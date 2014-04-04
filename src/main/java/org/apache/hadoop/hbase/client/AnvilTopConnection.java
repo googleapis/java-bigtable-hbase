@@ -23,6 +23,7 @@ import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.zookeeper.KeeperException;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -43,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-public class AnvilTopConnection implements HConnection {
+public class AnvilTopConnection implements HConnection, Closeable {
   private static final Log LOG = LogFactory.getLog(AnvilTopConnection.class);
 
   private final Configuration conf;
