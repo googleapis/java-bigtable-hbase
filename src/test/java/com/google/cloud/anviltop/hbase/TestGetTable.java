@@ -1,14 +1,12 @@
 package com.google.cloud.anviltop.hbase;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.HConnection;
-import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.concurrent.Executors;
 
 /*
  * Copyright (c) 2013 Google Inc.
@@ -23,14 +21,49 @@ import org.junit.Test;
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-public class TestInstantiation {
+public class TestGetTable extends AbstractTest {
   final String TABLE_NAME = "someTable";
 
   @Test
-  public void testBasicInstantiation() throws Exception {
-    Configuration conf = HBaseConfiguration.create();
-    HConnection connection = HConnectionManager.createConnection(conf);
+  public void testGetTable1() throws Exception {
     HTableInterface table = connection.getTable(TABLE_NAME);
+    checkTable(table);
+  }
+
+  @Test
+  public void testGetTable2() throws Exception {
+    HTableInterface table = connection.getTable(Bytes.toBytes(TABLE_NAME));
+    checkTable(table);
+  }
+
+  @Test
+  public void testGetTable3() throws Exception {
+    HTableInterface table = connection.getTable(TableName.valueOf(TABLE_NAME));
+    checkTable(table);
+  }
+
+  @Test
+  public void testGetTable4() throws Exception {
+    HTableInterface table = connection.getTable(TABLE_NAME, Executors.newFixedThreadPool(1));
+    checkTable(table);
+  }
+
+  @Test
+  public void testGetTable5() throws Exception {
+    HTableInterface table = connection.getTable(Bytes.toBytes(TABLE_NAME),
+        Executors.newFixedThreadPool(1));
+    checkTable(table);
+  }
+
+  @Test
+  public void testGetTable6() throws Exception {
+    HTableInterface table = connection.getTable(TableName.valueOf(TABLE_NAME),
+        Executors.newFixedThreadPool(1));
+    checkTable(table);
+  }
+
+  private void checkTable(HTableInterface table) {
+    Assert.assertTrue(table instanceof AnvilTop);
     TableName tableName = table.getName();
     Assert.assertEquals(TABLE_NAME, tableName.getNameAsString());
     Assert.assertArrayEquals(Bytes.toBytes(TABLE_NAME), tableName.getName());
