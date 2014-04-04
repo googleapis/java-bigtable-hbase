@@ -7,6 +7,25 @@
     <groupId>anviltop-client</groupId>
     <artifactId>anviltop-client</artifactId>
     <version>0.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
-    
+    <properties>
+        <hbase.version>0.96.0-hadoop2</hbase.version>
+        <junit.version>4.11</junit.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+            <version>${hbase.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>
