@@ -12,6 +12,7 @@
     <properties>
         <hbase.version>0.96.0-hadoop2</hbase.version>
         <junit.version>4.11</junit.version>
+        <compileSource>1.6</compileSource>
     </properties>
 
     <dependencies>
@@ -28,4 +29,22 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.5.1</version>
+                    <configuration>
+                        <source>${compileSource}</source>
+                        <target>${compileSource}</target>
+                        <showWarnings>true</showWarnings>
+                        <showDeprecation>false</showDeprecation>
+                        <compilerArgument>-Xlint:-options</compilerArgument>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>
