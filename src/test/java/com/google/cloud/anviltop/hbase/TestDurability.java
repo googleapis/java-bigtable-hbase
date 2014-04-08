@@ -61,10 +61,11 @@ public class TestDurability extends AbstractTest {
     // Get
     Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, testQualifier);
     Result result = table.get(get);
-    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
+    Assert.assertTrue("Durability=" + durability,
+        result.containsColumn(COLUMN_FAMILY, testQualifier));
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
-    Assert.assertEquals(1, cells.size());
-    Assert.assertEquals(testValue, cells.get(0).getValueArray());
+    Assert.assertEquals("Durability=" + durability, 1, cells.size());
+    Assert.assertArrayEquals("Durability=" + durability, testValue, cells.get(0).getValueArray());
 
     // Delete
     Delete delete = new Delete(rowKey);
@@ -72,6 +73,6 @@ public class TestDurability extends AbstractTest {
     table.delete(delete);
 
     // Confirm deleted
-    Assert.assertFalse(table.exists(get));
+    Assert.assertFalse("Durability=" + durability, table.exists(get));
   }
 }
