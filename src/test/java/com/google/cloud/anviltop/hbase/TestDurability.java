@@ -3,17 +3,16 @@ package com.google.cloud.anviltop.hbase;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Random;
 
 /*
  * Copyright (c) 2013 Google Inc.
@@ -28,54 +27,39 @@ import java.util.Random;
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-public class TestBasicOps extends AbstractTest {
+public class TestDurability extends AbstractTest {
   final String TABLE_NAME = "test";
   final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
 
-  //@Test  TODO(carterpage) - enable once implemented
-  public void testPutGetDelete() throws IOException {
+  /**
+   * Bigtable doesn't need durability hints.  Its recover and write-throughput is fast enough that
+   * the benefits are negligible.  We do however need to not break if a user provides a durability
+   * hint.
+   *
+   * @throws IOException
+   */
+  //@Test - TODO(carterpage) - enable once supported
+  public void testDurability() throws IOException {
+    for (Durability durability : Durability.values()) {
+      testDurability(durability);
+    }
+  }
+
+  private void testDurability(Durability durability) throws IOException {
     // Initialize
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
     byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
     byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
-    putGetDeleteExists(rowKey, testQualifier, testValue);
-  }
-
-  //@Test  TODO(carterpage) - enable once implemented
-  public void testBinaryPutGetDelete() throws IOException {
-    // Initialize
-    Random random = new Random();
-    byte[] rowKey = new byte[100];
-    random.nextBytes(rowKey);
-    byte[] testQualifier = new byte[100];
-    random.nextBytes(testQualifier);
-    byte[] testValue = new byte[100];
-    random.nextBytes(testValue);
-    // TODO(carterpage) - need to test that column-family can work as raw binary
-
-    // Put
-    putGetDeleteExists(rowKey, testQualifier, testValue);
-  }
-
-  //@Test TODO(carterpage) - enable once implemented
-  public void testNullQualifier() throws IOException {
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
-    byte[] testQualifier = null;
-    byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
-    putGetDeleteExists(rowKey, testQualifier, testValue);
-  }
-
-  private void putGetDeleteExists(byte[] rowKey, byte[] testQualifier, byte[] testValue) throws IOException {
-    HTableInterface table = connection.getTable(TABLE_NAME);
 
     // Put
     Put put = new Put(rowKey);
+    put.setDurability(durability);
     put.add(COLUMN_FAMILY, testQualifier, testValue);
+    HTableInterface table = connection.getTable(TABLE_NAME);
     table.put(put);
 
     // Get
-    Get get = new Get(rowKey);
-    get.addColumn(COLUMN_FAMILY, testQualifier);
+    Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, testQualifier);
     Result result = table.get(get);
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
