@@ -49,15 +49,15 @@ public class TestPut extends AbstractTest {
     HTableInterface table = connection.getTable(TABLE_NAME);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
     byte[][] testQualifiers = new byte[NUM_CELLS][];
-    byte[][] testValues= new byte[NUM_CELLS][];
-    for (int i = 0 ; i < NUM_CELLS ; ++i) {
+    byte[][] testValues = new byte[NUM_CELLS][];
+    for (int i = 0; i < NUM_CELLS; ++i) {
       testQualifiers[i] = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
       testValues[i] = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
     }
 
     // Send put
     Put put = new Put(rowKey);
-    for (int i = 0 ; i < NUM_CELLS ; ++i) {
+    for (int i = 0; i < NUM_CELLS; ++i) {
       put.add(COLUMN_FAMILY, testQualifiers[i], testValues[i]);
     }
     table.put(put);
@@ -68,8 +68,8 @@ public class TestPut extends AbstractTest {
     List<Cell> cells = result.listCells();
     Assert.assertEquals(NUM_CELLS, cells.size());
     // Results are sorted, so calculate the order we expect
-    SortedMap<ByteBuffer, ByteBuffer > expectedResults = new TreeMap<ByteBuffer, ByteBuffer>();
-    for (int i = 0 ; i < NUM_CELLS ; ++i) {
+    SortedMap<ByteBuffer, ByteBuffer> expectedResults = new TreeMap<ByteBuffer, ByteBuffer>();
+    for (int i = 0; i < NUM_CELLS; ++i) {
       expectedResults.put(ByteBuffer.wrap(testQualifiers[i]), ByteBuffer.wrap(testValues[i]));
     }
     int i = 0;
@@ -99,7 +99,7 @@ public class TestPut extends AbstractTest {
     List<ByteBuffer> rowKeys = new ArrayList<ByteBuffer>();
     Map<ByteBuffer, ByteBuffer> qualifiers = new TreeMap<ByteBuffer, ByteBuffer>();
     Map<ByteBuffer, ByteBuffer> values = new TreeMap<ByteBuffer, ByteBuffer>();
-    for (int i = 0 ; i < NUM_ROWS ; ++i) {
+    for (int i = 0; i < NUM_ROWS; ++i) {
       byte[] testRowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
       byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
       byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
@@ -128,7 +128,7 @@ public class TestPut extends AbstractTest {
     }
     Result[] result = table.get(gets);
     Assert.assertEquals(NUM_ROWS, result.length);
-    for (int i = 0 ; i < NUM_ROWS ; ++i) {
+    for (int i = 0; i < NUM_ROWS; ++i) {
       ByteBuffer rowKey = rowKeys.get(i);
       Assert.assertArrayEquals(rowKey.array(), result[i].getRow());
       byte[] qualifier = qualifiers.get(rowKey).array();

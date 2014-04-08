@@ -47,7 +47,7 @@ public class AnvilTop implements HTableInterface {
    * @param tableName
    */
   public AnvilTop(TableName tableName) {
-     this.tableName = tableName;
+    this.tableName = tableName;
   }
 
   @Override
@@ -81,7 +81,8 @@ public class AnvilTop implements HTableInterface {
   }
 
   @Override
-  public void batch(List<? extends Row> actions, Object[] results) throws IOException, InterruptedException {
+  public void batch(List<? extends Row> actions, Object[] results)
+      throws IOException, InterruptedException {
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -91,12 +92,14 @@ public class AnvilTop implements HTableInterface {
   }
 
   @Override
-  public <R> void batchCallback(List<? extends Row> actions, Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
+  public <R> void batchCallback(List<? extends Row> actions, Object[] results,
+      Batch.Callback<R> callback) throws IOException, InterruptedException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback) throws IOException, InterruptedException {
+  public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback)
+      throws IOException, InterruptedException {
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -141,7 +144,8 @@ public class AnvilTop implements HTableInterface {
   }
 
   @Override
-  public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) throws IOException {
+  public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put)
+      throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -156,7 +160,8 @@ public class AnvilTop implements HTableInterface {
   }
 
   @Override
-  public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws IOException {
+  public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value,
+      Delete delete) throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -176,17 +181,20 @@ public class AnvilTop implements HTableInterface {
   }
 
   @Override
-  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) throws IOException {
+  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
+      throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, Durability durability) throws IOException {
+  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount,
+      Durability durability) throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, boolean writeToWAL) throws IOException {
+  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount,
+      boolean writeToWAL) throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -211,12 +219,15 @@ public class AnvilTop implements HTableInterface {
   }
 
   @Override
-  public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> service, byte[] startKey, byte[] endKey, Batch.Call<T, R> callable) throws ServiceException, Throwable {
+  public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> service, byte[] startKey,
+      byte[] endKey, Batch.Call<T, R> callable) throws ServiceException, Throwable {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public <T extends Service, R> void coprocessorService(Class<T> service, byte[] startKey, byte[] endKey, Batch.Call<T, R> callable, Batch.Callback<R> callback) throws ServiceException, Throwable {
+  public <T extends Service, R> void coprocessorService(Class<T> service, byte[] startKey,
+      byte[] endKey, Batch.Call<T, R> callable, Batch.Callback<R> callback)
+      throws ServiceException, Throwable {
     throw new UnsupportedOperationException();  // TODO
   }
 
