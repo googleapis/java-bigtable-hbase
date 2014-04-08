@@ -80,7 +80,7 @@ public class TestBasicOps extends AbstractTest {
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
     Assert.assertEquals(1, cells.size());
-    Assert.assertEquals(testValue, cells.get(0).getValueArray());
+    Assert.assertArrayEquals(testValue, cells.get(0).getValueArray());
 
     // Delete
     Delete delete = new Delete(rowKey);

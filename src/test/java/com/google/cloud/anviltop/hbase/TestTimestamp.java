@@ -56,11 +56,11 @@ public class TestTimestamp extends AbstractTest {
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
     Assert.assertEquals(3, cells.size());
     Assert.assertEquals(3L, cells.get(0).getTimestamp());
-    Assert.assertEquals(testValue3, cells.get(0).getValueArray());
+    Assert.assertArrayEquals(testValue3, cells.get(0).getValueArray());
     Assert.assertEquals(2L, cells.get(1).getTimestamp());
-    Assert.assertEquals(testValue2, cells.get(1).getValueArray());
+    Assert.assertArrayEquals(testValue2, cells.get(1).getValueArray());
     Assert.assertEquals(1L, cells.get(2).getTimestamp());
-    Assert.assertEquals(testValue1, cells.get(2).getValueArray());
+    Assert.assertArrayEquals(testValue1, cells.get(2).getValueArray());
 
     // Delete the middle version
     Delete delete = new Delete(rowKey);
@@ -73,9 +73,9 @@ public class TestTimestamp extends AbstractTest {
     cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
     Assert.assertEquals(2, cells.size());
     Assert.assertEquals(3L, cells.get(0).getTimestamp());
-    Assert.assertEquals(testValue3, cells.get(0).getValueArray());
+    Assert.assertArrayEquals(testValue3, cells.get(0).getValueArray());
     Assert.assertEquals(1L, cells.get(1).getTimestamp());
-    Assert.assertEquals(testValue1, cells.get(1).getValueArray());
+    Assert.assertArrayEquals(testValue1, cells.get(1).getValueArray());
 
     // Now limit to just one version
     get.setMaxVersions(1);
@@ -84,7 +84,7 @@ public class TestTimestamp extends AbstractTest {
     cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
     Assert.assertEquals(1, cells.size());
     Assert.assertEquals(3L, cells.get(0).getTimestamp());
-    Assert.assertEquals(testValue3, cells.get(0).getValueArray());
+    Assert.assertArrayEquals(testValue3, cells.get(0).getValueArray());
 
     // Delete row
     delete = new Delete(rowKey);
