@@ -10,6 +10,8 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,7 +40,8 @@ public class TestDurability extends AbstractTest {
    *
    * @throws IOException
    */
-  //@Test - TODO(carterpage) - enable once supported
+  @Ignore // TODO(carterpage) - enable once implemented
+  @Test
   public void testDurability() throws IOException {
     for (Durability durability : Durability.values()) {
       testDurability(durability);

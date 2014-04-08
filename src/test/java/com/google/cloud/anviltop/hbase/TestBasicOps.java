@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -32,7 +33,8 @@ public class TestBasicOps extends AbstractTest {
   final String TABLE_NAME = "test";
   final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
 
-  //@Test  TODO(carterpage) - enable once implemented
+  @Ignore // TODO(carterpage) - enable once implemented
+  @Test
   public void testPutGetDelete() throws IOException {
     // Initialize
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
@@ -41,7 +43,8 @@ public class TestBasicOps extends AbstractTest {
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
-  //@Test  TODO(carterpage) - enable once implemented
+  @Ignore // TODO(carterpage) - enable once implemented
+  @Test
   public void testBinaryPutGetDelete() throws IOException {
     // Initialize
     Random random = new Random();
@@ -57,7 +60,8 @@ public class TestBasicOps extends AbstractTest {
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
-  //@Test TODO(carterpage) - enable once implemented
+  @Ignore // TODO(carterpage) - enable once implemented
+  @Test
   public void testNullQualifier() throws IOException {
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
     byte[] testQualifier = null;
@@ -65,7 +69,8 @@ public class TestBasicOps extends AbstractTest {
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
-  //@Test - TODO(carterpage) - enable once supported
+  @Ignore // TODO(carterpage) - enable once implemented
+  @Test
   public void testPutBigValue() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
@@ -76,7 +81,8 @@ public class TestBasicOps extends AbstractTest {
     putGetDeleteExists(testRowKey, testQualifier, testValue);
   }
 
-  //@Test(expected = IllegalArgumentException.class) - TODO(carterpage) - enable once supported
+  @Ignore // TODO(carterpage) - enable once implemented
+  @Test
   public void testPutTooBigValue() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
