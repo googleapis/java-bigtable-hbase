@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -31,7 +32,8 @@ public class TestTimestamp extends AbstractTest {
   final String TABLE_NAME = "test";
   final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
 
-  //@Test TODO(carterpage) - enable once supported
+  @Ignore // TODO(carterpage) - enable once implemented
+  @Test
   public void testArbitraryTimestamp() throws IOException {
     // Initialize
     HTableInterface table = connection.getTable(TABLE_NAME);

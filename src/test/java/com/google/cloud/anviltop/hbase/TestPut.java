@@ -9,6 +9,8 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -43,7 +45,8 @@ public class TestPut extends AbstractTest {
    *
    * @throws IOException
    */
-  //@Test - TODO(carterpage) - enable once supported
+  @Ignore // TODO(carterpage) - enable once implemented
+  @Test
   public void testPutMultipleCellsOneRow() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
@@ -92,7 +95,8 @@ public class TestPut extends AbstractTest {
    *
    * @throws IOException
    */
-  //@Test - TODO(carterpage) - enable once supported
+  @Ignore // TODO(carterpage) - enable once implemented
+  @Test
   public void testPutGetDeleteMultipleRows() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
