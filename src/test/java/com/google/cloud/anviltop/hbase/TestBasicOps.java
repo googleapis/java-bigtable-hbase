@@ -65,6 +65,28 @@ public class TestBasicOps extends AbstractTest {
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
+  //@Test - TODO(carterpage) - enable once supported
+  public void testPutBigValue() throws IOException {
+    // Initialize variables
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] testRowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
+    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
+    byte[] testValue = new byte[10 * 2 ^ 20];  // 10 MB
+    new Random().nextBytes(testValue);
+    putGetDeleteExists(testRowKey, testQualifier, testValue);
+  }
+
+  //@Test(expected = IllegalArgumentException.class) - TODO(carterpage) - enable once supported
+  public void testPutTooBigValue() throws IOException {
+    // Initialize variables
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] testRowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
+    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
+    byte[] testValue = new byte[10 * 2 ^ 20 + 1];  // 10 MB
+    new Random().nextBytes(testValue);
+    putGetDeleteExists(testRowKey, testQualifier, testValue);
+  }
+
   private void putGetDeleteExists(byte[] rowKey, byte[] testQualifier, byte[] testValue) throws IOException {
     HTableInterface table = connection.getTable(TABLE_NAME);
 
