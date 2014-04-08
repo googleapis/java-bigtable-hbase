@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 /*
  * Copyright (c) 2013 Google Inc.
@@ -31,14 +32,34 @@ public class TestBasicOps extends AbstractTest {
   final String TABLE_NAME = "test";
   final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
 
-  //@Test  TODO - enable once implemented
+  //@Test  TODO(carterpage) - enable once implemented
   public void testPutGetDelete() throws IOException {
     // Initialize
     HTableInterface table = connection.getTable(TABLE_NAME);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
     byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
     byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
+    putGetDeleteExists(table, rowKey, testQualifier, testValue);
+  }
 
+  //@Test  TODO(carterpage) - enable once implemented
+  public void testBinaryPutGetDelete() throws IOException {
+    // Initialize
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    Random random = new Random();
+    byte[] rowKey = new byte[100];
+    random.nextBytes(rowKey);
+    byte[] testQualifier = new byte[100];
+    random.nextBytes(testQualifier);
+    byte[] testValue = new byte[100];
+    random.nextBytes(testValue);
+    // TODO(carterpage) - need to test that column-family can work as raw binary
+
+    // Put
+    putGetDeleteExists(table, rowKey, testQualifier, testValue);
+  }
+
+  private void putGetDeleteExists(HTableInterface table, byte[] rowKey, byte[] testQualifier, byte[] testValue) throws IOException {
     // Put
     Put put = new Put(rowKey);
     put.add(COLUMN_FAMILY, testQualifier, testValue);
