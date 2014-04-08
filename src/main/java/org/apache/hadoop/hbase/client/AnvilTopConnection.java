@@ -218,12 +218,14 @@ public class AnvilTopConnection implements HConnection, Closeable {
   }
 
   @Override
-  public void updateCachedLocations(TableName tableName, byte[] rowkey, Object exception, HRegionLocation source) {
+  public void updateCachedLocations(TableName tableName, byte[] rowkey, Object exception,
+      HRegionLocation source) {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public void updateCachedLocations(byte[] tableName, byte[] rowkey, Object exception, HRegionLocation source) {
+  public void updateCachedLocations(byte[] tableName, byte[] rowkey, Object exception,
+      HRegionLocation source) {
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -243,12 +245,14 @@ public class AnvilTopConnection implements HConnection, Closeable {
   }
 
   @Override
-  public List<HRegionLocation> locateRegions(TableName tableName, boolean useCache, boolean offlined) throws IOException {
+  public List<HRegionLocation> locateRegions(TableName tableName, boolean useCache,
+      boolean offlined) throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public List<HRegionLocation> locateRegions(byte[] tableName, boolean useCache, boolean offlined) throws IOException {
+  public List<HRegionLocation> locateRegions(byte[] tableName, boolean useCache, boolean offlined)
+      throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -258,47 +262,58 @@ public class AnvilTopConnection implements HConnection, Closeable {
   }
 
   @Override
-  public AdminProtos.AdminService.BlockingInterface getAdmin(ServerName serverName) throws IOException {
+  public AdminProtos.AdminService.BlockingInterface getAdmin(ServerName serverName)
+      throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public ClientProtos.ClientService.BlockingInterface getClient(ServerName serverName) throws IOException {
+  public ClientProtos.ClientService.BlockingInterface getClient(ServerName serverName)
+      throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public AdminProtos.AdminService.BlockingInterface getAdmin(ServerName serverName, boolean getMaster) throws IOException {
+  public AdminProtos.AdminService.BlockingInterface getAdmin(ServerName serverName,
+      boolean getMaster) throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public HRegionLocation getRegionLocation(TableName tableName, byte[] row, boolean reload) throws IOException {
+  public HRegionLocation getRegionLocation(TableName tableName, byte[] row, boolean reload)
+      throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public HRegionLocation getRegionLocation(byte[] tableName, byte[] row, boolean reload) throws IOException {
+  public HRegionLocation getRegionLocation(byte[] tableName, byte[] row, boolean reload)
+      throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public void processBatch(List<? extends Row> actions, TableName tableName, ExecutorService pool, Object[] results) throws IOException, InterruptedException {
+  public void processBatch(List<? extends Row> actions, TableName tableName, ExecutorService pool,
+      Object[] results) throws IOException, InterruptedException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public void processBatch(List<? extends Row> actions, byte[] tableName, ExecutorService pool, Object[] results) throws IOException, InterruptedException {
+  public void processBatch(List<? extends Row> actions, byte[] tableName, ExecutorService pool,
+      Object[] results) throws IOException, InterruptedException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public <R> void processBatchCallback(List<? extends Row> list, TableName tableName, ExecutorService pool, Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
+  public <R> void processBatchCallback(List<? extends Row> list, TableName tableName,
+      ExecutorService pool, Object[] results, Batch.Callback<R> callback)
+      throws IOException, InterruptedException {
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
-  public <R> void processBatchCallback(List<? extends Row> list, byte[] tableName, ExecutorService pool, Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
+  public <R> void processBatchCallback(List<? extends Row> list, byte[] tableName,
+      ExecutorService pool, Object[] results, Batch.Callback<R> callback)
+      throws IOException, InterruptedException {
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -328,7 +343,8 @@ public class AnvilTopConnection implements HConnection, Closeable {
   }
 
   @Override
-  public HTableDescriptor[] getHTableDescriptorsByTableName(List<TableName> tableNames) throws IOException {
+  public HTableDescriptor[] getHTableDescriptorsByTableName(List<TableName> tableNames)
+      throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -370,7 +386,7 @@ public class AnvilTopConnection implements HConnection, Closeable {
   }
 
   @Override
-  public boolean isAborted(){
+  public boolean isAborted() {
     return this.aborted;
   }
 

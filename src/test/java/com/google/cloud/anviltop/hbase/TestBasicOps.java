@@ -87,7 +87,8 @@ public class TestBasicOps extends AbstractTest {
     putGetDeleteExists(testRowKey, testQualifier, testValue);
   }
 
-  private void putGetDeleteExists(byte[] rowKey, byte[] testQualifier, byte[] testValue) throws IOException {
+  private void putGetDeleteExists(byte[] rowKey, byte[] testQualifier, byte[] testValue)
+      throws IOException {
     HTableInterface table = connection.getTable(TABLE_NAME);
 
     // Put
