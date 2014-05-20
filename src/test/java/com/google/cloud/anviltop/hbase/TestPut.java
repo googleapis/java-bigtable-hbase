@@ -165,9 +165,9 @@ public class TestPut extends AbstractTest {
 
     HTableInterface table = connection.getTable(TABLE_NAME);
     table.setAutoFlushTo(true);
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
-    byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
-    byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
     Put put = new Put(rowKey);
     put.add(COLUMN_FAMILY, qualifier, value);
     table.put(put);
@@ -189,6 +189,19 @@ public class TestPut extends AbstractTest {
     Assert.assertTrue("Time increases strictly", timestamp2 > timestamp1);
     Assert.assertTrue("Time doesn't move too fast", (timestamp2 - timestamp1) < oneMinute);
     table.close();
+  }
+
+  @Test(expected = IOException.class)
+  public void testIOExceptionOnFailedPut() throws Exception {
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    table.setAutoFlushTo(true);
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] badfamily = Bytes.toBytes("badcolumnfamily-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
+    Put put = new Put(rowKey);
+    put.add(badfamily, qualifier, value);
+    table.put(put);
   }
 
   private static class QualifierAndValue implements Comparable<QualifierAndValue> {
