@@ -14,6 +14,8 @@ package com.google.cloud.anviltop.hbase;
  * the License.
  */
 
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Message;
 import com.google.protobuf.Service;
 import com.google.protobuf.ServiceException;
 import org.apache.hadoop.conf.Configuration;
@@ -253,6 +255,20 @@ public class AnvilTop implements HTableInterface {
 
   @Override
   public void setWriteBufferSize(long writeBufferSize) throws IOException {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
+  public <R extends Message> Map<byte[], R> batchCoprocessorService(
+      Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes2,
+      R r) throws ServiceException, Throwable {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
+  public <R extends Message> void batchCoprocessorService(
+      Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes2,
+      R r, Batch.Callback<R> rCallback) throws ServiceException, Throwable {
     throw new UnsupportedOperationException();  // TODO
   }
 }

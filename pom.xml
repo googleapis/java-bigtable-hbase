@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <hbase.version>0.96.0-hadoop2</hbase.version>
+        <hbase.version>0.98.2-hadoop2</hbase.version>
         <junit.version>4.11</junit.version>
         <compileSource>1.6</compileSource>
     </properties>
