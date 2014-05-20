@@ -2,6 +2,8 @@ package com.google.cloud.anviltop.hbase;
 
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
 import org.junit.Assert;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
@@ -16,6 +18,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +54,7 @@ public class TestPut extends AbstractTest {
   public void testPutMultipleCellsOneRow() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
 
     // Construct put with NUM_CELL random qualifier/value combos
     Put put = new Put(rowKey);
@@ -191,7 +194,7 @@ public class TestPut extends AbstractTest {
     table.close();
   }
 
-  @Test(expected = IOException.class)
+  @Test(expected = RetriesExhaustedWithDetailsException.class)
   public void testIOExceptionOnFailedPut() throws Exception {
     HTableInterface table = connection.getTable(TABLE_NAME);
     table.setAutoFlushTo(true);
@@ -202,6 +205,82 @@ public class TestPut extends AbstractTest {
     Put put = new Put(rowKey);
     put.add(badfamily, qualifier, value);
     table.put(put);
+  }
+
+  @Test
+  public void testMultiplePutsOneBadSameRow() throws Exception {
+    final int numberOfGoodPuts = 100;
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[][] goodkeys = new byte[numberOfGoodPuts][];
+    for (int i = 0; i < numberOfGoodPuts; ++i) {
+      goodkeys[i] = rowKey;
+    }
+    multiplePutsOneBad(numberOfGoodPuts, goodkeys, rowKey);
+    Get get = new Get(rowKey);
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    Result whatsLeft = table.get(get);
+    Assert.assertEquals("Same row, all other puts accepted", numberOfGoodPuts, whatsLeft.size());
+    table.close();
+  }
+
+  @Test
+  public void testMultiplePutsOneBadDiffRows() throws Exception {
+    final int numberOfGoodPuts = 100;
+    byte[] badkey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[][] goodkeys = new byte[numberOfGoodPuts][];
+    for (int i = 0; i < numberOfGoodPuts; ++i) {
+      goodkeys[i] = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+      assert !Arrays.equals(badkey, goodkeys[i]);
+    }
+    multiplePutsOneBad(numberOfGoodPuts, goodkeys, badkey);
+
+    List<Get> gets = new ArrayList<Get>();
+    for (int i = 0; i < numberOfGoodPuts; ++i) {
+      Get get = new Get(goodkeys[i]);
+      gets.add(get);
+    }
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    Result[] whatsLeft = table.get(gets);
+    int cellCount = 0;
+    for (Result result : whatsLeft) {
+      cellCount += result.size();
+    }
+    Assert.assertEquals("Different row, all other puts accepted", numberOfGoodPuts, cellCount);
+    table.close();
+  }
+
+  private void multiplePutsOneBad(int numberOfGoodPuts, byte[][] goodkeys, byte[] badkey)
+      throws IOException {
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    table.setAutoFlushTo(true);
+    List<Put> puts = new ArrayList<Put>();
+    for (int i = 0; i < numberOfGoodPuts; ++i) {
+      byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+      byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
+      Put put = new Put(goodkeys[i]);
+      put.add(COLUMN_FAMILY, qualifier, value);
+      puts.add(put);
+    }
+
+    // Insert a bad put in the middle
+    byte[] badfamily = Bytes.toBytes("badcolumnfamily-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
+    Put put = new Put(badkey);
+    put.add(badfamily, qualifier, value);
+    puts.add(numberOfGoodPuts / 2, put);
+    RetriesExhaustedWithDetailsException thrownException = null;
+    try {
+      table.put(puts);
+    } catch (RetriesExhaustedWithDetailsException e) {
+      thrownException = e;
+    }
+    Assert.assertNotNull("Exception should have been thrown", thrownException);
+    Assert.assertEquals("Expecting one exception", 1, thrownException.getNumExceptions());
+    Assert.assertArrayEquals("Row key", badkey, thrownException.getRow(0).getRow());
+    Assert.assertTrue("Cause: NoSuchColumnFamilyException",
+        thrownException.getCause(0) instanceof NoSuchColumnFamilyException);
+    table.close();
   }
 
   private static class QualifierAndValue implements Comparable<QualifierAndValue> {
