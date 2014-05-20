@@ -26,6 +26,12 @@ import java.io.IOException;
  */
 public class TestAutoFlush extends AbstractTest {
   @Test
+  public void testAutoFlushDefault() throws Exception {
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    Assert.assertTrue("Auto-flush on", table.isAutoFlush());
+  }
+
+  @Test
   public void testAutoFlushOff() throws Exception {
     HTableInterface tableForWrite = connection.getTable(TABLE_NAME);
     tableForWrite.setAutoFlushTo(false);
