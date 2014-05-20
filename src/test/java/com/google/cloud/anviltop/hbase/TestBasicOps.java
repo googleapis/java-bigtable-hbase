@@ -34,9 +34,9 @@ public class TestBasicOps extends AbstractTest {
   @Test
   public void testPutGetDelete() throws IOException {
     // Initialize
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
-    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
-    byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
@@ -58,9 +58,9 @@ public class TestBasicOps extends AbstractTest {
 
   @Test
   public void testNullQualifier() throws IOException {
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] testQualifier = null;
-    byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
+    byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
@@ -68,8 +68,8 @@ public class TestBasicOps extends AbstractTest {
   public void testPutBigValue() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] testRowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
-    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
+    byte[] testRowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] testValue = new byte[10 * 2 ^ 20];  // 10 MB
     new Random().nextBytes(testValue);
     putGetDeleteExists(testRowKey, testQualifier, testValue);
@@ -79,8 +79,8 @@ public class TestBasicOps extends AbstractTest {
   public void testPutTooBigValue() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] testRowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
-    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
+    byte[] testRowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] testValue = new byte[10 * 2 ^ 20 + 1];  // 10 MB
     new Random().nextBytes(testValue);
     putGetDeleteExists(testRowKey, testQualifier, testValue);
