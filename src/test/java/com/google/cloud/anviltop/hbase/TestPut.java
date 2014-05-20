@@ -234,6 +234,54 @@ public class TestPut extends AbstractTest {
     Get get = new Get(rowKey);
     Result result = table.get(get);
     Assert.assertEquals("Atomic behavior means there should be nothing here", 0, result.size());
+    table.close();
+  }
+
+  /**
+   * This tests particularly odd behavior, where if an error happens on the client-side validation
+   * of a list of puts, the commits after the bad put fail.  (This is unlike a server-side error
+   * where all the good puts are committed.)
+   */
+  @Test
+  public void testClientSideValidationError() throws Exception {
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    table.setAutoFlushTo(false);
+    byte[] rowKey1 = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] qual1 = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] value1 = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] rowKey2 = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    // No column.  This will cause an error during client-side validation.
+    byte[] rowKey3 = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] qual3 = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] value3 = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
+
+    List<Put> puts = new ArrayList<Put>();
+    Put put1 = new Put(rowKey1);
+    put1.add(COLUMN_FAMILY, qual1, value1);
+    puts.add(put1);
+    Put put2 = new Put(rowKey2);
+    puts.add(put2);
+    Put put3 = new Put(rowKey3);
+    put3.add(COLUMN_FAMILY, qual3, value3);
+    puts.add(put3);
+    boolean exceptionThrown = false;
+    try {
+      table.put(puts);
+    } catch (IllegalArgumentException e) {
+      exceptionThrown = true;
+    }
+    Assert.assertTrue("Exception should have been thrown", exceptionThrown);
+    Get get1 = new Get(rowKey1);
+    Assert.assertFalse("Row 1 should not exist yet", table.exists(get1));
+    table.flushCommits();
+
+    Assert.assertTrue("Row 1 should exist", table.exists(get1));
+    Get get2 = new Get(rowKey2);
+    Assert.assertFalse("Row 2 should not exist", table.exists(get2));
+    Get get3 = new Get(rowKey3);
+    Assert.assertFalse("Row 3 should not exist", table.exists(get3));
+
+    table.close();
   }
 
   @Test
