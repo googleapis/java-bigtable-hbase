@@ -51,7 +51,7 @@ public class TestPut extends AbstractTest {
   public void testPutMultipleCellsOneRow() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
 
     // Construct put with NUM_CELL random qualifier/value combos
     Put put = new Put(rowKey);

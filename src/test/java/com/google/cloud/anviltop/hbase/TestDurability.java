@@ -47,9 +47,9 @@ public class TestDurability extends AbstractTest {
 
   private void testDurability(Durability durability) throws IOException {
     // Initialize
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
-    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
-    byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
 
     // Put
     Put put = new Put(rowKey);
