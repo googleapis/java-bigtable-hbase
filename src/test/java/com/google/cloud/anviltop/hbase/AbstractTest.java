@@ -30,7 +30,7 @@ import java.io.IOException;
  * the License.
  */
 public abstract class AbstractTest {
-  private static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+  protected static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   protected HConnection connection;
   protected static final byte[] TABLE_NAME = Bytes.toBytes("test_table");
   protected static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
