@@ -30,7 +30,7 @@ import java.io.IOException;
  * the License.
  */
 public abstract class AbstractTest {
-  private static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+  protected static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   protected HConnection connection;
   protected static final byte[] TABLE_NAME = Bytes.toBytes("test_table");
   protected static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
@@ -58,5 +58,12 @@ public abstract class AbstractTest {
   @After
   public void tearDown() throws IOException {
     this.connection.close();
+  }
+
+  // This is for when we need to look at the results outside of the current connection
+  public HConnection createNewConnection() throws IOException {
+    Configuration conf = TEST_UTIL.getConfiguration();
+    HConnection newConnection = HConnectionManager.createConnection(conf);
+    return newConnection;
   }
 }
