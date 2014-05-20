@@ -59,4 +59,11 @@ public abstract class AbstractTest {
   public void tearDown() throws IOException {
     this.connection.close();
   }
+
+  // This is for when we need to look at the results outside of the current connection
+  public HConnection createNewConnection() throws IOException {
+    Configuration conf = TEST_UTIL.getConfiguration();
+    HConnection newConnection = HConnectionManager.createConnection(conf);
+    return newConnection;
+  }
 }
