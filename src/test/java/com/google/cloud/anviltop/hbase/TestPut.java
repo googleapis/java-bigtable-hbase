@@ -135,7 +135,8 @@ public class TestPut extends AbstractTest {
           Bytes.toBytes(entry.qualifier)));
       Assert.assertEquals(descriptor, entry.value,
           Bytes.toString(CellUtil.cloneValue(
-              result[i].getColumnCells(COLUMN_FAMILY, Bytes.toBytes(entry.qualifier)).get(0))));
+              result[i].getColumnCells(COLUMN_FAMILY, Bytes.toBytes(entry.qualifier)).get(0)))
+      );
     }
 
     // Delete
@@ -153,6 +154,40 @@ public class TestPut extends AbstractTest {
     for (Boolean check : checks) {
       Assert.assertFalse(check);
     }
+    table.close();
+  }
+
+  @Test
+  public void testDefaultTimestamp() throws IOException {
+    long now = System.currentTimeMillis();
+    long oneMinute = 60 * 1000;
+    long fifteenMinutes = 15 * 60 * 1000;
+
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    table.setAutoFlushTo(true);
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
+    byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
+    byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qualifier, value);
+    table.put(put);
+    Get get = new Get(rowKey);
+    get.addColumn(COLUMN_FAMILY, qualifier);
+    Result result = table.get(get);
+    long timestamp1 = result.getColumnLatestCell(COLUMN_FAMILY, qualifier).getTimestamp();
+    Assert.assertTrue(Math.abs(timestamp1 - now) < fifteenMinutes);
+
+    try {
+      Thread.sleep(10);  // Make sure the clock has a chance to move
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    table.put(put);
+    get.addColumn(COLUMN_FAMILY, qualifier);
+    result = table.get(get);
+    long timestamp2 = result.getColumnLatestCell(COLUMN_FAMILY, qualifier).getTimestamp();
+    Assert.assertTrue("Time increases strictly", timestamp2 > timestamp1);
+    Assert.assertTrue("Time doesn't move too fast", (timestamp2 - timestamp1) < oneMinute);
     table.close();
   }
 
