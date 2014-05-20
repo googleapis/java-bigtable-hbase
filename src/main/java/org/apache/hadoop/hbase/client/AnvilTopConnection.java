@@ -369,6 +369,11 @@ public class AnvilTopConnection implements HConnection, Closeable {
   }
 
   @Override
+  public NonceGenerator getNonceGenerator() {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
   public void abort(final String msg, Throwable t) {
     if (t != null) {
       LOG.fatal(msg, t);
