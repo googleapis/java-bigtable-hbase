@@ -208,6 +208,35 @@ public class TestPut extends AbstractTest {
   }
 
   @Test
+  public void testAtomicPut() throws Exception {
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] goodQual = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] goodValue = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] badQual = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] badValue = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] badfamily = Bytes.toBytes("badcolumnfamily-" + RandomStringUtils.randomAlphanumeric(8));
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, goodQual, goodValue);
+    put.add(badfamily, badQual, badValue);
+    RetriesExhaustedWithDetailsException thrownException = null;
+    try {
+      table.put(put);
+    } catch (RetriesExhaustedWithDetailsException e) {
+      thrownException = e;
+    }
+    Assert.assertNotNull("Exception should have been thrown", thrownException);
+    Assert.assertEquals("Expecting one exception", 1, thrownException.getNumExceptions());
+    Assert.assertArrayEquals("Row key", rowKey, thrownException.getRow(0).getRow());
+    Assert.assertTrue("Cause: NoSuchColumnFamilyException",
+        thrownException.getCause(0) instanceof NoSuchColumnFamilyException);
+
+    Get get = new Get(rowKey);
+    Result result = table.get(get);
+    Assert.assertEquals("Atomic behavior means there should be nothing here", 0, result.size());
+  }
+
+  @Test
   public void testMultiplePutsOneBadSameRow() throws Exception {
     final int numberOfGoodPuts = 100;
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
