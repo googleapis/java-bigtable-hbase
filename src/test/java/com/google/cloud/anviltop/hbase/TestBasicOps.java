@@ -2,6 +2,7 @@ package com.google.cloud.anviltop.hbase;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -30,10 +31,6 @@ import java.util.Random;
  * the License.
  */
 public class TestBasicOps extends AbstractTest {
-  final String TABLE_NAME = "test";
-  final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
-
-  @Ignore // TODO(carterpage) - enable once implemented
   @Test
   public void testPutGetDelete() throws IOException {
     // Initialize
@@ -43,7 +40,6 @@ public class TestBasicOps extends AbstractTest {
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
-  @Ignore // TODO(carterpage) - enable once implemented
   @Test
   public void testBinaryPutGetDelete() throws IOException {
     // Initialize
@@ -60,7 +56,6 @@ public class TestBasicOps extends AbstractTest {
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
-  @Ignore // TODO(carterpage) - enable once implemented
   @Test
   public void testNullQualifier() throws IOException {
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
@@ -69,7 +64,6 @@ public class TestBasicOps extends AbstractTest {
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
-  @Ignore // TODO(carterpage) - enable once implemented
   @Test
   public void testPutBigValue() throws IOException {
     // Initialize variables
@@ -81,7 +75,6 @@ public class TestBasicOps extends AbstractTest {
     putGetDeleteExists(testRowKey, testQualifier, testValue);
   }
 
-  @Ignore // TODO(carterpage) - enable once implemented
   @Test
   public void testPutTooBigValue() throws IOException {
     // Initialize variables
@@ -109,7 +102,7 @@ public class TestBasicOps extends AbstractTest {
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
     Assert.assertEquals(1, cells.size());
-    Assert.assertArrayEquals(testValue, cells.get(0).getValueArray());
+    Assert.assertArrayEquals(testValue, CellUtil.cloneValue(cells.get(0)));
 
     // Delete
     Delete delete = new Delete(rowKey);
@@ -118,5 +111,6 @@ public class TestBasicOps extends AbstractTest {
 
     // Confirm deleted
     Assert.assertFalse(table.exists(get));
+    table.close();
   }
 }

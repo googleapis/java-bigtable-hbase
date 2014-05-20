@@ -2,6 +2,7 @@ package com.google.cloud.anviltop.hbase;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -29,40 +30,48 @@ import java.util.List;
  * the License.
  */
 public class TestTimestamp extends AbstractTest {
-  final String TABLE_NAME = "test";
-  final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
-
-  @Ignore // TODO(carterpage) - enable once implemented
   @Test
   public void testArbitraryTimestamp() throws IOException {
     // Initialize
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
-    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.random(8));
-    byte[] testValue1 = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
-    byte[] testValue2 = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
-    byte[] testValue3 = Bytes.toBytes("testValue-" + RandomStringUtils.random(8));
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] testQualifier = Bytes.toBytes("testQual-" + RandomStringUtils.randomAlphanumeric(8));
+    String testValue1 = "testValue-" + RandomStringUtils.randomAlphanumeric(8);
+    String testValue2 = "testValue-" + RandomStringUtils.randomAlphanumeric(8);
+    String testValue3 = "testValue-" + RandomStringUtils.randomAlphanumeric(8);
 
     // Put three versions
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, testQualifier, 1L, testValue1);
-    put.add(COLUMN_FAMILY, testQualifier, 2L, testValue2);
-    put.add(COLUMN_FAMILY, testQualifier, 3L, testValue3);
+    put.add(COLUMN_FAMILY, testQualifier, 1L, Bytes.toBytes(testValue1));
+    put.add(COLUMN_FAMILY, testQualifier, 2L, Bytes.toBytes(testValue2));
+    put.add(COLUMN_FAMILY, testQualifier, 3L, Bytes.toBytes(testValue3));
     table.put(put);
 
     // Confirm they are all here, in descending version number
     Get get = new Get(rowKey);
     get.addColumn(COLUMN_FAMILY, testQualifier);
+    get.setMaxVersions(5);
     Result result = table.get(get);
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
     Assert.assertEquals(3, cells.size());
     Assert.assertEquals(3L, cells.get(0).getTimestamp());
-    Assert.assertArrayEquals(testValue3, cells.get(0).getValueArray());
+    Assert.assertEquals(testValue3, Bytes.toString(CellUtil.cloneValue(cells.get(0))));
     Assert.assertEquals(2L, cells.get(1).getTimestamp());
-    Assert.assertArrayEquals(testValue2, cells.get(1).getValueArray());
+    Assert.assertEquals(testValue2, Bytes.toString(CellUtil.cloneValue(cells.get(1))));
     Assert.assertEquals(1L, cells.get(2).getTimestamp());
-    Assert.assertArrayEquals(testValue1, cells.get(2).getValueArray());
+    Assert.assertEquals(testValue1, Bytes.toString(CellUtil.cloneValue(cells.get(2))));
+
+    // Now limit results to just two versions
+    get.setMaxVersions(2);
+    result = table.get(get);
+    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
+    cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
+    Assert.assertEquals(2, cells.size());
+    Assert.assertEquals(3L, cells.get(0).getTimestamp());
+    Assert.assertEquals(testValue3, Bytes.toString(CellUtil.cloneValue(cells.get(0))));
+    Assert.assertEquals(2L, cells.get(1).getTimestamp());
+    Assert.assertEquals(testValue2, Bytes.toString(CellUtil.cloneValue(cells.get(1))));
 
     // Delete the middle version
     Delete delete = new Delete(rowKey);
@@ -70,23 +79,15 @@ public class TestTimestamp extends AbstractTest {
     table.delete(delete);
 
     // Confirm versions 1 & 3 remain
+    get.setMaxVersions(5);
     result = table.get(get);
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
     cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
     Assert.assertEquals(2, cells.size());
     Assert.assertEquals(3L, cells.get(0).getTimestamp());
-    Assert.assertArrayEquals(testValue3, cells.get(0).getValueArray());
+    Assert.assertEquals(testValue3, Bytes.toString(CellUtil.cloneValue(cells.get(0))));
     Assert.assertEquals(1L, cells.get(1).getTimestamp());
-    Assert.assertArrayEquals(testValue1, cells.get(1).getValueArray());
-
-    // Now limit to just one version
-    get.setMaxVersions(1);
-    result = table.get(get);
-    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
-    cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
-    Assert.assertEquals(1, cells.size());
-    Assert.assertEquals(3L, cells.get(0).getTimestamp());
-    Assert.assertArrayEquals(testValue3, cells.get(0).getValueArray());
+    Assert.assertEquals(testValue1, Bytes.toString(CellUtil.cloneValue(cells.get(1))));
 
     // Delete row
     delete = new Delete(rowKey);
@@ -94,5 +95,6 @@ public class TestTimestamp extends AbstractTest {
 
     // Confirm it's gone
     Assert.assertFalse(table.exists(get));
+    table.close();
   }
 }

@@ -2,12 +2,17 @@ package com.google.cloud.anviltop.hbase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.AnvilTopConnection;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import java.io.IOException;
 
@@ -25,13 +30,29 @@ import java.io.IOException;
  * the License.
  */
 public abstract class AbstractTest {
+  private static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   protected HConnection connection;
+  protected static final byte[] TABLE_NAME = Bytes.toBytes("test_table");
+  protected static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
+
+  @BeforeClass
+  public static void setUpBeforeClass() throws Exception {
+    TEST_UTIL.startMiniCluster(1);
+    TEST_UTIL.createTable(TABLE_NAME, COLUMN_FAMILY, 6);
+  }
+
+  @AfterClass
+  public static void tearDownAfterClass() throws Exception {
+    TEST_UTIL.deleteTable(TABLE_NAME);
+    TEST_UTIL.shutdownMiniCluster();
+  }
 
   @Before
   public void setUp() throws IOException {
-    Configuration conf = HBaseConfiguration.create();
+    //Configuration conf = HBaseConfiguration.create();
+    Configuration conf = TEST_UTIL.getConfiguration();
     this.connection = HConnectionManager.createConnection(conf);
-    Assert.assertTrue(this.connection instanceof AnvilTopConnection);
+    //Assert.assertTrue(this.connection instanceof AnvilTopConnection);
   }
 
   @After

@@ -22,37 +22,40 @@ import java.util.concurrent.Executors;
  * the License.
  */
 public class TestGetTable extends AbstractTest {
-  final String TABLE_NAME = "someTable";
-
   @Test
   public void testGetTable1() throws Exception {
     HTableInterface table = connection.getTable(TABLE_NAME);
     checkTable(table);
+    table.close();
   }
 
   @Test
   public void testGetTable2() throws Exception {
-    HTableInterface table = connection.getTable(Bytes.toBytes(TABLE_NAME));
+    HTableInterface table = connection.getTable(Bytes.toString(TABLE_NAME));
     checkTable(table);
+    table.close();
   }
 
   @Test
   public void testGetTable3() throws Exception {
     HTableInterface table = connection.getTable(TableName.valueOf(TABLE_NAME));
     checkTable(table);
+    table.close();
   }
 
   @Test
   public void testGetTable4() throws Exception {
     HTableInterface table = connection.getTable(TABLE_NAME, Executors.newFixedThreadPool(1));
     checkTable(table);
+    table.close();
   }
 
   @Test
   public void testGetTable5() throws Exception {
-    HTableInterface table = connection.getTable(Bytes.toBytes(TABLE_NAME),
+    HTableInterface table = connection.getTable(Bytes.toString(TABLE_NAME),
         Executors.newFixedThreadPool(1));
     checkTable(table);
+    table.close();
   }
 
   @Test
@@ -60,13 +63,14 @@ public class TestGetTable extends AbstractTest {
     HTableInterface table = connection.getTable(TableName.valueOf(TABLE_NAME),
         Executors.newFixedThreadPool(1));
     checkTable(table);
+    table.close();
   }
 
   private void checkTable(HTableInterface table) {
-    Assert.assertTrue(table instanceof AnvilTop);
+//    Assert.assertTrue(table instanceof AnvilTop);
     TableName tableName = table.getName();
-    Assert.assertEquals(TABLE_NAME, tableName.getNameAsString());
-    Assert.assertArrayEquals(Bytes.toBytes(TABLE_NAME), tableName.getName());
-    Assert.assertArrayEquals(Bytes.toBytes(TABLE_NAME), table.getTableName());
+    Assert.assertEquals(Bytes.toString(TABLE_NAME), tableName.getNameAsString());
+    Assert.assertArrayEquals(TABLE_NAME, tableName.getName());
+    Assert.assertArrayEquals(TABLE_NAME, table.getTableName());
   }
 }
