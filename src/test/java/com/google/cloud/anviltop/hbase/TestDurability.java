@@ -2,6 +2,7 @@ package com.google.cloud.anviltop.hbase;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
@@ -30,9 +31,6 @@ import java.util.List;
  * the License.
  */
 public class TestDurability extends AbstractTest {
-  final String TABLE_NAME = "test";
-  final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
-
   /**
    * Bigtable doesn't need durability hints.  Its recover and write-throughput is fast enough that
    * the benefits are negligible.  We do however need to not break if a user provides a durability
@@ -40,7 +38,6 @@ public class TestDurability extends AbstractTest {
    *
    * @throws IOException
    */
-  @Ignore // TODO(carterpage) - enable once implemented
   @Test
   public void testDurability() throws IOException {
     for (Durability durability : Durability.values()) {
@@ -68,7 +65,8 @@ public class TestDurability extends AbstractTest {
         result.containsColumn(COLUMN_FAMILY, testQualifier));
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
     Assert.assertEquals("Durability=" + durability, 1, cells.size());
-    Assert.assertArrayEquals("Durability=" + durability, testValue, cells.get(0).getValueArray());
+    Assert.assertArrayEquals("Durability=" + durability, testValue,
+        CellUtil.cloneValue(cells.get(0)));
 
     // Delete
     Delete delete = new Delete(rowKey);
@@ -77,5 +75,6 @@ public class TestDurability extends AbstractTest {
 
     // Confirm deleted
     Assert.assertFalse("Durability=" + durability, table.exists(get));
+    table.close();
   }
 }

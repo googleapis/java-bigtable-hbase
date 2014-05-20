@@ -1,11 +1,13 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
+    <!--
     <property>
         <name>hbase.client.connection.impl</name>
         <value>org.apache.hadoop.hbase.client.AnvilTopConnection</value>
         <description>Use AnvilTop implementation of HConnection.</description>
     </property>
+    -->
     <property>
         <name>anviltop.project</name>
         <value><!-- TODO --></value>
