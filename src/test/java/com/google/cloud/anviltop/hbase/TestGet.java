@@ -204,4 +204,54 @@ public class TestGet extends AbstractTest {
     table.close();
   }
 
+  /**
+   * Requirement 3.6 - Client can request a maximum # of most recent versions returned.
+   */
+  @Test
+  public void testMaxVersions() throws IOException {
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
+    byte[] qual = Bytes.toBytes("qual-" + RandomStringUtils.random(8));
+    long timestamp1 = System.currentTimeMillis();
+    long timestamp2 = timestamp1 + 1;
+    long timestamp3 = timestamp2 + 1;
+    long timestamp4 = timestamp3 + 1;
+    long timestamp5 = timestamp4 + 1;
+    byte[] value1 = Bytes.toBytes("value-" + RandomStringUtils.random(8));
+    byte[] value2 = Bytes.toBytes("value-" + RandomStringUtils.random(8));
+    byte[] value3 = Bytes.toBytes("value-" + RandomStringUtils.random(8));
+    byte[] value4 = Bytes.toBytes("value-" + RandomStringUtils.random(8));
+    byte[] value5 = Bytes.toBytes("value-" + RandomStringUtils.random(8));
+
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qual, timestamp1, value1);
+    put.add(COLUMN_FAMILY, qual, timestamp2, value2);
+    put.add(COLUMN_FAMILY, qual, timestamp3, value3);
+    put.add(COLUMN_FAMILY, qual, timestamp4, value4);
+    put.add(COLUMN_FAMILY, qual, timestamp5, value5);
+    table.put(put);
+
+    Get get = new Get(rowKey);
+    get.addColumn(COLUMN_FAMILY, qual);
+    get.setMaxVersions(3);
+    Result result = table.get(get);
+
+    Assert.assertEquals(3, result.size());
+    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, qual));
+    List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, qual);
+    Assert.assertEquals(3, cells.size());
+
+    // Cells return in descending order
+    Assert.assertEquals(timestamp5, cells.get(0).getTimestamp());
+    Assert.assertArrayEquals(value5, CellUtil.cloneValue(cells.get(0)));
+    Assert.assertEquals(timestamp4, cells.get(1).getTimestamp());
+    Assert.assertArrayEquals(value4, CellUtil.cloneValue(cells.get(1)));
+    Assert.assertEquals(timestamp3, cells.get(2).getTimestamp());
+    Assert.assertArrayEquals(value3, CellUtil.cloneValue(cells.get(2)));
+
+    Delete delete = new Delete(rowKey);
+    table.delete(delete);
+
+    table.close();
+  }
 }
