@@ -13,6 +13,7 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -65,5 +66,26 @@ public abstract class AbstractTest {
     Configuration conf = TEST_UTIL.getConfiguration();
     HConnection newConnection = HConnectionManager.createConnection(conf);
     return newConnection;
+  }
+
+  protected byte[] randomData(String prefix) {
+    return Bytes.toBytes(prefix + RandomStringUtils.random(8));
+  }
+
+  protected byte[][] randomData(String prefix, int count) {
+    byte[][] result = new byte[count][];
+    for (int i = 0; i < count; ++i) {
+      result[i] = Bytes.toBytes(prefix + RandomStringUtils.random(8));
+    }
+    return result;
+  }
+
+  protected long[] sequentialTimestamps(int count) {
+    long[] timestamps = new long[count];
+    timestamps[0] = System.currentTimeMillis();
+    for (int i = 1; i < timestamps.length; ++i) {
+      timestamps[i] = timestamps[0] + i;
+    }
+    return timestamps;
   }
 }
