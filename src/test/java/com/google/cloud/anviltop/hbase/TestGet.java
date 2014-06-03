@@ -39,13 +39,13 @@ public class TestGet extends AbstractTest {
     HTableInterface table = connection.getTable(TABLE_NAME);
     byte[] rowKey = randomData("testrow-");
     int numValues = 3;
-    byte[][] qual = randomData("qual-", numValues);
-    byte[][] value = randomData("value-", numValues);
+    byte[][] quals = randomData("qual-", numValues);
+    byte[][] values = randomData("value-", numValues);
 
     // Insert some columns
     Put put = new Put(rowKey);
     for (int i = 0; i < numValues; ++i) {
-      put.add(COLUMN_FAMILY, qual[i], value[i]);
+      put.add(COLUMN_FAMILY, quals[i], values[i]);
     }
     table.put(put);
 
@@ -55,9 +55,9 @@ public class TestGet extends AbstractTest {
     Result result = table.get(get);
     Assert.assertEquals(numValues, result.size());
     for (int i = 0; i < numValues; ++i) {
-      Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, qual[i]));
-      Assert.assertArrayEquals(value[i],
-          CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual[i])));
+      Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, quals[i]));
+      Assert.assertArrayEquals(values[i],
+          CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[i])));
     }
 
     // Cleanup
@@ -75,13 +75,13 @@ public class TestGet extends AbstractTest {
     HTableInterface table = connection.getTable(TABLE_NAME);
     byte[] rowKey = randomData("testrow-");
     int numValues = 3;
-    byte[][] qual = randomData("qual-", numValues);
-    byte[][] value = randomData("value-", numValues);
+    byte[][] quals = randomData("qual-", numValues);
+    byte[][] values = randomData("value-", numValues);
 
     // Insert a few columns
     Put put = new Put(rowKey);
     for (int i = 0; i < numValues; ++i) {
-      put.add(COLUMN_FAMILY, qual[i], value[i]);
+      put.add(COLUMN_FAMILY, quals[i], values[i]);
     }
     table.put(put);
 
@@ -89,14 +89,14 @@ public class TestGet extends AbstractTest {
     Get get = new Get(rowKey);
     int[] colsToSelect = { 0, 2 };
     for (int i : colsToSelect) {
-      get.addColumn(COLUMN_FAMILY, qual[i]);
+      get.addColumn(COLUMN_FAMILY, quals[i]);
     }
     Result result = table.get(get);
     Assert.assertEquals(colsToSelect.length, result.size());
     for (int i : colsToSelect) {
-      Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, qual[i]));
-      Assert.assertArrayEquals(value[i],
-          CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual[i])));
+      Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, quals[i]));
+      Assert.assertArrayEquals(values[i],
+          CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[i])));
     }
 
     // Cleanup
@@ -118,20 +118,20 @@ public class TestGet extends AbstractTest {
     int numVersions = 5;
     int minVersion = 1;
     int maxVersion = 4;
-    long timestamp[] = sequentialTimestamps(numVersions);
-    byte[][] value = randomData("value-", numVersions);
+    long timestamps[] = sequentialTimestamps(numVersions);
+    byte[][] values = randomData("value-", numVersions);
 
     // Insert values with different timestamps at the same column.
     Put put = new Put(rowKey);
     for (int i = 0; i < numVersions; ++i) {
-      put.add(COLUMN_FAMILY, qual, timestamp[i], value[i]);
+      put.add(COLUMN_FAMILY, qual, timestamps[i], values[i]);
     }
     table.put(put);
 
     // Get with a time range, and return the correct cells are returned.
     Get get = new Get(rowKey);
     get.addColumn(COLUMN_FAMILY, qual);
-    get.setTimeRange(timestamp[minVersion], timestamp[maxVersion]);
+    get.setTimeRange(timestamps[minVersion], timestamps[maxVersion]);
     get.setMaxVersions(numVersions);
     Result result = table.get(get);
     Assert.assertEquals(maxVersion - minVersion, result.size());
@@ -141,8 +141,8 @@ public class TestGet extends AbstractTest {
 
     // Cells return in descending order.  Max is exclusive, min is inclusive.
     for (int i = maxVersion - 1, j = 0; i >= minVersion; --i, ++j) {
-      Assert.assertEquals(timestamp[i], cells.get(j).getTimestamp());
-      Assert.assertArrayEquals(value[i], CellUtil.cloneValue(cells.get(j)));
+      Assert.assertEquals(timestamps[i], cells.get(j).getTimestamp());
+      Assert.assertArrayEquals(values[i], CellUtil.cloneValue(cells.get(j)));
     }
 
     // Cleanup
@@ -162,27 +162,27 @@ public class TestGet extends AbstractTest {
     byte[] qual = randomData("qual-");
     int numVersions = 5;
     int particularTimestamp = 3;
-    long timestamp[] = sequentialTimestamps(numVersions);
+    long timestamps[] = sequentialTimestamps(numVersions);
     byte[][] values = randomData("value-", numVersions);
 
     // Insert several timestamps for a single row/column.
     Put put = new Put(rowKey);
     for (int i = 0; i < numVersions; ++i) {
-      put.add(COLUMN_FAMILY, qual, timestamp[i], values[i]);
+      put.add(COLUMN_FAMILY, qual, timestamps[i], values[i]);
     }
     table.put(put);
 
     // Get a particular timestamp, and confirm it's returned.
     Get get = new Get(rowKey);
     get.addColumn(COLUMN_FAMILY, qual);
-    get.setTimeStamp(timestamp[particularTimestamp]);
+    get.setTimeStamp(timestamps[particularTimestamp]);
     get.setMaxVersions(numVersions);
     Result result = table.get(get);
     Assert.assertEquals(1, result.size());
     Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, qual));
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, qual);
     Assert.assertEquals(1, cells.size());
-    Assert.assertEquals(timestamp[particularTimestamp], cells.get(0).getTimestamp());
+    Assert.assertEquals(timestamps[particularTimestamp], cells.get(0).getTimestamp());
     Assert.assertArrayEquals(values[particularTimestamp], CellUtil.cloneValue(cells.get(0)));
 
     // Cleanup
