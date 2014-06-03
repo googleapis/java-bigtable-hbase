@@ -13,25 +13,20 @@
  */
 package com.google.cloud.anviltop.hbase;
 
-import org.apache.commons.collections.list.TreeList;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.junit.Assert;
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 public class TestGet extends AbstractTest {
   /**
@@ -241,6 +236,8 @@ public class TestGet extends AbstractTest {
 
   /**
    * Requirement 3.7 - Specify maximum # of results to return per row, per column family.
+   *
+   * Requirement 3.8 - Can specify an offset to skip the first N qualifiers in a column family.
    */
   @Test
   public void testMaxResultsPerColumnFamily() throws IOException {
@@ -256,7 +253,7 @@ public class TestGet extends AbstractTest {
 
     // Insert a bunch of columns.
     Put put = new Put(rowKey);
-    List<QualifierAndValue> keyValues = new ArrayList<QualifierAndValue>();
+    List<QualifierValue> keyValues = new ArrayList<QualifierValue>();
     for (int i = 0; i < totalColumns; ++i) {
       put.add(COLUMN_FAMILY, quals[i], timestamps[i], values[i]);
 
@@ -264,7 +261,7 @@ public class TestGet extends AbstractTest {
       put.add(COLUMN_FAMILY, quals[i], timestamps[i] - 1, values[i]);
       put.add(COLUMN_FAMILY, quals[i], timestamps[i] - 2, values[i]);
 
-      keyValues.add(new QualifierAndValue(quals[i], values[i]));
+      keyValues.add(new QualifierValue(quals[i], values[i]));
     }
     table.put(put);
 
@@ -278,9 +275,47 @@ public class TestGet extends AbstractTest {
     Cell[] cells = result.rawCells();
     Collections.sort(keyValues);
     for (int i = 0; i < maxColumns; ++i) {
-      QualifierAndValue keyValue = keyValues.get(offsetColumn + i);
+      QualifierValue keyValue = keyValues.get(offsetColumn + i);
       Assert.assertArrayEquals(keyValue.qualifier, CellUtil.cloneQualifier(cells[i]));
       Assert.assertArrayEquals(keyValue.value, CellUtil.cloneValue(cells[i]));
     }
+
+    // Cleanup
+    Delete delete = new Delete(rowKey);
+    table.delete(delete);
+    table.close();
+  }
+
+  /**
+   * Requirement 3.11 - Result can contain empty values. (zero-length byte[]).
+   */
+  @Test
+  public void testEmptyValues() throws IOException {
+    // Initialize data
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    int numValues = 10;
+    byte[] rowKey = randomData("testrow-");
+    byte[][] quals = randomData("qual-", numValues);
+
+    // Insert empty values.  Null and byte[0] are interchangeable for puts (but not gets).
+    Put put = new Put(rowKey);
+    for (int i = 0; i < numValues; ++i) {
+      put.add(COLUMN_FAMILY, quals[i], i % 2 == 1 ? null : new byte[0]);
+    }
+    table.put(put);
+
+    // Check values
+    Get get = new Get(rowKey);
+    get.addFamily(COLUMN_FAMILY);
+    Result result = table.get(get);
+    for (int i = 0; i < numValues; ++i) {
+      Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, quals[i]));
+      Assert.assertArrayEquals(new byte[0], result.getValue(COLUMN_FAMILY, quals[i]));
+    }
+
+    // Cleanup
+    Delete delete = new Delete(rowKey);
+    table.delete(delete);
+    table.close();
   }
 }

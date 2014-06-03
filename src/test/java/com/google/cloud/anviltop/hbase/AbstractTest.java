@@ -15,22 +15,17 @@ package com.google.cloud.anviltop.hbase;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.client.AnvilTopConnection;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
-import java.util.Random;
 
 public abstract class AbstractTest {
   protected static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
@@ -96,18 +91,18 @@ public abstract class AbstractTest {
     return timestamps;
   }
 
-  protected static class QualifierAndValue implements Comparable<QualifierAndValue> {
+  protected static class QualifierValue implements Comparable<QualifierValue> {
     protected final byte[] qualifier;
     protected final byte[] value;
 
-    public QualifierAndValue(@NotNull byte[] qualifier, @NotNull byte[] value) {
+    public QualifierValue(@NotNull byte[] qualifier, @NotNull byte[] value) {
       this.qualifier = qualifier;
       this.value = value;
     }
 
     @Override
-    public int compareTo(QualifierAndValue qualifierAndValue) {
-      return Bytes.compareTo(this.qualifier, qualifierAndValue.qualifier);
+    public int compareTo(QualifierValue qualifierValue) {
+      return Bytes.compareTo(this.qualifier, qualifierValue.qualifier);
     }
   }
 }

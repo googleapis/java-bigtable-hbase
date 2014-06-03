@@ -25,21 +25,15 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
 import java.util.TreeMap;
-
-import javax.validation.constraints.NotNull;
 
 public class TestPut extends AbstractTest {
   static final int NUM_CELLS = 100;
@@ -60,10 +54,10 @@ public class TestPut extends AbstractTest {
 
     // Construct put with NUM_CELL random qualifier/value combos
     Put put = new Put(rowKey);
-    List<QualifierAndValue> keyValues = new ArrayList<QualifierAndValue>(100);
+    List<QualifierValue> keyValues = new ArrayList<QualifierValue>(100);
     for (int i = 0; i < NUM_CELLS; ++i) {
       put.add(COLUMN_FAMILY, quals[i], values[i]);
-      keyValues.add(new QualifierAndValue(quals[i], values[i]));
+      keyValues.add(new QualifierValue(quals[i], values[i]));
     }
     table.put(put);
 
@@ -104,7 +98,7 @@ public class TestPut extends AbstractTest {
     // Do puts
     List<Put> puts = new ArrayList<Put>(NUM_ROWS);
     List<String> keys = new ArrayList<String>(NUM_ROWS);
-    Map<String, QualifierAndValue> insertedKeyValues = new TreeMap<String, QualifierAndValue>();
+    Map<String, QualifierValue> insertedKeyValues = new TreeMap<String, QualifierValue>();
     for (int i = 0; i < NUM_ROWS; ++i) {
       Put put = new Put(rowKeys[i]);
       put.add(COLUMN_FAMILY, qualifiers[i], values[i]);
@@ -112,7 +106,7 @@ public class TestPut extends AbstractTest {
 
       String key = Bytes.toString(rowKeys[i]);
       keys.add(key);
-      insertedKeyValues.put(key, new QualifierAndValue(qualifiers[i], values[i]));
+      insertedKeyValues.put(key, new QualifierValue(qualifiers[i], values[i]));
     }
     table.put(puts);
 
@@ -129,7 +123,7 @@ public class TestPut extends AbstractTest {
     for (int i = 0; i < NUM_ROWS; ++i) {
       String rowKey = keys.get(i);
       Assert.assertEquals(rowKey, Bytes.toString(result[i].getRow()));
-      QualifierAndValue entry = insertedKeyValues.get(rowKey);
+      QualifierValue entry = insertedKeyValues.get(rowKey);
       String descriptor = "Row " + i + " (" + rowKey + ": ";
       Assert.assertEquals(descriptor, 1, result[i].size());
       Assert.assertTrue(descriptor,
