@@ -451,4 +451,37 @@ public class TestGet extends AbstractTest {
       Assert.assertTrue(exists[i]);
     }
   }
+
+  /**
+   * Requirement 3.16 - When submitting an array of Get operations, if one fails, they all fail.
+   */
+  @Test
+  public void testOneBadApple() throws IOException {
+    // Initialize data
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    int numValues = 10;
+
+    // Run a control test.
+    List<Get> gets = new ArrayList<Get>(numValues + 1);
+    for (int i = 0; i < numValues; ++i) {
+      Get get = new Get(randomData("key-"));
+      get.addColumn(COLUMN_FAMILY, randomData("qual-"));
+      gets.add(get);
+    }
+    table.get(gets);
+
+    // Now add a poison get.
+    Get get = new Get(randomData("testRow-"));
+    get.addColumn(randomData("badFamily-"), randomData("qual-"));
+    gets.add(get);
+
+    boolean throwsException = false;
+    try {
+      table.get(gets);
+    } catch (RetriesExhaustedWithDetailsException e) {
+      throwsException = true;
+      Assert.assertEquals(1, e.getNumExceptions());
+    }
+    Assert.assertTrue("Expected an exception", throwsException);
+  }
 }
