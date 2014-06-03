@@ -1,13 +1,3 @@
-package com.google.cloud.anviltop.hbase;
-
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.concurrent.Executors;
-
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -21,6 +11,16 @@ import java.util.concurrent.Executors;
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.google.cloud.anviltop.hbase;
+
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.concurrent.Executors;
+
 public class TestGetTable extends AbstractTest {
   @Test
   public void testGetTable1() throws Exception {
