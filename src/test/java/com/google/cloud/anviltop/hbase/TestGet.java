@@ -161,4 +161,47 @@ public class TestGet extends AbstractTest {
 
     table.close();
   }
+
+  /**
+   * Requirement 3.5 - A single timestamp can be specified.
+   */
+  @Test
+  public void testSingleTimestamp() throws IOException {
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.random(8));
+    byte[] qual = Bytes.toBytes("qual-" + RandomStringUtils.random(8));
+    long timestamp1 = System.currentTimeMillis();
+    long timestamp2 = timestamp1 + 1;
+    long timestamp3 = timestamp2 + 1;
+    byte[] value1 = Bytes.toBytes("value-" + RandomStringUtils.random(8));
+    byte[] value2 = Bytes.toBytes("value-" + RandomStringUtils.random(8));
+    byte[] value3 = Bytes.toBytes("value-" + RandomStringUtils.random(8));
+
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qual, timestamp1, value1);
+    put.add(COLUMN_FAMILY, qual, timestamp2, value2);
+    put.add(COLUMN_FAMILY, qual, timestamp3, value3);
+    table.put(put);
+
+    Get get = new Get(rowKey);
+    get.addColumn(COLUMN_FAMILY, qual);
+    get.setTimeStamp(timestamp2);
+    get.setMaxVersions(5);
+    Result result = table.get(get);
+
+    Assert.assertEquals(1, result.size());
+    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, qual));
+    List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, qual);
+    Assert.assertEquals(1, cells.size());
+
+    // Cells return in descending order
+    Assert.assertEquals(timestamp2, cells.get(0).getTimestamp());
+    Assert.assertArrayEquals(value2, CellUtil.cloneValue(cells.get(0)));
+
+    Delete delete = new Delete(rowKey);
+    table.delete(delete);
+
+    table.close();
+  }
+
 }
