@@ -21,6 +21,9 @@ import org.junit.Test;
 import java.io.IOException;
 
 public class TestCreateTable extends AbstractTest {
+  /**
+   * Requirement 1.8 - Table names must match [\w_][\w_\-\.]*
+   */
   @Test
   public void testTableNames() throws IOException {
     String[] goodnames = {

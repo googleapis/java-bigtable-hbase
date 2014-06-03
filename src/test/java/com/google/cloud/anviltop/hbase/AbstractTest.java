@@ -81,8 +81,13 @@ public abstract class AbstractTest {
   }
 
   protected long[] sequentialTimestamps(int count) {
+    return sequentialTimestamps(count, System.currentTimeMillis());
+  }
+
+  protected long[] sequentialTimestamps(int count, long firstValue) {
+    assert count > 0;
     long[] timestamps = new long[count];
-    timestamps[0] = System.currentTimeMillis();
+    timestamps[0] = firstValue;
     for (int i = 1; i < timestamps.length; ++i) {
       timestamps[i] = timestamps[0] + i;
     }

@@ -21,6 +21,9 @@ import org.junit.Test;
 
 import java.util.concurrent.Executors;
 
+/**
+ * These tests check various factory instantiations of the HTableInterface.
+ */
 public class TestGetTable extends AbstractTest {
   @Test
   public void testGetTable1() throws Exception {
