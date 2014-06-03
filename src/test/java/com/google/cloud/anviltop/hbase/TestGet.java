@@ -13,6 +13,7 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import org.apache.commons.collections.list.TreeList;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -26,7 +27,11 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class TestGet extends AbstractTest {
   /**
@@ -234,8 +239,48 @@ public class TestGet extends AbstractTest {
     table.close();
   }
 
+  /**
+   * Requirement 3.7 - Specify maximum # of results to return per row, per column family.
+   */
   @Test
   public void testMaxResultsPerColumnFamily() throws IOException {
+    // Initialize data
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = randomData("testrow-");
+    int totalColumns = 10;
+    int offsetColumn = 3;
+    int maxColumns = 5;
+    byte[][] quals = randomData("qual-", totalColumns);
+    byte[][] values = randomData("value-", totalColumns);
+    long[] timestamps = sequentialTimestamps(totalColumns);
 
+    // Insert a bunch of columns.
+    Put put = new Put(rowKey);
+    List<QualifierAndValue> keyValues = new ArrayList<QualifierAndValue>();
+    for (int i = 0; i < totalColumns; ++i) {
+      put.add(COLUMN_FAMILY, quals[i], timestamps[i], values[i]);
+
+      // Insert multiple timestamps per row/column to ensure only one cell per column is returned.
+      put.add(COLUMN_FAMILY, quals[i], timestamps[i] - 1, values[i]);
+      put.add(COLUMN_FAMILY, quals[i], timestamps[i] - 2, values[i]);
+
+      keyValues.add(new QualifierAndValue(quals[i], values[i]));
+    }
+    table.put(put);
+
+    // Get max columns with a particular offset.  Values should be ordered by qualifier.
+    Get get = new Get(rowKey);
+    get.addFamily(COLUMN_FAMILY);
+    get.setMaxResultsPerColumnFamily(maxColumns);
+    get.setRowOffsetPerColumnFamily(offsetColumn);
+    Result result = table.get(get);
+    Assert.assertEquals(maxColumns, result.size());
+    Cell[] cells = result.rawCells();
+    Collections.sort(keyValues);
+    for (int i = 0; i < maxColumns; ++i) {
+      QualifierAndValue keyValue = keyValues.get(offsetColumn + i);
+      Assert.assertArrayEquals(keyValue.qualifier, CellUtil.cloneQualifier(cells[i]));
+      Assert.assertArrayEquals(keyValue.value, CellUtil.cloneValue(cells[i]));
+    }
   }
 }

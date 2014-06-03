@@ -28,7 +28,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.Random;
 
 public abstract class AbstractTest {
   protected static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
@@ -69,13 +71,13 @@ public abstract class AbstractTest {
   }
 
   protected byte[] randomData(String prefix) {
-    return Bytes.toBytes(prefix + RandomStringUtils.random(8));
+    return Bytes.toBytes(prefix + RandomStringUtils.randomAlphanumeric(8));
   }
 
   protected byte[][] randomData(String prefix, int count) {
     byte[][] result = new byte[count][];
     for (int i = 0; i < count; ++i) {
-      result[i] = Bytes.toBytes(prefix + RandomStringUtils.random(8));
+      result[i] = Bytes.toBytes(prefix + RandomStringUtils.randomAlphanumeric(8));
     }
     return result;
   }
@@ -92,5 +94,20 @@ public abstract class AbstractTest {
       timestamps[i] = timestamps[0] + i;
     }
     return timestamps;
+  }
+
+  protected static class QualifierAndValue implements Comparable<QualifierAndValue> {
+    protected final byte[] qualifier;
+    protected final byte[] value;
+
+    public QualifierAndValue(@NotNull byte[] qualifier, @NotNull byte[] value) {
+      this.qualifier = qualifier;
+      this.value = value;
+    }
+
+    @Override
+    public int compareTo(QualifierAndValue qualifierAndValue) {
+      return Bytes.compareTo(this.qualifier, qualifierAndValue.qualifier);
+    }
   }
 }
