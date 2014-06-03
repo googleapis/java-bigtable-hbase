@@ -16,6 +16,8 @@ package com.google.cloud.anviltop.hbase;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
 import org.junit.Assert;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -317,5 +319,136 @@ public class TestGet extends AbstractTest {
     Delete delete = new Delete(rowKey);
     table.delete(delete);
     table.close();
+  }
+
+  /**
+   * Requirement 3.12 - Exists tests whether one or more of the row/columns exists, as specified in
+   * the Get object.
+   *
+   * An OR operation. If multiple columns are in the Get, then only one has to exist.
+   */
+  @Test
+  public void testExists() throws IOException {
+    // Initialize data
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    int numValues = 10;
+    byte[][] rowKeys = randomData("testrow-", numValues);
+    byte[][] quals = randomData("qual-", numValues);
+    byte[][] values = randomData("value-", numValues);
+
+    // Insert a bunch of data
+    List<Put> puts = new ArrayList<Put>(numValues);
+    for (int i = 0; i < numValues; ++i) {
+      Put put = new Put(rowKeys[i]);
+      put.add(COLUMN_FAMILY, quals[i], values[0]);
+      puts.add(put);
+    }
+    table.put(puts);
+
+    // Test just keys, both individually and as batch.
+    List<Get> gets = new ArrayList<Get>(numValues);
+    for(int i = 0; i < numValues; ++i) {
+      Get get = new Get(rowKeys[i]);
+      Assert.assertTrue(table.exists(get));
+      gets.add(get);
+    }
+    Boolean[] exists = table.exists(gets);
+    Assert.assertEquals(numValues, exists.length);
+    for (int i = 0; i < numValues; ++i) {
+      Assert.assertTrue(exists[i]);
+    }
+
+    // Test keys and familes, both individually and as batch.
+    gets.clear();
+    for(int i = 0; i < numValues; ++i) {
+      Get get = new Get(rowKeys[i]);
+      get.addFamily(COLUMN_FAMILY);
+      Assert.assertTrue(table.exists(get));
+      gets.add(get);
+    }
+    exists = table.exists(gets);
+    Assert.assertEquals(numValues, exists.length);
+    for (int i = 0; i < numValues; ++i) {
+      Assert.assertTrue(exists[i]);
+    }
+
+    // Test keys and qualifiers, both individually and as batch.
+    gets.clear();
+    for(int i = 0; i < numValues; ++i) {
+      Get get = new Get(rowKeys[i]);
+      get.addColumn(COLUMN_FAMILY, quals[i]);
+      Assert.assertTrue(table.exists(get));
+      gets.add(get);
+    }
+    exists = table.exists(gets);
+    Assert.assertEquals(numValues, exists.length);
+    for (int i = 0; i < numValues; ++i) {
+      Assert.assertTrue(exists[i]);
+    }
+
+    // Test bad rows, both individually and as batch
+    gets.clear();
+    for(int i = 0; i < numValues; ++i) {
+      Get get = new Get(randomData("badRow-"));
+      Assert.assertFalse(table.exists(get));
+      gets.add(get);
+    }
+    exists = table.exists(gets);
+    Assert.assertEquals(numValues, exists.length);
+    for (int i = 0; i < numValues; ++i) {
+      Assert.assertFalse(exists[i]);
+    }
+
+    // Test bad column family, both individually and as batch
+    gets.clear();
+    for(int i = 0; i < numValues; ++i) {
+      Get get = new Get(rowKeys[i]);
+      get.addFamily(randomData("badFamily-"));
+      boolean throwsException = false;
+      try {
+        table.exists(get);
+      } catch (NoSuchColumnFamilyException e) {
+        throwsException = true;
+      }
+      Assert.assertTrue(throwsException);
+      gets.add(get);
+    }
+    boolean throwsException = false;
+    try {
+      table.exists(gets);
+    } catch (RetriesExhaustedWithDetailsException e) {
+      throwsException = true;
+      Assert.assertEquals(numValues, e.getNumExceptions());
+    }
+    Assert.assertTrue(throwsException);
+
+    // Test bad qualifier, both individually and as batch
+    gets.clear();
+    for (int i = 0; i < numValues; ++i) {
+      Get get = new Get(rowKeys[i]);
+      get.addColumn(COLUMN_FAMILY, randomData("badColumn-"));
+      Assert.assertFalse(table.exists(get));
+      gets.add(get);
+    }
+    exists = table.exists(gets);
+    Assert.assertEquals(numValues, exists.length);
+    for (int i = 0; i < numValues; ++i) {
+      Assert.assertFalse(exists[i]);
+    }
+
+    // Test correct OR behavior on a per-row basis.
+    gets.clear();
+    for (int i = 0; i < numValues; ++i) {
+      Get get = new Get(rowKeys[i]);
+      get.addColumn(COLUMN_FAMILY, quals[i]);
+      get.addColumn(COLUMN_FAMILY, randomData("badColumn-"));
+      Assert.assertTrue(table.exists(get));
+      gets.add(get);
+    }
+    exists = table.exists(gets);
+    Assert.assertEquals(numValues, exists.length);
+    for (int i = 0; i < numValues; ++i) {
+      Assert.assertTrue(exists[i]);
+    }
   }
 }
