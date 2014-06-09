@@ -1,3 +1,16 @@
+/*
+ * Copyright (c) 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.cloud.anviltop.hbase;
 
 import org.apache.commons.lang.RandomStringUtils;
@@ -11,18 +24,11 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-/*
- * Copyright (c) 2013 Google Inc.
+/**
+ * Requirement 1.1 - Writes are buffered in the client by default (can be disabled).  Buffer size
+ * can be defined programmatically or configuring the hbase.client.write.buffer property.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * TODO - Test buffer size definitions
  */
 public class TestAutoFlush extends AbstractTest {
   @Test
@@ -59,9 +65,9 @@ public class TestAutoFlush extends AbstractTest {
 
   private Get quickPutThenGet(HTableInterface tableForWrite) throws IOException {
     // Set up the tiny write and read
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
-    byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
-    byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] rowKey = randomData("testrow-");
+    byte[] qualifier = randomData("testQualifier-");
+    byte[] value = randomData("testValue-");
     Put put = new Put(rowKey);
     put.add(COLUMN_FAMILY, qualifier, value);
     Get get = new Get(rowKey);

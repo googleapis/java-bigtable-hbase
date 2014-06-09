@@ -1,12 +1,3 @@
-package com.google.cloud.anviltop.hbase;
-
-import org.apache.commons.lang.RandomStringUtils;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.io.IOException;
-
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -20,7 +11,19 @@ import java.io.IOException;
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.google.cloud.anviltop.hbase;
+
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.io.IOException;
+
 public class TestCreateTable extends AbstractTest {
+  /**
+   * Requirement 1.8 - Table names must match [\w_][\w_\-\.]*
+   */
   @Test
   public void testTableNames() throws IOException {
     String[] goodnames = {

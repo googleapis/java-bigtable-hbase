@@ -1,3 +1,16 @@
+/*
+ * Copyright (c) 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.cloud.anviltop.hbase;
 
 import org.apache.commons.lang.RandomStringUtils;
@@ -17,29 +30,22 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
-/*
- * Copyright (c) 2013 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
- */
 public class TestBasicOps extends AbstractTest {
+  /**
+   * Happy path for a single value.
+   */
   @Test
   public void testPutGetDelete() throws IOException {
     // Initialize
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
-    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
-    byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] rowKey = randomData("testrow-");
+    byte[] testQualifier = randomData("testQualifier-");
+    byte[] testValue = randomData("testValue-");
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
+  /**
+   * Requirement 1.2 - Rowkey, family, qualifer, and value are byte[]
+   */
   @Test
   public void testBinaryPutGetDelete() throws IOException {
     // Initialize
@@ -50,39 +56,97 @@ public class TestBasicOps extends AbstractTest {
     random.nextBytes(testQualifier);
     byte[] testValue = new byte[100];
     random.nextBytes(testValue);
-    // TODO(carterpage) - need to test that column-family can work as raw binary
+    // TODO(carterpage) - test that column-family can work as raw binary
 
     // Put
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
+  /**
+   * Requirement 1.9 - Referring to a column without the qualifier implicity sets a special "empty"
+   * qualifier.
+   */
   @Test
   public void testNullQualifier() throws IOException {
-    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
-    byte[] testQualifier = null;
-    byte[] testValue = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
-    putGetDeleteExists(rowKey, testQualifier, testValue);
+    // Initialize values
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = randomData("testrow-");
+    byte[] testValue = randomData("testValue-");
+
+    // Insert value with null qualifier
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, null, testValue);
+    table.put(put);
+
+    // This is treated the same as an empty String (which is just an empty byte array).
+    Get get = new Get(rowKey);
+    get.addColumn(COLUMN_FAMILY, Bytes.toBytes(""));
+    Result result = table.get(get);
+    Assert.assertEquals(1, result.size());
+    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, null));
+    Assert.assertArrayEquals(testValue,
+        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, null)));
+
+    // Get as a null.  This should work.
+    get = new Get(rowKey);
+    get.addColumn(COLUMN_FAMILY, null);
+    result = table.get(get);
+    Assert.assertEquals(1, result.size());
+    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, null));
+    Assert.assertArrayEquals(testValue,
+        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, null)));
+
+    // This should return when selecting the whole family too.
+    get = new Get(rowKey);
+    get.addFamily(COLUMN_FAMILY);
+    result = table.get(get);
+    Assert.assertEquals(1, result.size());
+    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, null));
+    Assert.assertArrayEquals(testValue,
+        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, null)));
+
+    // Delete
+    Delete delete = new Delete(rowKey);
+    delete.deleteColumn(COLUMN_FAMILY, null);
+    table.delete(delete);
+
+    // Confirm deleted
+    Assert.assertFalse(table.exists(get));
+    table.close();
   }
 
+  /**
+   * Requirement 2.4 - Maximum cell size is 10MB by default.  Can be overriden using
+   * hbase.client.keyvalue.maxsize property.
+   *
+   * Cell size includes value and key info, so the value needs to a bit less than the max to work.
+   */
   @Test
   public void testPutBigValue() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] testRowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
-    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
-    byte[] testValue = new byte[10 * 2 ^ 20];  // 10 MB
+    byte[] testRowKey = randomData("testrow-");
+    byte[] testQualifier = randomData("testQualifier-");
+    byte[] testValue = new byte[(10 << 20) - 1024];  // 10 MB - 1kB
     new Random().nextBytes(testValue);
     putGetDeleteExists(testRowKey, testQualifier, testValue);
   }
 
-  @Test
+  /**
+   * Requirement 2.4 - Maximum cell size is 10MB by default.  Can be overriden using
+   * hbase.client.keyvalue.maxsize property.
+   *
+   * Ensure the failure case.
+   */
+  @Test(expected = IllegalArgumentException.class)
   public void testPutTooBigValue() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] testRowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
-    byte[] testQualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
-    byte[] testValue = new byte[10 * 2 ^ 20 + 1];  // 10 MB
+    byte[] testRowKey = randomData("testrow-");
+    byte[] testQualifier = randomData("testQualifier-");
+    byte[] testValue = new byte[10 << 20];  // 10 MB
     new Random().nextBytes(testValue);
+    System.out.println(testValue.length);
     putGetDeleteExists(testRowKey, testQualifier, testValue);
   }
 
