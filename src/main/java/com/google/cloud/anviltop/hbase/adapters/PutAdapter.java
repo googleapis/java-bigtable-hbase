@@ -17,6 +17,7 @@ import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopData.RowMutation;
 import com.google.bigtable.anviltop.AnviltopData.RowMutation.Mod;
 import com.google.bigtable.anviltop.AnviltopData.RowMutation.Mod.SetCell;
+import com.google.cloud.anviltop.hbase.AnviltopConstants;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 
@@ -26,14 +27,11 @@ import org.apache.hadoop.hbase.client.Put;
 
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Adapt an HBase Put Operation into an Anviltop RowMutation
  */
 public class PutAdapter implements OperationAdapter<Put, RowMutation.Builder> {
-
-  public static final ByteString SEPARATOR_BYTE_STRING = ByteString.copyFromUtf8(":");
 
   @Override
   public RowMutation.Builder adapt(Put operation) {
@@ -56,13 +54,15 @@ public class PutAdapter implements OperationAdapter<Put, RowMutation.Builder> {
             ByteString.copyFrom(
                 ImmutableList.of(
                     familyByteString,
-                    SEPARATOR_BYTE_STRING,
+                    AnviltopConstants.ANVILTOP_COLUMN_SEPARATOR_BYTE_STRING,
                     cellQualifierByteString)));
 
         AnviltopData.Cell.Builder cellBuilder = setCellBuilder.getCellBuilder();
 
         if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
-          long timestampMicros = TimeUnit.MILLISECONDS.toMicros(cell.getTimestamp());
+          long timestampMicros = AnviltopConstants.ANVILTOP_TIMEUNIT.convert(
+              cell.getTimestamp(),
+              AnviltopConstants.HBASE_TIMEUNIT);
           cellBuilder.setTimestampMicros(timestampMicros);
         }
 

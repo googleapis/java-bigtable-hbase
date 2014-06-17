@@ -13,6 +13,11 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import com.google.bigtable.anviltop.AnviltopData;
+import com.google.bigtable.anviltop.AnviltopServices.GetRowRequestOrBuilder;
+import com.google.bigtable.anviltop.AnviltopServices.GetRowResponse;
+import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
+import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.PutAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.protobuf.Descriptors;
@@ -37,6 +42,7 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.List;
@@ -47,6 +53,8 @@ public class AnvilTopTable implements HTableInterface {
   protected final AnviltopOptions options;
   protected final AnviltopClient client;
   protected final PutAdapter putAdapter = new PutAdapter();
+  protected final GetAdapter getAdapter = new GetAdapter();
+  protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter();
   protected final Configuration configuration;
 
   /**
@@ -120,7 +128,24 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Result get(Get get) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    GetRowRequestOrBuilder getRowRequest = getAdapter.adapt(get);
+    try {
+      GetRowResponse response =
+          client.getRow(
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              getRowRequest.getRowKey().toByteArray());
+
+      return getRowResponseAdapter.adaptResponse(response);
+    } catch (ServiceException e) {
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "get",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              getRowRequest.getRowKey().toByteArray()),
+          e);
+    }
   }
 
   @Override
@@ -150,13 +175,20 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void put(Put put) throws IOException {
+    AnviltopData.RowMutation rowMutation = putAdapter.adapt(put).build();
     try {
       client.mutateAtomic(
           options.getProjectId(),
           tableName.getQualifierAsString(),
-          putAdapter.adapt(put).build());
+          rowMutation);
     } catch (ServiceException e) {
-      throw new IOException("Failed to put row.", e);
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "put",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              rowMutation.getRowKey().toByteArray()),
+          e);
     }
   }
 
@@ -290,5 +322,18 @@ public class AnvilTopTable implements HTableInterface {
       Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes2,
       R r, Batch.Callback<R> rCallback) throws ServiceException, Throwable {
     throw new UnsupportedOperationException();  // TODO
+  }
+
+  static String makeGenericExceptionMessage(
+      String operation,
+      String projectId,
+      String tableName,
+      byte[] rowKey) {
+    return String.format(
+        "Failed to perform operation. Operation='%s', projectId='%s', tableName='%s', rowKey='%s'",
+        operation,
+        projectId,
+        tableName,
+        Bytes.toStringBinary(rowKey));
   }
 }
