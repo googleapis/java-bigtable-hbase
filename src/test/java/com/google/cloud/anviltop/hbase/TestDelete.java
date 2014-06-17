@@ -31,9 +31,9 @@ public class TestDelete extends AbstractTest {
     public void testDeleteRow() throws IOException {
         // Initialize data
         HTableInterface table = connection.getTable(TABLE_NAME);
-        byte[] rowKey = randomData("testrow-");
-        byte[] qual = randomData("qual-");
-        byte[] value = randomData("value-");
+        byte[] rowKey = dataGenerationHelper.randomData("testrow-");
+        byte[] qual = dataGenerationHelper.randomData("qual-");
+        byte[] value = dataGenerationHelper.randomData("value-");
 
         // Insert empty values.  Null and byte[0] are interchangeable for puts (but not gets).
         Put put = new Put(rowKey);

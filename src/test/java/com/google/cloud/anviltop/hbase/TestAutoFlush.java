@@ -65,9 +65,9 @@ public class TestAutoFlush extends AbstractTest {
 
   private Get quickPutThenGet(HTableInterface tableForWrite) throws IOException {
     // Set up the tiny write and read
-    byte[] rowKey = randomData("testrow-");
-    byte[] qualifier = randomData("testQualifier-");
-    byte[] value = randomData("testValue-");
+    byte[] rowKey = dataGenerationHelper.randomData("testrow-");
+    byte[] qualifier = dataGenerationHelper.randomData("testQualifier-");
+    byte[] value = dataGenerationHelper.randomData("testValue-");
     Put put = new Put(rowKey);
     put.add(COLUMN_FAMILY, qualifier, value);
     Get get = new Get(rowKey);

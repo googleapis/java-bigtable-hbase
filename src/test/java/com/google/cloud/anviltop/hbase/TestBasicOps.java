@@ -37,9 +37,9 @@ public class TestBasicOps extends AbstractTest {
   @Test
   public void testPutGetDelete() throws IOException {
     // Initialize
-    byte[] rowKey = randomData("testrow-");
-    byte[] testQualifier = randomData("testQualifier-");
-    byte[] testValue = randomData("testValue-");
+    byte[] rowKey = dataGenerationHelper.randomData("testrow-");
+    byte[] testQualifier = dataGenerationHelper.randomData("testQualifier-");
+    byte[] testValue = dataGenerationHelper.randomData("testValue-");
     putGetDeleteExists(rowKey, testQualifier, testValue);
   }
 
@@ -70,8 +70,8 @@ public class TestBasicOps extends AbstractTest {
   public void testNullQualifier() throws IOException {
     // Initialize values
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = randomData("testrow-");
-    byte[] testValue = randomData("testValue-");
+    byte[] rowKey = dataGenerationHelper.randomData("testrow-");
+    byte[] testValue = dataGenerationHelper.randomData("testValue-");
 
     // Insert value with null qualifier
     Put put = new Put(rowKey);
@@ -125,8 +125,8 @@ public class TestBasicOps extends AbstractTest {
   public void testPutBigValue() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] testRowKey = randomData("testrow-");
-    byte[] testQualifier = randomData("testQualifier-");
+    byte[] testRowKey = dataGenerationHelper.randomData("testrow-");
+    byte[] testQualifier = dataGenerationHelper.randomData("testQualifier-");
     byte[] testValue = new byte[(10 << 20) - 1024];  // 10 MB - 1kB
     new Random().nextBytes(testValue);
     putGetDeleteExists(testRowKey, testQualifier, testValue);
@@ -142,8 +142,8 @@ public class TestBasicOps extends AbstractTest {
   public void testPutTooBigValue() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] testRowKey = randomData("testrow-");
-    byte[] testQualifier = randomData("testQualifier-");
+    byte[] testRowKey = dataGenerationHelper.randomData("testrow-");
+    byte[] testQualifier = dataGenerationHelper.randomData("testQualifier-");
     byte[] testValue = new byte[10 << 20];  // 10 MB
     new Random().nextBytes(testValue);
     System.out.println(testValue.length);

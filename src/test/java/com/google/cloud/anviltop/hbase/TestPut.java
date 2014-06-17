@@ -48,9 +48,9 @@ public class TestPut extends AbstractTest {
   public void testPutMultipleCellsOneRow() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = randomData("testrow-");
-    byte[][] quals = randomData("testQualifier-", NUM_CELLS);
-    byte[][] values = randomData("testValue-", NUM_CELLS);
+    byte[] rowKey = dataGenerationHelper.randomData("testrow-");
+    byte[][] quals = dataGenerationHelper.randomData("testQualifier-", NUM_CELLS);
+    byte[][] values = dataGenerationHelper.randomData("testValue-", NUM_CELLS);
 
     // Construct put with NUM_CELL random qualifier/value combos
     Put put = new Put(rowKey);
@@ -91,9 +91,9 @@ public class TestPut extends AbstractTest {
   public void testPutGetDeleteMultipleRows() throws IOException {
     // Initialize interface
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[][] rowKeys = randomData("testrow-", NUM_ROWS);
-    byte[][] qualifiers = randomData("testQualifier-", NUM_ROWS);
-    byte[][] values = randomData("testValue-", NUM_ROWS);
+    byte[][] rowKeys = dataGenerationHelper.randomData("testrow-", NUM_ROWS);
+    byte[][] qualifiers = dataGenerationHelper.randomData("testQualifier-", NUM_ROWS);
+    byte[][] values = dataGenerationHelper.randomData("testValue-", NUM_ROWS);
 
     // Do puts
     List<Put> puts = new ArrayList<Put>(NUM_ROWS);

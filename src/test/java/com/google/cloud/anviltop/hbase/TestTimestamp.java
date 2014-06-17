@@ -39,12 +39,12 @@ public class TestTimestamp extends AbstractTest {
   public void testArbitraryTimestamp() throws IOException {
     // Initialize
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = randomData("testrow-");
-    byte[] testQualifier = randomData("testQual-");
+    byte[] rowKey = dataGenerationHelper.randomData("testrow-");
+    byte[] testQualifier = dataGenerationHelper.randomData("testQual-");
     int numVersions = 4;
     assert numVersions > 2;
-    byte[][] values = randomData("testValue-", numVersions);
-    long[] versions = sequentialTimestamps(numVersions, 1L);
+    byte[][] values = dataGenerationHelper.randomData("testValue-", numVersions);
+    long[] versions = dataGenerationHelper.sequentialTimestamps(numVersions, 1L);
 
     // Put several versions in the same row/column.
     Put put = new Put(rowKey);
