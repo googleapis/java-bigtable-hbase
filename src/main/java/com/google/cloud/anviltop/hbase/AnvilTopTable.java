@@ -13,10 +13,13 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import com.google.cloud.anviltop.hbase.adapters.PutAdapter;
+import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
 import com.google.protobuf.ServiceException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -39,16 +42,27 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class AnvilTop implements HTableInterface {
+public class AnvilTopTable implements HTableInterface {
   protected final TableName tableName;
+  protected final AnviltopOptions options;
+  protected final AnviltopClient client;
+  protected final PutAdapter putAdapter = new PutAdapter();
+  protected final Configuration configuration;
 
   /**
    * Constructed by AnvilTopConnection
    *
    * @param tableName
+   * @param client
    */
-  public AnvilTop(TableName tableName) {
+  public AnvilTopTable(TableName tableName,
+      AnviltopOptions options,
+      Configuration configuration,
+      AnviltopClient client) {
     this.tableName = tableName;
+    this.options = options;
+    this.client = client;
+    this.configuration = configuration;
   }
 
   @Override
@@ -63,7 +77,7 @@ public class AnvilTop implements HTableInterface {
 
   @Override
   public Configuration getConfiguration() {
-    throw new UnsupportedOperationException();  // TODO
+    return this.configuration;
   }
 
   @Override
@@ -136,7 +150,14 @@ public class AnvilTop implements HTableInterface {
 
   @Override
   public void put(Put put) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    try {
+      client.mutateAtomic(
+          options.getProjectId(),
+          tableName.getQualifierAsString(),
+          putAdapter.adapt(put).build());
+    } catch (ServiceException e) {
+      throw new IOException("Failed to put row.", e);
+    }
   }
 
   @Override

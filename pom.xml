@@ -23,6 +23,7 @@
             <artifactId>hbase-client</artifactId>
             <version>${hbase.version}</version>
         </dependency>
+
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
@@ -87,6 +88,14 @@
             <version>${hadoop.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>anviltop-client</groupId>
+          <artifactId>anviltop-client-interface</artifactId>
+          <version>0.1</version>
+          <systemPath>/google/data/ro/users/an/angusdavis/public/driver_deploy.jar</systemPath>
+          <scope>system</scope>
         </dependency>
     </dependencies>
 
