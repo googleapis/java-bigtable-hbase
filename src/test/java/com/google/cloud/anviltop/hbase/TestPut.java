@@ -274,6 +274,33 @@ public class TestPut extends AbstractTest {
   }
 
   @Test
+  public void testPutSameTimestamp() throws Exception {
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] qualifier = Bytes.toBytes("testqual-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] value1 = Bytes.toBytes("testvalue-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] value2 = Bytes.toBytes("testvalue-" + RandomStringUtils.randomAlphanumeric(8));
+    long timestamp = System.currentTimeMillis();
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qualifier, timestamp, value1);
+    table.put(put);
+    put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qualifier, timestamp, value2);
+    table.put(put);
+    Get get = new Get(rowKey);
+    get.addColumn(COLUMN_FAMILY, qualifier);
+    get.setMaxVersions(5);
+    Result result = table.get(get);
+    Assert.assertEquals(1, result.size());
+    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, qualifier));
+    Assert.assertEquals(timestamp,
+      result.getColumnLatestCell(COLUMN_FAMILY, qualifier).getTimestamp());
+    Assert.assertArrayEquals(value2,
+      CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qualifier)));
+    table.close();
+  }
+
+  @Test
   public void testMultiplePutsOneBadSameRow() throws Exception {
     final int numberOfGoodPuts = 100;
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
