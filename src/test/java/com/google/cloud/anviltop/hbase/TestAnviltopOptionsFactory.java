@@ -3,7 +3,9 @@ package com.google.cloud.anviltop.hbase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -13,17 +15,24 @@ public class TestAnviltopOptionsFactory {
   public static final String TEST_API_ENDPOINT_URL = "http://somehost:1000/api/v1/foo";
   public static final String TEST_PROJECT_ID = "project-foo";
 
-  @Test(expected = IllegalArgumentException.class)
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
+  @Test
   public void testProjectIdIsRequired() {
     Configuration configuration = new Configuration();
     configuration.set(AnvilTopOptionsFactory.API_ENDPOINT_KEY, TEST_API_ENDPOINT_URL);
+
+    expectedException.expect(IllegalArgumentException.class);
     AnvilTopOptionsFactory.fromConfiguration(configuration);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testEndpointUrlIsRequired() {
     Configuration configuration = new Configuration();
     configuration.set(AnvilTopOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
+
+    expectedException.expect(IllegalArgumentException.class);
     AnvilTopOptionsFactory.fromConfiguration(configuration);
   }
 
