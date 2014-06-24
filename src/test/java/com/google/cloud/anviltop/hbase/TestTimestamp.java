@@ -13,7 +13,6 @@
  */
 package com.google.cloud.anviltop.hbase;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -21,9 +20,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -39,12 +36,12 @@ public class TestTimestamp extends AbstractTest {
   public void testArbitraryTimestamp() throws IOException {
     // Initialize
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = randomData("testrow-");
-    byte[] testQualifier = randomData("testQual-");
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] testQualifier = dataHelper.randomData("testQual-");
     int numVersions = 4;
     assert numVersions > 2;
-    byte[][] values = randomData("testValue-", numVersions);
-    long[] versions = sequentialTimestamps(numVersions, 1L);
+    byte[][] values = dataHelper.randomData("testValue-", numVersions);
+    long[] versions = dataHelper.sequentialTimestamps(numVersions, 1L);
 
     // Put several versions in the same row/column.
     Put put = new Put(rowKey);

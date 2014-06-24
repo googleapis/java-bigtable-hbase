@@ -39,10 +39,10 @@ public class TestGet extends AbstractTest {
   public void testNoQualifier() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = randomData("testrow-");
+    byte[] rowKey = dataHelper.randomData("testrow-");
     int numValues = 3;
-    byte[][] quals = randomData("qual-", numValues);
-    byte[][] values = randomData("value-", numValues);
+    byte[][] quals = dataHelper.randomData("qual-", numValues);
+    byte[][] values = dataHelper.randomData("value-", numValues);
 
     // Insert some columns
     Put put = new Put(rowKey);
@@ -75,10 +75,10 @@ public class TestGet extends AbstractTest {
   public void testMultipleQualifiers() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = randomData("testrow-");
+    byte[] rowKey = dataHelper.randomData("testrow-");
     int numValues = 3;
-    byte[][] quals = randomData("qual-", numValues);
-    byte[][] values = randomData("value-", numValues);
+    byte[][] quals = dataHelper.randomData("qual-", numValues);
+    byte[][] values = dataHelper.randomData("value-", numValues);
 
     // Insert a few columns
     Put put = new Put(rowKey);
@@ -115,13 +115,13 @@ public class TestGet extends AbstractTest {
   public void testTimeRange() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = randomData("testrow-");
-    byte[] qual = randomData("qual-");
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual = dataHelper.randomData("qual-");
     int numVersions = 5;
     int minVersion = 1;
     int maxVersion = 4;
-    long timestamps[] = sequentialTimestamps(numVersions);
-    byte[][] values = randomData("value-", numVersions);
+    long timestamps[] = dataHelper.sequentialTimestamps(numVersions);
+    byte[][] values = dataHelper.randomData("value-", numVersions);
 
     // Insert values with different timestamps at the same column.
     Put put = new Put(rowKey);
@@ -160,12 +160,12 @@ public class TestGet extends AbstractTest {
   public void testSingleTimestamp() throws IOException {
     // Initialize variables
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = randomData("testrow-");
-    byte[] qual = randomData("qual-");
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual = dataHelper.randomData("qual-");
     int numVersions = 5;
     int particularTimestamp = 3;
-    long timestamps[] = sequentialTimestamps(numVersions);
-    byte[][] values = randomData("value-", numVersions);
+    long timestamps[] = dataHelper.sequentialTimestamps(numVersions);
+    byte[][] values = dataHelper.randomData("value-", numVersions);
 
     // Insert several timestamps for a single row/column.
     Put put = new Put(rowKey);
@@ -200,12 +200,12 @@ public class TestGet extends AbstractTest {
   public void testMaxVersions() throws IOException {
     // Initialize data
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = randomData("testrow-");
-    byte[] qual = randomData("qual-");
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual = dataHelper.randomData("qual-");
     int totalVersions = 5;
     int maxVersions = 3;
-    long timestamps[] = sequentialTimestamps(totalVersions);
-    byte[][] values = randomData("value-", totalVersions);
+    long timestamps[] = dataHelper.sequentialTimestamps(totalVersions);
+    byte[][] values = dataHelper.randomData("value-", totalVersions);
 
     // Insert several versions into the same row/col
     Put put = new Put(rowKey);
@@ -245,13 +245,13 @@ public class TestGet extends AbstractTest {
   public void testMaxResultsPerColumnFamily() throws IOException {
     // Initialize data
     HTableInterface table = connection.getTable(TABLE_NAME);
-    byte[] rowKey = randomData("testrow-");
+    byte[] rowKey = dataHelper.randomData("testrow-");
     int totalColumns = 10;
     int offsetColumn = 3;
     int maxColumns = 5;
-    byte[][] quals = randomData("qual-", totalColumns);
-    byte[][] values = randomData("value-", totalColumns);
-    long[] timestamps = sequentialTimestamps(totalColumns);
+    byte[][] quals = dataHelper.randomData("qual-", totalColumns);
+    byte[][] values = dataHelper.randomData("value-", totalColumns);
+    long[] timestamps = dataHelper.sequentialTimestamps(totalColumns);
 
     // Insert a bunch of columns.
     Put put = new Put(rowKey);
@@ -296,8 +296,8 @@ public class TestGet extends AbstractTest {
     // Initialize data
     HTableInterface table = connection.getTable(TABLE_NAME);
     int numValues = 10;
-    byte[] rowKey = randomData("testrow-");
-    byte[][] quals = randomData("qual-", numValues);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[][] quals = dataHelper.randomData("qual-", numValues);
 
     // Insert empty values.  Null and byte[0] are interchangeable for puts (but not gets).
     Put put = new Put(rowKey);
@@ -332,9 +332,9 @@ public class TestGet extends AbstractTest {
     // Initialize data
     HTableInterface table = connection.getTable(TABLE_NAME);
     int numValues = 10;
-    byte[][] rowKeys = randomData("testrow-", numValues);
-    byte[][] quals = randomData("qual-", numValues);
-    byte[][] values = randomData("value-", numValues);
+    byte[][] rowKeys = dataHelper.randomData("testrow-", numValues);
+    byte[][] quals = dataHelper.randomData("qual-", numValues);
+    byte[][] values = dataHelper.randomData("value-", numValues);
 
     // Insert a bunch of data
     List<Put> puts = new ArrayList<Put>(numValues);
@@ -389,7 +389,7 @@ public class TestGet extends AbstractTest {
     // Test bad rows, both individually and as batch
     gets.clear();
     for(int i = 0; i < numValues; ++i) {
-      Get get = new Get(randomData("badRow-"));
+      Get get = new Get(dataHelper.randomData("badRow-"));
       Assert.assertFalse(table.exists(get));
       gets.add(get);
     }
@@ -403,7 +403,7 @@ public class TestGet extends AbstractTest {
     gets.clear();
     for(int i = 0; i < numValues; ++i) {
       Get get = new Get(rowKeys[i]);
-      get.addFamily(randomData("badFamily-"));
+      get.addFamily(dataHelper.randomData("badFamily-"));
       boolean throwsException = false;
       try {
         table.exists(get);
@@ -426,7 +426,7 @@ public class TestGet extends AbstractTest {
     gets.clear();
     for (int i = 0; i < numValues; ++i) {
       Get get = new Get(rowKeys[i]);
-      get.addColumn(COLUMN_FAMILY, randomData("badColumn-"));
+      get.addColumn(COLUMN_FAMILY, dataHelper.randomData("badColumn-"));
       Assert.assertFalse(table.exists(get));
       gets.add(get);
     }
@@ -441,7 +441,7 @@ public class TestGet extends AbstractTest {
     for (int i = 0; i < numValues; ++i) {
       Get get = new Get(rowKeys[i]);
       get.addColumn(COLUMN_FAMILY, quals[i]);
-      get.addColumn(COLUMN_FAMILY, randomData("badColumn-"));
+      get.addColumn(COLUMN_FAMILY, dataHelper.randomData("badColumn-"));
       Assert.assertTrue(table.exists(get));
       gets.add(get);
     }
@@ -464,15 +464,17 @@ public class TestGet extends AbstractTest {
     // Run a control test.
     List<Get> gets = new ArrayList<Get>(numValues + 1);
     for (int i = 0; i < numValues; ++i) {
-      Get get = new Get(randomData("key-"));
-      get.addColumn(COLUMN_FAMILY, randomData("qual-"));
+      Get get = new Get(dataHelper.randomData("key-"));
+      get.addColumn(COLUMN_FAMILY, dataHelper.randomData("qual-"));
       gets.add(get);
     }
     table.get(gets);
 
     // Now add a poison get.
-    Get get = new Get(randomData("testRow-"));
-    get.addColumn(randomData("badFamily-"), randomData("qual-"));
+    Get get = new Get(dataHelper.randomData("testRow-"));
+    get.addColumn(
+        dataHelper.randomData("badFamily-"),
+        dataHelper.randomData("qual-"));
     gets.add(get);
 
     boolean throwsException = false;
