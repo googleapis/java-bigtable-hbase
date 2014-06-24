@@ -31,7 +31,7 @@ public abstract class AbstractTest {
   protected HConnection connection;
   protected static final byte[] TABLE_NAME = Bytes.toBytes("test_table");
   protected static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
-  protected DataGenerationHelper dataGenerationHelper = new DataGenerationHelper();
+  protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {

@@ -17,7 +17,6 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,9 +30,9 @@ public class TestDelete extends AbstractTest {
     public void testDeleteRow() throws IOException {
         // Initialize data
         HTableInterface table = connection.getTable(TABLE_NAME);
-        byte[] rowKey = dataGenerationHelper.randomData("testrow-");
-        byte[] qual = dataGenerationHelper.randomData("qual-");
-        byte[] value = dataGenerationHelper.randomData("value-");
+        byte[] rowKey = dataHelper.randomData("testrow-");
+        byte[] qual = dataHelper.randomData("qual-");
+        byte[] value = dataHelper.randomData("value-");
 
         // Insert empty values.  Null and byte[0] are interchangeable for puts (but not gets).
         Put put = new Put(rowKey);

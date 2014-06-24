@@ -22,11 +22,11 @@ import org.apache.hadoop.hbase.util.Bytes;
  */
 public class DataGenerationHelper {
 
-  protected byte[] randomData(String prefix) {
+  public byte[] randomData(String prefix) {
     return Bytes.toBytes(prefix + RandomStringUtils.randomAlphanumeric(8));
   }
 
-  protected byte[][] randomData(String prefix, int count) {
+  public byte[][] randomData(String prefix, int count) {
     byte[][] result = new byte[count][];
     for (int i = 0; i < count; ++i) {
       result[i] = Bytes.toBytes(prefix + RandomStringUtils.randomAlphanumeric(8));
@@ -34,11 +34,11 @@ public class DataGenerationHelper {
     return result;
   }
 
-  protected long[] sequentialTimestamps(int count) {
+  public long[] sequentialTimestamps(int count) {
     return sequentialTimestamps(count, System.currentTimeMillis());
   }
 
-  protected long[] sequentialTimestamps(int count, long firstValue) {
+  public long[] sequentialTimestamps(int count, long firstValue) {
     assert count > 0;
     long[] timestamps = new long[count];
     timestamps[0] = firstValue;

@@ -13,7 +13,6 @@
  */
 package com.google.cloud.anviltop.hbase;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -22,9 +21,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -47,9 +44,9 @@ public class TestDurability extends AbstractTest {
 
   private void testDurability(Durability durability) throws IOException {
     // Initialize
-    byte[] rowKey = dataGenerationHelper.randomData("testrow-");
-    byte[] testQualifier = dataGenerationHelper.randomData("testQualifier-");
-    byte[] testValue = dataGenerationHelper.randomData("testValue-");
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] testQualifier = dataHelper.randomData("testQualifier-");
+    byte[] testValue = dataHelper.randomData("testValue-");
 
     // Put
     Put put = new Put(rowKey);

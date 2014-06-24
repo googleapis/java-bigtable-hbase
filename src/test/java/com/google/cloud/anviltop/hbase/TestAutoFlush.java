@@ -13,12 +13,10 @@
  */
 package com.google.cloud.anviltop.hbase;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -65,9 +63,9 @@ public class TestAutoFlush extends AbstractTest {
 
   private Get quickPutThenGet(HTableInterface tableForWrite) throws IOException {
     // Set up the tiny write and read
-    byte[] rowKey = dataGenerationHelper.randomData("testrow-");
-    byte[] qualifier = dataGenerationHelper.randomData("testQualifier-");
-    byte[] value = dataGenerationHelper.randomData("testValue-");
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qualifier = dataHelper.randomData("testQualifier-");
+    byte[] value = dataHelper.randomData("testValue-");
     Put put = new Put(rowKey);
     put.add(COLUMN_FAMILY, qualifier, value);
     Get get = new Get(rowKey);
