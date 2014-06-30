@@ -25,6 +25,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Adapt a GetRowResponse from Anviltop to an HBase Result
+ */
 public class GetRowResponseAdapter implements ResponseAdapter<GetRowResponse, Result> {
   /**
    * Transform an Anviltop server response to an HBase Result instance.
