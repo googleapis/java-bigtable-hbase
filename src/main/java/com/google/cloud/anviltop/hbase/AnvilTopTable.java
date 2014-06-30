@@ -19,7 +19,10 @@ import com.google.bigtable.anviltop.AnviltopServices.GetRowResponse;
 import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
+import com.google.cloud.anviltop.hbase.adapters.MutationAdapter;
 import com.google.cloud.anviltop.hbase.adapters.PutAdapter;
+import com.google.cloud.anviltop.hbase.adapters.RowMutationsAdapter;
+import com.google.cloud.anviltop.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
@@ -54,8 +57,16 @@ public class AnvilTopTable implements HTableInterface {
   protected final AnviltopOptions options;
   protected final AnviltopClient client;
   protected final PutAdapter putAdapter = new PutAdapter();
-  protected final GetAdapter getAdapter = new GetAdapter();
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
+  protected final MutationAdapter mutationAdapter =
+      new MutationAdapter(
+          deleteAdapter,
+          putAdapter,
+          new UnsupportedOperationAdapter<Increment>("increment"),
+          new UnsupportedOperationAdapter<Append>("append"));
+  protected final RowMutationsAdapter rowMutationsAdapter =
+      new RowMutationsAdapter(mutationAdapter);
+  protected final GetAdapter getAdapter = new GetAdapter();
   protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter();
   protected final Configuration configuration;
 
@@ -236,7 +247,13 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    try {
+      client.mutateAtomic(options.getProjectId(),
+          tableName.getQualifierAsString(),
+          rowMutationsAdapter.adapt(rm).build());
+    } catch (ServiceException e) {
+      throw new IOException("Failed to mutate.", e);
+    }
   }
 
   @Override
