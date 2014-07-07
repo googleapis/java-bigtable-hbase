@@ -238,4 +238,45 @@ public class TestDelete extends AbstractTest {
 
     table.close();
   }
+
+  /**
+   * Requirement 4.7 - Delete all columns of a particular family less than or equal to a timestamp.
+   */
+  @Test
+  public void testDeleteFamilyWithTimestamp() throws IOException {
+    // Initialize data
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual1 = dataHelper.randomData("qual-");
+    byte[] qual2 = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qual1, 1L, value);
+    put.add(COLUMN_FAMILY, qual1, 2L, value);
+    put.add(COLUMN_FAMILY, qual1, 3L, value);
+    put.add(COLUMN_FAMILY, qual2, 1L, value);
+    put.add(COLUMN_FAMILY, qual2, 2L, value);
+    table.put(put);
+
+    // Check values
+    Get get = new Get(rowKey);
+    get.setMaxVersions(5);
+    Result result = table.get(get);
+    Assert.assertEquals(5, result.size());
+
+    // Delete row
+    Delete delete = new Delete(rowKey);
+    delete.deleteFamily(COLUMN_FAMILY, 2L);
+    table.delete(delete);
+
+    // Confirm results
+    result = table.get(get);
+    Assert.assertEquals("Only one version of qual1 should remain", 1, result.size());
+    Assert.assertTrue("Qual1 should be the remaining cell", result.containsColumn(COLUMN_FAMILY, qual1));
+    Assert.assertEquals("Version 3 should be the only version", 3L,
+      result.getColumnLatestCell(COLUMN_FAMILY, qual1).getTimestamp());
+
+    table.close();
+  }
 }
