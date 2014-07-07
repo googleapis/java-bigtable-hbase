@@ -14,6 +14,7 @@
 package com.google.cloud.anviltop.hbase;
 
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -124,6 +125,45 @@ public class TestDelete extends AbstractTest {
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, qual);
     Assert.assertEquals("Version 3 should be the latest version", 3L, cells.get(0).getTimestamp());
     Assert.assertEquals("Version 1 should be the oldest version", 1L, cells.get(1).getTimestamp());
+
+    table.close();
+  }
+
+  /**
+   * Requirement 4.4 - Delete all versions of a specific column
+   */
+  @Test
+  public void testDeleteAllColumnVersions() throws IOException {
+    // Initialize data
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual1 = dataHelper.randomData("qual-");
+    byte[] qual2 = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qual1, 1L, value);
+    put.add(COLUMN_FAMILY, qual1, 2L, value);
+    put.add(COLUMN_FAMILY, qual2, 1L, value);
+    table.put(put);
+
+    // Check values
+    Get get = new Get(rowKey);
+    get.setMaxVersions(5);
+    Result result = table.get(get);
+    Assert.assertEquals(3, result.size());
+
+    // Delete row
+    Delete delete = new Delete(rowKey);
+    delete.deleteColumns(COLUMN_FAMILY, qual1);
+    table.delete(delete);
+
+    // Check results
+    result = table.get(get);
+    Assert.assertEquals("Qual1 values should have been deleted", 1, result.size());
+    Assert.assertTrue("Qual2 should be intact", result.containsColumn(COLUMN_FAMILY, qual2));
+    Assert.assertArrayEquals("Qual2 value should match", qual2,
+      CellUtil.cloneQualifier(result.getColumnLatestCell(COLUMN_FAMILY, qual2)));
 
     table.close();
   }
