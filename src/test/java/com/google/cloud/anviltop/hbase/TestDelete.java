@@ -167,4 +167,40 @@ public class TestDelete extends AbstractTest {
 
     table.close();
   }
+
+  /**
+   * Requirement 4.5 - Delete all versions of a specific column less than or equal to a given timestamp
+   */
+  @Test
+  public void testDeleteOlderColumnVersions() throws IOException {
+    // Initialize data
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qual, 1L, value);
+    put.add(COLUMN_FAMILY, qual, 2L, value);
+    put.add(COLUMN_FAMILY, qual, 3L, value);
+    table.put(put);
+
+    // Check values
+    Get get = new Get(rowKey);
+    get.setMaxVersions(5);
+    Result result = table.get(get);
+    Assert.assertEquals(3, result.size());
+
+    // Delete latest column version
+    Delete delete = new Delete(rowKey);
+    delete.deleteColumns(COLUMN_FAMILY, qual, 2L);
+    table.delete(delete);
+
+    // Confirm results
+    result = table.get(get);
+    Assert.assertEquals("Only one version should remain", 1, result.size());
+    Assert.assertEquals("Version 3 should be the only version", 3L,
+      result.getColumnLatestCell(COLUMN_FAMILY, qual).getTimestamp());
+
+    table.close();
+  }
 }
