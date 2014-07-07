@@ -243,7 +243,7 @@ public class TestDelete extends AbstractTest {
    * Requirement 4.7 - Delete all columns of a particular family less than or equal to a timestamp.
    */
   @Test
-  public void testDeleteFamilyWithTimestamp() throws IOException {
+  public void testDeleteOlderFamilyColumns() throws IOException {
     // Initialize data
     HTableInterface table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
@@ -276,6 +276,53 @@ public class TestDelete extends AbstractTest {
     Assert.assertTrue("Qual1 should be the remaining cell", result.containsColumn(COLUMN_FAMILY, qual1));
     Assert.assertEquals("Version 3 should be the only version", 3L,
       result.getColumnLatestCell(COLUMN_FAMILY, qual1).getTimestamp());
+
+    table.close();
+  }
+
+  /**
+   * Requirement 4.8 - Delete all columns of a family with a specific ts.
+   */
+  @Test
+  public void testDeleteFamilyWithSpecificTimestamp() throws IOException {
+    // Initialize data
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual1 = dataHelper.randomData("qual-");
+    byte[] qual2 = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qual1, 1L, value);
+    put.add(COLUMN_FAMILY, qual1, 2L, value);
+    put.add(COLUMN_FAMILY, qual1, 3L, value);
+    put.add(COLUMN_FAMILY, qual2, 1L, value);
+    put.add(COLUMN_FAMILY, qual2, 2L, value);
+    table.put(put);
+
+    // Check values
+    Get get = new Get(rowKey);
+    get.setMaxVersions(5);
+    Result result = table.get(get);
+    Assert.assertEquals(5, result.size());
+
+    // Delete row
+    Delete delete = new Delete(rowKey);
+    delete.deleteFamilyVersion(COLUMN_FAMILY, 2L);
+    table.delete(delete);
+
+    // Confirm results
+    result = table.get(get);
+    Assert.assertEquals("Three versions should remain", 3, result.size());
+    Assert.assertTrue("Qual1 should have cells", result.containsColumn(COLUMN_FAMILY, qual1));
+    Assert.assertTrue("Qual2 should have a cell", result.containsColumn(COLUMN_FAMILY, qual2));
+    List<Cell> cells1 = result.getColumnCells(COLUMN_FAMILY, qual1);
+    Assert.assertEquals("Qual1 should have 2 cells", 2, cells1.size());
+    Assert.assertEquals("Version 3 should be the latest version", 3L, cells1.get(0).getTimestamp());
+    Assert.assertEquals("Version 1 should be the oldest version", 1L, cells1.get(1).getTimestamp());
+    List<Cell> cells2 = result.getColumnCells(COLUMN_FAMILY, qual2);
+    Assert.assertEquals("Qual2 should have 1 cell", 1, cells2.size());
+    Assert.assertEquals("Version 1 should be the latest version", 1L, cells2.get(0).getTimestamp());
 
     table.close();
   }
