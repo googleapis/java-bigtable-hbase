@@ -34,20 +34,19 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
   public static final ByteString SEPARATOR_BYTE_STRING =
       ByteString.copyFrom(KeyValue.COLUMN_FAMILY_DELIM_ARRAY);
 
-  static boolean isPointDelete(Cell cell ) {
+  static boolean isPointDelete(Cell cell) {
     return cell.getTypeByte() == KeyValue.Type.Delete.getCode();
   }
 
   static boolean isColumnDelete(Cell cell) {
-    return cell.getTypeByte() == KeyValue.Type.DeleteColumn.getCode()
-        || cell.getTypeByte() == KeyValue.Type.Delete.getCode();
+    return cell.getTypeByte() == KeyValue.Type.DeleteColumn.getCode();
   }
 
-  static boolean isDeleteFamily(Cell cell) {
+  static boolean isFamilyDelete(Cell cell) {
     return cell.getTypeByte() == KeyValue.Type.DeleteFamily.getCode();
   }
 
-  static boolean isDeleteFamilyVersion(Cell cell) {
+  static boolean isFamilyVersionDelete(Cell cell) {
     return cell.getTypeByte() == KeyValue.Type.DeleteFamilyVersion.getCode();
   }
 
@@ -63,6 +62,8 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
 
   static void throwIfUnsupportedDeleteFamily(Cell cell) {
     if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
+      // TODO; implement when anviltop service supports deleting a column family before
+      // a timestamp.
       throw new UnsupportedOperationException(
           "Cannot perform column family deletion before timestamp.");
     }
@@ -70,12 +71,15 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
 
   static void throwIfUnsupportedDeleteRow(Delete operation) {
     if (operation.getTimeStamp() != HConstants.LATEST_TIMESTAMP) {
+      // TODO: implement when anviltop service supports deleting a row before a timestamp.
       throw new UnsupportedOperationException("Cannot perform row deletion at timestamp.");
     }
   }
 
   static void throwIfUnsupportedPointDelete(Cell cell) {
     if (cell.getTimestamp() == HConstants.LATEST_TIMESTAMP) {
+      // TODO: implement when anviltop service supports deleting the single latest version
+      // of a cell.
       throw new UnsupportedOperationException("Cannot delete single latest cell.");
     }
   }
@@ -140,16 +144,16 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
         ByteString familyByteString = ByteString.copyFrom(entry.getKey());
 
         for (Cell cell : entry.getValue()) {
-          if (isColumnDelete(cell)) {
+          if (isColumnDelete(cell) || isPointDelete(cell)) {
             if (isPointDelete(cell)) {
               throwIfUnsupportedPointDelete(cell);
             }
             addDeleteCellRange(result, familyByteString, cell);
-          } else if (isDeleteFamily(cell)) {
+          } else if (isFamilyDelete(cell)) {
             throwIfUnsupportedDeleteFamily(cell);
 
             addDeleteFamilyMods(result, familyByteString);
-          } else if (isDeleteFamilyVersion(cell)) {
+          } else if (isFamilyVersionDelete(cell)) {
             throwOnUnsupportedDeleteFamilyVersion(cell);
           } else {
             throwOnUnsupportedCellType(cell);
