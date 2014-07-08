@@ -42,13 +42,53 @@ public class TestAppend extends AbstractTest {
     Put put = new Put(rowKey).add(COLUMN_FAMILY, qualifier, value1);
     table.put(put);
     Append append = new Append(rowKey).add(COLUMN_FAMILY, qualifier, value2);
+    Result result = table.append(append);
+    Cell cell = result.getColumnLatestCell(COLUMN_FAMILY, qualifier);
+    Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
+      CellUtil.cloneValue(cell));
+
+    // Test result
+    Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, qualifier);
+    result = table.get(get);
+    cell = result.getColumnLatestCell(COLUMN_FAMILY, qualifier);
+    Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
+      CellUtil.cloneValue(cell));
+  }
+
+  @Test
+  public void testAppendToEmptyCell() throws Exception {
+    // Initialize
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("rowKey-");
+    byte[] qualifier = dataHelper.randomData("qualifier-");
+    byte[] value = dataHelper.randomData("value1-");
+
+    // Put then append
+    Append append = new Append(rowKey).add(COLUMN_FAMILY, qualifier, value);
     table.append(append);
 
     // Test result
     Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, qualifier);
     Result result = table.get(get);
     Cell cell = result.getColumnLatestCell(COLUMN_FAMILY, qualifier);
-    Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
-      CellUtil.cloneValue(cell));
+    Assert.assertArrayEquals("Expect concatenated byte array", value, CellUtil.cloneValue(cell));
+  }
+
+  @Test
+  public void testAppendNoResult() throws Exception {
+    // Initialize
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("rowKey-");
+    byte[] qual = dataHelper.randomData("qualifier-");
+    byte[] value1 = dataHelper.randomData("value-");
+    byte[] value2 = dataHelper.randomData("value-");
+
+    // Put then append
+    Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value1);
+    table.put(put);
+    Append append = new Append(rowKey).add(COLUMN_FAMILY, qual, value2);
+    append.setReturnResults(false);
+    Result result = table.append(append);
+    Assert.assertNull("Should not return result", result);
   }
 }
