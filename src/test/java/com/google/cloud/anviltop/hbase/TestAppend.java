@@ -24,6 +24,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
+
 public class TestAppend extends AbstractTest {
   /**
    * Requirement 5.1 - Append values to one or more columns within a single row.
@@ -52,9 +54,11 @@ public class TestAppend extends AbstractTest {
     get.setMaxVersions(5);
     result = table.get(get);
     Assert.assertEquals("There should be two versions now", 2, result.size());
-    cell = result.getColumnLatestCell(COLUMN_FAMILY, qualifier);
+    List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, qualifier);
     Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
-      CellUtil.cloneValue(cell));
+      CellUtil.cloneValue(cells.get(0)));
+    Assert.assertArrayEquals("Expect original value still there", value1,
+      CellUtil.cloneValue(cells.get(1)));
   }
 
   @Test
