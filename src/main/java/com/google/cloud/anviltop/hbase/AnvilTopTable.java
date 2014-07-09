@@ -16,6 +16,7 @@ package com.google.cloud.anviltop.hbase;
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopServices.GetRowRequestOrBuilder;
 import com.google.bigtable.anviltop.AnviltopServices.GetRowResponse;
+import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.PutAdapter;
@@ -54,6 +55,7 @@ public class AnvilTopTable implements HTableInterface {
   protected final AnviltopClient client;
   protected final PutAdapter putAdapter = new PutAdapter();
   protected final GetAdapter getAdapter = new GetAdapter();
+  protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter();
   protected final Configuration configuration;
 
@@ -205,7 +207,20 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void delete(Delete delete) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    AnviltopData.RowMutation rowMutation = deleteAdapter.adapt(delete).build();
+    try {
+      client.mutateAtomic(options.getProjectId(),
+          tableName.getQualifierAsString(),
+          rowMutation);
+    } catch (ServiceException e) {
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "delete",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              rowMutation.getRowKey().toByteArray()),
+          e);
+    }
   }
 
   @Override
