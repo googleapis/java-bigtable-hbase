@@ -13,8 +13,10 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -23,13 +25,23 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
+@RunWith(JUnit4.class)
 public class TestIncrement extends AbstractTest {
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
   /**
    * Requirement 6.1 - Increment on or more columns in a given row by given amounts.
    */
@@ -53,15 +65,18 @@ public class TestIncrement extends AbstractTest {
     Increment increment = new Increment(rowKey);
     increment.addColumn(COLUMN_FAMILY, qual1, incr1);
     increment.addColumn(COLUMN_FAMILY, qual2, incr2);
-    table.increment(increment);
+    Result result = table.increment(increment);
+    Assert.assertEquals(2, result.size());
+    Assert.assertEquals("Value1=" + value1 + " & Incr1=" + incr1, value1 + incr1,
+      Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
+    Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
+      Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual2))));
 
-    // Check values
+    // Double-check values with a Get
     Get get = new Get(rowKey);
     get.setMaxVersions(5);
-    Result result = table.get(get);
+    result = table.get(get);
     Assert.assertEquals("Expected four results, two for each column", 4, result.size());
-    Assert.assertTrue("Expected qual1", result.containsColumn(COLUMN_FAMILY, qual1));
-    Assert.assertTrue("Expected qual2", result.containsColumn(COLUMN_FAMILY, qual2));
     Assert.assertEquals("Value1=" + value1 + " & Incr1=" + incr1, value1 + incr1,
       Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
     Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
@@ -71,10 +86,9 @@ public class TestIncrement extends AbstractTest {
   }
 
   /**
-   * Requirement 6.2 - Specify a timerange (min ts, inclusive + max ts, exclusive). This will
-   * create a new value that is an increment of the first value within this range, and will
-   * otherwise create a new value.
-   *
+   * Requirement 6.2 - Specify a timerange (min ts, inclusive + max ts, exclusive). This will create
+   * a new value that is an increment of the first value within this range, and will otherwise
+   * create a new value.
    * Note: This is pretty weird.  Not sure who would use it, or if we need to support it.
    */
   @Test
@@ -96,12 +110,14 @@ public class TestIncrement extends AbstractTest {
     increment.addColumn(COLUMN_FAMILY, qual, 1L);
     Result result = table.increment(increment);
     Assert.assertEquals("Should increment only 1 value", 1, result.size());
-    Assert.assertEquals("It shoudl have incremented 102", 102L + 1L, Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual))));
+    Assert.assertEquals("It shoudl have incremented 102", 102L + 1L,
+      Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual))));
 
     Get get = new Get(rowKey).setMaxVersions(10);
     result = table.get(get);
     System.out.println(result + "");
-    System.out.println(Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual))));
+    System.out
+      .println(Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual))));
     Assert.assertEquals("Check there's now a fourth", 4, result.size());
 
     // Test an increment out of range
@@ -138,4 +154,101 @@ public class TestIncrement extends AbstractTest {
 
     table.close();
   }
+
+  @Test
+  public void testTimestamp() throws IOException {
+    long now = System.currentTimeMillis();
+    long oneMinute = 60 * 1000;
+    long fifteenMinutes = 15 * 60 * 1000;
+
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    table.setAutoFlushTo(true);
+    byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
+    byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qualifier, 1L, Bytes.toBytes(100L));
+    table.put(put);
+
+    Increment increment = new Increment(rowKey).addColumn(COLUMN_FAMILY, qualifier, 1L);
+    table.increment(increment);
+
+    Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, qualifier);
+    Result result = table.get(get);
+    long timestamp1 = result.getColumnLatestCell(COLUMN_FAMILY, qualifier).getTimestamp();
+    Assert.assertTrue(Math.abs(timestamp1 - now) < fifteenMinutes);
+
+    try {
+      TimeUnit.MILLISECONDS.sleep(10);  // Make sure the clock has a chance to move
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    table.increment(increment);
+    result = table.get(get);
+    long timestamp2 = result.getColumnLatestCell(COLUMN_FAMILY, qualifier).getTimestamp();
+    Assert.assertTrue("Time increases strictly", timestamp2 > timestamp1);
+    Assert.assertTrue("Time doesn't move too fast", (timestamp2 - timestamp1) < oneMinute);
+    table.close();
+  }
+
+  @Test
+  public void testFailOnIncrementInt() throws IOException {
+    // Initialize
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual = dataHelper.randomData("qual-");
+    int value = new Random().nextInt();
+    Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, Bytes.toBytes(value));
+    table.put(put);
+
+    // Increment
+    Increment increment = new Increment(rowKey).addColumn(COLUMN_FAMILY, qual, 1L);
+    expectedException.expect(DoNotRetryIOException.class);
+    expectedException.expectMessage("Attempted to increment field that isn't 64 bits wide");
+    table.increment(increment);
+  }
+
+  @Test
+  public void testFailOnIncrementString() throws IOException {
+    // Initialize
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+    Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+    table.put(put);
+
+    // Increment
+    Increment increment = new Increment(rowKey).addColumn(COLUMN_FAMILY, qual, 1L);
+    expectedException.expect(DoNotRetryIOException.class);
+    expectedException.expectMessage("Attempted to increment field that isn't 64 bits wide");
+    table.increment(increment);
+  }
+
+  /**
+   * HBase should increment an 8-byte array just like it would a long.
+   */
+  @Test
+  public void testIncrementEightBytes() throws IOException {
+    // Initialize
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual = dataHelper.randomData("qual-");
+    byte[] value = new byte[8];
+    new Random().nextBytes(value);
+    ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE);
+    buffer.put(value);
+    buffer.flip();
+    long equivalentValue = buffer.getLong();
+
+    // Put the bytes in
+    Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+    table.put(put);
+
+    // Increment
+    Increment increment = new Increment(rowKey).addColumn(COLUMN_FAMILY, qual, 1L);
+    Result result = table.increment(increment);
+    Assert.assertEquals("Should have incremented the bytes like a long", equivalentValue + 1L,
+      Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual))));
+  }
+
 }

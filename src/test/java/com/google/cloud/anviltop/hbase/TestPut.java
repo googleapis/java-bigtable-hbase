@@ -171,7 +171,7 @@ public class TestPut extends AbstractTest {
     Assert.assertTrue(Math.abs(timestamp1 - now) < fifteenMinutes);
 
     try {
-      TimeUnit.SECONDS.sleep(10);  // Make sure the clock has a chance to move
+      TimeUnit.MILLISECONDS.sleep(10);  // Make sure the clock has a chance to move
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
