@@ -49,7 +49,9 @@ public class TestAppend extends AbstractTest {
 
     // Test result
     Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, qualifier);
+    get.setMaxVersions(5);
     result = table.get(get);
+    Assert.assertEquals("There should be two versions now", 2, result.size());
     cell = result.getColumnLatestCell(COLUMN_FAMILY, qualifier);
     Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
       CellUtil.cloneValue(cell));
@@ -69,9 +71,11 @@ public class TestAppend extends AbstractTest {
 
     // Test result
     Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, qualifier);
+    get.setMaxVersions(5);
     Result result = table.get(get);
+    Assert.assertEquals("There should be one version now", 1, result.size());
     Cell cell = result.getColumnLatestCell(COLUMN_FAMILY, qualifier);
-    Assert.assertArrayEquals("Expect concatenated byte array", value, CellUtil.cloneValue(cell));
+    Assert.assertArrayEquals("Expect append value is entire value", value, CellUtil.cloneValue(cell));
   }
 
   @Test
