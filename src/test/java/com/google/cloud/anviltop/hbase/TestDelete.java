@@ -57,6 +57,18 @@ public class TestDelete extends AbstractTest {
     table.close();
   }
 
+  @Test
+  public void testDeleteEmptyRow() throws IOException {
+    // Initialize data
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testrow-");
+
+    Delete delete = new Delete(rowKey);
+    table.delete(delete);
+
+    table.close();
+  }
+
   /**
    * Requirement 4.2 - Delete the latest version of a specific column (family:qualifier)
    */
