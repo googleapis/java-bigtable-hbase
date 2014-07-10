@@ -24,6 +24,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
+
 public class TestAppend extends AbstractTest {
   /**
    * Requirement 5.1 - Append values to one or more columns within a single row.
@@ -49,10 +51,14 @@ public class TestAppend extends AbstractTest {
 
     // Test result
     Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, qualifier);
+    get.setMaxVersions(5);
     result = table.get(get);
-    cell = result.getColumnLatestCell(COLUMN_FAMILY, qualifier);
+    Assert.assertEquals("There should be two versions now", 2, result.size());
+    List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, qualifier);
     Assert.assertArrayEquals("Expect concatenated byte array", value1And2,
-      CellUtil.cloneValue(cell));
+      CellUtil.cloneValue(cells.get(0)));
+    Assert.assertArrayEquals("Expect original value still there", value1,
+      CellUtil.cloneValue(cells.get(1)));
   }
 
   @Test
@@ -69,9 +75,11 @@ public class TestAppend extends AbstractTest {
 
     // Test result
     Get get = new Get(rowKey).addColumn(COLUMN_FAMILY, qualifier);
+    get.setMaxVersions(5);
     Result result = table.get(get);
+    Assert.assertEquals("There should be one version now", 1, result.size());
     Cell cell = result.getColumnLatestCell(COLUMN_FAMILY, qualifier);
-    Assert.assertArrayEquals("Expect concatenated byte array", value, CellUtil.cloneValue(cell));
+    Assert.assertArrayEquals("Expect append value is entire value", value, CellUtil.cloneValue(cell));
   }
 
   @Test
