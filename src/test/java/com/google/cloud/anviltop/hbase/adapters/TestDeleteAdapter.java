@@ -47,10 +47,10 @@ public class TestDeleteAdapter {
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
     Assert.assertEquals(1, rowMutation.getModsCount());
 
-    Assert.assertTrue(rowMutation.getMods(0).getDeleteRow());
+    Assert.assertTrue(rowMutation.getMods(0).hasDeleteRow());
 
-    Assert.assertFalse(rowMutation.getMods(0).hasDeleteCellRange());
-    Assert.assertFalse(rowMutation.getMods(0).hasDeleteCellsInFamily());
+    Assert.assertFalse(rowMutation.getMods(0).hasDeleteFromColumn());
+    Assert.assertFalse(rowMutation.getMods(0).hasDeleteFromFamily());
   }
 
   @Test
@@ -74,14 +74,14 @@ public class TestDeleteAdapter {
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
     Assert.assertEquals(1, rowMutation.getModsCount());
-    Assert.assertTrue(rowMutation.getMods(0).hasDeleteCellsInFamily());
+    Assert.assertTrue(rowMutation.getMods(0).hasDeleteFromFamily());
 
-    AnviltopData.RowMutation.Mod.DeleteCellsInFamily deleteCellsInFamily =
-        rowMutation.getMods(0).getDeleteCellsInFamily();
-    Assert.assertArrayEquals(family, deleteCellsInFamily.getFamilyNameBytes().toByteArray());
+    AnviltopData.RowMutation.Mod.DeleteFromFamily deleteFromFamily =
+        rowMutation.getMods(0).getDeleteFromFamily();
+    Assert.assertArrayEquals(family, deleteFromFamily.getFamilyNameBytes().toByteArray());
 
-    Assert.assertFalse(rowMutation.getMods(0).getDeleteRow());
-    Assert.assertFalse(rowMutation.getMods(0).hasDeleteCellRange());
+    Assert.assertFalse(rowMutation.getMods(0).hasDeleteRow());
+    Assert.assertFalse(rowMutation.getMods(0).hasDeleteFromColumn());
   }
 
   @Test
@@ -111,19 +111,19 @@ public class TestDeleteAdapter {
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
     Assert.assertEquals(1, rowMutation.getModsCount());
-    Assert.assertTrue(rowMutation.getMods(0).hasDeleteCellRange());
+    Assert.assertTrue(rowMutation.getMods(0).hasDeleteFromColumn());
 
-    AnviltopData.RowMutation.Mod.DeleteCellRange deleteCellRange =
-        rowMutation.getMods(0).getDeleteCellRange();
-    Assert.assertArrayEquals(fullColumnName, deleteCellRange.getColumnName().toByteArray());
-    Assert.assertTrue(rowMutation.getMods(0).getDeleteCellRange().hasTimeRange());
+    AnviltopData.RowMutation.Mod.DeleteFromColumn deleteFromColumn =
+        rowMutation.getMods(0).getDeleteFromColumn();
+    Assert.assertArrayEquals(fullColumnName, deleteFromColumn.getColumnName().toByteArray());
+    Assert.assertTrue(rowMutation.getMods(0).getDeleteFromColumn().hasTimeRange());
 
-    AnviltopData.TimeRange timeRange = deleteCellRange.getTimeRange();
+    AnviltopData.TimeRange timeRange = deleteFromColumn.getTimeRange();
     Assert.assertEquals(anviltopTimestamp, timeRange.getStartTimestampMicros());
     Assert.assertEquals(anviltopTimestamp, timeRange.getEndTimestampMicros());
 
-    Assert.assertFalse(rowMutation.getMods(0).getDeleteRow());
-    Assert.assertFalse(rowMutation.getMods(0).hasDeleteCellsInFamily());
+    Assert.assertFalse(rowMutation.getMods(0).hasDeleteRow());
+    Assert.assertFalse(rowMutation.getMods(0).hasDeleteFromFamily());
   }
 
   @Test
@@ -156,19 +156,19 @@ public class TestDeleteAdapter {
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
     Assert.assertEquals(1, rowMutation.getModsCount());
-    Assert.assertTrue(rowMutation.getMods(0).hasDeleteCellRange());
+    Assert.assertTrue(rowMutation.getMods(0).hasDeleteFromColumn());
 
-    AnviltopData.RowMutation.Mod.DeleteCellRange deleteCellRange =
-        rowMutation.getMods(0).getDeleteCellRange();
-    Assert.assertArrayEquals(fullColumnName, deleteCellRange.getColumnName().toByteArray());
-    Assert.assertTrue(rowMutation.getMods(0).getDeleteCellRange().hasTimeRange());
+    AnviltopData.RowMutation.Mod.DeleteFromColumn deleteFromColumn =
+        rowMutation.getMods(0).getDeleteFromColumn();
+    Assert.assertArrayEquals(fullColumnName, deleteFromColumn.getColumnName().toByteArray());
+    Assert.assertTrue(rowMutation.getMods(0).getDeleteFromColumn().hasTimeRange());
 
-    AnviltopData.TimeRange timeRange = deleteCellRange.getTimeRange();
+    AnviltopData.TimeRange timeRange = deleteFromColumn.getTimeRange();
     Assert.assertEquals(0L, timeRange.getStartTimestampMicros());
     Assert.assertEquals(anviltopTimestamp, timeRange.getEndTimestampMicros());
 
-    Assert.assertFalse(rowMutation.getMods(0).getDeleteRow());
-    Assert.assertFalse(rowMutation.getMods(0).hasDeleteCellsInFamily());
+    Assert.assertFalse(rowMutation.getMods(0).hasDeleteRow());
+    Assert.assertFalse(rowMutation.getMods(0).hasDeleteFromFamily());
   }
 
   @Test
