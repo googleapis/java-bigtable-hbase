@@ -84,11 +84,11 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
     }
   }
 
-  static AnviltopData.RowMutation.Mod.DeleteCellRange.Builder addDeleteCellRange(
+  static AnviltopData.RowMutation.Mod.DeleteFromColumn.Builder addDeleteFromColumnMods(
       AnviltopData.RowMutation.Builder result, ByteString familyByteString, Cell cell) {
     AnviltopData.RowMutation.Mod.Builder modBuilder = result.addModsBuilder();
-    AnviltopData.RowMutation.Mod.DeleteCellRange.Builder deleteBuilder =
-        modBuilder.getDeleteCellRangeBuilder();
+    AnviltopData.RowMutation.Mod.DeleteFromColumn.Builder deleteBuilder =
+        modBuilder.getDeleteFromColumnBuilder();
 
     ByteString cellQualifierByteString = ByteString.copyFrom(
         cell.getQualifierArray(),
@@ -119,11 +119,11 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
     return deleteBuilder;
   }
 
-  static AnviltopData.RowMutation.Mod.DeleteCellsInFamily.Builder addDeleteFamilyMods(
+  static AnviltopData.RowMutation.Mod.DeleteFromFamily.Builder addDeleteFromFamilyMods(
       AnviltopData.RowMutation.Builder result, ByteString familyByteString) {
     AnviltopData.RowMutation.Mod.Builder modBuilder = result.addModsBuilder();
-    AnviltopData.RowMutation.Mod.DeleteCellsInFamily.Builder deleteBuilder =
-        modBuilder.getDeleteCellsInFamilyBuilder();
+    AnviltopData.RowMutation.Mod.DeleteFromFamily.Builder deleteBuilder =
+        modBuilder.getDeleteFromFamilyBuilder();
     deleteBuilder.setFamilyNameBytes(familyByteString);
     return deleteBuilder;
   }
@@ -137,7 +137,7 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
       throwIfUnsupportedDeleteRow(operation);
 
       AnviltopData.RowMutation.Mod.Builder modBuilder = result.addModsBuilder();
-      modBuilder.setDeleteRow(true);
+      modBuilder.getDeleteRowBuilder();
     } else {
       for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
 
@@ -148,11 +148,11 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
             if (isPointDelete(cell)) {
               throwIfUnsupportedPointDelete(cell);
             }
-            addDeleteCellRange(result, familyByteString, cell);
+            addDeleteFromColumnMods(result, familyByteString, cell);
           } else if (isFamilyDelete(cell)) {
             throwIfUnsupportedDeleteFamily(cell);
 
-            addDeleteFamilyMods(result, familyByteString);
+            addDeleteFromFamilyMods(result, familyByteString);
           } else if (isFamilyVersionDelete(cell)) {
             throwOnUnsupportedDeleteFamilyVersion(cell);
           } else {
