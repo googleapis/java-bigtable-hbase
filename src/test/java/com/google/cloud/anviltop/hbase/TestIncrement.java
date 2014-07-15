@@ -169,8 +169,11 @@ public class TestIncrement extends AbstractTest {
     table.close();
   }
 
+  /**
+   * Test that increment uses the current time as the default timestamp for new versions.
+   */
   @Test
-  public void testTimestamp() throws IOException {
+  public void testDefaultTimestamp() throws IOException {
     long now = System.currentTimeMillis();
     long oneMinute = 60 * 1000;
     long fifteenMinutes = 15 * 60 * 1000;
