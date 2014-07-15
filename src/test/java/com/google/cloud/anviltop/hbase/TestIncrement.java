@@ -89,7 +89,24 @@ public class TestIncrement extends AbstractTest {
    * Requirement 6.2 - Specify a timerange (min ts, inclusive + max ts, exclusive). This will create
    * a new value that is an increment of the first value within this range, and will otherwise
    * create a new value.
+   *
    * Note: This is pretty weird.  Not sure who would use it, or if we need to support it.
+   *
+   * Here's the test:
+   *   1. Create a cell with three explicit versions: 101, 102, and 103.
+   *      The values are set to the same so we can track the original versions.
+   *   2. Call an increment (+1) with a time range of [101,103)
+   *   3. It should have created a fourth version with the current timestamp that
+   *      incremented version 102.  We can ensure this be looking at the new value
+   *      (103) and the number of versions.
+   *   4. Now increment (+1) with a time range outside of all versions [100000, 200000)
+   *   5. It should have create a new version with the current timestamp and value of 1.
+   *   6. Check all versions for the cell.  You should have, in descending version order:
+   *     a. A value of 1 with a recent timestamp.
+   *     b. A value of 103 with a recent timestamp.
+   *     c. A value of 103 with a timestamp of 103.
+   *     d. A value of 102 with a timestamp of 102.
+   *     e. A value of 101 with a timestamp of 101.
    */
   @Test
   public void testIncrementWithTimerange() throws IOException {
@@ -110,14 +127,11 @@ public class TestIncrement extends AbstractTest {
     increment.addColumn(COLUMN_FAMILY, qual, 1L);
     Result result = table.increment(increment);
     Assert.assertEquals("Should increment only 1 value", 1, result.size());
-    Assert.assertEquals("It shoudl have incremented 102", 102L + 1L,
+    Assert.assertEquals("It should have incremented 102", 102L + 1L,
       Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual))));
 
     Get get = new Get(rowKey).setMaxVersions(10);
     result = table.get(get);
-    System.out.println(result + "");
-    System.out
-      .println(Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual))));
     Assert.assertEquals("Check there's now a fourth", 4, result.size());
 
     // Test an increment out of range
