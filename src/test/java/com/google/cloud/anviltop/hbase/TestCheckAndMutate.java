@@ -52,7 +52,7 @@ public class TestCheckAndMutate extends AbstractTest {
     byte[] value1 = dataHelper.randomData("value-");
     byte[] value2 = dataHelper.randomData("value-");
 
-    // Put then again
+    // Put with a bad check on a null value, then try with a good one
     Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value1);
     boolean success = table.checkAndPut(rowKey, COLUMN_FAMILY, qual, value2, put);
     Assert.assertFalse("Column doesn't exist.  Should fail.", success);
