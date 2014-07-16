@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 public class TestPut extends AbstractTest {
   static final int NUM_CELLS = 100;
@@ -170,7 +171,7 @@ public class TestPut extends AbstractTest {
     Assert.assertTrue(Math.abs(timestamp1 - now) < fifteenMinutes);
 
     try {
-      Thread.sleep(10);  // Make sure the clock has a chance to move
+      TimeUnit.MILLISECONDS.sleep(10);  // Make sure the clock has a chance to move
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
