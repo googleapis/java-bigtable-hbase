@@ -19,6 +19,7 @@ import com.google.bigtable.anviltop.AnviltopServices.GetRowRequest.Builder;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Scan;
 
 /**
  * Adapter for HBase Get operations to Anviltop GetRowRequest.Builder.
@@ -26,35 +27,13 @@ import org.apache.hadoop.hbase.client.Get;
 public class GetAdapter implements OperationAdapter<Get, GetRowRequest.Builder>{
   @Override
   public Builder adapt(Get operation) {
-    throwIfUnsupportedOperation(operation);
+    ScanAdapter.throwIfUnsupportedScan(new Scan(operation));
 
     GetRowRequest.Builder result = GetRowRequest.newBuilder();
     result.setRowKey(ByteString.copyFrom(operation.getRow()));
+    result.setFilterBytes(
+        ByteString.copyFrom(
+            ScanAdapter.buildFilterByteString(new Scan(operation))));
     return result;
-  }
-
-  private void throwIfUnsupportedOperation(Get operation) {
-    // As more operations are supported at the Anviltop API level and Result adapters are added,
-    // these checks will be reduced or changed.
-    if (operation.getFilter() != null) {
-      throw new UnsupportedOperationException(
-          "Filters on Get are not supported.");
-    }
-    if (!operation.getFamilyMap().isEmpty()) {
-      throw new UnsupportedOperationException(
-          "Limiting of column families returned is not supported.");
-    }
-    if (operation.getMaxVersions() != Integer.MAX_VALUE) {
-      throw new UnsupportedOperationException(
-          "Limiting of versions on Get is not supported.");
-    }
-    if (operation.getMaxResultsPerColumnFamily() != -1) {
-      throw new UnsupportedOperationException(
-          "Limiting of max results per column family is not supported.");
-    }
-    if (!operation.getTimeRange().isAllTime()) {
-      throw new UnsupportedOperationException(
-          "Time range limiting is not supported.");
-    }
   }
 }
