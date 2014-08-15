@@ -28,52 +28,44 @@ public class TestGetTable extends AbstractTest {
   @Test
   public void testGetTable1() throws Exception {
     HTableInterface table = connection.getTable(TABLE_NAME);
-    checkTable(table);
+    Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable2() throws Exception {
-    HTableInterface table = connection.getTable(Bytes.toString(TABLE_NAME));
-    checkTable(table);
+    HTableInterface table = connection.getTable(TABLE_NAME.getNameAsString());
+    Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable3() throws Exception {
-    HTableInterface table = connection.getTable(TableName.valueOf(TABLE_NAME));
-    checkTable(table);
+    HTableInterface table = connection.getTable(TABLE_NAME.getName());
+    Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable4() throws Exception {
     HTableInterface table = connection.getTable(TABLE_NAME, Executors.newFixedThreadPool(1));
-    checkTable(table);
+    Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable5() throws Exception {
-    HTableInterface table = connection.getTable(Bytes.toString(TABLE_NAME),
+    HTableInterface table = connection.getTable(TABLE_NAME.getNameAsString(),
         Executors.newFixedThreadPool(1));
-    checkTable(table);
+    Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable6() throws Exception {
-    HTableInterface table = connection.getTable(TableName.valueOf(TABLE_NAME),
+    HTableInterface table = connection.getTable(TABLE_NAME.getName(),
         Executors.newFixedThreadPool(1));
-    checkTable(table);
+    Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
-  }
-
-  private void checkTable(HTableInterface table) {
-//    Assert.assertTrue(table instanceof AnvilTop);
-    TableName tableName = table.getName();
-    Assert.assertEquals(Bytes.toString(TABLE_NAME), tableName.getNameAsString());
-    Assert.assertArrayEquals(TABLE_NAME, tableName.getName());
-    Assert.assertArrayEquals(TABLE_NAME, table.getTableName());
   }
 }

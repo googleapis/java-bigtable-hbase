@@ -15,6 +15,10 @@ package com.google.cloud.anviltop.hbase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -29,20 +33,33 @@ import java.io.IOException;
 public abstract class AbstractTest {
   protected static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   protected HConnection connection;
-  protected static final byte[] TABLE_NAME = Bytes.toBytes("test_table");
+  protected static final TableName TABLE_NAME = TableName.valueOf("test_table");
   protected static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
+  protected static int MAX_VERSIONS = 6;
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     TEST_UTIL.startMiniCluster(1);
-    TEST_UTIL.createTable(TABLE_NAME, COLUMN_FAMILY, 6);
+    Admin admin = getAdmin();
+    HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
+    HTableDescriptor htd = new HTableDescriptor(TABLE_NAME);
+    htd.addFamily(hcd);
+    admin.createTable(htd);
   }
 
   @AfterClass
   public static void tearDownAfterClass() throws Exception {
-    TEST_UTIL.deleteTable(TABLE_NAME);
+    Admin admin = getAdmin();
+    admin.disableTable(TABLE_NAME);
+    admin.deleteTable(TABLE_NAME);
     TEST_UTIL.shutdownMiniCluster();
+  }
+
+  private static Admin getAdmin() throws IOException {
+    Configuration conf = TEST_UTIL.getConfiguration();
+    HConnection connection = HConnectionManager.createConnection(conf);
+    return connection.getAdmin();
   }
 
   @Before

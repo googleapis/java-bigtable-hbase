@@ -10,8 +10,8 @@
     <packaging>jar</packaging>
 
     <properties>
-        <hbase.version>0.98.2-hadoop2</hbase.version>
-        <hadoop.version>2.2.0</hadoop.version>
+        <hbase.version>0.99.0-SNAPSHOT</hbase.version>
+        <hadoop.version>2.4.0</hadoop.version>
         <compat.module>hbase-hadoop2-compat</compat.module>
         <junit.version>4.11</junit.version>
         <mockito.version>1.9.5</mockito.version>
@@ -76,6 +76,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <!--In hadoop1 this is hadoop-test-->
+            <artifactId>hadoop-minicluster</artifactId>
+            <version>${hadoop.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-hadoop-compat</artifactId>
             <version>${hbase.version}</version>
@@ -123,4 +130,11 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <repositories>
+        <repository>
+            <id>Apache Snapshots Repository</id>
+            <url>https://repository.apache.org/content/repositories/snapshots/</url>
+        </repository>
+    </repositories>
 </project>

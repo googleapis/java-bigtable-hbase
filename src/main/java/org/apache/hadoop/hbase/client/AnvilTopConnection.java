@@ -102,9 +102,10 @@ public class AnvilTopConnection implements HConnection, Closeable {
 
   protected BlockingInterface getAnvilTopInterface(String apiEndpointUrl) {
     return AnviltopService.newBlockingStub(
-        ProtoRestBlockingClient.newBuilder()
-            .setBaseUrl(apiEndpointUrl)
-            .build());
+      ProtoRestBlockingClient.newBuilder()
+        .setBaseUrl(apiEndpointUrl)
+        .build()
+    );
   }
 
   @Override
@@ -140,6 +141,11 @@ public class AnvilTopConnection implements HConnection, Closeable {
   @Override
   public HTableInterface getTable(TableName tableName, ExecutorService pool) throws IOException {
     return new AnvilTopTable(tableName, options, conf, client);
+  }
+
+  @Override
+  public Admin getAdmin() throws IOException {
+    throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
@@ -255,6 +261,12 @@ public class AnvilTopConnection implements HConnection, Closeable {
   @Override
   public void updateCachedLocations(TableName tableName, byte[] rowkey, Object exception,
       HRegionLocation source) {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
+  public void updateCachedLocations(TableName tableName, byte[] regionName, byte[] rowKey,
+      Object exception, ServerName serverName) {
     throw new UnsupportedOperationException();  // TODO
   }
 

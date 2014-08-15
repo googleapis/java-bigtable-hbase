@@ -61,15 +61,14 @@ public class TestBatch extends AbstractTest {
     Put put1 = new Put(rowKey1).add(COLUMN_FAMILY, qual1, value1);
     Put put2 = new Put(rowKey2).add(COLUMN_FAMILY, qual2, value2);
     List<Row> batch = new ArrayList<Row>(2);
-    Object[] results = new Object[3];
     batch.add(put1);
     batch.add(put2);
+    Object[] results = new Object[batch.size()];
     table.batch(batch, results);
     Assert.assertTrue("Should be a Result", results[0] instanceof Result);
     Assert.assertTrue("Should be a Result", results[1] instanceof Result);
     Assert.assertTrue("Should be empty", ((Result) results[0]).isEmpty());
     Assert.assertTrue("Should be empty", ((Result) results[1]).isEmpty());
-    Assert.assertNull("Last result should be null", results[2]);
     Assert.assertEquals("Batch should not have been cleared", 2, batch.size());
 
     // Check values
@@ -80,6 +79,7 @@ public class TestBatch extends AbstractTest {
     batch.add(get1);
     batch.add(get2);
     batch.add(get3);
+    results = new Object[batch.size()];
     table.batch(batch, results);
     Assert.assertTrue("Should be Result", results[0] instanceof Result);
     Assert.assertTrue("Should be Result", results[1] instanceof Result);
@@ -98,6 +98,7 @@ public class TestBatch extends AbstractTest {
     batch.clear();
     batch.add(delete1);
     batch.add(delete2);
+    results = new Object[batch.size()];
     table.batch(batch, results);
     Assert.assertTrue("Should be a Result", results[0] instanceof Result);
     Assert.assertTrue("Should be a Result", results[1] instanceof Result);
@@ -108,6 +109,7 @@ public class TestBatch extends AbstractTest {
     batch.clear();
     batch.add(get1);
     batch.add(get2);
+    results = new Object[batch.size()];
     table.batch(batch, results);
     Assert.assertTrue("Should be empty", ((Result) results[0]).isEmpty());
     Assert.assertTrue("Should be empty", ((Result) results[1]).isEmpty());
