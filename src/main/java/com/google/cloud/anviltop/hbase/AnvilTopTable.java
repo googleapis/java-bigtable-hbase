@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -217,6 +218,12 @@ public class AnvilTopTable implements HTableInterface {
   }
 
   @Override
+  public boolean checkAndPut(byte[] bytes, byte[] bytes2, byte[] bytes3,
+      CompareFilter.CompareOp compareOp, byte[] bytes4, Put put) throws IOException {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
   public void delete(Delete delete) throws IOException {
     AnviltopData.RowMutation rowMutation = deleteAdapter.adapt(delete).build();
     try {
@@ -242,6 +249,12 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value,
       Delete delete) throws IOException {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
+  public boolean checkAndDelete(byte[] bytes, byte[] bytes2, byte[] bytes3,
+    CompareFilter.CompareOp compareOp, byte[] bytes4, Delete delete) throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
