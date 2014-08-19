@@ -15,16 +15,13 @@
 // Because MasterKeepAliveConnection is default scope, we have to use this package.  :-/
 package org.apache.hadoop.hbase.client;
 
-import com.google.api.client.internal.protorest.ProtoRestBlockingClient;
-import com.google.bigtable.anviltop.AnviltopServices.AnviltopService;
-import com.google.bigtable.anviltop.AnviltopServices.AnviltopService.BlockingInterface;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
 import com.google.cloud.anviltop.hbase.AnvilTopOptionsFactory;
 import com.google.cloud.anviltop.hbase.AnvilTopTable;
-import com.google.cloud.hadoop.hbase.AnviltopBlockingClient;
+import com.google.cloud.hadoop.hbase.AnviltopAdminBlockingGrpcClient;
+import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
+import com.google.cloud.hadoop.hbase.AnviltopBlockingGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
-import com.google.net.rpc3.client.RpcStubParameters;
-import com.google.net.rpc3.impl.proto.HTTPOverRPC;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -32,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
@@ -52,7 +50,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class AnvilTopConnection implements HConnection, Closeable {
+// TODO: Move this class to implement Connection when that interface
+// is available.
+public class AnvilTopConnection implements ClusterConnection, Closeable {
   private static final Log LOG = LogFactory.getLog(AnvilTopConnection.class);
 
   private final Configuration conf;
@@ -60,6 +60,7 @@ public class AnvilTopConnection implements HConnection, Closeable {
   private volatile boolean aborted;
   private volatile ExecutorService batchPool = null;
   private AnviltopClient client;
+  private AnviltopAdminClient anviltopAdminClient;
   private User user = null;
   private volatile boolean cleanupPool = false;
   private final AnviltopOptions options;
@@ -80,32 +81,27 @@ public class AnvilTopConnection implements HConnection, Closeable {
 
     this.options = AnvilTopOptionsFactory.fromConfiguration(conf);
     this.client = getAnviltopClient(this.options);
+    this.anviltopAdminClient = getAdminClient(this.options);
+  }
+
+  private AnviltopAdminClient getAdminClient(AnviltopOptions options)
+      throws MalformedURLException {
+    URL endpointUrl = new URL(options.getApiEndpoint());
+
+    return AnviltopAdminBlockingGrpcClient.createClient(
+        "https".equals(endpointUrl.getProtocol()),
+        endpointUrl.getHost(),
+        endpointUrl.getPort());
   }
 
   protected AnviltopClient getAnviltopClient(AnviltopOptions options)
       throws MalformedURLException {
     URL endpointUrl = new URL(options.getApiEndpoint());
 
-    // Needed(?) until we run on Apiary @ staging.googleapis.com
-    HTTPOverRPC.ClientInterface rpc3stub = getRpc3Stub(
-        endpointUrl.getHost(), endpointUrl.getPort());
-
-    return new AnviltopBlockingClient(
-        rpc3stub,
-        getAnvilTopInterface(options.getApiEndpoint()));
-  }
-
-  HTTPOverRPC.ClientInterface getRpc3Stub(String host, int port) {
-    RpcStubParameters stubParam = new RpcStubParameters(String.format("%s:%s", host, port));
-    return HTTPOverRPC.newStub(stubParam);
-  }
-
-  protected BlockingInterface getAnvilTopInterface(String apiEndpointUrl) {
-    return AnviltopService.newBlockingStub(
-      ProtoRestBlockingClient.newBuilder()
-        .setBaseUrl(apiEndpointUrl)
-        .build()
-    );
+    return AnviltopBlockingGrpcClient.createClient(
+        "https".equals(endpointUrl.getProtocol()),
+        endpointUrl.getHost(),
+        endpointUrl.getPort());
   }
 
   @Override
@@ -145,7 +141,7 @@ public class AnvilTopConnection implements HConnection, Closeable {
 
   @Override
   public Admin getAdmin() throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return new AnviltopAdmin(options, this, anviltopAdminClient);
   }
 
   @Override
@@ -254,6 +250,12 @@ public class AnvilTopConnection implements HConnection, Closeable {
   }
 
   @Override
+  public HRegionLocation relocateRegion(TableName tableName, byte[] row, int replicaId)
+      throws IOException {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
   public HRegionLocation relocateRegion(byte[] tableName, byte[] row) throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
@@ -294,6 +296,18 @@ public class AnvilTopConnection implements HConnection, Closeable {
   @Override
   public List<HRegionLocation> locateRegions(TableName tableName, boolean useCache,
       boolean offlined) throws IOException {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
+  public RegionLocations locateRegion(TableName tableName, byte[] row, boolean useCache,
+      boolean retry) throws IOException {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
+  public RegionLocations locateRegion(TableName tableName, byte[] row, boolean useCache,
+      boolean retry, int replicaId) throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -417,6 +431,11 @@ public class AnvilTopConnection implements HConnection, Closeable {
 
   @Override
   public NonceGenerator getNonceGenerator() {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
+  public AsyncProcess getAsyncProcess() {
     throw new UnsupportedOperationException();  // TODO
   }
 
