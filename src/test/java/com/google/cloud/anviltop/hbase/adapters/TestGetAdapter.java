@@ -17,7 +17,6 @@ import com.google.bigtable.anviltop.AnviltopServices.GetRowRequest;
 import com.google.cloud.anviltop.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
@@ -29,6 +28,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 @RunWith(JUnit4.class)
@@ -55,25 +55,107 @@ public class TestGetAdapter {
   }
 
   @Test
-  public void testVersionLimitingIsNotSupported() throws IOException {
-    Get get = makeValidGet(dataHelper.randomData("rk1-"));
-    get.setMaxVersions(1);
+  public void testGetWithSingleColumnFamily() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rk1-");
+    Get get = makeValidGet(rowKey);
+    byte[] family1 = Bytes.toBytes("family1");
+    get.addFamily(family1);
 
-    expectedException.expect(UnsupportedOperationException.class);
-    expectedException.expectMessage("Limiting of versions on Get is not supported.");
+    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
-    getAdapter.adapt(get);
+    Assert.assertEquals("(col(family1:\\\\C*, ALL))", rowRequestBuilder.getFilter());
   }
 
   @Test
-  public void testTimeRangesAreNotSupported() throws IOException {
-    Get get = makeValidGet(dataHelper.randomData("rk1-"));
-    get.setTimeStamp(100L);
+  public void testGetWithMultipleColumnFamily() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rk1-");
+    Get get = makeValidGet(rowKey);
+    byte[] family1 = Bytes.toBytes("family1");
+    get.addFamily(family1);
+    byte[] family2 = Bytes.toBytes("family2");
+    get.addFamily(family2);
 
-    expectedException.expect(UnsupportedOperationException.class);
-    expectedException.expectMessage("Time range limiting is not supported");
+    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
-    getAdapter.adapt(get);
+    Assert.assertEquals("(col(family1:\\\\C*, ALL))+(col(family2:\\\\C*, ALL))",
+        rowRequestBuilder.getFilter());
+  }
+
+  @Test
+  public void testTimestampLimitsAreApplied() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rk1-");
+    Get get = makeValidGet(rowKey);
+    byte[] family1 = Bytes.toBytes("family1");
+    get.addFamily(family1);
+    byte[] family2 = Bytes.toBytes("family2");
+    get.addFamily(family2);
+    get.setTimeRange(1000, 2000);
+
+    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+
+    Assert.assertEquals(
+        "(col(family1:\\\\C*, ALL) | ts(1000000, 1999000))" +
+            "+(col(family2:\\\\C*, ALL) | ts(1000000, 1999000))",
+        rowRequestBuilder.getFilter());
+  }
+
+  @Test
+  public void testMaxVersionsIsApplied() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rk1-");
+    Get get = makeValidGet(rowKey);
+    byte[] family1 = Bytes.toBytes("family1");
+    get.addFamily(family1);
+    byte[] family2 = Bytes.toBytes("family2");
+    get.addFamily(family2);
+    get.setMaxVersions(1);
+    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+
+    Assert.assertEquals(
+        "(col(family1:\\\\C*, 1))+(col(family2:\\\\C*, 1))",
+        rowRequestBuilder.getFilter());
+  }
+
+  @Test
+  public void testMultipleFamiliesSomeWithQualifiersSpecified() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rk1-");
+    Get get = makeValidGet(rowKey);
+    get.addFamily(Bytes.toBytes("family1"));
+    get.addColumn(Bytes.toBytes("family2"), Bytes.toBytes("qualifier1"));
+    get.setMaxVersions(1);
+    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+
+    Assert.assertEquals(
+        "(col(family1:\\\\C*, 1))+(col(family2:qualifier1, 1))",
+        rowRequestBuilder.getFilter());
+  }
+
+  @Test
+  public void testBinaryColumnNamesAreQuoted() throws IOException {
+    String utf8Part = "☺"; // UTF-8: 0x9e, 0xe8, 0xc6
+    String asciiPart = "asdf"; // UTF-8: 0x61, 0x73, 0x64, 0x66
+    byte nullByte = 0x00;
+    String specialCharacters = "\\[]().*"; // UTF-8: 0x5c, 0x5b, 0x5d, 0x28, 0x29, 0x2e, 0x2a
+    ByteArrayOutputStream qualifierBuilder = new ByteArrayOutputStream();
+    qualifierBuilder.write(Bytes.toBytes(utf8Part));
+    qualifierBuilder.write(Bytes.toBytes(asciiPart));
+    qualifierBuilder.write(nullByte);
+    qualifierBuilder.write(Bytes.toBytes(specialCharacters));
+    byte[] rowKey = dataHelper.randomData("rk1-");
+    Get get = makeValidGet(rowKey);
+    get.addColumn(Bytes.toBytes("f1"), qualifierBuilder.toByteArray());
+    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+
+    ByteArrayOutputStream expectedFilterBuilder = new ByteArrayOutputStream();
+    expectedFilterBuilder.write(Bytes.toBytes("(col(f1:"));
+    expectedFilterBuilder.write(Bytes.toBytes(utf8Part)); // Only ASCII characters need escaping
+    expectedFilterBuilder.write(Bytes.toBytes(asciiPart)); // Leave a-z intact
+    expectedFilterBuilder.write(Bytes.toBytes("\\x00")); // null byte
+    expectedFilterBuilder.write(
+        Bytes.toBytes("\\\\\\[\\]\\(\\)\\.\\*")); // Escape each in special characters
+    expectedFilterBuilder.write(Bytes.toBytes(", ALL))"));
+    Assert.assertArrayEquals(
+        expectedFilterBuilder.toByteArray(),
+        rowRequestBuilder.getFilterBytes().toByteArray());
   }
 
   @Test
@@ -98,31 +180,9 @@ public class TestGetAdapter {
           Bytes.toBytes("someValue")));
 
     expectedException.expect(UnsupportedOperationException.class);
-    expectedException.expectMessage("Filters on Get are not supported.");
+    expectedException.expectMessage("Filters are not supported.");
 
     getAdapter.adapt(get);
   }
 
-  @Test
-  public void testReturningSpecificFamiliesIsNotSupported() throws IOException {
-    Get get = makeValidGet(dataHelper.randomData("rk1-"));
-    get.addFamily(Bytes.toBytes("family1"));
-
-    expectedException.expect(UnsupportedOperationException.class);
-    expectedException.expectMessage("Limiting of column families returned is not supported.");
-
-    getAdapter.adapt(get);
-  }
-
-  @Test
-  public void testReturningSpecificQualifiersIsNotSupported() throws IOException {
-    Get get = makeValidGet(dataHelper.randomData("rk1-"));
-    get.addColumn(Bytes.toBytes("family1"), Bytes.toBytes("qualifier1"));
-
-    // Same message as column family limiting
-    expectedException.expect(UnsupportedOperationException.class);
-    expectedException.expectMessage("Limiting of column families returned is not supported.");
-
-    getAdapter.adapt(get);
-  }
 }
