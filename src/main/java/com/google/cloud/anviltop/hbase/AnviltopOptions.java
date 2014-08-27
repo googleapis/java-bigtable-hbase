@@ -13,6 +13,10 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.cloud.hadoop.hbase.ChannelOptions;
+import com.google.cloud.hadoop.hbase.TransportOptions;
+
 /**
  * An immutable class providing access to configuration options for Anviltop.
  */
@@ -22,11 +26,23 @@ public class AnviltopOptions {
    * A mutable builder for AnviltopConnectionOptions.
    */
   public static class Builder {
-    private String apiEndpoint = "";
     private String projectId = "";
+    private Credential credential;
+    private String host;
+    private int port;
 
-    public Builder setApiEndpoint(String apiEndpoint) {
-      this.apiEndpoint = apiEndpoint;
+    public Builder setHost(String host) {
+      this.host = host;
+      return this;
+    }
+
+    public Builder setPort(int port) {
+      this.port = port;
+      return this;
+    }
+
+    public Builder setCredential(Credential credential) {
+      this.credential = credential;
       return this;
     }
 
@@ -36,29 +52,37 @@ public class AnviltopOptions {
     }
 
     public AnviltopOptions build() {
-      return new AnviltopOptions(this.apiEndpoint, this.projectId);
+      return new AnviltopOptions(host, port, credential, projectId);
     }
   }
 
-  private final String apiEndpoint;
+  private final String host;
+  private final int port;
+  private final Credential credential;
   private final String projectId;
 
-  public AnviltopOptions(String apiEndpoint, String projectId) {
-    this.apiEndpoint = apiEndpoint;
+  public AnviltopOptions(String host, int port, Credential credential, String projectId) {
+    this.host = host;
+    this.port = port;
+    this.credential = credential;
     this.projectId = projectId;
   }
 
-  /**
-   * The API endpoint to connect to, including version information.
-   */
-  public String getApiEndpoint() {
-    return apiEndpoint;
-  }
-
-  /**
-   * The project ID that table belong to.
-   */
   public String getProjectId() {
     return projectId;
+  }
+
+  public ChannelOptions getChannelOptions() {
+    if (this.credential == null) {
+      return new ChannelOptions();
+    }
+    return new ChannelOptions(credential);
+  }
+
+  public TransportOptions getTransportOptions() {
+    return new TransportOptions(
+        TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
+        host,
+        port);
   }
 }

@@ -10,6 +10,8 @@
     <packaging>jar</packaging>
 
     <properties>
+        <!-- As soon as stubby is public, this goes away -->
+        <stubby.driver.path>/google/data/ro/users/an/angusdavis/public/netty_driver_deploy.jar</stubby.driver.path>
         <hbase.version>0.99.0-SNAPSHOT</hbase.version>
         <hadoop.version>2.4.0</hadoop.version>
         <compat.module>hbase-hadoop2-compat</compat.module>
@@ -108,7 +110,7 @@
           <groupId>anviltop-client</groupId>
           <artifactId>anviltop-client-interface</artifactId>
           <version>0.1</version>
-          <systemPath>/google/data/ro/users/an/angusdavis/public/driver_deploy.jar</systemPath>
+          <systemPath>${stubby.driver.path}</systemPath>
           <scope>system</scope>
         </dependency>
     </dependencies>
