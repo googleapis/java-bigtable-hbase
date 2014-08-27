@@ -22,6 +22,8 @@ import com.google.cloud.hadoop.hbase.AnviltopAdminBlockingGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
 import com.google.cloud.hadoop.hbase.AnviltopBlockingGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
+import com.google.cloud.hadoop.hbase.ChannelOptions;
+import com.google.cloud.hadoop.hbase.TransportOptions;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -80,28 +82,35 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
     }
 
     this.options = AnvilTopOptionsFactory.fromConfiguration(conf);
-    this.client = getAnviltopClient(this.options);
-    this.anviltopAdminClient = getAdminClient(this.options);
+    TransportOptions transportOptions = options.getTransportOptions();
+    ChannelOptions channelOptions = options.getChannelOptions();
+
+    this.client = getAnviltopClient(
+        transportOptions,
+        channelOptions,
+        pool);
+    this.anviltopAdminClient = getAdminClient(
+        transportOptions,
+        channelOptions,
+        pool);
   }
 
-  private AnviltopAdminClient getAdminClient(AnviltopOptions options)
-      throws MalformedURLException {
-    URL endpointUrl = new URL(options.getApiEndpoint());
+  private AnviltopAdminClient getAdminClient(
+      TransportOptions transportOptions,
+      ChannelOptions channelOptions,
+      ExecutorService executorService) {
 
     return AnviltopAdminBlockingGrpcClient.createClient(
-        "https".equals(endpointUrl.getProtocol()),
-        endpointUrl.getHost(),
-        endpointUrl.getPort());
+        transportOptions, channelOptions, executorService);
   }
 
-  protected AnviltopClient getAnviltopClient(AnviltopOptions options)
-      throws MalformedURLException {
-    URL endpointUrl = new URL(options.getApiEndpoint());
+  protected AnviltopClient getAnviltopClient(
+      TransportOptions transportOptions,
+      ChannelOptions channelOptions,
+      ExecutorService executorService) {
 
     return AnviltopBlockingGrpcClient.createClient(
-        "https".equals(endpointUrl.getProtocol()),
-        endpointUrl.getHost(),
-        endpointUrl.getPort());
+        transportOptions, channelOptions, executorService);
   }
 
   @Override

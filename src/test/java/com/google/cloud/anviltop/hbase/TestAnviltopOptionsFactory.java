@@ -12,7 +12,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestAnviltopOptionsFactory {
 
-  public static final String TEST_API_ENDPOINT_URL = "http://somehost:1000/api/v1/foo";
+  public static final String TEST_HOST = "test-host";
+  public static final int TEST_PORT = 80;
   public static final String TEST_PROJECT_ID = "project-foo";
 
   @Rule
@@ -21,14 +22,14 @@ public class TestAnviltopOptionsFactory {
   @Test
   public void testProjectIdIsRequired() {
     Configuration configuration = new Configuration();
-    configuration.set(AnvilTopOptionsFactory.API_ENDPOINT_KEY, TEST_API_ENDPOINT_URL);
+    configuration.set(AnvilTopOptionsFactory.ANVILTOP_HOST_KEY, TEST_HOST);
 
     expectedException.expect(IllegalArgumentException.class);
     AnvilTopOptionsFactory.fromConfiguration(configuration);
   }
 
   @Test
-  public void testEndpointUrlIsRequired() {
+  public void testHostIsRequired() {
     Configuration configuration = new Configuration();
     configuration.set(AnvilTopOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
 
@@ -40,9 +41,9 @@ public class TestAnviltopOptionsFactory {
   public void testOptionsAreConstructedWithValidInput() {
     Configuration configuration = new Configuration();
     configuration.set(AnvilTopOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
-    configuration.set(AnvilTopOptionsFactory.API_ENDPOINT_KEY, TEST_API_ENDPOINT_URL);
+    configuration.set(AnvilTopOptionsFactory.ANVILTOP_HOST_KEY, TEST_HOST);
     AnviltopOptions options = AnvilTopOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals(TEST_API_ENDPOINT_URL, options.getApiEndpoint());
+    Assert.assertEquals(TEST_HOST, options.getTransportOptions().getHost());
     Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
   }
 }
