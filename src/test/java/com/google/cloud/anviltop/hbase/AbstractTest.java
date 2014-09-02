@@ -13,7 +13,11 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import com.google.api.client.util.Strings;
+import com.google.api.client.util.Throwables;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -29,35 +33,80 @@ import org.junit.BeforeClass;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
 
 public abstract class AbstractTest {
   protected static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   protected HConnection connection;
-  protected static final TableName TABLE_NAME = TableName.valueOf("test_table");
+  protected static final TableName TABLE_NAME;
   protected static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   protected static int MAX_VERSIONS = 6;
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
+  protected static final Configuration BASE_CONFIGURATION = HBaseConfiguration.create();
+  static {
+    TABLE_NAME = TableName.valueOf("test_table-" + UUID.randomUUID().toString());
+    addExtraResources(BASE_CONFIGURATION);
+  }
+
+  protected static void addExtraResources(Configuration configuration) {
+    String extraResources = System.getProperty("anviltop.test.extra.resources");
+    if (extraResources != null) {
+      InputStream resourceStream =
+          AbstractTest.class.getClassLoader().getResourceAsStream(extraResources);
+      if (resourceStream != null) {
+        configuration.addResource(resourceStream);
+      }
+    }
+  }
+
+  protected static boolean useMiniCluster() {
+    return Strings.isNullOrEmpty(
+        BASE_CONFIGURATION.get(HConnection.HBASE_CLIENT_CONNECTION_IMPL, ""));
+  }
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    TEST_UTIL.startMiniCluster(1);
+    if (useMiniCluster()) {
+      TEST_UTIL.startMiniCluster(1);
+    }
     Admin admin = getAdmin();
     HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
     HTableDescriptor htd = new HTableDescriptor(TABLE_NAME);
-    htd.addFamily(hcd);
-    admin.createTable(htd);
+    if (useMiniCluster()) {
+      htd.addFamily(hcd);
+      admin.createTable(htd);
+    } else {
+      // TODO: Remove once create table with column families is present
+      admin.createTable(htd);
+      admin.addColumn(htd.getTableName(), hcd);
+    }
   }
 
   @AfterClass
   public static void tearDownAfterClass() throws Exception {
     Admin admin = getAdmin();
-    admin.disableTable(TABLE_NAME);
+    if (useMiniCluster()) {
+      // TODO: Remove when disableTable is present
+      admin.disableTable(TABLE_NAME);
+    }
     admin.deleteTable(TABLE_NAME);
-    TEST_UTIL.shutdownMiniCluster();
+    if (useMiniCluster()) {
+      TEST_UTIL.shutdownMiniCluster();
+    }
   }
 
+  private static Configuration getConfiguration() {
+    if (useMiniCluster()) {
+      return TEST_UTIL.getConfiguration();
+    } else {
+      return BASE_CONFIGURATION;
+    }
+  }
+
+
   private static Admin getAdmin() throws IOException {
-    Configuration conf = TEST_UTIL.getConfiguration();
+    Configuration conf = getConfiguration();
     HConnection connection = HConnectionManager.createConnection(conf);
     return connection.getAdmin();
   }
@@ -65,7 +114,7 @@ public abstract class AbstractTest {
   @Before
   public void setUp() throws IOException {
     //Configuration conf = HBaseConfiguration.create();
-    Configuration conf = TEST_UTIL.getConfiguration();
+    Configuration conf = getConfiguration();
     this.connection = HConnectionManager.createConnection(conf);
     //Assert.assertTrue(this.connection instanceof AnvilTopConnection);
   }
@@ -77,7 +126,7 @@ public abstract class AbstractTest {
 
   // This is for when we need to look at the results outside of the current connection
   public HConnection createNewConnection() throws IOException {
-    Configuration conf = TEST_UTIL.getConfiguration();
+    Configuration conf = getConfiguration();
     HConnection newConnection = HConnectionManager.createConnection(conf);
     return newConnection;
   }

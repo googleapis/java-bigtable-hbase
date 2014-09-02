@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+    <property>
+        <name>hbase.client.connection.impl</name>
+        <value>org.apache.hadoop.hbase.client.AnvilTopConnection</value>
+    </property>
+    <property>
+        <name>google.anviltop.endpoint.host</name>
+        <value>9f135f0537b12b4b.sandbox.google.com</value>
+    </property>
+    <property>
+        <name>google.anviltop.endpoint.port</name>
+        <value>443</value>
+    </property>
+    <property>
+        <name>google.anviltop.project.id</name>
+        <value>testproject</value>
+    </property>
+</configuration>

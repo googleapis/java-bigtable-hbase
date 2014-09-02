@@ -24,6 +24,7 @@ import com.google.cloud.hadoop.hbase.AnviltopBlockingGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,6 +49,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -81,6 +83,11 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
       throw new IllegalArgumentException("AnvilTop does not support managed connections.");
     }
 
+    if (batchPool == null) {
+      batchPool = Executors.newCachedThreadPool(
+          new ThreadFactoryBuilder().setNameFormat("anviltop-client-%s").build());
+    }
+
     this.options = AnvilTopOptionsFactory.fromConfiguration(conf);
     TransportOptions transportOptions = options.getTransportOptions();
     ChannelOptions channelOptions = options.getChannelOptions();
@@ -88,11 +95,11 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
     this.client = getAnviltopClient(
         transportOptions,
         channelOptions,
-        pool);
+        batchPool);
     this.anviltopAdminClient = getAdminClient(
         transportOptions,
         channelOptions,
-        pool);
+        batchPool);
   }
 
   private AnviltopAdminClient getAdminClient(
@@ -150,7 +157,7 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
 
   @Override
   public Admin getAdmin() throws IOException {
-    return new AnviltopAdmin(options, this, anviltopAdminClient);
+    return new AnviltopAdmin(options, conf, this, anviltopAdminClient);
   }
 
   @Override
