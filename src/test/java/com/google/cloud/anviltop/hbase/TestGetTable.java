@@ -13,6 +13,9 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
+
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.util.Bytes;

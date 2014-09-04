@@ -13,6 +13,9 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
+
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
@@ -23,11 +26,14 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
+@RunWith(JUnit4.class)
 public class TestBasicOps extends AbstractTest {
   /**
    * Happy path for a single value.

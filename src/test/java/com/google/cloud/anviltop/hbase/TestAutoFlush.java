@@ -13,12 +13,17 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
+
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 
@@ -28,6 +33,7 @@ import java.io.IOException;
  *
  * TODO - Test buffer size definitions
  */
+@RunWith(JUnit4.class)
 public class TestAutoFlush extends AbstractTest {
   @Test
   public void testAutoFlushDefault() throws Exception {

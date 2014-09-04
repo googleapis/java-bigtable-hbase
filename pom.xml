@@ -186,7 +186,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>default-test</id>
+                                <id>local-hbase-cluster-test</id>
                                 <goals>
                                     <goal>test</goal>
                                 </goals>
@@ -204,6 +204,9 @@
                                         -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar:${stubby.driver.path}
                                     </argLine>
                                     <forkCount>1</forkCount>
+                                    <includes>
+                                        <include>**/IntegrationTests.java</include>
+                                    </includes>
                                     <reportNameSuffix>anviltop-server</reportNameSuffix>
                                     <systemPropertyVariables>
                                         <anviltop.test.extra.resources>anviltop-test.xml
@@ -334,6 +337,53 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/IntegrationTests.java</exclude>
+                                <exclude>**/TestAppend.java</exclude>
+                                <exclude>**/TestAutoFlush.java</exclude>
+                                <exclude>**/TestBasicOps.java</exclude>
+                                <exclude>**/TestBatch.java</exclude>
+                                <exclude>**/TestCheckAndMutate.java</exclude>
+                                <exclude>**/TestCreateTable.java</exclude>
+                                <exclude>**/TestDelete.java</exclude>
+                                <exclude>**/TestDurability.java</exclude>
+                                <exclude>**/TestFilters.java</exclude>
+                                <exclude>**/TestGet.java</exclude>
+                                <exclude>**/TestGetTable.java</exclude>
+                                <exclude>**/TestIncrement.java</exclude>
+                                <exclude>**/TestPut.java</exclude>
+                                <exclude>**/TestTimestamp.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>local-hbase-cluster-test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <phase>integration-test</phase>
+                        <configuration>
+                            <includes>
+                                <include>**/IntegrationTests.java</include>
+                            </includes>
+                            <reportNameSuffix>local-mini-cluster</reportNameSuffix>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 
     <repositories>

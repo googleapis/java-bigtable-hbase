@@ -13,6 +13,9 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
+
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Append;
@@ -29,12 +32,15 @@ import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+@RunWith(JUnit4.class)
 public class TestBatch extends AbstractTest {
   /**
    * Requirement 8.1 - Batch performs a collection of Deletes, Gets, Puts, Increments, and Appends

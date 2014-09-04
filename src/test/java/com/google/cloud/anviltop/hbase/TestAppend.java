@@ -13,6 +13,9 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
+
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -23,9 +26,12 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.util.List;
 
+@RunWith(JUnit4.class)
 public class TestAppend extends AbstractTest {
   /**
    * Requirement 5.1 - Append values to one or more columns within a single row.
