@@ -13,7 +13,14 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
+import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
+
 import org.apache.commons.lang.RandomStringUtils;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -62,10 +69,14 @@ public class TestCreateTable extends AbstractTest {
         "a" + RandomStringUtils.random(10, false, false)
     };
 
+    Admin admin = connection.getAdmin();
+
     for (String badname : badnames) {
       boolean failed = false;
       try {
-        TEST_UTIL.createTable(Bytes.toBytes(badname), COLUMN_FAMILY);
+        HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(badname));
+        descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+        admin.createTable(descriptor);
       } catch (IllegalArgumentException e) {
         failed = true;
       }
@@ -73,8 +84,12 @@ public class TestCreateTable extends AbstractTest {
     }
 
     for(String goodname : goodnames) {
-      TEST_UTIL.createTable(Bytes.toBytes(goodname), COLUMN_FAMILY);
-      TEST_UTIL.deleteTable(Bytes.toBytes(goodname));
+      TableName tableName = TableName.valueOf(goodname);
+      HTableDescriptor descriptor = new HTableDescriptor(tableName);
+      descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+      admin.createTable(descriptor);
+      admin.disableTable(tableName);
+      admin.deleteTable(tableName);
     }
   }
 }

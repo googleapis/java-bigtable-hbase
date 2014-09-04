@@ -13,7 +13,6 @@
  */
 package com.google.cloud.anviltop.hbase;
 
-
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 
