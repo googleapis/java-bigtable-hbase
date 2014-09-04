@@ -17,22 +17,217 @@
         <compat.module>hbase-hadoop2-compat</compat.module>
         <junit.version>4.11</junit.version>
         <mockito.version>1.9.5</mockito.version>
-        <compileSource>1.6</compileSource>
+        <compileSource>1.7</compileSource>
+        <!-- For Netty HTTP2/TLS negotiation -->
+        <alpn.version>7.0.0.v20140317</alpn.version>
     </properties>
-
+    <profiles>
+        <profile>
+            <id>anviltopIntegrationTest</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-client</artifactId>
+                    <version>${hbase.version}</version>
+                    <exclusions>
+                        <!-- Stubby requires netty5 and a newer version of guava. When available, we can
+                        repackage netty5, guava and stubby into our client and remove these exclusions  -->
+                        <exclusion>
+                            <groupId>io.netty</groupId>
+                            <artifactId>netty-all</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>io.netty</groupId>
+                            <artifactId>netty</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-server</artifactId>
+                    <version>${hbase.version}</version>
+                    <scope>test</scope>
+                    <exclusions>
+                        <!-- Stubby requires netty5 and a newer version of guava. When available, we can
+                       repackage netty5, guava and stubby into our client and remove these exclusions  -->
+                        <exclusion>
+                            <groupId>io.netty</groupId>
+                            <artifactId>netty-all</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>io.netty</groupId>
+                            <artifactId>netty</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-hadoop-compat</artifactId>
+                    <version>${hbase.version}</version>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-server</artifactId>
+                    <version>${hbase.version}</version>
+                    <type>test-jar</type>
+                    <scope>test</scope>
+                    <exclusions>
+                        <!-- Stubby requires netty5 and a newer version of guava. When available, we can
+                        repackage netty5, guava and stubby into our client and remove these exclusions  -->
+                        <exclusion>
+                            <groupId>io.netty</groupId>
+                            <artifactId>netty-all</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>io.netty</groupId>
+                            <artifactId>netty</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-common</artifactId>
+                    <version>${hbase.version}</version>
+                    <type>test-jar</type>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <!--In hadoop1 this is hadoop-test-->
+                    <artifactId>hadoop-minicluster</artifactId>
+                    <version>${hadoop.version}</version>
+                    <scope>test</scope>
+                    <exclusions>
+                        <!-- Stubby requires netty5 and a newer version of guava. When available, we can
+                        repackage netty5, guava and stubby into our client and remove these exclusions  -->
+                        <exclusion>
+                            <groupId>io.netty</groupId>
+                            <artifactId>netty-all</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>io.netty</groupId>
+                            <artifactId>netty</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-hadoop-compat</artifactId>
+                    <version>${hbase.version}</version>
+                    <type>test-jar</type>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>${compat.module}</artifactId>
+                    <version>${hbase.version}</version>
+                    <type>test-jar</type>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
+                    <version>${hadoop.version}</version>
+                    <type>test-jar</type>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-test</id>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <phase>none</phase>
+                            </execution>
+                            <execution>
+                                <id>api-integration-test</id>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <phase>integration-test</phase>
+                                <configuration>
+                                    <!-- ALPN is needed for SSL engine rewrites and the stubby driver for its version of guava -->
+                                    <argLine>
+                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar:${stubby.driver.path}
+                                    </argLine>
+                                    <forkCount>1</forkCount>
+                                    <reportNameSuffix>anviltop-server</reportNameSuffix>
+                                    <systemPropertyVariables>
+                                        <anviltop.test.extra.resources>anviltop-test.xml
+                                        </anviltop.test.extra.resources>
+                                    </systemPropertyVariables>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
     <dependencies>
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
             <version>${hbase.version}</version>
         </dependency>
-
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
             <version>1.0.0.GA</version>
         </dependency>
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -105,16 +300,19 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
-
         <dependency>
-          <groupId>anviltop-client</groupId>
-          <artifactId>anviltop-client-interface</artifactId>
-          <version>0.1</version>
-          <systemPath>${stubby.driver.path}</systemPath>
-          <scope>system</scope>
+            <groupId>org.mortbay.jetty.alpn</groupId>
+            <artifactId>alpn-boot</artifactId>
+            <version>${alpn.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>anviltop-client</groupId>
+            <artifactId>anviltop-client-interface</artifactId>
+            <version>0.1</version>
+            <systemPath>${stubby.driver.path}</systemPath>
+            <scope>system</scope>
         </dependency>
     </dependencies>
-
     <build>
         <pluginManagement>
             <plugins>
@@ -128,6 +326,11 @@
                         <showDeprecation>false</showDeprecation>
                         <compilerArgument>-Xlint:-options</compilerArgument>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.17</version>
                 </plugin>
             </plugins>
         </pluginManagement>

@@ -14,8 +14,10 @@
 package com.google.cloud.anviltop.hbase;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.util.Strings;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
+import com.google.common.base.Preconditions;
 
 /**
  * An immutable class providing access to configuration options for Anviltop.
@@ -62,6 +64,10 @@ public class AnviltopOptions {
   private final String projectId;
 
   public AnviltopOptions(String host, int port, Credential credential, String projectId) {
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(host), "Host must not be empty or null.");
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
     this.host = host;
     this.port = port;
     this.credential = credential;
