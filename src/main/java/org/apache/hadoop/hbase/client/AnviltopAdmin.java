@@ -1,9 +1,11 @@
 package org.apache.hadoop.hbase.client;
 
 
+import com.google.bigtable.anviltop.AnviltopAdminServices;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
 import com.google.cloud.anviltop.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
@@ -113,7 +115,11 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void createTable(HTableDescriptor desc) throws IOException {
-    anviltopAdminClient.createTable(options.getProjectId(), Bytes.toString(desc.getName()));
+    anviltopAdminClient.createTable(
+        AnviltopAdminServices.CreateTableRequest.newBuilder()
+            .setProjectId(options.getProjectId())
+            .setTableNameBytes(ByteString.copyFrom(desc.getName()))
+            .build());
   }
 
   @Override
@@ -134,7 +140,10 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void deleteTable(TableName tableName) throws IOException {
-    anviltopAdminClient.deleteTable(options.getProjectId(), tableName.getQualifierAsString());
+    anviltopAdminClient.deleteTable(AnviltopAdminServices.DeleteTableRequest.newBuilder()
+        .setProjectId(options.getProjectId())
+        .setTableNameBytes(ByteString.copyFrom(tableName.getQualifier()))
+        .build());
   }
 
   @Override
@@ -225,17 +234,20 @@ public class AnviltopAdmin implements Admin {
   @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
     anviltopAdminClient.createFamily(
-        options.getProjectId(),
-        tableName.getQualifierAsString(),
-        columnDescriptorAdapter.adapt(column).build());
+        AnviltopAdminServices.CreateFamilyRequest.newBuilder()
+            .setProjectId(options.getProjectId())
+            .setTableName(tableName.getQualifierAsString())
+            .setFamily(columnDescriptorAdapter.adapt(column))
+            .build());
   }
 
   @Override
   public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
     anviltopAdminClient.deleteFamily(
-        options.getProjectId(),
-        tableName.getQualifierAsString(),
-        Bytes.toString(columnName));
+        AnviltopAdminServices.DeleteFamilyRequest.newBuilder()
+            .setProjectId(options.getProjectId())
+            .setTableName(tableName.getQualifierAsString())
+            .setFamilyNameBytes(ByteString.copyFrom(columnName)).build());
   }
 
   @Override
