@@ -20,6 +20,11 @@ import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -270,6 +275,57 @@ public class TestIncrement extends AbstractTest {
     Result result = table.increment(increment);
     Assert.assertEquals("Should have incremented the bytes like a long", equivalentValue + 1L,
       Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual))));
+  }
+
+  @Test
+  public void testIncrementWithMaxVersions() throws IOException, InterruptedException {
+    // Initialize data
+    byte[] incrementFamily = Bytes.toBytes("i");
+    byte[] incrementTable = Bytes.toBytes("increment_table");
+
+    TableName incrementTableName = TableName.valueOf(incrementTable);
+    Admin admin = connection.getAdmin();
+    HTableDescriptor tableDescriptor = new HTableDescriptor(incrementTableName);
+    tableDescriptor.addFamily(new HColumnDescriptor(incrementFamily).setMaxVersions(1));
+    admin.createTable(tableDescriptor);
+
+    HTableInterface table = connection.getTable(incrementTable);
+
+    byte[] rowKey = dataHelper.randomData("testrow-");
+    byte[] qual1 = dataHelper.randomData("qual-");
+    long value1 = new Random().nextInt();
+    long incr1 = new Random().nextInt();
+    byte[] qual2 = dataHelper.randomData("qual-");
+    long value2 = new Random().nextInt();
+    long incr2 = new Random().nextInt();
+
+    // Put and increment
+    Put put = new Put(rowKey);
+    put.add(incrementFamily, qual1, Bytes.toBytes(value1));
+    put.add(incrementFamily, qual2, Bytes.toBytes(value2));
+    table.put(put);
+    Increment increment = new Increment(rowKey);
+    increment.addColumn(incrementFamily, qual1, incr1);
+    increment.addColumn(incrementFamily, qual2, incr2);
+    Result result = table.increment(increment);
+    Assert.assertEquals(2, result.size());
+    Assert.assertEquals("Value1=" + value1 + " & Incr1=" + incr1, value1 + incr1,
+        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(incrementFamily, qual1))));
+    Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
+        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(incrementFamily, qual2))));
+
+    // Double-check values with a Get
+    Get get = new Get(rowKey);
+    get.setMaxVersions(5);
+    result = table.get(get);
+    Assert.assertEquals("Expected two results, only the latest version for each column",
+        2, result.size());
+    Assert.assertEquals("Value1=" + value1 + " & Incr1=" + incr1, value1 + incr1,
+        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(incrementFamily, qual1))));
+    Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
+        Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(incrementFamily, qual2))));
+
+    table.close();
   }
 
 }
