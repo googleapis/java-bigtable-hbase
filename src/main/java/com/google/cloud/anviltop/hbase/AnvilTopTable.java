@@ -14,6 +14,7 @@
 package com.google.cloud.anviltop.hbase;
 
 import com.google.bigtable.anviltop.AnviltopData;
+import com.google.bigtable.anviltop.AnviltopServices;
 import com.google.bigtable.anviltop.AnviltopServices.GetRowRequestOrBuilder;
 import com.google.bigtable.anviltop.AnviltopServices.GetRowResponse;
 import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
@@ -142,13 +143,13 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Result get(Get get) throws IOException {
-    GetRowRequestOrBuilder getRowRequest = getAdapter.adapt(get);
+    AnviltopServices.GetRowRequest.Builder getRowRequest = getAdapter.adapt(get);
+    getRowRequest
+        .setProjectId(options.getProjectId())
+        .setTableName(tableName.getQualifierAsString());
+
     try {
-      GetRowResponse response =
-          client.getRow(
-              options.getProjectId(),
-              tableName.getQualifierAsString(),
-              getRowRequest.getRowKey().toByteArray());
+      AnviltopServices.GetRowResponse response = client.getRow(getRowRequest.build());
 
       return getRowResponseAdapter.adaptResponse(response);
     } catch (ServiceException e) {
@@ -189,12 +190,11 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void put(Put put) throws IOException {
-    AnviltopData.RowMutation rowMutation = putAdapter.adapt(put).build();
+    AnviltopData.RowMutation.Builder rowMutation = putAdapter.adapt(put);
+    AnviltopServices.MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
+
     try {
-      client.mutateAtomic(
-          options.getProjectId(),
-          tableName.getQualifierAsString(),
-          rowMutation);
+      client.mutateAtomic(request.build());
     } catch (ServiceException e) {
       throw new IOException(
           makeGenericExceptionMessage(
@@ -225,11 +225,11 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void delete(Delete delete) throws IOException {
-    AnviltopData.RowMutation rowMutation = deleteAdapter.adapt(delete).build();
+    AnviltopData.RowMutation.Builder rowMutation = deleteAdapter.adapt(delete);
+    AnviltopServices.MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
+
     try {
-      client.mutateAtomic(options.getProjectId(),
-          tableName.getQualifierAsString(),
-          rowMutation);
+      client.mutateAtomic(request.build());
     } catch (ServiceException e) {
       throw new IOException(
           makeGenericExceptionMessage(
@@ -260,10 +260,11 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
+    AnviltopData.RowMutation.Builder rowMutation = rowMutationsAdapter.adapt(rm);
+    AnviltopServices.MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
+
     try {
-      client.mutateAtomic(options.getProjectId(),
-          tableName.getQualifierAsString(),
-          rowMutationsAdapter.adapt(rm).build());
+      client.mutateAtomic(request.build());
     } catch (ServiceException e) {
       throw new IOException("Failed to mutate.", e);
     }
@@ -367,6 +368,14 @@ public class AnvilTopTable implements HTableInterface {
       Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes2,
       R r, Batch.Callback<R> rCallback) throws ServiceException, Throwable {
     throw new UnsupportedOperationException();  // TODO
+  }
+
+  private AnviltopServices.MutateRowRequest.Builder makeMutateRowRequest(
+      AnviltopData.RowMutation.Builder rowMutation) {
+    return AnviltopServices.MutateRowRequest.newBuilder()
+        .setProjectId(options.getProjectId())
+        .setTableName(tableName.getQualifierAsString())
+        .setMutation(rowMutation);
   }
 
   static String makeGenericExceptionMessage(
