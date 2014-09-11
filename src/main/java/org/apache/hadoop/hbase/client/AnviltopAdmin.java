@@ -1,8 +1,8 @@
 package org.apache.hadoop.hbase.client;
 
 
-import com.google.bigtable.anviltop.AnviltopData;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
+import com.google.cloud.anviltop.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
 import com.google.protobuf.ServiceException;
 
@@ -42,6 +42,7 @@ public class AnviltopAdmin implements Admin {
   private final AnviltopOptions options;
   private final AnvilTopConnection connection;
   private final AnviltopAdminClient anviltopAdminClient;
+  private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
 
   public AnviltopAdmin(
       AnviltopOptions options,
@@ -226,9 +227,7 @@ public class AnviltopAdmin implements Admin {
     anviltopAdminClient.createFamily(
         options.getProjectId(),
         tableName.getQualifierAsString(),
-        AnviltopData.ColumnFamily.newBuilder()
-            .setName(column.getNameAsString())
-            .build());
+        columnDescriptorAdapter.adapt(column).build());
   }
 
   @Override
