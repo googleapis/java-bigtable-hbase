@@ -31,7 +31,7 @@ public class ScanAdapter
     implements OperationAdapter<Scan, AnviltopData.ReadOptions.Builder> {
 
   private final static byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");
-  public static final String ALL_QUALIFIERS = "\\\\C*";
+  public static final String ALL_QUALIFIERS = "\\C*";
   public static final String ALL_FAMILIES = ".*";
   public static final String ALL_VERSIONS = "ALL";
   public static final char INTERLEAVE_CHARACTER = '+';
@@ -101,10 +101,11 @@ public class ScanAdapter
           scan.getMaxVersions() == Integer.MAX_VALUE ?
               ALL_VERSIONS : Integer.toString(scan.getMaxVersions());
 
-      outputStream.write(Bytes.toBytes("col("));
+      outputStream.write(Bytes.toBytes("col({"));
       outputStream.write(family);
       outputStream.write(':');
       outputStream.write(qualifier);
+      outputStream.write('}');
       outputStream.write(',');
       outputStream.write(' ');
       outputStream.write(Bytes.toBytes(versionPart));

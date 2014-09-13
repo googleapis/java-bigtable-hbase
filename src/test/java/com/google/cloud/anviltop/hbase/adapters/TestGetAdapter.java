@@ -63,7 +63,7 @@ public class TestGetAdapter {
 
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
-    Assert.assertEquals("(col(family1:\\\\C*, ALL))", rowRequestBuilder.getFilter());
+    Assert.assertEquals("(col({family1:\\C*}, ALL))", rowRequestBuilder.getFilter());
   }
 
   @Test
@@ -77,7 +77,7 @@ public class TestGetAdapter {
 
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
-    Assert.assertEquals("(col(family1:\\\\C*, ALL))+(col(family2:\\\\C*, ALL))",
+    Assert.assertEquals("(col({family1:\\C*}, ALL))+(col({family2:\\C*}, ALL))",
         rowRequestBuilder.getFilter());
   }
 
@@ -94,8 +94,8 @@ public class TestGetAdapter {
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
-        "(col(family1:\\\\C*, ALL) | ts(1000000, 1999000))" +
-            "+(col(family2:\\\\C*, ALL) | ts(1000000, 1999000))",
+        "(col({family1:\\C*}, ALL) | ts(1000000, 1999000))" +
+            "+(col({family2:\\C*}, ALL) | ts(1000000, 1999000))",
         rowRequestBuilder.getFilter());
   }
 
@@ -111,7 +111,7 @@ public class TestGetAdapter {
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
-        "(col(family1:\\\\C*, 1))+(col(family2:\\\\C*, 1))",
+        "(col({family1:\\C*}, 1))+(col({family2:\\C*}, 1))",
         rowRequestBuilder.getFilter());
   }
 
@@ -125,7 +125,7 @@ public class TestGetAdapter {
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
-        "(col(family1:\\\\C*, 1))+(col(family2:qualifier1, 1))",
+        "(col({family1:\\C*}, 1))+(col({family2:qualifier1}, 1))",
         rowRequestBuilder.getFilter());
   }
 
@@ -146,13 +146,13 @@ public class TestGetAdapter {
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     ByteArrayOutputStream expectedFilterBuilder = new ByteArrayOutputStream();
-    expectedFilterBuilder.write(Bytes.toBytes("(col(f1:"));
+    expectedFilterBuilder.write(Bytes.toBytes("(col({f1:"));
     expectedFilterBuilder.write(Bytes.toBytes(utf8Part)); // Only ASCII characters need escaping
     expectedFilterBuilder.write(Bytes.toBytes(asciiPart)); // Leave a-z intact
     expectedFilterBuilder.write(Bytes.toBytes("\\x00")); // null byte
     expectedFilterBuilder.write(
         Bytes.toBytes("\\\\\\[\\]\\(\\)\\.\\*")); // Escape each in special characters
-    expectedFilterBuilder.write(Bytes.toBytes(", ALL))"));
+    expectedFilterBuilder.write(Bytes.toBytes("}, ALL))"));
     Assert.assertArrayEquals(
         expectedFilterBuilder.toByteArray(),
         rowRequestBuilder.getFilterBytes().toByteArray());

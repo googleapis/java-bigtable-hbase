@@ -110,12 +110,19 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public boolean exists(Get get) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    // TODO: make use of strip_value() or count to hopefully return no extra data
+    Result result = get(get);
+    return !result.isEmpty();
   }
 
   @Override
   public Boolean[] exists(List<Get> gets) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    Boolean[] results = new Boolean[gets.size()];
+    for (int i = 0; i < gets.size(); i++) {
+      Get get = gets.get(i);
+      results[i] = exists(get);
+    }
+    return results;
   }
 
   @Override
@@ -165,7 +172,12 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Result[] get(List<Get> gets) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    Result[] results = new Result[gets.size()];
+    for (int i = 0; i < gets.size(); i++) {
+      Get get = gets.get(i);
+      results[i] = get(get);
+    }
+    return results;
   }
 
   @Override
@@ -208,7 +220,9 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void put(List<Put> puts) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    for (Put put : puts) {
+      put(put);
+    }
   }
 
   @Override
@@ -243,7 +257,9 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void delete(List<Delete> deletes) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    for (Delete delete : deletes) {
+      delete(delete);
+    }
   }
 
   @Override
@@ -300,7 +316,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public boolean isAutoFlush() {
-    throw new UnsupportedOperationException();  // TODO
+    return true;
   }
 
   @Override
@@ -310,7 +326,6 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void close() throws IOException {
-    throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
@@ -333,17 +348,14 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void setAutoFlush(boolean autoFlush) {
-    throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
   public void setAutoFlush(boolean autoFlush, boolean clearBufferOnFail) {
-    throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
   public void setAutoFlushTo(boolean autoFlush) {
-    throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
