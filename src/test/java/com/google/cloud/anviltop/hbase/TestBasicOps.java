@@ -174,7 +174,7 @@ public class TestBasicOps extends AbstractTest {
 
     // Delete
     Delete delete = new Delete(rowKey);
-    delete.deleteColumn(COLUMN_FAMILY, testQualifier);
+    delete.deleteColumns(COLUMN_FAMILY, testQualifier);
     table.delete(delete);
 
     // Confirm deleted
