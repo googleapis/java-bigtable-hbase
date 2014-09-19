@@ -150,7 +150,6 @@ public class TestBasicOps extends AbstractTest {
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = new byte[10 << 20];  // 10 MB
     new Random().nextBytes(testValue);
-    System.out.println(testValue.length);
     putGetDeleteExists(testRowKey, testQualifier, testValue);
   }
 
