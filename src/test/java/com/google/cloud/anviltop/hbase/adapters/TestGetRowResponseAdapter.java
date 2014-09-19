@@ -37,13 +37,8 @@ public class TestGetRowResponseAdapter {
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   @Test
-  public void testRowKeyNotPresentWhenNoCellsReturned() {
-    byte[] rowKey = dataHelper.randomData("rk1-");
-    AnviltopData.Row.Builder rowBuilder = AnviltopData.Row.newBuilder();
-    rowBuilder.setRowKey(ByteString.copyFrom(rowKey));
-
+  public void testEmptyResponse() {
     GetRowResponse.Builder responseBuilder = GetRowResponse.newBuilder();
-    responseBuilder.setRow(rowBuilder);
 
     Result result = adapter.adaptResponse(responseBuilder.build());
     Assert.assertNull(result.getRow());
@@ -78,94 +73,5 @@ public class TestGetRowResponseAdapter {
     Assert.assertArrayEquals(qualfier, CellUtil.cloneQualifier(cell));
     Assert.assertArrayEquals(rowKey, CellUtil.cloneRow(cell));
     Assert.assertEquals(anviltopTimestamp / 1000L, cell.getTimestamp());
-  }
-
-  @Test
-  public void testMultipleCellsInSingleColumnResult() {
-    byte[] rowKey = dataHelper.randomData("rk1-");
-    byte[] columnFamily = Bytes.toBytes("cf");
-    byte[] qualfier = dataHelper.randomData("col1");
-    byte[] value1 = dataHelper.randomData("val1");
-    long anviltopTimestamp1 = 20000L;
-    byte[] value2 = dataHelper.randomData("val2");
-    long anviltopTimestamp2 = 10000L;
-    byte[] fullQualifier = qualifierTestHelper.makeFullQualifier(columnFamily, qualfier);
-
-    GetRowResponse.Builder responseBuilder = GetRowResponse.newBuilder();
-    AnviltopData.Row.Builder rowBuilder = responseBuilder.getRowBuilder();
-    rowBuilder.setRowKey(ByteString.copyFrom(rowKey));
-
-    AnviltopData.Column.Builder columnBuilder = rowBuilder.addColumnsBuilder();
-    columnBuilder.setColumnName(ByteString.copyFrom(fullQualifier));
-
-    AnviltopData.Cell.Builder cellBuilder = columnBuilder.addCellsBuilder();
-    cellBuilder.setValue(ByteString.copyFrom(value1));
-    cellBuilder.setTimestampMicros(anviltopTimestamp1);
-
-    cellBuilder = columnBuilder.addCellsBuilder();
-    cellBuilder.setValue(ByteString.copyFrom(value2));
-    cellBuilder.setTimestampMicros(anviltopTimestamp2);
-
-    Result result = adapter.adaptResponse(responseBuilder.build());
-    Assert.assertEquals(2, result.size());
-
-    Cell cell1 = result.listCells().get(0);
-    Assert.assertArrayEquals(columnFamily, CellUtil.cloneFamily(cell1));
-    Assert.assertArrayEquals(qualfier, CellUtil.cloneQualifier(cell1));
-    Assert.assertArrayEquals(value1, CellUtil.cloneValue(cell1));
-    Assert.assertEquals(anviltopTimestamp1 / 1000L, cell1.getTimestamp());
-
-    Cell cell2 = result.listCells().get(1);
-    Assert.assertArrayEquals(columnFamily, CellUtil.cloneFamily(cell2));
-    Assert.assertArrayEquals(qualfier, CellUtil.cloneQualifier(cell2));
-    Assert.assertArrayEquals(value2, CellUtil.cloneValue(cell2));
-    Assert.assertEquals(anviltopTimestamp2 / 1000L, cell2.getTimestamp());
-  }
-
-  @Test
-  public void testMultipleCellsAreSortedByColumnName() {
-    byte[] rowKey = dataHelper.randomData("rk1-");
-    byte[] columnFamily = Bytes.toBytes("cf");
-    byte[] qualfier1 = dataHelper.randomData("col1");
-    byte[] qualfier2 = dataHelper.randomData("col2");
-    byte[] value1 = dataHelper.randomData("val1");
-    long anviltopTimestamp1 = 10000L;
-    byte[] value2 = dataHelper.randomData("val2");
-    long anviltopTimestamp2 = 10000L;
-    byte[] fullQualifier1 = qualifierTestHelper.makeFullQualifier(columnFamily, qualfier1);
-    byte[] fullQualifier2 = qualifierTestHelper.makeFullQualifier(columnFamily, qualfier2);
-
-    GetRowResponse.Builder responseBuilder = GetRowResponse.newBuilder();
-    AnviltopData.Row.Builder rowBuilder = responseBuilder.getRowBuilder();
-    rowBuilder.setRowKey(ByteString.copyFrom(rowKey));
-
-    AnviltopData.Column.Builder columnBuilder = rowBuilder.addColumnsBuilder();
-    columnBuilder.setColumnName(ByteString.copyFrom(fullQualifier1));
-
-    AnviltopData.Cell.Builder cellBuilder = columnBuilder.addCellsBuilder();
-    cellBuilder.setValue(ByteString.copyFrom(value1));
-    cellBuilder.setTimestampMicros(anviltopTimestamp1);
-
-    columnBuilder = rowBuilder.addColumnsBuilder();
-    columnBuilder.setColumnName(ByteString.copyFrom(fullQualifier2));
-
-    cellBuilder = columnBuilder.addCellsBuilder();
-    cellBuilder.setValue(ByteString.copyFrom(value2));
-    cellBuilder.setTimestampMicros(anviltopTimestamp2);
-
-    Result result = adapter.adaptResponse(responseBuilder.build());
-    Assert.assertEquals(2, result.size());
-
-    Cell cell1 = result.listCells().get(0);
-    Assert.assertArrayEquals(columnFamily, CellUtil.cloneFamily(cell1));
-    Assert.assertArrayEquals(qualfier1, CellUtil.cloneQualifier(cell1));
-    Assert.assertArrayEquals(value1, CellUtil.cloneValue(cell1));
-    Assert.assertEquals(anviltopTimestamp1 / 1000L, cell1.getTimestamp());
-
-    Cell cell2 = result.listCells().get(1);
-    Assert.assertArrayEquals(columnFamily, CellUtil.cloneFamily(cell2));
-    Assert.assertArrayEquals(qualfier2, CellUtil.cloneQualifier(cell2));
-    Assert.assertArrayEquals(value2, CellUtil.cloneValue(cell2));
-    Assert.assertEquals(anviltopTimestamp2 / 1000L, cell2.getTimestamp());
   }
 }

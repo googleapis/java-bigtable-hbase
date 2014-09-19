@@ -29,6 +29,8 @@ import java.util.List;
  * Adapt a GetRowResponse from Anviltop to an HBase Result
  */
 public class GetRowResponseAdapter implements ResponseAdapter<GetRowResponse, Result> {
+  protected final RowAdapter rowAdapter = new RowAdapter();
+
   /**
    * Transform an Anviltop server response to an HBase Result instance.
    *
@@ -38,57 +40,8 @@ public class GetRowResponseAdapter implements ResponseAdapter<GetRowResponse, Re
   public Result adaptResponse(GetRowResponse response) {
     List<Cell> cells = new ArrayList<Cell>();
     if (response.hasRow()) {
-      byte[] rowKey = response.getRow().getRowKey().toByteArray();
-
-      for (AnviltopData.Column column : response.getRow().getColumnsList()) {
-        byte[] fullColumnName = column.getColumnName().toByteArray();
-
-        int separatorIndex = getColumnSeparatorIndex(fullColumnName);
-
-        byte[] columnFamily = new byte[separatorIndex];
-        System.arraycopy(fullColumnName, 0, columnFamily, 0, separatorIndex);
-
-        // Remove one extra to account for the separator byte:
-        byte[] qualifier = new byte[
-            fullColumnName.length
-                - separatorIndex
-                - AnviltopConstants.ANVILTOP_COLUMN_SEPARATOR_LENGTH];
-
-        System.arraycopy(
-            fullColumnName,
-            separatorIndex + AnviltopConstants.ANVILTOP_COLUMN_SEPARATOR_LENGTH,
-            qualifier,
-            0,
-            qualifier.length);
-
-        for (AnviltopData.Cell cell  : column.getCellsList()) {
-          long hbaseTimestamp = AnviltopConstants.HBASE_TIMEUNIT.convert(
-              cell.getTimestampMicros(),
-              AnviltopConstants.ANVILTOP_TIMEUNIT);
-
-          KeyValue keyValue = new KeyValue(
-              rowKey,
-              columnFamily,
-              qualifier,
-              hbaseTimestamp,
-              cell.getValue().toByteArray());
-
-          cells.add(keyValue);
-        }
-      }
+      return rowAdapter.adaptResponse(response.getRow());
     }
-
-    Collections.sort(cells, KeyValue.COMPARATOR);
-
-    return Result.create(cells);
-  }
-
-  private int getColumnSeparatorIndex(byte[] fullColumnName) {
-    for (int idx = 0; idx < fullColumnName.length; idx++) {
-      if (fullColumnName[idx] == AnviltopConstants.ANVILTOP_COLUMN_SEPARATOR_BYTE) {
-        return idx;
-      }
-    }
-    throw new IllegalStateException("Failed to find column separator.");
+    return new Result();
   }
 }
