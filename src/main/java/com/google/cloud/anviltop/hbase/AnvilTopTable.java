@@ -20,6 +20,8 @@ import com.google.bigtable.anviltop.AnviltopServices.GetRowResponse;
 import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
+import com.google.cloud.anviltop.hbase.adapters.IncrementAdapter;
+import com.google.cloud.anviltop.hbase.adapters.IncrementRowResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.MutationAdapter;
 import com.google.cloud.anviltop.hbase.adapters.PutAdapter;
 import com.google.cloud.anviltop.hbase.adapters.RowMutationsAdapter;
@@ -31,6 +33,8 @@ import com.google.protobuf.Service;
 import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -59,6 +63,8 @@ public class AnvilTopTable implements HTableInterface {
   protected final AnviltopOptions options;
   protected final AnviltopClient client;
   protected final PutAdapter putAdapter = new PutAdapter();
+  protected final IncrementAdapter incrementAdapter = new IncrementAdapter();
+  protected final IncrementRowResponseAdapter incrRespAdapter = new IncrementRowResponseAdapter();
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected final MutationAdapter mutationAdapter =
       new MutationAdapter(
@@ -293,25 +299,56 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Result increment(Increment increment) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    AnviltopServices.IncrementRowRequest.Builder incrementRowRequest = incrementAdapter.adapt(
+        increment);
+    incrementRowRequest
+        .setProjectId(options.getProjectId())
+        .setTableName(tableName.getQualifierAsString());
+
+    try {
+      AnviltopServices.IncrementRowResponse response = client.incrementRow(
+          incrementRowRequest.build());
+      return incrRespAdapter.adaptResponse(response);
+    } catch (ServiceException e) {
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "increment",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              increment.getRow()),
+          e);
+    }
   }
 
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
       throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    Increment incr = new Increment(row);
+    incr.addColumn(family, qualifier, amount);
+    Result result = increment(incr);
+
+    Cell cell = result.getColumnLatestCell(family, qualifier);
+    if (cell == null) {
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "increment",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              row));
+    }
+    return Bytes.toLong(CellUtil.cloneValue(cell));
   }
 
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount,
       Durability durability) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return incrementColumnValue(row, family, qualifier, amount);
   }
 
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount,
       boolean writeToWAL) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return incrementColumnValue(row, family, qualifier, amount);
   }
 
   @Override
