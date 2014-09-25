@@ -16,7 +16,9 @@ package com.google.cloud.anviltop.hbase.adapters;
 
 import com.google.api.client.util.Throwables;
 import com.google.bigtable.anviltop.AnviltopData;
+import com.google.bigtable.anviltop.AnviltopServices;
 import com.google.cloud.anviltop.hbase.AnviltopConstants;
+import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -28,7 +30,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 
 public class ScanAdapter
-    implements OperationAdapter<Scan, AnviltopData.ReadOptions.Builder> {
+    implements OperationAdapter<Scan, AnviltopServices.ReadTableRequest.Builder> {
 
   private final static byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");
   public static final String ALL_QUALIFIERS = "\\C*";
@@ -179,7 +181,19 @@ public class ScanAdapter
   }
 
   @Override
-  public AnviltopData.ReadOptions.Builder adapt(Scan operation) {
-    throw new UnsupportedOperationException("Scan adapter not implemented.");
+  public AnviltopServices.ReadTableRequest.Builder adapt(Scan operation) {
+    throwIfUnsupportedScan(operation);
+    AnviltopServices.ReadTableRequest.Builder result =
+        AnviltopServices.ReadTableRequest.newBuilder();
+
+    AnviltopData.ReadOptions.Builder optionsBuilder = AnviltopData.ReadOptions.newBuilder();
+
+    byte[] filter = buildFilterByteString(operation);
+    optionsBuilder.setFilterBytes(ByteString.copyFrom(filter));
+    optionsBuilder.addRangesBuilder()
+        .setStart(ByteString.copyFrom(operation.getStartRow()))
+        .setEnd(ByteString.copyFrom(operation.getStopRow()));
+    result.setOptions(optionsBuilder);
+    return result;
   }
 }

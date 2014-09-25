@@ -14,24 +14,49 @@
 
 package com.google.cloud.anviltop.hbase.adapters;
 
+import com.google.bigtable.anviltop.AnviltopServices;
+
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+
+/**
+ * Lightweight tests for the ScanAdapter. Many of the methods, such as filter building are
+ * already tested in {@link TestGetAdapter}.
+ */
 @RunWith(JUnit4.class)
 public class TestScanAdapter {
-
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
   ScanAdapter scanAdapter = new ScanAdapter();
 
   @Test
-  public void testScanAdapterIsNotYetSupported() {
-    expectedException.expect(UnsupportedOperationException.class);
-    scanAdapter.adapt(new Scan());
+  public void testFilterStringIsSet() {
+    byte[] family = Bytes.toBytes("family");
+    byte[] qualifier = Bytes.toBytes("qualifier");
+    Scan scan = new Scan();
+    scan.addColumn(family, qualifier);
+    AnviltopServices.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
+    Assert.assertEquals("(col({family:qualifier}, 1))", request.getOptions().getFilter());
+  }
+
+  @Test
+  public void testStartAndEndKeysAreSet() {
+    byte[] startKey = Bytes.toBytes("startKey");
+    byte[] stopKey = Bytes.toBytes("stopKey");
+    Scan scan = new Scan();
+    scan.setStartRow(startKey);
+    scan.setStopRow(stopKey);
+    AnviltopServices.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
+    Assert.assertEquals(1, request.getOptions().getRangesCount());
+    Assert.assertArrayEquals(startKey, request.getOptions().getRanges(0).getStart().toByteArray());
+    Assert.assertArrayEquals(stopKey, request.getOptions().getRanges(0).getEnd().toByteArray());
   }
 }

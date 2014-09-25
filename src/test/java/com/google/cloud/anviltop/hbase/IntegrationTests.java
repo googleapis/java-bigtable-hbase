@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
     TestFilters.class,
     TestGet.class,
     TestGetTable.class,
+    TestScan.class,
     TestIncrement.class,
     TestPut.class,
     TestTimestamp.class})

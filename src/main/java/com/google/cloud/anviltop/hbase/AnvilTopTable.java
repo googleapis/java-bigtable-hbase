@@ -15,8 +15,7 @@ package com.google.cloud.anviltop.hbase;
 
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopServices;
-import com.google.bigtable.anviltop.AnviltopServices.GetRowRequestOrBuilder;
-import com.google.bigtable.anviltop.AnviltopServices.GetRowResponse;
+import com.google.cloud.anviltop.hbase.adapters.AnviltopResultScannerAdapter;
 import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
@@ -24,9 +23,12 @@ import com.google.cloud.anviltop.hbase.adapters.IncrementAdapter;
 import com.google.cloud.anviltop.hbase.adapters.IncrementRowResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.MutationAdapter;
 import com.google.cloud.anviltop.hbase.adapters.PutAdapter;
+import com.google.cloud.anviltop.hbase.adapters.RowAdapter;
 import com.google.cloud.anviltop.hbase.adapters.RowMutationsAdapter;
+import com.google.cloud.anviltop.hbase.adapters.ScanAdapter;
 import com.google.cloud.anviltop.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
+import com.google.cloud.hadoop.hbase.AnviltopResultScanner;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
@@ -76,6 +78,9 @@ public class AnvilTopTable implements HTableInterface {
       new RowMutationsAdapter(mutationAdapter);
   protected final GetAdapter getAdapter = new GetAdapter();
   protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter();
+  protected final ScanAdapter scanAdapter = new ScanAdapter();
+  protected final AnviltopResultScannerAdapter anviltopResultScannerAdapter =
+      new AnviltopResultScannerAdapter(new RowAdapter());
   protected final Configuration configuration;
 
   /**
@@ -193,17 +198,31 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    AnviltopServices.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
+    request.setProjectId(options.getProjectId());
+    request.setTableName(tableName.getQualifierAsString());
+
+    try {
+      AnviltopResultScanner scanner = client.readTable(request.build());
+      return anviltopResultScannerAdapter.adapt(scanner);
+    } catch (ServiceException e) {
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "getScanner",
+              options.getProjectId(),
+              tableName.getQualifierAsString()),
+          e);
+    }
   }
 
   @Override
   public ResultScanner getScanner(byte[] family) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return getScanner(new Scan().addFamily(family));
   }
 
   @Override
   public ResultScanner getScanner(byte[] family, byte[] qualifier) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return getScanner(new Scan().addColumn(family, qualifier));
   }
 
   @Override
@@ -425,6 +444,14 @@ public class AnvilTopTable implements HTableInterface {
         .setProjectId(options.getProjectId())
         .setTableName(tableName.getQualifierAsString())
         .setMutation(rowMutation);
+  }
+
+  static String makeGenericExceptionMessage(String operation, String projectId, String tableName) {
+    return String.format(
+        "Failed to perform operation. Operation='%s', projectId='%s', tableName='%s'",
+        operation,
+        projectId,
+        tableName);
   }
 
   static String makeGenericExceptionMessage(
