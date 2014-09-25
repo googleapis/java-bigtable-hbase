@@ -364,6 +364,7 @@
                                 <exclude>**/TestGetTable.java</exclude>
                                 <exclude>**/TestIncrement.java</exclude>
                                 <exclude>**/TestPut.java</exclude>
+                                <exclude>**/TestScan.java</exclude>
                                 <exclude>**/TestTimestamp.java</exclude>
                             </excludes>
                         </configuration>
