@@ -21,6 +21,7 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -488,5 +489,41 @@ public class TestGet extends AbstractTest {
       Assert.assertEquals(1, e.getNumExceptions());
     }
     Assert.assertTrue("Expected an exception", throwsException);
+  }
+
+  @Test
+  public void testReadSpecialCharactersInColumnQualifiers() throws IOException {
+    byte[][] qualifiers = new byte[][] {
+        Bytes.toBytes("}"),
+        Bytes.toBytes("{"),
+        Bytes.toBytes("@"),
+        Bytes.toBytes("}{"),
+        Bytes.toBytes("@}}"),
+        Bytes.toBytes("@@}}"),
+        Bytes.toBytes("@{{"),
+        Bytes.toBytes("@@{{")
+    };
+    byte[][] values = dataHelper.randomData("value-", qualifiers.length);
+    byte[] rowKey = dataHelper.randomData("rowKey");
+    HTableInterface table = connection.getTable(TABLE_NAME);
+    Put put = new Put(rowKey);
+
+    for (int i = 0; i < qualifiers.length; i++) {
+      put.add(COLUMN_FAMILY, qualifiers[i], values[i]);
+    }
+    table.put(put);
+
+    Get get = new Get(rowKey);
+    for (int i = 0; i < qualifiers.length; i++) {
+      get.addColumn(COLUMN_FAMILY, qualifiers[i]);
+    }
+
+    Result result = table.get(get);
+    Assert.assertEquals(qualifiers.length, result.listCells().size());
+
+    for (int i = 0; i < qualifiers.length; i++) {
+      byte[] value = CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qualifiers[i]));
+      Assert.assertArrayEquals(values[i], value);
+    }
   }
 }

@@ -159,6 +159,17 @@ public class TestGetAdapter {
   }
 
   @Test
+  public void testBigtableReaderSpecialCharactersAreQuoted() throws IOException {
+    String family = "f1";
+    String qualifier = "foo }{ @";
+
+    Get get = makeValidGet(dataHelper.randomData("special"));
+    get.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier));
+    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    Assert.assertEquals("(col({f1:foo\\ \\@}\\@{\\ \\@@}, ALL))", rowRequestBuilder.getFilter());
+  }
+
+  @Test
   public void testMaxCellsPerColumnFamilyIsNotSupported() throws IOException {
     Get get = makeValidGet(dataHelper.randomData("rk1-"));
     get.setMaxResultsPerColumnFamily(10);
@@ -184,5 +195,4 @@ public class TestGetAdapter {
 
     getAdapter.adapt(get);
   }
-
 }
