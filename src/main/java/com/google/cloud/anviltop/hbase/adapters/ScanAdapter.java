@@ -39,43 +39,79 @@ public class ScanAdapter
   public static final char INTERLEAVE_CHARACTER = '+';
 
   /**
-   * A re-implementation of RE2:QuoteMeta to properly escape literals for passing to
-   * bigtable's reader-expression language.
-   * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
-   * @return A byte array with speciail characters quoted with backslash (\).
+   * An OutputStream that performs RE2:QuoteMeta as bytes are written.
    */
-  static byte[] quoteMeta(byte[] unquoted) {
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(unquoted.length);
-    for (int idx = 0; idx < unquoted.length; idx++) {
-      // Escape any ascii character not in [A-Za-z_0-9].
-      //
-      // Note that it's legal to escape a character even if it has no
-      // special meaning in a regular expression -- so this function does
-      // that.  (This also makes it identical to the perl function of the
-      // same name except for the null-character special case;
-      // see `perldoc -f quotemeta`.)
-      if ((unquoted[idx] < 'a' || unquoted[idx] > 'z')
-          && (unquoted[idx] < 'A' || unquoted[idx] > 'Z')
-          && (unquoted[idx] < '0' || unquoted[idx] > '9')
-          && (unquoted[idx] != '_')
+  protected static class QuoteMetaOutputStream extends OutputStream {
+    protected final OutputStream delegate;
+
+    public QuoteMetaOutputStream(OutputStream delegate) {
+      this.delegate = delegate;
+    }
+
+    public void writeNullCharacterBytes() throws IOException {
+      for (byte b : NULL_CHARACTER_BYTES) {
+        delegate.write(b);
+      }
+    }
+
+    @Override
+    public void write(int unquoted) throws IOException {
+      if (unquoted == 0) { // Special handling for null chars.
+        // Note that this special handling is not strictly required for RE2,
+        // but this quoting is required for other regexp libraries such as
+        // PCRE.
+        // Can't use "\\0" since the next character might be a digit.
+        writeNullCharacterBytes();
+        return;
+      }
+      if ((unquoted < 'a' || unquoted > 'z')
+          && (unquoted < 'A' || unquoted > 'Z')
+          && (unquoted < '0' || unquoted > '9')
+          && (unquoted != '_')
           // If this is the part of a UTF8 or Latin1 character, we need
           // to copy this byte without escaping.  Experimentally this is
           // what works correctly with the regexp library.
-          && (unquoted[idx] >= 0)) {
-        if (unquoted[idx] == 0) { // Special handling for null chars.
-            // Note that this special handling is not strictly required for RE2,
-            // but this quoting is required for other regexp libraries such as
-            // PCRE.
-            // Can't use "\\0" since the next character might be a digit.
-          outputStream.write(NULL_CHARACTER_BYTES, 0, NULL_CHARACTER_BYTES.length);
-          continue;
-        }
-        outputStream.write('\\');
+          && (unquoted >= 0)) {
+        delegate.write('\\');
       }
-      outputStream.write(unquoted[idx]);
+      delegate.write(unquoted);
+    }
+  }
+
+  /**
+   * An OutputStream that performs bigtable reader filter expression language quoting of
+   * '@', '{', and '}' by pre-pending a '@' to each.
+   */
+  protected static class QuoteFilterExpressionStream extends OutputStream {
+    protected final OutputStream delegate;
+
+    public QuoteFilterExpressionStream(OutputStream delegate) {
+      this.delegate = delegate;
     }
 
-    return outputStream.toByteArray();
+    @Override
+    public void write(int unquoted) throws IOException {
+      if (unquoted == '@' || unquoted == '{' || unquoted == '}') {
+        delegate.write('@');
+      }
+      delegate.write(unquoted);
+    }
+  }
+
+  /**
+   * Write unquoted to the OutputStream applying both RE2:QuoteMeta and Bigtable reader
+   * expression quoting.
+   * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
+   * @param outputStream A stream to write quoted output to
+   */
+  static void writeQuotedExpression(byte[] unquoted, OutputStream outputStream)
+      throws  IOException {
+    QuoteFilterExpressionStream quoteFilterExpressionStream =
+        new QuoteFilterExpressionStream(outputStream);
+    QuoteMetaOutputStream quoteMetaOutputStream =
+        new QuoteMetaOutputStream(quoteFilterExpressionStream);
+
+    quoteMetaOutputStream.write(unquoted);
   }
 
   /**
@@ -83,20 +119,16 @@ public class ScanAdapter
    * The implementation of more filters will change the resultant form.
    * @param outputStream The stream to write the filter specification to
    * @param family The family byte array
-   * @param qualifier The qualifier byte array
+   * @param unquotedQualifier The qualifier byte array, unquoted.
    * @param scan The Scan object from which we can extract filters.
    */
   static void writeScanStream(
-      OutputStream outputStream, byte[] family, byte[] qualifier, Scan scan) {
+      OutputStream outputStream, byte[] family, byte[] unquotedQualifier, Scan scan) {
     try {
       outputStream.write('(');
 
       if (family == null) {
         family = Bytes.toBytes(ALL_FAMILIES);
-      }
-
-      if (qualifier == null) {
-        qualifier = Bytes.toBytes(ALL_QUALIFIERS);
       }
 
       String versionPart =
@@ -106,7 +138,11 @@ public class ScanAdapter
       outputStream.write(Bytes.toBytes("col({"));
       outputStream.write(family);
       outputStream.write(':');
-      outputStream.write(qualifier);
+      if (unquotedQualifier == null) {
+        outputStream.write(Bytes.toBytes(ALL_QUALIFIERS));
+      } else {
+        writeQuotedExpression(unquotedQualifier, outputStream);
+      }
       outputStream.write('}');
       outputStream.write(',');
       outputStream.write(' ');
@@ -151,8 +187,7 @@ public class ScanAdapter
               outputStream.write(INTERLEAVE_CHARACTER);
             }
             writeInterleave = true;
-            byte[] quotedQualifier = quoteMeta(qualifier);
-            writeScanStream(outputStream, entry.getKey(), quotedQualifier, scan);
+            writeScanStream(outputStream, entry.getKey(), qualifier, scan);
           }
         }
       }
