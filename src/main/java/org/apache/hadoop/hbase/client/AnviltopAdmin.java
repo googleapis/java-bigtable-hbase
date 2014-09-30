@@ -505,12 +505,14 @@ public class AnviltopAdmin implements Admin {
   }
 
   @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName) throws IOException, InterruptedException {
+  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName)
+      throws IOException, InterruptedException {
     throw new UnsupportedOperationException("getCompactionState");
   }
 
   @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes) throws IOException, InterruptedException {
+  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes)
+      throws IOException, InterruptedException {
     throw new UnsupportedOperationException("getCompactionStateForRegion");
 
   }
