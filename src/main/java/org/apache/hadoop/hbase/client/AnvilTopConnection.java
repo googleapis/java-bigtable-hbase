@@ -20,7 +20,7 @@ import com.google.cloud.anviltop.hbase.AnvilTopOptionsFactory;
 import com.google.cloud.anviltop.hbase.AnvilTopTable;
 import com.google.cloud.hadoop.hbase.AnviltopAdminBlockingGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
-import com.google.cloud.hadoop.hbase.AnviltopBlockingGrpcClient;
+import com.google.cloud.hadoop.hbase.AnviltopGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
@@ -116,7 +116,7 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
       ChannelOptions channelOptions,
       ExecutorService executorService) {
 
-    return AnviltopBlockingGrpcClient.createClient(
+    return AnviltopGrpcClient.createClient(
         transportOptions, channelOptions, executorService);
   }
 
