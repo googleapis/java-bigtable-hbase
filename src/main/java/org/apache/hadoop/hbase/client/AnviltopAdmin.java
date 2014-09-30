@@ -282,57 +282,53 @@ public class AnviltopAdmin implements Admin {
   }
 
   @Override
-  public void flush(String tableNameOrRegionName) throws IOException, InterruptedException {
+  public void flush(TableName tableName) throws IOException, InterruptedException {
     throw new UnsupportedOperationException("flush");  // TODO
   }
 
   @Override
-  public void flush(byte[] tableNameOrRegionName) throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("flush");  // TODO
+  public void flushRegion(byte[] bytes) throws IOException, InterruptedException {
+    throw new UnsupportedOperationException("flushRegion");  // TODO
   }
 
   @Override
-  public void compact(String tableNameOrRegionName) throws IOException, InterruptedException {
+  public void compact(TableName tableName) throws IOException, InterruptedException {
     throw new UnsupportedOperationException("compact");  // TODO
   }
 
   @Override
-  public void compact(byte[] tableNameOrRegionName) throws IOException, InterruptedException {
+  public void compactRegion(byte[] bytes) throws IOException, InterruptedException {
+    throw new UnsupportedOperationException("compactRegion");  // TODO
+  }
+
+  @Override
+  public void compact(TableName tableName, byte[] bytes) throws IOException, InterruptedException {
     throw new UnsupportedOperationException("compact");  // TODO
   }
 
   @Override
-  public void compact(String tableOrRegionName, String columnFamily)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("compact");  // TODO
+  public void compactRegion(byte[] bytes, byte[] bytes2) throws IOException, InterruptedException {
+    throw new UnsupportedOperationException("compactRegion");  // TODO
   }
 
   @Override
-  public void compact(byte[] tableNameOrRegionName, byte[] columnFamily)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("compact");  // TODO
-  }
-
-  @Override
-  public void majorCompact(String tableNameOrRegionName) throws IOException, InterruptedException {
+  public void majorCompact(TableName tableName) throws IOException, InterruptedException {
     throw new UnsupportedOperationException("majorCompact");  // TODO
   }
 
   @Override
-  public void majorCompact(byte[] tableNameOrRegionName) throws IOException, InterruptedException {
+  public void majorCompactRegion(byte[] bytes) throws IOException, InterruptedException {
+    throw new UnsupportedOperationException("majorCompactRegion");  // TODO
+  }
+
+  @Override
+  public void majorCompact(TableName tableName, byte[] bytes) throws IOException, InterruptedException {
     throw new UnsupportedOperationException("majorCompact");  // TODO
   }
 
   @Override
-  public void majorCompact(String tableNameOrRegionName, String columnFamily)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("majorCompact");  // TODO
-  }
-
-  @Override
-  public void majorCompact(byte[] tableNameOrRegionName, byte[] columnFamily)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("majorCompact");  // TODO
+  public void majorCompactRegion(byte[] bytes, byte[] bytes2) throws IOException, InterruptedException {
+    throw new UnsupportedOperationException("majorCompactRegion");  // TODO
   }
 
   @Override
@@ -393,25 +389,23 @@ public class AnviltopAdmin implements Admin {
   }
 
   @Override
-  public void split(String tableNameOrRegionName) throws IOException, InterruptedException {
+  public void split(TableName tableName) throws IOException, InterruptedException {
     throw new UnsupportedOperationException("split");  // TODO
   }
 
   @Override
-  public void split(byte[] tableNameOrRegionName) throws IOException, InterruptedException {
+  public void splitRegion(byte[] bytes) throws IOException, InterruptedException {
+    throw new UnsupportedOperationException("splitRegion");  // TODO
+  }
+
+  @Override
+  public void split(TableName tableName, byte[] bytes) throws IOException, InterruptedException {
     throw new UnsupportedOperationException("split");  // TODO
   }
 
   @Override
-  public void split(String tableNameOrRegionName, String splitPoint)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("split");  // TODO
-  }
-
-  @Override
-  public void split(byte[] tableNameOrRegionName, byte[] splitPoint)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("split");  // TODO
+  public void splitRegion(byte[] bytes, byte[] bytes2) throws IOException, InterruptedException {
+    throw new UnsupportedOperationException("splitRegion");  // TODO
   }
 
   @Override
@@ -511,15 +505,15 @@ public class AnviltopAdmin implements Admin {
   }
 
   @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(
-      String tableNameOrRegionName) throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("getCompactionState");  // TODO
+  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName)
+      throws IOException, InterruptedException {
+    throw new UnsupportedOperationException("getCompactionState");
   }
 
   @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(
-      byte[] tableNameOrRegionName) throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("getCompactionState");  // TODO
+  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes)
+      throws IOException, InterruptedException {
+    throw new UnsupportedOperationException("getCompactionStateForRegion");
   }
 
   @Override

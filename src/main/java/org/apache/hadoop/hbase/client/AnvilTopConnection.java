@@ -156,6 +156,11 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
   }
 
   @Override
+  public RegionLocator getRegionLocator(TableName tableName) throws IOException {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
   public Admin getAdmin() throws IOException {
     return new AnviltopAdmin(options, conf, this, anviltopAdminClient);
   }
