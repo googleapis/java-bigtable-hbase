@@ -390,22 +390,22 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void split(TableName tableName) throws IOException, InterruptedException {
-
+    throw new UnsupportedOperationException("split");  // TODO
   }
 
   @Override
   public void splitRegion(byte[] bytes) throws IOException, InterruptedException {
-
+    throw new UnsupportedOperationException("splitRegion");  // TODO
   }
 
   @Override
   public void split(TableName tableName, byte[] bytes) throws IOException, InterruptedException {
-
+    throw new UnsupportedOperationException("split");  // TODO
   }
 
   @Override
   public void splitRegion(byte[] bytes, byte[] bytes2) throws IOException, InterruptedException {
-
+    throw new UnsupportedOperationException("splitRegion");  // TODO
   }
 
   @Override
@@ -506,12 +506,13 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName) throws IOException, InterruptedException {
-    return null;
+    throw new UnsupportedOperationException("getCompactionState");
   }
 
   @Override
   public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes) throws IOException, InterruptedException {
-    return null;
+    throw new UnsupportedOperationException("getCompactionStateForRegion");
+
   }
 
   @Override
