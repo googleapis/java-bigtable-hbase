@@ -514,7 +514,6 @@ public class AnviltopAdmin implements Admin {
   public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes)
       throws IOException, InterruptedException {
     throw new UnsupportedOperationException("getCompactionStateForRegion");
-
   }
 
   @Override
