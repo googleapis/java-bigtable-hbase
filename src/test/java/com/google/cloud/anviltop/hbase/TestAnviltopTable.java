@@ -1,7 +1,7 @@
 package com.google.cloud.anviltop.hbase;
 
 import com.google.bigtable.anviltop.AnviltopServices;
-import com.google.cloud.hadoop.hbase.AnviltopBlockingClient;
+import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.protobuf.ServiceException;
 
 
@@ -32,7 +32,7 @@ public class TestAnviltopTable {
   public static final String TEST_TABLE = "testtable";
 
   @Mock
-  public AnviltopBlockingClient mockClient;
+  public AnviltopClient mockClient;
   public AnvilTopTable table;
 
   @Before
