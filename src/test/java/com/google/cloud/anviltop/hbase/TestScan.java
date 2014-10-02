@@ -7,7 +7,7 @@ import com.google.cloud.anviltop.hbase.adapters.TestScanAdapter;
 
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -57,7 +57,7 @@ public class TestScan extends AbstractTest {
   @Test
   public void testGetScannerNoQualifiers() throws IOException {
     // Initialize variables
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     int numValues = 3;
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -98,7 +98,7 @@ public class TestScan extends AbstractTest {
     int rowsToWrite = 100;
 
     // Initialize variables
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
 
     byte[][] rowKeys = new byte[rowsToWrite][];
     rowKeys[0] = dataHelper.randomData("scan_row_");

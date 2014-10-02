@@ -20,7 +20,7 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
@@ -38,7 +38,7 @@ public class TestTimestamp extends AbstractTest {
   @Test
   public void testArbitraryTimestamp() throws IOException {
     // Initialize
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQual-");
     int numVersions = 4;

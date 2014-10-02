@@ -22,7 +22,7 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
@@ -49,7 +49,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndPutSameQual() throws IOException {
     // Initialize
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
     byte[] value1 = dataHelper.randomData("value-");
@@ -89,7 +89,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndDeleteSameQual() throws IOException {
     // Initialize
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
     byte[] value1 = dataHelper.randomData("value-");
@@ -119,7 +119,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndPutDiffQual() throws IOException {
     // Initialize
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual1 = dataHelper.randomData("qualifier-");
     byte[] qual2 = dataHelper.randomData("qualifier-");
@@ -160,7 +160,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndDeleteDiffQual() throws IOException {
     // Initialize
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual1 = dataHelper.randomData("qualifier-");
     byte[] qual2 = dataHelper.randomData("qualifier-");
@@ -200,7 +200,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndPutDiffRow() throws IOException {
     // Initialize
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey1 = dataHelper.randomData("rowKey-");
     byte[] rowKey2 = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
@@ -218,7 +218,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndDeleteDiffRow() throws IOException {
     // Initialize
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey1 = dataHelper.randomData("rowKey-");
     byte[] rowKey2 = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");

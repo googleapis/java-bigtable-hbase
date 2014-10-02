@@ -21,7 +21,7 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
@@ -55,7 +55,7 @@ public class TestDurability extends AbstractTest {
     Put put = new Put(rowKey);
     put.setDurability(durability);
     put.add(COLUMN_FAMILY, testQualifier, testValue);
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     table.put(put);
 
     // Get

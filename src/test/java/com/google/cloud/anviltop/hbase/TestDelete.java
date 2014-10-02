@@ -20,7 +20,7 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
@@ -36,7 +36,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteRow() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
@@ -63,7 +63,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteEmptyRow() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
 
     Delete delete = new Delete(rowKey);
@@ -78,7 +78,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteLatestColumnVersion() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
@@ -113,7 +113,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteSpecificColumnVersion() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
@@ -150,7 +150,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteAllColumnVersions() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
@@ -189,7 +189,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteOlderColumnVersions() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
@@ -225,7 +225,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteFamily() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
@@ -260,7 +260,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteOlderFamilyColumns() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
@@ -301,7 +301,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteFamilyWithSpecificTimestamp() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
