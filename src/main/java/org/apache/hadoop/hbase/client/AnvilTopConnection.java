@@ -59,6 +59,14 @@ import java.util.concurrent.TimeUnit;
 public class AnvilTopConnection implements ClusterConnection, Closeable {
   private static final Log LOG = LogFactory.getLog(AnvilTopConnection.class);
 
+  private static class LoggingUncaughtExceptionHandler
+      implements Thread.UncaughtExceptionHandler {
+    @Override
+    public void uncaughtException(Thread t, Throwable e) {
+      LOG.error(String.format("Uncaught exception in threadpool thread %s", t.getName()), e);
+    }
+  }
+
   private final Configuration conf;
   private volatile boolean closed;
   private volatile boolean aborted;
@@ -85,7 +93,10 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
 
     if (batchPool == null) {
       batchPool = Executors.newCachedThreadPool(
-          new ThreadFactoryBuilder().setNameFormat("anviltop-client-%s").build());
+          new ThreadFactoryBuilder()
+              .setNameFormat("anviltop-client-%s")
+              .setUncaughtExceptionHandler(new LoggingUncaughtExceptionHandler())
+              .build());
     }
 
     this.options = AnvilTopOptionsFactory.fromConfiguration(conf);
@@ -152,7 +163,7 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
 
   @Override
   public HTableInterface getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new AnvilTopTable(tableName, options, conf, client);
+    return new AnvilTopTable(tableName, options, conf, client, pool);
   }
 
   @Override

@@ -21,6 +21,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
+import java.util.concurrent.Executors;
 
 /**
  * Unit tests for
@@ -40,7 +41,11 @@ public class TestAnviltopTable {
     MockitoAnnotations.initMocks(this);
     AnviltopOptions options = new AnviltopOptions("testhost", 0, null, TEST_PROJECT);
     table = new AnvilTopTable(
-        TableName.valueOf(TEST_TABLE), options, new Configuration(), mockClient);
+        TableName.valueOf(TEST_TABLE),
+        options,
+        new Configuration(),
+        mockClient,
+        Executors.newCachedThreadPool());
   }
 
   @Test

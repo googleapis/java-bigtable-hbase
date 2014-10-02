@@ -59,6 +59,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 public class AnvilTopTable implements HTableInterface {
   protected final TableName tableName;
@@ -82,6 +83,8 @@ public class AnvilTopTable implements HTableInterface {
   protected final AnviltopResultScannerAdapter anviltopResultScannerAdapter =
       new AnviltopResultScannerAdapter(new RowAdapter());
   protected final Configuration configuration;
+  protected final BatchExecutor batchExecutor;
+  private final ExecutorService executorService;
 
   /**
    * Constructed by AnvilTopConnection
@@ -92,11 +95,25 @@ public class AnvilTopTable implements HTableInterface {
   public AnvilTopTable(TableName tableName,
       AnviltopOptions options,
       Configuration configuration,
-      AnviltopClient client) {
+      AnviltopClient client,
+      ExecutorService executorService) {
     this.tableName = tableName;
     this.options = options;
     this.client = client;
     this.configuration = configuration;
+    this.executorService = executorService;
+    this.batchExecutor = new BatchExecutor(
+        client,
+        options,
+        tableName,
+        executorService,
+        getAdapter,
+        getRowResponseAdapter,
+        putAdapter,
+        deleteAdapter,
+        rowMutationsAdapter,
+        incrementAdapter);
+
   }
 
   @Override
@@ -133,35 +150,30 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Boolean[] exists(List<Get> gets) throws IOException {
-    Boolean[] results = new Boolean[gets.size()];
-    for (int i = 0; i < gets.size(); i++) {
-      Get get = gets.get(i);
-      results[i] = exists(get);
-    }
-    return results;
+    return batchExecutor.exists(gets);
   }
 
   @Override
   public void batch(List<? extends Row> actions, Object[] results)
       throws IOException, InterruptedException {
-    throw new UnsupportedOperationException();  // TODO
+    batchExecutor.batch(actions, results);
   }
 
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
-    throw new UnsupportedOperationException();  // TODO
+    return batchExecutor.batch(actions);
   }
 
   @Override
   public <R> void batchCallback(List<? extends Row> actions, Object[] results,
       Batch.Callback<R> callback) throws IOException, InterruptedException {
-    throw new UnsupportedOperationException();  // TODO
+    batchExecutor.batchCallback(actions, results, callback);
   }
 
   @Override
   public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback)
       throws IOException, InterruptedException {
-    throw new UnsupportedOperationException();  // TODO
+    return batchExecutor.batchCallback(actions, callback);
   }
 
   @Override
@@ -188,12 +200,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Result[] get(List<Get> gets) throws IOException {
-    Result[] results = new Result[gets.size()];
-    for (int i = 0; i < gets.size(); i++) {
-      Get get = gets.get(i);
-      results[i] = get(get);
-    }
-    return results;
+    return batchExecutor.get(gets);
   }
 
   @Override
@@ -250,9 +257,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void put(List<Put> puts) throws IOException {
-    for (Put put : puts) {
-      put(put);
-    }
+    batchExecutor.put(puts);
   }
 
   @Override
@@ -287,9 +292,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void delete(List<Delete> deletes) throws IOException {
-    for (Delete delete : deletes) {
-      delete(delete);
-    }
+    batchExecutor.delete(deletes);
   }
 
   @Override
