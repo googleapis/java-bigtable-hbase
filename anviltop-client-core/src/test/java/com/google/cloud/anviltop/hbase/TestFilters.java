@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.filter.NullComparator;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.SubstringComparator;
+import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -918,6 +919,40 @@ public class TestFilters extends AbstractTest {
     filter = new RowFilter(CompareFilter.CompareOp.NO_OP, rowKey2Comparable);
     results = scanWithFilter(table, row0, endRow, qual, filter);
     Assert.assertEquals("# results", 0, results.length);
+
+    table.close();
+  }
+
+  @Test
+  public void testValueFilter() throws IOException {
+    // Initialize
+    int numGoodCols = 5;
+    int numBadCols = 20;
+    String goodValue = "includeThisValue";
+    Table table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testRow-");
+    Put put = new Put(rowKey);
+    for (int i = 0; i < numBadCols; ++i) {
+      put.add(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes("someval"));
+    }
+    for (int i = 0; i < numGoodCols; ++i) {
+      put.add(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(goodValue));
+    }
+    table.put(put);
+
+    // Filter for results
+    Filter filter = new ValueFilter(
+        CompareFilter.CompareOp.EQUAL,
+        new BinaryComparator(Bytes.toBytes(goodValue)));
+
+    Get get = new Get(rowKey).setFilter(filter);
+    Result result = table.get(get);
+    Assert.assertEquals("Should only return good values", numGoodCols, result.size());
+    Cell[] cells = result.rawCells();
+    for (Cell cell : cells) {
+      Assert.assertTrue("Should have good value",
+          Bytes.toString(CellUtil.cloneValue(cell)).startsWith(goodValue));
+    }
 
     table.close();
   }

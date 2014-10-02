@@ -95,8 +95,8 @@ public class TestCheckAndMutate extends AbstractTest {
     byte[] value1 = dataHelper.randomData("value-");
     byte[] value2 = dataHelper.randomData("value-");
 
-    // Delete with checking non-existent value
-    Delete delete = new Delete(rowKey).deleteColumn(COLUMN_FAMILY, qual);
+    // Delete all previous versions if the value is found.
+    Delete delete = new Delete(rowKey).deleteColumns(COLUMN_FAMILY, qual);
     boolean success = table.checkAndDelete(rowKey, COLUMN_FAMILY, qual, value1, delete);
     Assert.assertFalse("Column doesn't exist.  Should fail.", success);
     success = table.checkAndDelete(rowKey, COLUMN_FAMILY, qual, null, delete);
@@ -167,8 +167,8 @@ public class TestCheckAndMutate extends AbstractTest {
     byte[] value1 = dataHelper.randomData("value-");
     byte[] value2 = dataHelper.randomData("value-");
 
-    // Put then again
-    Delete delete = new Delete(rowKey).deleteColumn(COLUMN_FAMILY, qual1);
+    // Delete all versions of a column if the latest version matches
+    Delete delete = new Delete(rowKey).deleteColumns(COLUMN_FAMILY, qual1);
     boolean success = table.checkAndDelete(rowKey, COLUMN_FAMILY, qual2, value2, delete);
     Assert.assertFalse("Column doesn't exist.  Should fail.", success);
     success = table.checkAndDelete(rowKey, COLUMN_FAMILY, qual2, null, delete);
@@ -225,7 +225,7 @@ public class TestCheckAndMutate extends AbstractTest {
     byte[] value = dataHelper.randomData("value-");
 
     // Put then again
-    Delete delete = new Delete(rowKey1).deleteColumn(COLUMN_FAMILY, qual);
+    Delete delete = new Delete(rowKey1).deleteColumns(COLUMN_FAMILY, qual);
     expectedException.expect(DoNotRetryIOException.class);
     expectedException.expectMessage("Action's getRow must match the passed row");
     table.checkAndDelete(rowKey2, COLUMN_FAMILY, qual, null, delete);
