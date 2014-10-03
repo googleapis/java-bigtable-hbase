@@ -111,7 +111,7 @@ public class TestBasicOps extends AbstractTest {
 
     // Delete
     Delete delete = new Delete(rowKey);
-    delete.deleteColumn(COLUMN_FAMILY, null);
+    delete.deleteColumns(COLUMN_FAMILY, null);
     table.delete(delete);
 
     // Confirm deleted
