@@ -163,52 +163,58 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void enableTable(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("enableTable");  // TODO
+    // NOP
   }
 
   @Override
   public void enableTableAsync(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("enableTableAsync");  // TODO
+    // NOP
   }
 
   @Override
   public HTableDescriptor[] enableTables(String regex) throws IOException {
-    throw new UnsupportedOperationException("enableTables");  // TODO
+    // NOP
+    return new HTableDescriptor[0];
   }
 
   @Override
   public HTableDescriptor[] enableTables(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("enableTables");  // TODO
+    // NOP
+    return new HTableDescriptor[0];
   }
 
   @Override
   public void disableTableAsync(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("disableTableAsync");  // TODO
+    // NOP
   }
 
   @Override
   public void disableTable(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("disableTable");  // TODO
+    // NOP
   }
 
   @Override
   public HTableDescriptor[] disableTables(String regex) throws IOException {
-    throw new UnsupportedOperationException("disableTables");  // TODO
+    // NOP
+    return new HTableDescriptor[0];
   }
 
   @Override
   public HTableDescriptor[] disableTables(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("disableTables");  // TODO
+    // NOP
+    return new HTableDescriptor[0];
   }
 
   @Override
   public boolean isTableEnabled(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("isTableEnabled");  // TODO
+    // AnvilTop tables are always enabled.
+    return true;
   }
 
   @Override
   public boolean isTableDisabled(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("isTableDisabled");  // TODO
+    // AnvilTop tables are always enabled.
+    return false;
   }
 
   @Override
