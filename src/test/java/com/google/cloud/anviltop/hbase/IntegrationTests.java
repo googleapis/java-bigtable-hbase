@@ -21,6 +21,7 @@ import org.junit.runners.Suite;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.SecureRandom;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -66,6 +67,11 @@ public class IntegrationTests {
       if (resourceStream != null) {
         configuration.addResource(resourceStream);
       }
+    }
+    String projectId = configuration.get(AnvilTopOptionsFactory.PROJECT_ID_KEY);
+    if (projectId != null) {
+      SecureRandom random = new SecureRandom();
+      configuration.set(AnvilTopOptionsFactory.PROJECT_ID_KEY, projectId + "-" + random.nextInt());
     }
   }
 
