@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
     TestBatch.class,
     TestCheckAndMutate.class,
     TestCreateTable.class,
+    TestDisableTable.class,
     TestDelete.class,
     TestDurability.class,
     TestFilters.class,
