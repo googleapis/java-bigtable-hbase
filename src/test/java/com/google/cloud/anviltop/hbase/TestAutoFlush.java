@@ -17,7 +17,7 @@ import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
 import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
 
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
@@ -37,15 +37,15 @@ import java.io.IOException;
 public class TestAutoFlush extends AbstractTest {
   @Test
   public void testAutoFlushDefault() throws Exception {
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     Assert.assertTrue("Auto-flush on", table.isAutoFlush());
   }
 
   @Test
   public void testAutoFlushOff() throws Exception {
-    HTableInterface tableForWrite = connection.getTable(TABLE_NAME);
+    Table tableForWrite = connection.getTable(TABLE_NAME);
     tableForWrite.setAutoFlushTo(false);
-    HTableInterface tableForRead = createNewConnection().getTable(TABLE_NAME);
+    Table tableForRead = createNewConnection().getTable(TABLE_NAME);
     Get get = quickPutThenGet(tableForWrite);
 
     Result result = tableForRead.get(get);
@@ -58,16 +58,16 @@ public class TestAutoFlush extends AbstractTest {
 
   @Test
   public void testAutoFlushOn() throws Exception {
-    HTableInterface tableForWrite = connection.getTable(TABLE_NAME);
+    Table tableForWrite = connection.getTable(TABLE_NAME);
     tableForWrite.setAutoFlushTo(true);
-    HTableInterface tableForRead = createNewConnection().getTable(TABLE_NAME);
+    Table tableForRead = createNewConnection().getTable(TABLE_NAME);
     Get get = quickPutThenGet(tableForWrite);
 
     Result result = tableForRead.get(get);
     Assert.assertEquals("Expecting one result", 1, result.size());
   }
 
-  private Get quickPutThenGet(HTableInterface tableForWrite) throws IOException {
+  private Get quickPutThenGet(Table tableForWrite) throws IOException {
     // Set up the tiny write and read
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qualifier = dataHelper.randomData("testQualifier-");

@@ -24,7 +24,7 @@ import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Test;
@@ -42,7 +42,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testNoQualifier() throws IOException {
     // Initialize variables
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     int numValues = 3;
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -78,7 +78,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testMultipleQualifiers() throws IOException {
     // Initialize variables
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     int numValues = 3;
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -118,7 +118,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testTimeRange() throws IOException {
     // Initialize variables
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     int numVersions = 5;
@@ -163,7 +163,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testSingleTimestamp() throws IOException {
     // Initialize variables
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     int numVersions = 5;
@@ -203,7 +203,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testMaxVersions() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     int totalVersions = 5;
@@ -248,7 +248,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testMaxResultsPerColumnFamily() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     int totalColumns = 10;
     int offsetColumn = 3;
@@ -298,7 +298,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testEmptyValues() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     int numValues = 10;
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -334,7 +334,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testExists() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     int numValues = 10;
     byte[][] rowKeys = dataHelper.randomData("testrow-", numValues);
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -356,7 +356,7 @@ public class TestGet extends AbstractTest {
       Assert.assertTrue(table.exists(get));
       gets.add(get);
     }
-    Boolean[] exists = table.exists(gets);
+    boolean[] exists = table.existsAll(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(exists[i]);
@@ -370,7 +370,7 @@ public class TestGet extends AbstractTest {
       Assert.assertTrue(table.exists(get));
       gets.add(get);
     }
-    exists = table.exists(gets);
+    exists = table.existsAll(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(exists[i]);
@@ -384,7 +384,7 @@ public class TestGet extends AbstractTest {
       Assert.assertTrue(table.exists(get));
       gets.add(get);
     }
-    exists = table.exists(gets);
+    exists = table.existsAll(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(exists[i]);
@@ -397,7 +397,7 @@ public class TestGet extends AbstractTest {
       Assert.assertFalse(table.exists(get));
       gets.add(get);
     }
-    exists = table.exists(gets);
+    exists = table.existsAll(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertFalse(exists[i]);
@@ -419,7 +419,7 @@ public class TestGet extends AbstractTest {
     }
     boolean throwsException = false;
     try {
-      table.exists(gets);
+      table.existsAll(gets);
     } catch (RetriesExhaustedWithDetailsException e) {
       throwsException = true;
       Assert.assertEquals(numValues, e.getNumExceptions());
@@ -434,7 +434,7 @@ public class TestGet extends AbstractTest {
       Assert.assertFalse(table.exists(get));
       gets.add(get);
     }
-    exists = table.exists(gets);
+    exists = table.existsAll(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertFalse(exists[i]);
@@ -449,7 +449,7 @@ public class TestGet extends AbstractTest {
       Assert.assertTrue(table.exists(get));
       gets.add(get);
     }
-    exists = table.exists(gets);
+    exists = table.existsAll(gets);
     Assert.assertEquals(numValues, exists.length);
     for (int i = 0; i < numValues; ++i) {
       Assert.assertTrue(exists[i]);
@@ -462,7 +462,7 @@ public class TestGet extends AbstractTest {
   @Test
   public void testOneBadApple() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     int numValues = 10;
 
     // Run a control test.
@@ -505,7 +505,7 @@ public class TestGet extends AbstractTest {
     };
     byte[][] values = dataHelper.randomData("value-", qualifiers.length);
     byte[] rowKey = dataHelper.randomData("rowKey");
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     Put put = new Put(rowKey);
 
     for (int i = 0; i < qualifiers.length; i++) {

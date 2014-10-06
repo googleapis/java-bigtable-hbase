@@ -17,7 +17,7 @@ import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
 import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
 
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,40 +25,40 @@ import org.junit.Test;
 import java.util.concurrent.Executors;
 
 /**
- * These tests check various factory instantiations of the HTableInterface.
+ * These tests check various factory instantiations of the Table.
  */
 public class TestGetTable extends AbstractTest {
   @Test
   public void testGetTable1() throws Exception {
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable2() throws Exception {
-    HTableInterface table = connection.getTable(TABLE_NAME.getNameAsString());
+    Table table = connection.getTable(TABLE_NAME.getNameAsString());
     Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable3() throws Exception {
-    HTableInterface table = connection.getTable(TABLE_NAME.getName());
+    Table table = connection.getTable(TABLE_NAME.getName());
     Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable4() throws Exception {
-    HTableInterface table = connection.getTable(TABLE_NAME, Executors.newFixedThreadPool(1));
+    Table table = connection.getTable(TABLE_NAME, Executors.newFixedThreadPool(1));
     Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable5() throws Exception {
-    HTableInterface table = connection.getTable(TABLE_NAME.getNameAsString(),
+    Table table = connection.getTable(TABLE_NAME.getNameAsString(),
         Executors.newFixedThreadPool(1));
     Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
@@ -66,7 +66,7 @@ public class TestGetTable extends AbstractTest {
 
   @Test
   public void testGetTable6() throws Exception {
-    HTableInterface table = connection.getTable(TABLE_NAME.getName(),
+    Table table = connection.getTable(TABLE_NAME.getName(),
         Executors.newFixedThreadPool(1));
     Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();

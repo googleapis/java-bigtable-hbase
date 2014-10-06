@@ -145,7 +145,12 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public boolean[] existsAll(List<Get> gets) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    Boolean[] existsObjects = exists(gets);
+    boolean[] exists = new boolean[existsObjects.length];
+    for (int i = 0; i < existsObjects.length; i++) {
+      exists[i] = existsObjects[i];
+    }
+    return exists;
   }
 
   @Override

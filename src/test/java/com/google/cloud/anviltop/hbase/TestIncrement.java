@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -57,7 +57,7 @@ public class TestIncrement extends AbstractTest {
   @Test
   public void testIncrement() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     long value1 = new Random().nextInt();
@@ -113,7 +113,7 @@ public class TestIncrement extends AbstractTest {
   @Test
   public void testIncrementWithTimerange() throws IOException {
     // Initialize data
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
 
@@ -181,7 +181,7 @@ public class TestIncrement extends AbstractTest {
     long oneMinute = 60 * 1000;
     long fifteenMinutes = 15 * 60 * 1000;
 
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     table.setAutoFlushTo(true);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
@@ -216,7 +216,7 @@ public class TestIncrement extends AbstractTest {
   @Test
   public void testFailOnIncrementInt() throws IOException {
     // Initialize
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     int value = new Random().nextInt();
@@ -236,7 +236,7 @@ public class TestIncrement extends AbstractTest {
   @Test
   public void testFailOnIncrementString() throws IOException {
     // Initialize
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
@@ -256,7 +256,7 @@ public class TestIncrement extends AbstractTest {
   @Test
   public void testIncrementEightBytes() throws IOException {
     // Initialize
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = new byte[8];
@@ -289,7 +289,7 @@ public class TestIncrement extends AbstractTest {
     tableDescriptor.addFamily(new HColumnDescriptor(incrementFamily).setMaxVersions(1));
     admin.createTable(tableDescriptor);
 
-    HTableInterface table = connection.getTable(incrementTable);
+    Table table = connection.getTable(incrementTable);
 
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");

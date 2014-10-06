@@ -20,7 +20,7 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -73,7 +73,7 @@ public class TestBasicOps extends AbstractTest {
   @Test
   public void testNullQualifier() throws IOException {
     // Initialize values
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] testValue = dataHelper.randomData("testValue-");
 
@@ -128,7 +128,7 @@ public class TestBasicOps extends AbstractTest {
   @Test
   public void testPutBigValue() throws IOException {
     // Initialize variables
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] testRowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = new byte[(10 << 20) - 1024];  // 10 MB - 1kB
@@ -145,7 +145,7 @@ public class TestBasicOps extends AbstractTest {
   @Test(expected = IllegalArgumentException.class)
   public void testPutTooBigValue() throws IOException {
     // Initialize variables
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
     byte[] testRowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = new byte[10 << 20];  // 10 MB
@@ -155,7 +155,7 @@ public class TestBasicOps extends AbstractTest {
 
   private void putGetDeleteExists(byte[] rowKey, byte[] testQualifier, byte[] testValue)
       throws IOException {
-    HTableInterface table = connection.getTable(TABLE_NAME);
+    Table table = connection.getTable(TABLE_NAME);
 
     // Put
     Put put = new Put(rowKey);
