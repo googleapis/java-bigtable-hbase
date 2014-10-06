@@ -508,6 +508,7 @@
                                 <exclude>**/TestBatch.java</exclude>
                                 <exclude>**/TestCheckAndMutate.java</exclude>
                                 <exclude>**/TestCreateTable.java</exclude>
+                                <exclude>**/TestDisableTable.java</exclude>
                                 <exclude>**/TestDelete.java</exclude>
                                 <exclude>**/TestDurability.java</exclude>
                                 <exclude>**/TestFilters.java</exclude>
