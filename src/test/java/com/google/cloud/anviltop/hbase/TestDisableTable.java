@@ -28,16 +28,15 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.UUID;
 
 public class TestDisableTable extends AbstractTest {
-  /**
-   * Requirement 1.8 - Table names must match [\w_][\w_\-\.]*
-   */
   @Test
   public void testDisable() throws IOException {
     Admin admin = connection.getAdmin();
-    TableName tableName = IntegrationTests.TABLE_NAME;
-    Table table = connection.getTable(TABLE_NAME);
+    TableName tableName = TableName.valueOf("test_table-" + UUID.randomUUID().toString());
+    // OnceCreateTable
+    Table table = connection.getTable(tableName);
 
     Get get = new Get("row".getBytes());
     table.get(get);
@@ -46,7 +45,6 @@ public class TestDisableTable extends AbstractTest {
     boolean throwsException = false;
     try {
       table.get(get);
-
     } catch (TableNotEnabledException e) {
       throwsException = true;
     }
