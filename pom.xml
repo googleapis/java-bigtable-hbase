@@ -513,6 +513,7 @@
                                 <exclude>**/TestFilters.java</exclude>
                                 <exclude>**/TestGet.java</exclude>
                                 <exclude>**/TestGetTable.java</exclude>
+                                <exclude>**/TestImport.java</exclude>
                                 <exclude>**/TestIncrement.java</exclude>
                                 <exclude>**/TestPut.java</exclude>
                                 <exclude>**/TestScan.java</exclude>
