@@ -35,7 +35,7 @@ public class TestDisableTable extends AbstractTest {
   public void testDisable() throws IOException {
     Admin admin = connection.getAdmin();
     TableName tableName = TableName.valueOf("test_table-" + UUID.randomUUID().toString());
-    // OnceCreateTable
+    IntegrationTests.CreateTable(tableName);
     Table table = connection.getTable(tableName);
 
     Get get = new Get("row".getBytes());
