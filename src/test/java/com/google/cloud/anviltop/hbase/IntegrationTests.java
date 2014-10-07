@@ -57,8 +57,12 @@ public class IntegrationTests {
   protected static Configuration configuration;
 
   static {
-    TABLE_NAME = TableName.valueOf("test_table-" + UUID.randomUUID().toString());
+    TABLE_NAME = newTestTableName();
     addExtraResources(BASE_CONFIGURATION);
+  }
+
+  public static TableName newTestTableName() {
+    return TableName.valueOf("test_table-" + UUID.randomUUID().toString());
   }
 
   protected static void addExtraResources(Configuration configuration) {
