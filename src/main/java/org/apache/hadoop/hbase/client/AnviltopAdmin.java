@@ -2,6 +2,7 @@ package org.apache.hadoop.hbase.client;
 
 
 import com.google.bigtable.anviltop.AnviltopAdminServices;
+import com.google.bigtable.anviltop.AnviltopData;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
 import com.google.cloud.anviltop.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
@@ -115,11 +116,15 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void createTable(HTableDescriptor desc) throws IOException {
-    anviltopAdminClient.createTable(
-        AnviltopAdminServices.CreateTableRequest.newBuilder()
-            .setProjectId(options.getProjectId())
-            .setTableNameBytes(ByteString.copyFrom(desc.getName()))
-            .build());
+    AnviltopAdminServices.CreateTableRequest.Builder builder = AnviltopAdminServices.CreateTableRequest.newBuilder();
+    builder.setProjectId(options.getProjectId())
+        .setTableNameBytes(ByteString.copyFrom(desc.getName()));
+
+    for (HColumnDescriptor column : desc.getColumnFamilies()) {
+      builder.addColumnFamilies(AnviltopData.ColumnFamily.newBuilder().setName(column.getNameAsString()));
+    }
+
+    anviltopAdminClient.createTable(builder.build());
   }
 
   @Override
