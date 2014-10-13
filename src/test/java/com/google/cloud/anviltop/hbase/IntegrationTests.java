@@ -26,7 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(Suite.class)
-@Suite.SuiteClasses({/*
+@Suite.SuiteClasses({
     TestAppend.class,
     TestAutoFlush.class,
     TestBasicOps.class,
@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
     TestScan.class,
     TestIncrement.class,
     TestPut.class,
-    TestTimestamp.class,*/
+    TestTimestamp.class,
     TestImport.class
 })
 public class IntegrationTests {
