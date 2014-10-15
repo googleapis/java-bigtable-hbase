@@ -17,8 +17,17 @@ import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
 import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.*;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.mapreduce.Export;
 import org.apache.hadoop.hbase.mapreduce.Import;
 import org.apache.hadoop.mapreduce.Job;
@@ -50,12 +59,18 @@ public class TestImport extends AbstractTest {
 
     // Run the export.
     Configuration conf = connection.getConfiguration();
-    conf.set("fs.defaultFS", "file:///");
+
+    //conf.set("fs.defaultFS", "file:///");
+    FileSystem dfs = IntegrationTests.getMiniCluster().getFileSystem();
+    String tempDir = "hdfs://" + dfs.getCanonicalServiceName() + "/tmp/backup";
+
     String[] args = new String[]{
         TABLE_NAME.getNameAsString(),
-        "/tmp/backup"
+        tempDir
     };
     Job job = Export.createSubmittableJob(conf, args);
+    // So it looks for jars in the local FS, not HDFS.
+    job.getConfiguration().set("fs.defaultFS", "file:///");
     Assert.assertTrue(job.waitForCompletion(true));
 
     // Create new table.
@@ -72,9 +87,10 @@ public class TestImport extends AbstractTest {
     // Run the import.
     args = new String[]{
         newTableName.getNameAsString(),
-        "/tmp/backup"
+        tempDir
     };
     job = Import.createSubmittableJob(conf, args);
+    job.getConfiguration().set("fs.defaultFS", "file:///");
     Assert.assertTrue(job.waitForCompletion(true));
 
     // Assert the value is there.

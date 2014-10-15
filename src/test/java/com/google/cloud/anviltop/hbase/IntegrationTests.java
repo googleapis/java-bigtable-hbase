@@ -13,6 +13,7 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.Timeout;
@@ -84,6 +85,10 @@ public class IntegrationTests {
   protected static boolean useMiniCluster() {
     return Strings.isNullOrEmpty(
         BASE_CONFIGURATION.get(HConnection.HBASE_CLIENT_CONNECTION_IMPL, ""));
+  }
+
+  public static MiniDFSCluster getMiniCluster() {
+    return testingUtility.getDFSCluster();
   }
 
   private static Admin getAdmin() throws IOException {
