@@ -96,7 +96,7 @@ public class IntegrationTests {
   @ClassRule
   public static Timeout timeoutRule = new Timeout((int) TimeUnit.MINUTES.toMillis(5));
 
-  public static void CreateTable(TableName tableName) throws IOException {
+  public static void createTable(TableName tableName) throws IOException {
     Admin admin = getAdmin();
     HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
     HTableDescriptor htd = new HTableDescriptor(tableName);
