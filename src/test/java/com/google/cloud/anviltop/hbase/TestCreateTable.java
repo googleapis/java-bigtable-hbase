@@ -29,11 +29,11 @@ import java.io.IOException;
 
 public class TestCreateTable extends AbstractTest {
   /**
-   * Requirement 1.8 - Table names must match [\w_][\w_\-\.]*
+   * Requirement 1.8 - Table names must match [_a-zA-Z0-9][-_.a-zA-Z0-9]*
    */
   @Test
   public void testTableNames() throws IOException {
-    String[] goodnames = {
+    String[] goodNames = {
         "a",
         "1",
         "_", // Really?  Yuck.
@@ -42,7 +42,7 @@ public class TestCreateTable extends AbstractTest {
         "_a-._5x",
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-."
     };
-    String[] badnames = {
+    String[] badNames = {
         "-x",
         ".x",
         "a!",
@@ -71,20 +71,20 @@ public class TestCreateTable extends AbstractTest {
 
     Admin admin = connection.getAdmin();
 
-    for (String badname : badnames) {
+    for (String badName : badNames) {
       boolean failed = false;
       try {
-        HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(badname));
+        HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(badName));
         descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
         admin.createTable(descriptor);
       } catch (IllegalArgumentException e) {
         failed = true;
       }
-      Assert.assertTrue("Should fail as table name: '" + badname + "'", failed);
+      Assert.assertTrue("Should fail as table name: '" + badName + "'", failed);
     }
 
-    for(String goodname : goodnames) {
-      TableName tableName = TableName.valueOf(goodname);
+    for(String goodName : goodNames) {
+      TableName tableName = TableName.valueOf(goodName);
       HTableDescriptor descriptor = new HTableDescriptor(tableName);
       descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
       admin.createTable(descriptor);
