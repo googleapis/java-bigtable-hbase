@@ -5,18 +5,20 @@ import com.google.bigtable.anviltop.AnviltopData.RowMutation.Mod;
 import com.google.bigtable.anviltop.AnviltopData.RowMutation.Mod.SetCell;
 import com.google.cloud.anviltop.hbase.DataGenerationHelper;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnit4.class)
 public class TestPutAdapter {
 
-  protected final PutAdapter adapter = new PutAdapter();
+  protected final PutAdapter adapter = new PutAdapter(new Configuration());
   protected final DataGenerationHelper dataHelper = new DataGenerationHelper();
   protected final QualifierTestHelper qualifierHelper = new QualifierTestHelper();
 
@@ -156,5 +158,12 @@ public class TestPutAdapter {
     Assert.assertFalse(setCell.getCell().hasTimestampMicros());
     Assert.assertEquals(0L, setCell.getCell().getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getCell().getValue().toByteArray());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyPut() {
+    byte[] row = dataHelper.randomData("rk-");
+    Put emptyPut = new Put(row);
+    adapter.adapt(emptyPut);
   }
 }

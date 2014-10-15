@@ -148,7 +148,20 @@ public class TestBasicOps extends AbstractTest {
     Table table = connection.getTable(TABLE_NAME);
     byte[] testRowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
-    byte[] testValue = new byte[10 << 20];  // 10 MB
+    int metadataSize =  (20 + testRowKey.length + COLUMN_FAMILY.length + testQualifier.length);
+    byte[] testValue = new byte[(10 << 20) - metadataSize + 1];  // 10 MB + 1
+    new Random().nextBytes(testValue);
+    putGetDeleteExists(testRowKey, testQualifier, testValue);
+  }
+
+  @Test
+  public void testPutAlmostTooBigValue() throws IOException {
+    // Initialize variables
+    Table table = connection.getTable(TABLE_NAME);
+    byte[] testRowKey = dataHelper.randomData("testrow-");
+    byte[] testQualifier = dataHelper.randomData("testQualifier-");
+    int metadataSize =  (20 + testRowKey.length + COLUMN_FAMILY.length + testQualifier.length);
+    byte[] testValue = new byte[(10 << 20) - metadataSize];  // 10 MB
     new Random().nextBytes(testValue);
     putGetDeleteExists(testRowKey, testQualifier, testValue);
   }
