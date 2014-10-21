@@ -21,6 +21,7 @@ import com.google.cloud.anviltop.hbase.AnviltopConstants;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
@@ -32,16 +33,35 @@ import java.util.Map.Entry;
  * Adapt an HBase Put Operation into an Anviltop RowMutation
  */
 public class PutAdapter implements OperationAdapter<Put, RowMutation.Builder> {
+  private int maxKeyValueSize;
+
+  public PutAdapter(Configuration configuration) {
+    maxKeyValueSize = configuration.getInt("hbase.client.keyvalue.maxsize", -1);
+  }
 
   @Override
   public RowMutation.Builder adapt(Put operation) {
     RowMutation.Builder result = AnviltopData.RowMutation.newBuilder();
     result.setRowKey(ByteString.copyFrom(operation.getRow()));
 
+    if (operation.isEmpty()) {
+      throw new IllegalArgumentException("No columns to insert");
+    }
+
     for (Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
       ByteString familyByteString = ByteString.copyFrom(entry.getKey());
 
       for (Cell cell : entry.getValue()) {
+        // Since we are not using the interface involving KeyValues, we reconstruct how big they would be.
+        // 20 bytes for metadata plus the length of all the elements.
+        int keyValueSize = (20 +
+            cell.getRowLength() +
+            cell.getFamilyLength() +
+            cell.getQualifierLength() +
+            cell.getValueLength());
+        if (maxKeyValueSize > 0 && keyValueSize > maxKeyValueSize) {
+          throw new IllegalArgumentException("KeyValue size too large");
+        }
         Mod.Builder modBuilder = result.addModsBuilder();
         SetCell.Builder setCellBuilder = modBuilder.getSetCellBuilder();
 
