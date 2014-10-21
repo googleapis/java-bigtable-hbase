@@ -11,7 +11,7 @@
 
     <properties>
         <!-- As soon as stubby is public, this goes away -->
-        <stubby.driver.path>/google/data/ro/teams/cloud-bigtable/driver/driver_deploy.jar</stubby.driver.path>
+        <stubby.driver.path>/google/data/ro/teams/cloud-bigtable/driver/driver_with_deps.jar</stubby.driver.path>
         <hbase.version>0.99.0</hbase.version>
         <hadoop.version>2.4.0</hadoop.version>
         <compat.module>hbase-hadoop2-compat</compat.module>
@@ -45,13 +45,6 @@
                             <groupId>com.google.guava</groupId>
                             <artifactId>guava</artifactId>
                         </exclusion>
-                        <!-- The generated messages in the anviltop driver depend on an unreleased
-                         version of protobuf-java. We can shade our references into the client
-                         when grpc is opened. -->
-                        <exclusion>
-                            <groupId>com.google.protobuf</groupId>
-                            <artifactId>protobuf-java</artifactId>
-                        </exclusion>
                     </exclusions>
                 </dependency>
                 <dependency>
@@ -74,13 +67,6 @@
                         <exclusion>
                             <groupId>com.google.guava</groupId>
                             <artifactId>guava</artifactId>
-                        </exclusion>
-                        <!-- The generated messages in the anviltop driver depend on an unreleased
-                         version of protobuf-java. We can shade our references into the client
-                         when grpc is opened. -->
-                        <exclusion>
-                            <groupId>com.google.protobuf</groupId>
-                            <artifactId>protobuf-java</artifactId>
                         </exclusion>
                     </exclusions>
                 </dependency>
@@ -97,10 +83,6 @@
                         <!-- The generated messages in the anviltop driver depend on an unreleased
                          version of protobuf-java. We can shade our references into the client
                          when grpc is opened. -->
-                        <exclusion>
-                            <groupId>com.google.protobuf</groupId>
-                            <artifactId>protobuf-java</artifactId>
-                        </exclusion>
                     </exclusions>
                 </dependency>
                 <dependency>
@@ -128,10 +110,6 @@
                         <!-- The generated messages in the anviltop driver depend on an unreleased
                          version of protobuf-java. We can shade our references into the client
                          when grpc is opened. -->
-                        <exclusion>
-                            <groupId>com.google.protobuf</groupId>
-                            <artifactId>protobuf-java</artifactId>
-                        </exclusion>
                     </exclusions>
                 </dependency>
                 <dependency>
@@ -148,10 +126,6 @@
                         <!-- The generated messages in the anviltop driver depend on an unreleased
                          version of protobuf-java. We can shade our references into the client
                          when grpc is opened. -->
-                        <exclusion>
-                            <groupId>com.google.protobuf</groupId>
-                            <artifactId>protobuf-java</artifactId>
-                        </exclusion>
                     </exclusions>
                 </dependency>
                 <dependency>
@@ -179,10 +153,6 @@
                         <!-- The generated messages in the anviltop driver depend on an unreleased
                          version of protobuf-java. We can shade our references into the client
                          when grpc is opened. -->
-                        <exclusion>
-                            <groupId>com.google.protobuf</groupId>
-                            <artifactId>protobuf-java</artifactId>
-                        </exclusion>
                     </exclusions>
                 </dependency>
                 <dependency>
@@ -202,10 +172,6 @@
                         <!-- The generated messages in the anviltop driver depend on an unreleased
                          version of protobuf-java. We can shade our references into the client
                          when grpc is opened. -->
-                        <exclusion>
-                            <groupId>com.google.protobuf</groupId>
-                            <artifactId>protobuf-java</artifactId>
-                        </exclusion>
                     </exclusions>
                 </dependency>
                 <dependency>
@@ -222,10 +188,6 @@
                         <!-- The generated messages in the anviltop driver depend on an unreleased
                          version of protobuf-java. We can shade our references into the client
                          when grpc is opened. -->
-                        <exclusion>
-                            <groupId>com.google.protobuf</groupId>
-                            <artifactId>protobuf-java</artifactId>
-                        </exclusion>
                     </exclusions>
                 </dependency>
                 <dependency>
@@ -242,10 +204,6 @@
                         <!-- The generated messages in the anviltop driver depend on an unreleased
                          version of protobuf-java. We can shade our references into the client
                          when grpc is opened. -->
-                        <exclusion>
-                            <groupId>com.google.protobuf</groupId>
-                            <artifactId>protobuf-java</artifactId>
-                        </exclusion>
                     </exclusions>
                 </dependency>
             </dependencies>
@@ -299,10 +257,6 @@
                 <!-- The generated messages in the anviltop driver depend on an unreleased
                  version of protobuf-java. We can shade our references into the client
                  when grpc is opened. -->
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -337,10 +291,6 @@
                 <!-- The generated messages in the anviltop driver depend on an unreleased
                  version of protobuf-java. We can shade our references into the client
                  when grpc is opened. -->
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -352,10 +302,6 @@
                 <!-- The generated messages in the anviltop driver depend on an unreleased
                  version of protobuf-java. We can shade our references into the client
                  when grpc is opened. -->
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -368,10 +314,6 @@
                 <!-- The generated messages in the anviltop driver depend on an unreleased
                  version of protobuf-java. We can shade our references into the client
                  when grpc is opened. -->
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -384,10 +326,6 @@
                 <!-- The generated messages in the anviltop driver depend on an unreleased
                  version of protobuf-java. We can shade our references into the client
                  when grpc is opened. -->
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -400,10 +338,6 @@
                 <!-- The generated messages in the anviltop driver depend on an unreleased
                  version of protobuf-java. We can shade our references into the client
                  when grpc is opened. -->
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -416,10 +350,6 @@
                 <!-- The generated messages in the anviltop driver depend on an unreleased
                  version of protobuf-java. We can shade our references into the client
                  when grpc is opened. -->
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -432,10 +362,6 @@
                 <!-- The generated messages in the anviltop driver depend on an unreleased
                  version of protobuf-java. We can shade our references into the client
                  when grpc is opened. -->
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -448,10 +374,6 @@
                 <!-- The generated messages in the anviltop driver depend on an unreleased
                  version of protobuf-java. We can shade our references into the client
                  when grpc is opened. -->
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
