@@ -65,18 +65,12 @@ public class AnvilTopTable implements HTableInterface {
   protected final TableName tableName;
   protected final AnviltopOptions options;
   protected final AnviltopClient client;
-  protected final PutAdapter putAdapter = new PutAdapter();
+  protected final PutAdapter putAdapter;
   protected final IncrementAdapter incrementAdapter = new IncrementAdapter();
   protected final IncrementRowResponseAdapter incrRespAdapter = new IncrementRowResponseAdapter();
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
-  protected final MutationAdapter mutationAdapter =
-      new MutationAdapter(
-          deleteAdapter,
-          putAdapter,
-          new UnsupportedOperationAdapter<Increment>("increment"),
-          new UnsupportedOperationAdapter<Append>("append"));
-  protected final RowMutationsAdapter rowMutationsAdapter =
-      new RowMutationsAdapter(mutationAdapter);
+  protected final MutationAdapter mutationAdapter;
+  protected final RowMutationsAdapter rowMutationsAdapter;
   protected final GetAdapter getAdapter = new GetAdapter();
   protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter();
   protected final ScanAdapter scanAdapter = new ScanAdapter();
@@ -101,6 +95,13 @@ public class AnvilTopTable implements HTableInterface {
     this.options = options;
     this.client = client;
     this.configuration = configuration;
+    putAdapter = new PutAdapter(configuration);
+    mutationAdapter = new MutationAdapter(
+        deleteAdapter,
+        putAdapter,
+        new UnsupportedOperationAdapter<Increment>("increment"),
+        new UnsupportedOperationAdapter<Append>("append"));
+    rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
     this.executorService = executorService;
     this.batchExecutor = new BatchExecutor(
         client,

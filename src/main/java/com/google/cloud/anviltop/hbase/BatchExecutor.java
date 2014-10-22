@@ -18,7 +18,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.GeneratedMessage;
+import com.google.cloud.hadoop.hbase.repackaged.protobuf.GeneratedMessage;
 import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.hbase.TableName;

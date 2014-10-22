@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
     TestBatch.class,
     TestCheckAndMutate.class,
     TestCreateTable.class,
+    TestDisableTable.class,
     TestDelete.class,
     TestDurability.class,
     TestFilters.class,
@@ -106,6 +107,22 @@ public class IntegrationTests {
   @ClassRule
   public static Timeout timeoutRule = new Timeout((int) TimeUnit.MINUTES.toMillis(5));
 
+  public static void createTable(TableName tableName) throws IOException {
+    Admin admin = getAdmin();
+    HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
+    HTableDescriptor htd = new HTableDescriptor(tableName);
+    if (useMiniCluster()) {
+      htd.addFamily(hcd);
+      admin.createTable(htd);
+    } else {
+      System.out.println("Creating test table... " + htd.getTableName().toString());
+      // TODO: Remove once create table with column families is present
+      admin.createTable(htd);
+      admin.addColumn(htd.getTableName(), hcd);
+      System.out.println("Test table created");
+    }
+  }
+
   @ClassRule
   public static ExternalResource connectionResource = new ExternalResource() {
     @Override
@@ -117,19 +134,7 @@ public class IntegrationTests {
       } else {
         configuration = BASE_CONFIGURATION;
       }
-      Admin admin = getAdmin();
-      HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
-      HTableDescriptor htd = new HTableDescriptor(TABLE_NAME);
-      if (useMiniCluster()) {
-        htd.addFamily(hcd);
-        admin.createTable(htd);
-      } else {
-        System.out.println("Creating test table... " + htd.getTableName().toString());
-        // TODO: Remove once create table with column families is present
-        admin.createTable(htd);
-        admin.addColumn(htd.getTableName(), hcd);
-        System.out.println("Test table created");
-      }
+      createTable(TABLE_NAME);
     }
 
     @Override
