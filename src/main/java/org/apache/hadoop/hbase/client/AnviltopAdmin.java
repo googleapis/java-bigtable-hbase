@@ -6,7 +6,7 @@ import com.google.bigtable.anviltop.AnviltopData;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
 import com.google.cloud.anviltop.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
-import com.google.protobuf.ByteString;
+import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;

@@ -32,7 +32,7 @@ import com.google.cloud.hadoop.hbase.AnviltopResultScanner;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
-import com.google.protobuf.ServiceException;
+import com.google.cloud.hadoop.hbase.repackaged.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellUtil;
