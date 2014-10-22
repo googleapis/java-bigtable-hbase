@@ -18,7 +18,7 @@ import com.google.api.client.util.Throwables;
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopServices;
 import com.google.cloud.anviltop.hbase.AnviltopConstants;
-import com.google.protobuf.ByteString;
+import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;

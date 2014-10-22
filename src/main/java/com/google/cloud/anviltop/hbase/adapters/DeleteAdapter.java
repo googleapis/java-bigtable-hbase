@@ -16,7 +16,7 @@ package com.google.cloud.anviltop.hbase.adapters;
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.cloud.anviltop.hbase.AnviltopConstants;
 import com.google.common.collect.ImmutableList;
-import com.google.protobuf.ByteString;
+import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;

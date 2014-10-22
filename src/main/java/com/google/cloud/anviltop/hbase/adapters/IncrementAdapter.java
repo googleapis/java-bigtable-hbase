@@ -19,7 +19,7 @@ import com.google.bigtable.anviltop.AnviltopServices.IncrementRowRequest.Builder
 import com.google.bigtable.anviltop.AnviltopData.RowIncrement;
 import com.google.cloud.anviltop.hbase.AnviltopConstants;
 import com.google.common.collect.ImmutableList;
-import com.google.protobuf.ByteString;
+import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.KeyValue;
