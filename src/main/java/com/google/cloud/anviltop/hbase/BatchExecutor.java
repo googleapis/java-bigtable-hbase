@@ -7,6 +7,7 @@ import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.IncrementAdapter;
+import com.google.cloud.anviltop.hbase.adapters.IncrementRowResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.OperationAdapter;
 import com.google.cloud.anviltop.hbase.adapters.PutAdapter;
 import com.google.cloud.anviltop.hbase.adapters.RowMutationsAdapter;
@@ -125,6 +126,7 @@ public class BatchExecutor {
   protected final DeleteAdapter deleteAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
   protected final IncrementAdapter incrementAdapter;
+  protected final IncrementRowResponseAdapter incrRespAdapter;
   protected final OperationAdapter<Append, ?> appendAdapter;
 
   public BatchExecutor(
@@ -137,7 +139,8 @@ public class BatchExecutor {
       PutAdapter putAdapter,
       DeleteAdapter deleteAdapter,
       RowMutationsAdapter rowMutationsAdapter,
-      IncrementAdapter incrementAdapter) {
+      IncrementAdapter incrementAdapter,
+      IncrementRowResponseAdapter incrRespAdapter) {
     this.client = client;
     this.options = options;
     this.tableName = tableName;
@@ -148,6 +151,7 @@ public class BatchExecutor {
     this.deleteAdapter = deleteAdapter;
     this.rowMutationsAdapter = rowMutationsAdapter;
     this.incrementAdapter = incrementAdapter;
+    this.incrRespAdapter = incrRespAdapter;
     this.appendAdapter = new UnsupportedOperationAdapter<>("append");
   }
 
@@ -350,7 +354,7 @@ public class BatchExecutor {
               row, callback, index, results, resultFuture) {
             @Override
             Object adaptResponse(AnviltopServices.IncrementRowResponse response) {
-              return new Result();
+              return incrRespAdapter.adaptResponse(response);
             }
           },
           service);
@@ -390,8 +394,11 @@ public class BatchExecutor {
   /**
    * Implementation of {@link org.apache.hadoop.hbase.client.HTable#batch(List, Object[])}
    */
-  public void batch(List<? extends Row> actions, Object[] results)
+  public void batch(List<? extends Row> actions, @Nullable Object[] results)
       throws IOException, InterruptedException {
+    if (results == null) {
+      results = new Object[actions.size()];
+    }
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must have same dimensions as actions list.");
     int index = 0;
