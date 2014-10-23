@@ -100,16 +100,8 @@ public class IntegrationTests {
     Admin admin = getAdmin();
     HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
     HTableDescriptor htd = new HTableDescriptor(tableName);
-    if (useMiniCluster()) {
-      htd.addFamily(hcd);
-      admin.createTable(htd);
-    } else {
-      System.out.println("Creating test table... " + htd.getTableName().toString());
-      // TODO: Remove once create table with column families is present
-      admin.createTable(htd);
-      admin.addColumn(htd.getTableName(), hcd);
-      System.out.println("Test table created");
-    }
+    htd.addFamily(hcd);
+    admin.createTable(htd);
   }
 
   @ClassRule
@@ -130,10 +122,7 @@ public class IntegrationTests {
     protected void after() {
       try {
         Admin admin = getAdmin();
-        if (useMiniCluster()) {
-          // TODO: Remove when disableTable is present
-          admin.disableTable(TABLE_NAME);
-        }
+        admin.disableTable(TABLE_NAME);
         admin.deleteTable(TABLE_NAME);
         if (useMiniCluster()) {
           testingUtility.shutdownMiniCluster();
