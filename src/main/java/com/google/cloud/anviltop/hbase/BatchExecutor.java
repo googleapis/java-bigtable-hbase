@@ -28,12 +28,14 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -403,6 +405,22 @@ public class BatchExecutor {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.
       Futures.successfulAsList(resultFutures).get();
+      Iterator<? extends Row> actionIt = actions.iterator();
+      Iterator<ListenableFuture<Object>> resultIt = resultFutures.iterator();
+      List<Throwable> problems = new ArrayList<Throwable>();
+      List<Row> problemActions = new ArrayList<Row>();
+      while (actionIt.hasNext() && resultIt.hasNext()) {
+        try {
+          resultIt.next().get();
+          actionIt.next();
+        } catch (ExecutionException e) {
+          problemActions.add(actionIt.next());
+          problems.add(e.getCause());
+        }
+      }
+      if (problems.size() > 0) {
+        throw new RetriesExhaustedWithDetailsException(problems, problemActions, new ArrayList<String>(problems.size()));
+      }
     } catch (ExecutionException e) {
       throw new IOException("Batch error", e);
     }
@@ -413,14 +431,9 @@ public class BatchExecutor {
    */
   public Object[] batch(List<? extends Row> actions) throws IOException {
     Result[] results = new Result[actions.size()];
-    int index = 0;
-    List<ListenableFuture<Object>> resultFutures = new ArrayList<>(actions.size());
-    for (Row row : actions) {
-      resultFutures.add(issueRowRequest(row, null, results, index++));
-    }
     try {
-      Futures.allAsList(resultFutures).get();
-    } catch (InterruptedException | ExecutionException e) {
+      batch(actions, results);
+    } catch (InterruptedException e) {
       throw new IOException("Batch error", e);
     }
     return results;
