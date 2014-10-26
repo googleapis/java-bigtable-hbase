@@ -113,7 +113,8 @@ public class AnvilTopTable implements HTableInterface {
         putAdapter,
         deleteAdapter,
         rowMutationsAdapter,
-        incrementAdapter);
+        incrementAdapter,
+        incrRespAdapter);
 
   }
 
