@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -168,52 +169,58 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void enableTable(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("enableTable");  // TODO
+    // enableTable is a NOP for Anviltop, tables are always enabled.
   }
 
   @Override
   public void enableTableAsync(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("enableTableAsync");  // TODO
+    // enableTableAsync is a NOP for Anviltop, tables are always enabled.
   }
 
   @Override
   public HTableDescriptor[] enableTables(String regex) throws IOException {
-    throw new UnsupportedOperationException("enableTables");  // TODO
+    // enableTables is a NOP for Anviltop, tables are always enabled.
+    return new HTableDescriptor[]{};
   }
 
   @Override
   public HTableDescriptor[] enableTables(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("enableTables");  // TODO
+    // enableTables is a NOP for Anviltop, tables are always enabled.
+    return new HTableDescriptor[]{};
   }
 
   @Override
   public void disableTableAsync(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("disableTableAsync");  // TODO
+    // disableTableAsync is a NOP for Anviltop, tables can't be actually disabled.
   }
 
   @Override
   public void disableTable(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("disableTable");  // TODO
+    // disableTable is a NOP for Anviltop, tables can't be actually disabled.
   }
 
   @Override
   public HTableDescriptor[] disableTables(String regex) throws IOException {
-    throw new UnsupportedOperationException("disableTables");  // TODO
+    // disableTables is a NOP for Anviltop, tables can't be actually disabled.
+    return new HTableDescriptor[]{};
   }
 
   @Override
   public HTableDescriptor[] disableTables(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("disableTables");  // TODO
+    // disableTables is a NOP for Anviltop, tables can't be actually disabled.
+    return new HTableDescriptor[]{};
   }
 
   @Override
   public boolean isTableEnabled(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("isTableEnabled");  // TODO
+    // Anviltop tables can't be disabled.
+    return true;
   }
 
   @Override
   public boolean isTableDisabled(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("isTableDisabled");  // TODO
+    // Anviltop tables can't be disabled.
+    return false;
   }
 
   @Override
