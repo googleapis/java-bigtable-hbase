@@ -13,6 +13,7 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.Timeout;
@@ -42,7 +43,9 @@ import java.util.concurrent.TimeUnit;
     TestScan.class,
     TestIncrement.class,
     TestPut.class,
-    TestTimestamp.class})
+    TestTimestamp.class,
+    TestImport.class
+})
 public class IntegrationTests {
 
   public static final TableName TABLE_NAME;
@@ -56,8 +59,12 @@ public class IntegrationTests {
   protected static Configuration configuration;
 
   static {
-    TABLE_NAME = TableName.valueOf("test_table-" + UUID.randomUUID().toString());
+    TABLE_NAME = newTestTableName();
     addExtraResources(BASE_CONFIGURATION);
+  }
+
+  public static TableName newTestTableName() {
+    return TableName.valueOf("test_table-" + UUID.randomUUID().toString());
   }
 
   protected static void addExtraResources(Configuration configuration) {
@@ -79,6 +86,10 @@ public class IntegrationTests {
   protected static boolean useMiniCluster() {
     return Strings.isNullOrEmpty(
         BASE_CONFIGURATION.get(HConnection.HBASE_CLIENT_CONNECTION_IMPL, ""));
+  }
+
+  public static MiniDFSCluster getMiniCluster() {
+    return testingUtility.getDFSCluster();
   }
 
   private static Admin getAdmin() throws IOException {
