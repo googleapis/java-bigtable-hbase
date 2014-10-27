@@ -15,7 +15,7 @@ package com.google.cloud.anviltop.hbase.adapters;
 
 import com.google.bigtable.anviltop.AnviltopServices.GetRowRequest;
 import com.google.cloud.anviltop.hbase.DataGenerationHelper;
-import com.google.protobuf.ByteString;
+import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;

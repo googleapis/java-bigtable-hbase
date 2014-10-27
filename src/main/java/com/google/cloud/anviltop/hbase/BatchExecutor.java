@@ -7,6 +7,7 @@ import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.IncrementAdapter;
+import com.google.cloud.anviltop.hbase.adapters.IncrementRowResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.OperationAdapter;
 import com.google.cloud.anviltop.hbase.adapters.PutAdapter;
 import com.google.cloud.anviltop.hbase.adapters.RowMutationsAdapter;
@@ -19,7 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.cloud.hadoop.hbase.repackaged.protobuf.GeneratedMessage;
-import com.google.protobuf.ServiceException;
+import com.google.cloud.hadoop.hbase.repackaged.protobuf.ServiceException;
 
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -28,12 +29,14 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -125,6 +128,7 @@ public class BatchExecutor {
   protected final DeleteAdapter deleteAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
   protected final IncrementAdapter incrementAdapter;
+  protected final IncrementRowResponseAdapter incrRespAdapter;
   protected final OperationAdapter<Append, ?> appendAdapter;
 
   public BatchExecutor(
@@ -137,7 +141,8 @@ public class BatchExecutor {
       PutAdapter putAdapter,
       DeleteAdapter deleteAdapter,
       RowMutationsAdapter rowMutationsAdapter,
-      IncrementAdapter incrementAdapter) {
+      IncrementAdapter incrementAdapter,
+      IncrementRowResponseAdapter incrRespAdapter) {
     this.client = client;
     this.options = options;
     this.tableName = tableName;
@@ -148,6 +153,7 @@ public class BatchExecutor {
     this.deleteAdapter = deleteAdapter;
     this.rowMutationsAdapter = rowMutationsAdapter;
     this.incrementAdapter = incrementAdapter;
+    this.incrRespAdapter = incrRespAdapter;
     this.appendAdapter = new UnsupportedOperationAdapter<>("append");
   }
 
@@ -350,7 +356,7 @@ public class BatchExecutor {
               row, callback, index, results, resultFuture) {
             @Override
             Object adaptResponse(AnviltopServices.IncrementRowResponse response) {
-              return new Result();
+              return incrRespAdapter.adaptResponse(response);
             }
           },
           service);
@@ -390,8 +396,11 @@ public class BatchExecutor {
   /**
    * Implementation of {@link org.apache.hadoop.hbase.client.HTable#batch(List, Object[])}
    */
-  public void batch(List<? extends Row> actions, Object[] results)
+  public void batch(List<? extends Row> actions, @Nullable Object[] results)
       throws IOException, InterruptedException {
+    if (results == null) {
+      results = new Object[actions.size()];
+    }
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must have same dimensions as actions list.");
     int index = 0;
@@ -403,6 +412,22 @@ public class BatchExecutor {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.
       Futures.successfulAsList(resultFutures).get();
+      Iterator<? extends Row> actionIt = actions.iterator();
+      Iterator<ListenableFuture<Object>> resultIt = resultFutures.iterator();
+      List<Throwable> problems = new ArrayList<Throwable>();
+      List<Row> problemActions = new ArrayList<Row>();
+      while (actionIt.hasNext() && resultIt.hasNext()) {
+        try {
+          resultIt.next().get();
+          actionIt.next();
+        } catch (ExecutionException e) {
+          problemActions.add(actionIt.next());
+          problems.add(e.getCause());
+        }
+      }
+      if (problems.size() > 0) {
+        throw new RetriesExhaustedWithDetailsException(problems, problemActions, new ArrayList<String>(problems.size()));
+      }
     } catch (ExecutionException e) {
       throw new IOException("Batch error", e);
     }
@@ -413,14 +438,9 @@ public class BatchExecutor {
    */
   public Object[] batch(List<? extends Row> actions) throws IOException {
     Result[] results = new Result[actions.size()];
-    int index = 0;
-    List<ListenableFuture<Object>> resultFutures = new ArrayList<>(actions.size());
-    for (Row row : actions) {
-      resultFutures.add(issueRowRequest(row, null, results, index++));
-    }
     try {
-      Futures.allAsList(resultFutures).get();
-    } catch (InterruptedException | ExecutionException e) {
+      batch(actions, results);
+    } catch (InterruptedException e) {
       throw new IOException("Batch error", e);
     }
     return results;
