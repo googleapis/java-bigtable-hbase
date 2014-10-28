@@ -4,9 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>anviltop-client</groupId>
+        <artifactId>anviltop-client</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
     <groupId>anviltop-client</groupId>
-    <artifactId>anviltop-client</artifactId>
+    <artifactId>anviltop-client-core</artifactId>
     <version>0.1.0-SNAPSHOT</version>
+    
     <packaging>jar</packaging>
 
     <properties>
