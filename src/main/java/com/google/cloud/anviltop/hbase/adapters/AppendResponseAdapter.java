@@ -23,6 +23,6 @@ public class AppendResponseAdapter implements ResponseAdapter<AnviltopServices.A
     if (response.hasRow()) {
       return rowAdapter.adaptResponse(response.getRow());
     }
-    return new Result();
+    return null;
   }
 }
