@@ -16,6 +16,8 @@ package com.google.cloud.anviltop.hbase;
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopServices;
 import com.google.cloud.anviltop.hbase.adapters.AnviltopResultScannerAdapter;
+import com.google.cloud.anviltop.hbase.adapters.AppendAdapter;
+import com.google.cloud.anviltop.hbase.adapters.AppendResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
@@ -65,17 +67,20 @@ public class AnvilTopTable implements HTableInterface {
   protected final TableName tableName;
   protected final AnviltopOptions options;
   protected final AnviltopClient client;
+  protected final RowAdapter rowAdapter = new RowAdapter();
   protected final PutAdapter putAdapter;
+  protected final AppendAdapter appendAdapter = new AppendAdapter();
+  protected final AppendResponseAdapter appendRespAdapter = new AppendResponseAdapter(rowAdapter);
   protected final IncrementAdapter incrementAdapter = new IncrementAdapter();
-  protected final IncrementRowResponseAdapter incrRespAdapter = new IncrementRowResponseAdapter();
+  protected final IncrementRowResponseAdapter incrRespAdapter = new IncrementRowResponseAdapter(rowAdapter);
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected final MutationAdapter mutationAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
   protected final GetAdapter getAdapter = new GetAdapter();
-  protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter();
+  protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter(rowAdapter);
   protected final ScanAdapter scanAdapter = new ScanAdapter();
   protected final AnviltopResultScannerAdapter anviltopResultScannerAdapter =
-      new AnviltopResultScannerAdapter(new RowAdapter());
+      new AnviltopResultScannerAdapter(rowAdapter);
   protected final Configuration configuration;
   protected final BatchExecutor batchExecutor;
   private final ExecutorService executorService;
@@ -113,6 +118,8 @@ public class AnvilTopTable implements HTableInterface {
         putAdapter,
         deleteAdapter,
         rowMutationsAdapter,
+        appendAdapter,
+        appendRespAdapter,
         incrementAdapter,
         incrRespAdapter);
 
@@ -328,7 +335,23 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Result append(Append append) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    AnviltopServices.AppendRowRequest.Builder appendRowRequest = appendAdapter.adapt(append);
+    appendRowRequest
+        .setProjectId(options.getProjectId())
+        .setTableName(tableName.getQualifierAsString());
+
+    try {
+      AnviltopServices.AppendRowResponse response = client.appendRow(appendRowRequest.build());
+      return appendRespAdapter.adaptResponse(response);
+    } catch (ServiceException e) {
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "append",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              append.getRow()),
+          e);
+    }
   }
 
   @Override

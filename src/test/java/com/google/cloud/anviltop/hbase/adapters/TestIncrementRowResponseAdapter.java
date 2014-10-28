@@ -32,7 +32,7 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TestIncrementRowResponseAdapter {
-  protected IncrementRowResponseAdapter adapter = new IncrementRowResponseAdapter();
+  protected IncrementRowResponseAdapter adapter = new IncrementRowResponseAdapter(new RowAdapter());
   protected QualifierTestHelper qualifierTestHelper = new QualifierTestHelper();
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
