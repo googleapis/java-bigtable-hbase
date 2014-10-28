@@ -3,15 +3,15 @@ package com.google.cloud.anviltop.hbase;
 import com.google.api.client.util.Preconditions;
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopServices;
+import com.google.cloud.anviltop.hbase.adapters.AppendAdapter;
+import com.google.cloud.anviltop.hbase.adapters.AppendResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.IncrementAdapter;
 import com.google.cloud.anviltop.hbase.adapters.IncrementRowResponseAdapter;
-import com.google.cloud.anviltop.hbase.adapters.OperationAdapter;
 import com.google.cloud.anviltop.hbase.adapters.PutAdapter;
 import com.google.cloud.anviltop.hbase.adapters.RowMutationsAdapter;
-import com.google.cloud.anviltop.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -127,9 +127,10 @@ public class BatchExecutor {
   protected final PutAdapter putAdapter;
   protected final DeleteAdapter deleteAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
+  protected final AppendAdapter appendAdapter;
+  protected final AppendResponseAdapter appendRespAdapter;
   protected final IncrementAdapter incrementAdapter;
   protected final IncrementRowResponseAdapter incrRespAdapter;
-  protected final OperationAdapter<Append, ?> appendAdapter;
 
   public BatchExecutor(
       AnviltopClient client,
@@ -141,6 +142,8 @@ public class BatchExecutor {
       PutAdapter putAdapter,
       DeleteAdapter deleteAdapter,
       RowMutationsAdapter rowMutationsAdapter,
+      AppendAdapter appendAdapter,
+      AppendResponseAdapter appendRespAdapter,
       IncrementAdapter incrementAdapter,
       IncrementRowResponseAdapter incrRespAdapter) {
     this.client = client;
@@ -152,9 +155,10 @@ public class BatchExecutor {
     this.putAdapter = putAdapter;
     this.deleteAdapter = deleteAdapter;
     this.rowMutationsAdapter = rowMutationsAdapter;
+    this.appendAdapter = appendAdapter;
+    this.appendRespAdapter = appendRespAdapter;
     this.incrementAdapter = incrementAdapter;
     this.incrRespAdapter = incrRespAdapter;
-    this.appendAdapter = new UnsupportedOperationAdapter<>("append");
   }
 
   /**
@@ -239,6 +243,25 @@ public class BatchExecutor {
             });
     // Force evaluation of the lazy transforms:
     return Lists.newArrayList(responseFutures);
+  }
+
+  /**
+   * Adapt and issue a single Append request returning a ListenableFuture
+   * for the AppendRowResponse.
+   */
+  ListenableFuture<AnviltopServices.AppendRowResponse> issueAppendRequest(
+      Append append) {
+    AnviltopServices.AppendRowRequest request =
+        appendAdapter.adapt(append)
+            .setTableName(tableName.getQualifierAsString())
+            .setProjectId(options.getProjectId())
+            .build();
+
+    try {
+      return client.appendRowAsync(request);
+    } catch (ServiceException e) {
+      return Futures.immediateFailedFuture(e);
+    }
   }
 
   /**
@@ -348,6 +371,18 @@ public class BatchExecutor {
             }
           },
           service);
+    } else if (row instanceof  Append) {
+      ListenableFuture<AnviltopServices.AppendRowResponse> rpcResponseFuture =
+          issueAppendRequest((Append) row);
+      Futures.addCallback(rpcResponseFuture,
+          new RpcResultFutureCallback<T, AnviltopServices.AppendRowResponse>(
+              row, callback, index, results, resultFuture) {
+            @Override
+            Object adaptResponse(AnviltopServices.AppendRowResponse response) {
+              return appendRespAdapter.adaptResponse(response);
+            }
+          },
+          service);
     } else if (row instanceof Increment) {
       ListenableFuture<AnviltopServices.IncrementRowResponse> rpcResponseFuture =
           issueIncrementRequest((Increment) row);
@@ -384,8 +419,6 @@ public class BatchExecutor {
             }
           },
           service);
-    } else if (row instanceof Append) {
-      resultFuture.setException(new UnsupportedOperationException("Append in batch."));
     } else {
       resultFuture.setException(new UnsupportedOperationException(
           String.format("Unknown action type %s", row.getClass().getCanonicalName())));

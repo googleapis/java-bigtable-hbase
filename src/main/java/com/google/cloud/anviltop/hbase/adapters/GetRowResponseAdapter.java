@@ -29,7 +29,11 @@ import java.util.List;
  * Adapt a GetRowResponse from Anviltop to an HBase Result
  */
 public class GetRowResponseAdapter implements ResponseAdapter<GetRowResponse, Result> {
-  protected final RowAdapter rowAdapter = new RowAdapter();
+  protected final RowAdapter rowAdapter;
+
+  public GetRowResponseAdapter(RowAdapter rowAdapter) {
+   this.rowAdapter = rowAdapter;
+  }
 
   /**
    * Transform an Anviltop server response to an HBase Result instance.
