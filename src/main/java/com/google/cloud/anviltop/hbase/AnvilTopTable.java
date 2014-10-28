@@ -57,6 +57,7 @@ import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -163,7 +164,9 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public void batch(List<? extends Row> actions, Object[] results)
       throws IOException, InterruptedException {
-    batchExecutor.batch(actions, results);
+    Result[] tempResults = new Result[results.length];
+    batchExecutor.batch(actions, tempResults);
+    System.arraycopy(tempResults, 0, results, 0, results.length);
   }
 
   @Override
@@ -174,7 +177,9 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public <R> void batchCallback(List<? extends Row> actions, Object[] results,
       Batch.Callback<R> callback) throws IOException, InterruptedException {
-    batchExecutor.batchCallback(actions, results, callback);
+    Result[] tempResults = new Result[results.length];
+    batchExecutor.batchCallback(actions, tempResults, callback);
+    System.arraycopy(tempResults, 0, results, 0, results.length);
   }
 
   @Override
@@ -207,7 +212,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Result[] get(List<Get> gets) throws IOException {
-    return batchExecutor.get(gets);
+    return batchExecutor.batch(gets);
   }
 
   @Override
@@ -264,7 +269,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void put(List<Put> puts) throws IOException {
-    batchExecutor.put(puts);
+    batchExecutor.batch(puts);
   }
 
   @Override
@@ -299,7 +304,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void delete(List<Delete> deletes) throws IOException {
-    batchExecutor.delete(deletes);
+    batchExecutor.batch(deletes);
   }
 
   @Override
