@@ -29,9 +29,9 @@ public class AppendAdapter implements OperationAdapter<Append, AppendRowRequest.
       for (Cell cell : entry.getValue()) {
         ByteString columnName = ByteString.copyFrom(
             ImmutableList.of(
-                ByteString.copyFrom(CellUtil.cloneFamily(cell)),
+                ByteString.copyFrom(cell.getFamilyArray(), cell.getFamilyOffset(), cell.getFamilyLength()),
                 AnviltopConstants.ANVILTOP_COLUMN_SEPARATOR_BYTE_STRING,
-                ByteString.copyFrom(CellUtil.cloneQualifier(cell))));
+                ByteString.copyFrom(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength())));
 
         append.addAppendsBuilder()
             .setColumnName(columnName)
