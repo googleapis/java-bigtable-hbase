@@ -24,7 +24,6 @@ public class AppendAdapter implements OperationAdapter<Append, AppendRowRequest.
     append.setRowKey(ByteString.copyFrom(operation.getRow()));
     append.setReturnResults(operation.isReturnResults());
 
-
     for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()){
       for (Cell cell : entry.getValue()) {
         ByteString columnName = ByteString.copyFrom(

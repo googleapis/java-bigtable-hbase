@@ -49,6 +49,8 @@ import javax.annotation.Nullable;
  */
 public class BatchExecutor {
 
+  protected static final Logger LOG = new Logger(BatchExecutor.class);
+
   /**
    * For callbacks that take a region, this is the region we will use.
    */
@@ -178,6 +180,7 @@ public class BatchExecutor {
    * Adapt and issue a single Delete request returning a ListenableFuture for the MutateRowResponse.
    */
   ListenableFuture<AnviltopServices.MutateRowResponse> issueDeleteRequest(Delete delete) {
+    LOG.trace("issueDeleteRequest(Delete)");
     AnviltopData.RowMutation.Builder mutationBuilder = deleteAdapter.adapt(delete);
     AnviltopServices.MutateRowRequest.Builder requestBuilder =
         makeMutateRowRequest(mutationBuilder);
@@ -185,6 +188,7 @@ public class BatchExecutor {
     try {
       return client.mutateAtomicAsync(requestBuilder.build());
     } catch (ServiceException e) {
+      LOG.error("Immediately failing async issueDeleteRequest due to ServiceException %s", e);
       return Futures.immediateFailedFuture(e);
     }
   }
@@ -195,6 +199,7 @@ public class BatchExecutor {
    */
   List<ListenableFuture<AnviltopServices.MutateRowResponse>> issueDeleteRequests(
       List<Delete> deletes) {
+    LOG.trace("issueDeleteRequests(List<>)");
     List<ListenableFuture<AnviltopServices.MutateRowResponse>> responseFutures =
         Lists.transform(deletes,
             new Function<Delete,
@@ -214,6 +219,7 @@ public class BatchExecutor {
    * for the GetRowResponse.
    */
   ListenableFuture<AnviltopServices.GetRowResponse> issueGetRequest(Get get) {
+    LOG.trace("issueGetRequest(Get)");
     AnviltopServices.GetRowRequest.Builder builder = getAdapter.adapt(get);
     AnviltopServices.GetRowRequest request =
         builder
@@ -224,6 +230,7 @@ public class BatchExecutor {
     try {
       return client.getRowAsync(request);
     } catch (ServiceException e) {
+      LOG.error("Immediately failing async issueGetRequest due to ServiceException %s", e);
       return Futures.immediateFailedFuture(e);
     }
   }
@@ -233,6 +240,7 @@ public class BatchExecutor {
    * for the GetRowResponses.
    */
   List<ListenableFuture<AnviltopServices.GetRowResponse>> issueGetRequests(List<Get> gets) {
+    LOG.trace("issueGetRequests(List<>)");
     List<ListenableFuture<AnviltopServices.GetRowResponse>> responseFutures =
         Lists.transform(gets,
             new Function<Get, ListenableFuture<AnviltopServices.GetRowResponse>>() {
@@ -251,6 +259,7 @@ public class BatchExecutor {
    */
   ListenableFuture<AnviltopServices.AppendRowResponse> issueAppendRequest(
       Append append) {
+    LOG.trace("issueAppendRequest(Append)");
     AnviltopServices.AppendRowRequest request =
         appendAdapter.adapt(append)
             .setTableName(tableName.getQualifierAsString())
@@ -260,6 +269,7 @@ public class BatchExecutor {
     try {
       return client.appendRowAsync(request);
     } catch (ServiceException e) {
+      LOG.error("Immediately failing async issueAppendRequest due to ServiceException %s", e);
       return Futures.immediateFailedFuture(e);
     }
   }
@@ -270,6 +280,7 @@ public class BatchExecutor {
    */
   ListenableFuture<AnviltopServices.IncrementRowResponse> issueIncrementRequest(
       Increment increment) {
+    LOG.trace("issueIncrementRequest(Increment)");
     AnviltopServices.IncrementRowRequest request =
         incrementAdapter.adapt(increment)
             .setTableName(tableName.getQualifierAsString())
@@ -279,6 +290,7 @@ public class BatchExecutor {
     try {
       return client.incrementRowAsync(request);
     } catch (ServiceException e) {
+      LOG.error("Immediately failing async issueIncrementRequest due to ServiceException %s", e);
       return Futures.immediateFailedFuture(e);
     }
   }
@@ -287,6 +299,7 @@ public class BatchExecutor {
    * Adapt and issue a single Put request returning a ListenableFuture for the MutateRowResponse.
    */
   ListenableFuture<AnviltopServices.MutateRowResponse> issuePutRequest(Put put) {
+    LOG.trace("issuePutRequest(Put)");
     AnviltopData.RowMutation.Builder mutationBuilder = putAdapter.adapt(put);
     AnviltopServices.MutateRowRequest.Builder requestBuilder =
         makeMutateRowRequest(mutationBuilder);
@@ -294,6 +307,7 @@ public class BatchExecutor {
     try {
       return client.mutateAtomicAsync(requestBuilder.build());
     } catch (ServiceException e) {
+      LOG.error("Immediately failing async issuePutRequest due to ServiceException %s", e);
       return Futures.immediateFailedFuture(e);
     }
   }
@@ -328,6 +342,7 @@ public class BatchExecutor {
     try {
       return client.mutateAtomicAsync(requestBuilder.build());
     } catch (ServiceException e) {
+      LOG.error("Immediately failing async issueRowMutationsRequest due to ServiceException %s", e);
       return Futures.immediateFailedFuture(e);
     }
   }
@@ -345,6 +360,7 @@ public class BatchExecutor {
    */
   <R extends Row,T> ListenableFuture<Object> issueRowRequest(
       final Row row, final Batch.Callback<T> callback, final Object[] results, final int index) {
+    LOG.trace("issueRowRequest(Row, Batch.Callback, Object[], index");
     final SettableFuture<Object> resultFuture = SettableFuture.create();
     results[index] = null;
     if (row instanceof Delete) {
@@ -420,6 +436,7 @@ public class BatchExecutor {
           },
           service);
     } else {
+      LOG.error("Encountered unknown action type %s", row.getClass());
       resultFuture.setException(new UnsupportedOperationException(
           String.format("Unknown action type %s", row.getClass().getCanonicalName())));
     }
@@ -431,6 +448,7 @@ public class BatchExecutor {
    */
   public void batch(List<? extends Row> actions, @Nullable Object[] results)
       throws IOException, InterruptedException {
+    LOG.trace("batch(List<>, Object[])");
     if (results == null) {
       results = new Object[actions.size()];
     }
@@ -462,6 +480,7 @@ public class BatchExecutor {
         throw new RetriesExhaustedWithDetailsException(problems, problemActions, new ArrayList<String>(problems.size()));
       }
     } catch (ExecutionException e) {
+      LOG.error("Encountered exception in batch(List<>, Object[]). Exception: %s", e);
       throw new IOException("Batch error", e);
     }
   }
@@ -470,10 +489,12 @@ public class BatchExecutor {
    * Implementation of {@link org.apache.hadoop.hbase.client.HTable#batch(List)}
    */
   public Object[] batch(List<? extends Row> actions) throws IOException {
+    LOG.trace("batch(List<>)");
     Result[] results = new Result[actions.size()];
     try {
       batch(actions, results);
     } catch (InterruptedException e) {
+      LOG.error("Encountered exception in batch(List<>). Exception: %s", e);
       throw new IOException("Batch error", e);
     }
     return results;
@@ -486,6 +507,7 @@ public class BatchExecutor {
   public <R> Object[] batchCallback(
       List<? extends Row> actions,
       Batch.Callback<R> callback) throws IOException, InterruptedException {
+    LOG.trace("batchCallback(List<>, Batch.Callback)");
     Result[] results = new Result[actions.size()];
     int index = 0;
     List<ListenableFuture<Object>> resultFutures = new ArrayList<>(actions.size());
@@ -495,6 +517,8 @@ public class BatchExecutor {
     try {
       Futures.allAsList(resultFutures).get();
     } catch (ExecutionException e) {
+      LOG.error("Encountered exception in batchCallback(List<>, Batch.Callback). "
+          + "Exception: %s", e);
       throw new IOException("batchCallback error", e);
     }
     return results;
@@ -506,6 +530,7 @@ public class BatchExecutor {
    */
   public <R> void batchCallback(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
+    LOG.trace("batchCallback(List<>, Object[], Batch.Callback)");
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must be the same length as actions.");
     int index = 0;
@@ -518,6 +543,8 @@ public class BatchExecutor {
       // set to null.
       Futures.successfulAsList(resultFutures).get();
     } catch (ExecutionException e) {
+      LOG.error("Encountered exception in batchCallback(List<>, Object[], Batch.Callback). "
+          + "Exception: %s", e);
       throw new IOException("batchCallback error", e);
     }
   }
@@ -526,6 +553,7 @@ public class BatchExecutor {
    * Implementation of {@link org.apache.hadoop.hbase.client.HTable#exists(List)}.
    */
   public Boolean[] exists(List<Get> gets) throws IOException {
+    LOG.trace("exists(List<>)");
     // get(gets) will throw if there are any errors:
     Result[] getResults = (Result[]) batch(gets);
 
@@ -535,5 +563,4 @@ public class BatchExecutor {
     }
     return exists;
   }
-
 }
