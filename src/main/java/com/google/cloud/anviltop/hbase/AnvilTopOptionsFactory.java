@@ -18,6 +18,9 @@ import com.google.common.base.Strings;
 
 import org.apache.hadoop.conf.Configuration;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+
 /**
  * Static methods to convert an instance of {@link Configuration}
  * to a {@link AnviltopOptions} instance.
@@ -30,7 +33,37 @@ public class AnvilTopOptionsFactory {
   public static final String ANVILTOP_HOST_KEY = "google.anviltop.endpoint.host";
   public static final String PROJECT_ID_KEY = "google.anviltop.project.id";
 
-  public static AnviltopOptions fromConfiguration(Configuration configuration) {
+  /**
+   * Key to set to enable service accounts to be used, either metadata server-based or P12-based.
+   * Defaults to enabled.
+   */
+  public static final String ANVILTOP_USE_SERVICE_ACCOUNTS_KEY =
+      "google.anviltop.auth.service.account.enable";
+  public static final boolean ANVILTOP_USE_SERVICE_ACCOUNTS_DEFAULT = true;
+
+  /**
+   * Key to allow unit tests to proceed with an invalid credential configuration.
+   */
+  public static final String ANVILTOP_NULL_CREDENTIAL_ENABLE_KEY =
+      "google.anviltop.auth.null.credential.enable";
+  public static final boolean ANVILTOP_NULL_CREDENTIAL_ENABLE_DEFAULT = false;
+
+  /**
+   * Key to set when using P12 keyfile authentication. The value should be the service account email
+   * address as displayed. If this value is not set and using service accounts is enabled, a
+   * metadata server account will be used.
+   */
+  public static final String ANVILTOP_SERVICE_ACCOUNT_EMAIL_KEY =
+      "google.anviltop.auth.service.account.email";
+
+  /**
+   * Key to set to a location where a P12 keyfile can be found that corresponds to the provided
+   * service account email address.
+   */
+  public static final String ANVILTOP_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY =
+      "google.anviltop.auth.service.account.keyfile";
+
+  public static AnviltopOptions fromConfiguration(Configuration configuration) throws IOException {
 
     AnviltopOptions.Builder optionsBuilder = new AnviltopOptions.Builder();
 
@@ -49,6 +82,38 @@ public class AnvilTopOptionsFactory {
     int port = configuration.getInt(ANVILTOP_PORT_KEY, DEFAULT_ANVILTOP_PORT);
     optionsBuilder.setPort(port);
 
+    // TODO: Wire in logging once logging PR is merged.
+    try {
+      if (configuration.getBoolean(
+          ANVILTOP_USE_SERVICE_ACCOUNTS_KEY, ANVILTOP_USE_SERVICE_ACCOUNTS_DEFAULT)) {
+
+        String serviceAccountEmail = configuration.get(ANVILTOP_SERVICE_ACCOUNT_EMAIL_KEY);
+
+        if (!Strings.isNullOrEmpty(serviceAccountEmail)) {
+          // Using P12 keyfile based OAuth:
+          String keyfileLocation =
+              configuration.get(ANVILTOP_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
+
+          Preconditions.checkState(
+              !Strings.isNullOrEmpty(keyfileLocation),
+              "Key file location must be specified when setting service account email");
+
+          optionsBuilder.setCredential(
+              CredentialFactory.getCredentialFromPrivateKeyServiceAccount(
+                  serviceAccountEmail, keyfileLocation));
+        } else {
+          optionsBuilder.setCredential(CredentialFactory.getCredentialFromMetadataServiceAccount());
+        }
+      } else if (configuration.getBoolean(
+          ANVILTOP_NULL_CREDENTIAL_ENABLE_KEY, ANVILTOP_NULL_CREDENTIAL_ENABLE_DEFAULT)) {
+        optionsBuilder.setCredential(null); // Intended for testing purposes only.
+      } else {
+        throw new IllegalStateException(
+            "Either service account or null credentials must be enabled");
+      }
+    } catch (GeneralSecurityException gse) {
+      throw new IOException("Failed to acquire credential.", gse);
+    }
     return optionsBuilder.build();
   }
 }
