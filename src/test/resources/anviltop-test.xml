@@ -18,4 +18,12 @@
         <name>google.anviltop.project.id</name>
         <value>testproject</value>
     </property>
+    <property>
+        <name>google.anviltop.auth.service.account.enable</name>
+        <value>${google.anviltop.auth.service.account.enable}</value>
+    </property>
+    <property>
+        <name>google.anviltop.auth.null.credential.enable</name>
+        <value>true</value>
+    </property>
 </configuration>
