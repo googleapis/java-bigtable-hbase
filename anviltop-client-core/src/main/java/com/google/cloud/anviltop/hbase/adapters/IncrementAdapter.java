@@ -22,14 +22,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.KeyValue;
 
 import java.util.Map;
 import java.util.NavigableMap;
 
 
 /**
- * Adapter for HBase Get operations to Anviltop GetRowRequest.Builder.
+ * Adapter for HBase Increment operations to Anviltop IncrementRowRequest.Builder.
  */
 public class IncrementAdapter implements OperationAdapter<Increment, IncrementRowRequest.Builder>{
 

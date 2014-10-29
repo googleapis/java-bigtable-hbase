@@ -18,21 +18,18 @@ import com.google.bigtable.anviltop.AnviltopServices.GetRowResponse;
 import com.google.cloud.anviltop.hbase.DataGenerationHelper;
 import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TestGetRowResponseAdapter {
-  protected GetRowResponseAdapter adapter = new GetRowResponseAdapter();
+  protected GetRowResponseAdapter adapter = new GetRowResponseAdapter(new RowAdapter());
   protected QualifierTestHelper qualifierTestHelper = new QualifierTestHelper();
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 

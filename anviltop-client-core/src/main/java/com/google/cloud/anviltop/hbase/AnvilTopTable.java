@@ -16,6 +16,8 @@ package com.google.cloud.anviltop.hbase;
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopServices;
 import com.google.cloud.anviltop.hbase.adapters.AnviltopResultScannerAdapter;
+import com.google.cloud.anviltop.hbase.adapters.AppendAdapter;
+import com.google.cloud.anviltop.hbase.adapters.AppendResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
@@ -62,20 +64,25 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 public class AnvilTopTable implements HTableInterface {
+  protected static final Logger LOG = new Logger(AnvilTopTable.class);
+
   protected final TableName tableName;
   protected final AnviltopOptions options;
   protected final AnviltopClient client;
+  protected final RowAdapter rowAdapter = new RowAdapter();
   protected final PutAdapter putAdapter;
+  protected final AppendAdapter appendAdapter = new AppendAdapter();
+  protected final AppendResponseAdapter appendRespAdapter = new AppendResponseAdapter(rowAdapter);
   protected final IncrementAdapter incrementAdapter = new IncrementAdapter();
-  protected final IncrementRowResponseAdapter incrRespAdapter = new IncrementRowResponseAdapter();
+  protected final IncrementRowResponseAdapter incrRespAdapter = new IncrementRowResponseAdapter(rowAdapter);
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected final MutationAdapter mutationAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
   protected final GetAdapter getAdapter = new GetAdapter();
-  protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter();
+  protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter(rowAdapter);
   protected final ScanAdapter scanAdapter = new ScanAdapter();
   protected final AnviltopResultScannerAdapter anviltopResultScannerAdapter =
-      new AnviltopResultScannerAdapter(new RowAdapter());
+      new AnviltopResultScannerAdapter(rowAdapter);
   protected final Configuration configuration;
   protected final BatchExecutor batchExecutor;
   private final ExecutorService executorService;
@@ -91,6 +98,12 @@ public class AnvilTopTable implements HTableInterface {
       Configuration configuration,
       AnviltopClient client,
       ExecutorService executorService) {
+    LOG.info("Opening table %s for project %s on host %s and port %s on transport %s",
+        tableName.toString(),
+        options.getProjectId(),
+        options.getTransportOptions().getHost(),
+        options.getTransportOptions().getPort(),
+        options.getTransportOptions().getTransport());
     this.tableName = tableName;
     this.options = options;
     this.client = client;
@@ -113,9 +126,10 @@ public class AnvilTopTable implements HTableInterface {
         putAdapter,
         deleteAdapter,
         rowMutationsAdapter,
+        appendAdapter,
+        appendRespAdapter,
         incrementAdapter,
         incrRespAdapter);
-
   }
 
   @Override
@@ -135,11 +149,13 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    // TODO: Also include column family information
+    return new HTableDescriptor(tableName);
   }
 
   @Override
   public boolean exists(Get get) throws IOException {
+    LOG.trace("exists(Get)");
     // TODO: make use of strip_value() or count to hopefully return no extra data
     Result result = get(get);
     return !result.isEmpty();
@@ -147,6 +163,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public boolean[] existsAll(List<Get> gets) throws IOException {
+    LOG.trace("existsAll(Get)");
     Boolean[] existsObjects = exists(gets);
     boolean[] exists = new boolean[existsObjects.length];
     for (int i = 0; i < existsObjects.length; i++) {
@@ -157,34 +174,40 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Boolean[] exists(List<Get> gets) throws IOException {
+    LOG.trace("exists(List<Get>)");
     return batchExecutor.exists(gets);
   }
 
   @Override
   public void batch(List<? extends Row> actions, Object[] results)
       throws IOException, InterruptedException {
+    LOG.trace("batch(List<>, Object[])");
     batchExecutor.batch(actions, results);
   }
 
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
+    LOG.trace("batch(List<>)");
     return batchExecutor.batch(actions);
   }
 
   @Override
   public <R> void batchCallback(List<? extends Row> actions, Object[] results,
       Batch.Callback<R> callback) throws IOException, InterruptedException {
+    LOG.trace("batchCallback(List<>, Object[], Batch.Callback)");
     batchExecutor.batchCallback(actions, results, callback);
   }
 
   @Override
   public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback)
       throws IOException, InterruptedException {
+    LOG.trace("batchCallback(List<>, Batch.Callback)");
     return batchExecutor.batchCallback(actions, callback);
   }
 
   @Override
   public Result get(Get get) throws IOException {
+    LOG.trace("get(Get)");
     AnviltopServices.GetRowRequest.Builder getRowRequest = getAdapter.adapt(get);
     getRowRequest
         .setProjectId(options.getProjectId())
@@ -195,6 +218,7 @@ public class AnvilTopTable implements HTableInterface {
 
       return getRowResponseAdapter.adaptResponse(response);
     } catch (ServiceException e) {
+      LOG.error("Encountered ServiceException when executing get, Exception: %s", e);
       throw new IOException(
           makeGenericExceptionMessage(
               "get",
@@ -207,7 +231,8 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Result[] get(List<Get> gets) throws IOException {
-    return batchExecutor.get(gets);
+    LOG.trace("get(List<>)");
+    return (Result[]) batchExecutor.batch(gets);
   }
 
   @Override
@@ -217,6 +242,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
+    LOG.trace("getScanner(Scan)");
     AnviltopServices.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
     request.setProjectId(options.getProjectId());
     request.setTableName(tableName.getQualifierAsString());
@@ -225,6 +251,7 @@ public class AnvilTopTable implements HTableInterface {
       AnviltopResultScanner scanner = client.readTable(request.build());
       return anviltopResultScannerAdapter.adapt(scanner);
     } catch (ServiceException e) {
+      LOG.error("Encountered ServiceException when executing getScanner. Exception: %s", e);
       throw new IOException(
           makeGenericExceptionMessage(
               "getScanner",
@@ -236,22 +263,26 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public ResultScanner getScanner(byte[] family) throws IOException {
+    LOG.trace("getScanner(byte[])");
     return getScanner(new Scan().addFamily(family));
   }
 
   @Override
   public ResultScanner getScanner(byte[] family, byte[] qualifier) throws IOException {
+    LOG.trace("getScanner(byte[], byte[])");
     return getScanner(new Scan().addColumn(family, qualifier));
   }
 
   @Override
   public void put(Put put) throws IOException {
+    LOG.trace("put(Put)");
     AnviltopData.RowMutation.Builder rowMutation = putAdapter.adapt(put);
     AnviltopServices.MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
 
     try {
       client.mutateAtomic(request.build());
     } catch (ServiceException e) {
+      LOG.error("Encountered ServiceException when executing put. Exception: %s", e);
       throw new IOException(
           makeGenericExceptionMessage(
               "put",
@@ -264,7 +295,8 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void put(List<Put> puts) throws IOException {
-    batchExecutor.put(puts);
+    LOG.trace("put(List<Put>)");
+    batchExecutor.batch(puts);
   }
 
   @Override
@@ -281,12 +313,14 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void delete(Delete delete) throws IOException {
+    LOG.trace("delete(Delete)");
     AnviltopData.RowMutation.Builder rowMutation = deleteAdapter.adapt(delete);
     AnviltopServices.MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
 
     try {
       client.mutateAtomic(request.build());
     } catch (ServiceException e) {
+      LOG.error("Encountered ServiceException when executing delete. Exception: %s", e);
       throw new IOException(
           makeGenericExceptionMessage(
               "delete",
@@ -299,7 +333,8 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void delete(List<Delete> deletes) throws IOException {
-    batchExecutor.delete(deletes);
+    LOG.trace("delete(List<Delete>)");
+    batchExecutor.batch(deletes);
   }
 
   @Override
@@ -316,23 +351,44 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
+    LOG.trace("mutateRow(RowMutation)");
     AnviltopData.RowMutation.Builder rowMutation = rowMutationsAdapter.adapt(rm);
     AnviltopServices.MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
 
     try {
       client.mutateAtomic(request.build());
     } catch (ServiceException e) {
+      LOG.error("Encountered ServiceException when executing mutateRow. Exception: %s", e);
       throw new IOException("Failed to mutate.", e);
     }
   }
 
   @Override
   public Result append(Append append) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    LOG.trace("append(Append)");
+    AnviltopServices.AppendRowRequest.Builder appendRowRequest = appendAdapter.adapt(append);
+    appendRowRequest
+        .setProjectId(options.getProjectId())
+        .setTableName(tableName.getQualifierAsString());
+
+    try {
+      AnviltopServices.AppendRowResponse response = client.appendRow(appendRowRequest.build());
+      return appendRespAdapter.adaptResponse(response);
+    } catch (ServiceException e) {
+      LOG.error("Encountered ServiceException when executing append. Exception: %s", e);
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "append",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              append.getRow()),
+          e);
+    }
   }
 
   @Override
   public Result increment(Increment increment) throws IOException {
+    LOG.trace("increment(Increment)");
     AnviltopServices.IncrementRowRequest.Builder incrementRowRequest = incrementAdapter.adapt(
         increment);
     incrementRowRequest
@@ -344,6 +400,7 @@ public class AnvilTopTable implements HTableInterface {
           incrementRowRequest.build());
       return incrRespAdapter.adaptResponse(response);
     } catch (ServiceException e) {
+      LOG.error("Encountered ServiceException when executing increment. Exception: %s", e);
       throw new IOException(
           makeGenericExceptionMessage(
               "increment",
@@ -357,12 +414,14 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
       throws IOException {
+    LOG.trace("incrementColumnValue(byte[], byte[], byte[], long)");
     Increment incr = new Increment(row);
     incr.addColumn(family, qualifier, amount);
     Result result = increment(incr);
 
     Cell cell = result.getColumnLatestCell(family, qualifier);
     if (cell == null) {
+      LOG.error("Failed to find a incremented value in result of increment");
       throw new IOException(
           makeGenericExceptionMessage(
               "increment",
@@ -376,22 +435,26 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount,
       Durability durability) throws IOException {
+    LOG.trace("incrementColumnValue(byte[], byte[], byte[], long, Durability)");
     return incrementColumnValue(row, family, qualifier, amount);
   }
 
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount,
       boolean writeToWAL) throws IOException {
+    LOG.trace("incrementColumnValue(byte[], byte[], byte[], long, boolean)");
     return incrementColumnValue(row, family, qualifier, amount);
   }
 
   @Override
   public boolean isAutoFlush() {
+    LOG.trace("isAutoFlush()");
     return true;
   }
 
   @Override
   public void flushCommits() throws IOException {
+    LOG.error("Unsupported flushCommits() called.");
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -401,12 +464,14 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public CoprocessorRpcChannel coprocessorService(byte[] row) {
+    LOG.error("Unsupported coprocessorService(byte[]) called.");
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
   public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> service, byte[] startKey,
       byte[] endKey, Batch.Call<T, R> callable) throws ServiceException, Throwable {
+    LOG.error("Unsupported coprocessorService(Class, byte[], byte[], Batch.Call) called.");
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -414,28 +479,35 @@ public class AnvilTopTable implements HTableInterface {
   public <T extends Service, R> void coprocessorService(Class<T> service, byte[] startKey,
       byte[] endKey, Batch.Call<T, R> callable, Batch.Callback<R> callback)
       throws ServiceException, Throwable {
+    LOG.error("Unsupported coprocessorService("
+        + "Class, byte[], byte[], Batch.Call, Batch.Callback) called.");
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
   public void setAutoFlush(boolean autoFlush) {
+    LOG.warn("setAutoFlush(%s) invoked, but is currently a NOP", autoFlush);
   }
 
   @Override
   public void setAutoFlush(boolean autoFlush, boolean clearBufferOnFail) {
+    LOG.warn("setAutoFlush(%s, %s), but is currently a NOP", autoFlush, clearBufferOnFail);
   }
 
   @Override
   public void setAutoFlushTo(boolean autoFlush) {
+    LOG.warn("setAutoFlushTo(%s), but is currently a NOP", autoFlush);
   }
 
   @Override
   public long getWriteBufferSize() {
+    LOG.error("Unsupported getWriteBufferSize() called");
     throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
   public void setWriteBufferSize(long writeBufferSize) throws IOException {
+    LOG.error("Unsupported getWriteBufferSize() called");
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -443,6 +515,8 @@ public class AnvilTopTable implements HTableInterface {
   public <R extends Message> Map<byte[], R> batchCoprocessorService(
       Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes2,
       R r) throws ServiceException, Throwable {
+    LOG.error("Unsupported batchCoprocessorService("
+        + "MethodDescriptor, Message, byte[], byte[], R) called.");
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -450,11 +524,15 @@ public class AnvilTopTable implements HTableInterface {
   public <R extends Message> void batchCoprocessorService(
       Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes2,
       R r, Batch.Callback<R> rCallback) throws ServiceException, Throwable {
+    LOG.error("Unsupported batchCoprocessorService("
+        + "MethodDescriptor, Message, byte[], byte[], R, Batch.Callback<R>) called.");
     throw new UnsupportedOperationException();  // TODO
   }
 
   private AnviltopServices.MutateRowRequest.Builder makeMutateRowRequest(
       AnviltopData.RowMutation.Builder rowMutation) {
+    LOG.trace("Making mutateRowRequest for table '%s' in project '%s' with mutations '%s'",
+        tableName, options.getProjectId(), rowMutation);
     return AnviltopServices.MutateRowRequest.newBuilder()
         .setProjectId(options.getProjectId())
         .setTableName(tableName.getQualifierAsString())

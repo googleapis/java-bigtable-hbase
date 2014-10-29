@@ -9,6 +9,8 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.IOException;
+
 @RunWith(JUnit4.class)
 public class TestAnviltopOptionsFactory {
 
@@ -20,7 +22,7 @@ public class TestAnviltopOptionsFactory {
   public ExpectedException expectedException = ExpectedException.none();
 
   @Test
-  public void testProjectIdIsRequired() {
+  public void testProjectIdIsRequired() throws IOException {
     Configuration configuration = new Configuration();
     configuration.set(AnvilTopOptionsFactory.ANVILTOP_HOST_KEY, TEST_HOST);
 
@@ -29,7 +31,7 @@ public class TestAnviltopOptionsFactory {
   }
 
   @Test
-  public void testHostIsRequired() {
+  public void testHostIsRequired() throws IOException {
     Configuration configuration = new Configuration();
     configuration.set(AnvilTopOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
 
@@ -38,10 +40,12 @@ public class TestAnviltopOptionsFactory {
   }
 
   @Test
-  public void testOptionsAreConstructedWithValidInput() {
+  public void testOptionsAreConstructedWithValidInput() throws IOException {
     Configuration configuration = new Configuration();
     configuration.set(AnvilTopOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(AnvilTopOptionsFactory.ANVILTOP_HOST_KEY, TEST_HOST);
+    configuration.setBoolean(AnvilTopOptionsFactory.ANVILTOP_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(AnvilTopOptionsFactory.ANVILTOP_NULL_CREDENTIAL_ENABLE_KEY, true);
     AnviltopOptions options = AnvilTopOptionsFactory.fromConfiguration(configuration);
     Assert.assertEquals(TEST_HOST, options.getTransportOptions().getHost());
     Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
