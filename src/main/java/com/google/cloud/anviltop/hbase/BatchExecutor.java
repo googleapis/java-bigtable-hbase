@@ -65,14 +65,14 @@ public class BatchExecutor {
     private final Row row;
     private final Batch.Callback<R> callback;
     private final int index;
-    private final Result[] resultsArray;
+    private final Object[] resultsArray;
     private final SettableFuture<Object> resultFuture;
 
     public RpcResultFutureCallback(
         Row row,
         Batch.Callback<R> callback,
         int index,
-        Result[] resultsArray,
+        Object[] resultsArray,
         SettableFuture<Object> resultFuture) {
       this.row = row;
       this.callback = callback;
@@ -84,7 +84,7 @@ public class BatchExecutor {
     /**
      * Adapt a proto result into a client result
      */
-    abstract Result adaptResponse(T response);
+    abstract Object adaptResponse(T response);
 
     @SuppressWarnings("unchecked")
     R unchecked(Object o) {
@@ -94,7 +94,7 @@ public class BatchExecutor {
     @Override
     public void onSuccess(T t) {
       try {
-        Result result = adaptResponse(t);
+        Object result = adaptResponse(t);
         resultsArray[index] = result;
         if (callback != null) {
           callback.update(NO_REGION, row.getRow(), unchecked(result));
@@ -321,7 +321,7 @@ public class BatchExecutor {
    * @return A ListenableFuture that will have the result when the RPC completes.
    */
   <R extends Row,T> ListenableFuture<Object> issueRowRequest(
-      final Row row, final Batch.Callback<T> callback, final Result[] results, final int index) {
+      final Row row, final Batch.Callback<T> callback, final Object[] results, final int index) {
     final SettableFuture<Object> resultFuture = SettableFuture.create();
     results[index] = null;
     if (row instanceof Delete) {
@@ -331,7 +331,7 @@ public class BatchExecutor {
           new RpcResultFutureCallback<T, AnviltopServices.MutateRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Result adaptResponse(AnviltopServices.MutateRowResponse response) {
+            Object adaptResponse(AnviltopServices.MutateRowResponse response) {
               return new Result();
             }
           },
@@ -343,7 +343,7 @@ public class BatchExecutor {
           new RpcResultFutureCallback<T, AnviltopServices.GetRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Result adaptResponse(AnviltopServices.GetRowResponse response) {
+            Object adaptResponse(AnviltopServices.GetRowResponse response) {
               return getRowResponseAdapter.adaptResponse(response);
             }
           },
@@ -355,7 +355,7 @@ public class BatchExecutor {
           new RpcResultFutureCallback<T, AnviltopServices.IncrementRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Result adaptResponse(AnviltopServices.IncrementRowResponse response) {
+            Object adaptResponse(AnviltopServices.IncrementRowResponse response) {
               return incrRespAdapter.adaptResponse(response);
             }
           },
@@ -367,7 +367,7 @@ public class BatchExecutor {
           new RpcResultFutureCallback<T, AnviltopServices.MutateRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Result adaptResponse(AnviltopServices.MutateRowResponse response) {
+            Object adaptResponse(AnviltopServices.MutateRowResponse response) {
               return new Result();
             }
           },
@@ -379,7 +379,7 @@ public class BatchExecutor {
           new RpcResultFutureCallback<T, AnviltopServices.MutateRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Result adaptResponse(AnviltopServices.MutateRowResponse response) {
+            Object adaptResponse(AnviltopServices.MutateRowResponse response) {
               return new Result();
             }
           },
@@ -396,10 +396,10 @@ public class BatchExecutor {
   /**
    * Implementation of {@link org.apache.hadoop.hbase.client.HTable#batch(List, Object[])}
    */
-  public void batch(List<? extends Row> actions, @Nullable Result[] results)
+  public void batch(List<? extends Row> actions, @Nullable Object[] results)
       throws IOException, InterruptedException {
     if (results == null) {
-      results = new Result[actions.size()];
+      results = new Object[actions.size()];
     }
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must have same dimensions as actions list.");
@@ -436,7 +436,7 @@ public class BatchExecutor {
   /**
    * Implementation of {@link org.apache.hadoop.hbase.client.HTable#batch(List)}
    */
-  public Result[] batch(List<? extends Row> actions) throws IOException {
+  public Object[] batch(List<? extends Row> actions) throws IOException {
     Result[] results = new Result[actions.size()];
     try {
       batch(actions, results);
@@ -472,7 +472,7 @@ public class BatchExecutor {
    * {@link org.apache.hadoop.hbase.client.HTable#batchCallback(List, Object[], Batch.Callback)}
    */
   public <R> void batchCallback(List<? extends Row> actions,
-        Result[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
+        Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must be the same length as actions.");
     int index = 0;
@@ -494,7 +494,7 @@ public class BatchExecutor {
    */
   public Boolean[] exists(List<Get> gets) throws IOException {
     // get(gets) will throw if there are any errors:
-    Result[] getResults = batch(gets);
+    Result[] getResults = (Result[]) batch(gets);
 
     Boolean[] exists = new Boolean[getResults.length];
     for (int index = 0; index < getResults.length; index++) {

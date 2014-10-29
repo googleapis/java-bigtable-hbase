@@ -163,9 +163,7 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public void batch(List<? extends Row> actions, Object[] results)
       throws IOException, InterruptedException {
-    Result[] tempResults = new Result[results.length];
-    batchExecutor.batch(actions, tempResults);
-    System.arraycopy(tempResults, 0, results, 0, results.length);
+    batchExecutor.batch(actions, results);
   }
 
   @Override
@@ -176,9 +174,7 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public <R> void batchCallback(List<? extends Row> actions, Object[] results,
       Batch.Callback<R> callback) throws IOException, InterruptedException {
-    Result[] tempResults = new Result[results.length];
-    batchExecutor.batchCallback(actions, tempResults, callback);
-    System.arraycopy(tempResults, 0, results, 0, results.length);
+    batchExecutor.batchCallback(actions, results, callback);
   }
 
   @Override
@@ -211,7 +207,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Result[] get(List<Get> gets) throws IOException {
-    return batchExecutor.batch(gets);
+    return (Result[]) batchExecutor.batch(gets);
   }
 
   @Override
