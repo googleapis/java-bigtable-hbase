@@ -523,33 +523,11 @@ public class BatchExecutor {
   }
 
   /**
-   * Implementation of {@link org.apache.hadoop.hbase.client.HTable#delete(List)}
-   */
-  public List<AnviltopServices.MutateRowResponse> delete(List<Delete> deletes) throws IOException {
-    List<AnviltopServices.MutateRowResponse> responses;
-    try {
-      /* The following is from Table#delete(List): "If there are any failures even after retries,
-       * there will be a null in the results array for those Gets, AND an exception will be thrown."
-       * This sentence makes my head hurt. The best interpretation I can come up with is "execute
-       * all gets and then throw an exception". This is what allAsList will do. Wait for all to
-       * complete and throw an exception for failed futures.
-       */
-      responses = Futures.allAsList(issueDeleteRequests(deletes)).get();
-    } catch (ExecutionException | InterruptedException e) {
-      // TODO: For Execution exception, add inspection of ExecutionException#getCause to get the
-      // real issue.
-      throw new IOException("Error in batch delete", e);
-    }
-
-    return responses;
-  }
-
-  /**
    * Implementation of {@link org.apache.hadoop.hbase.client.HTable#exists(List)}.
    */
   public Boolean[] exists(List<Get> gets) throws IOException {
     // get(gets) will throw if there are any errors:
-    Result[] getResults = get(gets);
+    Result[] getResults = (Result[]) batch(gets);
 
     Boolean[] exists = new Boolean[getResults.length];
     for (int index = 0; index < getResults.length; index++) {
@@ -558,58 +536,4 @@ public class BatchExecutor {
     return exists;
   }
 
-  /**
-   * Implementation of {@link org.apache.hadoop.hbase.client.HTable#get(List)}
-   */
-  public Result[] get(List<Get> gets) throws IOException {
-    List<AnviltopServices.GetRowResponse> responses;
-    try {
-      /* The following is from Table#get(List): "If there are any failures even after retries,
-       * there will be a null in the results array for those Gets, AND an exception will be thrown."
-       * This sentence makes my head hurt. The best interpretation I can come up with is "execute
-       * all gets and then throw an exception". This is what allAsList will do. Wait for all to
-       * complete and throw an exception for failed futures.
-       */
-      responses = Futures.allAsList(issueGetRequests(gets)).get();
-    } catch (ExecutionException | InterruptedException e) {
-      // TODO: For Execution exception, add inspection of ExecutionException#getCause to get the
-      // real issue.
-      throw new IOException("Error in batch get", e);
-    }
-
-    List<Result> resultList =
-        Lists.transform(responses, new Function<AnviltopServices.GetRowResponse, Result>(){
-          @Override
-          public Result apply(@Nullable AnviltopServices.GetRowResponse getRowResponse) {
-            return getRowResponseAdapter.adaptResponse(getRowResponse);
-          }
-        });
-
-    int resultCount = resultList.size();
-    Result[] results = new Result[resultCount];
-    resultList.toArray(results);
-    return results;
-  }
-
-  /**
-   * Implementation of {@link org.apache.hadoop.hbase.client.HTable#put(List)}
-   */
-  public List<AnviltopServices.MutateRowResponse> put(List<Put> puts) throws IOException {
-    List<AnviltopServices.MutateRowResponse> responses;
-    try {
-      /* The following is from Table#put(List): "If there are any failures even after retries,
-       * there will be a null in the results array for those Gets, AND an exception will be thrown."
-       * This sentence makes my head hurt. The best interpretation I can come up with is "execute
-       * all gets and then throw an exception". This is what allAsList will do. Wait for all to
-       * complete and throw an exception for failed futures.
-       */
-      responses = Futures.allAsList(issuePutRequests(puts)).get();
-    } catch (ExecutionException | InterruptedException e) {
-      // TODO: For Execution exception, add inspection of ExecutionException#getCause to get the
-      // real issue.
-      throw new IOException("Error in batch put", e);
-    }
-
-    return responses;
-  }
 }

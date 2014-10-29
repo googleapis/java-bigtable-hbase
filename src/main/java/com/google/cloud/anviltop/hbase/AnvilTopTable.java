@@ -214,7 +214,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public Result[] get(List<Get> gets) throws IOException {
-    return batchExecutor.get(gets);
+    return (Result[]) batchExecutor.batch(gets);
   }
 
   @Override
@@ -271,7 +271,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void put(List<Put> puts) throws IOException {
-    batchExecutor.put(puts);
+    batchExecutor.batch(puts);
   }
 
   @Override
@@ -306,7 +306,7 @@ public class AnvilTopTable implements HTableInterface {
 
   @Override
   public void delete(List<Delete> deletes) throws IOException {
-    batchExecutor.delete(deletes);
+    batchExecutor.batch(deletes);
   }
 
   @Override
