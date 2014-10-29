@@ -450,7 +450,7 @@ public class BatchExecutor {
    * Implementation of
    * {@link org.apache.hadoop.hbase.client.HTable#batchCallback(List, Batch.Callback)}
    */
-  public <R> Result[] batchCallback(
+  public <R> Object[] batchCallback(
       List<? extends Row> actions,
       Batch.Callback<R> callback) throws IOException, InterruptedException {
     Result[] results = new Result[actions.size()];
@@ -472,7 +472,7 @@ public class BatchExecutor {
    * {@link org.apache.hadoop.hbase.client.HTable#batchCallback(List, Object[], Batch.Callback)}
    */
   public <R> void batchCallback(List<? extends Row> actions,
-        Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
+      Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must be the same length as actions.");
     int index = 0;
