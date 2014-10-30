@@ -19,6 +19,7 @@ import com.google.cloud.anviltop.hbase.adapters.AnviltopResultScannerAdapter;
 import com.google.cloud.anviltop.hbase.adapters.AppendAdapter;
 import com.google.cloud.anviltop.hbase.adapters.AppendResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
+import com.google.cloud.anviltop.hbase.adapters.FilterAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetAdapter;
 import com.google.cloud.anviltop.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.IncrementAdapter;
@@ -31,6 +32,7 @@ import com.google.cloud.anviltop.hbase.adapters.ScanAdapter;
 import com.google.cloud.anviltop.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.cloud.hadoop.hbase.AnviltopResultScanner;
+import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
@@ -39,6 +41,7 @@ import com.google.cloud.hadoop.hbase.repackaged.protobuf.ServiceException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -54,11 +57,14 @@ import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -78,9 +84,9 @@ public class AnvilTopTable implements HTableInterface {
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected final MutationAdapter mutationAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
-  protected final GetAdapter getAdapter = new GetAdapter();
   protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter(rowAdapter);
-  protected final ScanAdapter scanAdapter = new ScanAdapter();
+  protected final ScanAdapter scanAdapter = new ScanAdapter(new FilterAdapter());
+  protected final GetAdapter getAdapter = new GetAdapter(scanAdapter);
   protected final AnviltopResultScannerAdapter anviltopResultScannerAdapter =
       new AnviltopResultScannerAdapter(rowAdapter);
   protected final Configuration configuration;
@@ -302,13 +308,30 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put)
       throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return checkAndPut(row, family, qualifier, CompareFilter.CompareOp.EQUAL, value, put);
   }
 
   @Override
-  public boolean checkAndPut(byte[] bytes, byte[] bytes2, byte[] bytes3,
-      CompareFilter.CompareOp compareOp, byte[] bytes4, Put put) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+  public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
+      CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
+
+    AnviltopServices.CheckAndMutateRowRequest.Builder requestBuilder =
+        makeConditionalMutationRequestBuilder(
+            row, family, qualifier, compareOp, value, put, putAdapter.adapt(put).getModsList());
+
+    try {
+      AnviltopServices.CheckAndMutateRowResponse response =
+          client.checkAndMutateRow(requestBuilder.build());
+      return response.getPredicateMatched();
+    } catch (ServiceException serviceException) {
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "checkAndPut",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              row),
+          serviceException);
+    }
   }
 
   @Override
@@ -340,13 +363,36 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value,
       Delete delete) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return checkAndDelete(row, family, qualifier, CompareFilter.CompareOp.EQUAL, value, delete);
   }
 
   @Override
-  public boolean checkAndDelete(byte[] bytes, byte[] bytes2, byte[] bytes3,
-    CompareFilter.CompareOp compareOp, byte[] bytes4, Delete delete) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+  public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
+    CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
+
+    AnviltopServices.CheckAndMutateRowRequest.Builder requestBuilder =
+        makeConditionalMutationRequestBuilder(
+            row,
+            family,
+            qualifier,
+            compareOp,
+            value,
+            delete,
+            deleteAdapter.adapt(delete).getModsList());
+
+    try {
+      AnviltopServices.CheckAndMutateRowResponse response =
+          client.checkAndMutateRow(requestBuilder.build());
+      return response.getPredicateMatched();
+    } catch (ServiceException serviceException) {
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "checkAndDelete",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              row),
+          serviceException);
+    }
   }
 
   @Override
@@ -537,6 +583,48 @@ public class AnvilTopTable implements HTableInterface {
         .setProjectId(options.getProjectId())
         .setTableName(tableName.getQualifierAsString())
         .setMutation(rowMutation);
+  }
+
+  protected AnviltopServices.CheckAndMutateRowRequest.Builder makeConditionalMutationRequestBuilder(
+      byte[] row,
+      byte[] family,
+      byte[] qualifier,
+      CompareFilter.CompareOp compareOp,
+      byte[] value,
+      Row action,
+      List<AnviltopData.RowMutation.Mod> mods) throws IOException {
+
+    if (!Arrays.equals(action.getRow(), row)) {
+      throw new DoNotRetryIOException("Action's getRow must match the passed row");
+    }
+
+    AnviltopServices.CheckAndMutateRowRequest.Builder requestBuilder =
+        AnviltopServices.CheckAndMutateRowRequest.newBuilder();
+    requestBuilder.setProjectId(options.getProjectId());
+    requestBuilder.setTableName(tableName.getQualifierAsString());
+
+    AnviltopData.ConditionalRowMutation.Builder mutationBuilder =
+        requestBuilder.getMutationBuilder();
+    mutationBuilder.setRowKey(ByteString.copyFrom(row));
+    Scan scan = new Scan().addColumn(family, qualifier);
+    scan.setMaxVersions(1);
+    scan.setFilter(new ValueFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(value)));
+    mutationBuilder.setPredicateFilterBytes(
+        ByteString.copyFrom(scanAdapter.buildFilterByteString(scan)));
+
+    if (CompareFilter.CompareOp.EQUAL.equals(compareOp)) {
+      mutationBuilder.addAllTrueMods(mods);
+    } else if (CompareFilter.CompareOp.NOT_EQUAL.equals(compareOp)) {
+      mutationBuilder.addAllFalseMods(mods);
+    } else {
+      throw new UnsupportedOperationException(
+          String.format(
+              "compareOp values other than EQUAL or NOT_EQUAL are not supported in "
+                  + "checkAndMutate. Found %s",
+              compareOp));
+    }
+
+    return requestBuilder;
   }
 
   static String makeGenericExceptionMessage(String operation, String projectId, String tableName) {

@@ -99,7 +99,7 @@ public class TestAnviltopTable {
     Mockito.when(mockClient.getRow(Mockito.any(AnviltopServices.GetRowRequest.class)))
         .thenReturn(AnviltopServices.GetRowResponse.getDefaultInstance());
 
-    String expectedFilter = "(col({family:qualifier}, 1))";
+    String expectedFilter = "((col({family:qualifier}, 1)))";
     table.get(
         new Get(Bytes.toBytes("rowKey1"))
             .addColumn(
