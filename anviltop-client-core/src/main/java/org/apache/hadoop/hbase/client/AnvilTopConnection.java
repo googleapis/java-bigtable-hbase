@@ -102,13 +102,14 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
     this.options = AnvilTopOptionsFactory.fromConfiguration(conf);
     TransportOptions transportOptions = options.getTransportOptions();
     ChannelOptions channelOptions = options.getChannelOptions();
+    TransportOptions adminTransportOptions = options.getAdminTransportOptions();
 
     this.client = getAnviltopClient(
         transportOptions,
         channelOptions,
         batchPool);
     this.anviltopAdminClient = getAdminClient(
-        transportOptions,
+        adminTransportOptions,
         channelOptions,
         batchPool);
   }

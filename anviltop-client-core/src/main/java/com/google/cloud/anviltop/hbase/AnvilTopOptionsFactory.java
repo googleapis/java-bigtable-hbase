@@ -29,9 +29,10 @@ public class AnvilTopOptionsFactory {
 
   public static final String ANVILTOP_PORT_KEY = "google.anviltop.endpoint.port";
   public static final int DEFAULT_ANVILTOP_PORT = 443;
-
+  public static final String ANVILTOP_ADMIN_HOST_KEY = "google.anviltop.admin.endpoint.host";
   public static final String ANVILTOP_HOST_KEY = "google.anviltop.endpoint.host";
   public static final String PROJECT_ID_KEY = "google.anviltop.project.id";
+
 
   /**
    * Key to set to enable service accounts to be used, either metadata server-based or P12-based.
@@ -78,6 +79,13 @@ public class AnvilTopOptionsFactory {
         !Strings.isNullOrEmpty(host),
         String.format("API endpoint host must be supplied via %s", ANVILTOP_HOST_KEY));
     optionsBuilder.setHost(host);
+
+    String adminHost = configuration.get(ANVILTOP_ADMIN_HOST_KEY);
+    if (!Strings.isNullOrEmpty(adminHost)) {
+      optionsBuilder.setAdminHost(adminHost);
+    } else {
+      optionsBuilder.setAdminHost(host);
+    }
 
     int port = configuration.getInt(ANVILTOP_PORT_KEY, DEFAULT_ANVILTOP_PORT);
     optionsBuilder.setPort(port);

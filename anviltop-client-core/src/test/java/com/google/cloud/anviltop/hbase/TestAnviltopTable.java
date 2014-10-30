@@ -39,7 +39,7 @@ public class TestAnviltopTable {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    AnviltopOptions options = new AnviltopOptions("testhost", 0, null, TEST_PROJECT);
+    AnviltopOptions options = new AnviltopOptions("testhost-admin", "testhost", 0, null, TEST_PROJECT);
     table = new AnvilTopTable(
         TableName.valueOf(TEST_TABLE),
         options,
