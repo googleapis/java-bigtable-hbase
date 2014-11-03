@@ -31,7 +31,13 @@ public class AnviltopOptions {
     private String projectId = "";
     private Credential credential;
     private String host;
+    private String adminHost;
     private int port;
+
+    public Builder setAdminHost(String host) {
+      this.adminHost = host;
+      return this;
+    }
 
     public Builder setHost(String host) {
       this.host = host;
@@ -54,20 +60,28 @@ public class AnviltopOptions {
     }
 
     public AnviltopOptions build() {
-      return new AnviltopOptions(host, port, credential, projectId);
+      if (Strings.isNullOrEmpty(adminHost)) {
+        adminHost = host;
+      }
+
+      return new AnviltopOptions(adminHost, host, port, credential, projectId);
     }
   }
 
+  private final String adminHost;
   private final String host;
   private final int port;
   private final Credential credential;
   private final String projectId;
 
-  public AnviltopOptions(String host, int port, Credential credential, String projectId) {
+  public AnviltopOptions(String adminHost, String host, int port, Credential credential, String projectId) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(host), "Host must not be empty or null.");
     Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(adminHost), "Admin host must not be empty or null.");
+    Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
+    this.adminHost = adminHost;
     this.host = host;
     this.port = port;
     this.credential = credential;
@@ -89,6 +103,13 @@ public class AnviltopOptions {
     return new TransportOptions(
         TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
         host,
+        port);
+  }
+
+  public TransportOptions getAdminTransportOptions() {
+    return new TransportOptions(
+        TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
+        adminHost,
         port);
   }
 }

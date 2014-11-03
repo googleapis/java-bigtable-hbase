@@ -28,6 +28,8 @@
         <alpn.version>7.0.0.v20140317</alpn.version>
         <google.api.client.version>1.19.0</google.api.client.version>
         <google.anviltop.auth.service.account.enable>false</google.anviltop.auth.service.account.enable>
+        <google.anviltop.admin.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.admin.endpoint.host>
+        <google.anviltop.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.endpoint.host>
     </properties>
     <profiles>
         <profile>

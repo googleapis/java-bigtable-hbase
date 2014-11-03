@@ -40,6 +40,18 @@ public class TestAnviltopOptionsFactory {
   }
 
   @Test
+  public void testAdminHostKeyIsUsed() throws IOException {
+    Configuration configuration = new Configuration();
+    configuration.set(AnvilTopOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
+    configuration.set(AnvilTopOptionsFactory.ANVILTOP_HOST_KEY, TEST_HOST);
+    configuration.set(AnvilTopOptionsFactory.ANVILTOP_ADMIN_HOST_KEY, TEST_HOST + "-admin");
+    configuration.setBoolean(AnvilTopOptionsFactory.ANVILTOP_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(AnvilTopOptionsFactory.ANVILTOP_NULL_CREDENTIAL_ENABLE_KEY, true);
+    AnviltopOptions options = AnvilTopOptionsFactory.fromConfiguration(configuration);
+    Assert.assertEquals(TEST_HOST + "-admin", options.getAdminTransportOptions().getHost());
+  }
+
+  @Test
   public void testOptionsAreConstructedWithValidInput() throws IOException {
     Configuration configuration = new Configuration();
     configuration.set(AnvilTopOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
