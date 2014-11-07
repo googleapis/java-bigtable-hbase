@@ -104,7 +104,7 @@ public class AnvilTopTable implements HTableInterface {
       Configuration configuration,
       AnviltopClient client,
       ExecutorService executorService) {
-    LOG.info("Opening table %s for project %s on host %s and port %s on transport %s",
+    LOG.debug("Opening table %s for project %s on host %s and port %s on transport %s",
         tableName.toString(),
         options.getProjectId(),
         options.getTransportOptions().getHost(),
