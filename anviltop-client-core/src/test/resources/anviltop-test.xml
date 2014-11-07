@@ -30,4 +30,8 @@
         <name>google.anviltop.auth.null.credential.enable</name>
         <value>true</value>
     </property>
+    <property>
+        <name>google.anviltop.call.report.directory</name>
+        <value>${google.anviltop.call.report.directory}</value>
+    </property>
 </configuration>
