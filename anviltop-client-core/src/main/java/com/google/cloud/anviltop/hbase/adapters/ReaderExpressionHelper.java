@@ -29,7 +29,6 @@ public class ReaderExpressionHelper {
         new QuoteFilterExpressionStream(outputStream);
     QuoteMetaOutputStream quoteMetaOutputStream =
         new QuoteMetaOutputStream(quoteFilterExpressionStream);
-
     quoteMetaOutputStream.write(unquoted);
   }
 

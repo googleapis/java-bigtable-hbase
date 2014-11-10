@@ -208,6 +208,7 @@ public class FilterAdapter {
   }
 
   static class ValueFilterAdapter extends AbstractSingleFilterAdapter<ValueFilter> {
+
     private final ReaderExpressionHelper readerExpressionHelper;
     ValueFilterAdapter(ReaderExpressionHelper readerExpressionHelper) {
       super(ValueFilter.class);

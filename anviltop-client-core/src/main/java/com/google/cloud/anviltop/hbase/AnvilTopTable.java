@@ -322,7 +322,7 @@ public class AnvilTopTable implements HTableInterface {
     try {
       AnviltopServices.CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
-      return response.getPredicateMatched();
+      return wasMutationApplied(requestBuilder, response);
     } catch (ServiceException serviceException) {
       throw new IOException(
           makeGenericExceptionMessage(
@@ -383,7 +383,7 @@ public class AnvilTopTable implements HTableInterface {
     try {
       AnviltopServices.CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
-      return response.getPredicateMatched();
+      return wasMutationApplied(requestBuilder, response);
     } catch (ServiceException serviceException) {
       throw new IOException(
           makeGenericExceptionMessage(
@@ -585,6 +585,18 @@ public class AnvilTopTable implements HTableInterface {
         .setMutation(rowMutation);
   }
 
+  protected boolean wasMutationApplied(
+      AnviltopServices.CheckAndMutateRowRequest.Builder requestBuilder,
+      AnviltopServices.CheckAndMutateRowResponse response) {
+
+    // If we have true mods, we want the predicate to have matched.
+    // If we have false mods, we did not want the predicate to have matched.
+    return (requestBuilder.getMutation().getTrueModsCount() > 0
+        && response.getPredicateMatched())
+        || (requestBuilder.getMutation().getFalseModsCount() > 0
+        && !response.getPredicateMatched());
+  }
+
   protected AnviltopServices.CheckAndMutateRowRequest.Builder makeConditionalMutationRequestBuilder(
       byte[] row,
       byte[] family,
@@ -598,6 +610,15 @@ public class AnvilTopTable implements HTableInterface {
       throw new DoNotRetryIOException("Action's getRow must match the passed row");
     }
 
+    if (!CompareFilter.CompareOp.EQUAL.equals(compareOp)
+        && !CompareFilter.CompareOp.NOT_EQUAL.equals(compareOp)) {
+      throw new UnsupportedOperationException(
+          String.format(
+              "compareOp values other than EQUAL or NOT_EQUAL are not supported in "
+                  + "checkAndMutate. Found %s",
+              compareOp));
+    }
+
     AnviltopServices.CheckAndMutateRowRequest.Builder requestBuilder =
         AnviltopServices.CheckAndMutateRowRequest.newBuilder();
     requestBuilder.setProjectId(options.getProjectId());
@@ -608,7 +629,19 @@ public class AnvilTopTable implements HTableInterface {
     mutationBuilder.setRowKey(ByteString.copyFrom(row));
     Scan scan = new Scan().addColumn(family, qualifier);
     scan.setMaxVersions(1);
-    scan.setFilter(new ValueFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(value)));
+    if (value == null) {
+      // If we don't have a value and we are doing CompareOp.EQUAL, we want to mutate if there
+      // is no cell with the qualifier. If we are doing CompareOp.NOT_EQUAL, we want to mutate
+      // if there is any cell. We don't actually want an extra filter for either of these cases,
+      // but we do need to invert the compare op.
+      if (CompareFilter.CompareOp.EQUAL.equals(compareOp)) {
+        compareOp = CompareFilter.CompareOp.NOT_EQUAL;
+      } else if (CompareFilter.CompareOp.NOT_EQUAL.equals(compareOp)) {
+        compareOp = CompareFilter.CompareOp.EQUAL;
+      }
+    } else {
+      scan.setFilter(new ValueFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(value)));
+    }
     mutationBuilder.setPredicateFilterBytes(
         ByteString.copyFrom(scanAdapter.buildFilterByteString(scan)));
 
@@ -616,12 +649,6 @@ public class AnvilTopTable implements HTableInterface {
       mutationBuilder.addAllTrueMods(mods);
     } else if (CompareFilter.CompareOp.NOT_EQUAL.equals(compareOp)) {
       mutationBuilder.addAllFalseMods(mods);
-    } else {
-      throw new UnsupportedOperationException(
-          String.format(
-              "compareOp values other than EQUAL or NOT_EQUAL are not supported in "
-                  + "checkAndMutate. Found %s",
-              compareOp));
     }
 
     return requestBuilder;
