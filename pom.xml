@@ -11,6 +11,7 @@
 
     <modules>
         <module>anviltop-client-core</module>
+        <module>sample-jobs</module>
     </modules>
 
     <repositories>
