@@ -1,7 +1,5 @@
 package com.google.anviltop.sample;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
@@ -12,12 +10,10 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
-import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -51,6 +47,7 @@ public class WordCountHBase {
   public static class MyTableReducer extends
       TableReducer<ImmutableBytesWritable, IntWritable, ImmutableBytesWritable> {
 
+    @Override
     public void reduce(ImmutableBytesWritable key, Iterable<IntWritable> values, Context context) throws IOException,
         InterruptedException {
       int sum = sum(values);
@@ -68,14 +65,6 @@ public class WordCountHBase {
     }
   }
 
-  public static class MyTableOutputFormat<KEY> extends TableOutputFormat<KEY> {
-    @Override
-    public void setConf(Configuration arg0) {
-      DebugUtil.printSystemProperties();
-      super.setConf(arg0);
-    }
-  }
-  
   public static void main(String[] args) throws Exception {
     Configuration conf = HBaseConfiguration.create();
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
@@ -106,10 +95,12 @@ public class WordCountHBase {
     job.setMapperClass(TokenizerMapper.class);
     job.setMapOutputValueClass(IntWritable.class);
 
+    // Using the long form of this method so that the "false" can be set as the last parameter.  That tells
+    // TableMapReduceUtil to not add the .jar depenendencies to the job, which causes problems for some reason.
     TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), MyTableReducer.class, job,
       null, null, null, null, false);
  
-    job.setOutputFormatClass(MyTableOutputFormat.class);
+    job.setOutputFormatClass(com.google.anviltop.sample.util.TableOutputFormat.class);
     DebugUtil.printConf(conf);
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
