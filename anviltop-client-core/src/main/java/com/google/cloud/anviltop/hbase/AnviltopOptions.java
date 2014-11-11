@@ -33,6 +33,9 @@ public class AnviltopOptions {
     private String host;
     private String adminHost;
     private int port;
+    private String callTimingReportPath;
+    private String callStatusReportPath;
+    private boolean retriesEnabled;
 
     public Builder setAdminHost(String host) {
       this.adminHost = host;
@@ -59,12 +62,35 @@ public class AnviltopOptions {
       return this;
     }
 
+    public Builder setCallTimingReportPath(String callTimingReportPath) {
+      this.callTimingReportPath = callTimingReportPath;
+      return this;
+    }
+
+    public Builder setCallStatusReportPath(String callStatusReportPath) {
+      this.callStatusReportPath = callStatusReportPath;
+      return this;
+    }
+
+    public Builder setRetriesEnabled(boolean retriesEnabled) {
+      this.retriesEnabled = retriesEnabled;
+      return this;
+    }
+
     public AnviltopOptions build() {
       if (Strings.isNullOrEmpty(adminHost)) {
         adminHost = host;
       }
 
-      return new AnviltopOptions(adminHost, host, port, credential, projectId);
+      return new AnviltopOptions(
+          adminHost,
+          host,
+          port,
+          credential,
+          projectId,
+          retriesEnabled,
+          callTimingReportPath,
+          callStatusReportPath);
     }
   }
 
@@ -73,8 +99,20 @@ public class AnviltopOptions {
   private final int port;
   private final Credential credential;
   private final String projectId;
+  private final boolean retriesEnabled;
+  private final String callTimingReportPath;
+  private final String callStatusReportPath;
 
-  public AnviltopOptions(String adminHost, String host, int port, Credential credential, String projectId) {
+
+  public AnviltopOptions(
+      String adminHost,
+      String host,
+      int port,
+      Credential credential,
+      String projectId,
+      boolean retriesEnabled,
+      String callTimingReportPath,
+      String callStatusReportPath) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(host), "Host must not be empty or null.");
     Preconditions.checkArgument(
@@ -86,6 +124,9 @@ public class AnviltopOptions {
     this.port = port;
     this.credential = credential;
     this.projectId = projectId;
+    this.retriesEnabled = retriesEnabled;
+    this.callTimingReportPath = callTimingReportPath;
+    this.callStatusReportPath = callStatusReportPath;
   }
 
   public String getProjectId() {
@@ -93,10 +134,12 @@ public class AnviltopOptions {
   }
 
   public ChannelOptions getChannelOptions() {
-    if (this.credential == null) {
-      return new ChannelOptions();
-    }
-    return new ChannelOptions(credential);
+    ChannelOptions.Builder optionsBuilder = new ChannelOptions.Builder();
+    optionsBuilder.setCallTimingReportPath(callTimingReportPath);
+    optionsBuilder.setCallStatusReportPath(callStatusReportPath);
+    optionsBuilder.setCredential(credential);
+    optionsBuilder.setEnableRetries(retriesEnabled);
+    return optionsBuilder.build();
   }
 
   public TransportOptions getTransportOptions() {

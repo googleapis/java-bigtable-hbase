@@ -185,7 +185,7 @@ public class TestCheckAndMutate extends AbstractTest {
     Assert.assertFalse("Wrong value should fail", success);
     success = table.checkAndDelete(rowKey, COLUMN_FAMILY, qual2, value2, delete);
     Assert.assertTrue(success);
-    delete = new Delete(rowKey).deleteColumn(COLUMN_FAMILY, qual2);
+    delete = new Delete(rowKey).deleteColumns(COLUMN_FAMILY, qual2);
     success = table.checkAndDelete(rowKey, COLUMN_FAMILY, qual1, null, delete);
     Assert.assertTrue(success);
     Assert.assertFalse("Row should be gone", table.exists(new Get(rowKey)));
