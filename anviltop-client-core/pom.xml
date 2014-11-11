@@ -17,7 +17,7 @@
 
     <properties>
         <!-- As soon as stubby is public, this goes away -->
-        <stubby.driver.path>/google/data/ro/teams/cloud-bigtable/driver/driver_with_deps.jar</stubby.driver.path>
+        <stubby.driver.path>/google/data/ro/teams/cloud-bigtable/driver_mpm/live/driver_with_deps.jar</stubby.driver.path>
         <hbase.version>0.99.0</hbase.version>
         <hadoop.version>2.4.0</hadoop.version>
         <compat.module>hbase-hadoop2-compat</compat.module>
@@ -28,6 +28,9 @@
         <alpn.version>7.0.0.v20140317</alpn.version>
         <google.api.client.version>1.19.0</google.api.client.version>
         <google.anviltop.auth.service.account.enable>false</google.anviltop.auth.service.account.enable>
+        <google.anviltop.admin.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.admin.endpoint.host>
+        <google.anviltop.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.endpoint.host>
+        <google.anviltop.call.report.directory>target/call_reports</google.anviltop.call.report.directory>
     </properties>
     <profiles>
         <profile>

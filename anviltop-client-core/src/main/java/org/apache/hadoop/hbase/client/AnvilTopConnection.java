@@ -18,6 +18,7 @@ package org.apache.hadoop.hbase.client;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
 import com.google.cloud.anviltop.hbase.AnvilTopOptionsFactory;
 import com.google.cloud.anviltop.hbase.AnvilTopTable;
+import com.google.cloud.anviltop.hbase.Logger;
 import com.google.cloud.hadoop.hbase.AnviltopAdminBlockingGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
 import com.google.cloud.hadoop.hbase.AnviltopGrpcClient;
@@ -57,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 // TODO: Move this class to implement Connection when that interface
 // is available.
 public class AnvilTopConnection implements ClusterConnection, Closeable {
-  private static final Log LOG = LogFactory.getLog(AnvilTopConnection.class);
+  private static final Logger LOG = new Logger(AnvilTopConnection.class);
 
   private static class LoggingUncaughtExceptionHandler
       implements Thread.UncaughtExceptionHandler {
@@ -102,13 +103,23 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
     this.options = AnvilTopOptionsFactory.fromConfiguration(conf);
     TransportOptions transportOptions = options.getTransportOptions();
     ChannelOptions channelOptions = options.getChannelOptions();
+    TransportOptions adminTransportOptions = options.getAdminTransportOptions();
+
+    LOG.info("Opening connection for project %s on data host:port %s:%s, "
+        + "admin host:port %s:%s, using transport %s.",
+        options.getProjectId(),
+        options.getTransportOptions().getHost(),
+        options.getTransportOptions().getPort(),
+        options.getAdminTransportOptions().getHost(),
+        options.getAdminTransportOptions().getPort(),
+        options.getTransportOptions().getTransport());
 
     this.client = getAnviltopClient(
         transportOptions,
         channelOptions,
         batchPool);
     this.anviltopAdminClient = getAdminClient(
-        transportOptions,
+        adminTransportOptions,
         channelOptions,
         batchPool);
   }

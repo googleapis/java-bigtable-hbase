@@ -31,7 +31,16 @@ public class AnviltopOptions {
     private String projectId = "";
     private Credential credential;
     private String host;
+    private String adminHost;
     private int port;
+    private String callTimingReportPath;
+    private String callStatusReportPath;
+    private boolean retriesEnabled;
+
+    public Builder setAdminHost(String host) {
+      this.adminHost = host;
+      return this;
+    }
 
     public Builder setHost(String host) {
       this.host = host;
@@ -53,25 +62,71 @@ public class AnviltopOptions {
       return this;
     }
 
+    public Builder setCallTimingReportPath(String callTimingReportPath) {
+      this.callTimingReportPath = callTimingReportPath;
+      return this;
+    }
+
+    public Builder setCallStatusReportPath(String callStatusReportPath) {
+      this.callStatusReportPath = callStatusReportPath;
+      return this;
+    }
+
+    public Builder setRetriesEnabled(boolean retriesEnabled) {
+      this.retriesEnabled = retriesEnabled;
+      return this;
+    }
+
     public AnviltopOptions build() {
-      return new AnviltopOptions(host, port, credential, projectId);
+      if (Strings.isNullOrEmpty(adminHost)) {
+        adminHost = host;
+      }
+
+      return new AnviltopOptions(
+          adminHost,
+          host,
+          port,
+          credential,
+          projectId,
+          retriesEnabled,
+          callTimingReportPath,
+          callStatusReportPath);
     }
   }
 
+  private final String adminHost;
   private final String host;
   private final int port;
   private final Credential credential;
   private final String projectId;
+  private final boolean retriesEnabled;
+  private final String callTimingReportPath;
+  private final String callStatusReportPath;
 
-  public AnviltopOptions(String host, int port, Credential credential, String projectId) {
+
+  public AnviltopOptions(
+      String adminHost,
+      String host,
+      int port,
+      Credential credential,
+      String projectId,
+      boolean retriesEnabled,
+      String callTimingReportPath,
+      String callStatusReportPath) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(host), "Host must not be empty or null.");
     Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(adminHost), "Admin host must not be empty or null.");
+    Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
+    this.adminHost = adminHost;
     this.host = host;
     this.port = port;
     this.credential = credential;
     this.projectId = projectId;
+    this.retriesEnabled = retriesEnabled;
+    this.callTimingReportPath = callTimingReportPath;
+    this.callStatusReportPath = callStatusReportPath;
   }
 
   public String getProjectId() {
@@ -79,16 +134,25 @@ public class AnviltopOptions {
   }
 
   public ChannelOptions getChannelOptions() {
-    if (this.credential == null) {
-      return new ChannelOptions();
-    }
-    return new ChannelOptions(credential);
+    ChannelOptions.Builder optionsBuilder = new ChannelOptions.Builder();
+    optionsBuilder.setCallTimingReportPath(callTimingReportPath);
+    optionsBuilder.setCallStatusReportPath(callStatusReportPath);
+    optionsBuilder.setCredential(credential);
+    optionsBuilder.setEnableRetries(retriesEnabled);
+    return optionsBuilder.build();
   }
 
   public TransportOptions getTransportOptions() {
     return new TransportOptions(
         TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
         host,
+        port);
+  }
+
+  public TransportOptions getAdminTransportOptions() {
+    return new TransportOptions(
+        TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
+        adminHost,
         port);
   }
 }

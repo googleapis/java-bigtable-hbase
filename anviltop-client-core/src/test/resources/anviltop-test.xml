@@ -8,11 +8,15 @@
     </property>
     <property>
         <name>google.anviltop.endpoint.host</name>
-        <value>9f135f0537b12b4b.sandbox.google.com</value>
+        <value>${google.anviltop.endpoint.host}</value>
     </property>
     <property>
         <name>google.anviltop.endpoint.port</name>
         <value>443</value>
+    </property>
+    <property>
+        <name>google.anviltop.admin.endpoint.host</name>
+        <value>${google.anviltop.admin.endpoint.host}</value>
     </property>
     <property>
         <name>google.anviltop.project.id</name>
@@ -25,5 +29,9 @@
     <property>
         <name>google.anviltop.auth.null.credential.enable</name>
         <value>true</value>
+    </property>
+    <property>
+        <name>google.anviltop.call.report.directory</name>
+        <value>${google.anviltop.call.report.directory}</value>
     </property>
 </configuration>

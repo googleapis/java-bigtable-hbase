@@ -21,97 +21,59 @@ import com.google.cloud.anviltop.hbase.AnviltopConstants;
 import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+
+import javax.annotation.Nullable;
 
 public class ScanAdapter
     implements OperationAdapter<Scan, AnviltopServices.ReadTableRequest.Builder> {
 
-  private final static byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");
-  public static final String ALL_QUALIFIERS = "\\C*";
-  public static final String ALL_FAMILIES = ".*";
-  public static final String ALL_VERSIONS = "ALL";
-  public static final char INTERLEAVE_CHARACTER = '+';
-
   /**
-   * An OutputStream that performs RE2:QuoteMeta as bytes are written.
+   * Simple AutoClosable that makes matching open-close filter elements slightly less error-prone
+   * by writing the opening part to the stream on construction and the closing part when exiting
+   * a try-block.
    */
-  protected static class QuoteMetaOutputStream extends OutputStream {
-    protected final OutputStream delegate;
+  public static class ReaderExpressionScope implements AutoCloseable {
 
-    public QuoteMetaOutputStream(OutputStream delegate) {
-      this.delegate = delegate;
+    private final OutputStream stream;
+    private final byte[] trailer;
+
+    public ReaderExpressionScope(OutputStream stream, char prefix, char trailer) {
+      // This seems rather complex for the task at hand...
+      this(stream,
+          StandardCharsets.UTF_8.encode(CharBuffer.wrap(new char[]{prefix})).array(),
+          StandardCharsets.UTF_8.encode(CharBuffer.wrap(new char[]{trailer})).array());
     }
 
-    public void writeNullCharacterBytes() throws IOException {
-      for (byte b : NULL_CHARACTER_BYTES) {
-        delegate.write(b);
+    public ReaderExpressionScope(OutputStream stream, String prefix, String trailer) {
+      this(stream, Bytes.toBytes(prefix), Bytes.toBytes(trailer));
+    }
+
+    public ReaderExpressionScope(OutputStream stream, byte[] prefix, byte[] trailer) {
+      this.stream = stream;
+      this.trailer = trailer;
+
+      try {
+        stream.write(prefix);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
       }
     }
 
     @Override
-    public void write(int unquoted) throws IOException {
-      if (unquoted == 0) { // Special handling for null chars.
-        // Note that this special handling is not strictly required for RE2,
-        // but this quoting is required for other regexp libraries such as
-        // PCRE.
-        // Can't use "\\0" since the next character might be a digit.
-        writeNullCharacterBytes();
-        return;
-      }
-      if ((unquoted < 'a' || unquoted > 'z')
-          && (unquoted < 'A' || unquoted > 'Z')
-          && (unquoted < '0' || unquoted > '9')
-          && (unquoted != '_')
-          // If this is the part of a UTF8 or Latin1 character, we need
-          // to copy this byte without escaping.  Experimentally this is
-          // what works correctly with the regexp library.
-          && (unquoted >= 0)) {
-        delegate.write('\\');
-      }
-      delegate.write(unquoted);
+    public void close() throws IOException {
+      stream.write(trailer);
     }
-  }
-
-  /**
-   * An OutputStream that performs bigtable reader filter expression language quoting of
-   * '@', '{', and '}' by pre-pending a '@' to each.
-   */
-  protected static class QuoteFilterExpressionStream extends OutputStream {
-    protected final OutputStream delegate;
-
-    public QuoteFilterExpressionStream(OutputStream delegate) {
-      this.delegate = delegate;
-    }
-
-    @Override
-    public void write(int unquoted) throws IOException {
-      if (unquoted == '@' || unquoted == '{' || unquoted == '}') {
-        delegate.write('@');
-      }
-      delegate.write(unquoted);
-    }
-  }
-
-  /**
-   * Write unquoted to the OutputStream applying both RE2:QuoteMeta and Bigtable reader
-   * expression quoting.
-   * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
-   * @param outputStream A stream to write quoted output to
-   */
-  static void writeQuotedExpression(byte[] unquoted, OutputStream outputStream)
-      throws  IOException {
-    QuoteFilterExpressionStream quoteFilterExpressionStream =
-        new QuoteFilterExpressionStream(outputStream);
-    QuoteMetaOutputStream quoteMetaOutputStream =
-        new QuoteMetaOutputStream(quoteFilterExpressionStream);
-
-    quoteMetaOutputStream.write(unquoted);
   }
 
   /**
@@ -120,34 +82,83 @@ public class ScanAdapter
    * @param outputStream The stream to write the filter specification to
    * @param family The family byte array
    * @param unquotedQualifier The qualifier byte array, unquoted.
-   * @param scan The Scan object from which we can extract filters.
+   * @param maxVersions The maximum number of versions to emit for the cell.
+   *  Or Integer.MAX_VALUE for all versions.
    */
-  static void writeScanStream(
-      OutputStream outputStream, byte[] family, byte[] unquotedQualifier, Scan scan) {
+  void writeScanStream(
+      OutputStream outputStream,
+      byte[] family,
+      byte[] unquotedQualifier,
+      int maxVersions) {
     try {
-      outputStream.write('(');
-
       if (family == null) {
-        family = Bytes.toBytes(ALL_FAMILIES);
+        family = Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES);
       }
 
       String versionPart =
-          scan.getMaxVersions() == Integer.MAX_VALUE ?
-              ALL_VERSIONS : Integer.toString(scan.getMaxVersions());
-
-      outputStream.write(Bytes.toBytes("col({"));
-      outputStream.write(family);
-      outputStream.write(':');
-      if (unquotedQualifier == null) {
-        outputStream.write(Bytes.toBytes(ALL_QUALIFIERS));
-      } else {
-        writeQuotedExpression(unquotedQualifier, outputStream);
+          maxVersions == Integer.MAX_VALUE ?
+              ReaderExpressionHelper.ALL_VERSIONS : Integer.toString(maxVersions);
+      try (ReaderExpressionScope scope = new ReaderExpressionScope(outputStream, "(col(", "))")) {
+        outputStream.write('{');
+        outputStream.write(family);
+        outputStream.write(':');
+        if (unquotedQualifier == null) {
+          outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));
+        } else {
+          readerExpressionHelper.writeQuotedExpression(unquotedQualifier, outputStream);
+        }
+        outputStream.write(Bytes.toBytes("}, "));
+        outputStream.write(Bytes.toBytes(versionPart));
       }
-      outputStream.write('}');
-      outputStream.write(',');
-      outputStream.write(' ');
-      outputStream.write(Bytes.toBytes(versionPart));
-      outputStream.write(')');
+    } catch (Exception ioe) {
+      throw Throwables.propagate(ioe);
+    }
+  }
+
+  /**
+   * Write an adapted Filter to the given OutputStream.
+   */
+  public void writeFilterStream(OutputStream stream, Filter filter) {
+    try {
+      stream.write(Bytes.toBytes(" | "));
+      filterAdapter.adaptFilterTo(filter, stream);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Given a scan construct an anviltop filter string.
+   *
+   */
+  public byte[] buildFilterByteString(Scan scan) {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    try {
+      Map<byte[],NavigableSet<byte[]>> familyMap = scan.getFamilyMap();
+      boolean writeInterleave = false;
+      try (ReaderExpressionScope scope = new ReaderExpressionScope(outputStream, '(', ')')) {
+        if (!familyMap.isEmpty()) {
+          for (Map.Entry<byte[], NavigableSet<byte[]>> entry : familyMap.entrySet()) {
+            if (entry.getValue() == null) {
+              if (writeInterleave) {
+                outputStream.write(ReaderExpressionHelper.INTERLEAVE_CHARACTERS);
+              }
+              writeInterleave = true;
+              writeScanStream(outputStream, entry.getKey(), null, scan.getMaxVersions());
+            } else {
+              for (byte[] qualifier : entry.getValue()) {
+                if (writeInterleave) {
+                  outputStream.write(ReaderExpressionHelper.INTERLEAVE_CHARACTERS);
+                }
+                writeInterleave = true;
+                writeScanStream(outputStream, entry.getKey(), qualifier, scan.getMaxVersions());
+              }
+            }
+          }
+        } else {
+          writeScanStream(outputStream, null, null, scan.getMaxVersions());
+        }
+      }
 
       if (scan.getTimeRange() != null && !scan.getTimeRange().isAllTime()) {
         // Time ranges in Anviltop are inclusive and HBase uses an open-closed interval. As such,
@@ -159,54 +170,27 @@ public class ScanAdapter
         outputStream.write(Bytes.toBytes(String.format(" | ts(%s, %s)", lowerBound, upperBound)));
       }
 
-      outputStream.write(')');
-    } catch (IOException ioe) {
-      throw Throwables.propagate(ioe);
-    }
-  }
-
-  /**
-   * Given a scan construct an anviltop filter string.
-   */
-  public static byte[] buildFilterByteString(final Scan scan) {
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    Map<byte[],NavigableSet<byte[]>> familyMap = scan.getFamilyMap();
-
-    boolean writeInterleave = false;
-    if (!familyMap.isEmpty()) {
-      for (Map.Entry<byte[], NavigableSet<byte[]>> entry : familyMap.entrySet()) {
-        if (entry.getValue() == null) {
-          if (writeInterleave) {
-            outputStream.write(INTERLEAVE_CHARACTER);
-          }
-          writeInterleave = true;
-          writeScanStream(outputStream, entry.getKey(), null, scan);
-        } else {
-          for (byte[] qualifier : entry.getValue()) {
-            if (writeInterleave) {
-              outputStream.write(INTERLEAVE_CHARACTER);
-            }
-            writeInterleave = true;
-            writeScanStream(outputStream, entry.getKey(), qualifier, scan);
-          }
-        }
+      if (scan.getFilter() != null) {
+        writeFilterStream(outputStream, scan.getFilter());
       }
-    } else {
-      writeScanStream(outputStream, null, null, scan);
-    }
 
-    return outputStream.toByteArray();
+      return outputStream.toByteArray();
+    } catch (IOException ioException) {
+      throw Throwables.propagate(ioException);
+    }
   }
 
-  public static void throwIfUnsupportedScan(Scan scan) {
+  protected final FilterAdapter filterAdapter;
+  protected final ReaderExpressionHelper readerExpressionHelper;
+
+  public ScanAdapter(FilterAdapter filterAdapter) {
+    this.filterAdapter = filterAdapter;
+    this.readerExpressionHelper = new ReaderExpressionHelper();
+  }
+
+  public void throwIfUnsupportedScan(Scan scan) {
     if (scan.getFilter() != null) {
-      // TODO: Translate the following Filters:
-      // ColumnPrefixFilter = col(fam:prefix.*, N)
-      // KeyOnlyFilter = strip_value()
-      // MultiplePrefixFilter = Maybe support with col(foo:bar, N) + col(baz:..., N)
-      // Possibly ValueFilter with a CompareOp of EQ and ByteArrayComparable of RegexStringComparator
-      throw new UnsupportedOperationException(
-          "Filters are not supported.");
+      filterAdapter.throwIfUnsupportedFilter(scan.getFilter());
     }
 
     if (scan.getMaxResultsPerColumnFamily() != -1) {

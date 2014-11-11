@@ -24,16 +24,22 @@ import org.apache.hadoop.hbase.client.Scan;
 /**
  * Adapter for HBase Get operations to Anviltop GetRowRequest.Builder.
  */
-public class GetAdapter implements OperationAdapter<Get, GetRowRequest.Builder>{
+public class GetAdapter implements OperationAdapter<Get, GetRowRequest.Builder> {
+
+  protected final ScanAdapter scanAdapter;
+  public GetAdapter(ScanAdapter scanAdapter) {
+    this.scanAdapter = scanAdapter;
+  }
+
   @Override
   public Builder adapt(Get operation) {
-    ScanAdapter.throwIfUnsupportedScan(new Scan(operation));
+    scanAdapter.throwIfUnsupportedScan(new Scan(operation));
 
     GetRowRequest.Builder result = GetRowRequest.newBuilder();
     result.setRowKey(ByteString.copyFrom(operation.getRow()));
     result.setFilterBytes(
         ByteString.copyFrom(
-            ScanAdapter.buildFilterByteString(new Scan(operation))));
+            scanAdapter.buildFilterByteString(new Scan(operation))));
     return result;
   }
 }

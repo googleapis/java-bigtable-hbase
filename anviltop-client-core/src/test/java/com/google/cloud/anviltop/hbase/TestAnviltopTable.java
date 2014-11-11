@@ -39,7 +39,14 @@ public class TestAnviltopTable {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    AnviltopOptions options = new AnviltopOptions("testhost", 0, null, TEST_PROJECT);
+    AnviltopOptions.Builder builder = new AnviltopOptions.Builder();
+    builder.setRetriesEnabled(false);
+    builder.setAdminHost("testhost-admin");
+    builder.setHost("testhost");
+    builder.setPort(0);
+    builder.setProjectId(TEST_PROJECT);
+    builder.setCredential(null);
+    AnviltopOptions options = builder.build();
     table = new AnvilTopTable(
         TableName.valueOf(TEST_TABLE),
         options,
@@ -99,7 +106,7 @@ public class TestAnviltopTable {
     Mockito.when(mockClient.getRow(Mockito.any(AnviltopServices.GetRowRequest.class)))
         .thenReturn(AnviltopServices.GetRowResponse.getDefaultInstance());
 
-    String expectedFilter = "(col({family:qualifier}, 1))";
+    String expectedFilter = "((col({family:qualifier}, 1)))";
     table.get(
         new Get(Bytes.toBytes("rowKey1"))
             .addColumn(

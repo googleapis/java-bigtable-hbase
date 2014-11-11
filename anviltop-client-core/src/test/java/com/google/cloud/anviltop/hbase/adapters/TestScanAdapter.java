@@ -35,7 +35,7 @@ public class TestScanAdapter {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
-  ScanAdapter scanAdapter = new ScanAdapter();
+  ScanAdapter scanAdapter = new ScanAdapter(new FilterAdapter());
 
   @Test
   public void testFilterStringIsSet() {
@@ -44,7 +44,7 @@ public class TestScanAdapter {
     Scan scan = new Scan();
     scan.addColumn(family, qualifier);
     AnviltopServices.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
-    Assert.assertEquals("(col({family:qualifier}, 1))", request.getOptions().getFilter());
+    Assert.assertEquals("((col({family:qualifier}, 1)))", request.getOptions().getFilter());
   }
 
   @Test

@@ -19,6 +19,9 @@ import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 
 /**
@@ -26,12 +29,14 @@ import java.security.GeneralSecurityException;
  * to a {@link AnviltopOptions} instance.
  */
 public class AnvilTopOptionsFactory {
+  protected static final Logger LOG = new Logger(AnvilTopOptionsFactory.class);
 
   public static final String ANVILTOP_PORT_KEY = "google.anviltop.endpoint.port";
   public static final int DEFAULT_ANVILTOP_PORT = 443;
-
+  public static final String ANVILTOP_ADMIN_HOST_KEY = "google.anviltop.admin.endpoint.host";
   public static final String ANVILTOP_HOST_KEY = "google.anviltop.endpoint.host";
   public static final String PROJECT_ID_KEY = "google.anviltop.project.id";
+  public static final String CALL_REPORT_DIRECTORY_KEY = "google.anviltop.call.report.directory";
 
   /**
    * Key to set to enable service accounts to be used, either metadata server-based or P12-based.
@@ -63,6 +68,13 @@ public class AnvilTopOptionsFactory {
   public static final String ANVILTOP_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY =
       "google.anviltop.auth.service.account.keyfile";
 
+  /**
+   * Key to set to a boolean flag indicating whether or not grpc retries should be enabled.
+   * The default is to enable retries on failed idempotent operations.
+   */
+  public static final String ENABLE_GRPC_RETRIES_KEY = "google.anviltop.grpc.retry.enable";
+  public static final boolean ENABLE_GRPC_RETRIES_DEFAULT = true;
+
   public static AnviltopOptions fromConfiguration(Configuration configuration) throws IOException {
 
     AnviltopOptions.Builder optionsBuilder = new AnviltopOptions.Builder();
@@ -72,24 +84,37 @@ public class AnvilTopOptionsFactory {
         !Strings.isNullOrEmpty(projectId),
         String.format("Project ID must be supplied via %s", PROJECT_ID_KEY));
     optionsBuilder.setProjectId(projectId);
+    LOG.debug("Project ID %s", projectId);
 
     String host = configuration.get(ANVILTOP_HOST_KEY);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(host),
         String.format("API endpoint host must be supplied via %s", ANVILTOP_HOST_KEY));
     optionsBuilder.setHost(host);
+    LOG.debug("Data endpoint host %s", host);
+
+    String adminHost = configuration.get(ANVILTOP_ADMIN_HOST_KEY);
+    if (!Strings.isNullOrEmpty(adminHost)) {
+      LOG.debug("Admin endpoint host %s", host);
+      optionsBuilder.setAdminHost(adminHost);
+    } else {
+      LOG.debug("No admin endpoint host specified");
+      optionsBuilder.setAdminHost(host);
+    }
 
     int port = configuration.getInt(ANVILTOP_PORT_KEY, DEFAULT_ANVILTOP_PORT);
     optionsBuilder.setPort(port);
 
-    // TODO: Wire in logging once logging PR is merged.
     try {
       if (configuration.getBoolean(
           ANVILTOP_USE_SERVICE_ACCOUNTS_KEY, ANVILTOP_USE_SERVICE_ACCOUNTS_DEFAULT)) {
+        LOG.debug("Using service accounts");
 
         String serviceAccountEmail = configuration.get(ANVILTOP_SERVICE_ACCOUNT_EMAIL_KEY);
 
         if (!Strings.isNullOrEmpty(serviceAccountEmail)) {
+          LOG.debug(
+              "Service account %s specified, using p12 authentication flow.", serviceAccountEmail);
           // Using P12 keyfile based OAuth:
           String keyfileLocation =
               configuration.get(ANVILTOP_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
@@ -97,7 +122,7 @@ public class AnvilTopOptionsFactory {
           Preconditions.checkState(
               !Strings.isNullOrEmpty(keyfileLocation),
               "Key file location must be specified when setting service account email");
-
+          LOG.debug("Using p12 keyfile: %s", keyfileLocation);
           optionsBuilder.setCredential(
               CredentialFactory.getCredentialFromPrivateKeyServiceAccount(
                   serviceAccountEmail, keyfileLocation));
@@ -107,6 +132,7 @@ public class AnvilTopOptionsFactory {
       } else if (configuration.getBoolean(
           ANVILTOP_NULL_CREDENTIAL_ENABLE_KEY, ANVILTOP_NULL_CREDENTIAL_ENABLE_DEFAULT)) {
         optionsBuilder.setCredential(null); // Intended for testing purposes only.
+        LOG.info("Enabling the use of null credentials. This should not be used in production.");
       } else {
         throw new IllegalStateException(
             "Either service account or null credentials must be enabled");
@@ -114,6 +140,32 @@ public class AnvilTopOptionsFactory {
     } catch (GeneralSecurityException gse) {
       throw new IOException("Failed to acquire credential.", gse);
     }
+
+    // Set up aggregate performance and call error rate logging:
+    if (!Strings.isNullOrEmpty(configuration.get(CALL_REPORT_DIRECTORY_KEY))) {
+      String reportDirectory = configuration.get(CALL_REPORT_DIRECTORY_KEY);
+      Path reportDirectoryPath = FileSystems.getDefault().getPath(reportDirectory);
+      if (Files.exists(reportDirectoryPath)) {
+        Preconditions.checkState(
+            Files.isDirectory(reportDirectoryPath), "Report path %s must be a directory");
+      } else {
+        Files.createDirectories(reportDirectoryPath);
+      }
+      String callStatusReport =
+          reportDirectoryPath.resolve("call_status.txt").toAbsolutePath().toString();
+      String callTimignReport =
+          reportDirectoryPath.resolve("call_timing.txt").toAbsolutePath().toString();
+      LOG.debug("Logging call status aggregates to %s", callStatusReport);
+      LOG.debug("Logging call timing aggregates to %s", callTimignReport);
+      optionsBuilder.setCallStatusReportPath(callStatusReport);
+      optionsBuilder.setCallTimingReportPath(callTimignReport);
+    }
+
+    boolean enableRetries = configuration.getBoolean(
+        ENABLE_GRPC_RETRIES_KEY, ENABLE_GRPC_RETRIES_DEFAULT);
+    LOG.debug("gRPC retries enabled: %s", enableRetries);
+    optionsBuilder.setRetriesEnabled(enableRetries);
+
     return optionsBuilder.build();
   }
 }

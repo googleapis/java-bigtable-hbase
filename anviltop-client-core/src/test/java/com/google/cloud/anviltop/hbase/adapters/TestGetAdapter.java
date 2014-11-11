@@ -18,8 +18,11 @@ import com.google.cloud.anviltop.hbase.DataGenerationHelper;
 import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -36,7 +39,7 @@ public class TestGetAdapter {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
-  protected GetAdapter getAdapter = new GetAdapter();
+  protected GetAdapter getAdapter = new GetAdapter(new ScanAdapter(new FilterAdapter()));
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   private Get makeValidGet(byte[] rowKey) throws IOException {
@@ -63,7 +66,7 @@ public class TestGetAdapter {
 
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
-    Assert.assertEquals("(col({family1:\\C*}, ALL))", rowRequestBuilder.getFilter());
+    Assert.assertEquals("((col({family1:\\C*}, ALL)))", rowRequestBuilder.getFilter());
   }
 
   @Test
@@ -77,7 +80,7 @@ public class TestGetAdapter {
 
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
-    Assert.assertEquals("(col({family1:\\C*}, ALL))+(col({family2:\\C*}, ALL))",
+    Assert.assertEquals("((col({family1:\\C*}, ALL)) + (col({family2:\\C*}, ALL)))",
         rowRequestBuilder.getFilter());
   }
 
@@ -94,8 +97,7 @@ public class TestGetAdapter {
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
-        "(col({family1:\\C*}, ALL) | ts(1000000, 1999000))" +
-            "+(col({family2:\\C*}, ALL) | ts(1000000, 1999000))",
+        "((col({family1:\\C*}, ALL)) + (col({family2:\\C*}, ALL))) | ts(1000000, 1999000)",
         rowRequestBuilder.getFilter());
   }
 
@@ -111,7 +113,7 @@ public class TestGetAdapter {
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
-        "(col({family1:\\C*}, 1))+(col({family2:\\C*}, 1))",
+        "((col({family1:\\C*}, 1)) + (col({family2:\\C*}, 1)))",
         rowRequestBuilder.getFilter());
   }
 
@@ -125,7 +127,7 @@ public class TestGetAdapter {
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
-        "(col({family1:\\C*}, 1))+(col({family2:qualifier1}, 1))",
+        "((col({family1:\\C*}, 1)) + (col({family2:qualifier1}, 1)))",
         rowRequestBuilder.getFilter());
   }
 
@@ -146,16 +148,62 @@ public class TestGetAdapter {
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     ByteArrayOutputStream expectedFilterBuilder = new ByteArrayOutputStream();
-    expectedFilterBuilder.write(Bytes.toBytes("(col({f1:"));
+    expectedFilterBuilder.write(Bytes.toBytes("((col({f1:"));
     expectedFilterBuilder.write(Bytes.toBytes(utf8Part)); // Only ASCII characters need escaping
     expectedFilterBuilder.write(Bytes.toBytes(asciiPart)); // Leave a-z intact
     expectedFilterBuilder.write(Bytes.toBytes("\\x00")); // null byte
     expectedFilterBuilder.write(
         Bytes.toBytes("\\\\\\[\\]\\(\\)\\.\\*")); // Escape each in special characters
-    expectedFilterBuilder.write(Bytes.toBytes("}, ALL))"));
+    expectedFilterBuilder.write(Bytes.toBytes("}, ALL)))"));
     Assert.assertArrayEquals(
         expectedFilterBuilder.toByteArray(),
         rowRequestBuilder.getFilterBytes().toByteArray());
+  }
+
+  @Test
+  public void testDisjunctiveFiltersAreApplied() throws IOException {
+    FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ONE);
+    filterList.addFilter(
+        new ValueFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("value1"))));
+    filterList.addFilter(
+        new ValueFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("value2"))));
+
+    byte[] rowKey = dataHelper.randomData("rk1-");
+    Get get = makeValidGet(rowKey);
+    get.addFamily(Bytes.toBytes("family1"));
+    get.addColumn(Bytes.toBytes("family2"), Bytes.toBytes("qualifier1"));
+    get.setMaxVersions(1);
+    get.setFilter(filterList);
+
+    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+
+    Assert.assertEquals(
+        "((col({family1:\\C*}, 1)) + (col({family2:qualifier1}, 1))) "
+            + "| (value_match({value1}) + value_match({value2}))",
+        rowRequestBuilder.getFilter());
+  }
+
+  @Test
+  public void testConjuntiveFiltersAreApplied() throws IOException {
+    FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
+    filterList.addFilter(
+        new ValueFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("value1"))));
+    filterList.addFilter(
+        new ValueFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("value2"))));
+
+    byte[] rowKey = dataHelper.randomData("rk1-");
+    Get get = makeValidGet(rowKey);
+    get.addFamily(Bytes.toBytes("family1"));
+    get.addColumn(Bytes.toBytes("family2"), Bytes.toBytes("qualifier1"));
+    get.setMaxVersions(1);
+    get.setFilter(filterList);
+
+    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+
+    Assert.assertEquals(
+        "((col({family1:\\C*}, 1)) + (col({family2:qualifier1}, 1))) "
+            + "| (value_match({value1}) | value_match({value2}))",
+        rowRequestBuilder.getFilter());
   }
 
   @Test
@@ -166,7 +214,7 @@ public class TestGetAdapter {
     Get get = makeValidGet(dataHelper.randomData("special"));
     get.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier));
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
-    Assert.assertEquals("(col({f1:foo\\ \\@}\\@{\\ \\@@}, ALL))", rowRequestBuilder.getFilter());
+    Assert.assertEquals("((col({f1:foo\\ \\@}\\@{\\ \\@@}, ALL)))", rowRequestBuilder.getFilter());
   }
 
   @Test
@@ -176,22 +224,6 @@ public class TestGetAdapter {
 
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Limiting of max results per column family is not supported");
-
-    getAdapter.adapt(get);
-  }
-
-  @Test
-  public void testFiltersAreNotSupported() throws IOException {
-    Get get = makeValidGet(dataHelper.randomData("rk1-"));
-    get.setFilter(
-        new SingleColumnValueFilter(
-          Bytes.toBytes("family1"),
-          Bytes.toBytes("qualifier1"),
-          CompareOp.EQUAL,
-          Bytes.toBytes("someValue")));
-
-    expectedException.expect(UnsupportedOperationException.class);
-    expectedException.expectMessage("Filters are not supported.");
 
     getAdapter.adapt(get);
   }
