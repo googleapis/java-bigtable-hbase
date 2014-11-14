@@ -104,12 +104,17 @@ public class AnvilTopTable implements HTableInterface {
       Configuration configuration,
       AnviltopClient client,
       ExecutorService executorService) {
-    LOG.debug("Opening table %s for project %s on host %s and port %s on transport %s",
-        tableName.toString(),
-        options.getProjectId(),
-        options.getTransportOptions().getHost(),
-        options.getTransportOptions().getPort(),
-        options.getTransportOptions().getTransport());
+    try {
+      LOG.debug("Opening table %s for project %s on host %s and port %s on transport %s",
+          tableName.toString(),
+          options.getProjectId(),
+          options.getTransportOptions().getHost(),
+          options.getTransportOptions().getPort(),
+          options.getTransportOptions().getTransport());
+    } catch (IOException ioe) {
+      LOG.error("Failed to acquire transport options for logging", ioe);
+    }
+
     this.tableName = tableName;
     this.options = options;
     this.client = client;
