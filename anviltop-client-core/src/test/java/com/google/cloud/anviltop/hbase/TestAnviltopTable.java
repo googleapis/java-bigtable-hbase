@@ -2,7 +2,7 @@ package com.google.cloud.anviltop.hbase;
 
 import com.google.bigtable.anviltop.AnviltopServices;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.ServiceException;
+import com.google.protobuf.ServiceException;
 
 
 import org.apache.hadoop.conf.Configuration;

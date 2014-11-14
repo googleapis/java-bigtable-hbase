@@ -32,11 +32,11 @@ import com.google.cloud.anviltop.hbase.adapters.ScanAdapter;
 import com.google.cloud.anviltop.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.cloud.hadoop.hbase.AnviltopResultScanner;
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.ServiceException;
+import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellUtil;
