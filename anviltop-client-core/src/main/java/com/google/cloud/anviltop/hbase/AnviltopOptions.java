@@ -19,6 +19,8 @@ import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
 import com.google.common.base.Preconditions;
 
+import java.io.IOException;
+
 /**
  * An immutable class providing access to configuration options for Anviltop.
  */
@@ -142,14 +144,14 @@ public class AnviltopOptions {
     return optionsBuilder.build();
   }
 
-  public TransportOptions getTransportOptions() {
+  public TransportOptions getTransportOptions() throws IOException {
     return new TransportOptions(
         TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
         host,
         port);
   }
 
-  public TransportOptions getAdminTransportOptions() {
+  public TransportOptions getAdminTransportOptions() throws IOException {
     return new TransportOptions(
         TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
         adminHost,
