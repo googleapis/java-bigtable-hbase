@@ -1,5 +1,7 @@
 package com.google.anviltop.sample;
 
+import com.google.anviltop.sample.util.TableOutputFormat;
+
 import java.io.IOException;
 import java.util.StringTokenizer;
 
@@ -100,7 +102,7 @@ public class WordCountHBase {
     TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), MyTableReducer.class, job,
       null, null, null, null, false);
  
-    job.setOutputFormatClass(com.google.anviltop.sample.util.TableOutputFormat.class);
+    job.setOutputFormatClass(TableOutputFormat.class);
     DebugUtil.printConf(conf);
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }

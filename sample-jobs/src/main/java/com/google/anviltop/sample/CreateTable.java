@@ -70,19 +70,17 @@ public class CreateTable {
       DebugUtil.printSystemProperties();
       connection = ConnectionFactory.createConnection(conf);
       admin = connection.getAdmin();
+      // TODO: re-add this once admin.isTableAvailable() is implemented in anviltop
 //      if (!admin.isTableAvailable(tableName)) {
-      // wait for the table to be created
       HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
       tableDescriptor.addFamily(new HColumnDescriptor(CF));
       admin.createTable(tableDescriptor);
-      System.err.println("Woohoo!  Could create table: " + tableName);
-      Thread.sleep(5000);
-    } catch (InterruptedException e) {
-      // ignore
+      System.err.println("Created table: " + tableName);
     } catch (Exception e) {
       e.printStackTrace();
-      System.err.println("Yikes!  Could not create table: " + tableName);
+      System.err.println("Could not create table: " + tableName);
     } finally {
+      // TODO: remove the try/catch once admin.close() doesn't throw exceptions anymore.
       try {
         if (admin != null) admin.close();
       } catch(Exception e) {
