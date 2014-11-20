@@ -12,7 +12,7 @@ import java.util.List;
  * Adapt an AppendRowResponse from Anviltop to an HBase Result
  */
 public class AppendResponseAdapter
-    implements ResponseAdapter<AnviltopServiceMessages.AppendRowResponse, Result> {
+    implements ResponseAdapter<AppendRowResponse, Result> {
   protected final RowAdapter rowAdapter;
 
   public AppendResponseAdapter(RowAdapter rowAdapter) {
@@ -20,7 +20,7 @@ public class AppendResponseAdapter
   }
 
   @Override
-  public Result adaptResponse(AnviltopServiceMessages.AppendRowResponse response) {
+  public Result adaptResponse(AppendRowResponse response) {
     List<Cell> cells = new ArrayList<Cell>();
     if (response.hasRow()) {
       return rowAdapter.adaptResponse(response.getRow());
