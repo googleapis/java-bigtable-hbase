@@ -24,6 +24,8 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 
 /**
@@ -40,12 +42,12 @@ public class TestAnviltopTable {
   public AnvilTopTable table;
 
   @Before
-  public void setup() {
+  public void setup() throws UnknownHostException {
     MockitoAnnotations.initMocks(this);
     AnviltopOptions.Builder builder = new AnviltopOptions.Builder();
     builder.setRetriesEnabled(false);
-    builder.setAdminHost("testhost-admin");
-    builder.setHost("testhost");
+    builder.setAdminHost(InetAddress.getLocalHost());
+    builder.setHost(InetAddress.getLocalHost());
     builder.setPort(0);
     builder.setProjectId(TEST_PROJECT);
     builder.setCredential(null);
