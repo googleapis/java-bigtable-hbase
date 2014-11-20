@@ -14,7 +14,7 @@
 
 package com.google.cloud.anviltop.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopServices;
+import com.google.bigtable.anviltop.AnviltopServiceMessages;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -43,7 +43,7 @@ public class TestScanAdapter {
     byte[] qualifier = Bytes.toBytes("qualifier");
     Scan scan = new Scan();
     scan.addColumn(family, qualifier);
-    AnviltopServices.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
+    AnviltopServiceMessages.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
     Assert.assertEquals("((col({family:qualifier}, 1)))", request.getOptions().getFilter());
   }
 
@@ -54,7 +54,7 @@ public class TestScanAdapter {
     Scan scan = new Scan();
     scan.setStartRow(startKey);
     scan.setStopRow(stopKey);
-    AnviltopServices.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
+    AnviltopServiceMessages.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
     Assert.assertEquals(1, request.getOptions().getRangesCount());
     Assert.assertArrayEquals(startKey, request.getOptions().getRanges(0).getStart().toByteArray());
     Assert.assertArrayEquals(stopKey, request.getOptions().getRanges(0).getEnd().toByteArray());

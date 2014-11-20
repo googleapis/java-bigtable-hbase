@@ -13,7 +13,7 @@
  */
 package com.google.cloud.anviltop.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopServices.IncrementRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
 import com.google.bigtable.anviltop.AnviltopData.RowIncrement;
 import com.google.cloud.anviltop.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;

@@ -13,7 +13,7 @@
  */
 package com.google.cloud.anviltop.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopServices.GetRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
 import com.google.cloud.anviltop.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
 
@@ -21,7 +21,6 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;

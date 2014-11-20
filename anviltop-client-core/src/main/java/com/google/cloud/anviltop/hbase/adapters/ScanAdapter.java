@@ -16,7 +16,8 @@ package com.google.cloud.anviltop.hbase.adapters;
 
 import com.google.api.client.util.Throwables;
 import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopServices;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableResponse;
 import com.google.cloud.anviltop.hbase.AnviltopConstants;
 import com.google.protobuf.ByteString;
 
@@ -29,14 +30,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 
-import javax.annotation.Nullable;
 
-public class ScanAdapter
-    implements OperationAdapter<Scan, AnviltopServices.ReadTableRequest.Builder> {
+public class ScanAdapter implements OperationAdapter<Scan, ReadTableRequest.Builder> {
 
   /**
    * Simple AutoClosable that makes matching open-close filter elements slightly less error-prone
@@ -200,10 +198,9 @@ public class ScanAdapter
   }
 
   @Override
-  public AnviltopServices.ReadTableRequest.Builder adapt(Scan operation) {
+  public ReadTableRequest.Builder adapt(Scan operation) {
     throwIfUnsupportedScan(operation);
-    AnviltopServices.ReadTableRequest.Builder result =
-        AnviltopServices.ReadTableRequest.newBuilder();
+    ReadTableRequest.Builder result = ReadTableRequest.newBuilder();
 
     AnviltopData.ReadOptions.Builder optionsBuilder = AnviltopData.ReadOptions.newBuilder();
 

@@ -14,8 +14,8 @@
 package com.google.cloud.anviltop.hbase.adapters;
 
 
-import com.google.bigtable.anviltop.AnviltopServices.GetRowRequest;
-import com.google.bigtable.anviltop.AnviltopServices.GetRowRequest.Builder;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest.Builder;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Scan;

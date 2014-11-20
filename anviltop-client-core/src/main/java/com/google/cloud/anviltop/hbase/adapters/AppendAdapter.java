@@ -1,7 +1,7 @@
 package com.google.cloud.anviltop.hbase.adapters;
 
 import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopServices.AppendRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
 import com.google.cloud.anviltop.hbase.AnviltopConstants;
 import com.google.protobuf.ByteString;
 import com.google.common.collect.ImmutableList;

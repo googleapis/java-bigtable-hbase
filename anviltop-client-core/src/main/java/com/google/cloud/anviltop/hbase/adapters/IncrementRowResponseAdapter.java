@@ -1,6 +1,6 @@
 package com.google.cloud.anviltop.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopServices.IncrementRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowResponse;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Result;

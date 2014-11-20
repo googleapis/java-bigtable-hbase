@@ -1,6 +1,9 @@
 package com.google.cloud.anviltop.hbase;
 
-import com.google.bigtable.anviltop.AnviltopServices;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowResponse;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.protobuf.ServiceException;
 
@@ -59,8 +62,8 @@ public class TestAnviltopTable {
   public void projectIsPopulatedInMutationRequests() throws ServiceException, IOException {
     table.delete(new Delete(Bytes.toBytes("rowKey1")));
 
-    ArgumentCaptor<AnviltopServices.MutateRowRequest> argument =
-        ArgumentCaptor.forClass(AnviltopServices.MutateRowRequest.class);
+    ArgumentCaptor<MutateRowRequest> argument =
+        ArgumentCaptor.forClass(MutateRowRequest.class);
     Mockito.verify(mockClient).mutateAtomic(argument.capture());
     Assert.assertEquals(TEST_PROJECT, argument.getValue().getProjectId());
   }
@@ -69,42 +72,42 @@ public class TestAnviltopTable {
   public void tableNameIsPopulatedInMutationRequests() throws ServiceException, IOException {
     table.delete(new Delete(Bytes.toBytes("rowKey1")));
 
-    ArgumentCaptor<AnviltopServices.MutateRowRequest> argument =
-        ArgumentCaptor.forClass(AnviltopServices.MutateRowRequest.class);
+    ArgumentCaptor<MutateRowRequest> argument =
+        ArgumentCaptor.forClass(MutateRowRequest.class);
     Mockito.verify(mockClient).mutateAtomic(argument.capture());
     Assert.assertEquals(TEST_TABLE, argument.getValue().getTableName());
   }
 
   @Test
   public void projectIsPopulatedInGetRequests() throws ServiceException, IOException {
-    Mockito.when(mockClient.getRow(Mockito.any(AnviltopServices.GetRowRequest.class)))
-        .thenReturn(AnviltopServices.GetRowResponse.getDefaultInstance());
+    Mockito.when(mockClient.getRow(Mockito.any(GetRowRequest.class)))
+        .thenReturn(GetRowResponse.getDefaultInstance());
 
     table.get(new Get(Bytes.toBytes("rowKey1")));
 
-    ArgumentCaptor<AnviltopServices.GetRowRequest> argument =
-        ArgumentCaptor.forClass(AnviltopServices.GetRowRequest.class);
+    ArgumentCaptor<GetRowRequest> argument =
+        ArgumentCaptor.forClass(GetRowRequest.class);
     Mockito.verify(mockClient).getRow(argument.capture());
     Assert.assertEquals(TEST_PROJECT, argument.getValue().getProjectId());
   }
 
   @Test
   public void tableNameIsPopulatedInGetRequests() throws ServiceException, IOException {
-    Mockito.when(mockClient.getRow(Mockito.any(AnviltopServices.GetRowRequest.class)))
-        .thenReturn(AnviltopServices.GetRowResponse.getDefaultInstance());
+    Mockito.when(mockClient.getRow(Mockito.any(GetRowRequest.class)))
+        .thenReturn(GetRowResponse.getDefaultInstance());
 
     table.get(new Get(Bytes.toBytes("rowKey1")));
 
-    ArgumentCaptor<AnviltopServices.GetRowRequest> argument =
-        ArgumentCaptor.forClass(AnviltopServices.GetRowRequest.class);
+    ArgumentCaptor<GetRowRequest> argument =
+        ArgumentCaptor.forClass(GetRowRequest.class);
     Mockito.verify(mockClient).getRow(argument.capture());
     Assert.assertEquals(TEST_TABLE, argument.getValue().getTableName());
   }
 
   @Test
   public void filterIsPopulatedInGetRequests() throws ServiceException, IOException {
-    Mockito.when(mockClient.getRow(Mockito.any(AnviltopServices.GetRowRequest.class)))
-        .thenReturn(AnviltopServices.GetRowResponse.getDefaultInstance());
+    Mockito.when(mockClient.getRow(Mockito.any(GetRowRequest.class)))
+        .thenReturn(GetRowResponse.getDefaultInstance());
 
     String expectedFilter = "((col({family:qualifier}, 1)))";
     table.get(
@@ -113,8 +116,8 @@ public class TestAnviltopTable {
                 Bytes.toBytes("family"),
                 Bytes.toBytes("qualifier")));
 
-    ArgumentCaptor<AnviltopServices.GetRowRequest> argument =
-        ArgumentCaptor.forClass(AnviltopServices.GetRowRequest.class);
+    ArgumentCaptor<GetRowRequest> argument =
+        ArgumentCaptor.forClass(GetRowRequest.class);
     Mockito.verify(mockClient).getRow(argument.capture());
     Assert.assertEquals(expectedFilter, argument.getValue().getFilter());
   }
