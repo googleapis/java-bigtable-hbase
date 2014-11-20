@@ -27,8 +27,6 @@ import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -46,8 +44,6 @@ import org.apache.hadoop.hbase.util.Threads;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

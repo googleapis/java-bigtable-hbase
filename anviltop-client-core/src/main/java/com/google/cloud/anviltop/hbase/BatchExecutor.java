@@ -2,7 +2,14 @@ package com.google.cloud.anviltop.hbase;
 
 import com.google.api.client.util.Preconditions;
 import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopServices;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowResponse;
 import com.google.cloud.anviltop.hbase.adapters.AppendAdapter;
 import com.google.cloud.anviltop.hbase.adapters.AppendResponseAdapter;
 import com.google.cloud.anviltop.hbase.adapters.DeleteAdapter;
@@ -19,8 +26,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.GeneratedMessage;
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.ServiceException;
+import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -40,7 +47,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.Nullable;
 
@@ -166,10 +172,8 @@ public class BatchExecutor {
   /**
    * Helper to construct a proper MutateRowRequest populated with project, table and mutations.
    */
-  AnviltopServices.MutateRowRequest.Builder makeMutateRowRequest(
-      AnviltopData.RowMutation.Builder mutation) {
-    AnviltopServices.MutateRowRequest.Builder requestBuilder =
-        AnviltopServices.MutateRowRequest.newBuilder();
+  MutateRowRequest.Builder makeMutateRowRequest(AnviltopData.RowMutation.Builder mutation) {
+    MutateRowRequest.Builder requestBuilder = MutateRowRequest.newBuilder();
     return requestBuilder
         .setMutation(mutation)
         .setTableName(tableName.getQualifierAsString())
@@ -179,11 +183,10 @@ public class BatchExecutor {
   /**
    * Adapt and issue a single Delete request returning a ListenableFuture for the MutateRowResponse.
    */
-  ListenableFuture<AnviltopServices.MutateRowResponse> issueDeleteRequest(Delete delete) {
+  ListenableFuture<MutateRowResponse> issueDeleteRequest(Delete delete) {
     LOG.trace("issueDeleteRequest(Delete)");
     AnviltopData.RowMutation.Builder mutationBuilder = deleteAdapter.adapt(delete);
-    AnviltopServices.MutateRowRequest.Builder requestBuilder =
-        makeMutateRowRequest(mutationBuilder);
+    MutateRowRequest.Builder requestBuilder = makeMutateRowRequest(mutationBuilder);
 
     try {
       return client.mutateAtomicAsync(requestBuilder.build());
@@ -197,15 +200,15 @@ public class BatchExecutor {
    * Adapt and issue multiple Delete requests returning a list of ListenableFuture instances
    * for the MutateRowResponses.
    */
-  List<ListenableFuture<AnviltopServices.MutateRowResponse>> issueDeleteRequests(
+  List<ListenableFuture<MutateRowResponse>> issueDeleteRequests(
       List<Delete> deletes) {
     LOG.trace("issueDeleteRequests(List<>)");
-    List<ListenableFuture<AnviltopServices.MutateRowResponse>> responseFutures =
+    List<ListenableFuture<MutateRowResponse>> responseFutures =
         Lists.transform(deletes,
             new Function<Delete,
-                ListenableFuture<AnviltopServices.MutateRowResponse>>() {
+                ListenableFuture<MutateRowResponse>>() {
               @Override
-              public ListenableFuture<AnviltopServices.MutateRowResponse> apply(Delete delete) {
+              public ListenableFuture<MutateRowResponse> apply(Delete delete) {
                 return issueDeleteRequest(delete);
               }
             });
@@ -218,14 +221,13 @@ public class BatchExecutor {
    * Adapt and issue a single Get request returning a ListenableFuture
    * for the GetRowResponse.
    */
-  ListenableFuture<AnviltopServices.GetRowResponse> issueGetRequest(Get get) {
+  ListenableFuture<GetRowResponse> issueGetRequest(Get get) {
     LOG.trace("issueGetRequest(Get)");
-    AnviltopServices.GetRowRequest.Builder builder = getAdapter.adapt(get);
-    AnviltopServices.GetRowRequest request =
-        builder
-            .setTableName(tableName.getQualifierAsString())
-            .setProjectId(options.getProjectId())
-            .build();
+    GetRowRequest.Builder builder = getAdapter.adapt(get);
+    GetRowRequest request = builder
+        .setTableName(tableName.getQualifierAsString())
+        .setProjectId(options.getProjectId())
+        .build();
 
     try {
       return client.getRowAsync(request);
@@ -239,13 +241,13 @@ public class BatchExecutor {
    * Adapt and issue multiple Get requests returning a list of ListenableFuture instances
    * for the GetRowResponses.
    */
-  List<ListenableFuture<AnviltopServices.GetRowResponse>> issueGetRequests(List<Get> gets) {
+  List<ListenableFuture<GetRowResponse>> issueGetRequests(List<Get> gets) {
     LOG.trace("issueGetRequests(List<>)");
-    List<ListenableFuture<AnviltopServices.GetRowResponse>> responseFutures =
+    List<ListenableFuture<GetRowResponse>> responseFutures =
         Lists.transform(gets,
-            new Function<Get, ListenableFuture<AnviltopServices.GetRowResponse>>() {
+            new Function<Get, ListenableFuture<GetRowResponse>>() {
               @Override
-              public ListenableFuture<AnviltopServices.GetRowResponse> apply(Get get) {
+              public ListenableFuture<GetRowResponse> apply(Get get) {
                 return issueGetRequest(get);
               }
             });
@@ -257,10 +259,10 @@ public class BatchExecutor {
    * Adapt and issue a single Append request returning a ListenableFuture
    * for the AppendRowResponse.
    */
-  ListenableFuture<AnviltopServices.AppendRowResponse> issueAppendRequest(
+  ListenableFuture<AppendRowResponse> issueAppendRequest(
       Append append) {
     LOG.trace("issueAppendRequest(Append)");
-    AnviltopServices.AppendRowRequest request =
+    AppendRowRequest request =
         appendAdapter.adapt(append)
             .setTableName(tableName.getQualifierAsString())
             .setProjectId(options.getProjectId())
@@ -278,10 +280,10 @@ public class BatchExecutor {
    * Adapt and issue a single Increment request returning a ListenableFuture
    * for the IncrementRowResponse.
    */
-  ListenableFuture<AnviltopServices.IncrementRowResponse> issueIncrementRequest(
+  ListenableFuture<IncrementRowResponse> issueIncrementRequest(
       Increment increment) {
     LOG.trace("issueIncrementRequest(Increment)");
-    AnviltopServices.IncrementRowRequest request =
+    IncrementRowRequest request =
         incrementAdapter.adapt(increment)
             .setTableName(tableName.getQualifierAsString())
             .setProjectId(options.getProjectId())
@@ -298,10 +300,10 @@ public class BatchExecutor {
   /**
    * Adapt and issue a single Put request returning a ListenableFuture for the MutateRowResponse.
    */
-  ListenableFuture<AnviltopServices.MutateRowResponse> issuePutRequest(Put put) {
+  ListenableFuture<MutateRowResponse> issuePutRequest(Put put) {
     LOG.trace("issuePutRequest(Put)");
     AnviltopData.RowMutation.Builder mutationBuilder = putAdapter.adapt(put);
-    AnviltopServices.MutateRowRequest.Builder requestBuilder =
+    MutateRowRequest.Builder requestBuilder =
         makeMutateRowRequest(mutationBuilder);
 
     try {
@@ -316,13 +318,13 @@ public class BatchExecutor {
    * Adapt and issue multiple Put requests returning a list of ListenableFuture instances
    * for the MutateRowResponses.
    */
-  List<ListenableFuture<AnviltopServices.MutateRowResponse>> issuePutRequests(List<Put> puts) {
-    List<ListenableFuture<AnviltopServices.MutateRowResponse>> responseFutures =
+  List<ListenableFuture<MutateRowResponse>> issuePutRequests(List<Put> puts) {
+    List<ListenableFuture<MutateRowResponse>> responseFutures =
         Lists.transform(puts,
             new Function<Put,
-                ListenableFuture<AnviltopServices.MutateRowResponse>>() {
+                ListenableFuture<MutateRowResponse>>() {
               @Override
-              public ListenableFuture<AnviltopServices.MutateRowResponse> apply(Put put) {
+              public ListenableFuture<MutateRowResponse> apply(Put put) {
                 return issuePutRequest(put);
               }
             });
@@ -333,11 +335,10 @@ public class BatchExecutor {
   /**
    * Adapt and issue a single Put request returning a ListenableFuture for the MutateRowResponse.
    */
-  ListenableFuture<AnviltopServices.MutateRowResponse> issueRowMutationsRequest(
+  ListenableFuture<MutateRowResponse> issueRowMutationsRequest(
       RowMutations mutations) {
     AnviltopData.RowMutation.Builder mutationBuilder = rowMutationsAdapter.adapt(mutations);
-    AnviltopServices.MutateRowRequest.Builder requestBuilder =
-        makeMutateRowRequest(mutationBuilder);
+    MutateRowRequest.Builder requestBuilder = makeMutateRowRequest(mutationBuilder);
 
     try {
       return client.mutateAtomicAsync(requestBuilder.build());
@@ -364,73 +365,73 @@ public class BatchExecutor {
     final SettableFuture<Object> resultFuture = SettableFuture.create();
     results[index] = null;
     if (row instanceof Delete) {
-      ListenableFuture<AnviltopServices.MutateRowResponse> rpcResponseFuture =
+      ListenableFuture<MutateRowResponse> rpcResponseFuture =
           issueDeleteRequest((Delete) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, AnviltopServices.MutateRowResponse>(
+          new RpcResultFutureCallback<T, MutateRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(AnviltopServices.MutateRowResponse response) {
+            Object adaptResponse(MutateRowResponse response) {
               return new Result();
             }
           },
           service);
     } else  if (row instanceof Get) {
-      ListenableFuture<AnviltopServices.GetRowResponse> rpcResponseFuture =
+      ListenableFuture<GetRowResponse> rpcResponseFuture =
           issueGetRequest((Get) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, AnviltopServices.GetRowResponse>(
+          new RpcResultFutureCallback<T, GetRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(AnviltopServices.GetRowResponse response) {
+            Object adaptResponse(GetRowResponse response) {
               return getRowResponseAdapter.adaptResponse(response);
             }
           },
           service);
     } else if (row instanceof  Append) {
-      ListenableFuture<AnviltopServices.AppendRowResponse> rpcResponseFuture =
+      ListenableFuture<AppendRowResponse> rpcResponseFuture =
           issueAppendRequest((Append) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, AnviltopServices.AppendRowResponse>(
+          new RpcResultFutureCallback<T, AppendRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(AnviltopServices.AppendRowResponse response) {
+            Object adaptResponse(AppendRowResponse response) {
               return appendRespAdapter.adaptResponse(response);
             }
           },
           service);
     } else if (row instanceof Increment) {
-      ListenableFuture<AnviltopServices.IncrementRowResponse> rpcResponseFuture =
+      ListenableFuture<IncrementRowResponse> rpcResponseFuture =
           issueIncrementRequest((Increment) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, AnviltopServices.IncrementRowResponse>(
+          new RpcResultFutureCallback<T, IncrementRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(AnviltopServices.IncrementRowResponse response) {
+            Object adaptResponse(IncrementRowResponse response) {
               return incrRespAdapter.adaptResponse(response);
             }
           },
           service);
     } else if (row instanceof Put) {
-      ListenableFuture<AnviltopServices.MutateRowResponse> rpcResponseFuture =
+      ListenableFuture<MutateRowResponse> rpcResponseFuture =
           issuePutRequest((Put) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, AnviltopServices.MutateRowResponse>(
+          new RpcResultFutureCallback<T, MutateRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(AnviltopServices.MutateRowResponse response) {
+            Object adaptResponse(MutateRowResponse response) {
               return new Result();
             }
           },
           service);
     } else if (row instanceof RowMutations) {
-      ListenableFuture<AnviltopServices.MutateRowResponse> rpcResponseFuture =
+      ListenableFuture<MutateRowResponse> rpcResponseFuture =
           issueRowMutationsRequest((RowMutations) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, AnviltopServices.MutateRowResponse>(
+          new RpcResultFutureCallback<T, MutateRowResponse>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(AnviltopServices.MutateRowResponse response) {
+            Object adaptResponse(MutateRowResponse response) {
               return new Result();
             }
           },

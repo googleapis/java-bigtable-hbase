@@ -14,7 +14,17 @@
 package com.google.cloud.anviltop.hbase;
 
 import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopServices;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.CheckAndMutateRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.CheckAndMutateRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableRequest;
 import com.google.cloud.anviltop.hbase.adapters.AnviltopResultScannerAdapter;
 import com.google.cloud.anviltop.hbase.adapters.AppendAdapter;
 import com.google.cloud.anviltop.hbase.adapters.AppendResponseAdapter;
@@ -32,11 +42,11 @@ import com.google.cloud.anviltop.hbase.adapters.ScanAdapter;
 import com.google.cloud.anviltop.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.cloud.hadoop.hbase.AnviltopResultScanner;
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.ServiceException;
+import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellUtil;
@@ -219,13 +229,13 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
-    AnviltopServices.GetRowRequest.Builder getRowRequest = getAdapter.adapt(get);
+    GetRowRequest.Builder getRowRequest = getAdapter.adapt(get);
     getRowRequest
         .setProjectId(options.getProjectId())
         .setTableName(tableName.getQualifierAsString());
 
     try {
-      AnviltopServices.GetRowResponse response = client.getRow(getRowRequest.build());
+      GetRowResponse response = client.getRow(getRowRequest.build());
 
       return getRowResponseAdapter.adaptResponse(response);
     } catch (ServiceException e) {
@@ -254,7 +264,7 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
-    AnviltopServices.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
+    ReadTableRequest.Builder request = scanAdapter.adapt(scan);
     request.setProjectId(options.getProjectId());
     request.setTableName(tableName.getQualifierAsString());
 
@@ -288,7 +298,7 @@ public class AnvilTopTable implements HTableInterface {
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
     AnviltopData.RowMutation.Builder rowMutation = putAdapter.adapt(put);
-    AnviltopServices.MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
+    MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
 
     try {
       client.mutateAtomic(request.build());
@@ -320,12 +330,12 @@ public class AnvilTopTable implements HTableInterface {
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
 
-    AnviltopServices.CheckAndMutateRowRequest.Builder requestBuilder =
+    CheckAndMutateRowRequest.Builder requestBuilder =
         makeConditionalMutationRequestBuilder(
             row, family, qualifier, compareOp, value, put, putAdapter.adapt(put).getModsList());
 
     try {
-      AnviltopServices.CheckAndMutateRowResponse response =
+      CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
       return wasMutationApplied(requestBuilder, response);
     } catch (ServiceException serviceException) {
@@ -343,7 +353,7 @@ public class AnvilTopTable implements HTableInterface {
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
     AnviltopData.RowMutation.Builder rowMutation = deleteAdapter.adapt(delete);
-    AnviltopServices.MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
+    MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
 
     try {
       client.mutateAtomic(request.build());
@@ -375,7 +385,7 @@ public class AnvilTopTable implements HTableInterface {
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
     CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
 
-    AnviltopServices.CheckAndMutateRowRequest.Builder requestBuilder =
+    CheckAndMutateRowRequest.Builder requestBuilder =
         makeConditionalMutationRequestBuilder(
             row,
             family,
@@ -386,7 +396,7 @@ public class AnvilTopTable implements HTableInterface {
             deleteAdapter.adapt(delete).getModsList());
 
     try {
-      AnviltopServices.CheckAndMutateRowResponse response =
+      CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
       return wasMutationApplied(requestBuilder, response);
     } catch (ServiceException serviceException) {
@@ -404,7 +414,7 @@ public class AnvilTopTable implements HTableInterface {
   public void mutateRow(RowMutations rm) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
     AnviltopData.RowMutation.Builder rowMutation = rowMutationsAdapter.adapt(rm);
-    AnviltopServices.MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
+    MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
 
     try {
       client.mutateAtomic(request.build());
@@ -417,13 +427,13 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public Result append(Append append) throws IOException {
     LOG.trace("append(Append)");
-    AnviltopServices.AppendRowRequest.Builder appendRowRequest = appendAdapter.adapt(append);
+    AppendRowRequest.Builder appendRowRequest = appendAdapter.adapt(append);
     appendRowRequest
         .setProjectId(options.getProjectId())
         .setTableName(tableName.getQualifierAsString());
 
     try {
-      AnviltopServices.AppendRowResponse response = client.appendRow(appendRowRequest.build());
+      AppendRowResponse response = client.appendRow(appendRowRequest.build());
       return appendRespAdapter.adaptResponse(response);
     } catch (ServiceException e) {
       LOG.error("Encountered ServiceException when executing append. Exception: %s", e);
@@ -440,14 +450,14 @@ public class AnvilTopTable implements HTableInterface {
   @Override
   public Result increment(Increment increment) throws IOException {
     LOG.trace("increment(Increment)");
-    AnviltopServices.IncrementRowRequest.Builder incrementRowRequest = incrementAdapter.adapt(
+    IncrementRowRequest.Builder incrementRowRequest = incrementAdapter.adapt(
         increment);
     incrementRowRequest
         .setProjectId(options.getProjectId())
         .setTableName(tableName.getQualifierAsString());
 
     try {
-      AnviltopServices.IncrementRowResponse response = client.incrementRow(
+      IncrementRowResponse response = client.incrementRow(
           incrementRowRequest.build());
       return incrRespAdapter.adaptResponse(response);
     } catch (ServiceException e) {
@@ -580,19 +590,19 @@ public class AnvilTopTable implements HTableInterface {
     throw new UnsupportedOperationException();  // TODO
   }
 
-  private AnviltopServices.MutateRowRequest.Builder makeMutateRowRequest(
+  private MutateRowRequest.Builder makeMutateRowRequest(
       AnviltopData.RowMutation.Builder rowMutation) {
     LOG.trace("Making mutateRowRequest for table '%s' in project '%s' with mutations '%s'",
         tableName, options.getProjectId(), rowMutation);
-    return AnviltopServices.MutateRowRequest.newBuilder()
+    return MutateRowRequest.newBuilder()
         .setProjectId(options.getProjectId())
         .setTableName(tableName.getQualifierAsString())
         .setMutation(rowMutation);
   }
 
   protected boolean wasMutationApplied(
-      AnviltopServices.CheckAndMutateRowRequest.Builder requestBuilder,
-      AnviltopServices.CheckAndMutateRowResponse response) {
+      CheckAndMutateRowRequest.Builder requestBuilder,
+      CheckAndMutateRowResponse response) {
 
     // If we have true mods, we want the predicate to have matched.
     // If we have false mods, we did not want the predicate to have matched.
@@ -602,7 +612,7 @@ public class AnvilTopTable implements HTableInterface {
         && !response.getPredicateMatched());
   }
 
-  protected AnviltopServices.CheckAndMutateRowRequest.Builder makeConditionalMutationRequestBuilder(
+  protected CheckAndMutateRowRequest.Builder makeConditionalMutationRequestBuilder(
       byte[] row,
       byte[] family,
       byte[] qualifier,
@@ -624,8 +634,8 @@ public class AnvilTopTable implements HTableInterface {
               compareOp));
     }
 
-    AnviltopServices.CheckAndMutateRowRequest.Builder requestBuilder =
-        AnviltopServices.CheckAndMutateRowRequest.newBuilder();
+    CheckAndMutateRowRequest.Builder requestBuilder =
+        CheckAndMutateRowRequest.newBuilder();
     requestBuilder.setProjectId(options.getProjectId());
     requestBuilder.setTableName(tableName.getQualifierAsString());
 

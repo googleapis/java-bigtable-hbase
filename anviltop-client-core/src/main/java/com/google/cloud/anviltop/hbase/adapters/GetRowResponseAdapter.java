@@ -13,16 +13,12 @@
  */
 package com.google.cloud.anviltop.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopServices.GetRowResponse;
-import com.google.cloud.anviltop.hbase.AnviltopConstants;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
 
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**

@@ -14,7 +14,7 @@
 package com.google.cloud.anviltop.hbase;
 
 
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
+import com.google.protobuf.ByteString;
 
 import java.util.concurrent.TimeUnit;
 

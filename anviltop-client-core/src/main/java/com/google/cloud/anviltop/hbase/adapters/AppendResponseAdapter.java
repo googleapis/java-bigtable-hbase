@@ -1,6 +1,7 @@
 package com.google.cloud.anviltop.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopServices;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowResponse;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Result;
 
@@ -10,7 +11,8 @@ import java.util.List;
 /**
  * Adapt an AppendRowResponse from Anviltop to an HBase Result
  */
-public class AppendResponseAdapter implements ResponseAdapter<AnviltopServices.AppendRowResponse, Result> {
+public class AppendResponseAdapter
+    implements ResponseAdapter<AnviltopServiceMessages.AppendRowResponse, Result> {
   protected final RowAdapter rowAdapter;
 
   public AppendResponseAdapter(RowAdapter rowAdapter) {
@@ -18,7 +20,7 @@ public class AppendResponseAdapter implements ResponseAdapter<AnviltopServices.A
   }
 
   @Override
-  public Result adaptResponse(AnviltopServices.AppendRowResponse response) {
+  public Result adaptResponse(AnviltopServiceMessages.AppendRowResponse response) {
     List<Cell> cells = new ArrayList<Cell>();
     if (response.hasRow()) {
       return rowAdapter.adaptResponse(response.getRow());

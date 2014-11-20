@@ -14,9 +14,9 @@
 package com.google.cloud.anviltop.hbase.adapters;
 
 import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopServices.IncrementRowResponse;
+import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowResponse;
 import com.google.cloud.anviltop.hbase.DataGenerationHelper;
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
+import com.google.protobuf.ByteString;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
