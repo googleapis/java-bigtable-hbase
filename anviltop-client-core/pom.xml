@@ -31,6 +31,7 @@
         <google.anviltop.admin.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.admin.endpoint.host>
         <google.anviltop.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.endpoint.host>
         <google.anviltop.call.report.directory>target/call_reports</google.anviltop.call.report.directory>
+        <google.anviltop.endpoint.ip.address.override></google.anviltop.endpoint.ip.address.override>
     </properties>
     <profiles>
         <profile>

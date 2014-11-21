@@ -20,6 +20,7 @@ import com.google.cloud.hadoop.hbase.TransportOptions;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
+import java.net.InetAddress;
 
 /**
  * An immutable class providing access to configuration options for Anviltop.
@@ -32,19 +33,19 @@ public class AnviltopOptions {
   public static class Builder {
     private String projectId = "";
     private Credential credential;
-    private String host;
-    private String adminHost;
+    private InetAddress host;
+    private InetAddress adminHost;
     private int port;
     private String callTimingReportPath;
     private String callStatusReportPath;
     private boolean retriesEnabled;
 
-    public Builder setAdminHost(String host) {
+    public Builder setAdminHost(InetAddress host) {
       this.adminHost = host;
       return this;
     }
 
-    public Builder setHost(String host) {
+    public Builder setHost(InetAddress host) {
       this.host = host;
       return this;
     }
@@ -80,7 +81,7 @@ public class AnviltopOptions {
     }
 
     public AnviltopOptions build() {
-      if (Strings.isNullOrEmpty(adminHost)) {
+      if (adminHost == null) {
         adminHost = host;
       }
 
@@ -96,8 +97,8 @@ public class AnviltopOptions {
     }
   }
 
-  private final String adminHost;
-  private final String host;
+  private final InetAddress adminHost;
+  private final InetAddress host;
   private final int port;
   private final Credential credential;
   private final String projectId;
@@ -107,8 +108,8 @@ public class AnviltopOptions {
 
 
   public AnviltopOptions(
-      String adminHost,
-      String host,
+      InetAddress adminHost,
+      InetAddress host,
       int port,
       Credential credential,
       String projectId,
@@ -116,13 +117,9 @@ public class AnviltopOptions {
       String callTimingReportPath,
       String callStatusReportPath) {
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(host), "Host must not be empty or null.");
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(adminHost), "Admin host must not be empty or null.");
-    Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
-    this.adminHost = adminHost;
-    this.host = host;
+    this.adminHost = Preconditions.checkNotNull(adminHost);
+    this.host = Preconditions.checkNotNull(host);
     this.port = port;
     this.credential = credential;
     this.projectId = projectId;
