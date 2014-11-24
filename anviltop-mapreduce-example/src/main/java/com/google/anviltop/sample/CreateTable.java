@@ -57,7 +57,6 @@ public class CreateTable {
       admin.createTable(tableDescriptor);
     } catch (Exception e) {
       LOG.error("Could not create table " + tableName, e);
-      e.printStackTrace();
     } finally {
       // TODO: remove the try/catch once admin.close() doesn't throw exceptions anymore.
       try {
@@ -65,7 +64,7 @@ public class CreateTable {
           admin.close();
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        LOG.error("Admin.close() threw an exception.", e);
       }
       if (connection != null) {
         connection.close();
