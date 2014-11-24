@@ -19,7 +19,7 @@
   </parent>
 
   <groupId>anviltop-client</groupId>
-  <artifactId>sample-jobs</artifactId>
+  <artifactId><nviltop-mapreduce-sample/artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
