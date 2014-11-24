@@ -20,9 +20,6 @@ public class SampleDriver {
     catch(Throwable e){
       e.printStackTrace();
     }
-
     System.exit(exitCode);
-  }
-
-  
+  } 
 }
