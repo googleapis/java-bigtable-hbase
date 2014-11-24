@@ -110,6 +110,7 @@
                     <groupId>org.apache.hbase</groupId>
                     <artifactId>hbase-common</artifactId>
                     <type>test-jar</type>
+                    <version>${hbase.version}</version>
                     <scope>test</scope>
                     <exclusions>
                         <exclusion>
