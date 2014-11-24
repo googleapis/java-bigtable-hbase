@@ -3,6 +3,7 @@ package com.google.anviltop.sample;
 import com.google.anviltop.sample.util.TableOutputFormat;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
@@ -27,7 +28,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
  */
 public class WordCountHBase {
 
-  public static final byte[] CF = "cf".getBytes();
+  public static final byte[] COLUMN_FAMILY = "cf".getBytes();
   public static final byte[] COUNT = "count".getBytes();
 
   public static class TokenizerMapper extends Mapper<Object, Text, ImmutableBytesWritable, IntWritable> {
@@ -54,7 +55,7 @@ public class WordCountHBase {
         InterruptedException {
       int sum = sum(values);
       Put put = new Put(key.get());
-      put.add(CF, COUNT, Bytes.toBytes(sum));
+      put.add(COLUMN_FAMILY, COUNT, Bytes.toBytes(sum));
       context.write(null, put);
     }
 
@@ -86,10 +87,11 @@ public class WordCountHBase {
 
     TableName tableName = TableName.valueOf(otherArgs[otherArgs.length - 1]);
     try {
-      CreateTable.createTable(tableName, conf);
-      System.out.println("Created the table. FTW!");
+      CreateTable.createTable(tableName, conf,
+          Collections.singletonList(Bytes.toString(COLUMN_FAMILY)));
+      System.out.println("Created the table.");
     } catch (Exception e) {
-      System.out.println("Yikes.  Couldn't create the table.");
+      System.out.println("Couldn't create table " + tableName);
       e.printStackTrace();
     }
 

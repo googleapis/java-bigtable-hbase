@@ -1,7 +1,7 @@
 package com.google.anviltop.sample;
 
-import java.io.IOException;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -12,18 +12,19 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.util.GenericOptionsParser;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Writes the results of WordCount to a new table
+ *
  * @author sduskis
  */
 public class CreateTable {
 
-  public static final String PROJECT_ID_KEY = "google.anviltop.project.id";
-
-  public static final byte[] CF = "cf".getBytes();
-  public static final byte[] COUNT = "count".getBytes();
-
-
+  final static Log LOG = LogFactory.getLog(CreateTable.class);
+  
   public static void main(String[] args) throws Exception {
     Configuration conf = HBaseConfiguration.create();
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
@@ -33,10 +34,11 @@ public class CreateTable {
     }
 
     TableName tableName = TableName.valueOf(otherArgs[otherArgs.length - 1]);
-    createTable(tableName, conf);
+    createTable(tableName, conf, Collections.singletonList("cf"));
   }
 
-  public static void createTable(TableName tableName, Configuration conf) throws IOException {
+  public static void createTable(TableName tableName, Configuration conf,
+      List<String> columnFamilies) throws IOException {
     Connection connection = null;
     Admin admin = null;
 
@@ -45,20 +47,29 @@ public class CreateTable {
       connection = ConnectionFactory.createConnection(conf);
       admin = connection.getAdmin();
       // TODO: re-add this once admin.isTableAvailable() is implemented in anviltop
-//      if (!admin.isTableAvailable(tableName)) {
+      // if (!admin.isTableAvailable(tableName)) {
       HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-      tableDescriptor.addFamily(new HColumnDescriptor(CF));
+      for (String columnFamily : columnFamilies) {
+        tableDescriptor.addFamily(new HColumnDescriptor(columnFamily));
+      }
+      
+      // NOTE: Anviltop createTable is synchronous while HBASE creation is not.
       admin.createTable(tableDescriptor);
     } catch (Exception e) {
+      LOG.error("Could not create table " + tableName, e);
       e.printStackTrace();
     } finally {
       // TODO: remove the try/catch once admin.close() doesn't throw exceptions anymore.
       try {
-        if (admin != null) admin.close();
-      } catch(Exception e) {
+        if (admin != null) {
+          admin.close();
+        }
+      } catch (Exception e) {
         e.printStackTrace();
       }
-      if (connection != null) connection.close();
+      if (connection != null) {
+        connection.close();
+      }
     }
   }
 }
