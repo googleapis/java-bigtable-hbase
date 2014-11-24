@@ -12,10 +12,6 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.util.GenericOptionsParser;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 
 /**
  * Writes the results of WordCount to a new table
@@ -30,36 +26,15 @@ public class CreateTable {
 
 
   public static void main(String[] args) throws Exception {
-
     Configuration conf = HBaseConfiguration.create();
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
     if (otherArgs.length != 1) {
       System.err.println("Usage: <table-name>");
       System.exit(2);
     }
-    String projectId = conf.get(PROJECT_ID_KEY);
-    if (projectId != null) {
-      SecureRandom random = new SecureRandom();
-      conf.set(PROJECT_ID_KEY, projectId + "-" + random.nextInt());
-    }
 
     TableName tableName = TableName.valueOf(otherArgs[otherArgs.length - 1]);
-    System.out.println("Creating " + tableName);
-    Logger.getRootLogger().getLoggerRepository().resetConfiguration();
-    ConsoleAppender console = new ConsoleAppender(); //create appender
-    //configure the appender
-    String PATTERN = "%d [%p|%c|%C{1}] %m%n";
-    console.setLayout(new PatternLayout(PATTERN)); 
-    console.setThreshold(Level.TRACE);
-    console.activateOptions();
-    //add appender to any Logger (here is root)
-    Logger.getRootLogger().addAppender(console);
-
-    System.out.println("testing");
-    Logger.getLogger(CreateTable.class).debug("Did this work?");
-
     createTable(tableName, conf);
-    System.out.println("Created");
   }
 
   public static void createTable(TableName tableName, Configuration conf) throws IOException {
@@ -75,10 +50,8 @@ public class CreateTable {
       HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
       tableDescriptor.addFamily(new HColumnDescriptor(CF));
       admin.createTable(tableDescriptor);
-      System.err.println("Created table: " + tableName);
     } catch (Exception e) {
       e.printStackTrace();
-      System.err.println("Could not create table: " + tableName);
     } finally {
       // TODO: remove the try/catch once admin.close() doesn't throw exceptions anymore.
       try {
