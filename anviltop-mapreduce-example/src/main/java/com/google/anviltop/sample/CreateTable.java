@@ -1,7 +1,6 @@
 package com.google.anviltop.sample;
 
 import java.io.IOException;
-import java.security.SecureRandom;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;

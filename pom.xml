@@ -11,7 +11,7 @@
 
     <modules>
         <module>anviltop-client-core</module>
-        <module>anviltop-mapreduce-sample</module>
+        <module>anviltop-mapreduce-example</module>
     </modules>
 
    <properties>
