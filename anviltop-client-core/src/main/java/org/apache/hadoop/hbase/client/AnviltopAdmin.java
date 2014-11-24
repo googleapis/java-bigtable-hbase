@@ -1,12 +1,20 @@
 package org.apache.hadoop.hbase.client;
 
 
-import com.google.bigtable.anviltop.AnviltopAdminServices;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateFamilyRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateFamilyResponse;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateTableRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateTableResponse;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyResponse;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableResponse;
+
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
 import com.google.cloud.anviltop.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.ByteString;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
@@ -31,11 +39,9 @@ import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -117,7 +123,7 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void createTable(HTableDescriptor desc) throws IOException {
-    AnviltopAdminServices.CreateTableRequest.Builder builder = AnviltopAdminServices.CreateTableRequest.newBuilder();
+    CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
     builder.setProjectId(options.getProjectId())
         .setTableNameBytes(ByteString.copyFrom(desc.getName()));
 
@@ -146,7 +152,7 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void deleteTable(TableName tableName) throws IOException {
-    anviltopAdminClient.deleteTable(AnviltopAdminServices.DeleteTableRequest.newBuilder()
+    anviltopAdminClient.deleteTable(DeleteTableRequest.newBuilder()
         .setProjectId(options.getProjectId())
         .setTableNameBytes(ByteString.copyFrom(tableName.getQualifier()))
         .build());
@@ -246,7 +252,7 @@ public class AnviltopAdmin implements Admin {
   @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
     anviltopAdminClient.createFamily(
-        AnviltopAdminServices.CreateFamilyRequest.newBuilder()
+        CreateFamilyRequest.newBuilder()
             .setProjectId(options.getProjectId())
             .setTableName(tableName.getQualifierAsString())
             .setFamily(columnDescriptorAdapter.adapt(column))
@@ -256,7 +262,7 @@ public class AnviltopAdmin implements Admin {
   @Override
   public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
     anviltopAdminClient.deleteFamily(
-        AnviltopAdminServices.DeleteFamilyRequest.newBuilder()
+        DeleteFamilyRequest.newBuilder()
             .setProjectId(options.getProjectId())
             .setTableName(tableName.getQualifierAsString())
             .setFamilyNameBytes(ByteString.copyFrom(columnName)).build());

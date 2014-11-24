@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +38,11 @@ public class AnvilTopOptionsFactory {
   public static final String ANVILTOP_HOST_KEY = "google.anviltop.endpoint.host";
   public static final String PROJECT_ID_KEY = "google.anviltop.project.id";
   public static final String CALL_REPORT_DIRECTORY_KEY = "google.anviltop.call.report.directory";
+
+  /**
+   * If set, bypass DNS host lookup and use the given IP address.
+   */
+  public static final String IP_OVERRIDE_KEY = "google.anviltop.endpoint.ip.address.override";
 
   /**
    * Key to set to enable service accounts to be used, either metadata server-based or P12-based.
@@ -76,7 +82,6 @@ public class AnvilTopOptionsFactory {
   public static final boolean ENABLE_GRPC_RETRIES_DEFAULT = true;
 
   public static AnviltopOptions fromConfiguration(Configuration configuration) throws IOException {
-
     AnviltopOptions.Builder optionsBuilder = new AnviltopOptions.Builder();
 
     String projectId = configuration.get(PROJECT_ID_KEY);
@@ -86,20 +91,39 @@ public class AnvilTopOptionsFactory {
     optionsBuilder.setProjectId(projectId);
     LOG.debug("Project ID %s", projectId);
 
+
+    String overrideIp = configuration.get(IP_OVERRIDE_KEY);
+    InetAddress overrideIpAddress = null;
+    if (!Strings.isNullOrEmpty(overrideIp)) {
+      LOG.debug("Using override IP address %s", overrideIp);
+      overrideIpAddress = InetAddress.getByName(overrideIp);
+    }
+
     String host = configuration.get(ANVILTOP_HOST_KEY);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(host),
         String.format("API endpoint host must be supplied via %s", ANVILTOP_HOST_KEY));
-    optionsBuilder.setHost(host);
-    LOG.debug("Data endpoint host %s", host);
+    if (overrideIpAddress == null) {
+      LOG.debug("Data endpoint host %s", host);
+      optionsBuilder.setHost(InetAddress.getByName(host));
+    } else {
+      LOG.debug("Data endpoint host %s. Using override IP address.", host);
+      optionsBuilder.setHost(InetAddress.getByAddress(host, overrideIpAddress.getAddress()));
+    }
 
     String adminHost = configuration.get(ANVILTOP_ADMIN_HOST_KEY);
-    if (!Strings.isNullOrEmpty(adminHost)) {
+    if (Strings.isNullOrEmpty(adminHost)) {
+      LOG.debug("Admin endpoint host not configured, assuming we should use data endpoint.");
+      adminHost = host;
+    }
+
+    if (overrideIpAddress == null) {
       LOG.debug("Admin endpoint host %s", host);
-      optionsBuilder.setAdminHost(adminHost);
+      optionsBuilder.setAdminHost(InetAddress.getByName(adminHost));
     } else {
-      LOG.debug("No admin endpoint host specified");
-      optionsBuilder.setAdminHost(host);
+      LOG.debug("Admin endpoint host %s. Using override IP address.", host);
+      optionsBuilder.setAdminHost(
+          InetAddress.getByAddress(adminHost, overrideIpAddress.getAddress()));
     }
 
     int port = configuration.getInt(ANVILTOP_PORT_KEY, DEFAULT_ANVILTOP_PORT);

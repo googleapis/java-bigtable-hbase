@@ -13,7 +13,7 @@
  */
 package com.google.cloud.anviltop.hbase.adapters;
 
-import com.google.cloud.hadoop.hbase.repackaged.protobuf.GeneratedMessage.Builder;
+import com.google.protobuf.GeneratedMessage.Builder;
 
 import org.apache.hadoop.hbase.client.Operation;
 

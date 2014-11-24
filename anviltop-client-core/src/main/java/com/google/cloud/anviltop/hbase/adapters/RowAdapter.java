@@ -14,7 +14,6 @@
 package com.google.cloud.anviltop.hbase.adapters;
 
 import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopServices.GetRowResponse;
 import com.google.cloud.anviltop.hbase.AnviltopConstants;
 
 import org.apache.hadoop.hbase.Cell;
