@@ -15,6 +15,7 @@
 // Because MasterKeepAliveConnection is default scope, we have to use this package.  :-/
 package org.apache.hadoop.hbase.client;
 
+import com.google.api.client.repackaged.com.google.common.base.Throwables;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
 import com.google.cloud.anviltop.hbase.AnvilTopOptionsFactory;
 import com.google.cloud.anviltop.hbase.AnvilTopTable;
@@ -89,11 +90,7 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
     }
 
     if (batchPool == null) {
-      batchPool = Executors.newCachedThreadPool(
-          new ThreadFactoryBuilder()
-              .setNameFormat("anviltop-client-%s")
-              .setUncaughtExceptionHandler(new LoggingUncaughtExceptionHandler())
-              .build());
+      batchPool = getBatchPool();
     }
 
     this.options = AnvilTopOptionsFactory.fromConfiguration(conf);
@@ -505,6 +502,12 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
     if (this.closed) {
       return;
     }
+    try {
+      anviltopAdminClient.close();
+      client.close();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
     shutdownBatchPool();
     this.closed = true;
   }
@@ -530,7 +533,7 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
               keepAliveTime,
               TimeUnit.SECONDS,
               workQueue,
-              Threads.newDaemonThreadFactory("hbase-connection-shared-executor"));
+              Threads.newDaemonThreadFactory("anviltop-connection-shared-executor"));
         }
         this.cleanupPool = true;
       }
