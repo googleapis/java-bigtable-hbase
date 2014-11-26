@@ -24,22 +24,8 @@
 
     <properties>
         <anviltop.grpc.repo.fullpath>${project.basedir}/../${anviltop.grpc.repo.dir}</anviltop.grpc.repo.fullpath>
-        <hbase.version>0.99.0</hbase.version>
-        <hadoop.version>2.4.0</hadoop.version>
-        <compat.module>hbase-hadoop2-compat</compat.module>
-        <junit.version>4.11</junit.version>
-        <mockito.version>1.9.5</mockito.version>
-        <compileSource>1.7</compileSource>
-        <!-- For Netty HTTP2/TLS negotiation -->
-        <alpn.version>7.0.0.v20140317</alpn.version>
-        <google.api.client.version>1.19.0</google.api.client.version>
-        <google.anviltop.auth.service.account.enable>false</google.anviltop.auth.service.account.enable>
-        <google.anviltop.admin.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.admin.endpoint.host>
-        <google.anviltop.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.endpoint.host>
-        <google.anviltop.call.report.directory>target/call_reports</google.anviltop.call.report.directory>
-        <google.anviltop.endpoint.ip.address.override></google.anviltop.endpoint.ip.address.override>
-        <google.anviltop.enable.grpc.v2>false</google.anviltop.enable.grpc.v2>
     </properties>
+
     <profiles>
         <profile>
             <id>anviltopIntegrationTest</id>
@@ -118,7 +104,6 @@
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
-            <version>${hbase.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
