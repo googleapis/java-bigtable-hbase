@@ -289,7 +289,7 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
   }
 
   @Override
-  public RegionLocations relocateRegion(TableName tableName, byte[] row, int replicaId)
+  public HRegionLocation relocateRegion(TableName tableName, byte[] row, int replicaId)
       throws IOException {
     throw new UnsupportedOperationException();  // TODO
   }
