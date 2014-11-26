@@ -24,7 +24,7 @@ import java.util.List;
 public class CreateTable {
 
   final static Log LOG = LogFactory.getLog(CreateTable.class);
-  
+
   public static void main(String[] args) throws Exception {
     Configuration conf = HBaseConfiguration.create();
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();

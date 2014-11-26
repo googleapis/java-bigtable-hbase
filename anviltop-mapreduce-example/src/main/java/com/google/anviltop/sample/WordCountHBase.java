@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.StringTokenizer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -24,14 +26,18 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 /**
  * Writes the same results of WordCount to a new table
+ *
  * @author sduskis
  */
 public class WordCountHBase {
 
-  public static final byte[] COLUMN_FAMILY = "cf".getBytes();
-  public static final byte[] COUNT = "count".getBytes();
+  final static Log LOG = LogFactory.getLog(WordCountHBase.class);
 
-  public static class TokenizerMapper extends Mapper<Object, Text, ImmutableBytesWritable, IntWritable> {
+  public static final byte[] COLUMN_FAMILY = "cf".getBytes();
+  public static final byte[] COUNT_COLUMN_NAME = "count".getBytes();
+
+  public static class TokenizerMapper extends
+      Mapper<Object, Text, ImmutableBytesWritable, IntWritable> {
 
     private final static IntWritable one = new IntWritable(1);
 
@@ -51,11 +57,11 @@ public class WordCountHBase {
       TableReducer<ImmutableBytesWritable, IntWritable, ImmutableBytesWritable> {
 
     @Override
-    public void reduce(ImmutableBytesWritable key, Iterable<IntWritable> values, Context context) throws IOException,
-        InterruptedException {
+    public void reduce(ImmutableBytesWritable key, Iterable<IntWritable> values, Context context)
+        throws IOException, InterruptedException {
       int sum = sum(values);
       Put put = new Put(key.get());
-      put.add(COLUMN_FAMILY, COUNT, Bytes.toBytes(sum));
+      put.add(COLUMN_FAMILY, COUNT_COLUMN_NAME, Bytes.toBytes(sum));
       context.write(null, put);
     }
 
@@ -78,9 +84,10 @@ public class WordCountHBase {
       System.err.println("Usage: wordcount-hbase <in> [<in>...] <table-name>");
       System.exit(2);
     }
-    
+
     Job job = Job.getInstance(conf, "word count");
 
+    job.setInputFormatClass(FileInputFormat.class);
     for (int i = 0; i < otherArgs.length - 1; ++i) {
       FileInputFormat.addInputPath(job, new Path(otherArgs[i]));
     }
@@ -89,25 +96,29 @@ public class WordCountHBase {
     try {
       CreateTable.createTable(tableName, conf,
           Collections.singletonList(Bytes.toString(COLUMN_FAMILY)));
-      System.out.println("Created the table.");
     } catch (Exception e) {
-      System.out.println("Couldn't create table " + tableName);
-      e.printStackTrace();
+      LOG.error("Could not create the table.", e);
     }
 
     job.setJarByClass(WordCountHBase.class);
     job.setMapperClass(TokenizerMapper.class);
     job.setMapOutputValueClass(IntWritable.class);
 
-    // Using the long form of this method so that the "false" can be set as the last parameter.  That tells
-    // TableMapReduceUtil to not add the .jar depenendencies to the job, which causes problems for some reason.
-    TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), MyTableReducer.class, job,
-      null, null, null, null, false);
- 
+    // Using the long form of this method so that the "false" can be set as the last parameter. That
+    // tells
+    // TableMapReduceUtil to not add the .jar depenendencies to the job, which causes problems for
+    // some reason.
+    TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(),
+        MyTableReducer.class,
+        job,
+        null,
+        null,
+        null,
+        null,
+        false);
+
     job.setOutputFormatClass(TableOutputFormat.class);
     DebugUtil.printConf(conf);
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
-
-
 }
