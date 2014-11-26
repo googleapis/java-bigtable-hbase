@@ -15,192 +15,20 @@
     <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <repositories>
+        <repository>
+            <id>repo</id>
+            <url>file://${anviltop.grpc.repo.fullpath}</url>
+        </repository>
+    </repositories>
+
+    <properties>
+        <anviltop.grpc.repo.fullpath>${project.basedir}/../${anviltop.grpc.repo.dir}</anviltop.grpc.repo.fullpath>
+    </properties>
+
     <profiles>
         <profile>
             <id>anviltopIntegrationTest</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-client</artifactId>
-                    <version>${hbase.version}</version>
-                    <exclusions>
-                        <!-- Stubby requires netty5 and a newer version of guava. When available,
-                        we can repackage netty5, guava, stubby, and protobuf into our client and
-                        remove these exclusions  -->
-                        <exclusion>
-                            <groupId>io.netty</groupId>
-                            <artifactId>netty-all</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>io.netty</groupId>
-                            <artifactId>netty</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-server</artifactId>
-                    <version>${hbase.version}</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <!-- Stubby requires netty5 and a newer version of guava. When available,
-                        we can repackage netty5, guava, stubby, and protobuf into our client and
-                        remove these exclusions  -->
-                        <exclusion>
-                            <groupId>io.netty</groupId>
-                            <artifactId>netty-all</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>io.netty</groupId>
-                            <artifactId>netty</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-hadoop-compat</artifactId>
-                    <version>${hbase.version}</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                        </exclusion>
-                        <!-- The generated messages in the anviltop driver depend on an unreleased
-                         version of protobuf-java. We can shade our references into the client
-                         when grpc is opened. -->
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-server</artifactId>
-                    <version>${hbase.version}</version>
-                    <type>test-jar</type>
-                    <scope>test</scope>
-                    <exclusions>
-                        <!-- Stubby requires netty5 and a newer version of guava. When available,
-                        we can repackage netty5, guava, stubby, and protobuf into our client and
-                        remove these exclusions  -->
-                        <exclusion>
-                            <groupId>io.netty</groupId>
-                            <artifactId>netty-all</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>io.netty</groupId>
-                            <artifactId>netty</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                        </exclusion>
-                        <!-- The generated messages in the anviltop driver depend on an unreleased
-                         version of protobuf-java. We can shade our references into the client
-                         when grpc is opened. -->
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-common</artifactId>
-                    <type>test-jar</type>
-                    <version>${hbase.version}</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                        </exclusion>
-                        <!-- The generated messages in the anviltop driver depend on an unreleased
-                         version of protobuf-java. We can shade our references into the client
-                         when grpc is opened. -->
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.hadoop</groupId>
-                    <!--In hadoop1 this is hadoop-test-->
-                    <artifactId>hadoop-minicluster</artifactId>
-                    <version>${hadoop.version}</version>
-                    <scope>test</scope>
-                    <exclusions>
-                        <!-- Stubby requires netty5 and a newer version of guava. When available,
-                        we can repackage netty5, guava, stubby, and protobuf into our client and
-                        remove these exclusions  -->
-                        <exclusion>
-                            <groupId>io.netty</groupId>
-                            <artifactId>netty-all</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>io.netty</groupId>
-                            <artifactId>netty</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                        </exclusion>
-                        <!-- The generated messages in the anviltop driver depend on an unreleased
-                         version of protobuf-java. We can shade our references into the client
-                         when grpc is opened. -->
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-hadoop-compat</artifactId>
-                    <version>${hbase.version}</version>
-                    <type>test-jar</type>
-                    <scope>test</scope>
-                    <exclusions>
-                        <!-- Stubby requires netty5 and a newer version of guava. When available,
-                        we can repackage netty5, guava, stubby, and protobuf into our client and
-                        remove these exclusions  -->
-                        <exclusion>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                        </exclusion>
-                        <!-- The generated messages in the anviltop driver depend on an unreleased
-                         version of protobuf-java. We can shade our references into the client
-                         when grpc is opened. -->
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>${compat.module}</artifactId>
-                    <version>${hbase.version}</version>
-                    <type>test-jar</type>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                        </exclusion>
-                        <!-- The generated messages in the anviltop driver depend on an unreleased
-                         version of protobuf-java. We can shade our references into the client
-                         when grpc is opened. -->
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-common</artifactId>
-                    <version>${hadoop.version}</version>
-                    <type>test-jar</type>
-                    <scope>test</scope>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                        </exclusion>
-                        <!-- The generated messages in the anviltop driver depend on an unreleased
-                         version of protobuf-java. We can shade our references into the client
-                         when grpc is opened. -->
-                    </exclusions>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -222,6 +50,9 @@
                                 <phase>integration-test</phase>
                                 <configuration>
                                     <!-- ALPN is needed for SSL engine rewrites and the stubby driver for its version of guava -->
+                                    <!-- to enable netty logging, include:
+                                    -Djava.util.logging.config.file=src/test/resources/logging.properties
+                                    -->
                                     <argLine>
                                         -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar:${stubby.driver.path}
                                     </argLine>
@@ -231,8 +62,7 @@
                                     </includes>
                                     <reportNameSuffix>anviltop-server</reportNameSuffix>
                                     <systemPropertyVariables>
-                                        <anviltop.test.extra.resources>anviltop-test.xml
-                                        </anviltop.test.extra.resources>
+                                        <anviltop.test.extra.resources>anviltop-test.xml</anviltop.test.extra.resources>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
@@ -246,11 +76,7 @@
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
-            <exclusions>
-                <!-- The generated messages in the anviltop driver depend on an unreleased
-                 version of protobuf-java. We can shade our references into the client
-                 when grpc is opened. -->
-            </exclusions>
+            <version>${hbase.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
@@ -279,22 +105,12 @@
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <!-- The generated messages in the anviltop driver depend on an unreleased
-                 version of protobuf-java. We can shade our references into the client
-                 when grpc is opened. -->
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-hadoop-compat</artifactId>
             <version>${hbase.version}</version>
             <scope>test</scope>
-            <exclusions>
-                <!-- The generated messages in the anviltop driver depend on an unreleased
-                 version of protobuf-java. We can shade our references into the client
-                 when grpc is opened. -->
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
@@ -302,11 +118,6 @@
             <version>${hbase.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
-            <exclusions>
-                <!-- The generated messages in the anviltop driver depend on an unreleased
-                 version of protobuf-java. We can shade our references into the client
-                 when grpc is opened. -->
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
@@ -314,11 +125,6 @@
             <version>${hbase.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
-            <exclusions>
-                <!-- The generated messages in the anviltop driver depend on an unreleased
-                 version of protobuf-java. We can shade our references into the client
-                 when grpc is opened. -->
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -326,11 +132,6 @@
             <artifactId>hadoop-minicluster</artifactId>
             <version>${hadoop.version}</version>
             <scope>test</scope>
-            <exclusions>
-                <!-- The generated messages in the anviltop driver depend on an unreleased
-                 version of protobuf-java. We can shade our references into the client
-                 when grpc is opened. -->
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
@@ -338,11 +139,6 @@
             <version>${hbase.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
-            <exclusions>
-                <!-- The generated messages in the anviltop driver depend on an unreleased
-                 version of protobuf-java. We can shade our references into the client
-                 when grpc is opened. -->
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
@@ -350,11 +146,6 @@
             <version>${hbase.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
-            <exclusions>
-                <!-- The generated messages in the anviltop driver depend on an unreleased
-                 version of protobuf-java. We can shade our references into the client
-                 when grpc is opened. -->
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -362,11 +153,6 @@
             <version>${hadoop.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
-            <exclusions>
-                <!-- The generated messages in the anviltop driver depend on an unreleased
-                 version of protobuf-java. We can shade our references into the client
-                 when grpc is opened. -->
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mortbay.jetty.alpn</groupId>
@@ -374,11 +160,9 @@
             <version>${alpn.version}</version>
         </dependency>
         <dependency>
-            <groupId>anviltop-client</groupId>
-            <artifactId>anviltop-client-interface</artifactId>
-            <version>0.1</version>
-            <systemPath>${stubby.driver.path}</systemPath>
-            <scope>system</scope>
+            <groupId>${stubby.driver.group}</groupId>
+            <artifactId>${stubby.driver.artifact}</artifactId>
+            <version>${stubby.driver.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
@@ -485,7 +269,46 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.google.bigtable.anviltop:*</include>
+                                </includes>
+                            </artifactSet>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google.common</pattern>
+                                    <shadedPattern>com.google.bigtable.anviltop.repackaged.com.google.common</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.fasterxml</pattern>
+                                    <shadedPattern>com.google.bigtable.anviltop.repackaged.com.fasterxml</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.commons.codec</pattern>
+                                    <shadedPattern>com.google.bigtable.anviltop.repackaged.org.apache.commons.codec</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>io.netty</pattern>
+                                    <shadedPattern>com.google.bigtable.anviltop.repackaged.io.netty</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
-
 </project>

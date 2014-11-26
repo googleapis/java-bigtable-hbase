@@ -14,9 +14,14 @@
         <module>anviltop-mapreduce-example</module>
     </modules>
 
-   <properties>
+    <properties>
         <!-- As soon as stubby is public, this goes away -->
         <stubby.driver.path>/google/data/ro/teams/cloud-bigtable/driver_mpm/live/driver_with_deps.jar</stubby.driver.path>
+        <stubby.driver.group>com.google.bigtable.anviltop</stubby.driver.group>
+        <stubby.driver.artifact>anviltop-grpc-interface</stubby.driver.artifact>
+        <stubby.driver.version>0.1</stubby.driver.version>
+        <anviltop.grpc.repo.dir>anviltop-grpc-repo</anviltop.grpc.repo.dir>
+        <anviltop.grpc.repo.fullpath>${project.basedir}/${anviltop.grpc.repo.dir}</anviltop.grpc.repo.fullpath>
         <hbase.version>0.99.0</hbase.version>
         <hadoop.version>2.4.0</hadoop.version>
         <compat.module>hbase-hadoop2-compat</compat.module>
@@ -30,6 +35,8 @@
         <google.anviltop.admin.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.admin.endpoint.host>
         <google.anviltop.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.endpoint.host>
         <google.anviltop.call.report.directory>target/call_reports</google.anviltop.call.report.directory>
+        <google.anviltop.endpoint.ip.address.override></google.anviltop.endpoint.ip.address.override>
+        <google.anviltop.enable.grpc.v2>false</google.anviltop.enable.grpc.v2>
     </properties>
 
     <dependencyManagement>
@@ -81,4 +88,35 @@
             <url>https://repository.apache.org/content/repositories/snapshots/</url>
         </repository>
     </repositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <version>1.3.2</version>
+                <executions>
+                    <execution>
+                        <id>install-grpc-client</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>mvn</executable>
+                            <arguments>
+                                <argument>org.apache.maven.plugins:maven-install-plugin:2.3.1:install-file</argument>
+                                <argument>-Dfile=${stubby.driver.path}</argument>
+                                <argument>-DgroupId=${stubby.driver.group}</argument>
+                                <argument>-DartifactId=${stubby.driver.artifact}</argument>
+                                <argument>-Dversion=${stubby.driver.version}</argument>
+                                <argument>-Dpackaging=jar</argument>
+                                <argument>-DlocalRepositoryPath=${anviltop.grpc.repo.fullpath}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
