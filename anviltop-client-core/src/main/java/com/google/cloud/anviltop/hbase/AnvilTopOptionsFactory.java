@@ -15,6 +15,7 @@ package com.google.cloud.anviltop.hbase;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.net.stubby.transport.AbstractClientStream;
 
 import org.apache.hadoop.conf.Configuration;
 
@@ -38,6 +39,7 @@ public class AnvilTopOptionsFactory {
   public static final String ANVILTOP_HOST_KEY = "google.anviltop.endpoint.host";
   public static final String PROJECT_ID_KEY = "google.anviltop.project.id";
   public static final String CALL_REPORT_DIRECTORY_KEY = "google.anviltop.call.report.directory";
+  public static final String ENABLE_GRPC_V2_KEY = "google.anviltop.enable.grpc.v2";
 
   /**
    * If set, bypass DNS host lookup and use the given IP address.
@@ -189,6 +191,8 @@ public class AnvilTopOptionsFactory {
         ENABLE_GRPC_RETRIES_KEY, ENABLE_GRPC_RETRIES_DEFAULT);
     LOG.debug("gRPC retries enabled: %s", enableRetries);
     optionsBuilder.setRetriesEnabled(enableRetries);
+
+    AbstractClientStream.GRPC_V2_PROTOCOL = configuration.getBoolean(ENABLE_GRPC_V2_KEY, false);
 
     return optionsBuilder.build();
   }

@@ -38,4 +38,8 @@
         <name>google.anviltop.endpoint.ip.address.override</name>
         <value>${google.anviltop.endpoint.ip.address.override}</value>
     </property>
+    <property>
+        <name>google.anviltop.enable.grpc.v2</name>
+        <value>${google.anviltop.enable.grpc.v2}</value>
+    </property>
 </configuration>
