@@ -411,6 +411,13 @@ public class AnvilTopTable implements HTableInterface {
   }
 
   @Override
+  public boolean checkAndMutate(final byte [] row, final byte [] family, final byte [] qualifier,
+                                final CompareFilter.CompareOp compareOp, final byte [] value, final RowMutations rm)
+      throws IOException {
+    throw new UnsupportedOperationException();  // TODO
+  }
+
+  @Override
   public void mutateRow(RowMutations rm) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
     AnviltopData.RowMutation.Builder rowMutation = rowMutationsAdapter.adapt(rm);

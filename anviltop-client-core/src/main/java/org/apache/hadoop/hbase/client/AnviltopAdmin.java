@@ -86,11 +86,6 @@ public class AnviltopAdmin implements Admin {
   }
 
   @Override
-  public boolean isMasterRunning() throws MasterNotRunningException, ZooKeeperConnectionException {
-    throw new UnsupportedOperationException("isMasterRunning");  // TODO
-  }
-
-  @Override
   public boolean tableExists(TableName tableName) throws IOException {
     throw new UnsupportedOperationException("tableExists");  // TODO
   }
@@ -300,53 +295,58 @@ public class AnviltopAdmin implements Admin {
   }
 
   @Override
-  public void flush(TableName tableName) throws IOException, InterruptedException {
+  public void flush(TableName tableName) throws IOException {
     throw new UnsupportedOperationException("flush");  // TODO
   }
 
   @Override
-  public void flushRegion(byte[] bytes) throws IOException, InterruptedException {
+  public void flushRegion(byte[] bytes) throws IOException {
     throw new UnsupportedOperationException("flushRegion");  // TODO
   }
 
   @Override
-  public void compact(TableName tableName) throws IOException, InterruptedException {
+  public void compact(TableName tableName) throws IOException {
     throw new UnsupportedOperationException("compact");  // TODO
   }
 
   @Override
-  public void compactRegion(byte[] bytes) throws IOException, InterruptedException {
+  public void compactRegion(byte[] bytes) throws IOException {
     throw new UnsupportedOperationException("compactRegion");  // TODO
   }
 
   @Override
-  public void compact(TableName tableName, byte[] bytes) throws IOException, InterruptedException {
+  public void compact(TableName tableName, byte[] bytes) throws IOException {
     throw new UnsupportedOperationException("compact");  // TODO
   }
 
   @Override
-  public void compactRegion(byte[] bytes, byte[] bytes2) throws IOException, InterruptedException {
+  public void compactRegion(byte[] bytes, byte[] bytes2) throws IOException {
     throw new UnsupportedOperationException("compactRegion");  // TODO
   }
 
   @Override
-  public void majorCompact(TableName tableName) throws IOException, InterruptedException {
+  public void majorCompact(TableName tableName) throws IOException {
     throw new UnsupportedOperationException("majorCompact");  // TODO
   }
 
   @Override
-  public void majorCompactRegion(byte[] bytes) throws IOException, InterruptedException {
+  public void majorCompactRegion(byte[] bytes) throws IOException {
     throw new UnsupportedOperationException("majorCompactRegion");  // TODO
   }
 
   @Override
-  public void majorCompact(TableName tableName, byte[] bytes) throws IOException, InterruptedException {
+  public void majorCompact(TableName tableName, byte[] bytes) throws IOException {
     throw new UnsupportedOperationException("majorCompact");  // TODO
   }
 
   @Override
-  public void majorCompactRegion(byte[] bytes, byte[] bytes2) throws IOException, InterruptedException {
+  public void majorCompactRegion(byte[] bytes, byte[] bytes2) throws IOException {
     throw new UnsupportedOperationException("majorCompactRegion");  // TODO
+  }
+
+  @Override
+  public void compactRegionServer(ServerName serverName, boolean b) throws IOException {
+    throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
@@ -380,23 +380,23 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public boolean balancer()
-      throws MasterNotRunningException, ZooKeeperConnectionException, ServiceException {
+      throws MasterNotRunningException, ZooKeeperConnectionException {
     throw new UnsupportedOperationException("balancer");  // TODO
   }
 
   @Override
   public boolean enableCatalogJanitor(boolean enable)
-      throws ServiceException, MasterNotRunningException {
+      throws MasterNotRunningException {
     throw new UnsupportedOperationException("enableCatalogJanitor");  // TODO
   }
 
   @Override
-  public int runCatalogScan() throws ServiceException, MasterNotRunningException {
+  public int runCatalogScan() throws MasterNotRunningException {
     throw new UnsupportedOperationException("runCatalogScan");  // TODO
   }
 
   @Override
-  public boolean isCatalogJanitorEnabled() throws ServiceException, MasterNotRunningException {
+  public boolean isCatalogJanitorEnabled() throws MasterNotRunningException {
     throw new UnsupportedOperationException("isCatalogJanitorEnabled");  // TODO
   }
 
@@ -407,22 +407,22 @@ public class AnviltopAdmin implements Admin {
   }
 
   @Override
-  public void split(TableName tableName) throws IOException, InterruptedException {
+  public void split(TableName tableName) throws IOException {
     throw new UnsupportedOperationException("split");  // TODO
   }
 
   @Override
-  public void splitRegion(byte[] bytes) throws IOException, InterruptedException {
+  public void splitRegion(byte[] bytes) throws IOException {
     throw new UnsupportedOperationException("splitRegion");  // TODO
   }
 
   @Override
-  public void split(TableName tableName, byte[] bytes) throws IOException, InterruptedException {
+  public void split(TableName tableName, byte[] bytes) throws IOException {
     throw new UnsupportedOperationException("split");  // TODO
   }
 
   @Override
-  public void splitRegion(byte[] bytes, byte[] bytes2) throws IOException, InterruptedException {
+  public void splitRegion(byte[] bytes, byte[] bytes2) throws IOException {
     throw new UnsupportedOperationException("splitRegion");  // TODO
   }
 
@@ -524,13 +524,13 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName)
-      throws IOException, InterruptedException {
+      throws IOException {
     throw new UnsupportedOperationException("getCompactionState");
   }
 
   @Override
   public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes)
-      throws IOException, InterruptedException {
+      throws IOException {
     throw new UnsupportedOperationException("getCompactionStateForRegion");
   }
 
@@ -595,13 +595,13 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void cloneSnapshot(byte[] snapshotName, TableName tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException, InterruptedException {
+      throws IOException, TableExistsException, RestoreSnapshotException {
     throw new UnsupportedOperationException("cloneSnapshot");  // TODO
   }
 
   @Override
   public void cloneSnapshot(String snapshotName, TableName tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException, InterruptedException {
+      throws IOException, TableExistsException, RestoreSnapshotException {
     throw new UnsupportedOperationException("cloneSnapshot");  // TODO
   }
 
@@ -661,5 +661,25 @@ public class AnviltopAdmin implements Admin {
   @Override
   public CoprocessorRpcChannel coprocessorService() {
     throw new UnsupportedOperationException("coprocessorService");  // TODO
+  }
+
+  @Override
+  public CoprocessorRpcChannel coprocessorService(ServerName serverName) {
+    throw new UnsupportedOperationException("coprocessorService");  // TODO
+  }
+
+  @Override
+  public void updateConfiguration(ServerName serverName) throws IOException {
+    throw new UnsupportedOperationException("updateConfiguration");  // TODO
+  }
+
+  @Override
+  public void updateConfiguration() throws IOException {
+    throw new UnsupportedOperationException("updateConfiguration");  // TODO
+  }
+
+  @Override
+  public int getMasterInfoPort() throws IOException {
+    throw new UnsupportedOperationException("getMasterInfoPort");  // TODO
   }
 }
