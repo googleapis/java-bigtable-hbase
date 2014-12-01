@@ -665,21 +665,21 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public CoprocessorRpcChannel coprocessorService(ServerName serverName) {
-    return null;
+    throw new UnsupportedOperationException("coprocessorService");  // TODO
   }
 
   @Override
   public void updateConfiguration(ServerName serverName) throws IOException {
-
+    throw new UnsupportedOperationException("updateConfiguration");  // TODO
   }
 
   @Override
   public void updateConfiguration() throws IOException {
-
+    throw new UnsupportedOperationException("updateConfiguration");  // TODO
   }
 
   @Override
   public int getMasterInfoPort() throws IOException {
-    return 0;
+    throw new UnsupportedOperationException("getMasterInfoPort");  // TODO
   }
 }
