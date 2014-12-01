@@ -24,7 +24,7 @@
 
     <properties>
         <anviltop.grpc.repo.fullpath>${project.basedir}/../${anviltop.grpc.repo.dir}</anviltop.grpc.repo.fullpath>
-        <hbase.version>0.99.0</hbase.version>
+        <hbase.version>0.99.2-SNAPSHOT</hbase.version>
         <hadoop.version>2.4.0</hadoop.version>
         <compat.module>hbase-hadoop2-compat</compat.module>
         <junit.version>4.11</junit.version>
