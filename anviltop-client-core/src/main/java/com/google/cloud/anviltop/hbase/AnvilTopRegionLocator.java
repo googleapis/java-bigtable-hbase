@@ -40,7 +40,7 @@ public class AnvilTopRegionLocator implements RegionLocator {
   private synchronized List<HRegionLocation> getRegions(boolean reload) throws IOException {
     // If we don't need to refresh and we have a recent enough version, just use that.
     if (!reload && regions != null &&
-        regionsFetchTimeMillis + MAX_REGION_AGE_MILLIS < System.currentTimeMillis()) {
+        regionsFetchTimeMillis + MAX_REGION_AGE_MILLIS > System.currentTimeMillis()) {
       return regions;
     }
 
