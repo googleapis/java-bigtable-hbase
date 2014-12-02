@@ -22,6 +22,7 @@ import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
@@ -42,6 +43,7 @@ import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -493,7 +495,11 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("getTableRegions");  // TODO
+    List<HRegionInfo> regionInfos = new ArrayList<>();
+    for (HRegionLocation location : connection.getRegionLocator(tableName).getAllRegionLocations()) {
+      regionInfos.add(location.getRegionInfo());
+    }
+    return regionInfos;
   }
 
   @Override

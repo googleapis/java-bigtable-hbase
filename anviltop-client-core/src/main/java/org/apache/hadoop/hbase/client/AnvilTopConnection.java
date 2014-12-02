@@ -16,6 +16,7 @@
 package org.apache.hadoop.hbase.client;
 
 import com.google.api.client.repackaged.com.google.common.base.Throwables;
+import com.google.cloud.anviltop.hbase.AnvilTopRegionLocator;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
 import com.google.cloud.anviltop.hbase.AnvilTopOptionsFactory;
 import com.google.cloud.anviltop.hbase.AnvilTopTable;
@@ -26,7 +27,6 @@ import com.google.cloud.hadoop.hbase.AnviltopGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -46,8 +46,9 @@ import org.apache.hadoop.hbase.util.Threads;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -64,6 +65,8 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
       LOG.error(String.format("Uncaught exception in threadpool thread %s", t.getName()), e);
     }
   }
+
+  private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
 
   private final Configuration conf;
   private volatile boolean closed;
@@ -172,7 +175,25 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
 
   @Override
   public RegionLocator getRegionLocator(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    for (RegionLocator locator : locatorCache) {
+      if (locator.getName().equals(tableName)) {
+        return locator;
+      }
+    }
+
+    RegionLocator newLocator = new AnvilTopRegionLocator(tableName, options, client);
+
+    if (locatorCache.add(newLocator)) {
+      return newLocator;
+    }
+
+    for (RegionLocator locator : locatorCache) {
+      if (locator.getName().equals(tableName)) {
+        return locator;
+      }
+    }
+
+    throw new IllegalStateException(newLocator + " was supposed to be in the cache");
   }
 
   @Override
@@ -379,13 +400,13 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
   @Override
   public HRegionLocation getRegionLocation(TableName tableName, byte[] row, boolean reload)
       throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return getRegionLocator(tableName).getRegionLocation(row, reload);
   }
 
   @Override
   public HRegionLocation getRegionLocation(byte[] tableName, byte[] row, boolean reload)
       throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return getRegionLocator(TableName.valueOf(tableName)).getRegionLocation(row, reload);
   }
 
   @Override
