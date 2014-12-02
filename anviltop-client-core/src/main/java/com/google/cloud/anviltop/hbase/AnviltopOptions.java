@@ -18,6 +18,7 @@ import com.google.api.client.util.Strings;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.hbase.ServerName;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -153,5 +154,9 @@ public class AnviltopOptions {
         TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
         adminHost,
         port);
+  }
+
+  public ServerName getServerName() {
+    return ServerName.valueOf(host.toString(), port, 0);
   }
 }
