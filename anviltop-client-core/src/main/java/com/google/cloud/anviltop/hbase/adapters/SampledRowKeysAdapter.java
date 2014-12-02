@@ -33,7 +33,6 @@ public class SampledRowKeysAdapter {
       // Avoid empty regions.
       if (Bytes.equals(startKey, endKey)) {
         continue;
-
       }
       HRegionInfo regionInfo = new HRegionInfo(tableName, startKey, endKey);
       startKey = endKey;

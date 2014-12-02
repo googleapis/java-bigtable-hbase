@@ -51,6 +51,7 @@ public class AnvilTopRegionLocator implements RegionLocator {
     try {
       List<ByteString> rowKeys = client.sampleRowKeys(request.build());
       regions = adapter.adaptResponse(rowKeys);
+      regionsFetchTimeMillis = System.currentTimeMillis();
       return regions;
     } catch(ServiceException e) {
       regions = null;
