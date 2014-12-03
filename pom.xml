@@ -21,7 +21,7 @@
        <stubby.driver.artifact>anviltop-grpc-interface</stubby.driver.artifact>
        <stubby.driver.version>0.2</stubby.driver.version>
        <hbase.version>0.99.2</hbase.version>
-       <hadoop.version>2.4.0</hadoop.version>
+       <hadoop.version>2.4.1</hadoop.version>
        <compat.module>hbase-hadoop2-compat</compat.module>
        <junit.version>4.11</junit.version>
        <mockito.version>1.9.5</mockito.version>
