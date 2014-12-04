@@ -4,7 +4,7 @@
 <configuration>
     <property>
         <name>hbase.client.connection.impl</name>
-        <value>org.apache.hadoop.hbase.client.AnvilTopConnection</value>
+        <value>org.apache.hadoop.hbase.client.AnviltopConnection</value>
     </property>
     <property>
         <name>google.anviltop.endpoint.host</name>

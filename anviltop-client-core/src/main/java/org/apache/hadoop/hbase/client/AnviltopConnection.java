@@ -16,10 +16,10 @@
 package org.apache.hadoop.hbase.client;
 
 import com.google.api.client.repackaged.com.google.common.base.Throwables;
-import com.google.cloud.anviltop.hbase.AnvilTopRegionLocator;
+import com.google.cloud.anviltop.hbase.AnviltopRegionLocator;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
-import com.google.cloud.anviltop.hbase.AnvilTopOptionsFactory;
-import com.google.cloud.anviltop.hbase.AnvilTopTable;
+import com.google.cloud.anviltop.hbase.AnviltopOptionsFactory;
+import com.google.cloud.anviltop.hbase.AnviltopTable;
 import com.google.cloud.anviltop.hbase.Logger;
 import com.google.cloud.hadoop.hbase.AnviltopAdminBlockingGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
@@ -55,8 +55,8 @@ import java.util.concurrent.TimeUnit;
 
 // TODO: Move this class to implement Connection when that interface
 // is available.
-public class AnvilTopConnection implements ClusterConnection, Closeable {
-  private static final Logger LOG = new Logger(AnvilTopConnection.class);
+public class AnviltopConnection implements ClusterConnection, Closeable {
+  private static final Logger LOG = new Logger(AnviltopConnection.class);
 
   private static class LoggingUncaughtExceptionHandler
       implements Thread.UncaughtExceptionHandler {
@@ -78,11 +78,11 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
   private volatile boolean cleanupPool = false;
   private final AnviltopOptions options;
 
-  public AnvilTopConnection(Configuration conf) throws IOException {
+  public AnviltopConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
   }
 
-  AnvilTopConnection(Configuration conf, boolean managed, ExecutorService pool, User user)
+  AnviltopConnection(Configuration conf, boolean managed, ExecutorService pool, User user)
       throws IOException {
     this.user = user;
     this.batchPool = pool;
@@ -96,7 +96,7 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
       batchPool = getBatchPool();
     }
 
-    this.options = AnvilTopOptionsFactory.fromConfiguration(conf);
+    this.options = AnviltopOptionsFactory.fromConfiguration(conf);
     TransportOptions transportOptions = options.getTransportOptions();
     ChannelOptions channelOptions = options.getChannelOptions();
     TransportOptions adminTransportOptions = options.getAdminTransportOptions();
@@ -170,7 +170,7 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
 
   @Override
   public HTableInterface getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new AnvilTopTable(tableName, options, conf, client, pool);
+    return new AnviltopTable(tableName, options, conf, client, pool);
   }
 
   @Override
@@ -181,7 +181,7 @@ public class AnvilTopConnection implements ClusterConnection, Closeable {
       }
     }
 
-    RegionLocator newLocator = new AnvilTopRegionLocator(tableName, options, client);
+    RegionLocator newLocator = new AnviltopRegionLocator(tableName, options, client);
 
     if (locatorCache.add(newLocator)) {
       return newLocator;

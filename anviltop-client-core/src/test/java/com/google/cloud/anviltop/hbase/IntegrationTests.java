@@ -76,10 +76,10 @@ public class IntegrationTests {
         configuration.addResource(resourceStream);
       }
     }
-    String projectId = configuration.get(AnvilTopOptionsFactory.PROJECT_ID_KEY);
+    String projectId = configuration.get(AnviltopOptionsFactory.PROJECT_ID_KEY);
     if (projectId != null) {
       SecureRandom random = new SecureRandom();
-      configuration.set(AnvilTopOptionsFactory.PROJECT_ID_KEY, projectId + "-" + random.nextInt());
+      configuration.set(AnviltopOptionsFactory.PROJECT_ID_KEY, projectId + "-" + random.nextInt());
     }
   }
 

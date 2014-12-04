@@ -30,8 +30,8 @@ import java.security.GeneralSecurityException;
  * Static methods to convert an instance of {@link Configuration}
  * to a {@link AnviltopOptions} instance.
  */
-public class AnvilTopOptionsFactory {
-  protected static final Logger LOG = new Logger(AnvilTopOptionsFactory.class);
+public class AnviltopOptionsFactory {
+  protected static final Logger LOG = new Logger(AnviltopOptionsFactory.class);
 
   public static final String ANVILTOP_PORT_KEY = "google.anviltop.endpoint.port";
   public static final int DEFAULT_ANVILTOP_PORT = 443;

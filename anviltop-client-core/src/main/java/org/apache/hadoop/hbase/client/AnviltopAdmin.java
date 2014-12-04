@@ -53,14 +53,14 @@ public class AnviltopAdmin implements Admin {
 
   private final Configuration configuration;
   private final AnviltopOptions options;
-  private final AnvilTopConnection connection;
+  private final AnviltopConnection connection;
   private final AnviltopAdminClient anviltopAdminClient;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
 
   public AnviltopAdmin(
       AnviltopOptions options,
       Configuration configuration,
-      AnvilTopConnection connection,
+      AnviltopConnection connection,
       AnviltopAdminClient anviltopAdminClient) {
     this.configuration = configuration;
     this.options = options;
