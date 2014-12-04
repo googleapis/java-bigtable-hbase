@@ -87,7 +87,6 @@ public class WordCountHBase {
 
     Job job = Job.getInstance(conf, "word count");
 
-    job.setInputFormatClass(FileInputFormat.class);
     for (int i = 0; i < otherArgs.length - 1; ++i) {
       FileInputFormat.addInputPath(job, new Path(otherArgs[i]));
     }

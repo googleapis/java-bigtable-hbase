@@ -519,11 +519,6 @@ public class AnviltopAdmin implements Admin {
   }
 
   @Override
-  public byte[][] rollHLogWriter(String serverName) throws IOException, FailedLogCloseException {
-    throw new UnsupportedOperationException("rollHLogWriter");  // TODO
-  }
-
-  @Override
   public String[] getMasterCoprocessors() {
     throw new UnsupportedOperationException("getMasterCoprocessors");  // TODO
   }
@@ -687,5 +682,10 @@ public class AnviltopAdmin implements Admin {
   @Override
   public int getMasterInfoPort() throws IOException {
     throw new UnsupportedOperationException("getMasterInfoPort");  // TODO
+  }
+
+  @Override
+  public void rollWALWriter(ServerName serverName) throws IOException, FailedLogCloseException {
+    throw new UnsupportedOperationException("rollWALWriter");  // TODO
   }
 }

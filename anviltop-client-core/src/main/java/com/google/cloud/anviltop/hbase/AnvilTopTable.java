@@ -168,6 +168,10 @@ public class AnvilTopTable implements HTableInterface {
     return this.configuration;
   }
 
+  public ExecutorService getPool(){ 
+    return this.executorService;
+  }
+  
   @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
     // TODO: Also include column family information
