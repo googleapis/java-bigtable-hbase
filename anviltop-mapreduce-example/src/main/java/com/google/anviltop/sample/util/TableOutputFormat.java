@@ -1,7 +1,5 @@
 package com.google.anviltop.sample.util;
 
-import com.google.anviltop.sample.DebugUtil;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configurable;
@@ -163,7 +161,6 @@ implements Configurable {
 
   @Override
   public void setConf(Configuration otherConf) {
-    DebugUtil.printSystemProperties();
     this.conf = HBaseConfiguration.create(otherConf);
 
     String tableName = this.conf.get(OUTPUT_TABLE);

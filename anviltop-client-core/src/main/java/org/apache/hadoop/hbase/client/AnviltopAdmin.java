@@ -9,7 +9,6 @@ import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyReq
 import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyResponse;
 import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequest;
 import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableResponse;
-
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
 import com.google.cloud.anviltop.hbase.adapters.ColumnDescriptorAdapter;
@@ -44,6 +43,8 @@ import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -450,7 +451,12 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public ClusterStatus getClusterStatus() throws IOException {
-    throw new UnsupportedOperationException("getClusterStatus");  // TODO
+    return new ClusterStatus() {
+      @Override
+      public Collection<ServerName> getServers() {
+        return Collections.emptyList();
+      }
+    };
   }
 
   @Override

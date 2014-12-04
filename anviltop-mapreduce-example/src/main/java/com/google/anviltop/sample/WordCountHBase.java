@@ -1,7 +1,5 @@
 package com.google.anviltop.sample;
 
-import com.google.anviltop.sample.util.TableOutputFormat;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.StringTokenizer;
@@ -116,8 +114,7 @@ public class WordCountHBase {
         null,
         false);
 
-    job.setOutputFormatClass(TableOutputFormat.class);
-    DebugUtil.printConf(conf);
+//    job.setOutputFormatClass(TableOutputFormat.class);
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
 }
