@@ -510,7 +510,7 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void close() throws IOException {
-    throw new UnsupportedOperationException("close");  // TODO
+    // no-op
   }
 
   @Override
