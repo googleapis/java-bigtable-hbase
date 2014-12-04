@@ -43,7 +43,6 @@ public class CreateTable {
     Admin admin = null;
 
     try {
-      DebugUtil.printSystemProperties();
       connection = ConnectionFactory.createConnection(conf);
       admin = connection.getAdmin();
       // TODO: re-add this once admin.isTableAvailable() is implemented in anviltop
