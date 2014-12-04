@@ -26,7 +26,6 @@
         <anviltop.grpc.repo.fullpath>${project.basedir}/../${anviltop.grpc.repo.dir}</anviltop.grpc.repo.fullpath>
         <google.anviltop.call.report.directory>target/call_reports</google.anviltop.call.report.directory>
         <google.anviltop.endpoint.ip.address.override></google.anviltop.endpoint.ip.address.override>
-        <google.anviltop.enable.grpc.v2>false</google.anviltop.enable.grpc.v2>
     </properties>
     <profiles>
         <profile>

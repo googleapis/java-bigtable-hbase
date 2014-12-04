@@ -192,7 +192,7 @@ public class AnvilTopOptionsFactory {
     LOG.debug("gRPC retries enabled: %s", enableRetries);
     optionsBuilder.setRetriesEnabled(enableRetries);
 
-    AbstractClientStream.GRPC_V2_PROTOCOL = configuration.getBoolean(ENABLE_GRPC_V2_KEY, false);
+    AbstractClientStream.GRPC_V2_PROTOCOL = configuration.getBoolean(ENABLE_GRPC_V2_KEY, true);
 
     return optionsBuilder.build();
   }
