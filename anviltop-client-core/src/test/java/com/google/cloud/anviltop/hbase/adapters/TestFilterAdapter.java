@@ -1,5 +1,7 @@
 package com.google.cloud.anviltop.hbase.adapters;
 
+import com.google.common.collect.ImmutableList;
+
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
@@ -8,10 +10,14 @@ import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -20,6 +26,7 @@ import org.junit.runners.JUnit4;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.EnumSet;
 
 @RunWith(JUnit4.class)
 public class TestFilterAdapter {
@@ -43,7 +50,7 @@ public class TestFilterAdapter {
     Assert.assertArrayEquals(Bytes.toBytes("value_match({foobar})"), outputStream.toByteArray());
   }
 
-  @Test
+  @Test @Ignore("This filter has been removed until compat is investigated further")
   public void testSingleColumnValueFilterFilters() throws IOException {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     byte[] filterValue = Bytes.toBytes("foobar");
@@ -75,7 +82,7 @@ public class TestFilterAdapter {
     ColumnCountGetFilter filter = new ColumnCountGetFilter(10);
     filterAdapter.adaptFilterTo(filter, outputStream);
     Assert.assertArrayEquals(
-        Bytes.toBytes("(col({.*:\\C*}, LATEST)) | itemlimit(10)"), outputStream.toByteArray());
+        Bytes.toBytes("((col({.*:\\C*}, LATEST)) | itemlimit(10))"), outputStream.toByteArray());
   }
 
   @Test
@@ -85,7 +92,8 @@ public class TestFilterAdapter {
     ColumnPaginationFilter filter = new ColumnPaginationFilter(10, 20);
     filterAdapter.adaptFilterTo(filter, outputStream);
     Assert.assertArrayEquals(
-        Bytes.toBytes("skip_items(20) | itemlimit(10)"), outputStream.toByteArray());
+        Bytes.toBytes("((col({.*:\\C*, LATEST)) | skip_items(20) | itemlimit(10))"),
+        outputStream.toByteArray());
   }
 
   @Test
@@ -96,6 +104,53 @@ public class TestFilterAdapter {
     filterAdapter.adaptFilterTo(filter, outputStream);
     Assert.assertArrayEquals(
         Bytes.toBytes("(col({.*:prefix.*}, ALL))"), outputStream.toByteArray());
+  }
+
+  @Test
+  public void testMultipleColumnPrefixFilter() throws IOException {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    // Return all columns in all families that are prefixed by "prefix" or prefix2.
+    MultipleColumnPrefixFilter filter =
+        new MultipleColumnPrefixFilter(
+            new byte[][]{Bytes.toBytes("prefix"), Bytes.toBytes("prefix2")});
+    filterAdapter.adaptFilterTo(filter, outputStream);
+    Assert.assertArrayEquals(
+        Bytes.toBytes("((col({.*:prefix.*}, ALL)) + (col({.*:prefix2.*}, ALL)))"),
+        outputStream.toByteArray());
+  }
+
+  @Test
+  public void testTimestampsFilter() throws IOException {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    // Return all columns in all families that are prefixed by "prefix".
+
+    TimestampsFilter filter = new TimestampsFilter(ImmutableList.<Long>of(1L, 2L, 3L));
+    filterAdapter.adaptFilterTo(filter, outputStream);
+    Assert.assertArrayEquals(
+        Bytes.toBytes("(ts(1,1) + ts(2,2) + ts(3,3))"),
+        outputStream.toByteArray());
+  }
+
+  @Test
+  public void testKeyOnlyFilter() throws IOException {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    // Return all columns in all families that are prefixed by "prefix".
+
+    KeyOnlyFilter filter = new KeyOnlyFilter();
+    filterAdapter.adaptFilterTo(filter, outputStream);
+    Assert.assertArrayEquals(
+        Bytes.toBytes("strip_value()"),
+        outputStream.toByteArray());
+  }
+
+  @Test
+  public void testKeyOnlyFilterWithLengthAsVal() throws IOException {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    // Return all columns in all families that are prefixed by "prefix".
+
+    KeyOnlyFilter filter = new KeyOnlyFilter(true);
+    expectedException.expectMessage("KeyOnlyFilters with lenAsVal = true are not supported");
+    filterAdapter.throwIfUnsupportedFilter(filter);
   }
 
   @Test

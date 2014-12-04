@@ -5,6 +5,8 @@ import com.google.api.client.util.Throwables;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
@@ -12,7 +14,12 @@ import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -207,6 +214,9 @@ public class FilterAdapter {
     }
   }
 
+  /**
+   * Adapt {@link ValueFilter} instances
+   */
   static class ValueFilterAdapter extends AbstractSingleFilterAdapter<ValueFilter> {
 
     private final ReaderExpressionHelper readerExpressionHelper;
@@ -242,7 +252,6 @@ public class FilterAdapter {
     }
   }
 
-
   static class SingleColumnValueFilterAdapter
       extends AbstractSingleFilterAdapter<SingleColumnValueFilter> {
     private final ReaderExpressionHelper readerExpressionHelper;
@@ -254,7 +263,7 @@ public class FilterAdapter {
     @Override
     void adaptTypedFilterTo(SingleColumnValueFilter filter, OutputStream outputStream)
         throws IOException {
-      outputStream.write(Bytes.toBytes("(col({"));
+      outputStream.write(Bytes.toBytes("((col({"));
       outputStream.write(filter.getFamily());
       outputStream.write(':');
       readerExpressionHelper.writeQuotedExpression(filter.getQualifier(), outputStream);
@@ -267,7 +276,7 @@ public class FilterAdapter {
       outputStream.write(Bytes.toBytes(")) | value_match({"));
       readerExpressionHelper.writeQuotedExpression(
           filter.getComparator().getValue(), outputStream);
-      outputStream.write(Bytes.toBytes("})"));
+      outputStream.write(Bytes.toBytes("}))"));
     }
 
     @Override
@@ -298,16 +307,67 @@ public class FilterAdapter {
     @Override
     void adaptTypedFilterTo(ColumnCountGetFilter filter, OutputStream outputStream)
         throws IOException {
-      outputStream.write(Bytes.toBytes("(col({"));
+      outputStream.write(Bytes.toBytes("((col({"));
       outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
       outputStream.write(':');
       outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));
       outputStream.write(Bytes.toBytes(
-          String.format("}, LATEST)) | itemlimit(%s)", filter.getLimit())));
+          String.format("}, LATEST)) | itemlimit(%s))", filter.getLimit())));
     }
 
     @Override
     FilterSupportStatus isTypedFilterSupported(ColumnCountGetFilter filter) {
+      return FilterSupportStatus.SUPPORTED;
+    }
+  }
+
+  /**
+   * Adapt {@link FirstKeyOnlyFilter} instances
+   */
+  static class FirstKeyOnlyFilterAdapter
+      extends AbstractSingleFilterAdapter<FirstKeyOnlyFilter> {
+
+    FirstKeyOnlyFilterAdapter() {
+      super(FirstKeyOnlyFilter.class);
+    }
+
+    @Override
+    void adaptTypedFilterTo(FirstKeyOnlyFilter filter, OutputStream outputStream)
+        throws IOException {
+      outputStream.write(Bytes.toBytes("itemlimit(1)"));
+    }
+
+    @Override
+    FilterSupportStatus isTypedFilterSupported(FirstKeyOnlyFilter filter) {
+      return FilterSupportStatus.SUPPORTED;
+    }
+  }
+
+  /**
+   * Adapt {@link TimestampsFilter} instances
+   */
+  static class TimestampsFilterAdapter
+      extends AbstractSingleFilterAdapter<TimestampsFilter> {
+    TimestampsFilterAdapter() {
+      super(TimestampsFilter.class);
+    }
+
+    @Override
+    void adaptTypedFilterTo(TimestampsFilter filter, OutputStream outputStream) throws IOException {
+      try (ScanAdapter.ReaderExpressionScope scope =
+          new ScanAdapter.ReaderExpressionScope(outputStream, '(', ')')) {
+        int timestampIndex = 0;
+        for (Long timestamp : filter.getTimestamps()) {
+          if (timestampIndex++ > 0) {
+            outputStream.write(STREAM_INTERLEAVE_BYTES);
+          }
+          outputStream.write(Bytes.toBytes(String.format("ts(%s,%s)", timestamp, timestamp)));
+        }
+      }
+    }
+
+    @Override
+    FilterSupportStatus isTypedFilterSupported(TimestampsFilter filter) {
       return FilterSupportStatus.SUPPORTED;
     }
   }
@@ -322,12 +382,21 @@ public class FilterAdapter {
     @Override
     void adaptTypedFilterTo(ColumnPaginationFilter filter, OutputStream outputStream)
         throws IOException {
-      outputStream.write(
-          Bytes.toBytes(
-              String.format(
-                  "skip_items(%s) | itemlimit(%s)",
-                  filter.getOffset(),
-                  filter.getLimit())));
+      try (ScanAdapter.ReaderExpressionScope scope =
+          new ScanAdapter.ReaderExpressionScope(outputStream, '(', ')')) {
+        outputStream.write(Bytes.toBytes("(col({"));
+        outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
+        outputStream.write(':');
+        outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));
+        outputStream.write(Bytes.toBytes(", LATEST))"));
+        outputStream.write(STREAM_FILTER_BYTES);
+        outputStream.write(
+            Bytes.toBytes(
+                String.format(
+                    "skip_items(%s) | itemlimit(%s)",
+                    filter.getOffset(),
+                    filter.getLimit())));
+      }
     }
 
     @Override
@@ -336,6 +405,9 @@ public class FilterAdapter {
     }
   }
 
+  /**
+   * Adapt a {@link ColumnPrefixFilter} instance
+   */
   static class ColumnPrefixFilterAdapter extends AbstractSingleFilterAdapter<ColumnPrefixFilter> {
     private final ReaderExpressionHelper readerExpressionHelper;
 
@@ -361,6 +433,74 @@ public class FilterAdapter {
   }
 
   /**
+   * Adapt an instance of {@link MultipleColumnPrefixFilter}
+   */
+  static class MultipleColumnPrefixFilterAdapter
+      extends AbstractSingleFilterAdapter<MultipleColumnPrefixFilter> {
+
+    private final ReaderExpressionHelper readerExpressionHelper;
+
+    protected MultipleColumnPrefixFilterAdapter(ReaderExpressionHelper readerExpressionHelper) {
+      super(MultipleColumnPrefixFilter.class);
+      this.readerExpressionHelper = readerExpressionHelper;
+    }
+
+    @Override
+    void adaptTypedFilterTo(MultipleColumnPrefixFilter filter, OutputStream outputStream)
+        throws IOException {
+      try (ScanAdapter.ReaderExpressionScope scope =
+          new ScanAdapter.ReaderExpressionScope(outputStream, '(', ')')) {
+        int prefixIndex = 0;
+        for (byte[] prefix : filter.getPrefix()) {
+          if (prefixIndex++ > 0) {
+            outputStream.write(STREAM_INTERLEAVE_BYTES);
+          }
+          outputStream.write(Bytes.toBytes("(col({"));
+          outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
+          outputStream.write(':');
+          readerExpressionHelper.writeQuotedExpression(prefix, outputStream);
+          outputStream.write(Bytes.toBytes(".*}, ALL))"));
+        }
+      }
+    }
+
+    @Override
+    FilterSupportStatus isTypedFilterSupported(MultipleColumnPrefixFilter filter) {
+      return FilterSupportStatus.SUPPORTED;
+    }
+  }
+
+  /**
+   * Adapt an instance of {@link KeyOnlyFilter}
+   */
+  static class KeyOnlyFilterAdapter extends AbstractSingleFilterAdapter<KeyOnlyFilter> {
+    protected static final Cell TEST_CELL = new KeyValue(
+        Bytes.toBytes('r'), // Row
+        Bytes.toBytes('f'), // Family
+        Bytes.toBytes('q'), // qualifier
+        1L,
+        Bytes.toBytes('v'));
+
+    protected KeyOnlyFilterAdapter() {
+      super(KeyOnlyFilter.class);
+    }
+
+    @Override
+    void adaptTypedFilterTo(KeyOnlyFilter filter, OutputStream outputStream) throws IOException {
+      outputStream.write(Bytes.toBytes("strip_value()"));
+    }
+
+    @Override
+    FilterSupportStatus isTypedFilterSupported(KeyOnlyFilter filter) {
+      if (filter.transformCell(TEST_CELL).getValueLength() != 0) {
+        return FilterSupportStatus.newNotSupported(
+            "KeyOnlyFilters with lenAsVal = true are not supported");
+      }
+      return FilterSupportStatus.SUPPORTED;
+    }
+  }
+
+  /**
    * A map of Class entries mapping to SingleFilterAdapter instances. Each supported Filter
    * subclass should have an entry in this map.
    */
@@ -371,9 +511,10 @@ public class FilterAdapter {
     adapterMap.put(
         ValueFilter.class,
         new ValueFilterAdapter(readerExpressionHelper));
-    adapterMap.put(
-        SingleColumnValueFilter.class,
-        new SingleColumnValueFilterAdapter(readerExpressionHelper));
+    // TODO: Re-enable when this settles
+    // adapterMap.put(
+    //      SingleColumnValueFilter.class,
+    //      new SingleColumnValueFilterAdapter(readerExpressionHelper));
     adapterMap.put(
         ColumnCountGetFilter.class,
         new ColumnCountGetFilterAdapter(readerExpressionHelper));
@@ -383,6 +524,18 @@ public class FilterAdapter {
     adapterMap.put(
         ColumnPrefixFilter.class,
         new ColumnPrefixFilterAdapter(readerExpressionHelper));
+    adapterMap.put(
+        FirstKeyOnlyFilter.class,
+        new FirstKeyOnlyFilterAdapter());
+    adapterMap.put(
+        TimestampsFilter.class,
+        new TimestampsFilterAdapter());
+    adapterMap.put(
+        KeyOnlyFilter.class,
+        new KeyOnlyFilterAdapter());
+    adapterMap.put(
+        MultipleColumnPrefixFilter.class,
+        new MultipleColumnPrefixFilterAdapter(readerExpressionHelper));
   }
 
   /**
