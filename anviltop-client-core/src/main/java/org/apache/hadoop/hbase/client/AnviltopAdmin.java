@@ -9,7 +9,10 @@ import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyReq
 import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyResponse;
 import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequest;
 import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableResponse;
-
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesResponse;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages;
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.cloud.anviltop.hbase.AnviltopOptions;
 import com.google.cloud.anviltop.hbase.adapters.ColumnDescriptorAdapter;
@@ -89,27 +92,46 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public boolean tableExists(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("tableExists");  // TODO
+    for(TableName existingTableName : listTableNames()) {
+      if (existingTableName.equals(tableName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
   public HTableDescriptor[] listTables() throws IOException {
-    throw new UnsupportedOperationException("listTables");  // TODO
+    return listTables(".*");
   }
 
   @Override
   public HTableDescriptor[] listTables(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("listTables");  // TODO
-  }
+    ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
+    builder.setProjectId(options.getProjectId());
+    ListTablesResponse response = anviltopAdminClient.listTables(builder.build());
+    List<HTableDescriptor> result = new ArrayList<>();
+    for (String tableName : response.getTableNameList()) {
+      result.add(new HTableDescriptor(TableName.valueOf(tableName)));
+    }
+
+    return result.toArray(new HTableDescriptor[result.size()]);  }
 
   @Override
   public HTableDescriptor[] listTables(String regex) throws IOException {
-    throw new UnsupportedOperationException("listTables");  // TODO
+    return listTables(Pattern.compile(regex));
   }
 
   @Override
   public TableName[] listTableNames() throws IOException {
-    throw new UnsupportedOperationException("listTableNames");  // TODO
+    HTableDescriptor[] tableDescriptors = listTables();
+    TableName[] tableNames = new TableName[tableDescriptors.length];
+    int i = 0;
+    for (HTableDescriptor tableDescriptor : tableDescriptors) {
+      tableNames[i] = tableDescriptor.getTableName();
+      i++;
+    }
+    return tableNames;
   }
 
   @Override
