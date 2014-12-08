@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
     TestGetTable.class,
     TestScan.class,
     TestIncrement.class,
+    TestListTables.class,
     TestPut.class,
     TestTimestamp.class,
     TestImport.class

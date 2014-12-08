@@ -267,6 +267,7 @@
                                 <exclude>**/TestGetTable.java</exclude>
                                 <exclude>**/TestImport.java</exclude>
                                 <exclude>**/TestIncrement.java</exclude>
+                                <exclude>**/TestListTables.java</exclude>
                                 <exclude>**/TestPut.java</exclude>
                                 <exclude>**/TestScan.java</exclude>
                                 <exclude>**/TestTimestamp.java</exclude>

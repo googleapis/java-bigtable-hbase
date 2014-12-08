@@ -248,17 +248,24 @@ public class AnviltopConnection implements ClusterConnection, Closeable {
 
   @Override
   public HTableDescriptor[] listTables() throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return getAdmin().listTables();
   }
 
   @Override
   public String[] getTableNames() throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    TableName[] tableNames = getAdmin().listTableNames();
+    String[] names = new String[tableNames.length];
+    int i = 0;
+    for (TableName tableName : tableNames) {
+      names[i] = tableName.getNameAsString();
+      i++;
+    }
+    return names;
   }
 
   @Override
   public TableName[] listTableNames() throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    return getAdmin().listTableNames();
   }
 
   @Override
