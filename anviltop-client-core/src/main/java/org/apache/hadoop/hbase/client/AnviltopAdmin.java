@@ -104,12 +104,7 @@ public class AnviltopAdmin implements Admin {
   // shell is switch to use the methods defined in the interface.
   @Deprecated
   public boolean tableExists(String tableName) throws IOException {
-    for(TableName existingTableName : listTableNames()) {
-      if (existingTableName.equals(tableName)) {
-        return true;
-      }
-    }
-    return false;
+    return tableExists(TableName.valueOf(tableName));
   }
 
   @Override
@@ -294,12 +289,14 @@ public class AnviltopAdmin implements Admin {
     // Anviltop tables can't be disabled.
     return false;
   }
+
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
   @Deprecated
   public boolean isTableDisabled(String tableName) throws IOException {
     return isTableDisabled(TableName.valueOf(tableName));
   }
+
   @Override
   public boolean isTableAvailable(TableName tableName) throws IOException {
     throw new UnsupportedOperationException("isTableAvailable");  // TODO
