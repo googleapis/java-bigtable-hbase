@@ -100,6 +100,13 @@ public class AnviltopAdmin implements Admin {
     return false;
   }
 
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public boolean tableExists(String tableName) throws IOException {
+    return tableExists(TableName.valueOf(tableName));
+  }
+
   @Override
   public HTableDescriptor[] listTables() throws IOException {
     return listTables(".*");
@@ -211,6 +218,13 @@ public class AnviltopAdmin implements Admin {
     // enableTable is a NOP for Anviltop, tables are always enabled.
   }
 
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public void enableTable(String tableName) throws IOException {
+    enableTable(TableName.valueOf(tableName));
+  }
+
   @Override
   public void enableTableAsync(TableName tableName) throws IOException {
     // enableTableAsync is a NOP for Anviltop, tables are always enabled.
@@ -238,6 +252,13 @@ public class AnviltopAdmin implements Admin {
     // disableTable is a NOP for Anviltop, tables can't be actually disabled.
   }
 
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public void disableTable(String tableName) throws IOException {
+    disableTable(TableName.valueOf(tableName));
+  }
+
   @Override
   public HTableDescriptor[] disableTables(String regex) throws IOException {
     // disableTables is a NOP for Anviltop, tables can't be actually disabled.
@@ -256,10 +277,24 @@ public class AnviltopAdmin implements Admin {
     return true;
   }
 
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public boolean isTableEnabled(String tableName) throws IOException {
+    return isTableEnabled(TableName.valueOf(tableName));
+  }
+
   @Override
   public boolean isTableDisabled(TableName tableName) throws IOException {
     // Anviltop tables can't be disabled.
     return false;
+  }
+
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public boolean isTableDisabled(String tableName) throws IOException {
+    return isTableDisabled(TableName.valueOf(tableName));
   }
 
   @Override
@@ -292,6 +327,13 @@ public class AnviltopAdmin implements Admin {
             .build());
   }
 
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public void addColumn(String tableName, HColumnDescriptor column) throws IOException {
+    addColumn(TableName.valueOf(tableName), column);
+  }
+
   @Override
   public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
     anviltopAdminClient.deleteFamily(
@@ -299,6 +341,13 @@ public class AnviltopAdmin implements Admin {
             .setProjectId(options.getProjectId())
             .setTableName(tableName.getQualifierAsString())
             .setFamilyNameBytes(ByteString.copyFrom(columnName)).build());
+  }
+
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public void deleteColumn(String tableName, byte[] columnName) throws IOException {
+    deleteColumn(TableName.valueOf(tableName), columnName);
   }
 
   @Override
