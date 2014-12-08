@@ -540,6 +540,7 @@ public class AnviltopAdmin implements Admin {
     return new ClusterStatus() {
       @Override
       public Collection<ServerName> getServers() {
+        // TODO(sduskis): Point the server name to options.getServerName()
         return Collections.emptyList();
       }
     };
