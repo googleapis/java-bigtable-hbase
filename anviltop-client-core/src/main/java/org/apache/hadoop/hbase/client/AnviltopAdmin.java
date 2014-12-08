@@ -140,6 +140,21 @@ public class AnviltopAdmin implements Admin {
     throw new UnsupportedOperationException("getTableDescriptor");  // TODO
   }
 
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public String[] getTableNames(String regex) throws IOException {
+    HTableDescriptor[] tableDescriptors = listTables();
+    String[] tableNames = new String[tableDescriptors.length];
+    int i = 0;
+    for (HTableDescriptor tableDescriptor : tableDescriptors) {
+      tableNames[i] = tableDescriptor.getNameAsString();
+      i++;
+    }
+    return tableNames;
+
+  }
+
   @Override
   public void createTable(HTableDescriptor desc) throws IOException {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
