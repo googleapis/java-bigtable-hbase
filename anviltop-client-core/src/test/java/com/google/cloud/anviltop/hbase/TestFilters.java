@@ -16,6 +16,8 @@ package com.google.cloud.anviltop.hbase;
 import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
 import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
 
+import com.google.common.collect.ImmutableList;
+
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -35,10 +37,14 @@ import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.NullComparator;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.SubstringComparator;
+import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -923,6 +929,50 @@ public class TestFilters extends AbstractTest {
     table.close();
   }
 
+  /**
+   * Test RowFilter with a RegexStringComparator and EQUAL comparator.
+   * @throws IOException
+   */
+  @Test
+  public void testDeterministRowRegexFilter() throws IOException {
+    // Initialize data
+    Table table = connection.getTable(TABLE_NAME);
+    byte[] row0 = Bytes.toBytes("0");  // Substring match, but out of row range
+    byte[] rowGoodIP1 = Bytes.toBytes("192.168.2.13");
+    byte[] rowGoodIP2 = Bytes.toBytes("8.8.8.8");
+    byte[] rowGoodIPv6 = Bytes.toBytes("FE80:0000:0000:0000:0202:B3FF:FE1E:8329");
+    byte[] rowBadIP = Bytes.toBytes("1.2.278.0");
+    byte[] rowTelephone = Bytes.toBytes("1-212-867-5309");
+    byte[] rowRandom = dataHelper.randomData("9-rowkey");
+    byte[] endRow = Bytes.fromHex("ffffff");
+    byte[] qual = dataHelper.randomData("testqual");
+    byte[] value = Bytes.toBytes("testvalue");
+    for (byte[] rowKey : new byte[][] { row0, rowGoodIP1, rowGoodIP2, rowGoodIPv6, rowBadIP,
+        rowTelephone, rowRandom }) {
+      Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+      table.put(put);
+    }
+    String regexIPAddr =
+        // v4 IP address
+        "(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3,3}" +
+            "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(\\/[0-9]+)?" +
+            "|" +
+            // v6 IP address
+            "((([\\dA-Fa-f]{1,4}:){7}[\\dA-Fa-f]{1,4})(:([\\d]{1,3}.)" +
+            "{3}[\\d]{1,3})?)(\\/[0-9]+)?";
+
+    // Test RegexStringComparator - EQUAL
+    ByteArrayComparable rowKey2Comparable = new RegexStringComparator(regexIPAddr);
+    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowKey2Comparable);
+    Result[] results = scanWithFilter(table, row0, endRow, qual, filter);
+    Assert.assertEquals("# results", 3, results.length);
+    Assert.assertArrayEquals(rowGoodIP1, results[0].getRow());
+    Assert.assertArrayEquals(rowGoodIP2, results[1].getRow());
+    Assert.assertArrayEquals(rowGoodIPv6, results[2].getRow());
+
+    table.close();
+  }
+
   @Test
   public void testValueFilter() throws IOException {
     // Initialize
@@ -953,6 +1003,119 @@ public class TestFilters extends AbstractTest {
       Assert.assertTrue("Should have good value",
           Bytes.toString(CellUtil.cloneValue(cell)).startsWith(goodValue));
     }
+
+    table.close();
+  }
+
+  @Test
+  public void testFirstKeyFilter() throws IOException {
+    // Initialize
+    int numCols = 5;
+    String columnValue = "includeThisValue";
+    Table table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testRow-");
+    Put put = new Put(rowKey);
+    for (int i = 0; i < numCols; ++i) {
+      put.add(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(columnValue));
+    }
+    table.put(put);
+
+    // Filter for results
+    Filter filter = new FirstKeyOnlyFilter();
+
+    Get get = new Get(rowKey).setFilter(filter);
+    Result result = table.get(get);
+    Assert.assertEquals("Should only return 1 keyvalue", 1, result.size());
+
+    table.close();
+  }
+
+  @Test
+  public void testKeyOnlyFilter() throws IOException {
+    // Initialize
+    int numCols = 5;
+    String goodValue = "includeThisValue";
+    Table table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testRow-");
+    Put put = new Put(rowKey);
+    for (int i = 0; i < numCols; ++i) {
+      put.add(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(goodValue));
+    }
+    table.put(put);
+
+    // Filter for results
+    Filter filter = new KeyOnlyFilter();
+
+    Get get = new Get(rowKey).setFilter(filter);
+    Result result = table.get(get);
+    Cell[] cells = result.rawCells();
+    for (Cell cell : cells) {
+      Assert.assertEquals(
+          "Should NOT have a length.",
+          0L,
+          cell.getValueLength());
+    }
+
+    table.close();
+  }
+
+  @Test
+  public void testMultipleColumnPrefixes() throws IOException {
+    // Initialize
+    int numCols = 5;
+    String goodValue = "includeThisValue";
+    Table table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testRow-");
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, dataHelper.randomData("a-"), Bytes.toBytes(goodValue));
+    put.add(COLUMN_FAMILY, dataHelper.randomData("b-"), Bytes.toBytes(goodValue));
+    put.add(COLUMN_FAMILY, dataHelper.randomData("c-"), Bytes.toBytes(goodValue));
+    put.add(COLUMN_FAMILY, dataHelper.randomData("d-"), Bytes.toBytes(goodValue));
+    table.put(put);
+
+    // Filter for results
+    Filter filter = new MultipleColumnPrefixFilter(new byte[][]{
+        Bytes.toBytes("a-"),
+        Bytes.toBytes("b-")
+    });
+
+    Get get = new Get(rowKey).setFilter(filter);
+    Result result = table.get(get);
+    Cell[] cells = result.rawCells();
+    Assert.assertEquals("Should have two cells, prefixes a- and b-.", 2, cells.length);
+    byte[] qualifier0 = CellUtil.cloneQualifier(cells[0]);
+    Assert.assertTrue("qualifier0 should start with a-",
+        qualifier0[0] == 'a' && qualifier0[1] == '-');
+
+    byte[] qualifier1 = CellUtil.cloneQualifier(cells[1]);
+    Assert.assertTrue("qualifier1 should start with b-",
+        qualifier1[0] == 'b' && qualifier1[1] == '-');
+
+    table.close();
+  }
+
+  @Test
+  public void testTimestampsFilter() throws IOException {
+    // Initialize
+    int numCols = 5;
+    String goodValue = "includeThisValue";
+    Table table = connection.getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("testRow-");
+    Put put = new Put(rowKey);
+    for (int i = 0; i < numCols; ++i) {
+      put.add(COLUMN_FAMILY, dataHelper.randomData(""), i, Bytes.toBytes(goodValue));
+    }
+    table.put(put);
+
+    // Filter for results
+    Filter filter = new TimestampsFilter(ImmutableList.<Long>of(0L, 1L));
+
+    Get get = new Get(rowKey).setFilter(filter);
+    Result result = table.get(get);
+    Cell[] cells = result.rawCells();
+    Assert.assertEquals("Should have two cells, timestamps 0 and 1.", 2, cells.length);
+    Assert.assertEquals(0L, cells[0].getTimestamp());
+    Assert.assertEquals(1L, cells[1].getTimestamp());
 
     table.close();
   }
