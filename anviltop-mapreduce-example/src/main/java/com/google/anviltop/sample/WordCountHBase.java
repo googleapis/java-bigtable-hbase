@@ -1,7 +1,5 @@
 package com.google.anviltop.sample;
 
-import com.google.anviltop.sample.util.TableOutputFormat;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.StringTokenizer;
@@ -103,21 +101,8 @@ public class WordCountHBase {
     job.setMapperClass(TokenizerMapper.class);
     job.setMapOutputValueClass(IntWritable.class);
 
-    // Using the long form of this method so that the "false" can be set as the last parameter. That
-    // tells
-    // TableMapReduceUtil to not add the .jar depenendencies to the job, which causes problems for
-    // some reason.
-    TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(),
-        MyTableReducer.class,
-        job,
-        null,
-        null,
-        null,
-        null,
-        false);
+    TableMapReduceUtil.initTableReducerJob(tableName.getNameAsString(), MyTableReducer.class, job);
 
-    job.setOutputFormatClass(TableOutputFormat.class);
-    DebugUtil.printConf(conf);
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
 }

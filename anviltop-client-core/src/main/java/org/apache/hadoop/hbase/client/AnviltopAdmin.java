@@ -47,6 +47,8 @@ import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -55,14 +57,14 @@ public class AnviltopAdmin implements Admin {
 
   private final Configuration configuration;
   private final AnviltopOptions options;
-  private final AnvilTopConnection connection;
+  private final AnviltopConnection connection;
   private final AnviltopAdminClient anviltopAdminClient;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
 
   public AnviltopAdmin(
       AnviltopOptions options,
       Configuration configuration,
-      AnvilTopConnection connection,
+      AnviltopConnection connection,
       AnviltopAdminClient anviltopAdminClient) {
     this.configuration = configuration;
     this.options = options;
@@ -535,7 +537,13 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public ClusterStatus getClusterStatus() throws IOException {
-    throw new UnsupportedOperationException("getClusterStatus");  // TODO
+    return new ClusterStatus() {
+      @Override
+      public Collection<ServerName> getServers() {
+        // TODO(sduskis): Point the server name to options.getServerName()
+        return Collections.emptyList();
+      }
+    };
   }
 
   @Override
@@ -589,7 +597,7 @@ public class AnviltopAdmin implements Admin {
 
   @Override
   public void close() throws IOException {
-    throw new UnsupportedOperationException("close");  // TODO
+    // no-op
   }
 
   @Override

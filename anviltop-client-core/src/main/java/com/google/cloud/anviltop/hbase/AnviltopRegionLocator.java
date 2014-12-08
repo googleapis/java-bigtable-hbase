@@ -14,11 +14,11 @@ import org.apache.hadoop.hbase.util.Pair;
 import java.io.IOException;
 import java.util.List;
 
-public class AnvilTopRegionLocator implements RegionLocator {
+public class AnviltopRegionLocator implements RegionLocator {
   // Reuse the results from previous calls during this time.
   public static long MAX_REGION_AGE_MILLIS = 60 * 1000;
 
-  protected static final Logger LOG = new Logger(AnvilTopTable.class);
+  protected static final Logger LOG = new Logger(AnviltopTable.class);
 
   private final TableName tableName;
   private final AnviltopOptions options;
@@ -27,7 +27,7 @@ public class AnvilTopRegionLocator implements RegionLocator {
   private List<HRegionLocation> regions;
   private long regionsFetchTimeMillis;
 
-  public AnvilTopRegionLocator(TableName tableName, AnviltopOptions options, AnviltopClient client) {
+  public AnviltopRegionLocator(TableName tableName, AnviltopOptions options, AnviltopClient client) {
     this.tableName = tableName;
     this.options = options;
     this.client = client;

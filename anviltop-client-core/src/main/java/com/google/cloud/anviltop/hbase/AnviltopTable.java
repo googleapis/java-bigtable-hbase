@@ -79,8 +79,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-public class AnvilTopTable implements HTableInterface {
-  protected static final Logger LOG = new Logger(AnvilTopTable.class);
+public class AnviltopTable implements HTableInterface {
+  protected static final Logger LOG = new Logger(AnviltopTable.class);
 
   protected final TableName tableName;
   protected final AnviltopOptions options;
@@ -109,7 +109,7 @@ public class AnvilTopTable implements HTableInterface {
    * @param tableName
    * @param client
    */
-  public AnvilTopTable(TableName tableName,
+  public AnviltopTable(TableName tableName,
       AnviltopOptions options,
       Configuration configuration,
       AnviltopClient client,

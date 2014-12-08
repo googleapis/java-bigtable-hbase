@@ -39,7 +39,7 @@ public class TestAnviltopTable {
 
   @Mock
   public AnviltopClient mockClient;
-  public AnvilTopTable table;
+  public AnviltopTable table;
 
   @Before
   public void setup() throws UnknownHostException {
@@ -52,7 +52,7 @@ public class TestAnviltopTable {
     builder.setProjectId(TEST_PROJECT);
     builder.setCredential(null);
     AnviltopOptions options = builder.build();
-    table = new AnvilTopTable(
+    table = new AnviltopTable(
         TableName.valueOf(TEST_TABLE),
         options,
         new Configuration(),
