@@ -152,7 +152,6 @@ public class AnviltopAdmin implements Admin {
       i++;
     }
     return tableNames;
-
   }
 
   @Override
