@@ -170,7 +170,7 @@ public class AnviltopAdmin implements Admin {
         .setTableNameBytes(ByteString.copyFrom(desc.getName()));
 
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
-      builder.addColumnFamilies(AnviltopData.ColumnFamily.newBuilder().setName(column.getNameAsString()));
+      builder.addColumnFamilies(columnDescriptorAdapter.adapt(column));
     }
 
     anviltopAdminClient.createTable(builder.build());
