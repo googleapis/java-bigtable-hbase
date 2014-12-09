@@ -93,9 +93,9 @@
     </repositories>
 
      <scm>
-	<connection>scm:https://github.com/GoogleCloudPlatform/anviltop-client.git</connection>
-	<url>scm:https://github.com/GoogleCloudPlatform/anviltop-client.git</url>
-	<developerConnection>scm:https://github.com/GoogleCloudPlatform/anviltop-client.git</developerConnection>
+	<connection>scm:git:https://github.com/GoogleCloudPlatform/anviltop-client.git</connection>
+	<url>scm:git:https://github.com/GoogleCloudPlatform/anviltop-client.git</url>
+	<developerConnection>scm:git:https://github.com/GoogleCloudPlatform/anviltop-client.git</developerConnection>
     </scm>
 
     <build>
