@@ -132,12 +132,12 @@ public class TestGetAdapter {
 
   @Test
   public void testBinaryColumnNamesAreQuoted() throws IOException {
-    String utf8Part = "☺"; // UTF-8: 0x9e, 0xe8, 0xc6
+    byte[] utf8Part = {(byte) 0x9E, (byte) 0xE8, (byte) 0xC6};
     String asciiPart = "asdf"; // UTF-8: 0x61, 0x73, 0x64, 0x66
     byte nullByte = 0x00;
     String specialCharacters = "\\[]().*"; // UTF-8: 0x5c, 0x5b, 0x5d, 0x28, 0x29, 0x2e, 0x2a
     ByteArrayOutputStream qualifierBuilder = new ByteArrayOutputStream();
-    qualifierBuilder.write(Bytes.toBytes(utf8Part));
+    qualifierBuilder.write(utf8Part);
     qualifierBuilder.write(Bytes.toBytes(asciiPart));
     qualifierBuilder.write(nullByte);
     qualifierBuilder.write(Bytes.toBytes(specialCharacters));
@@ -148,7 +148,7 @@ public class TestGetAdapter {
 
     ByteArrayOutputStream expectedFilterBuilder = new ByteArrayOutputStream();
     expectedFilterBuilder.write(Bytes.toBytes("((col({f1:"));
-    expectedFilterBuilder.write(Bytes.toBytes(utf8Part)); // Only ASCII characters need escaping
+    expectedFilterBuilder.write(utf8Part); // Only ASCII characters need escaping
     expectedFilterBuilder.write(Bytes.toBytes(asciiPart)); // Leave a-z intact
     expectedFilterBuilder.write(Bytes.toBytes("\\x00")); // null byte
     expectedFilterBuilder.write(
