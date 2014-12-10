@@ -36,6 +36,7 @@
        <google.anviltop.call.report.directory>target/call_reports</google.anviltop.call.report.directory>
        <anviltop.grpc.repo.dir>anviltop-grpc-repo</anviltop.grpc.repo.dir>
        <anviltop.grpc.repo.fullpath>${project.basedir}/${anviltop.grpc.repo.dir}</anviltop.grpc.repo.fullpath>
+       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>
 
     <dependencyManagement>
