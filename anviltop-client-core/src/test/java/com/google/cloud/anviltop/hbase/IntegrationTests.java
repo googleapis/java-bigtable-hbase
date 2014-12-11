@@ -1,7 +1,10 @@
 package com.google.cloud.anviltop.hbase;
 
-import com.google.api.client.util.Strings;
-import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.SecureRandom;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -10,8 +13,9 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HConnection;
-import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.ClassRule;
@@ -20,11 +24,8 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.SecureRandom;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import com.google.api.client.util.Strings;
+import com.google.common.base.Preconditions;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
@@ -56,7 +57,7 @@ public class IntegrationTests {
 
   // testingUtility, connection, and configuration are provided via the connectionResource later
   protected static HBaseTestingUtility testingUtility;
-  protected static HConnection connection;
+  protected static Connection connection;
   protected static Configuration configuration;
 
   static {
@@ -94,8 +95,7 @@ public class IntegrationTests {
   }
 
   private static Admin getAdmin() throws IOException {
-    HConnection connection = HConnectionManager.createConnection(configuration);
-    return connection.getAdmin();
+    return ConnectionFactory.createConnection(configuration).getAdmin();
   }
 
   public static Configuration getConfiguration() {

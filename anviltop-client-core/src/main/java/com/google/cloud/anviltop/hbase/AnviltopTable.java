@@ -13,6 +13,37 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Durability;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.ValueFilter;
+import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowResponse;
@@ -23,7 +54,6 @@ import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableRequest;
 import com.google.cloud.anviltop.hbase.adapters.AnviltopResultScannerAdapter;
 import com.google.cloud.anviltop.hbase.adapters.AppendAdapter;
@@ -48,38 +78,7 @@ import com.google.protobuf.Message;
 import com.google.protobuf.Service;
 import com.google.protobuf.ServiceException;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.DoNotRetryIOException;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Durability;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.coprocessor.Batch;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.ValueFilter;
-import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-
-public class AnviltopTable implements HTableInterface {
+public class AnviltopTable implements Table {
   protected static final Logger LOG = new Logger(AnviltopTable.class);
 
   protected final TableName tableName;
@@ -154,11 +153,6 @@ public class AnviltopTable implements HTableInterface {
   }
 
   @Override
-  public byte[] getTableName() {
-    return this.tableName.getName();
-  }
-
-  @Override
   public TableName getName() {
     return this.tableName;
   }
@@ -189,18 +183,12 @@ public class AnviltopTable implements HTableInterface {
   @Override
   public boolean[] existsAll(List<Get> gets) throws IOException {
     LOG.trace("existsAll(Get)");
-    Boolean[] existsObjects = exists(gets);
+    Boolean[] existsObjects = batchExecutor.exists(gets);
     boolean[] exists = new boolean[existsObjects.length];
     for (int i = 0; i < existsObjects.length; i++) {
       exists[i] = existsObjects[i];
     }
     return exists;
-  }
-
-  @Override
-  public Boolean[] exists(List<Get> gets) throws IOException {
-    LOG.trace("exists(List<Get>)");
-    return batchExecutor.exists(gets);
   }
 
   @Override
@@ -258,11 +246,6 @@ public class AnviltopTable implements HTableInterface {
   public Result[] get(List<Get> gets) throws IOException {
     LOG.trace("get(List<>)");
     return (Result[]) batchExecutor.batch(gets);
-  }
-
-  @Override
-  public Result getRowOrBefore(byte[] row, byte[] family) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
@@ -512,13 +495,6 @@ public class AnviltopTable implements HTableInterface {
   }
 
   @Override
-  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount,
-      boolean writeToWAL) throws IOException {
-    LOG.trace("incrementColumnValue(byte[], byte[], byte[], long, boolean)");
-    return incrementColumnValue(row, family, qualifier, amount);
-  }
-
-  @Override
   public boolean isAutoFlush() {
     LOG.trace("isAutoFlush()");
     return true;
@@ -554,16 +530,6 @@ public class AnviltopTable implements HTableInterface {
     LOG.error("Unsupported coprocessorService("
         + "Class, byte[], byte[], Batch.Call, Batch.Callback) called.");
     throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void setAutoFlush(boolean autoFlush) {
-    LOG.warn("setAutoFlush(%s) invoked, but is currently a NOP", autoFlush);
-  }
-
-  @Override
-  public void setAutoFlush(boolean autoFlush, boolean clearBufferOnFail) {
-    LOG.warn("setAutoFlush(%s, %s), but is currently a NOP", autoFlush, clearBufferOnFail);
   }
 
   @Override
