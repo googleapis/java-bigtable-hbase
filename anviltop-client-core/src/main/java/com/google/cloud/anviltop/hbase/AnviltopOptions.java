@@ -157,6 +157,6 @@ public class AnviltopOptions {
   }
 
   public ServerName getServerName() {
-    return ServerName.valueOf(host.toString(), port, 0);
+    return ServerName.valueOf(host.getHostName(), port, 0);
   }
 }

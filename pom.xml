@@ -17,7 +17,7 @@
        <stubby.driver.path>/google/data/ro/teams/cloud-bigtable/driver_mpm/live/driver_with_deps.jar</stubby.driver.path>
        <stubby.driver.group>com.google.bigtable.anviltop</stubby.driver.group>
        <stubby.driver.artifact>anviltop-grpc-interface</stubby.driver.artifact>
-       <stubby.driver.version>0.2</stubby.driver.version>
+       <stubby.driver.version>0.3-SNAPSHOT</stubby.driver.version>
        <hbase.version>0.99.2</hbase.version>
        <hadoop.version>2.4.1</hadoop.version>
        <compat.module>hbase-hadoop2-compat</compat.module>
