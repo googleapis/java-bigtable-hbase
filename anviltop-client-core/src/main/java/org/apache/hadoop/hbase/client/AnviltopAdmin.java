@@ -113,10 +113,31 @@ public class AnviltopAdmin implements Admin {
     ListTablesResponse response = anviltopAdminClient.listTables(builder.build());
     List<HTableDescriptor> result = new ArrayList<>();
     for (String tableName : response.getTableNameList()) {
-      result.add(new HTableDescriptor(TableName.valueOf(tableName)));
+      if (pattern.matcher(tableName).matches()) {
+        result.add(new HTableDescriptor(TableName.valueOf(tableName)));
+      }
     }
 
-    return result.toArray(new HTableDescriptor[result.size()]);  }
+    return result.toArray(new HTableDescriptor[result.size()]);  
+  }
+  
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public TableName[] listTableNames(String patternStr) throws IOException {
+    ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
+    builder.setProjectId(options.getProjectId());
+    ListTablesResponse response = anviltopAdminClient.listTables(builder.build());
+    List<TableName> result = new ArrayList<>();
+    Pattern pattern = Pattern.compile(patternStr);
+    for (String tableName : response.getTableNameList()) {
+      if (pattern.matcher(tableName).matches()) {
+        result.add(TableName.valueOf(tableName));
+      }
+    }
+
+    return result.toArray(new TableName[result.size()]);  
+  }
 
   @Override
   public HTableDescriptor[] listTables(String regex) throws IOException {
@@ -135,6 +156,7 @@ public class AnviltopAdmin implements Admin {
     return tableNames;
   }
 
+ 
   @Override
   public HTableDescriptor getTableDescriptor(TableName tableName)
       throws TableNotFoundException, IOException {

@@ -132,6 +132,14 @@ public class AnviltopConnection implements Connection, Closeable {
     return new AnviltopTable(tableName, options, conf, client, pool);
   }
 
+  /** This should not be used.  The hbase shell needs this in hbsae 0.99.2.  Remove this once
+   * 1.0.0 comes out
+   */
+  @Deprecated
+  public Table getTable(String tableName) throws IOException {
+    return getTable(TableName.valueOf(tableName));
+  }
+
   @Override
   public RegionLocator getRegionLocator(TableName tableName) throws IOException {
     for (RegionLocator locator : locatorCache) {
