@@ -13,18 +13,19 @@
  */
 package com.google.cloud.anviltop.hbase;
 
+import java.io.IOException;
+
+import javax.validation.constraints.NotNull;
+
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HConnection;
-import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Rule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-
-import javax.validation.constraints.NotNull;
-import java.io.IOException;
 
 public abstract class AbstractTest {
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -40,7 +41,7 @@ public abstract class AbstractTest {
   };
 
   // Populated by our connectionResource rule below:
-  public HConnection connection;
+  public Connection connection;
   // A new connection is generated per test:
   @Rule
   public ExternalResource connectionResource = new ExternalResource() {
@@ -65,9 +66,9 @@ public abstract class AbstractTest {
   };
 
   // This is for when we need to look at the results outside of the current connection
-  public HConnection createNewConnection() throws IOException {
+  public Connection createNewConnection() throws IOException {
     Configuration conf = IntegrationTests.getConfiguration();
-    return HConnectionManager.createConnection(conf);
+    return ConnectionFactory.createConnection(conf);
   }
 
   protected static class QualifierValue implements Comparable<QualifierValue> {

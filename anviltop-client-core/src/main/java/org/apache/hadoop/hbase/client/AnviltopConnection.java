@@ -15,37 +15,8 @@
 // Because MasterKeepAliveConnection is default scope, we have to use this package.  :-/
 package org.apache.hadoop.hbase.client;
 
-import com.google.api.client.repackaged.com.google.common.base.Throwables;
-import com.google.cloud.anviltop.hbase.AnviltopRegionLocator;
-import com.google.cloud.anviltop.hbase.AnviltopOptions;
-import com.google.cloud.anviltop.hbase.AnviltopOptionsFactory;
-import com.google.cloud.anviltop.hbase.AnviltopTable;
-import com.google.cloud.anviltop.hbase.Logger;
-import com.google.cloud.hadoop.hbase.AnviltopAdminBlockingGrpcClient;
-import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
-import com.google.cloud.hadoop.hbase.AnviltopGrpcClient;
-import com.google.cloud.hadoop.hbase.AnviltopClient;
-import com.google.cloud.hadoop.hbase.ChannelOptions;
-import com.google.cloud.hadoop.hbase.TransportOptions;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HRegionLocation;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.MasterNotRunningException;
-import org.apache.hadoop.hbase.RegionLocations;
-import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.coprocessor.Batch;
-import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
-import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
-import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.util.Threads;
-
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
@@ -53,18 +24,26 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-// TODO: Move this class to implement Connection when that interface
-// is available.
-public class AnviltopConnection implements ClusterConnection, Closeable {
-  private static final Logger LOG = new Logger(AnviltopConnection.class);
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.util.Threads;
 
-  private static class LoggingUncaughtExceptionHandler
-      implements Thread.UncaughtExceptionHandler {
-    @Override
-    public void uncaughtException(Thread t, Throwable e) {
-      LOG.error(String.format("Uncaught exception in threadpool thread %s", t.getName()), e);
-    }
-  }
+import com.google.api.client.repackaged.com.google.common.base.Throwables;
+import com.google.cloud.anviltop.hbase.AnviltopOptions;
+import com.google.cloud.anviltop.hbase.AnviltopOptionsFactory;
+import com.google.cloud.anviltop.hbase.AnviltopRegionLocator;
+import com.google.cloud.anviltop.hbase.AnviltopTable;
+import com.google.cloud.anviltop.hbase.Logger;
+import com.google.cloud.hadoop.hbase.AnviltopAdminBlockingGrpcClient;
+import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
+import com.google.cloud.hadoop.hbase.AnviltopClient;
+import com.google.cloud.hadoop.hbase.AnviltopGrpcClient;
+import com.google.cloud.hadoop.hbase.ChannelOptions;
+import com.google.cloud.hadoop.hbase.TransportOptions;
+
+public class AnviltopConnection implements Connection, Closeable {
+  private static final Logger LOG = new Logger(AnviltopConnection.class);
 
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
 
@@ -144,33 +123,21 @@ public class AnviltopConnection implements ClusterConnection, Closeable {
   }
 
   @Override
-  public HTableInterface getTable(String tableName) throws IOException {
-    return getTable(TableName.valueOf(tableName));
-  }
-
-  @Override
-  public HTableInterface getTable(byte[] tableName) throws IOException {
-    return getTable(TableName.valueOf(tableName));
-  }
-
-  @Override
-  public HTableInterface getTable(TableName tableName) throws IOException {
+  public Table getTable(TableName tableName) throws IOException {
     return getTable(tableName, getBatchPool());
   }
 
   @Override
-  public HTableInterface getTable(String tableName, ExecutorService pool) throws IOException {
-    return getTable(TableName.valueOf(tableName), pool);
-  }
-
-  @Override
-  public HTableInterface getTable(byte[] tableName, ExecutorService pool) throws IOException {
-    return getTable(TableName.valueOf(tableName), pool);
-  }
-
-  @Override
-  public HTableInterface getTable(TableName tableName, ExecutorService pool) throws IOException {
+  public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
     return new AnviltopTable(tableName, options, conf, client, pool);
+  }
+
+  /** This should not be used.  The hbase shell needs this in hbsae 0.99.2.  Remove this once
+   * 1.0.0 comes out
+   */
+  @Deprecated
+  public Table getTable(String tableName) throws IOException {
+    return getTable(TableName.valueOf(tableName));
   }
 
   @Override
@@ -201,312 +168,7 @@ public class AnviltopConnection implements ClusterConnection, Closeable {
     return new AnviltopAdmin(options, conf, this, anviltopAdminClient);
   }
 
-  @Override
-  public boolean isMasterRunning() throws MasterNotRunningException, ZooKeeperConnectionException {
-    throw new UnsupportedOperationException();  // TODO
-  }
 
-  @Override
-  public boolean isTableEnabled(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean isTableEnabled(byte[] tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean isTableDisabled(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean isTableDisabled(byte[] tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean isTableAvailable(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean isTableAvailable(byte[] tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean isTableAvailable(TableName tableName, byte[][] splitKeys) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean isTableAvailable(byte[] tableName, byte[][] splitKeys) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public HTableDescriptor[] listTables() throws IOException {
-    return getAdmin().listTables();
-  }
-
-  @Override
-  public String[] getTableNames() throws IOException {
-    TableName[] tableNames = getAdmin().listTableNames();
-    String[] names = new String[tableNames.length];
-    int i = 0;
-    for (TableName tableName : tableNames) {
-      names[i] = tableName.getNameAsString();
-      i++;
-    }
-    return names;
-  }
-
-  @Override
-  public TableName[] listTableNames() throws IOException {
-    return getAdmin().listTableNames();
-  }
-
-  @Override
-  public HTableDescriptor getHTableDescriptor(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public HTableDescriptor getHTableDescriptor(byte[] tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public HRegionLocation locateRegion(TableName tableName, byte[] row) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public HRegionLocation locateRegion(byte[] tableName, byte[] row) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void clearRegionCache() {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void clearRegionCache(TableName tableName) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void clearRegionCache(byte[] tableName) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void deleteCachedRegionLocation(HRegionLocation location) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public HRegionLocation relocateRegion(TableName tableName, byte[] row) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public RegionLocations relocateRegion(TableName tableName, byte[] row, int replicaId)
-      throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public HRegionLocation relocateRegion(byte[] tableName, byte[] row) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void updateCachedLocations(TableName tableName, byte[] rowkey, Object exception,
-      HRegionLocation source) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void updateCachedLocations(TableName tableName, byte[] regionName, byte[] rowKey,
-      Object exception, ServerName serverName) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void updateCachedLocations(byte[] tableName, byte[] rowkey, Object exception,
-      HRegionLocation source) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public HRegionLocation locateRegion(byte[] regionName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public List<HRegionLocation> locateRegions(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public List<HRegionLocation> locateRegions(byte[] tableName) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public List<HRegionLocation> locateRegions(TableName tableName, boolean useCache,
-      boolean offlined) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public RegionLocations locateRegion(TableName tableName, byte[] row, boolean useCache,
-      boolean retry) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public RegionLocations locateRegion(TableName tableName, byte[] row, boolean useCache,
-      boolean retry, int replicaId) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public List<HRegionLocation> locateRegions(byte[] tableName, boolean useCache, boolean offlined)
-      throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public MasterProtos.MasterService.BlockingInterface getMaster() throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public AdminProtos.AdminService.BlockingInterface getAdmin(ServerName serverName)
-      throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public ClientProtos.ClientService.BlockingInterface getClient(ServerName serverName)
-      throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public AdminProtos.AdminService.BlockingInterface getAdmin(ServerName serverName,
-      boolean getMaster) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public HRegionLocation getRegionLocation(TableName tableName, byte[] row, boolean reload)
-      throws IOException {
-    return getRegionLocator(tableName).getRegionLocation(row, reload);
-  }
-
-  @Override
-  public HRegionLocation getRegionLocation(byte[] tableName, byte[] row, boolean reload)
-      throws IOException {
-    return getRegionLocator(TableName.valueOf(tableName)).getRegionLocation(row, reload);
-  }
-
-  @Override
-  public void processBatch(List<? extends Row> actions, TableName tableName, ExecutorService pool,
-      Object[] results) throws IOException, InterruptedException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void processBatch(List<? extends Row> actions, byte[] tableName, ExecutorService pool,
-      Object[] results) throws IOException, InterruptedException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public <R> void processBatchCallback(List<? extends Row> list, TableName tableName,
-      ExecutorService pool, Object[] results, Batch.Callback<R> callback)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public <R> void processBatchCallback(List<? extends Row> list, byte[] tableName,
-      ExecutorService pool, Object[] results, Batch.Callback<R> callback)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void setRegionCachePrefetch(TableName tableName, boolean enable) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void setRegionCachePrefetch(byte[] tableName, boolean enable) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean getRegionCachePrefetch(TableName tableName) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean getRegionCachePrefetch(byte[] tableName) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public int getCurrentNrHRS() throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public HTableDescriptor[] getHTableDescriptorsByTableName(List<TableName> tableNames)
-      throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public HTableDescriptor[] getHTableDescriptors(List<String> tableNames) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void clearCaches(ServerName sn) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public MasterKeepAliveConnection getKeepAliveMasterService() throws MasterNotRunningException {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean isDeadServer(ServerName serverName) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public NonceGenerator getNonceGenerator() {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public AsyncProcess getAsyncProcess() {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public RpcRetryingCallerFactory getNewRpcRetryingCallerFactory(Configuration conf) {
-    throw new UnsupportedOperationException();  // TODO
-  }
 
   @Override
   public void abort(final String msg, Throwable t) {

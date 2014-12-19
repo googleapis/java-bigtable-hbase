@@ -13,24 +13,28 @@
  */
 package com.google.cloud.anviltop.hbase;
 
-import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
 import static com.google.cloud.anviltop.hbase.IntegrationTests.COLUMN_FAMILY;
+import static com.google.cloud.anviltop.hbase.IntegrationTests.TABLE_NAME;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -38,12 +42,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnit4.class)
 public class TestIncrement extends AbstractTest {
@@ -289,7 +287,7 @@ public class TestIncrement extends AbstractTest {
     tableDescriptor.addFamily(new HColumnDescriptor(incrementFamily).setMaxVersions(1));
     admin.createTable(tableDescriptor);
 
-    Table table = connection.getTable(incrementTable);
+    Table table = connection.getTable(incrementTableName);
 
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");

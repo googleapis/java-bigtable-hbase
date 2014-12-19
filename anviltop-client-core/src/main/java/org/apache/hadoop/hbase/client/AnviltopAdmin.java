@@ -1,24 +1,13 @@
 package org.apache.hadoop.hbase.client;
 
 
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateFamilyRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateFamilyResponse;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateTableRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateTableResponse;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyResponse;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableResponse;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesResponse;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages;
-import com.google.bigtable.anviltop.AnviltopData;
-import com.google.cloud.anviltop.hbase.AnviltopOptions;
-import com.google.cloud.anviltop.hbase.adapters.ColumnDescriptorAdapter;
-import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.ServiceException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -45,13 +34,16 @@ import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Pair;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateFamilyRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateTableRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesResponse;
+import com.google.cloud.anviltop.hbase.AnviltopOptions;
+import com.google.cloud.anviltop.hbase.adapters.ColumnDescriptorAdapter;
+import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
+import com.google.protobuf.ByteString;
 
 public class AnviltopAdmin implements Admin {
 
@@ -88,7 +80,7 @@ public class AnviltopAdmin implements Admin {
   }
 
   @Override
-  public HConnection getConnection() {
+  public Connection getConnection() {
     return connection;
   }
 
@@ -121,10 +113,31 @@ public class AnviltopAdmin implements Admin {
     ListTablesResponse response = anviltopAdminClient.listTables(builder.build());
     List<HTableDescriptor> result = new ArrayList<>();
     for (String tableName : response.getTableNameList()) {
-      result.add(new HTableDescriptor(TableName.valueOf(tableName)));
+      if (pattern.matcher(tableName).matches()) {
+        result.add(new HTableDescriptor(TableName.valueOf(tableName)));
+      }
     }
 
-    return result.toArray(new HTableDescriptor[result.size()]);  }
+    return result.toArray(new HTableDescriptor[result.size()]);  
+  }
+  
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public TableName[] listTableNames(String patternStr) throws IOException {
+    ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
+    builder.setProjectId(options.getProjectId());
+    ListTablesResponse response = anviltopAdminClient.listTables(builder.build());
+    List<TableName> result = new ArrayList<>();
+    Pattern pattern = Pattern.compile(patternStr);
+    for (String tableName : response.getTableNameList()) {
+      if (pattern.matcher(tableName).matches()) {
+        result.add(TableName.valueOf(tableName));
+      }
+    }
+
+    return result.toArray(new TableName[result.size()]);  
+  }
 
   @Override
   public HTableDescriptor[] listTables(String regex) throws IOException {
@@ -143,6 +156,7 @@ public class AnviltopAdmin implements Admin {
     return tableNames;
   }
 
+ 
   @Override
   public HTableDescriptor getTableDescriptor(TableName tableName)
       throws TableNotFoundException, IOException {
@@ -166,8 +180,8 @@ public class AnviltopAdmin implements Admin {
   @Override
   public void createTable(HTableDescriptor desc) throws IOException {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    builder.setProjectId(options.getProjectId())
-        .setTableNameBytes(ByteString.copyFrom(desc.getName()));
+    builder.setProjectId(options.getProjectId()).setTableNameBytes(
+      ByteString.copyFrom(desc.getTableName().getName()));
 
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
       builder.addColumnFamilies(columnDescriptorAdapter.adapt(column));
