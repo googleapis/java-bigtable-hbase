@@ -39,7 +39,6 @@ public class AnviltopOptionsFactory {
   public static final String ANVILTOP_HOST_KEY = "google.anviltop.endpoint.host";
   public static final String PROJECT_ID_KEY = "google.anviltop.project.id";
   public static final String CALL_REPORT_DIRECTORY_KEY = "google.anviltop.call.report.directory";
-  public static final String ENABLE_GRPC_V2_KEY = "google.anviltop.enable.grpc.v2";
 
   /**
    * If set, bypass DNS host lookup and use the given IP address.
@@ -191,8 +190,6 @@ public class AnviltopOptionsFactory {
         ENABLE_GRPC_RETRIES_KEY, ENABLE_GRPC_RETRIES_DEFAULT);
     LOG.debug("gRPC retries enabled: %s", enableRetries);
     optionsBuilder.setRetriesEnabled(enableRetries);
-
-    AbstractClientStream.GRPC_V2_PROTOCOL = configuration.getBoolean(ENABLE_GRPC_V2_KEY, true);
 
     return optionsBuilder.build();
   }
