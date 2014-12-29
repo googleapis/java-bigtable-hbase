@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+    <property>
+        <name>hbase.client.connection.impl</name>
+        <value>org.apache.hadoop.hbase.client.BigtableConnection</value>
+    </property>
+    <property>
+        <name>google.bigtable.endpoint.host</name>
+        <value>${google.bigtable.endpoint.host}</value>
+    </property>
+    <property>
+        <name>google.bigtable.endpoint.port</name>
+        <value>443</value>
+    </property>
+    <property>
+        <name>google.bigtable.admin.endpoint.host</name>
+        <value>${google.bigtable.admin.endpoint.host}</value>
+    </property>
+    <property>
+        <name>google.bigtable.project.id</name>
+        <value>testproject</value>
+    </property>
+    <property>
+        <name>google.bigtable.auth.service.account.enable</name>
+        <value>${google.bigtable.auth.service.account.enable}</value>
+    </property>
+    <property>
+        <name>google.bigtable.auth.null.credential.enable</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>google.bigtable.call.report.directory</name>
+        <value>${google.bigtable.call.report.directory}</value>
+    </property>
+    <property>
+        <name>google.bigtable.endpoint.ip.address.override</name>
+        <value>${google.bigtable.endpoint.ip.address.override}</value>
+    </property>
+    <property>
+        <name>google.bigtable.enable.grpc.v2</name>
+        <value>${google.bigtable.enable.grpc.v2}</value>
+    </property>
+</configuration>

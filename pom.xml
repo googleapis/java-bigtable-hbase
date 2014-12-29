@@ -2,21 +2,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>anviltop-client</groupId>
-    <artifactId>anviltop-client</artifactId>
+    <groupId>bigtable-client</groupId>
+    <artifactId>bigtable-client</artifactId>
     <version>0.1.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
-        <module>anviltop-client-core</module>
-        <module>anviltop-mapreduce-example</module>
+        <module>bigtable-hbase</module>
     </modules>
 
    <properties>
         <!-- As soon as stubby is public, this goes away -->
        <stubby.driver.path>/google/data/ro/teams/cloud-bigtable/driver_mpm/live/driver_with_deps.jar</stubby.driver.path>
-       <stubby.driver.group>com.google.bigtable.anviltop</stubby.driver.group>
-       <stubby.driver.artifact>anviltop-grpc-interface</stubby.driver.artifact>
+       <stubby.driver.group>com.google.bigtable.hbase</stubby.driver.group>
+       <stubby.driver.artifact>bigtable-grpc-interface</stubby.driver.artifact>
        <stubby.driver.version>0.3-SNAPSHOT</stubby.driver.version>
        <hbase.version>0.99.2</hbase.version>
        <hadoop.version>2.4.1</hadoop.version>
@@ -28,13 +27,13 @@
        <!-- For Netty HTTP2/TLS negotiation -->
        <alpn.version>7.0.0.v20140317</alpn.version>
        <google.api.client.version>1.19.0</google.api.client.version>
-       <google.anviltop.auth.service.account.enable>false</google.anviltop.auth.service.account.enable>
-       <google.anviltop.admin.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.admin.endpoint.host>
-       <google.anviltop.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.anviltop.endpoint.host>
-       <google.anviltop.call.report.directory>target/call_reports</google.anviltop.call.report.directory>
-       <anviltop.grpc.repo.dir>anviltop-grpc-repo</anviltop.grpc.repo.dir>
-       <anviltop.grpc.repo.fullpath>${project.basedir}/${anviltop.grpc.repo.dir}</anviltop.grpc.repo.fullpath>
-       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+       <google.bigtable.auth.service.account.enable>false</google.bigtable.auth.service.account.enable>
+       <google.bigtable.admin.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.bigtable.admin.endpoint.host>
+       <google.bigtable.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.bigtable.endpoint.host>
+       <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
+       <bigtable.grpc.repo.dir>bigtable-grpc-repo</bigtable.grpc.repo.dir>
+       <bigtable.grpc.repo.fullpath>${project.basedir}/${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
+       <!-- project.build.sourceEncoding>UTF-8</project.build.sourceEncoding -->
    </properties>
 
     <dependencyManagement>
@@ -125,7 +124,7 @@
                                 <argument>-DartifactId=${stubby.driver.artifact}</argument>
                                 <argument>-Dversion=${stubby.driver.version}</argument>
                                 <argument>-Dpackaging=jar</argument>
-                                <argument>-DlocalRepositoryPath=${anviltop.grpc.repo.fullpath}</argument>
+                                <argument>-DlocalRepositoryPath=${bigtable.grpc.repo.fullpath}</argument>
                             </arguments>
                         </configuration>
                     </execution>
