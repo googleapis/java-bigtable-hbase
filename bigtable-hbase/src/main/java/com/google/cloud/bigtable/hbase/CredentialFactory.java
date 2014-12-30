@@ -15,7 +15,7 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 
 /**
- * Simple factory for creating OAuth Credential objects for use with bigtabl.
+ * Simple factory for creating OAuth Credential objects for use with Bigtable.
  */
 public class CredentialFactory {
 
