@@ -135,7 +135,7 @@ public class TestGetAdapter {
 
   @Test
   public void testBinaryColumnNamesAreQuoted() throws IOException {
-    String utf8Part = "?????????"; // UTF-8: 0x9e, 0xe8, 0xc6
+    String utf8Part = "☺"; // UTF-8: 0x9e, 0xe8, 0xc6
     String asciiPart = "asdf"; // UTF-8: 0x61, 0x73, 0x64, 0x66
     byte nullByte = 0x00;
     String specialCharacters = "\\[]().*"; // UTF-8: 0x5c, 0x5b, 0x5d, 0x28, 0x29, 0x2e, 0x2a

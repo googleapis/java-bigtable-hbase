@@ -33,7 +33,7 @@
        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
        <bigtable.grpc.repo.dir>bigtable-grpc-repo</bigtable.grpc.repo.dir>
        <bigtable.grpc.repo.fullpath>${project.basedir}/${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
-       <!-- project.build.sourceEncoding>UTF-8</project.build.sourceEncoding -->
+       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>
 
     <dependencyManagement>
