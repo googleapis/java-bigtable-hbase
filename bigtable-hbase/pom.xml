@@ -303,25 +303,25 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <include>com.google.bigtable.bigtable:*</include>
+                                    <include>${stubby.driver.group}:*</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
                                 <relocation>
                                     <pattern>com.google.common</pattern>
-                                    <shadedPattern>com.google.bigtable.bigtable.repackaged.com.google.common</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.common</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>com.fasterxml</pattern>
-                                    <shadedPattern>com.google.bigtable.bigtable.repackaged.com.fasterxml</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.fasterxml</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.apache.commons.codec</pattern>
-                                    <shadedPattern>com.google.bigtable.bigtable.repackaged.org.apache.commons.codec</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.codec</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>io.netty</pattern>
-                                    <shadedPattern>com.google.bigtable.bigtable.repackaged.io.netty</shadedPattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>
