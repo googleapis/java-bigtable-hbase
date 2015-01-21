@@ -128,7 +128,6 @@ public class IntegrationTests {
       }
       createTable(TABLE_NAME);
     }
-    
 
     @Override
     protected void after() {
@@ -146,6 +145,4 @@ public class IntegrationTests {
       }
     }
   };
-  
-  
 }
