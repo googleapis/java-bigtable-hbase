@@ -71,7 +71,7 @@ public class IntegrationTests {
   }
 
   protected static void addExtraResources(Configuration configuration) {
-    String extraResources = System.getProperty("anviltop.test.extra.resources");
+    String extraResources = System.getProperty("bigtable.test.extra.resources");
     if (extraResources != null) {
       InputStream resourceStream =
           AbstractTest.class.getClassLoader().getResourceAsStream(extraResources);
@@ -95,10 +95,6 @@ public class IntegrationTests {
     return testingUtility.getDFSCluster();
   }
 
-  private static Admin getAdmin() throws IOException {
-    return ConnectionFactory.createConnection(configuration).getAdmin();
-  }
-
   public static Configuration getConfiguration() {
     // If the class rule hasn't run, we probably haven't created our table yet either.
     Preconditions.checkState(configuration != null,
@@ -110,11 +106,13 @@ public class IntegrationTests {
   public static Timeout timeoutRule = new Timeout((int) TimeUnit.MINUTES.toMillis(5));
 
   public static void createTable(TableName tableName) throws IOException {
-    Admin admin = getAdmin();
-    HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
-    HTableDescriptor htd = new HTableDescriptor(tableName);
-    htd.addFamily(hcd);
-    admin.createTable(htd);
+    try (Connection connection = ConnectionFactory.createConnection(configuration);
+        Admin admin = connection.getAdmin();) {
+      HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
+      HTableDescriptor htd = new HTableDescriptor(tableName);
+      htd.addFamily(hcd);
+      admin.createTable(htd);
+    }
   }
 
   @ClassRule
@@ -133,8 +131,8 @@ public class IntegrationTests {
 
     @Override
     protected void after() {
-      try {
-        Admin admin = getAdmin();
+      try (Connection connection = ConnectionFactory.createConnection(configuration);
+          Admin admin = connection.getAdmin();) {
         admin.disableTable(TABLE_NAME);
         admin.deleteTable(TABLE_NAME);
         if (useMiniCluster()) {
