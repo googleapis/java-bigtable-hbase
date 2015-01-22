@@ -1115,7 +1115,7 @@ public class TestFilters extends AbstractTest {
     Cell[] cells = result.rawCells();
     Assert.assertEquals("Should have two cells, timestamps 0 and 1.", 2, cells.length);
 
-    // The returned array is not necessarily sorted by timestamp.
+    // Since the qualifiers are random, ignore the order of the returned cells.
     long[] timestamps = new long[]{cells[0].getTimestamp(), cells[1].getTimestamp()};
     Arrays.sort(timestamps);
     Assert.assertArrayEquals(new long[]{0L, 1L}, timestamps);
