@@ -50,6 +50,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 public class TestFilters extends AbstractTest {
@@ -1113,8 +1114,11 @@ public class TestFilters extends AbstractTest {
     Result result = table.get(get);
     Cell[] cells = result.rawCells();
     Assert.assertEquals("Should have two cells, timestamps 0 and 1.", 2, cells.length);
-    Assert.assertEquals(0L, cells[0].getTimestamp());
-    Assert.assertEquals(1L, cells[1].getTimestamp());
+
+    // The returned array is not necessarily sorted by timestamp.
+    long[] timestamps = new long[]{cells[0].getTimestamp(), cells[1].getTimestamp()};
+    Arrays.sort(timestamps);
+    Assert.assertArrayEquals(new long[]{0L, 1L}, timestamps);
 
     table.close();
   }
