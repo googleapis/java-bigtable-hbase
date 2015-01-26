@@ -28,8 +28,8 @@
        <alpn.version>7.0.0.v20140317</alpn.version>
        <google.api.client.version>1.19.0</google.api.client.version>
        <google.bigtable.auth.service.account.enable>false</google.bigtable.auth.service.account.enable>
-       <google.bigtable.admin.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.bigtable.admin.endpoint.host>
-       <google.bigtable.endpoint.host>9f135f0537b12b4b.sandbox.google.com</google.bigtable.endpoint.host>
+       <google.bigtable.admin.endpoint.host>test-table-admin-bigtable.googleapis.com</google.bigtable.admin.endpoint.host>
+       <google.bigtable.endpoint.host>test-bigtable.googleapis.com</google.bigtable.endpoint.host>
        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
        <bigtable.grpc.repo.dir>bigtable-grpc-repo</bigtable.grpc.repo.dir>
        <bigtable.grpc.repo.fullpath>${project.basedir}/${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
