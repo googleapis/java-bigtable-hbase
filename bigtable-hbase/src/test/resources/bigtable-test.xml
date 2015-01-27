@@ -48,6 +48,7 @@
     </property>
     <property>
         <name>google.bigtable.auth.service.account.keyfile</name>
-        <value>/google/data/rw/users/mg/mgaro/My Test Project-d5c2dc57b0de.p12</value>
+        <value>/google/data/ro/users/mg/mgaro/My Test Project-d5c2dc57b0de.p12</value>
+
     </property>
 </configuration>
