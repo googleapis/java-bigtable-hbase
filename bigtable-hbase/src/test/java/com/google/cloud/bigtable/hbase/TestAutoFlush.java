@@ -21,8 +21,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 
@@ -32,7 +31,6 @@ import java.io.IOException;
  *
  * TODO - Test buffer size definitions
  */
-@RunWith(JUnit4.class)
 public class TestAutoFlush extends AbstractTest {
   @Test
   public void testAutoFlushDefault() throws Exception {
@@ -41,6 +39,7 @@ public class TestAutoFlush extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
   public void testAutoFlushOff() throws Exception {
     Table tableForWrite = connection.getTable(TABLE_NAME);
     tableForWrite.setAutoFlushTo(false);

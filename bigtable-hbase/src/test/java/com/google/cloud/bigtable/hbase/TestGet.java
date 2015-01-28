@@ -27,6 +27,7 @@ import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -245,6 +246,7 @@ public class TestGet extends AbstractTest {
    * Requirement 3.8 - Can specify an offset to skip the first N qualifiers in a column family.
    */
   @Test
+  @Category(KnownGap.class)
   public void testMaxResultsPerColumnFamily() throws IOException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -331,6 +333,7 @@ public class TestGet extends AbstractTest {
    * An OR operation. If multiple columns are in the Get, then only one has to exist.
    */
   @Test
+  @Category(KnownGap.class)
   public void testExists() throws IOException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -459,6 +462,7 @@ public class TestGet extends AbstractTest {
    * Requirement 3.16 - When submitting an array of Get operations, if one fails, they all fail.
    */
   @Test
+  @Category(KnownGap.class)
   public void testOneBadApple() throws IOException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);

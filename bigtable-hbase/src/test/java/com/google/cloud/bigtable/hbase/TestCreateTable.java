@@ -22,6 +22,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 
@@ -30,6 +31,7 @@ public class TestCreateTable extends AbstractTest {
    * Requirement 1.8 - Table names must match [_a-zA-Z0-9][-_.a-zA-Z0-9]*
    */
   @Test
+  @Category(KnownGap.class)
   public void testTableNames() throws IOException {
     String[] goodNames = {
         "a",
