@@ -38,4 +38,12 @@
         <name>google.bigtable.endpoint.ip.address.override</name>
         <value>${google.bigtable.endpoint.ip.address.override}</value>
     </property>
+    <property>
+        <name>google.bigtable.auth.service.account.email</name>
+        <value>450300683590-th0dk93ks4nicmug2ts9d05f7p2q0mda@developer.gserviceaccount.com</value>
+    </property>
+    <property>
+        <name>google.bigtable.auth.service.account.keyfile</name>
+        <value>/google/data/ro/users/mg/mgaro/My Test Project-d5c2dc57b0de.p12</value>
+    </property>
 </configuration>
