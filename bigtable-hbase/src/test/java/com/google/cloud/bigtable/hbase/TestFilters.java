@@ -48,6 +48,7 @@ import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -58,6 +59,7 @@ public class TestFilters extends AbstractTest {
    * Requirement 9.1 - ColumnCountGetFilter - return first N columns on rows only
    */
   @Test
+  @Category(KnownGap.class)
   public void testColumnCountGetFilter() throws Exception {
     // Initialize data
     int numColumns = 20;
@@ -99,6 +101,7 @@ public class TestFilters extends AbstractTest {
    * too; offset can be a # of cols, or can be a particular qualifier byte[] value (inclusive)
    */
   @Test
+  @Category(KnownGap.class)
   public void testColumnPaginationFilter() throws Exception {
     // Initialize data
     int numColumns = 20;
@@ -140,6 +143,7 @@ public class TestFilters extends AbstractTest {
    * Requirement 9.2
    */
   @Test
+  @Category(KnownGap.class)
   public void testColumnPaginationFilter_StartingAtParticularQualifier() throws Exception {
     Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
@@ -169,6 +173,7 @@ public class TestFilters extends AbstractTest {
    * Requirement 9.2
    */
   @Test
+  @Category(KnownGap.class)
   public void testColumnFilterScan() throws Exception {
     // Initialize data
     int numRows = 5;
@@ -215,6 +220,7 @@ public class TestFilters extends AbstractTest {
    * Requirement 9.3 - ColumnPrefixFilter - select keys with columns that match a particular prefix
    */
   @Test
+  @Category(KnownGap.class)
   public void testColumnPrefixFilter() throws Exception {
     // Initialize
     int numGoodCols = 5;
@@ -252,6 +258,7 @@ public class TestFilters extends AbstractTest {
    * combinations of start/end keys being inclusive/exclusive.
    */
   @Test
+  @Category(KnownGap.class)
   public void testColumnRangeFilter() throws Exception {
     // Initialize
     Table table = connection.getTable(TABLE_NAME);
@@ -308,6 +315,7 @@ public class TestFilters extends AbstractTest {
    * Bytes.compareTo(byte[], byte[]).
    */
   @Test
+  @Category(KnownGap.class)
   public void testRowFilterBinaryComparator() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -379,6 +387,7 @@ public class TestFilters extends AbstractTest {
    * the length of this byte array.
    */
   @Test
+  @Category(KnownGap.class)
   public void testRowFilterBinaryPrefixComparator() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -463,6 +472,7 @@ public class TestFilters extends AbstractTest {
    * of the operation.  If the comparison fails, it is returned as LESS THAN by the comparator.
    */
   @Test
+  @Category(KnownGap.class)
   public void testRowFilterBitComparatorXOR() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -543,6 +553,7 @@ public class TestFilters extends AbstractTest {
    * of the operation.  If the comparison fails, it is returned as LESS THAN by the comparator.
    */
   @Test
+  @Category(KnownGap.class)
   public void testRowFilterBitComparatorAND() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -623,6 +634,7 @@ public class TestFilters extends AbstractTest {
    * of the operation.  If the comparison fails, it is returned as LESS THAN by the comparator.
    */
   @Test
+  @Category(KnownGap.class)
   public void testRowFilterBitComparatorOR() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -702,6 +714,7 @@ public class TestFilters extends AbstractTest {
    * byte array.
    */
   @Test
+  @Category(KnownGap.class)
   public void testRowFilterNullComparator() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -763,6 +776,7 @@ public class TestFilters extends AbstractTest {
    * operators can still return deterministic results in HBase.
    */
   @Test
+  @Category(KnownGap.class)
   public void testRowFilterSubstringComparator() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -842,6 +856,7 @@ public class TestFilters extends AbstractTest {
    * operators can still return deterministic results in HBase.
    */
   @Test
+  @Category(KnownGap.class)
   public void testRowFilterRegexStringComparator() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -934,6 +949,7 @@ public class TestFilters extends AbstractTest {
    * @throws IOException
    */
   @Test
+  @Category(KnownGap.class)
   public void testDeterministRowRegexFilter() throws IOException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -1060,6 +1076,7 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
   public void testMultipleColumnPrefixes() throws IOException {
     // Initialize
     int numCols = 5;
@@ -1095,6 +1112,7 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
   public void testTimestampsFilter() throws IOException {
     // Initialize
     int numCols = 5;

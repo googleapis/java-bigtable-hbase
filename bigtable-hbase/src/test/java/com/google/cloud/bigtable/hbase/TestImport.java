@@ -32,12 +32,14 @@ import org.apache.hadoop.hbase.mapreduce.Import;
 import org.apache.hadoop.mapreduce.Job;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.List;
 
 public class TestImport extends AbstractTest {
   @Test
+  @Category(KnownGap.class)
   public void testMapReduce() throws IOException, ClassNotFoundException, InterruptedException {
     Table oldTable = connection.getTable(TABLE_NAME);
 

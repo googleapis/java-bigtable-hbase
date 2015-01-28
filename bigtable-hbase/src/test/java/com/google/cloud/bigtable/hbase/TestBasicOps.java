@@ -25,14 +25,11 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
-@RunWith(JUnit4.class)
 public class TestBasicOps extends AbstractTest {
   /**
    * Happy path for a single value.

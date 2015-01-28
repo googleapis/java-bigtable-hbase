@@ -31,15 +31,13 @@ import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-@RunWith(JUnit4.class)
 public class TestBatch extends AbstractTest {
   /**
    * Requirement 8.1 - Batch performs a collection of Deletes, Gets, Puts, Increments, and Appends
@@ -52,6 +50,7 @@ public class TestBatch extends AbstractTest {
    * a batch() operation.
    */
   @Test
+  @Category(KnownGap.class)
   public void testBatchPutGetAndDelete() throws IOException, InterruptedException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -209,6 +208,7 @@ public class TestBatch extends AbstractTest {
    * corresponding Throwables.
    */
   @Test
+  @Category(KnownGap.class)
   public void testBatchWithException() throws IOException, InterruptedException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -273,6 +273,7 @@ public class TestBatch extends AbstractTest {
    * row.
    */
   @Test
+  @Category(KnownGap.class)
   public void testRowMutations() throws IOException, InterruptedException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);

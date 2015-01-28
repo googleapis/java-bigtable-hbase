@@ -20,12 +20,14 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.UUID;
 
 public class TestDisableTable extends AbstractTest {
   @Test
+  @Category(KnownGap.class)
   public void testDisable() throws IOException {
     Admin admin = connection.getAdmin();
     TableName tableName = TableName.valueOf("test_table-" + UUID.randomUUID().toString());

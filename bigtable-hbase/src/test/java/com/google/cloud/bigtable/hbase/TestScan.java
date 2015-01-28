@@ -12,14 +12,12 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-@RunWith(JUnit4.class)
 public class TestScan extends AbstractTest {
 
   public static byte[] rowFollowing(byte[] rowKey) {
@@ -92,6 +90,7 @@ public class TestScan extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
   public void test100ResultsInScanner() throws IOException {
     int rowsToWrite = 100;
 
