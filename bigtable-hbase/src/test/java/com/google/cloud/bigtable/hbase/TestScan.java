@@ -117,7 +117,6 @@ public class TestScan extends AbstractTest {
       }
       puts.add(put);
     }
-    table.setAutoFlushTo(true);
     table.put(puts);
 
     Scan scan = new Scan();

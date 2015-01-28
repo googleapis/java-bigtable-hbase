@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
     TestAppend.class,
-    TestAutoFlush.class,
+    TestBufferedMutator.class,
     TestBasicOps.class,
     TestBatch.class,
     TestCheckAndMutate.class,
