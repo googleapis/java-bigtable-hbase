@@ -30,7 +30,7 @@ import org.junit.experimental.categories.Category;
  *
  * TODO - Test buffer size definitions
  */
-public class TestAutoFlush extends AbstractTest {
+public class TestBufferedMutator extends AbstractTest {
 
   @Test
   @Category(KnownGap.class)
