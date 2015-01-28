@@ -33,9 +33,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -43,7 +42,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-@RunWith(JUnit4.class)
 public class TestIncrement extends AbstractTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -53,6 +51,7 @@ public class TestIncrement extends AbstractTest {
    * Requirement 6.4 - Return post-increment value(s)
    */
   @Test
+  @Category(KnownGap.class)
   public void testIncrement() throws IOException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -109,6 +108,7 @@ public class TestIncrement extends AbstractTest {
    * of 101.
    */
   @Test
+  @Category(KnownGap.class)
   public void testIncrementWithTimerange() throws IOException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -211,6 +211,7 @@ public class TestIncrement extends AbstractTest {
    * Requirement 6.6 - Increment should fail on non-64-bit values, and succeed on any 64-bit value.
    */
   @Test
+  @Category(KnownGap.class)
   public void testFailOnIncrementInt() throws IOException {
     // Initialize
     Table table = connection.getTable(TABLE_NAME);
@@ -231,6 +232,7 @@ public class TestIncrement extends AbstractTest {
    * Requirement 6.6
    */
   @Test
+  @Category(KnownGap.class)
   public void testFailOnIncrementString() throws IOException {
     // Initialize
     Table table = connection.getTable(TABLE_NAME);
@@ -275,6 +277,7 @@ public class TestIncrement extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
   public void testIncrementWithMaxVersions() throws IOException, InterruptedException {
     // Initialize data
     byte[] incrementFamily = Bytes.toBytes("i");

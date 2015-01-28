@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.List;
@@ -75,6 +76,7 @@ public class TestDelete extends AbstractTest {
    * Requirement 4.2 - Delete the latest version of a specific column (family:qualifier)
    */
   @Test
+  @Category(KnownGap.class)
   public void testDeleteLatestColumnVersion() throws IOException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -257,6 +259,7 @@ public class TestDelete extends AbstractTest {
    * Requirement 4.7 - Delete all columns of a particular family less than or equal to a timestamp.
    */
   @Test
+  @Category(KnownGap.class)
   public void testDeleteOlderFamilyColumns() throws IOException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
@@ -298,6 +301,7 @@ public class TestDelete extends AbstractTest {
    * Requirement 4.8 - Delete all columns of a family with a specific ts.
    */
   @Test
+  @Category(KnownGap.class)
   public void testDeleteFamilyWithSpecificTimestamp() throws IOException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);

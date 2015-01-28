@@ -23,8 +23,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.experimental.categories.Category;
 
 /**
  * Requirement 1.1 - Writes are buffered in the client by default (can be disabled).  Buffer size
@@ -32,10 +31,10 @@ import org.junit.runners.JUnit4;
  *
  * TODO - Test buffer size definitions
  */
-@RunWith(JUnit4.class)
 public class TestAutoFlush extends AbstractTest {
 
   @Test
+  @Category(KnownGap.class)
   public void testAutoFlushOff() throws Exception {
     try (BufferedMutator mutator = connection.getBufferedMutator(TABLE_NAME);
         Table tableForRead = createNewConnection().getTable(TABLE_NAME);) {

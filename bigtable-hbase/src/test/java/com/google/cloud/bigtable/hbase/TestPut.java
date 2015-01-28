@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -188,6 +189,7 @@ public class TestPut extends AbstractTest {
   }
 
   @Test(expected = RetriesExhaustedWithDetailsException.class)
+  @Category(KnownGap.class)
   public void testIOExceptionOnFailedPut() throws Exception {
     Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
@@ -200,6 +202,7 @@ public class TestPut extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
   public void testAtomicPut() throws Exception {
     Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
@@ -235,6 +238,7 @@ public class TestPut extends AbstractTest {
    * where all the good puts are committed.)
    */
   @Test
+  @Category(KnownGap.class)
   public void testClientSideValidationError() throws Exception {
     BufferedMutator mutator = connection.getBufferedMutator(TABLE_NAME);
     Table table = connection.getTable(TABLE_NAME);
@@ -305,6 +309,7 @@ public class TestPut extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
   public void testMultiplePutsOneBadSameRow() throws Exception {
     final int numberOfGoodPuts = 100;
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
@@ -321,6 +326,7 @@ public class TestPut extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
   public void testMultiplePutsOneBadDiffRows() throws Exception {
     final int numberOfGoodPuts = 100;
     byte[] badkey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
