@@ -186,7 +186,6 @@
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
@@ -280,6 +279,17 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.17</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.google.cloud.bigtable.mapreduce.Driver</mainClass>
+                            </manifest>
+                        </archive>
+                     </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -297,9 +307,9 @@
                             <excludes>
                                 <exclude>**/IntegrationTests.java</exclude>
                                 <exclude>**/TestAppend.java</exclude>
-                                <exclude>**/TestAutoFlush.java</exclude>
                                 <exclude>**/TestBasicOps.java</exclude>
                                 <exclude>**/TestBatch.java</exclude>
+                                <exclude>**/TestBufferedMutator.java</exclude>
                                 <exclude>**/TestCheckAndMutate.java</exclude>
                                 <exclude>**/TestCreateTable.java</exclude>
                                 <exclude>**/TestDisableTable.java</exclude>
