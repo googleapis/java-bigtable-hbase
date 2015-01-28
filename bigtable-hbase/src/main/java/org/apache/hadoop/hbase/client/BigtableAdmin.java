@@ -8,6 +8,7 @@ import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequ
 import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesRequest;
 import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesResponse;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
+import com.google.cloud.bigtable.hbase.Logger;
 import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
 import com.google.protobuf.ByteString;
@@ -47,6 +48,8 @@ import java.util.regex.Pattern;
 
 public class BigtableAdmin implements Admin {
 
+  private static final Logger LOG = new Logger(BigtableAdmin.class);
+
   private final Configuration configuration;
   private final BigtableOptions options;
   private final BigtableConnection connection;
@@ -58,6 +61,7 @@ public class BigtableAdmin implements Admin {
       Configuration configuration,
       BigtableConnection connection,
       AnviltopAdminClient bigtableAdminClient) {
+    LOG.debug("Creating BigtableAdmin");
     this.configuration = configuration;
     this.options = options;
     this.connection = connection;
@@ -86,7 +90,7 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public boolean tableExists(TableName tableName) throws IOException {
-    for(TableName existingTableName : listTableNames()) {
+    for(TableName existingTableName : listTableNames(tableName.getNameAsString())) {
       if (existingTableName.equals(tableName)) {
         return true;
       }
@@ -118,30 +122,56 @@ public class BigtableAdmin implements Admin {
       }
     }
 
-    return result.toArray(new HTableDescriptor[result.size()]);  
+    return result.toArray(new HTableDescriptor[result.size()]);
   }
-  
+
+  @Override
+  public HTableDescriptor[] listTables(final Pattern pattern, final boolean includeSysTables)
+      throws IOException {
+    // We don't have systables.
+    return listTables(pattern);
+  }
+
+
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
   @Deprecated
   public TableName[] listTableNames(String patternStr) throws IOException {
+    return listTableNames(Pattern.compile(patternStr));
+  }
+
+  @Override
+  public TableName[] listTableNames(Pattern pattern) throws IOException {
     ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
     builder.setProjectId(options.getProjectId());
     ListTablesResponse response = bigtableAdminClient.listTables(builder.build());
     List<TableName> result = new ArrayList<>();
-    Pattern pattern = Pattern.compile(patternStr);
     for (String tableName : response.getTableNameList()) {
       if (pattern.matcher(tableName).matches()) {
         result.add(TableName.valueOf(tableName));
       }
     }
 
-    return result.toArray(new TableName[result.size()]);  
+    return result.toArray(new TableName[result.size()]);
   }
 
   @Override
+  public TableName[] listTableNames(Pattern pattern, boolean includeSysTables) throws IOException {
+    return listTableNames(pattern);
+  }
+
+  @Override
+  public TableName[] listTableNames(String regex, boolean includeSysTables) throws IOException {
+    return listTableNames(regex);
+  }
+  @Override
   public HTableDescriptor[] listTables(String regex) throws IOException {
     return listTables(Pattern.compile(regex));
+  }
+
+  @Override
+  public HTableDescriptor[] listTables(String regex, boolean includeSysTables) throws IOException {
+    return listTables(regex);
   }
 
   @Override
@@ -156,7 +186,7 @@ public class BigtableAdmin implements Admin {
     return tableNames;
   }
 
- 
+
   @Override
   public HTableDescriptor getTableDescriptor(TableName tableName)
       throws TableNotFoundException, IOException {
