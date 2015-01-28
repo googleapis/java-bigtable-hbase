@@ -13,8 +13,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
+import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
+import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -23,8 +25,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.io.IOException;
 
 /**
  * Requirement 1.1 - Writes are buffered in the client by default (can be disabled).  Buffer size
@@ -37,40 +37,40 @@ public class TestAutoFlush extends AbstractTest {
 
   @Test
   public void testAutoFlushOff() throws Exception {
-    Table tableForWrite = connection.getTable(TABLE_NAME);
-    Table tableForRead = createNewConnection().getTable(TABLE_NAME);
-    Get get = quickPutThenGet(tableForWrite);
+    try (BufferedMutator mutator = connection.getBufferedMutator(TABLE_NAME);
+        Table tableForRead = createNewConnection().getTable(TABLE_NAME);) {
+      // Set up the tiny write and read
+      mutator.mutate(getPut());
+      Get get = getGet();
 
-    Result result = tableForRead.get(get);
-
-    Assert.assertEquals("Expecting no results", 0, result.size());
-    result = tableForRead.get(get);
-    Assert.assertEquals("Expecting one result", 1, result.size());
+      Assert.assertEquals("Expecting no results", 0, tableForRead.get(get).size());
+      mutator.flush();
+      Assert.assertEquals("Expecting one result", 1, tableForRead.get(get).size());
+    }
   }
 
   @Test
   public void testAutoFlushOn() throws Exception {
-    Table tableForWrite = connection.getTable(TABLE_NAME);
-    Table tableForRead = createNewConnection().getTable(TABLE_NAME);
-    Get get = quickPutThenGet(tableForWrite);
-
-    Result result = tableForRead.get(get);
-    Assert.assertEquals("Expecting one result", 1, result.size());
+    try (Table mutator = connection.getTable(TABLE_NAME);
+        Table tableForRead = createNewConnection().getTable(TABLE_NAME);) {
+      mutator.put(getPut());
+      Assert.assertEquals("Expecting one result", 1, tableForRead.get(getGet()).size());
+    }
   }
 
-  private Get quickPutThenGet(Table tableForWrite) throws IOException {
-    // Set up the tiny write and read
-    byte[] rowKey = dataHelper.randomData("testrow-");
-    byte[] qualifier = dataHelper.randomData("testQualifier-");
-    byte[] value = dataHelper.randomData("testValue-");
-    Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qualifier, value);
+  final byte[] qualifier = dataHelper.randomData("testQualifier-");
+  final byte[] rowKey = dataHelper.randomData("testrow-");
+  final byte[] value = dataHelper.randomData("testValue-");
+
+  private Get getGet() {
     Get get = new Get(rowKey);
     get.addColumn(COLUMN_FAMILY, qualifier);
-
-    // Write and read in quick succession.  If this gets race-y, the test will be flaky and will
-    // need to be rethought.
-    tableForWrite.put(put);
     return get;
+  }
+
+  private Put getPut() {
+    Put put = new Put(rowKey);
+    put.add(COLUMN_FAMILY, qualifier, value);
+    return put;
   }
 }
