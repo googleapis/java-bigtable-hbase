@@ -54,10 +54,12 @@ import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -78,7 +80,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-public class BigtableTable implements Table {
+public class BigtableTable implements Table, BufferedMutator {
   protected static final Logger LOG = new Logger(BigtableTable.class);
 
   protected final TableName tableName;
@@ -162,10 +164,10 @@ public class BigtableTable implements Table {
     return this.configuration;
   }
 
-  public ExecutorService getPool(){ 
+  public ExecutorService getPool(){
     return this.executorService;
   }
-  
+
   @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
     // TODO: Also include column family information
@@ -419,6 +421,26 @@ public class BigtableTable implements Table {
   }
 
   @Override
+  public void mutate(Mutation m) throws IOException {
+    AnviltopData.RowMutation.Builder mutation  = mutationAdapter.adapt(m);
+    MutateRowRequest.Builder request = makeMutateRowRequest(mutation);
+
+    try {
+      client.mutateAtomic(request.build());
+    } catch (ServiceException e) {
+      LOG.error("Encountered ServiceException when executing mutate. Exception: %s", e);
+      throw new IOException("Failed to mutate.", e);
+    }
+  }
+
+  @Override
+  public void mutate(List<? extends Mutation> mutations) throws IOException {
+    for (Mutation mutation : mutations) {
+      mutate(mutation);
+    }
+  }
+
+  @Override
   public Result append(Append append) throws IOException {
     LOG.trace("append(Append)");
     AppendRowRequest.Builder appendRowRequest = appendAdapter.adapt(append);
@@ -495,14 +517,8 @@ public class BigtableTable implements Table {
   }
 
   @Override
-  public boolean isAutoFlush() {
-    LOG.trace("isAutoFlush()");
-    return true;
-  }
-
-  @Override
-  public void flushCommits() throws IOException {
-    LOG.error("Unsupported flushCommits() called.");
+  public void flush() throws IOException {
+    LOG.error("Unsupported flush() called.");
     throw new UnsupportedOperationException();  // TODO
   }
 
@@ -530,11 +546,6 @@ public class BigtableTable implements Table {
     LOG.error("Unsupported coprocessorService("
         + "Class, byte[], byte[], Batch.Call, Batch.Callback) called.");
     throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void setAutoFlushTo(boolean autoFlush) {
-    LOG.warn("setAutoFlushTo(%s), but is currently a NOP", autoFlush);
   }
 
   @Override

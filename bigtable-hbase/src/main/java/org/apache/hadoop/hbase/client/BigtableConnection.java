@@ -132,6 +132,23 @@ public class BigtableConnection implements Connection, Closeable {
     return new BigtableTable(tableName, options, conf, client, pool);
   }
 
+  @Override
+  public BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
+    if (params.getTableName() == null) {
+      throw new IllegalArgumentException("TableName cannot be null.");
+    }
+    if (params.getPool() == null) {
+      params.pool(getBatchPool());
+    }
+
+    return (BufferedMutator) getTable(params.getTableName(), params.getPool());
+  }
+
+  @Override
+  public BufferedMutator getBufferedMutator(TableName tableName) throws IOException {
+    return (BufferedMutator) getTable(tableName);
+  }
+
   /** This should not be used.  The hbase shell needs this in hbsae 0.99.2.  Remove this once
    * 1.0.0 comes out
    */

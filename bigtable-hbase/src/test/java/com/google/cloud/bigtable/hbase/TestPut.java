@@ -160,7 +160,6 @@ public class TestPut extends AbstractTest {
     long fifteenMinutes = 15 * 60 * 1000;
 
     Table table = connection.getTable(TABLE_NAME);
-    table.setAutoFlushTo(true);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
@@ -190,7 +189,6 @@ public class TestPut extends AbstractTest {
   @Test(expected = RetriesExhaustedWithDetailsException.class)
   public void testIOExceptionOnFailedPut() throws Exception {
     Table table = connection.getTable(TABLE_NAME);
-    table.setAutoFlushTo(true);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] badfamily = Bytes.toBytes("badcolumnfamily-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
@@ -238,7 +236,6 @@ public class TestPut extends AbstractTest {
   @Test
   public void testClientSideValidationError() throws Exception {
     Table table = connection.getTable(TABLE_NAME);
-    table.setAutoFlushTo(false);
     byte[] rowKey1 = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qual1 = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] value1 = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
@@ -266,7 +263,6 @@ public class TestPut extends AbstractTest {
     Assert.assertTrue("Exception should have been thrown", exceptionThrown);
     Get get1 = new Get(rowKey1);
     Assert.assertFalse("Row 1 should not exist yet", table.exists(get1));
-    table.flushCommits();
 
     Assert.assertTrue("Row 1 should exist", table.exists(get1));
     Get get2 = new Get(rowKey2);
@@ -349,7 +345,6 @@ public class TestPut extends AbstractTest {
   private void multiplePutsOneBad(int numberOfGoodPuts, byte[][] goodkeys, byte[] badkey)
       throws IOException {
     Table table = connection.getTable(TABLE_NAME);
-    table.setAutoFlushTo(true);
     List<Put> puts = new ArrayList<Put>();
     for (int i = 0; i < numberOfGoodPuts; ++i) {
       byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));

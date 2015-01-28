@@ -34,23 +34,16 @@ import java.io.IOException;
  */
 @RunWith(JUnit4.class)
 public class TestAutoFlush extends AbstractTest {
-  @Test
-  public void testAutoFlushDefault() throws Exception {
-    Table table = connection.getTable(TABLE_NAME);
-    Assert.assertTrue("Auto-flush on", table.isAutoFlush());
-  }
 
   @Test
   public void testAutoFlushOff() throws Exception {
     Table tableForWrite = connection.getTable(TABLE_NAME);
-    tableForWrite.setAutoFlushTo(false);
     Table tableForRead = createNewConnection().getTable(TABLE_NAME);
     Get get = quickPutThenGet(tableForWrite);
 
     Result result = tableForRead.get(get);
 
     Assert.assertEquals("Expecting no results", 0, result.size());
-    tableForWrite.flushCommits();
     result = tableForRead.get(get);
     Assert.assertEquals("Expecting one result", 1, result.size());
   }
@@ -58,7 +51,6 @@ public class TestAutoFlush extends AbstractTest {
   @Test
   public void testAutoFlushOn() throws Exception {
     Table tableForWrite = connection.getTable(TABLE_NAME);
-    tableForWrite.setAutoFlushTo(true);
     Table tableForRead = createNewConnection().getTable(TABLE_NAME);
     Get get = quickPutThenGet(tableForWrite);
 

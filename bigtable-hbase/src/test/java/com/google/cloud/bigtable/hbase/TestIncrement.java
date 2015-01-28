@@ -180,7 +180,6 @@ public class TestIncrement extends AbstractTest {
     long fifteenMinutes = 15 * 60 * 1000;
 
     Table table = connection.getTable(TABLE_NAME);
-    table.setAutoFlushTo(true);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     Put put = new Put(rowKey);
