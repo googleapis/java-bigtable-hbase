@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -160,7 +161,6 @@ public class TestPut extends AbstractTest {
     long fifteenMinutes = 15 * 60 * 1000;
 
     Table table = connection.getTable(TABLE_NAME);
-    table.setAutoFlushTo(true);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
@@ -190,7 +190,6 @@ public class TestPut extends AbstractTest {
   @Test(expected = RetriesExhaustedWithDetailsException.class)
   public void testIOExceptionOnFailedPut() throws Exception {
     Table table = connection.getTable(TABLE_NAME);
-    table.setAutoFlushTo(true);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] badfamily = Bytes.toBytes("badcolumnfamily-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
@@ -237,8 +236,8 @@ public class TestPut extends AbstractTest {
    */
   @Test
   public void testClientSideValidationError() throws Exception {
+    BufferedMutator mutator = connection.getBufferedMutator(TABLE_NAME);
     Table table = connection.getTable(TABLE_NAME);
-    table.setAutoFlushTo(false);
     byte[] rowKey1 = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qual1 = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] value1 = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
@@ -248,7 +247,7 @@ public class TestPut extends AbstractTest {
     byte[] qual3 = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] value3 = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
 
-    List<Put> puts = new ArrayList<Put>();
+    List<Put> puts = new ArrayList<>();
     Put put1 = new Put(rowKey1);
     put1.add(COLUMN_FAMILY, qual1, value1);
     puts.add(put1);
@@ -259,14 +258,14 @@ public class TestPut extends AbstractTest {
     puts.add(put3);
     boolean exceptionThrown = false;
     try {
-      table.put(puts);
+      mutator.mutate(puts);
     } catch (IllegalArgumentException e) {
       exceptionThrown = true;
     }
     Assert.assertTrue("Exception should have been thrown", exceptionThrown);
     Get get1 = new Get(rowKey1);
     Assert.assertFalse("Row 1 should not exist yet", table.exists(get1));
-    table.flushCommits();
+    mutator.flush();
 
     Assert.assertTrue("Row 1 should exist", table.exists(get1));
     Get get2 = new Get(rowKey2);
@@ -275,6 +274,7 @@ public class TestPut extends AbstractTest {
     Assert.assertFalse("Row 3 should not exist", table.exists(get3));
 
     table.close();
+    mutator.close();
   }
 
   @Test
@@ -349,7 +349,6 @@ public class TestPut extends AbstractTest {
   private void multiplePutsOneBad(int numberOfGoodPuts, byte[][] goodkeys, byte[] badkey)
       throws IOException {
     Table table = connection.getTable(TABLE_NAME);
-    table.setAutoFlushTo(true);
     List<Put> puts = new ArrayList<Put>();
     for (int i = 0; i < numberOfGoodPuts; ++i) {
       byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
