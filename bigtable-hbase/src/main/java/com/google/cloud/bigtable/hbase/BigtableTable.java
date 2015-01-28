@@ -80,6 +80,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
+/*
+ * TODO(sduskis): Create an implementation of BufferedMutator that actually does buffered mutations.
+ */
 public class BigtableTable implements Table, BufferedMutator {
   protected static final Logger LOG = new Logger(BigtableTable.class);
 
@@ -435,9 +438,7 @@ public class BigtableTable implements Table, BufferedMutator {
 
   @Override
   public void mutate(List<? extends Mutation> mutations) throws IOException {
-    for (Mutation mutation : mutations) {
-      mutate(mutation);
-    }
+    batchExecutor.batch(mutations);
   }
 
   @Override
@@ -524,6 +525,7 @@ public class BigtableTable implements Table, BufferedMutator {
 
   @Override
   public void close() throws IOException {
+    // TODO: shutdown the executor.
   }
 
   @Override

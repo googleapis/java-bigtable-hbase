@@ -79,9 +79,7 @@ public class Import extends Configured implements Tool {
      * @throws IOException When something is broken with the data.
      */
     @Override
-    public void map(ImmutableBytesWritable row, Result value,
-      Context context)
-    throws IOException {
+    public void map(ImmutableBytesWritable row, Result value, Context context) throws IOException {
       try {
         if (LOG.isTraceEnabled()) {
           LOG.trace("Considering the row."
@@ -109,7 +107,7 @@ public class Import extends Configured implements Tool {
   }
 
   /**
-   * Write table content out to files in hdfs.
+   * Write table content out to files.
    */
   public static class Importer extends TableMapper<ImmutableBytesWritable, Mutation> {
     private Map<byte[], byte[]> cfRenameMap;
@@ -123,9 +121,7 @@ public class Import extends Configured implements Tool {
      * @throws IOException When something is broken with the data.
      */
     @Override
-    public void map(ImmutableBytesWritable row, Result value,
-      Context context)
-    throws IOException {
+    public void map(ImmutableBytesWritable row, Result value, Context context) throws IOException {
       try {
         writeResult(row, value, context);
       } catch (InterruptedException e) {
