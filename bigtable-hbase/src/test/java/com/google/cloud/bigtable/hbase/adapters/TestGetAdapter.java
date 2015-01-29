@@ -68,7 +68,7 @@ public class TestGetAdapter {
 
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
-    Assert.assertEquals("((col({family1:\\C*}, ALL)))", rowRequestBuilder.getFilter());
+    Assert.assertEquals("((col({family1:\\C*}, all)))", rowRequestBuilder.getFilter());
   }
 
   @Test
@@ -82,7 +82,7 @@ public class TestGetAdapter {
 
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
-    Assert.assertEquals("((col({family1:\\C*}, ALL)) + (col({family2:\\C*}, ALL)))",
+    Assert.assertEquals("((col({family1:\\C*}, all)) + (col({family2:\\C*}, all)))",
         rowRequestBuilder.getFilter());
   }
 
@@ -99,7 +99,7 @@ public class TestGetAdapter {
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
-        "((col({family1:\\C*}, ALL)) + (col({family2:\\C*}, ALL))) | ts(1000000, 1999000)",
+        "((col({family1:\\C*}, all)) + (col({family2:\\C*}, all))) | ts(1000000, 1999000)",
         rowRequestBuilder.getFilter());
   }
 
@@ -156,7 +156,7 @@ public class TestGetAdapter {
     expectedFilterBuilder.write(Bytes.toBytes("\\x00")); // null byte
     expectedFilterBuilder.write(
         Bytes.toBytes("\\\\\\[\\]\\(\\)\\.\\*")); // Escape each in special characters
-    expectedFilterBuilder.write(Bytes.toBytes("}, ALL)))"));
+    expectedFilterBuilder.write(Bytes.toBytes("}, all)))"));
     Assert.assertArrayEquals(
         expectedFilterBuilder.toByteArray(),
         rowRequestBuilder.getFilterBytes().toByteArray());
@@ -216,7 +216,7 @@ public class TestGetAdapter {
     Get get = makeValidGet(dataHelper.randomData("special"));
     get.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier));
     GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
-    Assert.assertEquals("((col({f1:foo\\ \\@}\\@{\\ \\@@}, ALL)))", rowRequestBuilder.getFilter());
+    Assert.assertEquals("((col({f1:foo\\ \\@}\\@{\\ \\@@}, all)))", rowRequestBuilder.getFilter());
   }
 
   @Test
