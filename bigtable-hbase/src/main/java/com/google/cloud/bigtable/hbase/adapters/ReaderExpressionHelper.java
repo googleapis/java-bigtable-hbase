@@ -13,7 +13,8 @@ public class ReaderExpressionHelper {
 
   public static final String ALL_QUALIFIERS = "\\C*";
   public static final String ALL_FAMILIES = ".*";
-  public static final String ALL_VERSIONS = "ALL";
+  public static final String ALL_VERSIONS = "all";
+  public static final String LATEST_VERSION = "latest";
   public static final byte[] INTERLEAVE_CHARACTERS = Bytes.toBytes(" + ");
   private final static byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");
 

@@ -59,7 +59,6 @@ public class TestFilters extends AbstractTest {
    * Requirement 9.1 - ColumnCountGetFilter - return first N columns on rows only
    */
   @Test
-  @Category(KnownGap.class)
   public void testColumnCountGetFilter() throws Exception {
     // Initialize data
     int numColumns = 20;
@@ -220,7 +219,6 @@ public class TestFilters extends AbstractTest {
    * Requirement 9.3 - ColumnPrefixFilter - select keys with columns that match a particular prefix
    */
   @Test
-  @Category(KnownGap.class)
   public void testColumnPrefixFilter() throws Exception {
     // Initialize
     int numGoodCols = 5;
@@ -1076,7 +1074,6 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testMultipleColumnPrefixes() throws IOException {
     // Initialize
     int numCols = 5;

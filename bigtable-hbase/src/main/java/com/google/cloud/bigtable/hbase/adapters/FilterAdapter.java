@@ -270,9 +270,9 @@ public class FilterAdapter {
       readerExpressionHelper.writeQuotedExpression(filter.getQualifier(), outputStream);
       outputStream.write(Bytes.toBytes("}, "));
       if (filter.getLatestVersionOnly()) {
-        outputStream.write(Bytes.toBytes("LATEST"));
+        outputStream.write(Bytes.toBytes(ReaderExpressionHelper.LATEST_VERSION));
       } else {
-        outputStream.write(Bytes.toBytes("ALL"));
+        outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_VERSIONS));
       }
       outputStream.write(Bytes.toBytes(")) | value_match({"));
       readerExpressionHelper.writeQuotedExpression(
@@ -313,7 +313,7 @@ public class FilterAdapter {
       outputStream.write(':');
       outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));
       outputStream.write(Bytes.toBytes(
-          String.format("}, LATEST)) | itemlimit(%s))", filter.getLimit())));
+          String.format("}, latest)) | itemlimit(%s))", filter.getLimit())));
     }
 
     @Override
@@ -393,7 +393,7 @@ public class FilterAdapter {
         outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
         outputStream.write(':');
         outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));
-        outputStream.write(Bytes.toBytes(", LATEST))"));
+        outputStream.write(Bytes.toBytes(", latest))"));
         outputStream.write(STREAM_FILTER_BYTES);
         outputStream.write(
             Bytes.toBytes(
@@ -428,7 +428,9 @@ public class FilterAdapter {
       outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
       outputStream.write(':');
       readerExpressionHelper.writeQuotedExpression(filter.getPrefix(), outputStream);
-      outputStream.write(Bytes.toBytes(".*}, ALL))"));
+      outputStream.write(Bytes.toBytes(".*}, "));
+      outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_VERSIONS));
+      outputStream.write(Bytes.toBytes("))"));
     }
 
     @Override
@@ -464,7 +466,9 @@ public class FilterAdapter {
           outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
           outputStream.write(':');
           readerExpressionHelper.writeQuotedExpression(prefix, outputStream);
-          outputStream.write(Bytes.toBytes(".*}, ALL))"));
+          outputStream.write(Bytes.toBytes(".*}, "));
+          outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_VERSIONS));
+          outputStream.write(Bytes.toBytes("))"));
         }
       }
     }
