@@ -1112,7 +1112,6 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testTimestampsFilter() throws IOException {
     // Initialize
     int numCols = 5;

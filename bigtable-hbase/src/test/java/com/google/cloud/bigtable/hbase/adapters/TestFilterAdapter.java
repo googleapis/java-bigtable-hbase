@@ -127,7 +127,7 @@ public class TestFilterAdapter {
     TimestampsFilter filter = new TimestampsFilter(ImmutableList.<Long>of(1L, 2L, 3L));
     filterAdapter.adaptFilterTo(filter, outputStream);
     Assert.assertArrayEquals(
-        Bytes.toBytes("(ts(1,1) + ts(2,2) + ts(3,3))"),
+        Bytes.toBytes("((ts(1000,1000)) + (ts(2000,2000)) + (ts(3000,3000)))"),
         outputStream.toByteArray());
   }
 
