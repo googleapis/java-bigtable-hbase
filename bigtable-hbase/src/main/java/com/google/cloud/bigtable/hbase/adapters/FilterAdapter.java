@@ -2,6 +2,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Throwables;
+import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 
@@ -361,7 +362,11 @@ public class FilterAdapter {
           if (timestampIndex++ > 0) {
             outputStream.write(STREAM_INTERLEAVE_BYTES);
           }
-          outputStream.write(Bytes.toBytes(String.format("ts(%s,%s)", timestamp, timestamp)));
+          long bigtableTimestamp =
+              BigtableConstants.BIGTABLE_TIMEUNIT.convert(
+                  timestamp, BigtableConstants.HBASE_TIMEUNIT);
+          outputStream.write(Bytes.toBytes(String.format("(ts(%s,%s))",
+              bigtableTimestamp, bigtableTimestamp)));
         }
       }
     }
