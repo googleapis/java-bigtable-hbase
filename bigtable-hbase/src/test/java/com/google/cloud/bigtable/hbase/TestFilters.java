@@ -100,7 +100,6 @@ public class TestFilters extends AbstractTest {
    * too; offset can be a # of cols, or can be a particular qualifier byte[] value (inclusive)
    */
   @Test
-  @Category(KnownGap.class)
   public void testColumnPaginationFilter() throws Exception {
     // Initialize data
     int numColumns = 20;

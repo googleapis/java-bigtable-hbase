@@ -393,7 +393,7 @@ public class FilterAdapter {
         outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
         outputStream.write(':');
         outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));
-        outputStream.write(Bytes.toBytes(", latest))"));
+        outputStream.write(Bytes.toBytes("}, latest))"));
         outputStream.write(STREAM_FILTER_BYTES);
         outputStream.write(
             Bytes.toBytes(
