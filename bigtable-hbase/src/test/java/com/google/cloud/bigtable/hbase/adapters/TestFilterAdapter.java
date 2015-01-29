@@ -65,14 +65,14 @@ public class TestFilterAdapter {
 
     filterAdapter.adaptFilterTo(filter, outputStream);
 
-    Assert.assertArrayEquals(Bytes.toBytes("(col({f:someColumn}, LATEST)) | value_match({foobar})"),
+    Assert.assertArrayEquals(Bytes.toBytes("(col({f:someColumn}, latest)) | value_match({foobar})"),
         outputStream.toByteArray());
 
     outputStream.reset();
 
     filter.setLatestVersionOnly(false);
     filterAdapter.adaptFilterTo(filter, outputStream);
-    Assert.assertArrayEquals(Bytes.toBytes("(col({f:someColumn}, ALL)) | value_match({foobar})"),
+    Assert.assertArrayEquals(Bytes.toBytes("(col({f:someColumn}, all)) | value_match({foobar})"),
         outputStream.toByteArray());
   }
 
@@ -82,7 +82,7 @@ public class TestFilterAdapter {
     ColumnCountGetFilter filter = new ColumnCountGetFilter(10);
     filterAdapter.adaptFilterTo(filter, outputStream);
     Assert.assertArrayEquals(
-        Bytes.toBytes("((col({.*:\\C*}, LATEST)) | itemlimit(10))"), outputStream.toByteArray());
+        Bytes.toBytes("((col({.*:\\C*}, latest)) | itemlimit(10))"), outputStream.toByteArray());
   }
 
   @Test
@@ -92,7 +92,7 @@ public class TestFilterAdapter {
     ColumnPaginationFilter filter = new ColumnPaginationFilter(10, 20);
     filterAdapter.adaptFilterTo(filter, outputStream);
     Assert.assertArrayEquals(
-        Bytes.toBytes("((col({.*:\\C*, LATEST)) | skip_items(20) | itemlimit(10))"),
+        Bytes.toBytes("((col({.*:\\C*, latest)) | skip_items(20) | itemlimit(10))"),
         outputStream.toByteArray());
   }
 
@@ -103,7 +103,7 @@ public class TestFilterAdapter {
     ColumnPrefixFilter filter = new ColumnPrefixFilter(Bytes.toBytes("prefix"));
     filterAdapter.adaptFilterTo(filter, outputStream);
     Assert.assertArrayEquals(
-        Bytes.toBytes("(col({.*:prefix.*}, ALL))"), outputStream.toByteArray());
+        Bytes.toBytes("(col({.*:prefix.*}, all))"), outputStream.toByteArray());
   }
 
   @Test
@@ -115,7 +115,7 @@ public class TestFilterAdapter {
             new byte[][]{Bytes.toBytes("prefix"), Bytes.toBytes("prefix2")});
     filterAdapter.adaptFilterTo(filter, outputStream);
     Assert.assertArrayEquals(
-        Bytes.toBytes("((col({.*:prefix.*}, ALL)) + (col({.*:prefix2.*}, ALL)))"),
+        Bytes.toBytes("((col({.*:prefix.*}, all)) + (col({.*:prefix2.*}, all)))"),
         outputStream.toByteArray());
   }
 
