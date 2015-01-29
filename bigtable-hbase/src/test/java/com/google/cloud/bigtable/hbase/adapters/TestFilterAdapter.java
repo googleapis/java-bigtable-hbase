@@ -92,7 +92,7 @@ public class TestFilterAdapter {
     ColumnPaginationFilter filter = new ColumnPaginationFilter(10, 20);
     filterAdapter.adaptFilterTo(filter, outputStream);
     Assert.assertArrayEquals(
-        Bytes.toBytes("((col({.*:\\C*, latest)) | skip_items(20) | itemlimit(10))"),
+        Bytes.toBytes("((col({.*:\\C*}, latest)) | skip_items(20) | itemlimit(10))"),
         outputStream.toByteArray());
   }
 
