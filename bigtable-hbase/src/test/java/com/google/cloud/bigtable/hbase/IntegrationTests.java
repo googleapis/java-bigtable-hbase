@@ -79,11 +79,6 @@ public class IntegrationTests {
         configuration.addResource(resourceStream);
       }
     }
-    String projectId = configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY);
-    if (projectId != null) {
-      SecureRandom random = new SecureRandom();
-      configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId + "-" + random.nextInt());
-    }
   }
 
   protected static boolean useMiniCluster() {
