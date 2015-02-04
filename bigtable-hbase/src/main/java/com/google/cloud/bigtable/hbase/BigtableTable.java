@@ -80,10 +80,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-/*
- * TODO(sduskis): Create an implementation of BufferedMutator that actually does buffered mutations.
- */
-public class BigtableTable implements Table, BufferedMutator {
+public class BigtableTable implements Table {
   protected static final Logger LOG = new Logger(BigtableTable.class);
 
   protected final TableName tableName;
@@ -424,24 +421,6 @@ public class BigtableTable implements Table, BufferedMutator {
   }
 
   @Override
-  public void mutate(Mutation m) throws IOException {
-    AnviltopData.RowMutation.Builder mutation  = mutationAdapter.adapt(m);
-    MutateRowRequest.Builder request = makeMutateRowRequest(mutation);
-
-    try {
-      client.mutateAtomic(request.build());
-    } catch (ServiceException e) {
-      LOG.error("Encountered ServiceException when executing mutate. Exception: %s", e);
-      throw new IOException("Failed to mutate.", e);
-    }
-  }
-
-  @Override
-  public void mutate(List<? extends Mutation> mutations) throws IOException {
-    batchExecutor.batch(mutations);
-  }
-
-  @Override
   public Result append(Append append) throws IOException {
     LOG.trace("append(Append)");
     AppendRowRequest.Builder appendRowRequest = appendAdapter.adapt(append);
@@ -515,12 +494,6 @@ public class BigtableTable implements Table, BufferedMutator {
       Durability durability) throws IOException {
     LOG.trace("incrementColumnValue(byte[], byte[], byte[], long, Durability)");
     return incrementColumnValue(row, family, qualifier, amount);
-  }
-
-  @Override
-  public void flush() throws IOException {
-    LOG.error("Unsupported flush() called.");
-    throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
