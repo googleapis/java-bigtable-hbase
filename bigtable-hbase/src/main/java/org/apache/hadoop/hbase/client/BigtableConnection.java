@@ -15,21 +15,8 @@
 // Because MasterKeepAliveConnection is default scope, we have to use this package.  :-/
 package org.apache.hadoop.hbase.client;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.util.Threads;
-
 import com.google.api.client.repackaged.com.google.common.base.Throwables;
+import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
@@ -41,6 +28,20 @@ import com.google.cloud.hadoop.hbase.AnviltopClient;
 import com.google.cloud.hadoop.hbase.AnviltopGrpcClient;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.util.Threads;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class BigtableConnection implements Connection, Closeable {
   private static final Logger LOG = new Logger(BigtableConnection.class);
@@ -56,6 +57,7 @@ public class BigtableConnection implements Connection, Closeable {
   private User user = null;
   private volatile boolean cleanupPool = false;
   private final BigtableOptions options;
+  private final TableConfiguration tableConfig;
 
   public BigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
@@ -97,6 +99,7 @@ public class BigtableConnection implements Connection, Closeable {
         adminTransportOptions,
         channelOptions,
         batchPool);
+    this.tableConfig = new TableConfiguration(conf);
   }
 
   private AnviltopAdminClient getAdminClient(
@@ -140,13 +143,30 @@ public class BigtableConnection implements Connection, Closeable {
     if (params.getPool() == null) {
       params.pool(getBatchPool());
     }
+    if (params.getWriteBufferSize() == BufferedMutatorParams.UNSET) {
+      // HBase uses a buffer byte size, where we use a number of threads. Make sure that
+      // there don't spawn an inordinate number of threads.
+      if (tableConfig.getWriteBufferSize() < 1000) { 
+        params.writeBufferSize(tableConfig.getWriteBufferSize());
+      } else {
+        // Our default is 30 concurrent threads to perform writes.  Why 30?  It seems to work.
+        // TODO(sduskis): Use a better default that maximizes the use of the batchPool.
+        params.writeBufferSize(30);
+      }
+    }
 
-    return (BufferedMutator) getTable(params.getTableName(), params.getPool());
+    return new BigtableBufferedMutator(conf,
+        params.getTableName(),
+        (int) params.getWriteBufferSize(),
+        client,
+        options,
+        params.getPool(),
+        params.getListener());
   }
 
   @Override
   public BufferedMutator getBufferedMutator(TableName tableName) throws IOException {
-    return (BufferedMutator) getTable(tableName);
+    return getBufferedMutator(new BufferedMutatorParams(tableName));
   }
 
   /** This should not be used.  The hbase shell needs this in hbsae 0.99.2.  Remove this once
@@ -184,8 +204,6 @@ public class BigtableConnection implements Connection, Closeable {
   public Admin getAdmin() throws IOException {
     return new BigtableAdmin(options, conf, this, bigtableAdminClient);
   }
-
-
 
   @Override
   public void abort(final String msg, Throwable t) {

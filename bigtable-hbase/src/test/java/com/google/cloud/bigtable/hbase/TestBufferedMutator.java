@@ -33,7 +33,6 @@ import org.junit.experimental.categories.Category;
 public class TestBufferedMutator extends AbstractTest {
 
   @Test
-  @Category(KnownGap.class)
   public void testAutoFlushOff() throws Exception {
     try (BufferedMutator mutator = connection.getBufferedMutator(TABLE_NAME);
         Table tableForRead = createNewConnection().getTable(TABLE_NAME);) {
