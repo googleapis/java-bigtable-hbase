@@ -366,6 +366,10 @@
                                     <shadedPattern>com.google.bigtable.repackaged.com.google.common</shadedPattern>
                                 </relocation>
                                 <relocation>
+                                    <pattern>com.google.protobuf</pattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.protobuf</shadedPattern>
+                                </relocation>
+                                <relocation>
                                     <pattern>com.fasterxml</pattern>
                                     <shadedPattern>com.google.bigtable.repackaged.com.fasterxml</shadedPattern>
                                 </relocation>
