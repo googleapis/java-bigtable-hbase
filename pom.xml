@@ -9,6 +9,7 @@
 
     <modules>
         <module>bigtable-hbase</module>
+        <module>bigtable-hbase-integration-tests</module>
     </modules>
 
    <properties>
