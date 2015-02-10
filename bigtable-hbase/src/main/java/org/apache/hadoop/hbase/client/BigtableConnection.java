@@ -24,8 +24,8 @@ import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.Logger;
 import com.google.cloud.hadoop.hbase.AnviltopAdminBlockingGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
-import com.google.cloud.hadoop.hbase.AnviltopClient;
-import com.google.cloud.hadoop.hbase.AnviltopGrpcClient;
+import com.google.cloud.hadoop.hbase.BigtableGrpcClient;
+import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
 
@@ -52,7 +52,7 @@ public class BigtableConnection implements Connection, Closeable {
   private volatile boolean closed;
   private volatile boolean aborted;
   private volatile ExecutorService batchPool = null;
-  private AnviltopClient client;
+  private BigtableClient client;
   private AnviltopAdminClient bigtableAdminClient;
   private User user = null;
   private volatile boolean cleanupPool = false;
@@ -111,12 +111,12 @@ public class BigtableConnection implements Connection, Closeable {
         transportOptions, channelOptions, executorService);
   }
 
-  protected AnviltopClient getBigtableClient(
+  protected BigtableClient getBigtableClient(
       TransportOptions transportOptions,
       ChannelOptions channelOptions,
       ExecutorService executorService) {
 
-    return AnviltopGrpcClient.createClient(
+    return BigtableGrpcClient.createClient(
         transportOptions, channelOptions, executorService);
   }
 

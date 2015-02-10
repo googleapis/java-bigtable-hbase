@@ -1,10 +1,10 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopData.RowMutation;
-import com.google.bigtable.anviltop.AnviltopData.RowMutation.Mod;
-import com.google.bigtable.anviltop.AnviltopData.RowMutation.Mod.SetCell;
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.Mutation;
+import com.google.bigtable.v1.Mutation.MutationCase;
+import com.google.bigtable.v1.Mutation.SetCell;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Put;
@@ -20,7 +20,6 @@ public class TestPutAdapter {
 
   protected final PutAdapter adapter = new PutAdapter(new Configuration());
   protected final DataGenerationHelper dataHelper = new DataGenerationHelper();
-  protected final QualifierTestHelper qualifierHelper = new QualifierTestHelper();
 
   @Test
   public void testSingleCellIsConverted() {
@@ -33,21 +32,21 @@ public class TestPutAdapter {
     Put hbasePut = new Put(row);
     hbasePut.add(family, qualifier, timestamp, value);
 
-    RowMutation.Builder rowMutationBuilder = adapter.adapt(hbasePut);
+    MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
 
-    Assert.assertEquals(1, rowMutationBuilder.getModsCount());
-    Mod mod = rowMutationBuilder.getMods(0);
+    Assert.assertEquals(1, rowMutationBuilder.getMutationCount());
+    Mutation mutation = rowMutationBuilder.getMutation(0);
 
-    Assert.assertTrue(mod.hasSetCell());
-    SetCell setCell = mod.getSetCell();
+    Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
+    SetCell setCell = mutation.getSetCell();
 
-    byte[] fullCellQualifier = qualifierHelper.makeFullQualifier(family, qualifier);
-    Assert.assertArrayEquals(fullCellQualifier, setCell.getColumnName().toByteArray());
+    Assert.assertArrayEquals(family, setCell.getFamilyNameBytes().toByteArray());
+    Assert.assertArrayEquals(qualifier, setCell.getColumnQualifier().toByteArray());
     Assert.assertEquals(
         TimeUnit.MILLISECONDS.toMicros(timestamp),
-        setCell.getCell().getTimestampMicros());
-    Assert.assertArrayEquals(value, setCell.getCell().getValue().toByteArray());
+        setCell.getTimestampMicros());
+    Assert.assertArrayEquals(value, setCell.getValue().toByteArray());
   }
 
   @Test
@@ -61,35 +60,33 @@ public class TestPutAdapter {
     long timestamp1 = 1L;
     long timestamp2 = 2L;
 
-    byte[] fullCellQualifier1 = qualifierHelper.makeFullQualifier(family, qualifier1);
-    byte[] fullCellQualifier2 = qualifierHelper.makeFullQualifier(family, qualifier2);
-
     Put hbasePut = new Put(row);
     hbasePut.add(family, qualifier1, timestamp1, value1);
     hbasePut.add(family, qualifier2, timestamp2, value2);
 
-    RowMutation.Builder rowMutationBuilder = adapter.adapt(hbasePut);
+    MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
 
-    Assert.assertEquals(2, rowMutationBuilder.getModsCount());
-    Mod mod = rowMutationBuilder.getMods(0);
+    Assert.assertEquals(2, rowMutationBuilder.getMutationCount());
+    Mutation mutation = rowMutationBuilder.getMutation(0);
 
-    Assert.assertTrue(mod.hasSetCell());
-    SetCell setCell = mod.getSetCell();
-    Assert.assertArrayEquals(fullCellQualifier1, setCell.getColumnName().toByteArray());
+    Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
+    SetCell setCell = mutation.getSetCell();
+    Assert.assertArrayEquals(family, setCell.getFamilyNameBytes().toByteArray());
+    Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
     Assert.assertEquals(
         TimeUnit.MILLISECONDS.toMicros(timestamp1),
-        setCell.getCell().getTimestampMicros());
-    Assert.assertArrayEquals(value1, setCell.getCell().getValue().toByteArray());
+        setCell.getTimestampMicros());
+    Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
 
-
-    Mod mod2 = rowMutationBuilder.getMods(1);
+    Mutation mod2 = rowMutationBuilder.getMutation(1);
     SetCell setCell2 = mod2.getSetCell();
-    Assert.assertArrayEquals(fullCellQualifier2, setCell2.getColumnName().toByteArray());
+    Assert.assertArrayEquals(family, setCell2.getFamilyNameBytes().toByteArray());
+    Assert.assertArrayEquals(qualifier2, setCell2.getColumnQualifier().toByteArray());
     Assert.assertEquals(
         TimeUnit.MILLISECONDS.toMicros(timestamp2),
-        setCell2.getCell().getTimestampMicros());
-    Assert.assertArrayEquals(value2, setCell2.getCell().getValue().toByteArray());
+        setCell2.getTimestampMicros());
+    Assert.assertArrayEquals(value2, setCell2.getValue().toByteArray());
   }
 
   @Test
@@ -104,34 +101,33 @@ public class TestPutAdapter {
     long timestamp1 = 1L;
     long timestamp2 = 2L;
 
-    byte[] fullCellQualifier1 = qualifierHelper.makeFullQualifier(family1, qualifier1);
-    byte[] fullCellQualifier2 = qualifierHelper.makeFullQualifier(family2, qualifier2);
-
     Put hbasePut = new Put(row);
     hbasePut.add(family1, qualifier1, timestamp1, value1);
     hbasePut.add(family2, qualifier2, timestamp2, value2);
 
-    RowMutation.Builder rowMutationBuilder = adapter.adapt(hbasePut);
+    MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
 
-    Assert.assertEquals(2, rowMutationBuilder.getModsCount());
-    Mod mod = rowMutationBuilder.getMods(0);
+    Assert.assertEquals(2, rowMutationBuilder.getMutationCount());
+    Mutation mutation1 = rowMutationBuilder.getMutation(0);
 
-    Assert.assertTrue(mod.hasSetCell());
-    SetCell setCell = mod.getSetCell();
-    Assert.assertArrayEquals(fullCellQualifier1, setCell.getColumnName().toByteArray());
+    Assert.assertEquals(MutationCase.SET_CELL, mutation1.getMutationCase());
+    SetCell setCell = mutation1.getSetCell();
+    Assert.assertArrayEquals(family1, setCell.getFamilyNameBytes().toByteArray());
+    Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
     Assert.assertEquals(
         TimeUnit.MILLISECONDS.toMicros(timestamp1),
-        setCell.getCell().getTimestampMicros());
-    Assert.assertArrayEquals(value1, setCell.getCell().getValue().toByteArray());
+        setCell.getTimestampMicros());
+    Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
 
-    Mod mod2 = rowMutationBuilder.getMods(1);
-    SetCell setCell2 = mod2.getSetCell();
-    Assert.assertArrayEquals(fullCellQualifier2, setCell2.getColumnName().toByteArray());
+    Mutation mutation2 = rowMutationBuilder.getMutation(1);
+    SetCell setCell2 = mutation2.getSetCell();
+    Assert.assertArrayEquals(family2, setCell2.getFamilyNameBytes().toByteArray());
+    Assert.assertArrayEquals(qualifier2, setCell2.getColumnQualifier().toByteArray());
     Assert.assertEquals(
         TimeUnit.MILLISECONDS.toMicros(timestamp2),
-        setCell2.getCell().getTimestampMicros());
-    Assert.assertArrayEquals(value2, setCell2.getCell().getValue().toByteArray());
+        setCell2.getTimestampMicros());
+    Assert.assertArrayEquals(value2, setCell2.getValue().toByteArray());
   }
 
   @Test
@@ -144,20 +140,19 @@ public class TestPutAdapter {
     Put hbasePut = new Put(row);
     hbasePut.add(family1, qualifier1, value1);
 
-    RowMutation.Builder rowMutationBuilder = adapter.adapt(hbasePut);
+    MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
 
-    Assert.assertEquals(1, rowMutationBuilder.getModsCount());
-    Mod mod = rowMutationBuilder.getMods(0);
+    Assert.assertEquals(1, rowMutationBuilder.getMutationCount());
+    Mutation mutation = rowMutationBuilder.getMutation(0);
 
-    Assert.assertTrue(mod.hasSetCell());
-    SetCell setCell = mod.getSetCell();
+    Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
+    SetCell setCell = mutation.getSetCell();
 
-    byte[] fullCellQualifier = qualifierHelper.makeFullQualifier(family1, qualifier1);
-    Assert.assertArrayEquals(fullCellQualifier, setCell.getColumnName().toByteArray());
-    Assert.assertFalse(setCell.getCell().hasTimestampMicros());
-    Assert.assertEquals(0L, setCell.getCell().getTimestampMicros());
-    Assert.assertArrayEquals(value1, setCell.getCell().getValue().toByteArray());
+    Assert.assertArrayEquals(family1, setCell.getFamilyNameBytes().toByteArray());
+    Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
+    Assert.assertEquals(0L, setCell.getTimestampMicros());
+    Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
   }
 
   @Test(expected = IllegalArgumentException.class)

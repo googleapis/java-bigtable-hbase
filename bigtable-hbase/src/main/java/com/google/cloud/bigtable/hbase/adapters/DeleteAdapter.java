@@ -14,6 +14,11 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.anviltop.AnviltopData;
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.Mutation;
+import com.google.bigtable.v1.Mutation.Builder;
+import com.google.bigtable.v1.Mutation.DeleteFromFamily;
+import com.google.bigtable.v1.Mutation.DeleteFromRow;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
@@ -29,11 +34,7 @@ import java.util.Map;
 /**
  * Adapt a single Delete operation to a Bigtable RowMutation
  */
-public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowMutation.Builder> {
-
-  public static final ByteString SEPARATOR_BYTE_STRING =
-      ByteString.copyFrom(KeyValue.COLUMN_FAMILY_DELIM_ARRAY);
-
+public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.Builder> {
   static boolean isPointDelete(Cell cell) {
     return cell.getTypeByte() == KeyValue.Type.Delete.getCode();
   }
@@ -84,10 +85,10 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
     }
   }
 
-  static AnviltopData.RowMutation.Mod.DeleteFromColumn.Builder addDeleteFromColumnMods(
-      AnviltopData.RowMutation.Builder result, ByteString familyByteString, Cell cell) {
-    AnviltopData.RowMutation.Mod.Builder modBuilder = result.addModsBuilder();
-    AnviltopData.RowMutation.Mod.DeleteFromColumn.Builder deleteBuilder =
+  static Mutation.DeleteFromColumn.Builder addDeleteFromColumnMods(
+      MutateRowRequest.Builder result, ByteString familyByteString, Cell cell) {
+    Mutation.Builder modBuilder = result.addMutationBuilder();
+    Mutation.DeleteFromColumn.Builder deleteBuilder =
         modBuilder.getDeleteFromColumnBuilder();
 
     ByteString cellQualifierByteString = ByteString.copyFrom(
@@ -95,12 +96,8 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
         cell.getQualifierOffset(),
         cell.getQualifierLength());
 
-    deleteBuilder.setColumnName(
-        ByteString.copyFrom(
-            ImmutableList.of(
-                familyByteString,
-                SEPARATOR_BYTE_STRING,
-                cellQualifierByteString)));
+    deleteBuilder.setFamilyNameBytes(familyByteString);
+    deleteBuilder.setColumnQualifier(cellQualifierByteString);
 
     long timestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
         cell.getTimestamp(),
@@ -119,25 +116,23 @@ public class DeleteAdapter implements OperationAdapter<Delete, AnviltopData.RowM
     return deleteBuilder;
   }
 
-  static AnviltopData.RowMutation.Mod.DeleteFromFamily.Builder addDeleteFromFamilyMods(
-      AnviltopData.RowMutation.Builder result, ByteString familyByteString) {
-    AnviltopData.RowMutation.Mod.Builder modBuilder = result.addModsBuilder();
-    AnviltopData.RowMutation.Mod.DeleteFromFamily.Builder deleteBuilder =
-        modBuilder.getDeleteFromFamilyBuilder();
+  static Mutation.DeleteFromFamily.Builder addDeleteFromFamilyMods(
+      MutateRowRequest.Builder result, ByteString familyByteString) {
+    Builder modBuilder = result.addMutationBuilder();
+    DeleteFromFamily.Builder deleteBuilder = modBuilder.getDeleteFromFamilyBuilder();
     deleteBuilder.setFamilyNameBytes(familyByteString);
     return deleteBuilder;
   }
 
   @Override
-  public AnviltopData.RowMutation.Builder adapt(Delete operation) {
-    AnviltopData.RowMutation.Builder result = AnviltopData.RowMutation.newBuilder();
+  public MutateRowRequest.Builder adapt(Delete operation) {
+    MutateRowRequest.Builder result = MutateRowRequest.newBuilder();
     result.setRowKey(ByteString.copyFrom(operation.getRow()));
 
     if (operation.getFamilyCellMap().isEmpty()) {
       throwIfUnsupportedDeleteRow(operation);
 
-      AnviltopData.RowMutation.Mod.Builder modBuilder = result.addModsBuilder();
-      modBuilder.getDeleteRowBuilder();
+      result.addMutationBuilder().setDeleteFromRow(DeleteFromRow.getDefaultInstance());
     } else {
       for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
 

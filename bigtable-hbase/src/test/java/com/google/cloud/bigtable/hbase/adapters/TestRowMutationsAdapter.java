@@ -15,6 +15,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 
 import com.google.bigtable.anviltop.AnviltopData;
+import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
@@ -39,7 +40,7 @@ import java.io.IOException;
 public class TestRowMutationsAdapter {
 
   @Mock
-  private OperationAdapter<Mutation, AnviltopData.RowMutation.Builder> mutationAdapter;
+  private OperationAdapter<Mutation, MutateRowRequest.Builder> mutationAdapter;
 
   private RowMutationsAdapter adapter;
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -55,7 +56,7 @@ public class TestRowMutationsAdapter {
   public void testRowKeyIsSet() {
     byte[] rowKey = dataHelper.randomData("rk-1");
     RowMutations mutations = new RowMutations(rowKey);
-    AnviltopData.RowMutation.Builder result = adapter.adapt(mutations);
+    MutateRowRequest.Builder result = adapter.adapt(mutations);
     Assert.assertArrayEquals(rowKey, result.getRowKey().toByteArray());
   }
 
@@ -80,21 +81,19 @@ public class TestRowMutationsAdapter {
         new Put(rowKey)
             .add(family2, qualifier2, value2));
 
-    // When mocKAdapter is asked to adapt the above mutations, we'll return these responses:
-    AnviltopData.RowMutation.Builder response1 = AnviltopData.RowMutation.newBuilder();
-    response1.addModsBuilder()
+    // When mockAdapter is asked to adapt the above mutations, we'll return these responses:
+    MutateRowRequest.Builder response1 = MutateRowRequest.newBuilder();
+    response1.addMutationBuilder()
         .getSetCellBuilder()
-            .setColumnName(ByteString.copyFrom(
-                qualifierHelper.makeFullQualifier(family1, qualifier1)))
-        .getCellBuilder()
+            .setColumnQualifier(ByteString.copyFrom(qualifier1))
+            .setFamilyNameBytes(ByteString.copyFrom(family1))
             .setValue(ByteString.copyFrom(value1));
 
-    AnviltopData.RowMutation.Builder response2 = AnviltopData.RowMutation.newBuilder();
-    response2.addModsBuilder()
+    MutateRowRequest.Builder response2 = MutateRowRequest.newBuilder();
+    response2.addMutationBuilder()
         .getSetCellBuilder()
-        .setColumnName(ByteString.copyFrom(
-            qualifierHelper.makeFullQualifier(family2, qualifier2)))
-        .getCellBuilder()
+            .setColumnQualifier(ByteString.copyFrom(qualifier2))
+            .setFamilyNameBytes(ByteString.copyFrom(family2))
             .setValue(ByteString.copyFrom(value2));
 
     Mockito.when(mutationAdapter.adapt(Matchers.any(Mutation.class)))
@@ -102,15 +101,19 @@ public class TestRowMutationsAdapter {
         .thenReturn(response2);
 
     // Adapt the RowMutations to a RowMutation:
-    AnviltopData.RowMutation.Builder result = adapter.adapt(mutations);
+    MutateRowRequest.Builder result = adapter.adapt(mutations);
     Assert.assertArrayEquals(rowKey, result.getRowKey().toByteArray());
 
     // Verify mutations.getMutations(0) is in the first position in result.mods.
-    Assert.assertArrayEquals(qualifierHelper.makeFullQualifier(family1, qualifier1),
-        result.getMods(0).getSetCell().getColumnName().toByteArray());
+    Assert.assertArrayEquals(family1,
+        result.getMutation(0).getSetCell().getFamilyNameBytes().toByteArray());
+    Assert.assertArrayEquals(qualifier1,
+        result.getMutation(0).getSetCell().getColumnQualifier().toByteArray());
 
     //Verify mutations.getMutation(1) is in the second position in result.mods.
-    Assert.assertArrayEquals(qualifierHelper.makeFullQualifier(family2, qualifier2),
-        result.getMods(1).getSetCell().getColumnName().toByteArray());
+    Assert.assertArrayEquals(family2,
+        result.getMutation(1).getSetCell().getFamilyNameBytes().toByteArray());
+    Assert.assertArrayEquals(qualifier2,
+        result.getMutation(1).getSetCell().getColumnQualifier().toByteArray());
   }
 }

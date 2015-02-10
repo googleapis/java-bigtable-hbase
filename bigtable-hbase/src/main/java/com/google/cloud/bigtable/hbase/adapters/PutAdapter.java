@@ -13,12 +13,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopData.RowMutation;
-import com.google.bigtable.anviltop.AnviltopData.RowMutation.Mod;
-import com.google.bigtable.anviltop.AnviltopData.RowMutation.Mod.SetCell;
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.Mutation;
+import com.google.bigtable.v1.Mutation.SetCell.Builder;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
-import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.conf.Configuration;
@@ -26,13 +24,14 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map.Entry;
 
 /**
  * Adapt an HBase Put Operation into an Anviltop RowMutation
  */
-public class PutAdapter implements OperationAdapter<Put, RowMutation.Builder> {
+public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builder> {
   private int maxKeyValueSize;
 
   public PutAdapter(Configuration configuration) {
@@ -40,8 +39,8 @@ public class PutAdapter implements OperationAdapter<Put, RowMutation.Builder> {
   }
 
   @Override
-  public RowMutation.Builder adapt(Put operation) {
-    RowMutation.Builder result = AnviltopData.RowMutation.newBuilder();
+  public MutateRowRequest.Builder adapt(Put operation) {
+    MutateRowRequest.Builder result = MutateRowRequest.newBuilder();
     result.setRowKey(ByteString.copyFrom(operation.getRow()));
 
     if (operation.isEmpty()) {
@@ -49,7 +48,7 @@ public class PutAdapter implements OperationAdapter<Put, RowMutation.Builder> {
     }
 
     for (Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
-      ByteString familyByteString = ByteString.copyFrom(entry.getKey());
+      String familyString = new String(entry.getKey(), StandardCharsets.UTF_8);
 
       for (Cell cell : entry.getValue()) {
         // Since we are not using the interface involving KeyValues, we reconstruct how big they would be.
@@ -62,31 +61,25 @@ public class PutAdapter implements OperationAdapter<Put, RowMutation.Builder> {
         if (maxKeyValueSize > 0 && keyValueSize > maxKeyValueSize) {
           throw new IllegalArgumentException("KeyValue size too large");
         }
-        Mod.Builder modBuilder = result.addModsBuilder();
-        SetCell.Builder setCellBuilder = modBuilder.getSetCellBuilder();
+        Mutation.Builder modBuilder = result.addMutationBuilder();
+        Builder setCellBuilder = modBuilder.getSetCellBuilder();
 
         ByteString cellQualifierByteString = ByteString.copyFrom(
             cell.getQualifierArray(),
             cell.getQualifierOffset(),
             cell.getQualifierLength());
 
-        setCellBuilder.setColumnName(
-            ByteString.copyFrom(
-                ImmutableList.of(
-                    familyByteString,
-                    BigtableConstants.BIGTABLE_COLUMN_SEPARATOR_BYTE_STRING,
-                    cellQualifierByteString)));
-
-        AnviltopData.Cell.Builder cellBuilder = setCellBuilder.getCellBuilder();
+        setCellBuilder.setFamilyName(familyString);
+        setCellBuilder.setColumnQualifier(cellQualifierByteString);
 
         if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
           long timestampMicros = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
               cell.getTimestamp(),
               BigtableConstants.HBASE_TIMEUNIT);
-          cellBuilder.setTimestampMicros(timestampMicros);
+          setCellBuilder.setTimestampMicros(timestampMicros);
         }
 
-        cellBuilder.setValue(
+        setCellBuilder.setValue(
             ByteString.copyFrom(
                 cell.getValueArray(),
                 cell.getValueOffset(),

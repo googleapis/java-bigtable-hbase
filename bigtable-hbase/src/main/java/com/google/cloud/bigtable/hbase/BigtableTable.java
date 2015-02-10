@@ -16,14 +16,14 @@ package com.google.cloud.bigtable.hbase;
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowResponse;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.CheckAndMutateRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.CheckAndMutateRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowResponse;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableRequest;
+import com.google.bigtable.v1.CheckAndMutateRowResponse;
+import com.google.bigtable.v1.CheckAndMutateRowRequest;
+import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.AppendResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
@@ -39,7 +39,7 @@ import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
-import com.google.cloud.hadoop.hbase.AnviltopClient;
+import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.cloud.hadoop.hbase.AnviltopResultScanner;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
@@ -54,12 +54,10 @@ import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -85,7 +83,7 @@ public class BigtableTable implements Table {
 
   protected final TableName tableName;
   protected final BigtableOptions options;
-  protected final AnviltopClient client;
+  protected final BigtableClient client;
   protected final RowAdapter rowAdapter = new RowAdapter();
   protected final PutAdapter putAdapter;
   protected final AppendAdapter appendAdapter = new AppendAdapter();
@@ -103,7 +101,7 @@ public class BigtableTable implements Table {
   protected final Configuration configuration;
   protected final BatchExecutor batchExecutor;
   private final ExecutorService executorService;
-
+  private final TableMetadataSetter metadataSetter;
   /**
    * Constructed by AnvilTopConnection
    *
@@ -113,7 +111,7 @@ public class BigtableTable implements Table {
   public BigtableTable(TableName tableName,
       BigtableOptions options,
       Configuration configuration,
-      AnviltopClient client,
+      BigtableClient client,
       ExecutorService executorService) {
     try {
       LOG.debug("Opening table %s for project %s on host %s and port %s on transport %s",
@@ -141,7 +139,7 @@ public class BigtableTable implements Table {
     this.batchExecutor = new BatchExecutor(
         client,
         options,
-        tableName,
+        new TableMetadataSetter(tableName, options.getProjectId(), options.getZone(), options.getCluster()),
         executorService,
         getAdapter,
         getRowResponseAdapter,
@@ -152,6 +150,8 @@ public class BigtableTable implements Table {
         appendRespAdapter,
         incrementAdapter,
         incrRespAdapter);
+    this.metadataSetter = new TableMetadataSetter(
+        tableName, options.getProjectId(), options.getZone(), options.getCluster());
   }
 
   @Override
@@ -286,11 +286,10 @@ public class BigtableTable implements Table {
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
-    AnviltopData.RowMutation.Builder rowMutation = putAdapter.adapt(put);
-    MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
+    MutateRowRequest.Builder rowMutationBuilder = putAdapter.adapt(put);
 
     try {
-      client.mutateAtomic(request.build());
+      client.mutateRow(rowMutationBuilder.build());
     } catch (ServiceException e) {
       LOG.error("Encountered ServiceException when executing put. Exception: %s", e);
       throw new IOException(
@@ -298,7 +297,7 @@ public class BigtableTable implements Table {
               "put",
               options.getProjectId(),
               tableName.getQualifierAsString(),
-              rowMutation.getRowKey().toByteArray()),
+              rowMutationBuilder.getRowKey().toByteArray()),
           e);
     }
   }
@@ -321,7 +320,7 @@ public class BigtableTable implements Table {
 
     CheckAndMutateRowRequest.Builder requestBuilder =
         makeConditionalMutationRequestBuilder(
-            row, family, qualifier, compareOp, value, put, putAdapter.adapt(put).getModsList());
+            row, family, qualifier, compareOp, value, put, putAdapter.adapt(put).getMutationList());
 
     try {
       CheckAndMutateRowResponse response =
@@ -341,11 +340,11 @@ public class BigtableTable implements Table {
   @Override
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
-    AnviltopData.RowMutation.Builder rowMutation = deleteAdapter.adapt(delete);
-    MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
+    MutateRowRequest.Builder requestBuilder = deleteAdapter.adapt(delete);
+    metadataSetter.setMetadata(requestBuilder);
 
     try {
-      client.mutateAtomic(request.build());
+      client.mutateRow(requestBuilder.build());
     } catch (ServiceException e) {
       LOG.error("Encountered ServiceException when executing delete. Exception: %s", e);
       throw new IOException(
@@ -353,7 +352,7 @@ public class BigtableTable implements Table {
               "delete",
               options.getProjectId(),
               tableName.getQualifierAsString(),
-              rowMutation.getRowKey().toByteArray()),
+              requestBuilder.getRowKey().toByteArray()),
           e);
     }
   }
@@ -382,7 +381,7 @@ public class BigtableTable implements Table {
             compareOp,
             value,
             delete,
-            deleteAdapter.adapt(delete).getModsList());
+            deleteAdapter.adapt(delete).getMutationList());
 
     try {
       CheckAndMutateRowResponse response =
@@ -409,11 +408,10 @@ public class BigtableTable implements Table {
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
-    AnviltopData.RowMutation.Builder rowMutation = rowMutationsAdapter.adapt(rm);
-    MutateRowRequest.Builder request = makeMutateRowRequest(rowMutation);
-
+    MutateRowRequest.Builder requestBuilder = rowMutationsAdapter.adapt(rm);
+    metadataSetter.setMetadata(requestBuilder);
     try {
-      client.mutateAtomic(request.build());
+      client.mutateRow(requestBuilder.build());
     } catch (ServiceException e) {
       LOG.error("Encountered ServiceException when executing mutateRow. Exception: %s", e);
       throw new IOException("Failed to mutate.", e);
@@ -553,25 +551,15 @@ public class BigtableTable implements Table {
     throw new UnsupportedOperationException();  // TODO
   }
 
-  private MutateRowRequest.Builder makeMutateRowRequest(
-      AnviltopData.RowMutation.Builder rowMutation) {
-    LOG.trace("Making mutateRowRequest for table '%s' in project '%s' with mutations '%s'",
-        tableName, options.getProjectId(), rowMutation);
-    return MutateRowRequest.newBuilder()
-        .setProjectId(options.getProjectId())
-        .setTableName(tableName.getQualifierAsString())
-        .setMutation(rowMutation);
-  }
-
   protected boolean wasMutationApplied(
       CheckAndMutateRowRequest.Builder requestBuilder,
       CheckAndMutateRowResponse response) {
 
     // If we have true mods, we want the predicate to have matched.
     // If we have false mods, we did not want the predicate to have matched.
-    return (requestBuilder.getMutation().getTrueModsCount() > 0
+    return (requestBuilder.getTrueMutationsCount() > 0
         && response.getPredicateMatched())
-        || (requestBuilder.getMutation().getFalseModsCount() > 0
+        || (requestBuilder.getFalseMutationsCount() > 0
         && !response.getPredicateMatched());
   }
 
@@ -582,7 +570,7 @@ public class BigtableTable implements Table {
       CompareFilter.CompareOp compareOp,
       byte[] value,
       Row action,
-      List<AnviltopData.RowMutation.Mod> mods) throws IOException {
+      List<com.google.bigtable.v1.Mutation> mutations) throws IOException {
 
     if (!Arrays.equals(action.getRow(), row)) {
       throw new DoNotRetryIOException("Action's getRow must match the passed row");
@@ -599,12 +587,10 @@ public class BigtableTable implements Table {
 
     CheckAndMutateRowRequest.Builder requestBuilder =
         CheckAndMutateRowRequest.newBuilder();
-    requestBuilder.setProjectId(options.getProjectId());
-    requestBuilder.setTableName(tableName.getQualifierAsString());
 
-    AnviltopData.ConditionalRowMutation.Builder mutationBuilder =
-        requestBuilder.getMutationBuilder();
-    mutationBuilder.setRowKey(ByteString.copyFrom(row));
+    metadataSetter.setMetadata(requestBuilder);
+
+    requestBuilder.setRowKey(ByteString.copyFrom(row));
     Scan scan = new Scan().addColumn(family, qualifier);
     scan.setMaxVersions(1);
     if (value == null) {
@@ -620,13 +606,14 @@ public class BigtableTable implements Table {
     } else {
       scan.setFilter(new ValueFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(value)));
     }
-    mutationBuilder.setPredicateFilterBytes(
+
+    requestBuilder.setDEPRECATEDField3Bytes(
         ByteString.copyFrom(scanAdapter.buildFilterByteString(scan)));
 
     if (CompareFilter.CompareOp.EQUAL.equals(compareOp)) {
-      mutationBuilder.addAllTrueMods(mods);
+      requestBuilder.addAllTrueMutations(mutations);
     } else if (CompareFilter.CompareOp.NOT_EQUAL.equals(compareOp)) {
-      mutationBuilder.addAllFalseMods(mods);
+      requestBuilder.addAllFalseMutations(mutations);
     }
 
     return requestBuilder;

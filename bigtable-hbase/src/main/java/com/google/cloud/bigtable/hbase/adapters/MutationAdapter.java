@@ -14,6 +14,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.anviltop.AnviltopData;
+import com.google.bigtable.v1.MutateRowRequest;
 
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
@@ -30,13 +31,13 @@ import java.util.Map;
  * This class uses instanceof checking to determine an appropriate adaptation to apply.
  */
 public class MutationAdapter
-    implements OperationAdapter<Mutation, AnviltopData.RowMutation.Builder> {
+    implements OperationAdapter<Mutation, MutateRowRequest.Builder> {
 
   static class AdapterInstanceMap {
     private Map<Class<?>, OperationAdapter<?, ?>> unsafeMap =
         new HashMap<Class<?>, OperationAdapter<?, ?>>();
 
-    public <S extends Mutation, U extends OperationAdapter<S, AnviltopData.RowMutation.Builder>>
+    public <S extends Mutation, U extends OperationAdapter<S, MutateRowRequest.Builder>>
     Class<S> put(Class<S> key, U adapter) {
       unsafeMap.put(key, adapter);
       return key;
@@ -45,7 +46,7 @@ public class MutationAdapter
     // The only way to add to the unsafeMap is via put which enforces our type constraints at
     // compile-time. The unchecked cast should be safe.
     @SuppressWarnings("unchecked")
-    public <S extends Mutation, U extends OperationAdapter<S, AnviltopData.RowMutation.Builder>>
+    public <S extends Mutation, U extends OperationAdapter<S, MutateRowRequest.Builder>>
     U get(Class<? extends S> key) {
       return (U) unsafeMap.get(key);
     }
@@ -54,10 +55,10 @@ public class MutationAdapter
   private final AdapterInstanceMap adapterMap = new AdapterInstanceMap();
 
   public MutationAdapter(
-      OperationAdapter<Delete, AnviltopData.RowMutation.Builder> deleteAdapter,
-      OperationAdapter<Put, AnviltopData.RowMutation.Builder> putAdapter,
-      OperationAdapter<Increment, AnviltopData.RowMutation.Builder> incrementAdapter,
-      OperationAdapter<Append, AnviltopData.RowMutation.Builder> appendAdapter) {
+      OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
+      OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
+      OperationAdapter<Increment, MutateRowRequest.Builder> incrementAdapter,
+      OperationAdapter<Append, MutateRowRequest.Builder> appendAdapter) {
     adapterMap.put(Delete.class, deleteAdapter);
     adapterMap.put(Put.class, putAdapter);
     adapterMap.put(Increment.class, incrementAdapter);
@@ -65,8 +66,8 @@ public class MutationAdapter
   }
 
   @Override
-  public AnviltopData.RowMutation.Builder adapt(Mutation mutation) {
-    OperationAdapter<Mutation, AnviltopData.RowMutation.Builder> adapter =
+  public MutateRowRequest.Builder adapt(Mutation mutation) {
+    OperationAdapter<Mutation, MutateRowRequest.Builder> adapter =
         adapterMap.get(mutation.getClass());
     if (adapter == null) {
       throw new UnsupportedOperationException(

@@ -2,10 +2,8 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowRequest;
-import com.google.cloud.bigtable.hbase.BigtableOptions;
-import com.google.cloud.bigtable.hbase.BigtableTable;
-import com.google.cloud.hadoop.hbase.AnviltopClient;
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
@@ -36,9 +34,11 @@ public class TestBigtableTable {
 
   public static final String TEST_PROJECT = "testproject";
   public static final String TEST_TABLE = "testtable";
+  public static final String TEST_CLUSTER = "testcluster";
+  public static final String TEST_ZONE = "testzone";
 
   @Mock
-  public AnviltopClient mockClient;
+  public BigtableClient mockClient;
   public BigtableTable table;
 
   @Before
@@ -50,6 +50,8 @@ public class TestBigtableTable {
     builder.setHost(InetAddress.getLocalHost());
     builder.setPort(0);
     builder.setProjectId(TEST_PROJECT);
+    builder.setCluster(TEST_CLUSTER);
+    builder.setZone(TEST_ZONE);
     builder.setCredential(null);
     BigtableOptions options = builder.build();
     table = new BigtableTable(
@@ -66,18 +68,11 @@ public class TestBigtableTable {
 
     ArgumentCaptor<MutateRowRequest> argument =
         ArgumentCaptor.forClass(MutateRowRequest.class);
-    Mockito.verify(mockClient).mutateAtomic(argument.capture());
-    Assert.assertEquals(TEST_PROJECT, argument.getValue().getProjectId());
-  }
+    Mockito.verify(mockClient).mutateRow(argument.capture());
 
-  @Test
-  public void tableNameIsPopulatedInMutationRequests() throws ServiceException, IOException {
-    table.delete(new Delete(Bytes.toBytes("rowKey1")));
-
-    ArgumentCaptor<MutateRowRequest> argument =
-        ArgumentCaptor.forClass(MutateRowRequest.class);
-    Mockito.verify(mockClient).mutateAtomic(argument.capture());
-    Assert.assertEquals(TEST_TABLE, argument.getValue().getTableName());
+    Assert.assertEquals(
+        "projects/testproject/zones/testzone/clusters/testcluster/tables/testtable",
+        argument.getValue().getTableName());
   }
 
   @Test

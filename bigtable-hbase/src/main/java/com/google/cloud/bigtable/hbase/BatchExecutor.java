@@ -1,35 +1,30 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowResponse;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.MutateRowResponse;
+import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.AppendResponseAdapter;
-import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementRowResponseAdapter;
-import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
+import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
-import com.google.cloud.hadoop.hbase.AnviltopClient;
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
+import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.ServiceException;
 
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -126,14 +121,14 @@ public class BatchExecutor {
     }
   }
 
-  protected final AnviltopClient client;
+  protected final BigtableClient client;
   protected final BigtableOptions options;
-  protected final TableName tableName;
+  protected final TableMetadataSetter tableMetadataSetter;
   protected final ExecutorService service;
   protected final GetAdapter getAdapter;
   protected final GetRowResponseAdapter getRowResponseAdapter;
-  protected final PutAdapter putAdapter;
-  protected final DeleteAdapter deleteAdapter;
+  protected final OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
+  protected final OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
   protected final AppendAdapter appendAdapter;
   protected final AppendResponseAdapter appendRespAdapter;
@@ -141,14 +136,14 @@ public class BatchExecutor {
   protected final IncrementRowResponseAdapter incrRespAdapter;
 
   public BatchExecutor(
-      AnviltopClient client,
+      BigtableClient client,
       BigtableOptions options,
-      TableName tableName,
+      TableMetadataSetter tableMetadataSetter,
       ExecutorService service,
       GetAdapter getAdapter,
       GetRowResponseAdapter getRowResponseAdapter,
-      PutAdapter putAdapter,
-      DeleteAdapter deleteAdapter,
+      OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
+      OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
       RowMutationsAdapter rowMutationsAdapter,
       AppendAdapter appendAdapter,
       AppendResponseAdapter appendRespAdapter,
@@ -156,7 +151,7 @@ public class BatchExecutor {
       IncrementRowResponseAdapter incrRespAdapter) {
     this.client = client;
     this.options = options;
-    this.tableName = tableName;
+    this.tableMetadataSetter = tableMetadataSetter;
     this.service = service;
     this.getAdapter = getAdapter;
     this.getRowResponseAdapter = getRowResponseAdapter;
@@ -170,51 +165,13 @@ public class BatchExecutor {
   }
 
   /**
-   * Helper to construct a proper MutateRowRequest populated with project, table and mutations.
-   */
-  MutateRowRequest.Builder makeMutateRowRequest(AnviltopData.RowMutation.Builder mutation) {
-    MutateRowRequest.Builder requestBuilder = MutateRowRequest.newBuilder();
-    return requestBuilder
-        .setMutation(mutation)
-        .setTableName(tableName.getQualifierAsString())
-        .setProjectId(options.getProjectId());
-  }
-
-  /**
    * Adapt and issue a single Delete request returning a ListenableFuture for the MutateRowResponse.
    */
-  ListenableFuture<MutateRowResponse> issueDeleteRequest(Delete delete) {
+  ListenableFuture<Empty> issueDeleteRequest(Delete delete) {
     LOG.trace("issueDeleteRequest(Delete)");
-    AnviltopData.RowMutation.Builder mutationBuilder = deleteAdapter.adapt(delete);
-    MutateRowRequest.Builder requestBuilder = makeMutateRowRequest(mutationBuilder);
-
-    try {
-      return client.mutateAtomicAsync(requestBuilder.build());
-    } catch (ServiceException e) {
-      LOG.error("Immediately failing async issueDeleteRequest due to ServiceException %s", e);
-      return Futures.immediateFailedFuture(e);
-    }
-  }
-
-  /**
-   * Adapt and issue multiple Delete requests returning a list of ListenableFuture instances
-   * for the MutateRowResponses.
-   */
-  List<ListenableFuture<MutateRowResponse>> issueDeleteRequests(
-      List<Delete> deletes) {
-    LOG.trace("issueDeleteRequests(List<>)");
-    List<ListenableFuture<MutateRowResponse>> responseFutures =
-        Lists.transform(deletes,
-            new Function<Delete,
-                ListenableFuture<MutateRowResponse>>() {
-              @Override
-              public ListenableFuture<MutateRowResponse> apply(Delete delete) {
-                return issueDeleteRequest(delete);
-              }
-            });
-
-    // Force evaluation of the lazy transforms:
-    return Lists.newArrayList(responseFutures);
+    MutateRowRequest.Builder requestBuilder = deleteAdapter.adapt(delete);
+    tableMetadataSetter.setMetadata(requestBuilder);
+    return client.mutateRowAsync(requestBuilder.build());
   }
 
   /**
@@ -224,10 +181,9 @@ public class BatchExecutor {
   ListenableFuture<GetRowResponse> issueGetRequest(Get get) {
     LOG.trace("issueGetRequest(Get)");
     GetRowRequest.Builder builder = getAdapter.adapt(get);
-    GetRowRequest request = builder
-        .setTableName(tableName.getQualifierAsString())
-        .setProjectId(options.getProjectId())
-        .build();
+    tableMetadataSetter.setMetadata(builder);
+
+    GetRowRequest request = builder.build();
 
     try {
       return client.getRowAsync(request);
@@ -238,35 +194,14 @@ public class BatchExecutor {
   }
 
   /**
-   * Adapt and issue multiple Get requests returning a list of ListenableFuture instances
-   * for the GetRowResponses.
-   */
-  List<ListenableFuture<GetRowResponse>> issueGetRequests(List<Get> gets) {
-    LOG.trace("issueGetRequests(List<>)");
-    List<ListenableFuture<GetRowResponse>> responseFutures =
-        Lists.transform(gets,
-            new Function<Get, ListenableFuture<GetRowResponse>>() {
-              @Override
-              public ListenableFuture<GetRowResponse> apply(Get get) {
-                return issueGetRequest(get);
-              }
-            });
-    // Force evaluation of the lazy transforms:
-    return Lists.newArrayList(responseFutures);
-  }
-
-  /**
    * Adapt and issue a single Append request returning a ListenableFuture
    * for the AppendRowResponse.
    */
-  ListenableFuture<AppendRowResponse> issueAppendRequest(
-      Append append) {
+  ListenableFuture<AppendRowResponse> issueAppendRequest(Append append) {
     LOG.trace("issueAppendRequest(Append)");
-    AppendRowRequest request =
-        appendAdapter.adapt(append)
-            .setTableName(tableName.getQualifierAsString())
-            .setProjectId(options.getProjectId())
-            .build();
+    AppendRowRequest.Builder builder = appendAdapter.adapt(append);
+    tableMetadataSetter.setMetadata(builder);
+    AppendRowRequest request = builder.build();
 
     try {
       return client.appendRowAsync(request);
@@ -283,11 +218,9 @@ public class BatchExecutor {
   ListenableFuture<IncrementRowResponse> issueIncrementRequest(
       Increment increment) {
     LOG.trace("issueIncrementRequest(Increment)");
-    IncrementRowRequest request =
-        incrementAdapter.adapt(increment)
-            .setTableName(tableName.getQualifierAsString())
-            .setProjectId(options.getProjectId())
-            .build();
+    IncrementRowRequest.Builder builder = incrementAdapter.adapt(increment);
+    tableMetadataSetter.setMetadata(builder);
+    IncrementRowRequest request = builder.build();
 
     try {
       return client.incrementRowAsync(request);
@@ -300,52 +233,21 @@ public class BatchExecutor {
   /**
    * Adapt and issue a single Put request returning a ListenableFuture for the MutateRowResponse.
    */
-  ListenableFuture<MutateRowResponse> issuePutRequest(Put put) {
+  ListenableFuture<Empty> issuePutRequest(Put put) {
     LOG.trace("issuePutRequest(Put)");
-    AnviltopData.RowMutation.Builder mutationBuilder = putAdapter.adapt(put);
-    MutateRowRequest.Builder requestBuilder =
-        makeMutateRowRequest(mutationBuilder);
+    MutateRowRequest.Builder requestBuilder = putAdapter.adapt(put);
+    tableMetadataSetter.setMetadata(requestBuilder);
 
-    try {
-      return client.mutateAtomicAsync(requestBuilder.build());
-    } catch (ServiceException e) {
-      LOG.error("Immediately failing async issuePutRequest due to ServiceException %s", e);
-      return Futures.immediateFailedFuture(e);
-    }
-  }
-
-  /**
-   * Adapt and issue multiple Put requests returning a list of ListenableFuture instances
-   * for the MutateRowResponses.
-   */
-  List<ListenableFuture<MutateRowResponse>> issuePutRequests(List<Put> puts) {
-    List<ListenableFuture<MutateRowResponse>> responseFutures =
-        Lists.transform(puts,
-            new Function<Put,
-                ListenableFuture<MutateRowResponse>>() {
-              @Override
-              public ListenableFuture<MutateRowResponse> apply(Put put) {
-                return issuePutRequest(put);
-              }
-            });
-    // Force evaluation of the lazy transforms:
-    return Lists.newArrayList(responseFutures);
+    return client.mutateRowAsync(requestBuilder.build());
   }
 
   /**
    * Adapt and issue a single Put request returning a ListenableFuture for the MutateRowResponse.
    */
-  ListenableFuture<MutateRowResponse> issueRowMutationsRequest(
-      RowMutations mutations) {
-    AnviltopData.RowMutation.Builder mutationBuilder = rowMutationsAdapter.adapt(mutations);
-    MutateRowRequest.Builder requestBuilder = makeMutateRowRequest(mutationBuilder);
+  ListenableFuture<Empty> issueRowMutationsRequest(RowMutations mutations) {
+    MutateRowRequest.Builder requestBuilder = rowMutationsAdapter.adapt(mutations);
 
-    try {
-      return client.mutateAtomicAsync(requestBuilder.build());
-    } catch (ServiceException e) {
-      LOG.error("Immediately failing async issueRowMutationsRequest due to ServiceException %s", e);
-      return Futures.immediateFailedFuture(e);
-    }
+    return client.mutateRowAsync(requestBuilder.build());
   }
 
   /**
@@ -365,13 +267,13 @@ public class BatchExecutor {
     final SettableFuture<Object> resultFuture = SettableFuture.create();
     results[index] = null;
     if (row instanceof Delete) {
-      ListenableFuture<MutateRowResponse> rpcResponseFuture =
+      ListenableFuture<Empty> rpcResponseFuture =
           issueDeleteRequest((Delete) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, MutateRowResponse>(
+          new RpcResultFutureCallback<T, Empty>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(MutateRowResponse response) {
+            Object adaptResponse(Empty response) {
               return new Result();
             }
           },
@@ -413,25 +315,25 @@ public class BatchExecutor {
           },
           service);
     } else if (row instanceof Put) {
-      ListenableFuture<MutateRowResponse> rpcResponseFuture =
+      ListenableFuture<Empty> rpcResponseFuture =
           issuePutRequest((Put) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, MutateRowResponse>(
+          new RpcResultFutureCallback<T, Empty>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(MutateRowResponse response) {
+            Object adaptResponse(Empty response) {
               return new Result();
             }
           },
           service);
     } else if (row instanceof RowMutations) {
-      ListenableFuture<MutateRowResponse> rpcResponseFuture =
+      ListenableFuture<Empty> rpcResponseFuture =
           issueRowMutationsRequest((RowMutations) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, MutateRowResponse>(
+          new RpcResultFutureCallback<T, Empty>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(MutateRowResponse response) {
+            Object adaptResponse(Empty response) {
               return new Result();
             }
           },
@@ -478,7 +380,8 @@ public class BatchExecutor {
         }
       }
       if (problems.size() > 0) {
-        throw new RetriesExhaustedWithDetailsException(problems, problemActions, new ArrayList<String>(problems.size()));
+        throw new RetriesExhaustedWithDetailsException(
+            problems, problemActions, new ArrayList<String>(problems.size()));
       }
     } catch (ExecutionException e) {
       LOG.error("Encountered exception in batch(List<>, Object[]). Exception: %s", e);

@@ -23,6 +23,14 @@
         <value>autonomous-mote-782</value>
     </property>
     <property>
+        <name>google.bigtable.zone.name</name>
+        <value>us-central1-b</value>
+    </property>
+    <property>
+        <name>google.bigtable.cluster.name</name>
+        <value>testcluster</value>
+    </property>
+    <property>
         <name>google.bigtable.auth.service.account.enable</name>
         <value>${google.bigtable.auth.service.account.enable}</value>
     </property>
