@@ -126,14 +126,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.mortbay.jetty.alpn</groupId>
-            <artifactId>alpn-boot</artifactId>
-            <version>${alpn.version}</version>
-        </dependency>
-        <dependency>
             <groupId>${stubby.driver.group}</groupId>
             <artifactId>${stubby.driver.artifact}</artifactId>
             <version>${stubby.driver.version}</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
@@ -220,6 +216,7 @@
                                     <include>${stubby.driver.group}:*</include>
                                 </includes>
                             </artifactSet>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
                             <relocations>
                                 <relocation>
                                     <pattern>com.google.common</pattern>

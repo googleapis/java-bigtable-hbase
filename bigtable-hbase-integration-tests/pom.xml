@@ -13,15 +13,7 @@
     <version>0.1.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <repositories>
-        <repository>
-            <id>repo</id>
-            <url>file://${bigtable.grpc.repo.fullpath}</url>
-        </repository>
-    </repositories>
-
     <properties>
-        <bigtable.grpc.repo.fullpath>${project.basedir}/../${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
         <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
         <google.bigtable.endpoint.ip.address.override />
         <!-- project.build.sourceEncoding>UTF-8</project.build.sourceEncoding -->
@@ -49,12 +41,12 @@
                                 </goals>
                                 <phase>integration-test</phase>
                                 <configuration>
-                                    <!-- ALPN is needed for SSL engine rewrites and the stubby driver for its version of guava -->
+                                    <!-- ALPN is needed for SSL engine rewrites -->
                                     <!-- to enable netty logging, include:
                                     -Djava.util.logging.config.file=src/test/resources/logging.properties
                                     -->
                                     <argLine>
-                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar:${stubby.driver.path}
+                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
                                     </argLine>
                                     <forkCount>1</forkCount>
                                     <includes>
@@ -93,12 +85,12 @@
                                 </goals>
                                 <phase>integration-test</phase>
                                 <configuration>
-                                    <!-- ALPN is needed for SSL engine rewrites and the stubby driver for its version of guava -->
+                                    <!-- ALPN is needed for SSL engine rewrites -->
                                     <!-- to enable netty logging, include:
                                     -Djava.util.logging.config.file=src/test/resources/logging.properties
                                     -->
                                     <argLine>
-                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar:${stubby.driver.path}
+                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
                                     </argLine>
                                     <forkCount>1</forkCount>
                                     <includes>
@@ -225,11 +217,6 @@
             <groupId>org.mortbay.jetty.alpn</groupId>
             <artifactId>alpn-boot</artifactId>
             <version>${alpn.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${stubby.driver.group}</groupId>
-            <artifactId>${stubby.driver.artifact}</artifactId>
-            <version>${stubby.driver.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
