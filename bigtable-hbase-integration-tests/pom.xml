@@ -11,7 +11,7 @@
     <groupId>bigtable-client</groupId>
     <artifactId>bigtable-hbase-integration-tests</artifactId>
     <version>0.1.2-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
     <properties>
         <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>

@@ -216,7 +216,6 @@
                                     <include>${stubby.driver.group}:*</include>
                                 </includes>
                             </artifactSet>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
                             <relocations>
                                 <relocation>
                                     <pattern>com.google.common</pattern>
