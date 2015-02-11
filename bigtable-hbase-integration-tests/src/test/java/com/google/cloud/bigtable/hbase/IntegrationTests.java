@@ -1,7 +1,6 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.client.util.Strings;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.base.Preconditions;
 
 import org.apache.hadoop.conf.Configuration;
@@ -24,7 +23,6 @@ import org.junit.runners.Suite;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.SecureRandom;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
