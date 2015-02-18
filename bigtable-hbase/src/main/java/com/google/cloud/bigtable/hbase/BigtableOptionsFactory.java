@@ -37,6 +37,8 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_ADMIN_HOST_KEY = "google.bigtable.admin.endpoint.host";
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
+  public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
+  public static final String ZONE_KEY = "google.bigtable.zone.name";
   public static final String CALL_REPORT_DIRECTORY_KEY = "google.bigtable.call.report.directory";
 
   /**
@@ -90,6 +92,20 @@ public class BigtableOptionsFactory {
         String.format("Project ID must be supplied via %s", PROJECT_ID_KEY));
     optionsBuilder.setProjectId(projectId);
     LOG.debug("Project ID %s", projectId);
+
+    String zone = configuration.get(ZONE_KEY);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(zone),
+        String.format("Zone must be supplied via %s", ZONE_KEY));
+    optionsBuilder.setZone(zone);
+    LOG.debug("Zone %s", zone);
+
+    String cluster = configuration.get(CLUSTER_KEY);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(cluster),
+        String.format("Cluster must be supplied via %s", CLUSTER_KEY));
+    optionsBuilder.setCluster(cluster);
+    LOG.debug("Cluster %s", cluster);
 
 
     String overrideIp = configuration.get(IP_OVERRIDE_KEY);

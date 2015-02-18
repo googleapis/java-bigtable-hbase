@@ -14,6 +14,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.anviltop.AnviltopData;
+import com.google.bigtable.v1.MutateRowRequest;
 
 import org.apache.hadoop.hbase.client.Operation;
 
@@ -21,7 +22,7 @@ import org.apache.hadoop.hbase.client.Operation;
  * An adapter that throws an Unsupported exception when its adapt method is invoked.
  */
 public class UnsupportedOperationAdapter<T extends Operation>
-    implements OperationAdapter<T, AnviltopData.RowMutation.Builder> {
+    implements OperationAdapter<T, MutateRowRequest.Builder> {
 
   private final String operationDescription;
 
@@ -36,7 +37,7 @@ public class UnsupportedOperationAdapter<T extends Operation>
    * @return An equivalent Anviltop
    */
   @Override
-  public AnviltopData.RowMutation.Builder adapt(T operation) {
+  public MutateRowRequest.Builder adapt(T operation) {
     throw new UnsupportedOperationException(
         String.format("The %s operation is unsupported.", operationDescription));
   }

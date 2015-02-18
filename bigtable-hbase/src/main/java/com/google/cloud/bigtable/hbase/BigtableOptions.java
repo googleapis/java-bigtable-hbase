@@ -28,12 +28,13 @@ import java.net.InetAddress;
  * An immutable class providing access to configuration options for Bigtable.
  */
 public class BigtableOptions {
-
   /**
    * A mutable builder for BigtableConnectionOptions.
    */
   public static class Builder {
-    private String projectId = "";
+    private String projectId;
+    private String zone;
+    private String cluster;
     private Credential credential;
     private InetAddress host;
     private InetAddress adminHost;
@@ -67,6 +68,16 @@ public class BigtableOptions {
       return this;
     }
 
+    public Builder setZone(String zone) {
+      this.zone = zone;
+      return this;
+    }
+
+    public Builder setCluster(String cluster) {
+      this.cluster = cluster;
+      return this;
+    }
+
     public Builder setCallTimingReportPath(String callTimingReportPath) {
       this.callTimingReportPath = callTimingReportPath;
       return this;
@@ -93,6 +104,8 @@ public class BigtableOptions {
           port,
           credential,
           projectId,
+          zone,
+          cluster,
           retriesEnabled,
           callTimingReportPath,
           callStatusReportPath);
@@ -104,6 +117,8 @@ public class BigtableOptions {
   private final int port;
   private final Credential credential;
   private final String projectId;
+  private final String zone;
+  private final String cluster;
   private final boolean retriesEnabled;
   private final String callTimingReportPath;
   private final String callStatusReportPath;
@@ -115,11 +130,17 @@ public class BigtableOptions {
       int port,
       Credential credential,
       String projectId,
+      String zone,
+      String cluster,
       boolean retriesEnabled,
       String callTimingReportPath,
       String callStatusReportPath) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(zone), "Zone must not be empty or null.");
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(cluster), "Cluster must not be empty or null.");
     this.adminHost = Preconditions.checkNotNull(adminHost);
     this.host = Preconditions.checkNotNull(host);
     this.port = port;
@@ -128,10 +149,20 @@ public class BigtableOptions {
     this.retriesEnabled = retriesEnabled;
     this.callTimingReportPath = callTimingReportPath;
     this.callStatusReportPath = callStatusReportPath;
+    this.zone = zone;
+    this.cluster = cluster;
   }
 
   public String getProjectId() {
     return projectId;
+  }
+
+  public String getZone() {
+    return zone;
+  }
+
+  public String getCluster() {
+    return cluster;
   }
 
   public ChannelOptions getChannelOptions() {

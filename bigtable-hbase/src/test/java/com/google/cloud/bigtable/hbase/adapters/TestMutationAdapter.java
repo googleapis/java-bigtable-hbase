@@ -14,9 +14,8 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.anviltop.AnviltopData;
+import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
@@ -39,13 +38,13 @@ public class TestMutationAdapter {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   @Mock
-  private OperationAdapter<Delete, AnviltopData.RowMutation.Builder> deleteAdapter;
+  private OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter;
   @Mock
-  private OperationAdapter<Put, AnviltopData.RowMutation.Builder> putAdapter;
+  private OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
   @Mock
-  private OperationAdapter<Increment, AnviltopData.RowMutation.Builder> incrementAdapter;
+  private OperationAdapter<Increment, MutateRowRequest.Builder> incrementAdapter;
   @Mock
-  private OperationAdapter<Append, AnviltopData.RowMutation.Builder> appendAdapter;
+  private OperationAdapter<Append, MutateRowRequest.Builder> appendAdapter;
 
   private MutationAdapter adapter;
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -71,9 +70,9 @@ public class TestMutationAdapter {
   public void testPutIsAdapted() {
     Put put = new Put(dataHelper.randomData("rk1"));
     Mockito.when(putAdapter.adapt(put))
-        .thenReturn(AnviltopData.RowMutation.newBuilder());
+        .thenReturn(MutateRowRequest.newBuilder());
 
-    AnviltopData.RowMutation.Builder result = adapter.adapt(put);
+    MutateRowRequest.Builder result = adapter.adapt(put);
 
     Mockito.verify(putAdapter, Mockito.times(1)).adapt(Mockito.any(Put.class));
   }
@@ -82,9 +81,9 @@ public class TestMutationAdapter {
   public void testDeleteIsAdapted() {
     Delete delete = new Delete(dataHelper.randomData("rk1"));
     Mockito.when(deleteAdapter.adapt(delete))
-        .thenReturn(AnviltopData.RowMutation.newBuilder());
+        .thenReturn(MutateRowRequest.newBuilder());
 
-    AnviltopData.RowMutation.Builder result = adapter.adapt(delete);
+    MutateRowRequest.Builder result = adapter.adapt(delete);
 
     Mockito.verify(deleteAdapter, Mockito.times(1)).adapt(Mockito.any(Delete.class));
   }
@@ -93,9 +92,9 @@ public class TestMutationAdapter {
   public void testAppendIsAdapted() {
     Append append = new Append(dataHelper.randomData("rk1"));
     Mockito.when(appendAdapter.adapt(append))
-        .thenReturn(AnviltopData.RowMutation.newBuilder());
+        .thenReturn(MutateRowRequest.newBuilder());
 
-    AnviltopData.RowMutation.Builder result = adapter.adapt(append);
+    MutateRowRequest.Builder result = adapter.adapt(append);
 
     Mockito.verify(appendAdapter, Mockito.times(1)).adapt(Mockito.any(Append.class));
   }
@@ -104,8 +103,8 @@ public class TestMutationAdapter {
   public void testIncrementIsAdapted() {
     Increment increment = new Increment(dataHelper.randomData("rk1"));
     Mockito.when(incrementAdapter.adapt(increment))
-        .thenReturn(AnviltopData.RowMutation.newBuilder());
-    AnviltopData.RowMutation.Builder result = adapter.adapt(increment);
+        .thenReturn(MutateRowRequest.newBuilder());
+    MutateRowRequest.Builder result = adapter.adapt(increment);
 
     Mockito.verify(incrementAdapter, Mockito.times(1)).adapt(Mockito.any(Increment.class));
   }

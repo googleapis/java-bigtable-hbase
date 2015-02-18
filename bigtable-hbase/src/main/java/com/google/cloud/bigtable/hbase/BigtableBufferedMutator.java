@@ -28,7 +28,7 @@ import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
-import com.google.cloud.hadoop.hbase.AnviltopClient;
+import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.common.collect.Lists;
 
 import org.apache.hadoop.conf.Configuration;
@@ -82,7 +82,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   public BigtableBufferedMutator(Configuration configuration,
       TableName tableName,
       int bufferCount,
-      AnviltopClient client,
+      BigtableClient client,
       BigtableOptions options,
       ExecutorService executorService,
       BufferedMutator.ExceptionListener listener) {
@@ -101,7 +101,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
     this.batchExecutor = new BatchExecutor(client,
         options,
-        tableName,
+        new TableMetadataSetter(
+            tableName, options.getProjectId(), options.getZone(), options.getCluster()),
         executorService,
         getAdapter,
         getRowResponseAdapter,

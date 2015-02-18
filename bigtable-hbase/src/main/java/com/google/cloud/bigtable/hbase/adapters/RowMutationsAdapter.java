@@ -14,7 +14,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 
-import com.google.bigtable.anviltop.AnviltopData;
+import com.google.bigtable.v1.MutateRowRequest;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Mutation;
@@ -26,20 +26,22 @@ import org.apache.hadoop.hbase.client.RowMutations;
  */
 public class RowMutationsAdapter {
 
-  protected final OperationAdapter<Mutation, AnviltopData.RowMutation.Builder> mutationAdapter;
+  protected final OperationAdapter<Mutation,
+      MutateRowRequest.Builder> mutationAdapter;
 
   public RowMutationsAdapter(
-      OperationAdapter<Mutation, AnviltopData.RowMutation.Builder> mutationAdapter) {
+      OperationAdapter<Mutation, MutateRowRequest.Builder> mutationAdapter) {
     this.mutationAdapter = mutationAdapter;
   }
 
-  public AnviltopData.RowMutation.Builder adapt(RowMutations mutations) {
-    AnviltopData.RowMutation.Builder result = AnviltopData.RowMutation.newBuilder();
+  public MutateRowRequest.Builder adapt(RowMutations mutations) {
+    MutateRowRequest.Builder result = MutateRowRequest.newBuilder();
+
     result.setRowKey(ByteString.copyFrom(mutations.getRow()));
 
     for (Mutation mutation : mutations.getMutations()) {
-      AnviltopData.RowMutation.Builder anviltopMutation = mutationAdapter.adapt(mutation);
-      result.addAllMods(anviltopMutation.getModsList());
+      MutateRowRequest.Builder bigtableBuilder = mutationAdapter.adapt(mutation);
+      result.addAllMutation(bigtableBuilder.getMutationList());
     }
 
     return result;
