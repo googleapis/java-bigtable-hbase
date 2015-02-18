@@ -61,7 +61,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
         if (maxKeyValueSize > 0 && keyValueSize > maxKeyValueSize) {
           throw new IllegalArgumentException("KeyValue size too large");
         }
-        Mutation.Builder modBuilder = result.addMutationBuilder();
+        Mutation.Builder modBuilder = result.addMutationsBuilder();
         Builder setCellBuilder = modBuilder.getSetCellBuilder();
 
         ByteString cellQualifierByteString = ByteString.copyFrom(
@@ -77,6 +77,8 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
               cell.getTimestamp(),
               BigtableConstants.HBASE_TIMEUNIT);
           setCellBuilder.setTimestampMicros(timestampMicros);
+        } else {
+          setCellBuilder.setTimestampMicros(-1);
         }
 
         setCellBuilder.setValue(

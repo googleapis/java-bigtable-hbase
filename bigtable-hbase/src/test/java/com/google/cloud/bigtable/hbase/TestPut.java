@@ -172,7 +172,10 @@ public class TestPut extends AbstractTest {
     get.addColumn(COLUMN_FAMILY, qualifier);
     Result result = table.get(get);
     long timestamp1 = result.getColumnLatestCell(COLUMN_FAMILY, qualifier).getTimestamp();
-    Assert.assertTrue(Math.abs(timestamp1 - now) < fifteenMinutes);
+    System.out.println(String.format("Timestamp of latest cell: %s now = %s", timestamp1, now));
+    Assert.assertTrue(
+        "Latest timestamp is off by > 15 minutes",
+        Math.abs(timestamp1 - now) < fifteenMinutes);
 
     try {
       TimeUnit.MILLISECONDS.sleep(10);  // Make sure the clock has a chance to move

@@ -87,7 +87,7 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
 
   static Mutation.DeleteFromColumn.Builder addDeleteFromColumnMods(
       MutateRowRequest.Builder result, ByteString familyByteString, Cell cell) {
-    Mutation.Builder modBuilder = result.addMutationBuilder();
+    Mutation.Builder modBuilder = result.addMutationsBuilder();
     Mutation.DeleteFromColumn.Builder deleteBuilder =
         modBuilder.getDeleteFromColumnBuilder();
 
@@ -99,18 +99,22 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
     deleteBuilder.setFamilyNameBytes(familyByteString);
     deleteBuilder.setColumnQualifier(cellQualifierByteString);
 
-    long timestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
+    long startTimestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
         cell.getTimestamp(),
+        BigtableConstants.HBASE_TIMEUNIT);
+
+    long endTimestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
+        cell.getTimestamp() + 1,
         BigtableConstants.HBASE_TIMEUNIT);
 
     if (isPointDelete(cell)) {
       // Delete a single cell
-      deleteBuilder.getTimeRangeBuilder().setStartTimestampMicros(timestamp);
-      deleteBuilder.getTimeRangeBuilder().setEndTimestampMicros(timestamp);
+      deleteBuilder.getTimeRangeBuilder().setStartTimestampMicros(startTimestamp);
+      deleteBuilder.getTimeRangeBuilder().setEndTimestampMicros(endTimestamp);
     } else {
       // Delete all cells before a timestamp
       if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
-        deleteBuilder.getTimeRangeBuilder().setEndTimestampMicros(timestamp);
+        deleteBuilder.getTimeRangeBuilder().setEndTimestampMicros(endTimestamp);
       }
     }
     return deleteBuilder;
@@ -118,7 +122,7 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
 
   static Mutation.DeleteFromFamily.Builder addDeleteFromFamilyMods(
       MutateRowRequest.Builder result, ByteString familyByteString) {
-    Builder modBuilder = result.addMutationBuilder();
+    Builder modBuilder = result.addMutationsBuilder();
     DeleteFromFamily.Builder deleteBuilder = modBuilder.getDeleteFromFamilyBuilder();
     deleteBuilder.setFamilyNameBytes(familyByteString);
     return deleteBuilder;
@@ -132,7 +136,7 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
     if (operation.getFamilyCellMap().isEmpty()) {
       throwIfUnsupportedDeleteRow(operation);
 
-      result.addMutationBuilder().setDeleteFromRow(DeleteFromRow.getDefaultInstance());
+      result.addMutationsBuilder().setDeleteFromRow(DeleteFromRow.getDefaultInstance());
     } else {
       for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
 

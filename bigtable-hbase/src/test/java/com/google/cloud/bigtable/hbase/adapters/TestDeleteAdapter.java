@@ -47,9 +47,9 @@ public class TestDeleteAdapter {
     MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
-    Assert.assertEquals(1, rowMutation.getMutationCount());
+    Assert.assertEquals(1, rowMutation.getMutationsCount());
 
-    Mutation.MutationCase mutationCase = rowMutation.getMutation(0).getMutationCase();
+    Mutation.MutationCase mutationCase = rowMutation.getMutations(0).getMutationCase();
 
     Assert.assertEquals(MutationCase.DELETE_FROM_ROW, mutationCase);
   }
@@ -74,14 +74,14 @@ public class TestDeleteAdapter {
     MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
-    Assert.assertEquals(1, rowMutation.getMutationCount());
+    Assert.assertEquals(1, rowMutation.getMutationsCount());
 
-    MutationCase mutationCase = rowMutation.getMutation(0).getMutationCase();
+    MutationCase mutationCase = rowMutation.getMutations(0).getMutationCase();
 
     Assert.assertEquals(MutationCase.DELETE_FROM_FAMILY, mutationCase);
 
     Mutation.DeleteFromFamily deleteFromFamily =
-        rowMutation.getMutation(0).getDeleteFromFamily();
+        rowMutation.getMutations(0).getDeleteFromFamily();
     Assert.assertArrayEquals(family, deleteFromFamily.getFamilyNameBytes().toByteArray());
   }
 
@@ -103,7 +103,8 @@ public class TestDeleteAdapter {
     byte[] family = randomHelper.randomData("family1-");
     byte[] qualifier = randomHelper.randomData("qualifier");
     long hbaseTimestamp = 1000L;
-    long anviltopTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp);
+    long anviltopStartTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp);
+    long anviltopEndTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp + 1);
     byte[] fullColumnName = qualifierTestHelper.makeFullQualifier(family, qualifier);
 
     Delete delete = new Delete(rowKey);
@@ -111,21 +112,21 @@ public class TestDeleteAdapter {
     MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
-    Assert.assertEquals(1, rowMutation.getMutationCount());
+    Assert.assertEquals(1, rowMutation.getMutationsCount());
 
-    MutationCase mutationCase = rowMutation.getMutation(0).getMutationCase();
+    MutationCase mutationCase = rowMutation.getMutations(0).getMutationCase();
 
     Assert.assertEquals(MutationCase.DELETE_FROM_COLUMN, mutationCase);
 
     Mutation.DeleteFromColumn deleteFromColumn =
-        rowMutation.getMutation(0).getDeleteFromColumn();
+        rowMutation.getMutations(0).getDeleteFromColumn();
     Assert.assertArrayEquals(family, deleteFromColumn.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier, deleteFromColumn.getColumnQualifier().toByteArray());
-    Assert.assertTrue(rowMutation.getMutation(0).getDeleteFromColumn().hasTimeRange());
+    Assert.assertTrue(rowMutation.getMutations(0).getDeleteFromColumn().hasTimeRange());
 
     TimestampRange timeStampRange = deleteFromColumn.getTimeRange();
-    Assert.assertEquals(anviltopTimestamp, timeStampRange.getStartTimestampMicros());
-    Assert.assertEquals(anviltopTimestamp, timeStampRange.getEndTimestampMicros());
+    Assert.assertEquals(anviltopStartTimestamp, timeStampRange.getStartTimestampMicros());
+    Assert.assertEquals(anviltopEndTimestamp, timeStampRange.getEndTimestampMicros());
   }
 
   @Test
@@ -149,7 +150,7 @@ public class TestDeleteAdapter {
     byte[] family = randomHelper.randomData("family1-");
     byte[] qualifier = randomHelper.randomData("qualifier");
     long hbaseTimestamp = 1000L;
-    long anviltopTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp);
+    long anviltopTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp + 1);
     byte[] fullColumnName = qualifierTestHelper.makeFullQualifier(family, qualifier);
 
     Delete delete = new Delete(rowKey);
@@ -157,14 +158,14 @@ public class TestDeleteAdapter {
     MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
-    Assert.assertEquals(1, rowMutation.getMutationCount());
+    Assert.assertEquals(1, rowMutation.getMutationsCount());
     Assert.assertEquals(
-        MutationCase.DELETE_FROM_COLUMN, rowMutation.getMutation(0).getMutationCase());
+        MutationCase.DELETE_FROM_COLUMN, rowMutation.getMutations(0).getMutationCase());
 
     Mutation.DeleteFromColumn deleteFromColumn =
-        rowMutation.getMutation(0).getDeleteFromColumn();
+        rowMutation.getMutations(0).getDeleteFromColumn();
     Assert.assertArrayEquals(qualifier, deleteFromColumn.getColumnQualifier().toByteArray());
-    Assert.assertTrue(rowMutation.getMutation(0).getDeleteFromColumn().hasTimeRange());
+    Assert.assertTrue(rowMutation.getMutations(0).getDeleteFromColumn().hasTimeRange());
 
     TimestampRange timeRange = deleteFromColumn.getTimeRange();
     Assert.assertEquals(0L, timeRange.getStartTimestampMicros());

@@ -14,7 +14,6 @@ import org.apache.hadoop.hbase.TableName;
  * service messages.
  */
 public class TableMetadataSetter {
-
   public static final String BIGTABLE_V1_TABLENAME_FMT =
       "projects/%s/zones/%s/clusters/%s/tables/%s";
 
