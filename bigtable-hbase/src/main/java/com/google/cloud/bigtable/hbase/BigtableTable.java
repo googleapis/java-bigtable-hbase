@@ -287,6 +287,7 @@ public class BigtableTable implements Table {
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
     MutateRowRequest.Builder rowMutationBuilder = putAdapter.adapt(put);
+    metadataSetter.setMetadata(rowMutationBuilder);
 
     try {
       client.mutateRow(rowMutationBuilder.build());
@@ -320,7 +321,7 @@ public class BigtableTable implements Table {
 
     CheckAndMutateRowRequest.Builder requestBuilder =
         makeConditionalMutationRequestBuilder(
-            row, family, qualifier, compareOp, value, put, putAdapter.adapt(put).getMutationList());
+            row, family, qualifier, compareOp, value, put, putAdapter.adapt(put).getMutationsList());
 
     try {
       CheckAndMutateRowResponse response =
@@ -381,7 +382,7 @@ public class BigtableTable implements Table {
             compareOp,
             value,
             delete,
-            deleteAdapter.adapt(delete).getMutationList());
+            deleteAdapter.adapt(delete).getMutationsList());
 
     try {
       CheckAndMutateRowResponse response =

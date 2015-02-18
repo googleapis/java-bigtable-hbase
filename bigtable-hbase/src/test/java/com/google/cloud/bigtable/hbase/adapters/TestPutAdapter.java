@@ -35,8 +35,8 @@ public class TestPutAdapter {
     MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
 
-    Assert.assertEquals(1, rowMutationBuilder.getMutationCount());
-    Mutation mutation = rowMutationBuilder.getMutation(0);
+    Assert.assertEquals(1, rowMutationBuilder.getMutationsCount());
+    Mutation mutation = rowMutationBuilder.getMutations(0);
 
     Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
     SetCell setCell = mutation.getSetCell();
@@ -67,8 +67,8 @@ public class TestPutAdapter {
     MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
 
-    Assert.assertEquals(2, rowMutationBuilder.getMutationCount());
-    Mutation mutation = rowMutationBuilder.getMutation(0);
+    Assert.assertEquals(2, rowMutationBuilder.getMutationsCount());
+    Mutation mutation = rowMutationBuilder.getMutations(0);
 
     Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
     SetCell setCell = mutation.getSetCell();
@@ -79,7 +79,7 @@ public class TestPutAdapter {
         setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
 
-    Mutation mod2 = rowMutationBuilder.getMutation(1);
+    Mutation mod2 = rowMutationBuilder.getMutations(1);
     SetCell setCell2 = mod2.getSetCell();
     Assert.assertArrayEquals(family, setCell2.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier2, setCell2.getColumnQualifier().toByteArray());
@@ -108,8 +108,8 @@ public class TestPutAdapter {
     MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
 
-    Assert.assertEquals(2, rowMutationBuilder.getMutationCount());
-    Mutation mutation1 = rowMutationBuilder.getMutation(0);
+    Assert.assertEquals(2, rowMutationBuilder.getMutationsCount());
+    Mutation mutation1 = rowMutationBuilder.getMutations(0);
 
     Assert.assertEquals(MutationCase.SET_CELL, mutation1.getMutationCase());
     SetCell setCell = mutation1.getSetCell();
@@ -120,7 +120,7 @@ public class TestPutAdapter {
         setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
 
-    Mutation mutation2 = rowMutationBuilder.getMutation(1);
+    Mutation mutation2 = rowMutationBuilder.getMutations(1);
     SetCell setCell2 = mutation2.getSetCell();
     Assert.assertArrayEquals(family2, setCell2.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier2, setCell2.getColumnQualifier().toByteArray());
@@ -143,15 +143,15 @@ public class TestPutAdapter {
     MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
 
-    Assert.assertEquals(1, rowMutationBuilder.getMutationCount());
-    Mutation mutation = rowMutationBuilder.getMutation(0);
+    Assert.assertEquals(1, rowMutationBuilder.getMutationsCount());
+    Mutation mutation = rowMutationBuilder.getMutations(0);
 
     Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
     SetCell setCell = mutation.getSetCell();
 
     Assert.assertArrayEquals(family1, setCell.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
-    Assert.assertEquals(0L, setCell.getTimestampMicros());
+    Assert.assertEquals(-1L, setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
   }
 

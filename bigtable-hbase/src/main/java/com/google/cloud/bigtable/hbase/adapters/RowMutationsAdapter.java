@@ -41,7 +41,7 @@ public class RowMutationsAdapter {
 
     for (Mutation mutation : mutations.getMutations()) {
       MutateRowRequest.Builder bigtableBuilder = mutationAdapter.adapt(mutation);
-      result.addAllMutation(bigtableBuilder.getMutationList());
+      result.addAllMutations(bigtableBuilder.getMutationsList());
     }
 
     return result;

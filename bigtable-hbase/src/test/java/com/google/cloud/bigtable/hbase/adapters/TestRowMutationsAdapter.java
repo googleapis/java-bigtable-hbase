@@ -83,14 +83,14 @@ public class TestRowMutationsAdapter {
 
     // When mockAdapter is asked to adapt the above mutations, we'll return these responses:
     MutateRowRequest.Builder response1 = MutateRowRequest.newBuilder();
-    response1.addMutationBuilder()
+    response1.addMutationsBuilder()
         .getSetCellBuilder()
             .setColumnQualifier(ByteString.copyFrom(qualifier1))
             .setFamilyNameBytes(ByteString.copyFrom(family1))
             .setValue(ByteString.copyFrom(value1));
 
     MutateRowRequest.Builder response2 = MutateRowRequest.newBuilder();
-    response2.addMutationBuilder()
+    response2.addMutationsBuilder()
         .getSetCellBuilder()
             .setColumnQualifier(ByteString.copyFrom(qualifier2))
             .setFamilyNameBytes(ByteString.copyFrom(family2))
@@ -106,14 +106,14 @@ public class TestRowMutationsAdapter {
 
     // Verify mutations.getMutations(0) is in the first position in result.mods.
     Assert.assertArrayEquals(family1,
-        result.getMutation(0).getSetCell().getFamilyNameBytes().toByteArray());
+        result.getMutations(0).getSetCell().getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier1,
-        result.getMutation(0).getSetCell().getColumnQualifier().toByteArray());
+        result.getMutations(0).getSetCell().getColumnQualifier().toByteArray());
 
     //Verify mutations.getMutation(1) is in the second position in result.mods.
     Assert.assertArrayEquals(family2,
-        result.getMutation(1).getSetCell().getFamilyNameBytes().toByteArray());
+        result.getMutations(1).getSetCell().getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier2,
-        result.getMutation(1).getSetCell().getColumnQualifier().toByteArray());
+        result.getMutations(1).getSetCell().getColumnQualifier().toByteArray());
   }
 }
