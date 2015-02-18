@@ -110,7 +110,7 @@
         </repository>
         <repository>
             <id>Apache HBase Temporary Repository</id>
-            <url>https://repository.apache.org/content/repositories/orgapachehbase-1063/</url>
+            <url>https://repository.apache.org/content/repositories/orgapachehbase-1065/</url>
         </repository>
     </repositories>
 
