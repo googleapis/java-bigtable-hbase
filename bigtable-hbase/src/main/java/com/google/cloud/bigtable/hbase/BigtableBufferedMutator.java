@@ -19,17 +19,16 @@ import com.google.cloud.bigtable.hbase.adapters.BigtableRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
-import com.google.cloud.bigtable.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -60,11 +59,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   protected final BatchExecutor batchExecutor;
 
-  protected final RowAdapter rowAdapter = new RowAdapter();
   protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> bigtableRowAdapter =
       new BigtableRowAdapter();
-  protected final GetRowResponseAdapter getRowResponseAdapter =
-      new GetRowResponseAdapter(rowAdapter);
   protected final ScanAdapter scanAdapter = new ScanAdapter(new FilterAdapter());
   protected final GetAdapter getAdapter = new GetAdapter(scanAdapter);
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
@@ -110,9 +106,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
         options,
         new TableMetadataSetter(
             tableName, options.getProjectId(), options.getZone(), options.getCluster()),
-        executorService,
+        MoreExecutors.listeningDecorator(executorService),
         getAdapter,
-        getRowResponseAdapter,
         putAdapter,
         deleteAdapter,
         rowMutationsAdapter,

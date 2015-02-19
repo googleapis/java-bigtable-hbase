@@ -35,6 +35,13 @@ public class TestBigtableRowAdapter {
   }
 
   @Test
+  public void testNullIsAnEmptyResult() {
+    Row row = null;
+    Result result = adapter.adaptResponse(row);
+    Assert.assertNull(result.getRow());
+  }
+
+  @Test
   public void testSingleCellResult() {
     byte[] rowKey = dataHelper.randomData("rk1-");
     String columnFamily = "cf";

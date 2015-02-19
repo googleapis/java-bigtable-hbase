@@ -1,8 +1,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.client.util.Throwables;
-import com.google.bigtable.anviltop.AnviltopData;
-import com.google.cloud.hadoop.hbase.AnviltopResultScanner;
+import com.google.bigtable.v1.Row;
 
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
@@ -10,20 +9,25 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 
 import java.io.IOException;
 
+/**
+ * Adapt a Bigtable ResultScanner to an HBase Result Scanner.
+ */
 public class BigtableResultScannerAdapter {
 
-  final RowAdapter rowAdapter;
+  final ResponseAdapter<Row, Result> rowAdapter;
 
-  public BigtableResultScannerAdapter(RowAdapter rowAdapter) {
+  public BigtableResultScannerAdapter(ResponseAdapter<Row, Result> rowAdapter) {
     this.rowAdapter = rowAdapter;
   }
 
-  public ResultScanner adapt(final AnviltopResultScanner bigtableResultScanner) {
+  public ResultScanner adapt(
+      final com.google.cloud.hadoop.hbase.ResultScanner<Row> bigtableResultScanner) {
     return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {
-        AnviltopData.Row row = bigtableResultScanner.next();
+        Row row = bigtableResultScanner.next();
         if (row == null) {
+          // Null signals EOF.
           return null;
         }
         return rowAdapter.adaptResponse(row);

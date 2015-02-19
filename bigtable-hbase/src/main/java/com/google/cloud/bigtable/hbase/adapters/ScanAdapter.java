@@ -18,6 +18,7 @@ import com.google.api.client.util.Throwables;
 import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableResponse;
+import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.protobuf.ByteString;
 
@@ -34,7 +35,10 @@ import java.util.Map;
 import java.util.NavigableSet;
 
 
-public class ScanAdapter implements OperationAdapter<Scan, ReadTableRequest.Builder> {
+/**
+ * An adapter that translates HBase Scan operations to Bigtable readRows operations.
+ */
+public class ScanAdapter implements OperationAdapter<Scan, ReadRowsRequest.Builder> {
 
   /**
    * Simple AutoClosable that makes matching open-close filter elements slightly less error-prone
@@ -198,18 +202,15 @@ public class ScanAdapter implements OperationAdapter<Scan, ReadTableRequest.Buil
   }
 
   @Override
-  public ReadTableRequest.Builder adapt(Scan operation) {
+  public ReadRowsRequest.Builder adapt(Scan operation) {
     throwIfUnsupportedScan(operation);
-    ReadTableRequest.Builder result = ReadTableRequest.newBuilder();
-
-    AnviltopData.ReadOptions.Builder optionsBuilder = AnviltopData.ReadOptions.newBuilder();
+    ReadRowsRequest.Builder result = ReadRowsRequest.newBuilder();
 
     byte[] filter = buildFilterByteString(operation);
-    optionsBuilder.setFilterBytes(ByteString.copyFrom(filter));
-    optionsBuilder.addRangesBuilder()
-        .setStart(ByteString.copyFrom(operation.getStartRow()))
-        .setEnd(ByteString.copyFrom(operation.getStopRow()));
-    result.setOptions(optionsBuilder);
+    result.setDEPRECATEDStringFilterBytes(ByteString.copyFrom(filter));
+    result.getRowRangeBuilder()
+        .setStartKey(ByteString.copyFrom(operation.getStartRow()))
+        .setEndKey(ByteString.copyFrom(operation.getStopRow()));
     return result;
   }
 }

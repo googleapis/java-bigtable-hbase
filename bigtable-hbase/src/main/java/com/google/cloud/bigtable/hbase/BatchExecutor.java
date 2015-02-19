@@ -1,27 +1,24 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
+import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
-import com.google.cloud.bigtable.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
+import com.google.cloud.hadoop.hbase.ResultScanner;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
-import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
@@ -38,8 +35,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 
 import javax.annotation.Nullable;
 
@@ -122,9 +119,8 @@ public class BatchExecutor {
   protected final BigtableClient client;
   protected final BigtableOptions options;
   protected final TableMetadataSetter tableMetadataSetter;
-  protected final ExecutorService service;
+  protected final ListeningExecutorService service;
   protected final GetAdapter getAdapter;
-  protected final GetRowResponseAdapter getRowResponseAdapter;
   protected final OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
   protected final OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
@@ -136,9 +132,8 @@ public class BatchExecutor {
       BigtableClient client,
       BigtableOptions options,
       TableMetadataSetter tableMetadataSetter,
-      ExecutorService service,
+      ListeningExecutorService service,
       GetAdapter getAdapter,
-      GetRowResponseAdapter getRowResponseAdapter,
       OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
       OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
       RowMutationsAdapter rowMutationsAdapter,
@@ -150,7 +145,6 @@ public class BatchExecutor {
     this.tableMetadataSetter = tableMetadataSetter;
     this.service = service;
     this.getAdapter = getAdapter;
-    this.getRowResponseAdapter = getRowResponseAdapter;
     this.putAdapter = putAdapter;
     this.deleteAdapter = deleteAdapter;
     this.rowMutationsAdapter = rowMutationsAdapter;
@@ -169,24 +163,40 @@ public class BatchExecutor {
     return client.mutateRowAsync(requestBuilder.build());
   }
 
+  private ListenableFuture<com.google.bigtable.v1.Row> createSingleRowFuture(
+      final ResultScanner<com.google.bigtable.v1.Row> rowResultScanner) {
+    // I really dislike potentially creating a thread for a single row get.
+    // Consider ways to expose a ListenableFuture<Row> on the client interface;
+    // perhaps just exposing the stream observer version would suffice.
+    return service.submit(new Callable<com.google.bigtable.v1.Row>() {
+      @Override
+      public com.google.bigtable.v1.Row call() throws Exception {
+        com.google.bigtable.v1.Row next = rowResultScanner.next();
+        try {
+          rowResultScanner.close();
+        } catch (Exception e) {
+          // Ignore errors on close.
+          LOG.info("Error when closing result scanner", e);
+        }
+        return next;
+      }
+    });
+  }
+
   /**
    * Adapt and issue a single Get request returning a ListenableFuture
    * for the GetRowResponse.
    */
-  ListenableFuture<GetRowResponse> issueGetRequest(Get get) {
+  ListenableFuture<com.google.bigtable.v1.Row> issueGetRequest(Get get) {
     LOG.trace("issueGetRequest(Get)");
-    GetRowRequest.Builder builder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder builder = getAdapter.adapt(get);
     tableMetadataSetter.setMetadata(builder);
 
-    GetRowRequest request = builder.build();
+    ReadRowsRequest request = builder.build();
 
-    try {
-      return client.getRowAsync(request);
-    } catch (ServiceException e) {
-      LOG.error("Immediately failing async issueGetRequest due to ServiceException %s", e);
-      return Futures.immediateFailedFuture(e);
-    }
+    return createSingleRowFuture(client.readRows(request));
   }
+
 
   /**
    * Adapt and issue a single Append request returning a ListenableFuture
@@ -263,14 +273,14 @@ public class BatchExecutor {
           },
           service);
     } else  if (row instanceof Get) {
-      ListenableFuture<GetRowResponse> rpcResponseFuture =
+      ListenableFuture<com.google.bigtable.v1.Row> rpcResponseFuture =
           issueGetRequest((Get) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, GetRowResponse>(
+          new RpcResultFutureCallback<T, com.google.bigtable.v1.Row>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(GetRowResponse response) {
-              return getRowResponseAdapter.adaptResponse(response);
+            Object adaptResponse(com.google.bigtable.v1.Row response) {
+              return rowToResultAdapter.adaptResponse(response);
             }
           },
           service);

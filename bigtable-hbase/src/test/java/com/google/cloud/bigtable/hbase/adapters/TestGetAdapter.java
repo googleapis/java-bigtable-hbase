@@ -13,11 +13,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
+import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
-import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Get;
@@ -54,7 +51,7 @@ public class TestGetAdapter {
   public void testBasicRowKeyGet() throws IOException {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Get get = makeValidGet(rowKey);
-    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
     ByteString adaptedRowKey = rowRequestBuilder.getRowKey();
     Assert.assertArrayEquals(rowKey, adaptedRowKey.toByteArray());
   }
@@ -66,9 +63,10 @@ public class TestGetAdapter {
     byte[] family1 = Bytes.toBytes("family1");
     get.addFamily(family1);
 
-    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
-    Assert.assertEquals("((col({family1:\\C*}, all)))", rowRequestBuilder.getFilter());
+    Assert.assertEquals("((col({family1:\\C*}, all)))",
+        rowRequestBuilder.getDEPRECATEDStringFilter());
   }
 
   @Test
@@ -80,10 +78,10 @@ public class TestGetAdapter {
     byte[] family2 = Bytes.toBytes("family2");
     get.addFamily(family2);
 
-    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals("((col({family1:\\C*}, all)) + (col({family2:\\C*}, all)))",
-        rowRequestBuilder.getFilter());
+        rowRequestBuilder.getDEPRECATEDStringFilter());
   }
 
   @Test
@@ -96,11 +94,11 @@ public class TestGetAdapter {
     get.addFamily(family2);
     get.setTimeRange(1000, 2000);
 
-    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
         "((col({family1:\\C*}, all)) + (col({family2:\\C*}, all))) | ts(1000000, 1999000)",
-        rowRequestBuilder.getFilter());
+        rowRequestBuilder.getDEPRECATEDStringFilter());
   }
 
   @Test
@@ -112,11 +110,11 @@ public class TestGetAdapter {
     byte[] family2 = Bytes.toBytes("family2");
     get.addFamily(family2);
     get.setMaxVersions(1);
-    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
         "((col({family1:\\C*}, 1)) + (col({family2:\\C*}, 1)))",
-        rowRequestBuilder.getFilter());
+        rowRequestBuilder.getDEPRECATEDStringFilter());
   }
 
   @Test
@@ -126,11 +124,11 @@ public class TestGetAdapter {
     get.addFamily(Bytes.toBytes("family1"));
     get.addColumn(Bytes.toBytes("family2"), Bytes.toBytes("qualifier1"));
     get.setMaxVersions(1);
-    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
         "((col({family1:\\C*}, 1)) + (col({family2:qualifier1}, 1)))",
-        rowRequestBuilder.getFilter());
+        rowRequestBuilder.getDEPRECATEDStringFilter());
   }
 
   @Test
@@ -147,7 +145,7 @@ public class TestGetAdapter {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Get get = makeValidGet(rowKey);
     get.addColumn(Bytes.toBytes("f1"), qualifierBuilder.toByteArray());
-    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     ByteArrayOutputStream expectedFilterBuilder = new ByteArrayOutputStream();
     expectedFilterBuilder.write(Bytes.toBytes("((col({f1:"));
@@ -159,7 +157,7 @@ public class TestGetAdapter {
     expectedFilterBuilder.write(Bytes.toBytes("}, all)))"));
     Assert.assertArrayEquals(
         expectedFilterBuilder.toByteArray(),
-        rowRequestBuilder.getFilterBytes().toByteArray());
+        rowRequestBuilder.getDEPRECATEDStringFilterBytes().toByteArray());
   }
 
   @Test
@@ -177,12 +175,12 @@ public class TestGetAdapter {
     get.setMaxVersions(1);
     get.setFilter(filterList);
 
-    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
         "((col({family1:\\C*}, 1)) + (col({family2:qualifier1}, 1))) "
             + "| (value_match({value1}) + value_match({value2}))",
-        rowRequestBuilder.getFilter());
+        rowRequestBuilder.getDEPRECATEDStringFilter());
   }
 
   @Test
@@ -200,12 +198,12 @@ public class TestGetAdapter {
     get.setMaxVersions(1);
     get.setFilter(filterList);
 
-    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
 
     Assert.assertEquals(
         "((col({family1:\\C*}, 1)) + (col({family2:qualifier1}, 1))) "
             + "| (value_match({value1}) | value_match({value2}))",
-        rowRequestBuilder.getFilter());
+        rowRequestBuilder.getDEPRECATEDStringFilter());
   }
 
   @Test
@@ -215,8 +213,9 @@ public class TestGetAdapter {
 
     Get get = makeValidGet(dataHelper.randomData("special"));
     get.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier));
-    GetRowRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
-    Assert.assertEquals("((col({f1:foo\\ \\@}\\@{\\ \\@@}, all)))", rowRequestBuilder.getFilter());
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    Assert.assertEquals("((col({f1:foo\\ \\@}\\@{\\ \\@@}, all)))",
+        rowRequestBuilder.getDEPRECATEDStringFilter());
   }
 
   @Test

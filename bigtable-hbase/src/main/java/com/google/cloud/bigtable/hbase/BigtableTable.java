@@ -20,23 +20,24 @@ import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
+import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
-import com.google.cloud.bigtable.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.cloud.hadoop.hbase.AnviltopResultScanner;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
@@ -80,7 +81,6 @@ public class BigtableTable implements Table {
   protected final TableName tableName;
   protected final BigtableOptions options;
   protected final BigtableClient client;
-  protected final RowAdapter rowAdapter = new RowAdapter();
   protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> bigtableRowAdapter =
       new BigtableRowAdapter();
   protected final PutAdapter putAdapter;
@@ -89,14 +89,13 @@ public class BigtableTable implements Table {
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected final MutationAdapter mutationAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
-  protected final GetRowResponseAdapter getRowResponseAdapter = new GetRowResponseAdapter(rowAdapter);
   protected final ScanAdapter scanAdapter = new ScanAdapter(new FilterAdapter());
   protected final GetAdapter getAdapter = new GetAdapter(scanAdapter);
   protected final BigtableResultScannerAdapter bigtableResultScannerAdapter =
-      new BigtableResultScannerAdapter(rowAdapter);
+      new BigtableResultScannerAdapter(bigtableRowAdapter);
   protected final Configuration configuration;
   protected final BatchExecutor batchExecutor;
-  private final ExecutorService executorService;
+  private final ListeningExecutorService executorService;
   private final TableMetadataSetter metadataSetter;
   /**
    * Constructed by AnvilTopConnection
@@ -131,14 +130,13 @@ public class BigtableTable implements Table {
         new UnsupportedOperationAdapter<Increment>("increment"),
         new UnsupportedOperationAdapter<Append>("append"));
     rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
-    this.executorService = executorService;
+    this.executorService = MoreExecutors.listeningDecorator(executorService);
     this.batchExecutor = new BatchExecutor(
         client,
         options,
         new TableMetadataSetter(tableName, options.getProjectId(), options.getZone(), options.getCluster()),
-        executorService,
+        this.executorService,
         getAdapter,
-        getRowResponseAdapter,
         putAdapter,
         deleteAdapter,
         rowMutationsAdapter,
@@ -218,23 +216,24 @@ public class BigtableTable implements Table {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
-    GetRowRequest.Builder getRowRequest = getAdapter.adapt(get);
-    getRowRequest
-        .setProjectId(options.getProjectId())
-        .setTableName(tableName.getQualifierAsString());
+    ReadRowsRequest.Builder readRowsRequest = getAdapter.adapt(get);
+    metadataSetter.setMetadata(readRowsRequest);
 
     try {
-      GetRowResponse response = client.getRow(getRowRequest.build());
+      com.google.cloud.hadoop.hbase.ResultScanner<com.google.bigtable.v1.Row> scanner =
+          client.readRows(readRowsRequest.build());
+      Result response = bigtableRowAdapter.adaptResponse(scanner.next());
+      scanner.close();
 
-      return getRowResponseAdapter.adaptResponse(response);
-    } catch (ServiceException e) {
-      LOG.error("Encountered ServiceException when executing get, Exception: %s", e);
+      return response;
+    } catch (RuntimeException | IOException e) {
+      LOG.error("Encountered exception when executing get, Exception: %s", e);
       throw new IOException(
           makeGenericExceptionMessage(
               "get",
               options.getProjectId(),
               tableName.getQualifierAsString(),
-              getRowRequest.getRowKey().toByteArray()),
+              readRowsRequest.getRowKey().toByteArray()),
           e);
     }
   }
@@ -248,15 +247,15 @@ public class BigtableTable implements Table {
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
-    ReadTableRequest.Builder request = scanAdapter.adapt(scan);
-    request.setProjectId(options.getProjectId());
-    request.setTableName(tableName.getQualifierAsString());
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan);
+    metadataSetter.setMetadata(request);
 
     try {
-      AnviltopResultScanner scanner = client.readTable(request.build());
+      com.google.cloud.hadoop.hbase.ResultScanner<com.google.bigtable.v1.Row> scanner =
+          client.readRows(request.build());
       return bigtableResultScannerAdapter.adapt(scanner);
-    } catch (ServiceException e) {
-      LOG.error("Encountered ServiceException when executing getScanner. Exception: %s", e);
+    } catch (RuntimeException e) {
+      LOG.error("Encountered exception when executing getScanner. Exception: %s", e);
       throw new IOException(
           makeGenericExceptionMessage(
               "getScanner",
