@@ -16,10 +16,13 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -52,6 +55,24 @@ public class TestBufferedMutator extends AbstractTest {
         Table tableForRead = createNewConnection().getTable(TABLE_NAME);) {
       mutator.put(getPut());
       Assert.assertEquals("Expecting one result", 1, tableForRead.get(getGet()).size());
+    }
+  }
+
+  @Test
+  public void testBufferSizeFlush() throws Exception {
+    int maxSize = 32 * 1024;
+    try (BufferedMutator mutator =
+        connection.getBufferedMutator(new BufferedMutatorParams(TABLE_NAME)
+            .writeBufferSize(maxSize))) {
+      Put put = getPut();
+      mutator.mutate(put);
+      Assert.assertEquals(put.heapSize(), mutator.getWriteBufferSize());
+
+      Put largePut = new Put(dataHelper.randomData("testrow-"));
+      put.add(COLUMN_FAMILY, qualifier,
+        Bytes.toBytes(RandomStringUtils.randomAlphanumeric(maxSize)));
+      mutator.mutate(largePut);
+      Assert.assertEquals(0, mutator.getWriteBufferSize());
     }
   }
 

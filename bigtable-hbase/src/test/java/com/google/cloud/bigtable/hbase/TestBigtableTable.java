@@ -46,8 +46,8 @@ public class TestBigtableTable {
     MockitoAnnotations.initMocks(this);
     BigtableOptions.Builder builder = new BigtableOptions.Builder();
     builder.setRetriesEnabled(false);
-    builder.setAdminHost(InetAddress.getLocalHost());
-    builder.setHost(InetAddress.getLocalHost());
+    builder.setAdminHost(InetAddress.getByName("localhost"));
+    builder.setHost(InetAddress.getByName("localhost"));
     builder.setPort(0);
     builder.setProjectId(TEST_PROJECT);
     builder.setCluster(TEST_CLUSTER);

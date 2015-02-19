@@ -44,6 +44,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class BigtableConnection implements Connection, Closeable {
+  public static final String BUFFERED_MUTATOR_MAX_THREADS = "com.google.cloud.bigtable.hbase.buffered_mutator.max_threads";
   private static final Logger LOG = new Logger(BigtableConnection.class);
 
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
@@ -144,20 +145,15 @@ public class BigtableConnection implements Connection, Closeable {
       params.pool(getBatchPool());
     }
     if (params.getWriteBufferSize() == BufferedMutatorParams.UNSET) {
-      // HBase uses a buffer byte size, where we use a number of threads. Make sure that
-      // there don't spawn an inordinate number of threads.
-      if (tableConfig.getWriteBufferSize() < 1000) { 
-        params.writeBufferSize(tableConfig.getWriteBufferSize());
-      } else {
-        // Our default is 30 concurrent threads to perform writes.  Why 30?  It seems to work.
-        // TODO(sduskis): Use a better default that maximizes the use of the batchPool.
-        params.writeBufferSize(30);
-      }
+      params.writeBufferSize(tableConfig.getWriteBufferSize());
     }
+
+    int bufferCount = conf.getInt(BUFFERED_MUTATOR_MAX_THREADS, 30);
 
     return new BigtableBufferedMutator(conf,
         params.getTableName(),
-        (int) params.getWriteBufferSize(),
+        bufferCount,
+        params.getWriteBufferSize(),
         client,
         options,
         params.getPool(),
