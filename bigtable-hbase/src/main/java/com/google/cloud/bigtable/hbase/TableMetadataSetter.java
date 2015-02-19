@@ -6,6 +6,7 @@ import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest.Builde
 import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 
 import org.apache.hadoop.hbase.TableName;
 
@@ -34,11 +35,6 @@ public class TableMetadataSetter {
     builder.setProjectId(projectId);
   }
 
-  public void setMetadata(AppendRowRequest.Builder builder) {
-    builder.setTableName(tableName.getQualifierAsString());
-    builder.setProjectId(projectId);
-  }
-
   public void setMetadata(IncrementRowRequest.Builder builder) {
     builder.setTableName(tableName.getQualifierAsString());
     builder.setProjectId(projectId);
@@ -49,6 +45,10 @@ public class TableMetadataSetter {
   }
 
   public void setMetadata(CheckAndMutateRowRequest.Builder builder) {
+    builder.setTableName(formattedV1TableName);
+  }
+
+  public void setMetadata(ReadModifyWriteRowRequest.Builder builder) {
     builder.setTableName(formattedV1TableName);
   }
 }

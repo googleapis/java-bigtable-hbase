@@ -14,47 +14,54 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 
-import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest.Builder;
-import com.google.bigtable.anviltop.AnviltopData.RowIncrement;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
-import com.google.common.collect.ImmutableList;
+import com.google.bigtable.v1.ReadModifyWriteRowRequest;
+import com.google.bigtable.v1.ReadModifyWriteRule;
 import com.google.protobuf.ByteString;
 
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
 
 /**
- * Adapter for HBase Increment operations to Anviltop IncrementRowRequest.Builder.
+ * Adapter for HBase Increment operations to Bigtable ReadModifyWriteRowRequest.Builder.
  */
-public class IncrementAdapter implements OperationAdapter<Increment, IncrementRowRequest.Builder>{
+public class IncrementAdapter
+    implements OperationAdapter<Increment, ReadModifyWriteRowRequest.Builder>{
 
   @Override
-  public Builder adapt(Increment operation) {
+  public ReadModifyWriteRowRequest.Builder adapt(Increment operation) {
     if (!operation.getTimeRange().isAllTime()) {
       throw new UnsupportedOperationException(
           "Setting the time range in an Increment is not implemented");
     }
 
-    IncrementRowRequest.Builder result = IncrementRowRequest.newBuilder();
-    RowIncrement.Builder builder = result.getIncrementBuilder();
+    ReadModifyWriteRowRequest.Builder result = ReadModifyWriteRowRequest.newBuilder();
 
-    builder.setRowKey(ByteString.copyFrom(operation.getRow()));
-    for (Map.Entry<byte[], NavigableMap<byte[], Long>> familyEntry : operation.getFamilyMapOfLongs().entrySet()) {
-      ByteString familyByteString = ByteString.copyFrom(familyEntry.getKey());
+    result.setRowKey(ByteString.copyFrom(operation.getRow()));
 
-      for (Map.Entry<byte[], Long> qualifierEntry : familyEntry.getValue().entrySet()){
-        builder.addIncrsBuilder()
-            .setAmount(qualifierEntry.getValue())
-            .setColumnName(
-                ByteString.copyFrom(
-                    ImmutableList.of(
-                        familyByteString,
-                        BigtableConstants.BIGTABLE_COLUMN_SEPARATOR_BYTE_STRING,
-                        ByteString.copyFrom(qualifierEntry.getKey()))));
+    for (Map.Entry<byte[], NavigableMap<byte[], Long>> familyEntry :
+        operation.getFamilyMapOfLongs().entrySet()) {
+      String familyName = Bytes.toString(familyEntry.getKey());
+      // Bigtable applies all increments present in a single RPC. HBase applies only the last
+      // mutation present, if any. We remove all but the last mutation for each qualifier here:
+      List<Cell> mutationCells =
+          CellDeduplicationHelper.deduplicateFamily(operation, familyEntry.getKey());
+
+      for (Cell cell : mutationCells){
+        ReadModifyWriteRule.Builder rule = result.addRulesBuilder();
+        rule.setIncrementAmount(
+            Bytes.toLong(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength()));
+        rule.setFamilyName(familyName);
+        rule.setColumnQualifier(
+            ByteString.copyFrom(
+                cell.getQualifierArray(),
+                cell.getQualifierOffset(),
+                cell.getQualifierLength()));
       }
     }
     return result;

@@ -13,28 +13,24 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
-import com.google.cloud.bigtable.hbase.adapters.AppendResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
+import com.google.cloud.bigtable.hbase.adapters.BigtableRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
-import com.google.cloud.bigtable.hbase.adapters.IncrementRowResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
@@ -85,11 +81,11 @@ public class BigtableTable implements Table {
   protected final BigtableOptions options;
   protected final BigtableClient client;
   protected final RowAdapter rowAdapter = new RowAdapter();
+  protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> bigtableRowAdapter =
+      new BigtableRowAdapter();
   protected final PutAdapter putAdapter;
   protected final AppendAdapter appendAdapter = new AppendAdapter();
-  protected final AppendResponseAdapter appendRespAdapter = new AppendResponseAdapter(rowAdapter);
   protected final IncrementAdapter incrementAdapter = new IncrementAdapter();
-  protected final IncrementRowResponseAdapter incrRespAdapter = new IncrementRowResponseAdapter(rowAdapter);
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected final MutationAdapter mutationAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
@@ -147,9 +143,8 @@ public class BigtableTable implements Table {
         deleteAdapter,
         rowMutationsAdapter,
         appendAdapter,
-        appendRespAdapter,
         incrementAdapter,
-        incrRespAdapter);
+        bigtableRowAdapter);
     this.metadataSetter = new TableMetadataSetter(
         tableName, options.getProjectId(), options.getZone(), options.getCluster());
   }
@@ -422,16 +417,21 @@ public class BigtableTable implements Table {
   @Override
   public Result append(Append append) throws IOException {
     LOG.trace("append(Append)");
-    AppendRowRequest.Builder appendRowRequest = appendAdapter.adapt(append);
-    appendRowRequest
-        .setProjectId(options.getProjectId())
-        .setTableName(tableName.getQualifierAsString());
 
+    ReadModifyWriteRowRequest.Builder appendRowRequest = appendAdapter.adapt(append);
+    metadataSetter.setMetadata(appendRowRequest);
     try {
-      AppendRowResponse response = client.appendRow(appendRowRequest.build());
-      return appendRespAdapter.adaptResponse(response);
-    } catch (ServiceException e) {
-      LOG.error("Encountered ServiceException when executing append. Exception: %s", e);
+      com.google.bigtable.v1.Row response =
+          client.readModifyWriteRow(appendRowRequest.build());
+      // The bigtable API will always return the mutated results. In order to maintain
+      // compatibility, simply return null when results were not requested.
+      if (append.isReturnResults()) {
+        return bigtableRowAdapter.adaptResponse(response);
+      } else {
+        return null;
+      }
+    } catch (RuntimeException e) {
+      LOG.error("Encountered Exception when executing append. Exception: %s", e);
       throw new IOException(
           makeGenericExceptionMessage(
               "append",
@@ -445,18 +445,15 @@ public class BigtableTable implements Table {
   @Override
   public Result increment(Increment increment) throws IOException {
     LOG.trace("increment(Increment)");
-    IncrementRowRequest.Builder incrementRowRequest = incrementAdapter.adapt(
-        increment);
-    incrementRowRequest
-        .setProjectId(options.getProjectId())
-        .setTableName(tableName.getQualifierAsString());
+    ReadModifyWriteRowRequest.Builder incrementRowRequest =
+        incrementAdapter.adapt(increment);
+    metadataSetter.setMetadata(incrementRowRequest);
 
     try {
-      IncrementRowResponse response = client.incrementRow(
-          incrementRowRequest.build());
-      return incrRespAdapter.adaptResponse(response);
-    } catch (ServiceException e) {
-      LOG.error("Encountered ServiceException when executing increment. Exception: %s", e);
+      com.google.bigtable.v1.Row response = client.readModifyWriteRow(incrementRowRequest.build());
+      return bigtableRowAdapter.adaptResponse(response);
+    } catch (RuntimeException e) {
+      LOG.error("Encountered RuntimeException when executing increment. Exception: %s", e);
       throw new IOException(
           makeGenericExceptionMessage(
               "increment",
