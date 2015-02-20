@@ -8,9 +8,7 @@
         <version>0.1.2-SNAPSHOT</version>
     </parent>
 
-    <groupId>bigtable-client</groupId>
     <artifactId>bigtable-hbase</artifactId>
-    <version>0.1.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <repositories>
@@ -22,13 +20,11 @@
 
     <properties>
         <bigtable.grpc.repo.fullpath>${project.basedir}/../${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
-        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
-        <google.bigtable.endpoint.ip.address.override />
-        <!-- project.build.sourceEncoding>UTF-8</project.build.sourceEncoding -->
     </properties>
+
     <profiles>
         <profile>
-            <id>anviltopIntegrationTest</id>
+            <id>hbaseLocalMiniClusterTest</id>
             <build>
                 <plugins>
                     <plugin>
@@ -36,40 +32,40 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>local-hbase-cluster-test</id>
+                                <id>api-integration-test</id>
                                 <goals>
                                     <goal>test</goal>
                                 </goals>
                                 <phase>none</phase>
                             </execution>
                             <execution>
-                                <id>api-integration-test</id>
+                                <id>local-hbase-cluster-test</id>
                                 <goals>
                                     <goal>test</goal>
                                 </goals>
                                 <phase>integration-test</phase>
                                 <configuration>
-                                    <!-- ALPN is needed for SSL engine rewrites and the stubby driver for its version of guava -->
-                                    <!-- to enable netty logging, include:
-                                    -Djava.util.logging.config.file=src/test/resources/logging.properties
-                                    -->
-                                    <argLine>
-                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar:${stubby.driver.path}
-                                    </argLine>
-                                    <forkCount>1</forkCount>
                                     <includes>
-                                        <include>**/IntegrationTestsNoKnownGap.java</include>
+                                        <include>**/IntegrationTests.java</include>
                                     </includes>
-                                    <reportNameSuffix>bigtable-server</reportNameSuffix>
-                                    <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
-                                    </systemPropertyVariables>
+                                    <reportNameSuffix>local-mini-cluster</reportNameSuffix>
+                                    <classpathDependencyExcludes>
+                                        <!-- Shading makes including this work when deploying to a cluster.
+                                        Including non-shaded items on the classpath makes this test in particular
+                                        unhappy. -->
+                                        <classpathDependencyExclude>${stubby.driver.group}:${stubby.driver.artifact}</classpathDependencyExclude>
+                                    </classpathDependencyExcludes>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <!-- This profile exists to prevent failed builds. It should be removed as soon as the
+            build definitions are updated -->
+            <id>anviltopIntegrationTest</id>
         </profile>
         <profile>
             <id>anviltopGapTest</id>
@@ -80,7 +76,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>local-hbase-cluster-test</id>
+                                <id>api-integration-test</id>
                                 <goals>
                                     <goal>test</goal>
                                 </goals>
@@ -98,8 +94,14 @@
                                     -Djava.util.logging.config.file=src/test/resources/logging.properties
                                     -->
                                     <argLine>
-                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar:${stubby.driver.path}
+                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
                                     </argLine>
+                                    <classpathDependencyExcludes>
+                                        <!-- protobuf and netty are included in the grpc-interface jar -->
+                                        <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
+                                        <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
+                                        <classpathDependencyExclude>com.google.guava:guava</classpathDependencyExclude>
+                                    </classpathDependencyExcludes>
                                     <forkCount>1</forkCount>
                                     <includes>
                                         <include>**/IntegrationTestsGap.java</include>
@@ -120,91 +122,55 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-            <version>${hadoop.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <!--In hadoop1 this is hadoop-test-->
             <artifactId>hadoop-minicluster</artifactId>
-            <version>${hadoop.version}</version>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-annotations</artifactId>
-            <version>${hadoop.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-yarn-api</artifactId>
-            <version>${hadoop.version}</version>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
-            <version>${hadoop.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-hadoop-compat</artifactId>
-            <version>${hbase.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
-            <version>${hbase.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
-            <version>1.0.0.GA</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -214,120 +180,53 @@
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
-            <version>${hbase.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-common</artifactId>
-            <version>${hbase.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-hadoop-compat</artifactId>
-            <version>${hbase.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>${compat.module}</artifactId>
-            <version>${hbase.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mortbay.jetty.alpn</groupId>
             <artifactId>alpn-boot</artifactId>
-            <version>${alpn.version}</version>
         </dependency>
         <dependency>
             <groupId>${stubby.driver.group}</groupId>
             <artifactId>${stubby.driver.artifact}</artifactId>
-            <version>${stubby.driver.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client-jackson2</artifactId>
-            <version>${google.api.client.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client-java6</artifactId>
-            <version>${google.api.client.version}</version>
-            <exclusions>
-                <exclusion>
-                    <!-- this version hides too many things -->
-                    <artifactId>guava-jdk5</artifactId>
-                    <groupId>com.google.guava</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client</artifactId>
-            <version>${google.api.client.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client-java6</artifactId>
-            <version>${google.api.client.version}</version>
         </dependency>
     </dependencies>
     <build>
-        <testResources>
-            <testResource>
-                <directory>src/test/resources</directory>
-                <!-- enable system property substitution. -->
-                <filtering>true</filtering>
-            </testResource>
-        </testResources>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>2.5.1</version>
-                    <configuration>
-                        <source>${compileSource}</source>
-                        <target>${compileSource}</target>
-                        <showWarnings>true</showWarnings>
-                        <showDeprecation>false</showDeprecation>
-                        <compilerArgument>-Xlint:-options</compilerArgument>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.17</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <configuration>
-                        <archive>
-                            <manifest>
-                                <mainClass>com.google.cloud.bigtable.mapreduce.Driver</mainClass>
-                            </manifest>
-                        </archive>
-                     </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -361,24 +260,55 @@
                                 <exclude>**/TestScan.java</exclude>
                                 <exclude>**/TestTimestamp.java</exclude>
                             </excludes>
+                            <classpathDependencyExcludes>
+                                <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
+                                <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
+                            </classpathDependencyExcludes>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>local-hbase-cluster-test</id>
+                        <id>api-integration-test</id>
                         <goals>
                             <goal>test</goal>
                         </goals>
                         <phase>integration-test</phase>
                         <configuration>
+                            <!-- ALPN is needed for SSL engine rewrites and the stubby driver for its version of guava -->
+                            <!-- to enable netty logging, include:
+                            -Djava.util.logging.config.file=src/test/resources/logging.properties
+                            -->
+                            <argLine>
+                                -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
+                            </argLine>
+                            <!-- protobuf and netty are included in the grpc-interface jar -->
+                            <classpathDependencyExcludes>
+                                <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
+                                <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
+                                <classpathDependencyExclude>com.google.guava:guava</classpathDependencyExclude>
+                            </classpathDependencyExcludes>
+                            <forkCount>1</forkCount>
                             <includes>
-                                <include>**/IntegrationTests.java</include>
+                                <include>**/IntegrationTestsNoKnownGap.java</include>
                             </includes>
-                            <reportNameSuffix>local-mini-cluster</reportNameSuffix>
+                            <reportNameSuffix>bigtable-server</reportNameSuffix>
+                            <systemPropertyVariables>
+                                <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
+                            </systemPropertyVariables>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.google.cloud.bigtable.mapreduce.Driver</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -390,6 +320,9 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <shadeTestJar>true</shadeTestJar>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <shadedClassifierName>shaded</shadedClassifierName>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
