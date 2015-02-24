@@ -28,26 +28,25 @@ import java.util.UUID;
 public class TestDisableTable extends AbstractTest {
   @Test
   @Category(KnownGap.class)
+  // TODO(sduskis): Disabled tables should throw TableNotEnabledException for gets.
   public void testDisable() throws IOException {
     Admin admin = connection.getAdmin();
     TableName tableName = TableName.valueOf("test_table-" + UUID.randomUUID().toString());
     IntegrationTests.createTable(tableName);
-    Table table = connection.getTable(tableName);
-
-    Get get = new Get("row".getBytes());
-    table.get(get);
-
-    admin.disableTable(tableName);
-    boolean throwsException = false;
-    try {
+    try (Table table = connection.getTable(tableName)) {
+      Get get = new Get("row".getBytes());
       table.get(get);
-    } catch (TableNotEnabledException e) {
-      throwsException = true;
+      admin.disableTable(tableName);
+      Assert.assertTrue(admin.isTableDisabled(tableName));
+      try {
+        table.get(get);
+        Assert.fail("Expected TableNotEnabledException");
+      } catch (TableNotEnabledException e) {
+      }
+      admin.enableTable(tableName);
+      table.get(get);
+    } finally {
+      admin.deleteTable(tableName);
     }
-    Assert.assertTrue(throwsException);
-    
-    admin.enableTable(tableName);
-
-    table.get(get);
   }
 }

@@ -1,17 +1,14 @@
 package org.apache.hadoop.hbase.client;
 
 
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateFamilyRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateTableRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesResponse;
-import com.google.cloud.bigtable.hbase.BigtableOptions;
-import com.google.cloud.bigtable.hbase.Logger;
-import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
-import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
-import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -25,6 +22,7 @@ import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
@@ -36,19 +34,32 @@ import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateFamilyRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateTableRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesRequest;
+import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesResponse;
+import com.google.cloud.bigtable.hbase.BigtableOptions;
+import com.google.cloud.bigtable.hbase.Logger;
+import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
+import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
+import com.google.protobuf.ByteString;
 
 public class BigtableAdmin implements Admin {
 
   private static final Logger LOG = new Logger(BigtableAdmin.class);
+  
+  /**
+   * Bigtable doesn't require disabling tables before deletes or schema changes. Some clients do
+   * call disable first, and then check for disable before deletes or schema changes. We're keeping
+   * track of that state in memory on so that those clients can proceed with the delete/schema
+   * change
+   */
+  private final Set<TableName> disabledTables;
 
   private final Configuration configuration;
   private final BigtableOptions options;
@@ -60,12 +71,14 @@ public class BigtableAdmin implements Admin {
       BigtableOptions options,
       Configuration configuration,
       BigtableConnection connection,
-      AnviltopAdminClient bigtableAdminClient) {
+      AnviltopAdminClient bigtableAdminClient,
+      Set<TableName> disabledTables) {
     LOG.debug("Creating BigtableAdmin");
     this.configuration = configuration;
     this.options = options;
     this.connection = connection;
     this.bigtableAdminClient = bigtableAdminClient;
+    this.disabledTables = disabledTables;
   }
 
   @Override
@@ -261,7 +274,12 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void enableTable(TableName tableName) throws IOException {
-    // enableTable is a NOP for Anviltop, tables are always enabled.
+    TableName.isLegalFullyQualifiedTableName(tableName.getName());
+    if (!this.tableExists(tableName)) {
+      throw new TableNotFoundException(tableName);
+    }
+    disabledTables.remove(tableName);
+    LOG.warn("Table " + tableName + " was enabled in memory only.");
   }
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
@@ -273,29 +291,43 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void enableTableAsync(TableName tableName) throws IOException {
-    // enableTableAsync is a NOP for Anviltop, tables are always enabled.
+    enableTable(tableName);
   }
 
   @Override
   public HTableDescriptor[] enableTables(String regex) throws IOException {
-    // enableTables is a NOP for Anviltop, tables are always enabled.
-    return new HTableDescriptor[]{};
+    HTableDescriptor[] tableDescriptors = listTables(regex);
+    for (HTableDescriptor descriptor : tableDescriptors) {
+      enableTable(descriptor.getTableName());
+    }
+    return tableDescriptors;
   }
 
   @Override
   public HTableDescriptor[] enableTables(Pattern pattern) throws IOException {
-    // enableTables is a NOP for Anviltop, tables are always enabled.
-    return new HTableDescriptor[]{};
+    HTableDescriptor[] tableDescriptors = listTables(pattern);
+    for (HTableDescriptor descriptor : tableDescriptors) {
+      enableTable(descriptor.getTableName());
+    }
+    return tableDescriptors;
   }
 
   @Override
   public void disableTableAsync(TableName tableName) throws IOException {
-    // disableTableAsync is a NOP for Anviltop, tables can't be actually disabled.
+    disableTable(tableName);
   }
 
   @Override
   public void disableTable(TableName tableName) throws IOException {
-    // disableTable is a NOP for Anviltop, tables can't be actually disabled.
+    TableName.isLegalFullyQualifiedTableName(tableName.getName());
+    if (!this.tableExists(tableName)) {
+      throw new TableNotFoundException(tableName);
+    }
+    if (this.isTableDisabled(tableName)) {
+      throw new TableNotEnabledException(tableName);
+    }
+    disabledTables.add(tableName);
+    LOG.warn("Table " + tableName + " was disabled in memory only.");
   }
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
@@ -307,20 +339,25 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public HTableDescriptor[] disableTables(String regex) throws IOException {
-    // disableTables is a NOP for Anviltop, tables can't be actually disabled.
-    return new HTableDescriptor[]{};
+    HTableDescriptor[] tableDescriptors = listTables(regex);
+    for (HTableDescriptor descriptor : tableDescriptors) {
+      disableTable(descriptor.getTableName());
+    }
+    return tableDescriptors;
   }
 
   @Override
   public HTableDescriptor[] disableTables(Pattern pattern) throws IOException {
-    // disableTables is a NOP for Anviltop, tables can't be actually disabled.
-    return new HTableDescriptor[]{};
+    HTableDescriptor[] tableDescriptors = listTables(pattern);
+    for (HTableDescriptor descriptor : tableDescriptors) {
+      disableTable(descriptor.getTableName());
+    }
+    return tableDescriptors;
   }
 
   @Override
   public boolean isTableEnabled(TableName tableName) throws IOException {
-    // Anviltop tables can't be disabled.
-    return true;
+    return !isTableDisabled(tableName);
   }
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
@@ -332,8 +369,7 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public boolean isTableDisabled(TableName tableName) throws IOException {
-    // Anviltop tables can't be disabled.
-    return false;
+    return disabledTables.contains(tableName);
   }
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
