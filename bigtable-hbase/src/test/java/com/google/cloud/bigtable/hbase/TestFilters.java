@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -35,6 +36,7 @@ import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
@@ -42,6 +44,7 @@ import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.NullComparator;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.SubstringComparator;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
@@ -1134,6 +1137,88 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(new long[]{0L, 1L}, timestamps);
 
     table.close();
+  }
+
+  @Test
+  public void testSingleColumnValueFilter() throws IOException {
+    // Set up:
+    // Row 1: f:qualifier1 = value1_1, f:qualifier2 = value2_1
+    // Row 2: f:qualifier1 (ts1) = value1_1, f:qualifier1 (ts2) = value1_2
+
+    // Cases to test:
+    // a: Qualifier exists in the row and the value matches the latest version
+    // b: Qualifier exists in the row and the value matches any version
+    // c: Qualifier exists in the row and the value does NOT match
+    // d: Qualifier does not exist in the row.
+
+    byte[] rowKey1 = dataHelper.randomData("scvfrk1");
+    byte[] rowKey2 = dataHelper.randomData("scvfrk2");
+    byte[] qualifier1 = dataHelper.randomData("scvfq1");
+    byte[] qualifier2 = dataHelper.randomData("scvfq2");
+    byte[] value1_1 = dataHelper.randomData("val1.1");
+    byte[] value1_2 = dataHelper.randomData("val1.2");
+    byte[] value2_1 = dataHelper.randomData("val2.1");
+
+    Table table = connection.getTable(TABLE_NAME);
+    Put put = new Put(rowKey1);
+    put.add(COLUMN_FAMILY, qualifier1, value1_1);
+    put.add(COLUMN_FAMILY, qualifier2, value2_1);
+    table.put(put);
+
+    put = new Put(rowKey2);
+    put.add(COLUMN_FAMILY, qualifier1, 1L, value1_1);
+    put.add(COLUMN_FAMILY, qualifier1, 2L, value1_2);
+    table.put(put);
+
+    Result[] results;
+    Scan scan = new Scan();
+    scan.addColumn(COLUMN_FAMILY, qualifier1);
+    scan.addColumn(COLUMN_FAMILY, qualifier2);
+
+    // This is not intuitive. In order to get filter.setLatestVersionOnly to have an effect,
+    // we must enable the scanner to see more versions:
+    scan.setMaxVersions(3);
+
+    SingleColumnValueFilter filter =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier1, CompareOp.EQUAL,  value1_1);
+    filter.setFilterIfMissing(false);
+    filter.setLatestVersionOnly(false);
+
+    // a: Qualifier exists in the row and the value matches the latest version (row1)
+    // b: Qualifier exists in the row and the value matches any version (row2)
+    scan.setFilter(filter);
+    results = table.getScanner(scan).next(10);
+    Assert.assertEquals(2, results.length);
+
+    // a: Qualifier exists in the row and the value matches the latest version (row1)
+    filter.setLatestVersionOnly(true);
+    scan.setFilter(filter);
+    results = table.getScanner(scan).next(10);
+    Assert.assertEquals(1, results.length);
+
+    // a: Qualifier exists in the row and the value matches the latest version (row1)
+    // d: Qualifier does not exist in the row: (row2)
+    filter =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier2, CompareOp.EQUAL,  value2_1);
+    filter.setFilterIfMissing(false);
+    scan.setFilter(filter);
+    results = table.getScanner(scan).next(10);
+    Assert.assertEquals(2, results.length);
+
+    // a: Qualifier exists in the row and the value matches the latest version (row1):
+    filter.setFilterIfMissing(true);
+    scan.setFilter(filter);
+    results = table.getScanner(scan).next(10);
+    Assert.assertEquals(1, results.length);
+
+    // Test qualifier exists and value never matches:
+    // c: Qualifier exists in the row and the value does NOT match
+    filter =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier2, CompareOp.EQUAL,  value1_1);
+    filter.setFilterIfMissing(true);
+    scan.setFilter(filter);
+    results = table.getScanner(scan).next(10);
+    Assert.assertEquals(0, results.length);
   }
 
   private Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
