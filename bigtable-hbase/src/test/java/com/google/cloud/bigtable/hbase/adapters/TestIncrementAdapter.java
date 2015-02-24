@@ -13,10 +13,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopData.RowIncrement;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
+import com.google.bigtable.v1.ReadModifyWriteRowRequest;
+import com.google.bigtable.v1.ReadModifyWriteRule;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Increment;
@@ -42,8 +41,8 @@ public class TestIncrementAdapter {
   public void testBasicRowKeyIncrement() throws IOException {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Increment incr = new Increment(rowKey);
-    IncrementRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
-    ByteString adaptedRowKey = requestBuilder.getIncrement().getRowKey();
+    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    ByteString adaptedRowKey = requestBuilder.getRowKey();
     Assert.assertArrayEquals(rowKey, adaptedRowKey.toByteArray());
   }
 
@@ -57,11 +56,14 @@ public class TestIncrementAdapter {
     Increment incr = new Increment(rowKey);
     incr.addColumn(family, qualifier, amount);
 
-    IncrementRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
-    Assert.assertEquals(1, requestBuilder.getIncrement().getIncrsCount());
-    RowIncrement.Increment incrProto = requestBuilder.getIncrement().getIncrs(0);
-    Assert.assertEquals("family:qualifier", incrProto.getColumnName().toStringUtf8());
-    Assert.assertEquals(amount, incrProto.getAmount());
+    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+
+    Assert.assertEquals(1, requestBuilder.getRulesCount());
+    ReadModifyWriteRule rule = requestBuilder.getRules(0);
+
+    Assert.assertEquals("qualifier", rule.getColumnQualifier().toStringUtf8());
+    Assert.assertEquals("family", rule.getFamilyName());
+    Assert.assertEquals(amount, rule.getIncrementAmount());
   }
 
   @Test
@@ -76,22 +78,59 @@ public class TestIncrementAdapter {
     byte[] qualifier2 = Bytes.toBytes("qualifier2");
     long amount2 = 4321;
 
-
     Increment incr = new Increment(rowKey);
     incr.addColumn(family1, qualifier1, amount1);
     incr.addColumn(family2, qualifier2, amount2);
 
-    IncrementRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
-    Assert.assertEquals(2, requestBuilder.getIncrement().getIncrsCount());
+    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    Assert.assertEquals(2, requestBuilder.getRulesCount());
 
-    RowIncrement.Increment incrProto = requestBuilder.getIncrement().getIncrs(0);
-    Assert.assertEquals("family1:qualifier1", incrProto.getColumnName().toStringUtf8());
-    Assert.assertEquals(amount1, incrProto.getAmount());
+    ReadModifyWriteRule rule = requestBuilder.getRules(0);
+    Assert.assertEquals("family1", rule.getFamilyName());
+    Assert.assertEquals("qualifier1", rule.getColumnQualifier().toStringUtf8());
+    Assert.assertEquals(amount1, rule.getIncrementAmount());
 
-    incrProto = requestBuilder.getIncrement().getIncrs(1);
-    Assert.assertEquals("family2:qualifier2", incrProto.getColumnName().toStringUtf8());
-    Assert.assertEquals(amount2, incrProto.getAmount());
+    rule = requestBuilder.getRules(1);
+    Assert.assertEquals("family2", rule.getFamilyName());
+    Assert.assertEquals("qualifier2", rule.getColumnQualifier().toStringUtf8());
+    Assert.assertEquals(amount2, rule.getIncrementAmount());
   }
+
+
+  @Test
+  public void testMultipleIncrementWithDuplicateQualifier() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rk1-");
+
+    byte[] family1 = Bytes.toBytes("family1");
+    byte[] qualifier1 = Bytes.toBytes("qualifier1");
+    long amount1 = 1234;
+
+    byte[] family2 = Bytes.toBytes("family2");
+    byte[] qualifier2 = Bytes.toBytes("qualifier2");
+    long amount2 = 4321;
+
+    long amount3 = 5000;
+
+    Increment incr = new Increment(rowKey);
+    incr.addColumn(family1, qualifier1, amount1);
+    incr.addColumn(family2, qualifier2, amount2);
+    incr.addColumn(family2, qualifier2, amount3);
+
+    ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    Assert.assertEquals(2, requestBuilder.getRulesCount());
+
+    ReadModifyWriteRule rule = requestBuilder.getRules(0);
+    Assert.assertEquals("family1", rule.getFamilyName());
+    Assert.assertEquals("qualifier1", rule.getColumnQualifier().toStringUtf8());
+    Assert.assertEquals(amount1, rule.getIncrementAmount());
+
+    rule = requestBuilder.getRules(1);
+    Assert.assertEquals("family2", rule.getFamilyName());
+    Assert.assertEquals("qualifier2", rule.getColumnQualifier().toStringUtf8());
+    // amount3 since it was added after amount2:
+    Assert.assertEquals(amount3, rule.getIncrementAmount());
+  }
+
 
   @Test
   public void testIncrementTimeRange() throws IOException {
@@ -101,6 +140,6 @@ public class TestIncrementAdapter {
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Setting the time range in an Increment is not implemented");
 
-    IncrementRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
+    incrementAdapter.adapt(incr);
   }
 }
