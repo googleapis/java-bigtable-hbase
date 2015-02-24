@@ -46,6 +46,9 @@ public class TestDisableTable extends AbstractTest {
       admin.enableTable(tableName);
       table.get(get);
     } finally {
+      if (admin.isTableEnabled(tableName)) {
+        admin.disableTable(tableName);
+      }
       admin.deleteTable(tableName);
     }
   }
