@@ -12,7 +12,7 @@
         <module>bigtable-hbase</module>
     </modules>
 
-   <properties>
+    <properties>
         <!-- As soon as stubby is public, this goes away -->
        <stubby.driver.group>com.google.bigtable.hbase</stubby.driver.group>
        <stubby.driver.artifact>bigtable-grpc-interface</stubby.driver.artifact>
@@ -34,16 +34,12 @@
        <google.bigtable.endpoint.host>test-bigtable.googleapis.com</google.bigtable.endpoint.host>
        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-   </properties>
+    </properties>
 
     <repositories>
         <repository>
             <id>Apache Snapshots Repository</id>
             <url>https://repository.apache.org/content/repositories/snapshots/</url>
-        </repository>
-        <repository>
-            <id>Apache HBase Temporary Repository</id>
-            <url>https://repository.apache.org/content/repositories/orgapachehbase-1065/</url>
         </repository>
     </repositories>
 
