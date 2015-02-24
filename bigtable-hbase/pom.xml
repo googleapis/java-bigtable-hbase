@@ -120,6 +120,11 @@
     </profiles>
     <dependencies>
         <dependency>
+            <groupId>bigtable-client</groupId>
+            <artifactId>bigtable-grpc-interface</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
             <type>test-jar</type>
@@ -327,10 +332,6 @@
                             <artifactSet>
                                 <includes>
                                     <include>${stubby.driver.group}:*</include>
-                                    <include>com.google.api-client:*</include>
-                                    <include>com.google.http-client:*</include>
-                                    <include>com.google.oauth-client:*</include>
-                                    <include>com.fasterxml.jackson.core:*</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
@@ -353,10 +354,6 @@
                                 <relocation>
                                     <pattern>io.netty</pattern>
                                     <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.api</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.api</shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>
