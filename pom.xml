@@ -8,15 +8,17 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>bigtable-grpc-interface</module>
         <module>bigtable-hbase</module>
     </modules>
 
    <properties>
         <!-- As soon as stubby is public, this goes away -->
-       <stubby.driver.path>/google/data/ro/teams/cloud-bigtable/driver_mpm/test/driver_deploy.jar</stubby.driver.path>
        <stubby.driver.group>com.google.bigtable.hbase</stubby.driver.group>
        <stubby.driver.artifact>bigtable-grpc-interface</stubby.driver.artifact>
        <stubby.driver.version>0.4-SNAPSHOT</stubby.driver.version>
+       <bigtable.grpc.repo.dir>bigtable-grpc-repo</bigtable.grpc.repo.dir>
+
        <hbase.version>1.0.0</hbase.version>
        <hadoop.version>2.4.1</hadoop.version>
        <compat.module>hbase-hadoop2-compat</compat.module>
@@ -31,8 +33,6 @@
        <google.bigtable.admin.endpoint.host>test-table-admin-bigtable.googleapis.com</google.bigtable.admin.endpoint.host>
        <google.bigtable.endpoint.host>test-bigtable.googleapis.com</google.bigtable.endpoint.host>
        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
-       <bigtable.grpc.repo.dir>bigtable-grpc-repo</bigtable.grpc.repo.dir>
-       <bigtable.grpc.repo.fullpath>${project.basedir}/${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>
 
@@ -286,33 +286,5 @@
                 </plugin>
             </plugins>
         </pluginManagement>
-        <plugins>
-            <plugin>
-                <artifactId>exec-maven-plugin</artifactId>
-                <groupId>org.codehaus.mojo</groupId>
-                <version>1.3.2</version>
-                <executions>
-                    <execution>
-                        <id>install-grpc-client</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>mvn</executable>
-                            <arguments>
-                                <argument>org.apache.maven.plugins:maven-install-plugin:2.3.1:install-file</argument>
-                                <argument>-Dfile=${stubby.driver.path}</argument>
-                                <argument>-DgroupId=${stubby.driver.group}</argument>
-                                <argument>-DartifactId=${stubby.driver.artifact}</argument>
-                                <argument>-Dversion=${stubby.driver.version}</argument>
-                                <argument>-Dpackaging=jar</argument>
-                                <argument>-DlocalRepositoryPath=${bigtable.grpc.repo.fullpath}</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
     </build>
 </project>
