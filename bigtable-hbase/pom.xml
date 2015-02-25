@@ -120,6 +120,10 @@
     </profiles>
     <dependencies>
         <dependency>
+            <groupId>${stubby.driver.group}</groupId>
+            <artifactId>${stubby.driver.artifact}</artifactId>
+        </dependency>
+        <dependency>
             <groupId>bigtable-client</groupId>
             <artifactId>bigtable-grpc-interface</artifactId>
             <version>${project.version}</version>
@@ -209,10 +213,6 @@
         <dependency>
             <groupId>org.mortbay.jetty.alpn</groupId>
             <artifactId>alpn-boot</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${stubby.driver.group}</groupId>
-            <artifactId>${stubby.driver.artifact}</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
