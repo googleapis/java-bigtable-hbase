@@ -25,7 +25,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 /**
  * Requirement 1.1 - Writes are buffered in the client by default (can be disabled).  Buffer size
@@ -60,7 +59,7 @@ public class TestBufferedMutator extends AbstractTest {
 
   @Test
   public void testBufferSizeFlush() throws Exception {
-    int maxSize = 32 * 1024;
+    int maxSize = 1024;
     try (BufferedMutator mutator =
         connection.getBufferedMutator(new BufferedMutatorParams(TABLE_NAME)
             .writeBufferSize(maxSize))) {
@@ -69,8 +68,10 @@ public class TestBufferedMutator extends AbstractTest {
       Assert.assertEquals(put.heapSize(), mutator.getWriteBufferSize());
 
       Put largePut = new Put(dataHelper.randomData("testrow-"));
-      put.add(COLUMN_FAMILY, qualifier,
-        Bytes.toBytes(RandomStringUtils.randomAlphanumeric(maxSize)));
+      largePut.addColumn(COLUMN_FAMILY, qualifier,
+        Bytes.toBytes(RandomStringUtils.randomAlphanumeric(maxSize * 2)));
+      long heapSize = largePut.heapSize();
+      Assert.assertTrue("largePut heapsize is : " + heapSize, heapSize > maxSize);
       mutator.mutate(largePut);
       Assert.assertEquals(0, mutator.getWriteBufferSize());
     }
@@ -88,7 +89,7 @@ public class TestBufferedMutator extends AbstractTest {
 
   private Put getPut() {
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qualifier, value);
+    put.addColumn(COLUMN_FAMILY, qualifier, value);
     return put;
   }
 }
