@@ -1,9 +1,8 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopData.RowAppend;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
+import com.google.bigtable.v1.ReadModifyWriteRowRequest;
+import com.google.bigtable.v1.ReadModifyWriteRule;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Append;
@@ -25,8 +24,8 @@ public class TestAppendAdapter {
   public void testBasicRowKeyAppend() throws IOException {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Append append = new Append(rowKey);
-    AppendRowRequest request = appendAdapter.adapt(append).build();
-    ByteString adaptedRowKey = request.getAppend().getRowKey();
+    ReadModifyWriteRowRequest request = appendAdapter.adapt(append).build();
+    ByteString adaptedRowKey = request.getRowKey();
     Assert.assertArrayEquals(rowKey, adaptedRowKey.toByteArray());
   }
 
@@ -46,12 +45,49 @@ public class TestAppendAdapter {
     append.add(family1, qualifier1, value1);
     append.add(family2, qualifier2, value2);
 
-    AppendRowRequest request = appendAdapter.adapt(append).build();
-    List<RowAppend.Append> appends = request.getAppend().getAppendsList();
-    Assert.assertEquals(2, request.getAppend().getAppendsList().size());
-    Assert.assertEquals("family1:qualifier1", appends.get(0).getColumnName().toStringUtf8());
-    Assert.assertEquals("value1", appends.get(0).getValue().toStringUtf8());
-    Assert.assertEquals("family2:qualifier2", appends.get(1).getColumnName().toStringUtf8());
-    Assert.assertEquals("value2", appends.get(1).getValue().toStringUtf8());
+    ReadModifyWriteRowRequest request = appendAdapter.adapt(append).build();
+    List<ReadModifyWriteRule> rules = request.getRulesList();
+    Assert.assertEquals(2, rules.size());
+
+    Assert.assertEquals("family1", rules.get(0).getFamilyName());
+    Assert.assertEquals("qualifier1", rules.get(0).getColumnQualifier().toStringUtf8());
+    Assert.assertEquals("value1", rules.get(0).getAppendValue().toStringUtf8());
+
+    Assert.assertEquals("family2", rules.get(1).getFamilyName());
+    Assert.assertEquals("qualifier2", rules.get(1).getColumnQualifier().toStringUtf8());
+    Assert.assertEquals("value2", rules.get(1).getAppendValue().toStringUtf8());
+  }
+
+  @Test
+  public void testMultipleAppendsWithDuplicates() throws IOException {
+    byte[] rowKey = dataHelper.randomData("rk1-");
+
+    byte[] family1 = Bytes.toBytes("family1");
+    byte[] qualifier1 = Bytes.toBytes("qualifier1");
+    byte[] value1 = Bytes.toBytes("value1");
+
+    byte[] family2 = Bytes.toBytes("family2");
+    byte[] qualifier2 = Bytes.toBytes("qualifier2");
+    byte[] value2 = Bytes.toBytes("value2");
+
+    byte[] value3 = Bytes.toBytes("value3");
+
+    Append append = new Append(rowKey);
+    append.add(family1, qualifier1, value1);
+    append.add(family2, qualifier2, value2);
+    append.add(family2, qualifier2, value3);
+
+    ReadModifyWriteRowRequest request = appendAdapter.adapt(append).build();
+    List<ReadModifyWriteRule> rules = request.getRulesList();
+    Assert.assertEquals(2, rules.size());
+
+    Assert.assertEquals("family1", rules.get(0).getFamilyName());
+    Assert.assertEquals("qualifier1", rules.get(0).getColumnQualifier().toStringUtf8());
+    Assert.assertEquals("value1", rules.get(0).getAppendValue().toStringUtf8());
+
+    Assert.assertEquals("family2", rules.get(1).getFamilyName());
+    Assert.assertEquals("qualifier2", rules.get(1).getColumnQualifier().toStringUtf8());
+    // Value3 as it was added after value2:
+    Assert.assertEquals("value3", rules.get(1).getAppendValue().toStringUtf8());
   }
 }

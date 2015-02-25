@@ -1,20 +1,18 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
-import com.google.cloud.bigtable.hbase.adapters.AppendResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
-import com.google.cloud.bigtable.hbase.adapters.IncrementRowResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.common.util.concurrent.FutureCallback;
@@ -131,9 +129,8 @@ public class BatchExecutor {
   protected final OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
   protected final AppendAdapter appendAdapter;
-  protected final AppendResponseAdapter appendRespAdapter;
   protected final IncrementAdapter incrementAdapter;
-  protected final IncrementRowResponseAdapter incrRespAdapter;
+  protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter;
 
   public BatchExecutor(
       BigtableClient client,
@@ -146,9 +143,8 @@ public class BatchExecutor {
       OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
       RowMutationsAdapter rowMutationsAdapter,
       AppendAdapter appendAdapter,
-      AppendResponseAdapter appendRespAdapter,
       IncrementAdapter incrementAdapter,
-      IncrementRowResponseAdapter incrRespAdapter) {
+      ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter) {
     this.client = client;
     this.options = options;
     this.tableMetadataSetter = tableMetadataSetter;
@@ -159,9 +155,8 @@ public class BatchExecutor {
     this.deleteAdapter = deleteAdapter;
     this.rowMutationsAdapter = rowMutationsAdapter;
     this.appendAdapter = appendAdapter;
-    this.appendRespAdapter = appendRespAdapter;
     this.incrementAdapter = incrementAdapter;
-    this.incrRespAdapter = incrRespAdapter;
+    this.rowToResultAdapter = rowToResultAdapter;
   }
 
   /**
@@ -197,37 +192,26 @@ public class BatchExecutor {
    * Adapt and issue a single Append request returning a ListenableFuture
    * for the AppendRowResponse.
    */
-  ListenableFuture<AppendRowResponse> issueAppendRequest(Append append) {
+  ListenableFuture<com.google.bigtable.v1.Row> issueAppendRequest(Append append) {
     LOG.trace("issueAppendRequest(Append)");
-    AppendRowRequest.Builder builder = appendAdapter.adapt(append);
+    ReadModifyWriteRowRequest.Builder builder = appendAdapter.adapt(append);
     tableMetadataSetter.setMetadata(builder);
-    AppendRowRequest request = builder.build();
+    ReadModifyWriteRowRequest request = builder.build();
 
-    try {
-      return client.appendRowAsync(request);
-    } catch (ServiceException e) {
-      LOG.error("Immediately failing async issueAppendRequest due to ServiceException %s", e);
-      return Futures.immediateFailedFuture(e);
-    }
+    return client.readModifyWriteRowAsync(request);
   }
 
   /**
    * Adapt and issue a single Increment request returning a ListenableFuture
    * for the IncrementRowResponse.
    */
-  ListenableFuture<IncrementRowResponse> issueIncrementRequest(
-      Increment increment) {
+  ListenableFuture<com.google.bigtable.v1.Row> issueIncrementRequest(Increment increment) {
     LOG.trace("issueIncrementRequest(Increment)");
-    IncrementRowRequest.Builder builder = incrementAdapter.adapt(increment);
+    ReadModifyWriteRowRequest.Builder builder = incrementAdapter.adapt(increment);
     tableMetadataSetter.setMetadata(builder);
-    IncrementRowRequest request = builder.build();
+    ReadModifyWriteRowRequest request = builder.build();
 
-    try {
-      return client.incrementRowAsync(request);
-    } catch (ServiceException e) {
-      LOG.error("Immediately failing async issueIncrementRequest due to ServiceException %s", e);
-      return Futures.immediateFailedFuture(e);
-    }
+    return client.readModifyWriteRowAsync(request);
   }
 
   /**
@@ -290,27 +274,27 @@ public class BatchExecutor {
             }
           },
           service);
-    } else if (row instanceof  Append) {
-      ListenableFuture<AppendRowResponse> rpcResponseFuture =
+    } else if (row instanceof Append) {
+      ListenableFuture<com.google.bigtable.v1.Row> rpcResponseFuture =
           issueAppendRequest((Append) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, AppendRowResponse>(
+          new RpcResultFutureCallback<T, com.google.bigtable.v1.Row>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(AppendRowResponse response) {
-              return appendRespAdapter.adaptResponse(response);
+            Object adaptResponse(com.google.bigtable.v1.Row response) {
+              return rowToResultAdapter.adaptResponse(response);
             }
           },
           service);
     } else if (row instanceof Increment) {
-      ListenableFuture<IncrementRowResponse> rpcResponseFuture =
+      ListenableFuture<com.google.bigtable.v1.Row> rpcResponseFuture =
           issueIncrementRequest((Increment) row);
       Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, IncrementRowResponse>(
+          new RpcResultFutureCallback<T, com.google.bigtable.v1.Row>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(IncrementRowResponse response) {
-              return incrRespAdapter.adaptResponse(response);
+            Object adaptResponse(com.google.bigtable.v1.Row response) {
+              return rowToResultAdapter.adaptResponse(response);
             }
           },
           service);

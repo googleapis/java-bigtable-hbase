@@ -1,6 +1,6 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.HConstants;
@@ -24,7 +24,7 @@ public class TestSampledRowKeysAdapter {
 
   @Test
   public void testEmptyRowList() {
-    List<ByteString> rowKeys = new ArrayList<>();
+    List<SampleRowKeysResponse> rowKeys = new ArrayList<>();
     List<HRegionLocation> locations = adapter.adaptResponse(rowKeys);
     Assert.assertEquals(1, locations.size());
     HRegionLocation location = locations.get(0);
@@ -44,10 +44,13 @@ public class TestSampledRowKeysAdapter {
   @Test
   public void testOneRow() {
     byte[] rowKey = Bytes.toBytes("row");
-    List<ByteString> rowKeys = new ArrayList<>();
-    rowKeys.add(ByteString.copyFrom(rowKey));
 
-    List<HRegionLocation> locations = adapter.adaptResponse(rowKeys);
+    List<SampleRowKeysResponse> responses = new ArrayList<>();
+    SampleRowKeysResponse.Builder responseBuilder = SampleRowKeysResponse.newBuilder();
+    responseBuilder.setRowKey(ByteString.copyFrom(rowKey));
+    responses.add(responseBuilder.build());
+
+    List<HRegionLocation> locations = adapter.adaptResponse(responses);
     Assert.assertEquals(2, locations.size());
 
     HRegionLocation location = locations.get(0);
@@ -71,10 +74,13 @@ public class TestSampledRowKeysAdapter {
   @Test
   public void testEmptyRow() {
     byte[] rowKey = new byte[0];
-    List<ByteString> rowKeys = new ArrayList<>();
-    rowKeys.add(ByteString.copyFrom(rowKey));
 
-    List<HRegionLocation> locations = adapter.adaptResponse(rowKeys);
+    List<SampleRowKeysResponse> responses = new ArrayList<>();
+    SampleRowKeysResponse.Builder responseBuilder = SampleRowKeysResponse.newBuilder();
+    responseBuilder.setRowKey(ByteString.copyFrom(rowKey));
+    responses.add(responseBuilder.build());
+
+    List<HRegionLocation> locations = adapter.adaptResponse(responses);
     Assert.assertEquals(1, locations.size());
     HRegionLocation location = locations.get(0);
     Assert.assertArrayEquals(

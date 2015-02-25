@@ -15,15 +15,15 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
-import com.google.cloud.bigtable.hbase.adapters.AppendResponseAdapter;
+import com.google.cloud.bigtable.hbase.adapters.BigtableRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetRowResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
-import com.google.cloud.bigtable.hbase.adapters.IncrementRowResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 
@@ -60,6 +61,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
   protected final BatchExecutor batchExecutor;
 
   protected final RowAdapter rowAdapter = new RowAdapter();
+  protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> bigtableRowAdapter =
+      new BigtableRowAdapter();
   protected final GetRowResponseAdapter getRowResponseAdapter =
       new GetRowResponseAdapter(rowAdapter);
   protected final ScanAdapter scanAdapter = new ScanAdapter(new FilterAdapter());
@@ -77,10 +80,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * batchExecutor so that we can remove these.
    */
   protected final AppendAdapter appendAdapter = new AppendAdapter();
-  protected final AppendResponseAdapter appendRespAdapter = new AppendResponseAdapter(rowAdapter);
   protected final IncrementAdapter incrementAdapter = new IncrementAdapter();
-  protected final IncrementRowResponseAdapter incrRespAdapter =
-      new IncrementRowResponseAdapter(rowAdapter);
 
   public BigtableBufferedMutator(Configuration configuration,
       TableName tableName,
@@ -99,7 +99,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.listener = listener;
 
     putAdapter = new PutAdapter(configuration);
-    mutationAdapter = new MutationAdapter(deleteAdapter, putAdapter,
+    mutationAdapter = new MutationAdapter(
+        deleteAdapter,
+        putAdapter,
         new UnsupportedOperationAdapter<Increment>("increment"),
         new UnsupportedOperationAdapter<Append>("append"));
     rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
@@ -115,9 +117,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
         deleteAdapter,
         rowMutationsAdapter,
         appendAdapter,
-        appendRespAdapter,
         incrementAdapter,
-        incrRespAdapter);
+        bigtableRowAdapter);
   }
 
   @Override

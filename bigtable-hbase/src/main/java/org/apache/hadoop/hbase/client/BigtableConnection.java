@@ -15,6 +15,21 @@
 // Because MasterKeepAliveConnection is default scope, we have to use this package.  :-/
 package org.apache.hadoop.hbase.client;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.util.Threads;
+
 import com.google.api.client.repackaged.com.google.common.base.Throwables;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
@@ -24,24 +39,10 @@ import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.Logger;
 import com.google.cloud.hadoop.hbase.AnviltopAdminBlockingGrpcClient;
 import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
-import com.google.cloud.hadoop.hbase.BigtableGrpcClient;
 import com.google.cloud.hadoop.hbase.BigtableClient;
+import com.google.cloud.hadoop.hbase.BigtableGrpcClient;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.util.Threads;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class BigtableConnection implements Connection, Closeable {
   public static final String BUFFERED_MUTATOR_MAX_THREADS = "com.google.cloud.bigtable.hbase.buffered_mutator.max_threads";
@@ -59,6 +60,9 @@ public class BigtableConnection implements Connection, Closeable {
   private volatile boolean cleanupPool = false;
   private final BigtableOptions options;
   private final TableConfiguration tableConfig;
+
+  // A set of tables that have been disabled via BigtableAdmin.
+  private Set<TableName> disabledTables = new HashSet<>();
 
   public BigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
@@ -198,7 +202,7 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public Admin getAdmin() throws IOException {
-    return new BigtableAdmin(options, conf, this, bigtableAdminClient);
+    return new BigtableAdmin(options, conf, this, bigtableAdminClient, this.disabledTables );
   }
 
   @Override

@@ -193,12 +193,12 @@ public class BigtableOptionsFactory {
       }
       String callStatusReport =
           reportDirectoryPath.resolve("call_status.txt").toAbsolutePath().toString();
-      String callTimignReport =
+      String callTimingReport =
           reportDirectoryPath.resolve("call_timing.txt").toAbsolutePath().toString();
       LOG.debug("Logging call status aggregates to %s", callStatusReport);
-      LOG.debug("Logging call timing aggregates to %s", callTimignReport);
+      LOG.debug("Logging call timing aggregates to %s", callTimingReport);
       optionsBuilder.setCallStatusReportPath(callStatusReport);
-      optionsBuilder.setCallTimingReportPath(callTimignReport);
+      optionsBuilder.setCallTimingReportPath(callTimingReport);
     }
 
     boolean enableRetries = configuration.getBoolean(
