@@ -1,6 +1,8 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.protobuf.ByteString;
+import com.google.bigtable.v1.SampleRowKeysResponse;
+import com.google.cloud.bigtable.hbase.Logger;
+
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -13,6 +15,8 @@ import java.util.List;
 
 
 public class SampledRowKeysAdapter {
+  protected static final Logger LOG = new Logger(SampledRowKeysAdapter.class);
+
   private final TableName tableName;
   private final ServerName serverName;
 
@@ -21,14 +25,15 @@ public class SampledRowKeysAdapter {
     this.serverName = serverName;
   }
 
-  public List<HRegionLocation> adaptResponse(List<ByteString> rowKeys) {
+  public List<HRegionLocation> adaptResponse(List<SampleRowKeysResponse> responses) {
+
     List<HRegionLocation> regions = new ArrayList<>();
 
     // Starting by the first possible row, iterate over the sorted sampled row keys and create regions.
     byte[] startKey = HConstants.EMPTY_START_ROW;
 
-    for (ByteString rowKey : rowKeys) {
-      byte[] endKey = rowKey.toByteArray();
+    for (SampleRowKeysResponse response : responses) {
+      byte[] endKey = response.getRowKey().toByteArray();
 
       // Avoid empty regions.
       if (Bytes.equals(startKey, endKey)) {

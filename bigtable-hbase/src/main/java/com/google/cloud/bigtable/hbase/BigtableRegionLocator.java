@@ -1,10 +1,10 @@
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.anviltop.AnviltopServiceMessages.SampleRowKeysRequest;
+import com.google.bigtable.v1.SampleRowKeysRequest;
+import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
-import com.google.cloud.hadoop.hbase.AnviltopClient;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.ServiceException;
+import com.google.cloud.hadoop.hbase.BigtableClient;
+import com.google.common.collect.ImmutableList;
 
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
@@ -19,19 +19,21 @@ public class BigtableRegionLocator implements RegionLocator {
   // Reuse the results from previous calls during this time.
   public static long MAX_REGION_AGE_MILLIS = 60 * 1000;
 
-  protected static final Logger LOG = new Logger(BigtableTable.class);
+  protected static final Logger LOG = new Logger(BigtableRegionLocator.class);
 
   private final TableName tableName;
   private final BigtableOptions options;
-  private final AnviltopClient client;
+  private final BigtableClient client;
   private final SampledRowKeysAdapter adapter;
+  private final TableMetadataSetter metadataSetter;
   private List<HRegionLocation> regions;
   private long regionsFetchTimeMillis;
 
-  public BigtableRegionLocator(TableName tableName, BigtableOptions options, AnviltopClient client) {
+  public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableClient client) {
     this.tableName = tableName;
     this.options = options;
     this.client = client;
+    this.metadataSetter = TableMetadataSetter.from(tableName, options);
     this.adapter = new SampledRowKeysAdapter(tableName, options.getServerName());
   }
 
@@ -46,17 +48,17 @@ public class BigtableRegionLocator implements RegionLocator {
     }
 
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    request.setProjectId(options.getProjectId());
-    request.setTableName(tableName.getQualifierAsString());
+    metadataSetter.setMetadata(request);
+    LOG.debug("Sampling rowkeys for table %s", request.getTableName());
 
     try {
-      List<ByteString> rowKeys = client.sampleRowKeys(request.build());
-      regions = adapter.adaptResponse(rowKeys);
+      ImmutableList<SampleRowKeysResponse> responses = client.sampleRowKeys(request.build());
+      regions = adapter.adaptResponse(responses);
       regionsFetchTimeMillis = System.currentTimeMillis();
       return regions;
-    } catch(ServiceException e) {
+    } catch(RuntimeException e) {
       regions = null;
-      throw new IOException(e);
+      throw new IOException("Error sampling rowkeys.", e);
     }
   }
 

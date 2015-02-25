@@ -1,12 +1,11 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.bigtable.anviltop.AnviltopServiceMessages;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.AppendRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest.Builder;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.IncrementRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
+import com.google.bigtable.v1.SampleRowKeysRequest;
 
 import org.apache.hadoop.hbase.TableName;
 
@@ -17,6 +16,11 @@ import org.apache.hadoop.hbase.TableName;
 public class TableMetadataSetter {
   public static final String BIGTABLE_V1_TABLENAME_FMT =
       "projects/%s/zones/%s/clusters/%s/tables/%s";
+
+  public static TableMetadataSetter from(TableName tableName, BigtableOptions options) {
+    return new TableMetadataSetter(
+        tableName, options.getProjectId(), options.getZone(), options.getCluster());
+  }
 
   private final TableName tableName;
   private final String projectId;
@@ -49,6 +53,10 @@ public class TableMetadataSetter {
   }
 
   public void setMetadata(ReadModifyWriteRowRequest.Builder builder) {
+    builder.setTableName(formattedV1TableName);
+  }
+
+  public void setMetadata(SampleRowKeysRequest.Builder builder) {
     builder.setTableName(formattedV1TableName);
   }
 }
