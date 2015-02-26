@@ -12,10 +12,13 @@ import java.io.OutputStream;
 public class ReaderExpressionHelper {
 
   public static final String ALL_QUALIFIERS = "\\C*";
+  public static final byte[] ALL_QUALIFIERS_BYTES = Bytes.toBytes(ALL_QUALIFIERS);
   public static final String ALL_FAMILIES = ".*";
+  public static final byte[] ALL_FAMILIES_BYTES = Bytes.toBytes(ALL_FAMILIES);
   public static final String ALL_VERSIONS = "all";
   public static final String LATEST_VERSION = "latest";
   public static final byte[] INTERLEAVE_CHARACTERS = Bytes.toBytes(" + ");
+  public static final byte[] PIPE_CHARACTER_BYTES = Bytes.toBytes(" | ");
   private final static byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");
 
   /**

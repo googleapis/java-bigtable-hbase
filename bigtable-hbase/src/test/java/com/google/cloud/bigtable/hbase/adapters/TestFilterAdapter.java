@@ -50,7 +50,7 @@ public class TestFilterAdapter {
     Assert.assertArrayEquals(Bytes.toBytes("value_match({foobar})"), outputStream.toByteArray());
   }
 
-  @Test @Ignore("This filter has been removed until compat is investigated further")
+  @Test
   public void testSingleColumnValueFilterFilters() throws IOException {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     byte[] filterValue = Bytes.toBytes("foobar");
@@ -63,17 +63,53 @@ public class TestFilterAdapter {
         CompareFilter.CompareOp.EQUAL,
         new BinaryComparator(filterValue));
 
+    filter.setFilterIfMissing(false);
+    filter.setLatestVersionOnly(false);
     filterAdapter.adaptFilterTo(filter, outputStream);
 
-    Assert.assertArrayEquals(Bytes.toBytes("(col({f:someColumn}, latest)) | value_match({foobar})"),
-        outputStream.toByteArray());
+    Assert.assertEquals(
+            "(row_has((col({f:someColumn}, all))) ? "
+                + "((row_has(((col({f:someColumn}, all)) | "
+                + "(value_match({foobar})))) ? ((col({.*:\\C*}, all))))) "
+                + ": ((col({.*:\\C*}, all))))",
+        Bytes.toString(outputStream.toByteArray()));
 
     outputStream.reset();
 
+    filter.setFilterIfMissing(false);
+    filter.setLatestVersionOnly(true);
+    filterAdapter.adaptFilterTo(filter, outputStream);
+
+    Assert.assertEquals(
+        "(row_has((col({f:someColumn}, latest))) ? "
+            + "((row_has(((col({f:someColumn}, latest)) | "
+            + "(value_match({foobar})))) ? ((col({.*:\\C*}, all))))) "
+            + ": ((col({.*:\\C*}, all))))",
+        Bytes.toString(outputStream.toByteArray()));
+
+    outputStream.reset();
+
+    filter.setFilterIfMissing(true);
     filter.setLatestVersionOnly(false);
     filterAdapter.adaptFilterTo(filter, outputStream);
-    Assert.assertArrayEquals(Bytes.toBytes("(col({f:someColumn}, all)) | value_match({foobar})"),
-        outputStream.toByteArray());
+
+    Assert.assertEquals(
+        "(row_has(((col({f:someColumn}, all)) | "
+            + "(value_match({foobar})))) ? ((col({.*:\\C*}, all))))",
+        Bytes.toString(outputStream.toByteArray()));
+
+    outputStream.reset();
+
+    filter.setFilterIfMissing(true);
+    filter.setLatestVersionOnly(true);
+    filterAdapter.adaptFilterTo(filter, outputStream);
+
+    Assert.assertEquals(
+        "(row_has(((col({f:someColumn}, latest)) | "
+            + "(value_match({foobar})))) ? ((col({.*:\\C*}, all))))",
+        Bytes.toString(outputStream.toByteArray()));
+
+    outputStream.reset();
   }
 
   @Test

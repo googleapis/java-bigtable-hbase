@@ -3,6 +3,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Throwables;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.hbase.adapters.ScanAdapter.ReaderExpressionScope;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 
@@ -16,7 +17,6 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
-import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
@@ -261,23 +261,95 @@ public class FilterAdapter {
       this.readerExpressionHelper = readerExpressionHelper;
     }
 
-    @Override
-    void adaptTypedFilterTo(SingleColumnValueFilter filter, OutputStream outputStream)
+    void writeFilterColumnSpec(SingleColumnValueFilter filter, OutputStream outputStream)
         throws IOException {
-      outputStream.write(Bytes.toBytes("((col({"));
+      // write col({fam:qualifier}, (all|latest))
+      outputStream.write(Bytes.toBytes("col({"));
       outputStream.write(filter.getFamily());
       outputStream.write(':');
       readerExpressionHelper.writeQuotedExpression(filter.getQualifier(), outputStream);
-      outputStream.write(Bytes.toBytes("}, "));
+      outputStream.write(Bytes.toBytes("}, ")); // End of regex for col({ },
       if (filter.getLatestVersionOnly()) {
         outputStream.write(Bytes.toBytes(ReaderExpressionHelper.LATEST_VERSION));
       } else {
         outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_VERSIONS));
       }
-      outputStream.write(Bytes.toBytes(")) | value_match({"));
-      readerExpressionHelper.writeQuotedExpression(
-          filter.getComparator().getValue(), outputStream);
-      outputStream.write(Bytes.toBytes("}))"));
+      outputStream.write(')');
+    }
+
+    void writeAllColumnsSpec(OutputStream outputStream)
+        throws IOException {
+      outputStream.write(Bytes.toBytes("(col({"));
+          outputStream.write(ReaderExpressionHelper.ALL_FAMILIES_BYTES);
+      outputStream.write(':');
+      outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
+      // The value of scan#maxVersions has been applied already, we can emit all cells that we
+      // see:
+      outputStream.write(Bytes.toBytes("}, all))"));
+    }
+
+    void writeRowHasWithValueMatch(
+        SingleColumnValueFilter filter, OutputStream outputStream) throws IOException {
+      // We don't include rows that don't have a column with the given value:
+      // Expect: (row_has(((col({fam:qual}, N) | (value_match({f:a}))) ? col({*}, all))
+      try (ReaderExpressionScope rowHasOuter =
+          new ReaderExpressionScope(outputStream, '(', ')')) {
+        try (ReaderExpressionScope rowHas =
+            new ReaderExpressionScope(outputStream, "row_has((","))")) {
+          try (ReaderExpressionScope colWrapper =
+              new ReaderExpressionScope(outputStream, '(', ')')) {
+            writeFilterColumnSpec(filter, outputStream);
+          }
+
+          outputStream.write(ReaderExpressionHelper.PIPE_CHARACTER_BYTES);
+          try (ReaderExpressionScope valueMatchWrapper =
+              new ReaderExpressionScope(outputStream, "(value_match({", "}))")) {
+            readerExpressionHelper.writeQuotedExpression(
+                filter.getComparator().getValue(), outputStream);
+          }
+        } // End of rowHas
+
+        outputStream.write(Bytes.toBytes(" ? "));
+
+        // Condition is now complete - write true statement:
+        try (ReaderExpressionScope trueWrapper =
+            new ReaderExpressionScope(outputStream, '(', ')')) {
+          writeAllColumnsSpec(outputStream);
+        }
+      } // End of rowHasOuter
+    }
+
+    @Override
+    void adaptTypedFilterTo(SingleColumnValueFilter filter, OutputStream outputStream)
+        throws IOException {
+      if (filter.getFilterIfMissing()) {
+        writeRowHasWithValueMatch(filter, outputStream);
+      } else {
+        // Include rows that don't have a column with the given value:
+        try (ReaderExpressionScope rowHasOuter =
+            new ReaderExpressionScope(outputStream, '(', ')')) {
+          try (ReaderExpressionScope rowHas =
+              new ReaderExpressionScope(outputStream, "row_has((", "))")) {
+            writeFilterColumnSpec(filter, outputStream);
+          }
+
+          outputStream.write(Bytes.toBytes(" ? "));
+
+          // Writing case where the row has the column:
+          try (ReaderExpressionScope trueWrapper =
+              new ReaderExpressionScope(outputStream, '(', ')')) {
+            writeRowHasWithValueMatch(filter, outputStream);
+          }
+
+          outputStream.write(Bytes.toBytes(" : "));
+
+          // Writing the case where the row does not have the column:
+          try (ReaderExpressionScope falseWrapper =
+              new ReaderExpressionScope(outputStream, '(', ')')) {
+            writeAllColumnsSpec(outputStream);
+          }
+        } // End of rowHasOuter
+      }
     }
 
     @Override
@@ -520,10 +592,9 @@ public class FilterAdapter {
     adapterMap.put(
         ValueFilter.class,
         new ValueFilterAdapter(readerExpressionHelper));
-    // TODO: Re-enable when this settles
-    // adapterMap.put(
-    //      SingleColumnValueFilter.class,
-    //      new SingleColumnValueFilterAdapter(readerExpressionHelper));
+    adapterMap.put(
+          SingleColumnValueFilter.class,
+          new SingleColumnValueFilterAdapter(readerExpressionHelper));
     adapterMap.put(
         ColumnCountGetFilter.class,
         new ColumnCountGetFilterAdapter(readerExpressionHelper));
