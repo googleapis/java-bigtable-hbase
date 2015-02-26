@@ -16,13 +16,15 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 /**
  * Requirement 1.1 - Writes are buffered in the client by default (can be disabled).  Buffer size
@@ -55,6 +57,26 @@ public class TestBufferedMutator extends AbstractTest {
     }
   }
 
+  @Test
+  public void testBufferSizeFlush() throws Exception {
+    int maxSize = 1024;
+    try (BufferedMutator mutator =
+        connection.getBufferedMutator(new BufferedMutatorParams(TABLE_NAME)
+            .writeBufferSize(maxSize))) {
+      Put put = getPut();
+      mutator.mutate(put);
+      Assert.assertEquals(put.heapSize(), mutator.getWriteBufferSize());
+
+      Put largePut = new Put(dataHelper.randomData("testrow-"));
+      largePut.addColumn(COLUMN_FAMILY, qualifier,
+        Bytes.toBytes(RandomStringUtils.randomAlphanumeric(maxSize * 2)));
+      long heapSize = largePut.heapSize();
+      Assert.assertTrue("largePut heapsize is : " + heapSize, heapSize > maxSize);
+      mutator.mutate(largePut);
+      Assert.assertEquals(0, mutator.getWriteBufferSize());
+    }
+  }
+
   final byte[] qualifier = dataHelper.randomData("testQualifier-");
   final byte[] rowKey = dataHelper.randomData("testrow-");
   final byte[] value = dataHelper.randomData("testValue-");
@@ -67,7 +89,7 @@ public class TestBufferedMutator extends AbstractTest {
 
   private Put getPut() {
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qualifier, value);
+    put.addColumn(COLUMN_FAMILY, qualifier, value);
     return put;
   }
 }

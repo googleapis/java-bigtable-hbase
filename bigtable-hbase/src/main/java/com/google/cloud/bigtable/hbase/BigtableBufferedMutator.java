@@ -52,9 +52,12 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private final Configuration configuration;
   private final TableName tableName;
-  private List<Row> writeBuffer = new ArrayList<>();
+  private List<Mutation> writeBuffer = new ArrayList<>();
   private boolean closed = false;
-  private final int bufferCount;
+  private final int maxInflightRpcCount;
+  private final long writeBufferSize;
+  protected long currentWriteBufferSize = 0;
+
   protected final BatchExecutor batchExecutor;
 
   protected final RowAdapter rowAdapter = new RowAdapter();
@@ -81,14 +84,16 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   public BigtableBufferedMutator(Configuration configuration,
       TableName tableName,
-      int bufferCount,
+      int maxInflightRpcs,
+      long writeBufferSize,
       BigtableClient client,
       BigtableOptions options,
       ExecutorService executorService,
       BufferedMutator.ExceptionListener listener) {
     super();
-    LOG.trace("CREATED with buffer count " + bufferCount);
-    this.bufferCount = bufferCount;
+    LOG.trace("CREATED with max in flight rpc count " + maxInflightRpcs);
+    this.maxInflightRpcCount = maxInflightRpcs;
+    this.writeBufferSize = writeBufferSize;
     this.configuration = configuration;
     this.tableName = tableName;
     this.listener = listener;
@@ -130,8 +135,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
       throw new IllegalStateException("Cannot flush when the BufferedMutator is closed.");
     }
     if (!writeBuffer.isEmpty()) {
-      List<Row> copy = Lists.newArrayList(writeBuffer);
-      for (List<Row> partition : Lists.partition(copy, 30)) {
+      List<Row> copy = Lists.<Row> newArrayList(writeBuffer);
+      for (List<Row> partition : Lists.partition(copy, this.maxInflightRpcCount)) {
         writeBuffer.removeAll(partition);
         try {
           batchExecutor.batch(partition);
@@ -143,6 +148,10 @@ public class BigtableBufferedMutator implements BufferedMutator {
           listener.onException(
               new RetriesExhaustedWithDetailsException(problems, partition, hostnames), this);
         }
+      }
+      currentWriteBufferSize = 0;
+      for (Mutation m : writeBuffer) {
+        currentWriteBufferSize += m.heapSize();
       }
     }
   }
@@ -159,7 +168,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   @Override
   public synchronized long getWriteBufferSize() {
-    return writeBuffer.size();
+    return currentWriteBufferSize;
   }
 
   @Override
@@ -168,9 +177,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
       throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
     }
     writeBuffer.add(mutation);
-    if (writeBuffer.size() > bufferCount) {
-      flush();
-    }
+    currentWriteBufferSize += mutation.heapSize();
+    flushIfNecessary();
   }
 
   @Override
@@ -179,8 +187,17 @@ public class BigtableBufferedMutator implements BufferedMutator {
       throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
     }
     writeBuffer.addAll(mutations);
-    if (writeBuffer.size() > bufferCount) {
+    for (Mutation m : mutations) {
+      currentWriteBufferSize += m.heapSize();
+    }
+    flushIfNecessary();
+  }
+
+  private void flushIfNecessary() throws IOException {
+    if (writeBuffer.size() > maxInflightRpcCount ||
+        currentWriteBufferSize > writeBufferSize) {
       flush();
     }
   }
+
 }
