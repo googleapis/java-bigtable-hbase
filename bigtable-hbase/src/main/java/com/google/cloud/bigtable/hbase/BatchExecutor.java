@@ -12,6 +12,7 @@ import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.cloud.hadoop.hbase.ResultScanner;
+import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -163,26 +164,6 @@ public class BatchExecutor {
     return client.mutateRowAsync(requestBuilder.build());
   }
 
-  private ListenableFuture<com.google.bigtable.v1.Row> createSingleRowFuture(
-      final ResultScanner<com.google.bigtable.v1.Row> rowResultScanner) {
-    // I really dislike potentially creating a thread for a single row get.
-    // Consider ways to expose a ListenableFuture<Row> on the client interface;
-    // perhaps just exposing the stream observer version would suffice.
-    return service.submit(new Callable<com.google.bigtable.v1.Row>() {
-      @Override
-      public com.google.bigtable.v1.Row call() throws Exception {
-        com.google.bigtable.v1.Row next = rowResultScanner.next();
-        try {
-          rowResultScanner.close();
-        } catch (Exception e) {
-          // Ignore errors on close.
-          LOG.info("Error when closing result scanner", e);
-        }
-        return next;
-      }
-    });
-  }
-
   /**
    * Adapt and issue a single Get request returning a ListenableFuture
    * for the GetRowResponse.
@@ -194,9 +175,22 @@ public class BatchExecutor {
 
     ReadRowsRequest request = builder.build();
 
-    return createSingleRowFuture(client.readRows(request));
-  }
+    ListenableFuture<List<com.google.bigtable.v1.Row>> rowsFuture =
+        client.readRowsAsync(request);
 
+    return Futures.transform(
+        rowsFuture,
+        new Function<List<com.google.bigtable.v1.Row>, com.google.bigtable.v1.Row>() {
+          @Override
+          public com.google.bigtable.v1.Row apply(List<com.google.bigtable.v1.Row> rows) {
+            if (rows.isEmpty()) {
+              return null;
+            } else {
+              return rows.get(0);
+            }
+          }
+        });
+  }
 
   /**
    * Adapt and issue a single Append request returning a ListenableFuture
