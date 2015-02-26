@@ -54,7 +54,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final TableName tableName;
   private List<Mutation> writeBuffer = new ArrayList<>();
   private boolean closed = false;
-  private final int bufferCount;
+  private final int maxInflightRpcCount;
   private final long writeBufferSize;
   protected long currentWriteBufferSize = 0;
 
@@ -84,15 +84,15 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   public BigtableBufferedMutator(Configuration configuration,
       TableName tableName,
-      int bufferCount,
+      int maxInflightRpcs,
       long writeBufferSize,
       BigtableClient client,
       BigtableOptions options,
       ExecutorService executorService,
       BufferedMutator.ExceptionListener listener) {
     super();
-    LOG.trace("CREATED with buffer count " + bufferCount);
-    this.bufferCount = bufferCount;
+    LOG.trace("CREATED with max in flight rpc count " + maxInflightRpcs);
+    this.maxInflightRpcCount = maxInflightRpcs;
     this.writeBufferSize = writeBufferSize;
     this.configuration = configuration;
     this.tableName = tableName;
@@ -136,7 +136,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
     if (!writeBuffer.isEmpty()) {
       List<Row> copy = Lists.<Row> newArrayList(writeBuffer);
-      for (List<Row> partition : Lists.partition(copy, 30)) {
+      for (List<Row> partition : Lists.partition(copy, this.maxInflightRpcCount)) {
         writeBuffer.removeAll(partition);
         try {
           batchExecutor.batch(partition);
@@ -194,7 +194,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   private void flushIfNecessary() throws IOException {
-    if (writeBuffer.size() > bufferCount ||
+    if (writeBuffer.size() > maxInflightRpcCount ||
         currentWriteBufferSize > writeBufferSize) {
       flush();
     }
