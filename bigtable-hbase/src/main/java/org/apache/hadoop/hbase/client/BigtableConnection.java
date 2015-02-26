@@ -45,7 +45,7 @@ import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
 
 public class BigtableConnection implements Connection, Closeable {
-  public static final String BUFFERED_MUTATOR_MAX_THREADS = "com.google.cloud.bigtable.hbase.buffered_mutator.max_threads";
+  public static final String MAX_INFLIGHT_RPCS = "MAX_INFLIGHT_RPCS";
   private static final Logger LOG = new Logger(BigtableConnection.class);
 
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
@@ -152,7 +152,7 @@ public class BigtableConnection implements Connection, Closeable {
       params.writeBufferSize(tableConfig.getWriteBufferSize());
     }
 
-    int bufferCount = conf.getInt(BUFFERED_MUTATOR_MAX_THREADS, 30);
+    int bufferCount = conf.getInt(MAX_INFLIGHT_RPCS, 30);
 
     return new BigtableBufferedMutator(conf,
         params.getTableName(),
