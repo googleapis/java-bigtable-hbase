@@ -60,12 +60,17 @@ public class TestBufferedMutator extends AbstractTest {
   @Test
   public void testBufferSizeFlush() throws Exception {
     int maxSize = 1024;
-    try (BufferedMutator mutator =
-        connection.getBufferedMutator(new BufferedMutatorParams(TABLE_NAME)
-            .writeBufferSize(maxSize))) {
+    BufferedMutatorParams params = new BufferedMutatorParams(TABLE_NAME)
+        .writeBufferSize(maxSize);
+    try (BufferedMutator mutator = connection.getBufferedMutator(params)) {
+      // HBase 1.0.0 has a bug in it. It returns maxSize instead of the buffer size for
+      // getWriteBufferSize.  https://issues.apache.org/jira/browse/HBASE-13113
+      Assert.assertTrue(
+          0 == mutator.getWriteBufferSize() || maxSize == mutator.getWriteBufferSize());
+
       Put put = getPut();
       mutator.mutate(put);
-      Assert.assertEquals(put.heapSize(), mutator.getWriteBufferSize());
+      Assert.assertTrue(mutator.getWriteBufferSize() > 0);
 
       Put largePut = new Put(dataHelper.randomData("testrow-"));
       largePut.addColumn(COLUMN_FAMILY, qualifier,
@@ -73,7 +78,11 @@ public class TestBufferedMutator extends AbstractTest {
       long heapSize = largePut.heapSize();
       Assert.assertTrue("largePut heapsize is : " + heapSize, heapSize > maxSize);
       mutator.mutate(largePut);
-      Assert.assertEquals(0, mutator.getWriteBufferSize());
+
+      // HBase 1.0.0 has a bug in it. It returns maxSize instead of the buffer size for
+      // getWriteBufferSize.  https://issues.apache.org/jira/browse/HBASE-13113
+      Assert.assertTrue(
+          0 == mutator.getWriteBufferSize() || maxSize == mutator.getWriteBufferSize());
     }
   }
 
