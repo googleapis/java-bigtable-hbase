@@ -21,6 +21,9 @@ import java.util.List;
 public class BigtableRowAdapter implements ResponseAdapter<Row, Result> {
   @Override
   public Result adaptResponse(Row response) {
+    if (response == null) {
+      return new Result();
+    }
     List<org.apache.hadoop.hbase.Cell> hbaseCells = new ArrayList<>();
     byte[] rowKey = response.getKey().toByteArray();
 

@@ -14,9 +14,8 @@
 
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopServiceMessages;
-import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
+import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.bigtable.v1.ReadRowsRequest.TargetCase;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -45,8 +44,8 @@ public class TestScanAdapter {
     byte[] qualifier = Bytes.toBytes("qualifier");
     Scan scan = new Scan();
     scan.addColumn(family, qualifier);
-    AnviltopServiceMessages.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
-    Assert.assertEquals("((col({family:qualifier}, 1)))", request.getOptions().getFilter());
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan);
+    Assert.assertEquals("((col({family:qualifier}, 1)))", request.getDEPRECATEDStringFilter());
   }
 
   @Test
@@ -56,9 +55,9 @@ public class TestScanAdapter {
     Scan scan = new Scan();
     scan.setStartRow(startKey);
     scan.setStopRow(stopKey);
-    AnviltopServiceMessages.ReadTableRequest.Builder request = scanAdapter.adapt(scan);
-    Assert.assertEquals(1, request.getOptions().getRangesCount());
-    Assert.assertArrayEquals(startKey, request.getOptions().getRanges(0).getStart().toByteArray());
-    Assert.assertArrayEquals(stopKey, request.getOptions().getRanges(0).getEnd().toByteArray());
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan);
+    Assert.assertEquals(TargetCase.ROW_RANGE, request.getTargetCase());
+    Assert.assertArrayEquals(startKey, request.getRowRange().getStartKey().toByteArray());
+    Assert.assertArrayEquals(stopKey, request.getRowRange().getEndKey().toByteArray());
   }
 }

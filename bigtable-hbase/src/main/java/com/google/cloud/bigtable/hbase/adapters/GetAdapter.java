@@ -13,9 +13,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-
-import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest.Builder;
+import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Scan;
@@ -23,7 +21,7 @@ import org.apache.hadoop.hbase.client.Scan;
 /**
  * Adapter for HBase Get operations to Anviltop GetRowRequest.Builder.
  */
-public class GetAdapter implements OperationAdapter<Get, GetRowRequest.Builder> {
+public class GetAdapter implements OperationAdapter<Get, ReadRowsRequest.Builder> {
 
   protected final ScanAdapter scanAdapter;
   public GetAdapter(ScanAdapter scanAdapter) {
@@ -31,12 +29,12 @@ public class GetAdapter implements OperationAdapter<Get, GetRowRequest.Builder> 
   }
 
   @Override
-  public Builder adapt(Get operation) {
+  public ReadRowsRequest.Builder adapt(Get operation) {
     scanAdapter.throwIfUnsupportedScan(new Scan(operation));
 
-    GetRowRequest.Builder result = GetRowRequest.newBuilder();
+    ReadRowsRequest.Builder result = ReadRowsRequest.newBuilder();
     result.setRowKey(ByteString.copyFrom(operation.getRow()));
-    result.setFilterBytes(
+    result.setDEPRECATEDStringFilterBytes(
         ByteString.copyFrom(
             scanAdapter.buildFilterByteString(new Scan(operation))));
     return result;

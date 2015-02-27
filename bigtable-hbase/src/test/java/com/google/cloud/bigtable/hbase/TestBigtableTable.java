@@ -3,7 +3,10 @@ package com.google.cloud.bigtable.hbase;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
 import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.bigtable.v1.Row;
 import com.google.cloud.hadoop.hbase.BigtableClient;
+import com.google.cloud.hadoop.hbase.ResultScanner;
 import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
@@ -76,46 +79,39 @@ public class TestBigtableTable {
   }
 
   @Test
-  public void projectIsPopulatedInGetRequests() throws ServiceException, IOException {
-    Mockito.when(mockClient.getRow(Mockito.any(GetRowRequest.class)))
-        .thenReturn(GetRowResponse.getDefaultInstance());
+  public void getRequestsAreFullyPopulated() throws ServiceException, IOException {
+    Mockito.when(mockClient.readRows(Mockito.any(ReadRowsRequest.class)))
+        .thenReturn(new ResultScanner<Row>() {
+          @Override
+          public Row next() throws IOException {
+            return null;
+          }
 
-    table.get(new Get(Bytes.toBytes("rowKey1")));
+          @Override
+          public Row[] next(int i) throws IOException {
+            return new Row[i];
+          }
 
-    ArgumentCaptor<GetRowRequest> argument =
-        ArgumentCaptor.forClass(GetRowRequest.class);
-    Mockito.verify(mockClient).getRow(argument.capture());
-    Assert.assertEquals(TEST_PROJECT, argument.getValue().getProjectId());
-  }
+          @Override
+          public void close() throws IOException {
+          }
+        });
 
-  @Test
-  public void tableNameIsPopulatedInGetRequests() throws ServiceException, IOException {
-    Mockito.when(mockClient.getRow(Mockito.any(GetRowRequest.class)))
-        .thenReturn(GetRowResponse.getDefaultInstance());
-
-    table.get(new Get(Bytes.toBytes("rowKey1")));
-
-    ArgumentCaptor<GetRowRequest> argument =
-        ArgumentCaptor.forClass(GetRowRequest.class);
-    Mockito.verify(mockClient).getRow(argument.capture());
-    Assert.assertEquals(TEST_TABLE, argument.getValue().getTableName());
-  }
-
-  @Test
-  public void filterIsPopulatedInGetRequests() throws ServiceException, IOException {
-    Mockito.when(mockClient.getRow(Mockito.any(GetRowRequest.class)))
-        .thenReturn(GetRowResponse.getDefaultInstance());
-
-    String expectedFilter = "((col({family:qualifier}, 1)))";
     table.get(
         new Get(Bytes.toBytes("rowKey1"))
             .addColumn(
                 Bytes.toBytes("family"),
                 Bytes.toBytes("qualifier")));
 
-    ArgumentCaptor<GetRowRequest> argument =
-        ArgumentCaptor.forClass(GetRowRequest.class);
-    Mockito.verify(mockClient).getRow(argument.capture());
-    Assert.assertEquals(expectedFilter, argument.getValue().getFilter());
+    ArgumentCaptor<ReadRowsRequest> argument =
+        ArgumentCaptor.forClass(ReadRowsRequest.class);
+
+    Mockito.verify(mockClient).readRows(argument.capture());
+
+    Assert.assertEquals(
+        "projects/testproject/zones/testzone/clusters/testcluster/tables/testtable",
+        argument.getValue().getTableName());
+    String expectedFilter = "((col({family:qualifier}, 1)))";
+    Assert.assertEquals(expectedFilter, argument.getValue().getDEPRECATEDStringFilter());
   }
 }

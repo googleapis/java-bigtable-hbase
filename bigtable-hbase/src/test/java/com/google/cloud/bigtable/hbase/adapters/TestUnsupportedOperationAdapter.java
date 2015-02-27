@@ -14,8 +14,6 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 
-import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
-
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Rule;
