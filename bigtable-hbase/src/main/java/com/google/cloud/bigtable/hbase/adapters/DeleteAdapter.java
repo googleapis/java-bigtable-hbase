@@ -13,14 +13,12 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.Builder;
 import com.google.bigtable.v1.Mutation.DeleteFromFamily;
 import com.google.bigtable.v1.Mutation.DeleteFromRow;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
-import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;

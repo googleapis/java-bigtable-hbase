@@ -13,9 +13,6 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.MutateRowRequest;
@@ -35,7 +32,6 @@ import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
-import com.google.cloud.hadoop.hbase.AnviltopResultScanner;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
