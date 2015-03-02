@@ -1,6 +1,5 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.v1.Cell;
 import com.google.bigtable.v1.Column;
 import com.google.bigtable.v1.Family;

@@ -1,7 +1,5 @@
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.GetRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;

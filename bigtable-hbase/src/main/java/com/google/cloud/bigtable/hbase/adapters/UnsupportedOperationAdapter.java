@@ -13,7 +13,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopData;
 import com.google.bigtable.v1.MutateRowRequest;
 
 import org.apache.hadoop.hbase.client.Operation;

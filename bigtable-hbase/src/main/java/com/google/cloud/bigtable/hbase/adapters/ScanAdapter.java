@@ -14,18 +14,6 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 
-import com.google.api.client.util.Throwables;
-import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableRequest;
-import com.google.bigtable.anviltop.AnviltopServiceMessages.ReadTableResponse;
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
-import com.google.protobuf.ByteString;
-
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,6 +21,15 @@ import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.NavigableSet;
+
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import com.google.api.client.util.Throwables;
+import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.protobuf.ByteString;
 
 
 /**
