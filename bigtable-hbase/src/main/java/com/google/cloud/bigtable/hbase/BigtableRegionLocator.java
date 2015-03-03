@@ -56,9 +56,9 @@ public class BigtableRegionLocator implements RegionLocator {
       regions = adapter.adaptResponse(responses);
       regionsFetchTimeMillis = System.currentTimeMillis();
       return regions;
-    } catch(RuntimeException e) {
+    } catch(Throwable throwable) {
       regions = null;
-      throw new IOException("Error sampling rowkeys.", e);
+      throw new IOException("Error sampling rowkeys.", throwable);
     }
   }
 
