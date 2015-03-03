@@ -222,15 +222,15 @@ public class BigtableTable implements Table {
       scanner.close();
 
       return response;
-    } catch (RuntimeException | IOException e) {
-      LOG.error("Encountered exception when executing get, Exception: %s", e);
+    } catch (Throwable throwable) {
+      LOG.error("Encountered exception when executing get, Exception: %s", throwable);
       throw new IOException(
           makeGenericExceptionMessage(
               "get",
               options.getProjectId(),
               tableName.getQualifierAsString(),
               readRowsRequest.getRowKey().toByteArray()),
-          e);
+          throwable);
     }
   }
 
@@ -250,14 +250,14 @@ public class BigtableTable implements Table {
       com.google.cloud.hadoop.hbase.ResultScanner<com.google.bigtable.v1.Row> scanner =
           client.readRows(request.build());
       return bigtableResultScannerAdapter.adapt(scanner);
-    } catch (RuntimeException e) {
-      LOG.error("Encountered exception when executing getScanner. Exception: %s", e);
+    } catch (Throwable throwable) {
+      LOG.error("Encountered exception when executing getScanner. Exception: %s", throwable);
       throw new IOException(
           makeGenericExceptionMessage(
               "getScanner",
               options.getProjectId(),
               tableName.getQualifierAsString()),
-          e);
+          throwable);
     }
   }
 
@@ -281,15 +281,15 @@ public class BigtableTable implements Table {
 
     try {
       client.mutateRow(rowMutationBuilder.build());
-    } catch (ServiceException e) {
-      LOG.error("Encountered ServiceException when executing put. Exception: %s", e);
+    } catch (Throwable throwable) {
+      LOG.error("Encountered ServiceException when executing put. Exception: %s", throwable);
       throw new IOException(
           makeGenericExceptionMessage(
               "put",
               options.getProjectId(),
               tableName.getQualifierAsString(),
               rowMutationBuilder.getRowKey().toByteArray()),
-          e);
+          throwable);
     }
   }
 
@@ -317,14 +317,14 @@ public class BigtableTable implements Table {
       CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
       return wasMutationApplied(requestBuilder, response);
-    } catch (ServiceException serviceException) {
+    } catch (Throwable throwable) {
       throw new IOException(
           makeGenericExceptionMessage(
               "checkAndPut",
               options.getProjectId(),
               tableName.getQualifierAsString(),
               row),
-          serviceException);
+          throwable);
     }
   }
 
@@ -336,15 +336,15 @@ public class BigtableTable implements Table {
 
     try {
       client.mutateRow(requestBuilder.build());
-    } catch (ServiceException e) {
-      LOG.error("Encountered ServiceException when executing delete. Exception: %s", e);
+    } catch (Throwable throwable) {
+      LOG.error("Encountered ServiceException when executing delete. Exception: %s", throwable);
       throw new IOException(
           makeGenericExceptionMessage(
               "delete",
               options.getProjectId(),
               tableName.getQualifierAsString(),
               requestBuilder.getRowKey().toByteArray()),
-          e);
+          throwable);
     }
   }
 
@@ -378,14 +378,14 @@ public class BigtableTable implements Table {
       CheckAndMutateRowResponse response =
           client.checkAndMutateRow(requestBuilder.build());
       return wasMutationApplied(requestBuilder, response);
-    } catch (ServiceException serviceException) {
+    } catch (Throwable throwable) {
       throw new IOException(
           makeGenericExceptionMessage(
               "checkAndDelete",
               options.getProjectId(),
               tableName.getQualifierAsString(),
               row),
-          serviceException);
+          throwable);
     }
   }
 
@@ -403,9 +403,14 @@ public class BigtableTable implements Table {
     metadataSetter.setMetadata(requestBuilder);
     try {
       client.mutateRow(requestBuilder.build());
-    } catch (ServiceException e) {
-      LOG.error("Encountered ServiceException when executing mutateRow. Exception: %s", e);
-      throw new IOException("Failed to mutate.", e);
+    } catch (Throwable throwable) {
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "mutateRow",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              rm.getRow()),
+          throwable);
     }
   }
 
@@ -425,15 +430,15 @@ public class BigtableTable implements Table {
       } else {
         return null;
       }
-    } catch (RuntimeException e) {
-      LOG.error("Encountered Exception when executing append. Exception: %s", e);
+    } catch (Throwable throwable) {
+      LOG.error("Encountered Exception when executing append. Exception: %s", throwable);
       throw new IOException(
           makeGenericExceptionMessage(
               "append",
               options.getProjectId(),
               tableName.getQualifierAsString(),
               append.getRow()),
-          e);
+          throwable);
     }
   }
 
@@ -447,7 +452,7 @@ public class BigtableTable implements Table {
     try {
       com.google.bigtable.v1.Row response = client.readModifyWriteRow(incrementRowRequest.build());
       return bigtableRowAdapter.adaptResponse(response);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       LOG.error("Encountered RuntimeException when executing increment. Exception: %s", e);
       throw new IOException(
           makeGenericExceptionMessage(

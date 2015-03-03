@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
 import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateFamilyRequest;
@@ -126,7 +127,12 @@ public class BigtableAdmin implements Admin {
   public HTableDescriptor[] listTables(Pattern pattern) throws IOException {
     ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
     builder.setProjectId(options.getProjectId());
-    ListTablesResponse response = bigtableAdminClient.listTables(builder.build());
+    ListTablesResponse response;
+    try {
+      response = bigtableAdminClient.listTables(builder.build());
+    } catch (Throwable throwable) {
+      throw new IOException("Failed to listTables", throwable);
+    }
     List<HTableDescriptor> result = new ArrayList<>();
     for (String tableName : response.getTableNameList()) {
       if (pattern.matcher(tableName).matches()) {
@@ -228,8 +234,15 @@ public class BigtableAdmin implements Admin {
     for (HColumnDescriptor column : desc.getColumnFamilies()) {
       builder.addColumnFamilies(columnDescriptorAdapter.adapt(column));
     }
-
-    bigtableAdminClient.createTable(builder.build());
+    try {
+      bigtableAdminClient.createTable(builder.build());
+    } catch (Throwable throwable) {
+      throw new IOException(
+          String.format(
+              "Failed to create table '%s'",
+              desc.getTableName().getNameAsString()),
+          throwable);
+    }
   }
 
   @Override
@@ -250,10 +263,18 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void deleteTable(TableName tableName) throws IOException {
-    bigtableAdminClient.deleteTable(DeleteTableRequest.newBuilder()
-        .setProjectId(options.getProjectId())
-        .setTableNameBytes(ByteString.copyFrom(tableName.getQualifier()))
-        .build());
+    try {
+      bigtableAdminClient.deleteTable(DeleteTableRequest.newBuilder()
+          .setProjectId(options.getProjectId())
+          .setTableNameBytes(ByteString.copyFrom(tableName.getQualifier()))
+          .build());
+    } catch (Throwable throwable) {
+      throw new IOException(
+          String.format(
+              "Failed to delete table '%s'",
+              tableName.getNameAsString()),
+          throwable);
+    }
   }
 
   @Override
@@ -400,12 +421,21 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
-    bigtableAdminClient.createFamily(
-        CreateFamilyRequest.newBuilder()
-            .setProjectId(options.getProjectId())
-            .setTableName(tableName.getQualifierAsString())
-            .setFamily(columnDescriptorAdapter.adapt(column))
-            .build());
+    try {
+      bigtableAdminClient.createFamily(
+          CreateFamilyRequest.newBuilder()
+              .setProjectId(options.getProjectId())
+              .setTableName(tableName.getQualifierAsString())
+              .setFamily(columnDescriptorAdapter.adapt(column))
+              .build());
+    } catch (Throwable throwable) {
+      throw new IOException(
+          String.format(
+              "Failed to add column '%s' to table '%s'",
+              column.getNameAsString(),
+              tableName.getNameAsString()),
+          throwable);
+    }
   }
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
@@ -417,11 +447,20 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
-    bigtableAdminClient.deleteFamily(
-        DeleteFamilyRequest.newBuilder()
-            .setProjectId(options.getProjectId())
-            .setTableName(tableName.getQualifierAsString())
-            .setFamilyNameBytes(ByteString.copyFrom(columnName)).build());
+    try {
+      bigtableAdminClient.deleteFamily(
+          DeleteFamilyRequest.newBuilder()
+              .setProjectId(options.getProjectId())
+              .setTableName(tableName.getQualifierAsString())
+              .setFamilyNameBytes(ByteString.copyFrom(columnName)).build());
+    } catch (Throwable throwable) {
+      throw new IOException(
+          String.format(
+              "Failed to delete column '%s' from table '%s'",
+              Bytes.toString(columnName),
+              tableName.getNameAsString()),
+          throwable);
+    }
   }
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
