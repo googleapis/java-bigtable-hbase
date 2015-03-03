@@ -208,7 +208,7 @@ public class BigtableAdmin implements Admin {
   @Override
   public HTableDescriptor getTableDescriptor(TableName tableName)
       throws TableNotFoundException, IOException {
-    throw new UnsupportedOperationException("getTableDescriptor");  // TODO
+    return new HTableDescriptor(tableName);
   }
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
