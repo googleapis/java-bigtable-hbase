@@ -65,8 +65,8 @@ public class TestIncrement extends AbstractTest {
 
     // Put and increment
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qual1, Bytes.toBytes(value1));
-    put.add(COLUMN_FAMILY, qual2, Bytes.toBytes(value2));
+    put.addColumn(COLUMN_FAMILY, qual1, Bytes.toBytes(value1));
+    put.addColumn(COLUMN_FAMILY, qual2, Bytes.toBytes(value2));
     table.put(put);
     Increment increment = new Increment(rowKey);
     increment.addColumn(COLUMN_FAMILY, qual1, incr1);
@@ -116,9 +116,9 @@ public class TestIncrement extends AbstractTest {
     byte[] qual = dataHelper.randomData("qual-");
 
     // Put and increment in range.  Test min is inclusive, max is exclusive.
-    Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, 101L, Bytes.toBytes(101L))
-      .add(COLUMN_FAMILY, qual, 102L, Bytes.toBytes(102L))
-      .add(COLUMN_FAMILY, qual, 103L, Bytes.toBytes(103L));
+    Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, 101L, Bytes.toBytes(101L))
+      .addColumn(COLUMN_FAMILY, qual, 102L, Bytes.toBytes(102L))
+      .addColumn(COLUMN_FAMILY, qual, 103L, Bytes.toBytes(103L));
     table.put(put);
 
     // Increment doesn't increment in place.
@@ -183,7 +183,7 @@ public class TestIncrement extends AbstractTest {
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qualifier, 1L, Bytes.toBytes(100L));
+    put.addColumn(COLUMN_FAMILY, qualifier, 1L, Bytes.toBytes(100L));
     table.put(put);
 
     Increment increment = new Increment(rowKey).addColumn(COLUMN_FAMILY, qualifier, 1L);
@@ -218,7 +218,7 @@ public class TestIncrement extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     int value = new Random().nextInt();
-    Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, Bytes.toBytes(value));
+    Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, Bytes.toBytes(value));
     table.put(put);
 
     // Increment
@@ -239,7 +239,7 @@ public class TestIncrement extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
-    Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+    Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
     table.put(put);
 
     // Increment
@@ -266,7 +266,7 @@ public class TestIncrement extends AbstractTest {
     long equivalentValue = buffer.getLong();
 
     // Put the bytes in
-    Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+    Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
     table.put(put);
 
     // Increment
@@ -301,8 +301,8 @@ public class TestIncrement extends AbstractTest {
 
     // Put and increment
     Put put = new Put(rowKey);
-    put.add(incrementFamily, qual1, Bytes.toBytes(value1));
-    put.add(incrementFamily, qual2, Bytes.toBytes(value2));
+    put.addColumn(incrementFamily, qual1, Bytes.toBytes(value1));
+    put.addColumn(incrementFamily, qual2, Bytes.toBytes(value2));
     table.put(put);
     Increment increment = new Increment(rowKey);
     increment.addColumn(incrementFamily, qual1, incr1);

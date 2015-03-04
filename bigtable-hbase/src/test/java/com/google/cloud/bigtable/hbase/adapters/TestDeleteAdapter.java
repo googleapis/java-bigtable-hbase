@@ -70,7 +70,7 @@ public class TestDeleteAdapter {
     byte[] rowKey = randomHelper.randomData("rk1-");
     byte[] family = randomHelper.randomData("family1-");
     Delete delete = new Delete(rowKey);
-    delete.deleteFamily(family);
+    delete.addFamily(family);
     MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
@@ -89,7 +89,7 @@ public class TestDeleteAdapter {
   public void testColumnFamilyDeleteAtTimestampFails() {
     byte[] rowKey = randomHelper.randomData("rk1-");
     Delete delete = new Delete(rowKey);
-    delete.deleteFamily(Bytes.toBytes("family1"), 10000L);
+    delete.addFamily(Bytes.toBytes("family1"), 10000L);
 
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Cannot perform column family deletion before timestamp");
@@ -105,10 +105,9 @@ public class TestDeleteAdapter {
     long hbaseTimestamp = 1000L;
     long anviltopStartTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp);
     long anviltopEndTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp + 1);
-    byte[] fullColumnName = qualifierTestHelper.makeFullQualifier(family, qualifier);
 
     Delete delete = new Delete(rowKey);
-    delete.deleteColumn(family, qualifier, hbaseTimestamp);
+    delete.addColumn(family, qualifier, hbaseTimestamp);
     MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());
@@ -136,7 +135,7 @@ public class TestDeleteAdapter {
     byte[] qualifier = randomHelper.randomData("qualifier");
 
     Delete delete = new Delete(rowKey);
-    delete.deleteColumn(family, qualifier);
+    delete.addColumn(family, qualifier);
 
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Cannot delete single latest cell");
@@ -151,10 +150,9 @@ public class TestDeleteAdapter {
     byte[] qualifier = randomHelper.randomData("qualifier");
     long hbaseTimestamp = 1000L;
     long anviltopTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp + 1);
-    byte[] fullColumnName = qualifierTestHelper.makeFullQualifier(family, qualifier);
 
     Delete delete = new Delete(rowKey);
-    delete.deleteColumns(family, qualifier, hbaseTimestamp);
+    delete.addColumns(family, qualifier, hbaseTimestamp);
     MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
 
     Assert.assertArrayEquals(rowKey, rowMutation.getRowKey().toByteArray());

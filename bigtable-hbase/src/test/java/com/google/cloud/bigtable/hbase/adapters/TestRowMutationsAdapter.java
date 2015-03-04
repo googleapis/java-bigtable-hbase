@@ -43,7 +43,6 @@ public class TestRowMutationsAdapter {
 
   private RowMutationsAdapter adapter;
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
-  private QualifierTestHelper qualifierHelper = new QualifierTestHelper();
 
   @Before
   public void setUp() {
@@ -74,11 +73,11 @@ public class TestRowMutationsAdapter {
 
     mutations.add(
         new Put(rowKey)
-            .add(family1, qualifier1, value1));
+            .addColumn(family1, qualifier1, value1));
 
     mutations.add(
         new Put(rowKey)
-            .add(family2, qualifier2, value2));
+            .addColumn(family2, qualifier2, value2));
 
     // When mockAdapter is asked to adapt the above mutations, we'll return these responses:
     MutateRowRequest.Builder response1 = MutateRowRequest.newBuilder();

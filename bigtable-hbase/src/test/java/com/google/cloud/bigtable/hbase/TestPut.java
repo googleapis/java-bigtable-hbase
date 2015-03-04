@@ -62,7 +62,7 @@ public class TestPut extends AbstractTest {
     Put put = new Put(rowKey);
     List<QualifierValue> keyValues = new ArrayList<QualifierValue>(100);
     for (int i = 0; i < NUM_CELLS; ++i) {
-      put.add(COLUMN_FAMILY, quals[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], values[i]);
       keyValues.add(new QualifierValue(quals[i], values[i]));
     }
     table.put(put);
@@ -107,7 +107,7 @@ public class TestPut extends AbstractTest {
     Map<String, QualifierValue> insertedKeyValues = new TreeMap<String, QualifierValue>();
     for (int i = 0; i < NUM_ROWS; ++i) {
       Put put = new Put(rowKeys[i]);
-      put.add(COLUMN_FAMILY, qualifiers[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, qualifiers[i], values[i]);
       puts.add(put);
 
       String key = Bytes.toString(rowKeys[i]);
@@ -166,7 +166,7 @@ public class TestPut extends AbstractTest {
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qualifier, value);
+    put.addColumn(COLUMN_FAMILY, qualifier, value);
     table.put(put);
     Get get = new Get(rowKey);
     get.addColumn(COLUMN_FAMILY, qualifier);
@@ -200,7 +200,7 @@ public class TestPut extends AbstractTest {
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
     Put put = new Put(rowKey);
-    put.add(badfamily, qualifier, value);
+    put.addColumn(badfamily, qualifier, value);
     table.put(put);
   }
 
@@ -215,8 +215,8 @@ public class TestPut extends AbstractTest {
     byte[] badValue = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] badfamily = Bytes.toBytes("badcolumnfamily-" + RandomStringUtils.randomAlphanumeric(8));
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, goodQual, goodValue);
-    put.add(badfamily, badQual, badValue);
+    put.addColumn(COLUMN_FAMILY, goodQual, goodValue);
+    put.addColumn(badfamily, badQual, badValue);
     RetriesExhaustedWithDetailsException thrownException = null;
     try {
       table.put(put);
@@ -256,12 +256,12 @@ public class TestPut extends AbstractTest {
 
     List<Put> puts = new ArrayList<>();
     Put put1 = new Put(rowKey1);
-    put1.add(COLUMN_FAMILY, qual1, value1);
+    put1.addColumn(COLUMN_FAMILY, qual1, value1);
     puts.add(put1);
     Put put2 = new Put(rowKey2);
     puts.add(put2);
     Put put3 = new Put(rowKey3);
-    put3.add(COLUMN_FAMILY, qual3, value3);
+    put3.addColumn(COLUMN_FAMILY, qual3, value3);
     puts.add(put3);
     boolean exceptionThrown = false;
     try {
@@ -293,10 +293,10 @@ public class TestPut extends AbstractTest {
     long timestamp = System.currentTimeMillis();
     Table table = connection.getTable(TABLE_NAME);
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qualifier, timestamp, value1);
+    put.addColumn(COLUMN_FAMILY, qualifier, timestamp, value1);
     table.put(put);
     put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qualifier, timestamp, value2);
+    put.addColumn(COLUMN_FAMILY, qualifier, timestamp, value2);
     table.put(put);
     Get get = new Get(rowKey);
     get.addColumn(COLUMN_FAMILY, qualifier);
@@ -363,7 +363,7 @@ public class TestPut extends AbstractTest {
       byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
       byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
       Put put = new Put(goodkeys[i]);
-      put.add(COLUMN_FAMILY, qualifier, value);
+      put.addColumn(COLUMN_FAMILY, qualifier, value);
       puts.add(put);
     }
 
@@ -372,7 +372,7 @@ public class TestPut extends AbstractTest {
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));
     Put put = new Put(badkey);
-    put.add(badfamily, qualifier, value);
+    put.addColumn(badfamily, qualifier, value);
     puts.add(numberOfGoodPuts / 2, put);
     RetriesExhaustedWithDetailsException thrownException = null;
     try {

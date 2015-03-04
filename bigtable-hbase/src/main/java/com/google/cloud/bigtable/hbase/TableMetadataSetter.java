@@ -21,14 +21,10 @@ public class TableMetadataSetter {
         tableName, options.getProjectId(), options.getZone(), options.getCluster());
   }
 
-  private final TableName tableName;
-  private final String projectId;
   private final String formattedV1TableName;
 
   public TableMetadataSetter(
       TableName tableName, String projectId, String zone, String clusterName) {
-    this.tableName = tableName;
-    this.projectId = projectId;
     this.formattedV1TableName = String.format(BIGTABLE_V1_TABLENAME_FMT,
         projectId, zone, clusterName, tableName.getQualifierAsString());
   }

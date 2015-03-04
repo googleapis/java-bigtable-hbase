@@ -75,7 +75,7 @@ public class TestBasicOps extends AbstractTest {
 
     // Insert value with null qualifier
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, null, testValue);
+    put.addColumn(COLUMN_FAMILY, null, testValue);
     table.put(put);
 
     // This is treated the same as an empty String (which is just an empty byte array).
@@ -107,7 +107,7 @@ public class TestBasicOps extends AbstractTest {
 
     // Delete
     Delete delete = new Delete(rowKey);
-    delete.deleteColumns(COLUMN_FAMILY, null);
+    delete.addColumns(COLUMN_FAMILY, null);
     table.delete(delete);
 
     // Confirm deleted
@@ -124,7 +124,6 @@ public class TestBasicOps extends AbstractTest {
   @Test
   public void testPutBigValue() throws IOException {
     // Initialize variables
-    Table table = connection.getTable(TABLE_NAME);
     byte[] testRowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = new byte[(10 << 20) - 1024];  // 10 MB - 1kB
@@ -141,7 +140,6 @@ public class TestBasicOps extends AbstractTest {
   @Test(expected = IllegalArgumentException.class)
   public void testPutTooBigValue() throws IOException {
     // Initialize variables
-    Table table = connection.getTable(TABLE_NAME);
     byte[] testRowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     int metadataSize =  (20 + testRowKey.length + COLUMN_FAMILY.length + testQualifier.length);
@@ -153,7 +151,6 @@ public class TestBasicOps extends AbstractTest {
   @Test
   public void testPutAlmostTooBigValue() throws IOException {
     // Initialize variables
-    Table table = connection.getTable(TABLE_NAME);
     byte[] testRowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     int metadataSize =  (20 + testRowKey.length + COLUMN_FAMILY.length + testQualifier.length);
@@ -168,7 +165,7 @@ public class TestBasicOps extends AbstractTest {
 
     // Put
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, testQualifier, testValue);
+    put.addColumn(COLUMN_FAMILY, testQualifier, testValue);
     table.put(put);
 
     // Get
@@ -182,7 +179,7 @@ public class TestBasicOps extends AbstractTest {
 
     // Delete
     Delete delete = new Delete(rowKey);
-    delete.deleteColumns(COLUMN_FAMILY, testQualifier);
+    delete.addColumns(COLUMN_FAMILY, testQualifier);
     table.delete(delete);
 
     // Confirm deleted

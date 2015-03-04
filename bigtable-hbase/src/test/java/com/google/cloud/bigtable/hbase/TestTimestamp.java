@@ -49,7 +49,7 @@ public class TestTimestamp extends AbstractTest {
     // Put several versions in the same row/column.
     Put put = new Put(rowKey);
     for (int i = 0; i < numVersions; ++i) {
-      put.add(COLUMN_FAMILY, testQualifier, versions[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, testQualifier, versions[i], values[i]);
     }
     table.put(put);
 
@@ -79,7 +79,7 @@ public class TestTimestamp extends AbstractTest {
 
     // Delete the second-to-last version.
     Delete delete = new Delete(rowKey);
-    delete.deleteColumn(COLUMN_FAMILY, testQualifier, versions[numVersions - 2]);
+    delete.addColumn(COLUMN_FAMILY, testQualifier, versions[numVersions - 2]);
     table.delete(delete);
 
     // Now, the same get should return the last and third-to-last values.

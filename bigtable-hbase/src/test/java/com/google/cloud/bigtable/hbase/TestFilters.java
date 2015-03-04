@@ -75,8 +75,8 @@ public class TestFilters extends AbstractTest {
     for (int i = 0; i < numColumns; ++i) {
       quals[i] = Bytes.toBytes(i);
       // Add two timestamps to test that filter only grabs the latest version
-      put.add(COLUMN_FAMILY, quals[i], 1L, values[0][i]);
-      put.add(COLUMN_FAMILY, quals[i], 2L, values[1][i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], 1L, values[0][i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], 2L, values[1][i]);
     }
     table.put(put);
 
@@ -117,8 +117,8 @@ public class TestFilters extends AbstractTest {
     for (int i = 0; i < numColumns; ++i) {
       quals[i] = Bytes.toBytes(i);
       // Add two timestamps to test that filter only grabs the latest version
-      put.add(COLUMN_FAMILY, quals[i], 1L, values[0][i]);
-      put.add(COLUMN_FAMILY, quals[i], 2L, values[1][i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], 1L, values[0][i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], 2L, values[1][i]);
     }
     table.put(put);
 
@@ -149,11 +149,11 @@ public class TestFilters extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testrow-");
     Put put = new Put(rowKey);
     byte[] value = Bytes.toBytes("someval");
-    put.add(COLUMN_FAMILY, Bytes.toBytes("A"), value);
-    put.add(COLUMN_FAMILY, Bytes.toBytes("AA"), value);
-    put.add(COLUMN_FAMILY, Bytes.toBytes("B"), value);
-    put.add(COLUMN_FAMILY, Bytes.toBytes("BB"), value);
-    put.add(COLUMN_FAMILY, Bytes.toBytes("C"), value);
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("A"), value);
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("AA"), value);
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("B"), value);
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("BB"), value);
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("C"), value);
     table.put(put);
 
     // Filter and test
@@ -189,7 +189,7 @@ public class TestFilters extends AbstractTest {
     for (int i = 0; i < numRows; ++i) {
       Put put = new Put(rowKeys[i]);
       for (int j = 0; j < numColumns; ++j) {
-        put.add(COLUMN_FAMILY, quals[j], values[j]);
+        put.addColumn(COLUMN_FAMILY, quals[j], values[j]);
       }
       table.put(put);
     }
@@ -229,10 +229,10 @@ public class TestFilters extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numBadCols; ++i) {
-      put.add(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes("someval"));
+      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes("someval"));
     }
     for (int i = 0; i < numGoodCols; ++i) {
-      put.add(COLUMN_FAMILY, dataHelper.randomData(goodColPrefix), Bytes.toBytes("someval"));
+      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(goodColPrefix), Bytes.toBytes("someval"));
     }
     table.put(put);
 
@@ -263,12 +263,12 @@ public class TestFilters extends AbstractTest {
     Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, Bytes.toBytes("A"), Bytes.toBytes("someval"));
-    put.add(COLUMN_FAMILY, Bytes.toBytes("AA"), Bytes.toBytes("someval"));
-    put.add(COLUMN_FAMILY, Bytes.toBytes("B"), Bytes.toBytes("someval"));
-    put.add(COLUMN_FAMILY, Bytes.toBytes("BB"), Bytes.toBytes("someval"));
-    put.add(COLUMN_FAMILY, Bytes.toBytes("C"), Bytes.toBytes("someval"));
-    put.add(COLUMN_FAMILY, Bytes.toBytes("CC"), Bytes.toBytes("someval"));
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("A"), Bytes.toBytes("someval"));
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("AA"), Bytes.toBytes("someval"));
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("B"), Bytes.toBytes("someval"));
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("BB"), Bytes.toBytes("someval"));
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("C"), Bytes.toBytes("someval"));
+    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("CC"), Bytes.toBytes("someval"));
     table.put(put);
 
     // Filter for "B" exclusive, "C" exclusive
@@ -326,7 +326,7 @@ public class TestFilters extends AbstractTest {
     byte[] qual = Bytes.toBytes("testqual");
     byte[] value = Bytes.toBytes("testvalue");
     for (byte[] rowKey : new byte[][] { rowKey1, rowKey2, rowKey3, rowKey4}) {
-      Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
       table.put(put);
     }
 
@@ -401,7 +401,7 @@ public class TestFilters extends AbstractTest {
     byte[] qual = Bytes.toBytes("testqual");
     byte[] value = Bytes.toBytes("testvalue");
     for (byte[] rowKey : new byte[][] { rowA, rowAA, rowB, rowBB, rowC, rowCC, rowD }) {
-      Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
       table.put(put);
     }
 
@@ -475,7 +475,6 @@ public class TestFilters extends AbstractTest {
   public void testRowFilterBitComparatorXOR() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
-    String rowKeyPrefix = "testRowFilter-" + RandomStringUtils.randomAlphabetic(10);
     byte[] row0000 = Bytes.fromHex("00");
     byte[] row0101 = Bytes.fromHex("55");
     byte[] row1010 = Bytes.fromHex("aa");
@@ -485,7 +484,7 @@ public class TestFilters extends AbstractTest {
     byte[] qual = dataHelper.randomData("testqual");
     byte[] value = Bytes.toBytes("testvalue");
     for (byte[] rowKey : new byte[][] { row0000, row0101, row1010, row1111, rowDiffLength}) {
-      Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
       table.put(put);
     }
 
@@ -556,7 +555,6 @@ public class TestFilters extends AbstractTest {
   public void testRowFilterBitComparatorAND() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
-    String rowKeyPrefix = "testRowFilter-" + RandomStringUtils.randomAlphabetic(10);
     byte[] row0000 = Bytes.fromHex("00");
     byte[] row0101 = Bytes.fromHex("55");
     byte[] row1010 = Bytes.fromHex("aa");
@@ -566,7 +564,7 @@ public class TestFilters extends AbstractTest {
     byte[] qual = dataHelper.randomData("testqual");
     byte[] value = Bytes.toBytes("testvalue");
     for (byte[] rowKey : new byte[][] { row0000, row0101, row1010, row1111, rowDiffLength}) {
-      Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
       table.put(put);
     }
 
@@ -637,7 +635,6 @@ public class TestFilters extends AbstractTest {
   public void testRowFilterBitComparatorOR() throws Exception {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);
-    String rowKeyPrefix = "testRowFilter-" + RandomStringUtils.randomAlphabetic(10);
     byte[] row0000 = Bytes.fromHex("00");
     byte[] row0101 = Bytes.fromHex("55");
     byte[] row1010 = Bytes.fromHex("aa");
@@ -647,7 +644,7 @@ public class TestFilters extends AbstractTest {
     byte[] qual = dataHelper.randomData("testqual");
     byte[] value = Bytes.toBytes("testvalue");
     for (byte[] rowKey : new byte[][] { row0000, row0101, row1010, row1111, rowDiffLength}) {
-      Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
       table.put(put);
     }
 
@@ -722,7 +719,7 @@ public class TestFilters extends AbstractTest {
     byte[] rowKeyB = Bytes.toBytes(rowKeyPrefix + "B");
     byte[] qual = dataHelper.randomData("testqual");
     byte[] value = Bytes.toBytes("testvalue");
-    Put put = new Put(rowKeyA).add(COLUMN_FAMILY, qual, value);
+    Put put = new Put(rowKeyA).addColumn(COLUMN_FAMILY, qual, value);
     table.put(put);
 
     // Test BinaryComparator - EQUAL
@@ -789,7 +786,7 @@ public class TestFilters extends AbstractTest {
     byte[] qual = dataHelper.randomData("testqual");
     byte[] value = Bytes.toBytes("testvalue");
     for (byte[] rowKey : new byte[][] { rowab, rowA, rowAB, rowAbC, rowDaB, rowDabE}) {
-      Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
       table.put(put);
     }
 
@@ -871,7 +868,7 @@ public class TestFilters extends AbstractTest {
     byte[] value = Bytes.toBytes("testvalue");
     for (byte[] rowKey : new byte[][] { row0, rowGoodIP1, rowGoodIP2, rowGoodIPv6, rowBadIP,
         rowTelephone, rowRandom }) {
-      Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
       table.put(put);
     }
     String regexIPAddr =
@@ -964,7 +961,7 @@ public class TestFilters extends AbstractTest {
     byte[] value = Bytes.toBytes("testvalue");
     for (byte[] rowKey : new byte[][] { row0, rowGoodIP1, rowGoodIP2, rowGoodIPv6, rowBadIP,
         rowTelephone, rowRandom }) {
-      Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value);
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
       table.put(put);
     }
     String regexIPAddr =
@@ -998,10 +995,10 @@ public class TestFilters extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numBadCols; ++i) {
-      put.add(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes("someval"));
+      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes("someval"));
     }
     for (int i = 0; i < numGoodCols; ++i) {
-      put.add(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(goodValue));
+      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(goodValue));
     }
     table.put(put);
 
@@ -1031,7 +1028,7 @@ public class TestFilters extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numCols; ++i) {
-      put.add(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(columnValue));
+      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(columnValue));
     }
     table.put(put);
 
@@ -1054,7 +1051,7 @@ public class TestFilters extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numCols; ++i) {
-      put.add(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(goodValue));
+      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(goodValue));
     }
     table.put(put);
 
@@ -1077,15 +1074,14 @@ public class TestFilters extends AbstractTest {
   @Test
   public void testMultipleColumnPrefixes() throws IOException {
     // Initialize
-    int numCols = 5;
     String goodValue = "includeThisValue";
     Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, dataHelper.randomData("a-"), Bytes.toBytes(goodValue));
-    put.add(COLUMN_FAMILY, dataHelper.randomData("b-"), Bytes.toBytes(goodValue));
-    put.add(COLUMN_FAMILY, dataHelper.randomData("c-"), Bytes.toBytes(goodValue));
-    put.add(COLUMN_FAMILY, dataHelper.randomData("d-"), Bytes.toBytes(goodValue));
+    put.addColumn(COLUMN_FAMILY, dataHelper.randomData("a-"), Bytes.toBytes(goodValue));
+    put.addColumn(COLUMN_FAMILY, dataHelper.randomData("b-"), Bytes.toBytes(goodValue));
+    put.addColumn(COLUMN_FAMILY, dataHelper.randomData("c-"), Bytes.toBytes(goodValue));
+    put.addColumn(COLUMN_FAMILY, dataHelper.randomData("d-"), Bytes.toBytes(goodValue));
     table.put(put);
 
     // Filter for results
@@ -1118,7 +1114,7 @@ public class TestFilters extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numCols; ++i) {
-      put.add(COLUMN_FAMILY, dataHelper.randomData(""), i, Bytes.toBytes(goodValue));
+      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), i, Bytes.toBytes(goodValue));
     }
     table.put(put);
 
@@ -1160,13 +1156,13 @@ public class TestFilters extends AbstractTest {
 
     Table table = connection.getTable(TABLE_NAME);
     Put put = new Put(rowKey1);
-    put.add(COLUMN_FAMILY, qualifier1, value1_1);
-    put.add(COLUMN_FAMILY, qualifier2, value2_1);
+    put.addColumn(COLUMN_FAMILY, qualifier1, value1_1);
+    put.addColumn(COLUMN_FAMILY, qualifier2, value2_1);
     table.put(put);
 
     put = new Put(rowKey2);
-    put.add(COLUMN_FAMILY, qualifier1, 1L, value1_1);
-    put.add(COLUMN_FAMILY, qualifier1, 2L, value1_2);
+    put.addColumn(COLUMN_FAMILY, qualifier1, 1L, value1_1);
+    put.addColumn(COLUMN_FAMILY, qualifier1, 2L, value1_2);
     table.put(put);
 
     Result[] results;

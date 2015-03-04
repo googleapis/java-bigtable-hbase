@@ -71,7 +71,7 @@ public class TestMutationAdapter {
     Mockito.when(putAdapter.adapt(put))
         .thenReturn(MutateRowRequest.newBuilder());
 
-    MutateRowRequest.Builder result = adapter.adapt(put);
+    adapter.adapt(put);
 
     Mockito.verify(putAdapter, Mockito.times(1)).adapt(Mockito.any(Put.class));
   }
@@ -82,7 +82,7 @@ public class TestMutationAdapter {
     Mockito.when(deleteAdapter.adapt(delete))
         .thenReturn(MutateRowRequest.newBuilder());
 
-    MutateRowRequest.Builder result = adapter.adapt(delete);
+    adapter.adapt(delete);
 
     Mockito.verify(deleteAdapter, Mockito.times(1)).adapt(Mockito.any(Delete.class));
   }
@@ -93,7 +93,7 @@ public class TestMutationAdapter {
     Mockito.when(appendAdapter.adapt(append))
         .thenReturn(MutateRowRequest.newBuilder());
 
-    MutateRowRequest.Builder result = adapter.adapt(append);
+    adapter.adapt(append);
 
     Mockito.verify(appendAdapter, Mockito.times(1)).adapt(Mockito.any(Append.class));
   }
@@ -103,7 +103,7 @@ public class TestMutationAdapter {
     Increment increment = new Increment(dataHelper.randomData("rk1"));
     Mockito.when(incrementAdapter.adapt(increment))
         .thenReturn(MutateRowRequest.newBuilder());
-    MutateRowRequest.Builder result = adapter.adapt(increment);
+    adapter.adapt(increment);
 
     Mockito.verify(incrementAdapter, Mockito.times(1)).adapt(Mockito.any(Increment.class));
   }
