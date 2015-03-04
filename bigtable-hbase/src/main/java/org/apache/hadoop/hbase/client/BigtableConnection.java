@@ -56,7 +56,7 @@ public class BigtableConnection implements Connection, Closeable {
   private volatile ExecutorService batchPool = null;
   private BigtableClient client;
   private AnviltopAdminClient bigtableAdminClient;
-  private User user = null;
+
   private volatile boolean cleanupPool = false;
   private final BigtableOptions options;
   private final TableConfiguration tableConfig;
@@ -70,7 +70,6 @@ public class BigtableConnection implements Connection, Closeable {
 
   BigtableConnection(Configuration conf, boolean managed, ExecutorService pool, User user)
       throws IOException {
-    this.user = user;
     this.batchPool = pool;
     this.closed = false;
     this.conf = conf;

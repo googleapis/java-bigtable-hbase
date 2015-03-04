@@ -62,8 +62,8 @@ public class TestBatch extends AbstractTest {
     byte[] value2 = dataHelper.randomData("value-");
     byte[] emptyRowKey = dataHelper.randomData("testrow-");
 
-    Put put1 = new Put(rowKey1).add(COLUMN_FAMILY, qual1, value1);
-    Put put2 = new Put(rowKey2).add(COLUMN_FAMILY, qual2, value2);
+    Put put1 = new Put(rowKey1).addColumn(COLUMN_FAMILY, qual1, value1);
+    Put put2 = new Put(rowKey2).addColumn(COLUMN_FAMILY, qual2, value2);
     List<Row> batch = new ArrayList<Row>(2);
     batch.add(put1);
     batch.add(put2);
@@ -137,8 +137,8 @@ public class TestBatch extends AbstractTest {
     long value2 = random.nextLong();
 
     // Put
-    Put put1 = new Put(rowKey1).add(COLUMN_FAMILY, qual1, Bytes.toBytes(value1));
-    Put put2 = new Put(rowKey2).add(COLUMN_FAMILY, qual2, Bytes.toBytes(value2));
+    Put put1 = new Put(rowKey1).addColumn(COLUMN_FAMILY, qual1, Bytes.toBytes(value1));
+    Put put2 = new Put(rowKey2).addColumn(COLUMN_FAMILY, qual2, Bytes.toBytes(value2));
     List<Row> batch = new ArrayList<Row>(2);
     batch.add(put1);
     batch.add(put2);
@@ -177,8 +177,8 @@ public class TestBatch extends AbstractTest {
     byte[] value2_2 = dataHelper.randomData("value-");
 
     // Put
-    Put put1 = new Put(rowKey1).add(COLUMN_FAMILY, qual1, value1_1);
-    Put put2 = new Put(rowKey2).add(COLUMN_FAMILY, qual2, value2_1);
+    Put put1 = new Put(rowKey1).addColumn(COLUMN_FAMILY, qual1, value1_1);
+    Put put2 = new Put(rowKey2).addColumn(COLUMN_FAMILY, qual2, value2_1);
     List<Row> batch = new ArrayList<Row>(2);
     batch.add(put1);
     batch.add(put2);
@@ -216,11 +216,11 @@ public class TestBatch extends AbstractTest {
     byte[][] quals = dataHelper.randomData("qual-", 5);
     byte[][] values = dataHelper.randomData("value-", 5);
 
-    Put put0 = new Put(rowKeys[0]).add(COLUMN_FAMILY, quals[0], values[0]);
-    Put put1 = new Put(rowKeys[1]).add(Bytes.toBytes("NO SUCH FAMILY"), quals[1], values[1]);
-    Put put2 = new Put(rowKeys[2]).add(COLUMN_FAMILY, quals[2], values[2]);
-    Put put3 = new Put(rowKeys[3]).add(Bytes.toBytes("NO SUCH FAMILY"), quals[3], values[3]);
-    Put put4 = new Put(rowKeys[4]).add(COLUMN_FAMILY, quals[4], values[4]);
+    Put put0 = new Put(rowKeys[0]).addColumn(COLUMN_FAMILY, quals[0], values[0]);
+    Put put1 = new Put(rowKeys[1]).addColumn(Bytes.toBytes("NO SUCH FAMILY"), quals[1], values[1]);
+    Put put2 = new Put(rowKeys[2]).addColumn(COLUMN_FAMILY, quals[2], values[2]);
+    Put put3 = new Put(rowKeys[3]).addColumn(Bytes.toBytes("NO SUCH FAMILY"), quals[3], values[3]);
+    Put put4 = new Put(rowKeys[4]).addColumn(COLUMN_FAMILY, quals[4], values[4]);
     List<Row> batch = new ArrayList<Row>(5);
     Object[] results = new Object[5];
     batch.add(put0);
@@ -282,8 +282,8 @@ public class TestBatch extends AbstractTest {
     byte[][] values = dataHelper.randomData("value-", 3);
 
     // Put a couple of values
-    Put put0 = new Put(rowKey).add(COLUMN_FAMILY, quals[0], values[0]);
-    Put put1 = new Put(rowKey).add(COLUMN_FAMILY, quals[1], values[1]);
+    Put put0 = new Put(rowKey).addColumn(COLUMN_FAMILY, quals[0], values[0]);
+    Put put1 = new Put(rowKey).addColumn(COLUMN_FAMILY, quals[1], values[1]);
     RowMutations rm = new RowMutations(rowKey);
     rm.add(put0);
     rm.add(put1);
@@ -298,8 +298,8 @@ public class TestBatch extends AbstractTest {
       CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[1])));
 
     // Now delete the value #1 and insert value #3
-    Delete delete = new Delete(rowKey).deleteColumn(COLUMN_FAMILY, quals[1]);
-    Put put2 = new Put(rowKey).add(COLUMN_FAMILY, quals[2], values[2]);
+    Delete delete = new Delete(rowKey).addColumn(COLUMN_FAMILY, quals[1]);
+    Put put2 = new Put(rowKey).addColumn(COLUMN_FAMILY, quals[2], values[2]);
     rm = new RowMutations(rowKey);
     rm.add(delete);
     rm.add(put2);

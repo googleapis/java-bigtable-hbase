@@ -180,7 +180,6 @@ public class TestFilterAdapter {
 
   @Test
   public void testKeyOnlyFilterWithLengthAsVal() throws IOException {
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     // Return all columns in all families that are prefixed by "prefix".
 
     KeyOnlyFilter filter = new KeyOnlyFilter(true);
@@ -206,7 +205,6 @@ public class TestFilterAdapter {
 
   @Test
   public void testUnsupportedValueFilterCompareOp() throws IOException {
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     byte[] filterValue = Bytes.toBytes("foobar");
 
     ValueFilter filter = new ValueFilter(

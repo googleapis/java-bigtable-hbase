@@ -43,9 +43,9 @@ public class TestDelete extends AbstractTest {
     byte[] value = dataHelper.randomData("value-");
 
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qual1, 1L, value);
-    put.add(COLUMN_FAMILY, qual1, 2L, value);
-    put.add(COLUMN_FAMILY, qual2, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 2L, value);
+    put.addColumn(COLUMN_FAMILY, qual2, 1L, value);
     table.put(put);
 
     // Check values
@@ -84,8 +84,8 @@ public class TestDelete extends AbstractTest {
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qual, 1L, value);
-    put.add(COLUMN_FAMILY, qual, 2L, value);
+    put.addColumn(COLUMN_FAMILY, qual, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual, 2L, value);
     table.put(put);
 
     // Check values
@@ -96,7 +96,7 @@ public class TestDelete extends AbstractTest {
 
     // Delete latest column version
     Delete delete = new Delete(rowKey);
-    delete.deleteColumn(COLUMN_FAMILY, qual);
+    delete.addColumn(COLUMN_FAMILY, qual);
     table.delete(delete);
 
     // Confirm results.
@@ -119,9 +119,9 @@ public class TestDelete extends AbstractTest {
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qual, 1L, value);
-    put.add(COLUMN_FAMILY, qual, 2L, value);
-    put.add(COLUMN_FAMILY, qual, 3L, value);
+    put.addColumn(COLUMN_FAMILY, qual, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual, 2L, value);
+    put.addColumn(COLUMN_FAMILY, qual, 3L, value);
     table.put(put);
 
     // Check values
@@ -132,7 +132,7 @@ public class TestDelete extends AbstractTest {
 
     // Delete latest column version
     Delete delete = new Delete(rowKey);
-    delete.deleteColumn(COLUMN_FAMILY, qual, 2L);
+    delete.addColumn(COLUMN_FAMILY, qual, 2L);
     table.delete(delete);
 
     // Confirm results
@@ -158,9 +158,9 @@ public class TestDelete extends AbstractTest {
     byte[] value = dataHelper.randomData("value-");
 
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qual1, 1L, value);
-    put.add(COLUMN_FAMILY, qual1, 2L, value);
-    put.add(COLUMN_FAMILY, qual2, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 2L, value);
+    put.addColumn(COLUMN_FAMILY, qual2, 1L, value);
     table.put(put);
 
     // Check values
@@ -171,7 +171,7 @@ public class TestDelete extends AbstractTest {
 
     // Delete row
     Delete delete = new Delete(rowKey);
-    delete.deleteColumns(COLUMN_FAMILY, qual1);
+    delete.addColumns(COLUMN_FAMILY, qual1);
     table.delete(delete);
 
     // Check results
@@ -195,9 +195,9 @@ public class TestDelete extends AbstractTest {
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qual, 1L, value);
-    put.add(COLUMN_FAMILY, qual, 2L, value);
-    put.add(COLUMN_FAMILY, qual, 3L, value);
+    put.addColumn(COLUMN_FAMILY, qual, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual, 2L, value);
+    put.addColumn(COLUMN_FAMILY, qual, 3L, value);
     table.put(put);
 
     // Check values
@@ -208,7 +208,7 @@ public class TestDelete extends AbstractTest {
 
     // Delete latest column version
     Delete delete = new Delete(rowKey);
-    delete.deleteColumns(COLUMN_FAMILY, qual, 2L);
+    delete.addColumns(COLUMN_FAMILY, qual, 2L);
     table.delete(delete);
 
     // Confirm results
@@ -233,9 +233,9 @@ public class TestDelete extends AbstractTest {
     byte[] value = dataHelper.randomData("value-");
 
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qual1, 1L, value);
-    put.add(COLUMN_FAMILY, qual1, 2L, value);
-    put.add(COLUMN_FAMILY, qual2, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 2L, value);
+    put.addColumn(COLUMN_FAMILY, qual2, 1L, value);
     table.put(put);
 
     // Check values
@@ -246,7 +246,7 @@ public class TestDelete extends AbstractTest {
 
     // Delete row
     Delete delete = new Delete(rowKey);
-    delete.deleteFamily(COLUMN_FAMILY);
+    delete.addFamily(COLUMN_FAMILY);
     table.delete(delete);
 
     // Check results
@@ -269,11 +269,11 @@ public class TestDelete extends AbstractTest {
     byte[] value = dataHelper.randomData("value-");
 
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qual1, 1L, value);
-    put.add(COLUMN_FAMILY, qual1, 2L, value);
-    put.add(COLUMN_FAMILY, qual1, 3L, value);
-    put.add(COLUMN_FAMILY, qual2, 1L, value);
-    put.add(COLUMN_FAMILY, qual2, 2L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 2L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 3L, value);
+    put.addColumn(COLUMN_FAMILY, qual2, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual2, 2L, value);
     table.put(put);
 
     // Check values
@@ -284,7 +284,7 @@ public class TestDelete extends AbstractTest {
 
     // Delete row
     Delete delete = new Delete(rowKey);
-    delete.deleteFamily(COLUMN_FAMILY, 2L);
+    delete.addFamily(COLUMN_FAMILY, 2L);
     table.delete(delete);
 
     // Confirm results
@@ -311,11 +311,11 @@ public class TestDelete extends AbstractTest {
     byte[] value = dataHelper.randomData("value-");
 
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qual1, 1L, value);
-    put.add(COLUMN_FAMILY, qual1, 2L, value);
-    put.add(COLUMN_FAMILY, qual1, 3L, value);
-    put.add(COLUMN_FAMILY, qual2, 1L, value);
-    put.add(COLUMN_FAMILY, qual2, 2L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 2L, value);
+    put.addColumn(COLUMN_FAMILY, qual1, 3L, value);
+    put.addColumn(COLUMN_FAMILY, qual2, 1L, value);
+    put.addColumn(COLUMN_FAMILY, qual2, 2L, value);
     table.put(put);
 
     // Check values

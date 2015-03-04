@@ -43,7 +43,7 @@ public class TestAppend extends AbstractTest {
     byte[] value1And2 = ArrayUtils.addAll(value1, value2);
 
     // Put then append
-    Put put = new Put(rowKey).add(COLUMN_FAMILY, qualifier, value1);
+    Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qualifier, value1);
     table.put(put);
     Append append = new Append(rowKey).add(COLUMN_FAMILY, qualifier, value2);
     Result result = table.append(append);
@@ -94,7 +94,7 @@ public class TestAppend extends AbstractTest {
     byte[] value2 = dataHelper.randomData("value-");
 
     // Put then append
-    Put put = new Put(rowKey).add(COLUMN_FAMILY, qual, value1);
+    Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value1);
     table.put(put);
     Append append = new Append(rowKey).add(COLUMN_FAMILY, qual, value2);
     append.setReturnResults(false);

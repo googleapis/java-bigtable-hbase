@@ -30,7 +30,7 @@ public class TestPutAdapter {
     long timestamp = 2L;
 
     Put hbasePut = new Put(row);
-    hbasePut.add(family, qualifier, timestamp, value);
+    hbasePut.addColumn(family, qualifier, timestamp, value);
 
     MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
@@ -61,8 +61,8 @@ public class TestPutAdapter {
     long timestamp2 = 2L;
 
     Put hbasePut = new Put(row);
-    hbasePut.add(family, qualifier1, timestamp1, value1);
-    hbasePut.add(family, qualifier2, timestamp2, value2);
+    hbasePut.addColumn(family, qualifier1, timestamp1, value1);
+    hbasePut.addColumn(family, qualifier2, timestamp2, value2);
 
     MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
@@ -102,8 +102,8 @@ public class TestPutAdapter {
     long timestamp2 = 2L;
 
     Put hbasePut = new Put(row);
-    hbasePut.add(family1, qualifier1, timestamp1, value1);
-    hbasePut.add(family2, qualifier2, timestamp2, value2);
+    hbasePut.addColumn(family1, qualifier1, timestamp1, value1);
+    hbasePut.addColumn(family2, qualifier2, timestamp2, value2);
 
     MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
@@ -138,7 +138,7 @@ public class TestPutAdapter {
     byte[] value1 = dataHelper.randomData("v1");
 
     Put hbasePut = new Put(row);
-    hbasePut.add(family1, qualifier1, value1);
+    hbasePut.addColumn(family1, qualifier1, value1);
 
     MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());

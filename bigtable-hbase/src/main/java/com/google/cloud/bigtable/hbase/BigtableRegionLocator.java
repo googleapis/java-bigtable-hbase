@@ -22,7 +22,6 @@ public class BigtableRegionLocator implements RegionLocator {
   protected static final Logger LOG = new Logger(BigtableRegionLocator.class);
 
   private final TableName tableName;
-  private final BigtableOptions options;
   private final BigtableClient client;
   private final SampledRowKeysAdapter adapter;
   private final TableMetadataSetter metadataSetter;
@@ -31,7 +30,6 @@ public class BigtableRegionLocator implements RegionLocator {
 
   public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableClient client) {
     this.tableName = tableName;
-    this.options = options;
     this.client = client;
     this.metadataSetter = TableMetadataSetter.from(tableName, options);
     this.adapter = new SampledRowKeysAdapter(tableName, options.getServerName());

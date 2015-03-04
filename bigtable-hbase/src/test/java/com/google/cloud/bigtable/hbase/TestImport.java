@@ -48,7 +48,7 @@ public class TestImport extends AbstractTest {
     byte[] qual = dataHelper.randomData("testQualifier-");
     byte[] value = dataHelper.randomData("testValue-");
     Put put = new Put(rowKey);
-    put.add(COLUMN_FAMILY, qual, value);
+    put.addColumn(COLUMN_FAMILY, qual, value);
     oldTable.put(put);
 
     // Assert the value is there.

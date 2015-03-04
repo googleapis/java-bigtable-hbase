@@ -62,7 +62,7 @@ public class TestScan extends AbstractTest {
     // Insert some columns
     Put put = new Put(rowKey);
     for (int i = 0; i < numValues; ++i) {
-      put.add(COLUMN_FAMILY, quals[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], values[i]);
     }
     table.put(put);
 
@@ -113,7 +113,7 @@ public class TestScan extends AbstractTest {
     for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
       Put put = new Put(rowKeys[rowIndex]);
       for (int qualifierIndex = 0; qualifierIndex < numValuesPerRow; qualifierIndex++) {
-        put.add(COLUMN_FAMILY, quals[qualifierIndex], values[qualifierIndex]);
+        put.addColumn(COLUMN_FAMILY, quals[qualifierIndex], values[qualifierIndex]);
       }
       puts.add(put);
     }

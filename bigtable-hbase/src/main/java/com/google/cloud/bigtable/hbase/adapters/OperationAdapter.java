@@ -22,7 +22,7 @@ import org.apache.hadoop.hbase.client.Operation;
  * @param <T> The HBase operation type
  * @param <U> The Anviltop message type
  */
-public interface OperationAdapter<T extends Operation, U extends Builder> {
+public interface OperationAdapter<T extends Operation, U extends Builder<?>> {
 
   /**
    * Adapt a single HBase Operation to a single Anviltop generated message.

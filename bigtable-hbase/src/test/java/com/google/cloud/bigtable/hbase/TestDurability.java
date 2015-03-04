@@ -53,7 +53,7 @@ public class TestDurability extends AbstractTest {
     // Put
     Put put = new Put(rowKey);
     put.setDurability(durability);
-    put.add(COLUMN_FAMILY, testQualifier, testValue);
+    put.addColumn(COLUMN_FAMILY, testQualifier, testValue);
     Table table = connection.getTable(TABLE_NAME);
     table.put(put);
 
@@ -69,7 +69,7 @@ public class TestDurability extends AbstractTest {
 
     // Delete
     Delete delete = new Delete(rowKey);
-    delete.deleteColumns(COLUMN_FAMILY, testQualifier);
+    delete.addColumns(COLUMN_FAMILY, testQualifier);
     table.delete(delete);
 
     // Confirm deleted

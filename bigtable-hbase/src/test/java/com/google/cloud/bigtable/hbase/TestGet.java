@@ -51,7 +51,7 @@ public class TestGet extends AbstractTest {
     // Insert some columns
     Put put = new Put(rowKey);
     for (int i = 0; i < numValues; ++i) {
-      put.add(COLUMN_FAMILY, quals[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], values[i]);
     }
     table.put(put);
 
@@ -87,7 +87,7 @@ public class TestGet extends AbstractTest {
     // Insert a few columns
     Put put = new Put(rowKey);
     for (int i = 0; i < numValues; ++i) {
-      put.add(COLUMN_FAMILY, quals[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], values[i]);
     }
     table.put(put);
 
@@ -130,7 +130,7 @@ public class TestGet extends AbstractTest {
     // Insert values with different timestamps at the same column.
     Put put = new Put(rowKey);
     for (int i = 0; i < numVersions; ++i) {
-      put.add(COLUMN_FAMILY, qual, timestamps[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, qual, timestamps[i], values[i]);
     }
     table.put(put);
 
@@ -174,7 +174,7 @@ public class TestGet extends AbstractTest {
     // Insert several timestamps for a single row/column.
     Put put = new Put(rowKey);
     for (int i = 0; i < numVersions; ++i) {
-      put.add(COLUMN_FAMILY, qual, timestamps[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, qual, timestamps[i], values[i]);
     }
     table.put(put);
 
@@ -214,7 +214,7 @@ public class TestGet extends AbstractTest {
     // Insert several versions into the same row/col
     Put put = new Put(rowKey);
     for (int i = 0; i < totalVersions; ++i) {
-      put.add(COLUMN_FAMILY, qual, timestamps[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, qual, timestamps[i], values[i]);
     }
     table.put(put);
 
@@ -262,11 +262,11 @@ public class TestGet extends AbstractTest {
     Put put = new Put(rowKey);
     List<QualifierValue> keyValues = new ArrayList<QualifierValue>();
     for (int i = 0; i < totalColumns; ++i) {
-      put.add(COLUMN_FAMILY, quals[i], timestamps[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], timestamps[i], values[i]);
 
       // Insert multiple timestamps per row/column to ensure only one cell per column is returned.
-      put.add(COLUMN_FAMILY, quals[i], timestamps[i] - 1, values[i]);
-      put.add(COLUMN_FAMILY, quals[i], timestamps[i] - 2, values[i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], timestamps[i] - 1, values[i]);
+      put.addColumn(COLUMN_FAMILY, quals[i], timestamps[i] - 2, values[i]);
 
       keyValues.add(new QualifierValue(quals[i], values[i]));
     }
@@ -307,7 +307,7 @@ public class TestGet extends AbstractTest {
     // Insert empty values.  Null and byte[0] are interchangeable for puts (but not gets).
     Put put = new Put(rowKey);
     for (int i = 0; i < numValues; ++i) {
-      put.add(COLUMN_FAMILY, quals[i], i % 2 == 1 ? null : new byte[0]);
+      put.addColumn(COLUMN_FAMILY, quals[i], i % 2 == 1 ? null : new byte[0]);
     }
     table.put(put);
 
@@ -346,7 +346,7 @@ public class TestGet extends AbstractTest {
     List<Put> puts = new ArrayList<Put>(numValues);
     for (int i = 0; i < numValues; ++i) {
       Put put = new Put(rowKeys[i]);
-      put.add(COLUMN_FAMILY, quals[i], values[0]);
+      put.addColumn(COLUMN_FAMILY, quals[i], values[0]);
       puts.add(put);
     }
     table.put(puts);
@@ -512,7 +512,7 @@ public class TestGet extends AbstractTest {
     Put put = new Put(rowKey);
 
     for (int i = 0; i < qualifiers.length; i++) {
-      put.add(COLUMN_FAMILY, qualifiers[i], values[i]);
+      put.addColumn(COLUMN_FAMILY, qualifiers[i], values[i]);
     }
     table.put(put);
 
