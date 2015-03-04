@@ -182,7 +182,7 @@ public class TestCheckAndMutate extends AbstractTest {
     Assert.assertFalse("Wrong value should fail", success);
     success = table.checkAndDelete(rowKey, COLUMN_FAMILY, qual2, value2, delete);
     Assert.assertTrue(success);
-    delete = new Delete(rowKey).addColumn(COLUMN_FAMILY, qual2);
+    delete = new Delete(rowKey).addColumns(COLUMN_FAMILY, qual2);
     success = table.checkAndDelete(rowKey, COLUMN_FAMILY, qual1, null, delete);
     Assert.assertTrue(success);
     Assert.assertFalse("Row should be gone", table.exists(new Get(rowKey)));
@@ -221,7 +221,7 @@ public class TestCheckAndMutate extends AbstractTest {
     byte[] qual = dataHelper.randomData("qualifier-");
 
     // Put then again
-    Delete delete = new Delete(rowKey1).addColumn(COLUMN_FAMILY, qual);
+    Delete delete = new Delete(rowKey1).addColumns(COLUMN_FAMILY, qual);
     expectedException.expect(DoNotRetryIOException.class);
     expectedException.expectMessage("Action's getRow must match the passed row");
     table.checkAndDelete(rowKey2, COLUMN_FAMILY, qual, null, delete);
