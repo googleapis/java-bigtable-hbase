@@ -33,7 +33,6 @@ public class TestListTables extends AbstractTest {
     TableName tableName1 = TableName.valueOf("list_table1-" + UUID.randomUUID().toString());
     TableName tableName2 = TableName.valueOf("list_table2-" + UUID.randomUUID().toString());
 
-    System.out.println("" + tableName1 + "  " + admin.tableExists(tableName1));
     Assert.assertFalse(admin.tableExists(tableName1));
     Assert.assertFalse(ArrayUtils.contains(admin.listTableNames(), tableName1));
 
@@ -54,5 +53,7 @@ public class TestListTables extends AbstractTest {
     Assert.assertTrue(admin.tableExists(tableName2));
     Assert.assertTrue(ArrayUtils.contains(admin.listTableNames(), tableName1));
     Assert.assertTrue(ArrayUtils.contains(admin.listTableNames(), tableName2));
+    admin.deleteTable(tableName1);
+    admin.deleteTable(tableName2);
   }
 }
