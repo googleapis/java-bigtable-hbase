@@ -53,7 +53,11 @@ public class TestListTables extends AbstractTest {
     Assert.assertTrue(admin.tableExists(tableName2));
     Assert.assertTrue(ArrayUtils.contains(admin.listTableNames(), tableName1));
     Assert.assertTrue(ArrayUtils.contains(admin.listTableNames(), tableName2));
+
+    // Clean up: disable (for hbase compatibility) and delete.
+    admin.disableTable(tableName1);
     admin.deleteTable(tableName1);
+    admin.disableTable(tableName2);
     admin.deleteTable(tableName2);
   }
 }
