@@ -25,8 +25,7 @@
        <junit.version>4.11</junit.version>
        <mockito.version>1.9.5</mockito.version>
        <compileSource>1.7</compileSource>
-
-       <!-- testing -->  
+ 
        <!-- For Netty HTTP2/TLS negotiation -->
        <alpn.version>7.0.0.v20140317</alpn.version>
        <google.api.client.version>1.19.0</google.api.client.version>
