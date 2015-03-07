@@ -15,10 +15,14 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
 
+import com.google.api.client.util.Lists;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -37,6 +41,8 @@ import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
@@ -44,6 +50,7 @@ import org.apache.hadoop.hbase.filter.NullComparator;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.SkipFilter;
 import org.apache.hadoop.hbase.filter.SubstringComparator;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
@@ -53,6 +60,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -1214,6 +1222,123 @@ public class TestFilters extends AbstractTest {
     scan.setFilter(filter);
     results = table.getScanner(scan).next(10);
     Assert.assertEquals(0, results.length);
+  }
+
+  @Test
+  public void testSkipFilter() throws IOException {
+    // numRows must be divisble by 2:
+    int numRows = 10;
+    List<Long> filterTimestamps = ImmutableList.of(5L, 6L, 7L, 8L, 9L);
+
+    byte[][] rowKeys = dataHelper.randomData("skip-filter-", numRows);
+    byte[] evenQualifier = dataHelper.randomData("even-qual-");
+    byte[] oddQualifier = dataHelper.randomData("odd-qual-");
+    byte[] evenRowValue = dataHelper.randomData("even-");
+    byte[] oddRowValue = dataHelper.randomData("odd-");
+
+    Table table = connection.getTable(TABLE_NAME);
+    for (int idx = 0; idx < numRows; idx++) {
+      byte[] qualifier;
+      byte[] value;
+      if (idx % 2 == 0) {
+        qualifier = evenQualifier;
+        value = evenRowValue;
+      } else {
+        qualifier = oddQualifier;
+        value = oddRowValue;
+      }
+      Put put = new Put(rowKeys[idx]);
+      put.addColumn(COLUMN_FAMILY, qualifier, idx, value);
+      table.put(put);
+    }
+
+    TimestampsFilter timestampsFilter = new TimestampsFilter(filterTimestamps);
+    SkipFilter skipFilter = new SkipFilter(timestampsFilter);
+    Scan scan = new Scan(getStartKey(rowKeys), getEndKey(rowKeys));
+    scan.addFamily(COLUMN_FAMILY);
+    scan.setFilter(skipFilter);
+    ResultScanner scanner = table.getScanner(scan);
+    Result[] allResults = readAllResults(scanner);
+    Assert.assertEquals(numRows / 2, allResults.length);
+    for (int idx = 0; idx < allResults.length; idx++) {
+      CellScanner cellScanner = allResults[idx].cellScanner();
+      Assert.assertTrue(
+          String.format("Expected at least one cell in result %s", idx),
+          cellScanner.advance());
+      Cell singleCell = cellScanner.current();
+      Assert.assertFalse(
+          String.format("Expected at most one cell in result %s", idx),
+          cellScanner.advance());
+      Assert.assertTrue(
+          String.format(
+              "Result with timestamp %s found, but shouldn't have been...",
+              singleCell.getTimestamp()),
+          filterTimestamps.contains(singleCell.getTimestamp()));
+    }
+
+    ValueFilter valueFilter =
+        new ValueFilter(
+            CompareOp.EQUAL, new BinaryComparator(evenRowValue));
+    FilterList andFilter =
+        new FilterList(Operator.MUST_PASS_ALL, valueFilter, timestampsFilter);
+    skipFilter = new SkipFilter(andFilter);
+    scan.setFilter(skipFilter);
+    List<Long> evenRowTimestamps =
+        Lists.newArrayList(
+            Collections2.filter(filterTimestamps, new Predicate<Long>() {
+              @Override
+              public boolean apply(Long timestamp) {
+                return timestamp % 2 == 0;
+              }}));
+    scanner = table.getScanner(scan);
+    allResults = readAllResults(scanner);
+    Assert.assertEquals(evenRowTimestamps.size(), allResults.length);
+    for (int idx = 0; idx < allResults.length; idx++) {
+      CellScanner cellScanner = allResults[idx].cellScanner();
+      Assert.assertTrue(
+          String.format("Expected at least one cell in result %s", idx),
+          cellScanner.advance());
+      Cell singleCell = cellScanner.current();
+      Assert.assertFalse(
+          String.format("Expected at most one cell in result %s", idx),
+          cellScanner.advance());
+      Assert.assertTrue(
+          String.format(
+              "Result with timestamp %s found, but shouldn't have been...",
+              singleCell.getTimestamp()),
+          evenRowTimestamps.contains(singleCell.getTimestamp()));
+      Assert.assertArrayEquals(evenRowValue, CellUtil.cloneValue(singleCell));
+    }
+  }
+
+  private Result[] readAllResults(ResultScanner scanner) throws IOException {
+    List<Result> results = new ArrayList<>();
+    Result result = scanner.next();
+    while (result != null) {
+      results.add(result);
+      result = scanner.next();
+    }
+    return results.toArray(new Result[results.size()]);
+  }
+
+  private byte[] getStartKey(byte[][] keys) {
+    byte[] smallest = keys[0];
+    for (int idx = 1; idx < keys.length; idx++) {
+      if (Bytes.compareTo(smallest, keys[idx]) > 0) {
+        smallest = keys[idx];
+      }
+    }
+    return smallest;
+  }
+
+  private byte[] getEndKey(byte[][] keys) {
+    byte[] highest = keys[0];
+    for (int idx = 1; idx < keys.length; idx++) {
+      if (Bytes.compareTo(highest, keys[idx]) < 0) {
+        highest = keys[idx];
+      }
+    }
+    return highest;
   }
 
   private Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
