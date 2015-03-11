@@ -104,8 +104,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
     this.batchExecutor = new BatchExecutor(client,
         options,
-        new TableMetadataSetter(
-            tableName, options.getProjectId(), options.getZone(), options.getCluster()),
+        TableMetadataSetter.from(tableName, options),
         MoreExecutors.listeningDecorator(executorService),
         getAdapter,
         putAdapter,

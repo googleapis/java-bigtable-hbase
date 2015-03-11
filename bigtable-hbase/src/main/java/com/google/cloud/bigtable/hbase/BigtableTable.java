@@ -127,10 +127,11 @@ public class BigtableTable implements Table {
         new UnsupportedOperationAdapter<Append>("append"));
     rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
     this.executorService = MoreExecutors.listeningDecorator(executorService);
+    this.metadataSetter = TableMetadataSetter.from(tableName, options);
     this.batchExecutor = new BatchExecutor(
         client,
         options,
-        new TableMetadataSetter(tableName, options.getProjectId(), options.getZone(), options.getCluster()),
+        this.metadataSetter,
         this.executorService,
         getAdapter,
         putAdapter,
@@ -139,8 +140,6 @@ public class BigtableTable implements Table {
         appendAdapter,
         incrementAdapter,
         bigtableRowAdapter);
-    this.metadataSetter = new TableMetadataSetter(
-        tableName, options.getProjectId(), options.getZone(), options.getCluster());
   }
 
   @Override
