@@ -223,7 +223,7 @@ public class BigtableTable implements Table {
 
       return response;
     } catch (Throwable throwable) {
-      LOG.error("Encountered exception when executing get, Exception: %s", throwable);
+      LOG.error("Encountered exception when executing get.", throwable);
       throw new IOException(
           makeGenericExceptionMessage(
               "get",
@@ -251,7 +251,7 @@ public class BigtableTable implements Table {
           client.readRows(request.build());
       return bigtableResultScannerAdapter.adapt(scanner);
     } catch (Throwable throwable) {
-      LOG.error("Encountered exception when executing getScanner. Exception: %s", throwable);
+      LOG.error("Encountered exception when executing getScanner.", throwable);
       throw new IOException(
           makeGenericExceptionMessage(
               "getScanner",
@@ -282,7 +282,7 @@ public class BigtableTable implements Table {
     try {
       client.mutateRow(rowMutationBuilder.build());
     } catch (Throwable throwable) {
-      LOG.error("Encountered ServiceException when executing put. Exception: %s", throwable);
+      LOG.error("Encountered ServiceException when executing put.", throwable);
       throw new IOException(
           makeGenericExceptionMessage(
               "put",
@@ -337,7 +337,7 @@ public class BigtableTable implements Table {
     try {
       client.mutateRow(requestBuilder.build());
     } catch (Throwable throwable) {
-      LOG.error("Encountered ServiceException when executing delete. Exception: %s", throwable);
+      LOG.error("Encountered ServiceException when executing delete.", throwable);
       throw new IOException(
           makeGenericExceptionMessage(
               "delete",
@@ -431,7 +431,7 @@ public class BigtableTable implements Table {
         return null;
       }
     } catch (Throwable throwable) {
-      LOG.error("Encountered Exception when executing append. Exception: %s", throwable);
+      LOG.error("Encountered Exception when executing append.", throwable);
       throw new IOException(
           makeGenericExceptionMessage(
               "append",
@@ -453,7 +453,7 @@ public class BigtableTable implements Table {
       com.google.bigtable.v1.Row response = client.readModifyWriteRow(incrementRowRequest.build());
       return bigtableRowAdapter.adaptResponse(response);
     } catch (Throwable e) {
-      LOG.error("Encountered RuntimeException when executing increment. Exception: %s", e);
+      LOG.error("Encountered RuntimeException when executing increment.", e);
       throw new IOException(
           makeGenericExceptionMessage(
               "increment",
