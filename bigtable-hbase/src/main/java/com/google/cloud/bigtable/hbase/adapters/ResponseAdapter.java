@@ -18,15 +18,15 @@ import com.google.protobuf.GeneratedMessage;
 import org.apache.hadoop.hbase.client.Result;
 
 /**
- * An adapter for transforming a response from the Anviltop server to a HBase result.
- * @param <T> The response type from Anviltop
+ * An adapter for transforming a response from the Bigtable server to a HBase result.
+ * @param <T> The response type from Bigtable
  * @param <U> The HBase result type
  */
 public interface ResponseAdapter<T extends GeneratedMessage, U extends Result> {
 
   /**
-   * Transform an Anviltop server response to an HBase Result instance.
-   * @param response The anviltop response to transform.
+   * Transform an Bigtable server response to an HBase Result instance.
+   * @param response The Bigtable response to transform.
    */
   public U adaptResponse(T response);
 }

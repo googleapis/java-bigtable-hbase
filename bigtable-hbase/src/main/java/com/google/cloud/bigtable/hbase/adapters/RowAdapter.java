@@ -25,13 +25,13 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Adapt a Row from Anviltop to an HBase Result
+ * Adapt a Row from Bigtable to an HBase Result
  */
 public class RowAdapter implements ResponseAdapter<AnviltopData.Row, Result> {
   /**
-   * Transform an Anviltop server response to an HBase Result instance.
+   * Transform an Bigtable server response to an HBase Result instance.
    *
-   * @param response The Anviltop response to transform.
+   * @param response The Bigtable response to transform.
    */
   @Override
   public Result adaptResponse(AnviltopData.Row response) {

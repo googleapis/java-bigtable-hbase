@@ -94,7 +94,7 @@ public class BigtableTable implements Table {
   private final ListeningExecutorService executorService;
   private final TableMetadataSetter metadataSetter;
   /**
-   * Constructed by AnvilTopConnection
+   * Constructed by BigtableConnection
    *
    * @param tableName
    * @param client

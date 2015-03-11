@@ -18,16 +18,16 @@ import com.google.protobuf.GeneratedMessage.Builder;
 import org.apache.hadoop.hbase.client.Operation;
 
 /**
- * An interface for adapters that will convert an HBase Operation into an Anviltop
+ * An interface for adapters that will convert an HBase Operation into an Bigtable
  * @param <T> The HBase operation type
- * @param <U> The Anviltop message type
+ * @param <U> The Bigtable message type
  */
 public interface OperationAdapter<T extends Operation, U extends Builder<?>> {
 
   /**
-   * Adapt a single HBase Operation to a single Anviltop generated message.
+   * Adapt a single HBase Operation to a single Bigtable generated message.
    * @param operation The HBase operation to convert.
-   * @return An equivalent Anviltop
+   * @return An equivalent Bigtable
    */
   public U adapt(T operation);
 }

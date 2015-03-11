@@ -40,7 +40,7 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /**
- * Class to help AnviltopTable with batch operations on an AnviltopClient.
+ * Class to help BigtableTable with batch operations on an BigtableClient.
  */
 public class BatchExecutor {
 

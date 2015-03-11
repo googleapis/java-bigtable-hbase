@@ -103,8 +103,8 @@ public class TestDeleteAdapter {
     byte[] family = randomHelper.randomData("family1-");
     byte[] qualifier = randomHelper.randomData("qualifier");
     long hbaseTimestamp = 1000L;
-    long anviltopStartTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp);
-    long anviltopEndTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp + 1);
+    long bigtableStartTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp);
+    long bigtableEndTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp + 1);
 
     Delete delete = new Delete(rowKey);
     delete.addColumn(family, qualifier, hbaseTimestamp);
@@ -124,8 +124,8 @@ public class TestDeleteAdapter {
     Assert.assertTrue(rowMutation.getMutations(0).getDeleteFromColumn().hasTimeRange());
 
     TimestampRange timeStampRange = deleteFromColumn.getTimeRange();
-    Assert.assertEquals(anviltopStartTimestamp, timeStampRange.getStartTimestampMicros());
-    Assert.assertEquals(anviltopEndTimestamp, timeStampRange.getEndTimestampMicros());
+    Assert.assertEquals(bigtableStartTimestamp, timeStampRange.getStartTimestampMicros());
+    Assert.assertEquals(bigtableEndTimestamp, timeStampRange.getEndTimestampMicros());
   }
 
   @Test
@@ -149,7 +149,7 @@ public class TestDeleteAdapter {
     byte[] family = randomHelper.randomData("family1-");
     byte[] qualifier = randomHelper.randomData("qualifier");
     long hbaseTimestamp = 1000L;
-    long anviltopTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp + 1);
+    long bigtableTimestamp = TimeUnit.MILLISECONDS.toMicros(hbaseTimestamp + 1);
 
     Delete delete = new Delete(rowKey);
     delete.addColumns(family, qualifier, hbaseTimestamp);
@@ -167,7 +167,7 @@ public class TestDeleteAdapter {
 
     TimestampRange timeRange = deleteFromColumn.getTimeRange();
     Assert.assertEquals(0L, timeRange.getStartTimestampMicros());
-    Assert.assertEquals(anviltopTimestamp, timeRange.getEndTimestampMicros());
+    Assert.assertEquals(bigtableTimestamp, timeRange.getEndTimestampMicros());
   }
 
   @Test

@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 /**
- * Adapt an HBase Put Operation into an Anviltop RowMutation
+ * Adapt an HBase Put Operation into an Bigtable RowMutation
  */
 public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builder> {
   private int maxKeyValueSize;

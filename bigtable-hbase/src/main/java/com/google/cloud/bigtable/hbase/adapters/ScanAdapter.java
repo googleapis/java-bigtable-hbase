@@ -127,7 +127,7 @@ public class ScanAdapter implements OperationAdapter<Scan, ReadRowsRequest.Build
   }
 
   /**
-   * Given a scan construct an anviltop filter string.
+   * Given a scan construct an bigtable filter string.
    *
    */
   public byte[] buildFilterByteString(Scan scan) {
@@ -160,7 +160,7 @@ public class ScanAdapter implements OperationAdapter<Scan, ReadRowsRequest.Build
       }
 
       if (scan.getTimeRange() != null && !scan.getTimeRange().isAllTime()) {
-        // Time ranges in Anviltop are inclusive and HBase uses an open-closed interval. As such,
+        // Time ranges in Bigtable are inclusive and HBase uses an open-closed interval. As such,
         // subtract one from the upper bound.
         long upperBound = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
             scan.getTimeRange().getMax() - 1, BigtableConstants.HBASE_TIMEUNIT);
