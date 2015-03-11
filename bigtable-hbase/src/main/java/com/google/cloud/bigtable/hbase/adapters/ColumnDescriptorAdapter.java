@@ -145,7 +145,7 @@ public class ColumnDescriptorAdapter {
     if (ttlSeconds != HColumnDescriptor.DEFAULT_TTL) {
       // minVersions only comes into play with a TTL:
       if (minVersions != HColumnDescriptor.DEFAULT_MIN_VERSIONS) {
-        buffer.append(String.format("(age() > %s && versions() > %s)", anviltopTtl, minVersions));
+        buffer.append(String.format("(age() > %s && version() > %s)", anviltopTtl, minVersions));
       } else {
         buffer.append(String.format("(age() > %s)", anviltopTtl));
       }
@@ -154,7 +154,7 @@ public class ColumnDescriptorAdapter {
     if (buffer.length() != 0) {
       buffer.append(" || ");
     }
-    buffer.append(String.format("(versions() > %s)", maxVersions));
+    buffer.append(String.format("(version() > %s)", maxVersions));
 
     return buffer.toString();
   }
