@@ -19,7 +19,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Scan;
 
 /**
- * Adapter for HBase Get operations to Anviltop GetRowRequest.Builder.
+ * Adapter for HBase Get operations to Bigtable GetRowRequest.Builder.
  */
 public class GetAdapter implements OperationAdapter<Get, ReadRowsRequest.Builder> {
 

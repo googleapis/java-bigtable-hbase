@@ -45,7 +45,7 @@ public class BigtableConstants {
   public static final TimeUnit HBASE_TIMEUNIT = TimeUnit.MILLISECONDS;
 
   /**
-   * TimeUnit in which Anviltop requires messages to be sent and received.
+   * TimeUnit in which Bigtable requires messages to be sent and received.
    */
   public static final TimeUnit BIGTABLE_TIMEUNIT = TimeUnit.MICROSECONDS;
 }

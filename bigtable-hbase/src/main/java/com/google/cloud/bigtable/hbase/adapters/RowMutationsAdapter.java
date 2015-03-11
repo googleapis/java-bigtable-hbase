@@ -21,7 +21,7 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RowMutations;
 
 /**
- * An adapter that adapts a @{link RowMutations} object into an Anviltop
+ * An adapter that adapts a @{link RowMutations} object into an Bigtable
  * @{link AnviltopData.RowMutation.Builder}.
  */
 public class RowMutationsAdapter {

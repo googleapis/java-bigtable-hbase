@@ -26,7 +26,7 @@ public class ColumnDescriptorAdapter {
 
   /**
    * Configuration keys that we can support unconditionally and we provide
-   * a mapped version of the column descriptor to anviltop.
+   * a mapped version of the column descriptor to bigtable.
    */
   public static final Set<String> SUPPORTED_OPTION_KEYS =
       ImmutableSet.of(
@@ -130,13 +130,13 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * Construct an anviltop GC expression from the given column descriptor.
+   * Construct an bigtable GC expression from the given column descriptor.
    */
   public static String buildGarbageCollectionExpression(HColumnDescriptor columnDescriptor) {
     int maxVersions = columnDescriptor.getMaxVersions();
     int minVersions = columnDescriptor.getMinVersions();
     int ttlSeconds = columnDescriptor.getTimeToLive();
-    long anviltopTtl = BigtableConstants.BIGTABLE_TIMEUNIT.convert(ttlSeconds, TimeUnit.SECONDS);
+    long bigtableTtl = BigtableConstants.BIGTABLE_TIMEUNIT.convert(ttlSeconds, TimeUnit.SECONDS);
 
     Preconditions.checkState(minVersions < maxVersions,
         "HColumnDescriptor min versions must be less than max versions.");
@@ -145,12 +145,12 @@ public class ColumnDescriptorAdapter {
     if (ttlSeconds != HColumnDescriptor.DEFAULT_TTL) {
       // minVersions only comes into play with a TTL:
       if (minVersions != HColumnDescriptor.DEFAULT_MIN_VERSIONS) {
-        buffer.append(String.format("(age() > %s && version() > %s)", anviltopTtl, minVersions));
+        buffer.append(String.format("(age() > %s && version() > %s)", bigtableTtl, minVersions));
       } else {
-        buffer.append(String.format("(age() > %s)", anviltopTtl));
+        buffer.append(String.format("(age() > %s)", bigtableTtl));
       }
     }
-    // Since the HBase version default is 1, which may or may not be the same as Anviltop
+    // Since the HBase version default is 1, which may or may not be the same as Bigtable
     if (buffer.length() != 0) {
       buffer.append(" || ");
     }

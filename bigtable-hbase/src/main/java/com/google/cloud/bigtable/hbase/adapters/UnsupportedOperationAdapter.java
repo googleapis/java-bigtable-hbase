@@ -30,10 +30,10 @@ public class UnsupportedOperationAdapter<T extends Operation>
   }
 
   /**
-   * Adapt a single HBase Operation to a single Anviltop generated message.
+   * Adapt a single HBase Operation to a single Bigtable generated message.
    *
    * @param operation The HBase operation to convert.
-   * @return An equivalent Anviltop
+   * @return An equivalent Bigtable
    */
   @Override
   public MutateRowRequest.Builder adapt(T operation) {

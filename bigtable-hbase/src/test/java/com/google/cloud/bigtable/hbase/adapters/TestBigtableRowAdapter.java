@@ -46,7 +46,7 @@ public class TestBigtableRowAdapter {
     String columnFamily = "cf";
     byte[] qualfier = dataHelper.randomData("col1");
     byte[] value = dataHelper.randomData("val1");
-    long anviltopTimestamp = 10000L;
+    long bigtableTimestamp = 10000L;
 
     Row.Builder rowBuilder = Row.newBuilder();
     rowBuilder.setKey(ByteString.copyFrom(rowKey));
@@ -59,7 +59,7 @@ public class TestBigtableRowAdapter {
 
     Cell.Builder cellBuilder = columnBuilder.addCellsBuilder();
     cellBuilder.setValue(ByteString.copyFrom(value));
-    cellBuilder.setTimestampMicros(anviltopTimestamp);
+    cellBuilder.setTimestampMicros(bigtableTimestamp);
 
     Result result = adapter.adaptResponse(rowBuilder.build());
     Assert.assertEquals(1, result.size());
@@ -69,7 +69,7 @@ public class TestBigtableRowAdapter {
     Assert.assertArrayEquals(Bytes.toBytes(columnFamily), CellUtil.cloneFamily(cell));
     Assert.assertArrayEquals(qualfier, CellUtil.cloneQualifier(cell));
     Assert.assertArrayEquals(rowKey, CellUtil.cloneRow(cell));
-    Assert.assertEquals(anviltopTimestamp / 1000L, cell.getTimestamp());
+    Assert.assertEquals(bigtableTimestamp / 1000L, cell.getTimestamp());
   }
 
   @Test
@@ -78,9 +78,9 @@ public class TestBigtableRowAdapter {
     String columnFamily = "cf";
     byte[] qualfier = dataHelper.randomData("col1");
     byte[] value1 = dataHelper.randomData("val1");
-    long anviltopTimestamp1 = 20000L;
+    long bigtableTimestamp1 = 20000L;
     byte[] value2 = dataHelper.randomData("val2");
-    long anviltopTimestamp2 = 10000L;
+    long bigtableTimestamp2 = 10000L;
 
     Row.Builder rowBuilder = Row.newBuilder();
     rowBuilder.setKey(ByteString.copyFrom(rowKey));
@@ -93,11 +93,11 @@ public class TestBigtableRowAdapter {
 
     Cell.Builder cellBuilder = columnBuilder.addCellsBuilder();
     cellBuilder.setValue(ByteString.copyFrom(value1));
-    cellBuilder.setTimestampMicros(anviltopTimestamp1);
+    cellBuilder.setTimestampMicros(bigtableTimestamp1);
 
     Cell.Builder cellBuilder2 = columnBuilder.addCellsBuilder();
     cellBuilder2.setValue(ByteString.copyFrom(value2));
-    cellBuilder2.setTimestampMicros(anviltopTimestamp2);
+    cellBuilder2.setTimestampMicros(bigtableTimestamp2);
 
     Result result = adapter.adaptResponse(rowBuilder.build());
     Assert.assertEquals(2, result.size());
@@ -106,13 +106,13 @@ public class TestBigtableRowAdapter {
     Assert.assertArrayEquals(Bytes.toBytes(columnFamily), CellUtil.cloneFamily(cell1));
     Assert.assertArrayEquals(qualfier, CellUtil.cloneQualifier(cell1));
     Assert.assertArrayEquals(value1, CellUtil.cloneValue(cell1));
-    Assert.assertEquals(anviltopTimestamp1 / 1000L, cell1.getTimestamp());
+    Assert.assertEquals(bigtableTimestamp1 / 1000L, cell1.getTimestamp());
 
     org.apache.hadoop.hbase.Cell cell2 = result.listCells().get(1);
     Assert.assertArrayEquals(Bytes.toBytes(columnFamily), CellUtil.cloneFamily(cell2));
     Assert.assertArrayEquals(qualfier, CellUtil.cloneQualifier(cell2));
     Assert.assertArrayEquals(value2, CellUtil.cloneValue(cell2));
-    Assert.assertEquals(anviltopTimestamp2 / 1000L, cell2.getTimestamp());
+    Assert.assertEquals(bigtableTimestamp2 / 1000L, cell2.getTimestamp());
   }
 
   @Test
@@ -122,9 +122,9 @@ public class TestBigtableRowAdapter {
     byte[] qualfierA = dataHelper.randomData("colA");
     byte[] qualfierB = dataHelper.randomData("colB");
     byte[] valueA = dataHelper.randomData("valA");
-    long anviltopTimestampA = 10000L;
+    long bigtableTimestampA = 10000L;
     byte[] valueB = dataHelper.randomData("valB");
-    long anviltopTimestampB = 10000L;
+    long bigtableTimestampB = 10000L;
 
     Row.Builder rowBuilder = Row.newBuilder();
     rowBuilder.setKey(ByteString.copyFrom(rowKey));
@@ -137,14 +137,14 @@ public class TestBigtableRowAdapter {
 
     Cell.Builder cellBuilderB = columnBuilderB.addCellsBuilder();
     cellBuilderB.setValue(ByteString.copyFrom(valueB));
-    cellBuilderB.setTimestampMicros(anviltopTimestampB);
+    cellBuilderB.setTimestampMicros(bigtableTimestampB);
 
     Column.Builder columnBuilderA = familyBuilder.addColumnsBuilder();
     columnBuilderA.setQualifier(ByteString.copyFrom(qualfierA));
 
     Cell.Builder cellBuilderA = columnBuilderA.addCellsBuilder();
     cellBuilderA.setValue(ByteString.copyFrom(valueA));
-    cellBuilderA.setTimestampMicros(anviltopTimestampA);
+    cellBuilderA.setTimestampMicros(bigtableTimestampA);
 
     Result result = adapter.adaptResponse(rowBuilder.build());
     Assert.assertEquals(2, result.size());
@@ -153,12 +153,12 @@ public class TestBigtableRowAdapter {
     Assert.assertArrayEquals(Bytes.toBytes(columnFamily), CellUtil.cloneFamily(cellA));
     Assert.assertArrayEquals(qualfierA, CellUtil.cloneQualifier(cellA));
     Assert.assertArrayEquals(valueA, CellUtil.cloneValue(cellA));
-    Assert.assertEquals(anviltopTimestampA / 1000L, cellA.getTimestamp());
+    Assert.assertEquals(bigtableTimestampA / 1000L, cellA.getTimestamp());
 
     org.apache.hadoop.hbase.Cell cellB = result.listCells().get(1);
     Assert.assertArrayEquals(Bytes.toBytes(columnFamily), CellUtil.cloneFamily(cellB));
     Assert.assertArrayEquals(qualfierB, CellUtil.cloneQualifier(cellB));
     Assert.assertArrayEquals(valueB, CellUtil.cloneValue(cellB));
-    Assert.assertEquals(anviltopTimestampB / 1000L, cellB.getTimestamp());
+    Assert.assertEquals(bigtableTimestampB / 1000L, cellB.getTimestamp());
   }
 }
