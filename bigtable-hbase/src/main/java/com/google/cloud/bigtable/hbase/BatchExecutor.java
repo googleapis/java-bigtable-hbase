@@ -370,7 +370,7 @@ public class BatchExecutor {
             problems, problemActions, new ArrayList<String>(problems.size()));
       }
     } catch (ExecutionException e) {
-      LOG.error("Encountered exception in batch(List<>, Object[]). Exception: %s", e);
+      LOG.error("Encountered exception in batch(List<>, Object[]).", e);
       throw new IOException("Batch error", e);
     }
   }
@@ -384,7 +384,7 @@ public class BatchExecutor {
     try {
       batch(actions, results);
     } catch (InterruptedException e) {
-      LOG.error("Encountered exception in batch(List<>). Exception: %s", e);
+      LOG.error("Encountered exception in batch(List<>).", e);
       throw new IOException("Batch error", e);
     }
     return results;
@@ -407,8 +407,7 @@ public class BatchExecutor {
     try {
       Futures.allAsList(resultFutures).get();
     } catch (ExecutionException e) {
-      LOG.error("Encountered exception in batchCallback(List<>, Batch.Callback). "
-          + "Exception: %s", e);
+      LOG.error("Encountered exception in batchCallback(List<>, Batch.Callback). ", e);
       throw new IOException("batchCallback error", e);
     }
     return results;
@@ -433,8 +432,7 @@ public class BatchExecutor {
       // set to null.
       Futures.successfulAsList(resultFutures).get();
     } catch (ExecutionException e) {
-      LOG.error("Encountered exception in batchCallback(List<>, Object[], Batch.Callback). "
-          + "Exception: %s", e);
+      LOG.error("Encountered exception in batchCallback(List<>, Object[], Batch.Callback). ", e);
       throw new IOException("batchCallback error", e);
     }
   }

@@ -37,15 +37,33 @@ public class Logger {
     }
   }
 
+  public void warn(String message, Throwable t, Object ... args) {
+    if (log.isWarnEnabled()) {
+      log.warn(String.format(message, args), t);
+    }
+  }
+
   public void error(String message, Object ... args) {
     if (log.isErrorEnabled()) {
       log.error(String.format(message, args));
     }
   }
 
+  public void error(String message, Throwable t, Object ... args) {
+    if (log.isErrorEnabled()) {
+      log.error(String.format(message, args), t);
+    }
+  }
+
   public void fatal(String message, Object ... args) {
     if (log.isFatalEnabled()) {
       log.fatal(String.format(message, args));
+    }
+  }
+
+  public void fatal(String message, Throwable t, Object ... args) {
+    if (log.isFatalEnabled()) {
+      log.fatal(String.format(message, args), t);
     }
   }
 }
