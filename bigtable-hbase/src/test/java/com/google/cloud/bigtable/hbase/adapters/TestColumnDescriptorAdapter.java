@@ -101,14 +101,14 @@ public class TestColumnDescriptorAdapter {
     descriptor.setTimeToLive(86400);
     AnviltopData.ColumnFamilyOrBuilder result = adapter.adapt(descriptor);
 
-    Assert.assertEquals("(age() > 86400000000) || (versions() > 1)", result.getGcExpression());
+    Assert.assertEquals("(age() > 86400000000) || (version() > 1)", result.getGcExpression());
   }
 
   @Test
   public void maxVersionsIsPreservedInGcExpression() {
     descriptor.setMaxVersions(10);
     AnviltopData.ColumnFamilyOrBuilder result = adapter.adapt(descriptor);
-    Assert.assertEquals("(versions() > 10)", result.getGcExpression());
+    Assert.assertEquals("(version() > 10)", result.getGcExpression());
   }
 
   @Test
@@ -118,7 +118,7 @@ public class TestColumnDescriptorAdapter {
     descriptor.setTimeToLive(86400); // 1 day in seconds
     AnviltopData.ColumnFamilyOrBuilder result = adapter.adapt(descriptor);
     Assert.assertEquals(
-        "(age() > 86400000000 && versions() > 10) || (versions() > 20)",
+        "(age() > 86400000000 && version() > 10) || (version() > 20)",
         result.getGcExpression());
   }
 
