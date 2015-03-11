@@ -37,8 +37,8 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.Logger;
-import com.google.cloud.hadoop.hbase.AnviltopAdminBlockingGrpcClient;
-import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
+import com.google.cloud.hadoop.hbase.BigtableAdminClient;
+import com.google.cloud.hadoop.hbase.BigtableAdminGrpcClient;
 import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.cloud.hadoop.hbase.BigtableGrpcClient;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
@@ -55,7 +55,7 @@ public class BigtableConnection implements Connection, Closeable {
   private volatile boolean aborted;
   private volatile ExecutorService batchPool = null;
   private BigtableClient client;
-  private AnviltopAdminClient bigtableAdminClient;
+  private BigtableAdminClient bigtableAdminClient;
 
   private volatile boolean cleanupPool = false;
   private final BigtableOptions options;
@@ -106,12 +106,12 @@ public class BigtableConnection implements Connection, Closeable {
     this.tableConfig = new TableConfiguration(conf);
   }
 
-  private AnviltopAdminClient getAdminClient(
+  private BigtableAdminClient getAdminClient(
       TransportOptions transportOptions,
       ChannelOptions channelOptions,
       ExecutorService executorService) {
 
-    return AnviltopAdminBlockingGrpcClient.createClient(
+    return BigtableAdminGrpcClient.createClient(
         transportOptions, channelOptions, executorService);
   }
 
@@ -201,7 +201,7 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public Admin getAdmin() throws IOException {
-    return new BigtableAdmin(options, conf, this, bigtableAdminClient, this.disabledTables );
+    return new BigtableAdmin(options, conf, this, bigtableAdminClient, this.disabledTables);
   }
 
   @Override

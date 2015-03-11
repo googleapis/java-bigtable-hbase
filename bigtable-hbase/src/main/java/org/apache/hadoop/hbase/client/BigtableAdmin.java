@@ -37,22 +37,27 @@ import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateFamilyRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.CreateTableRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteFamilyRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.DeleteTableRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesRequest;
-import com.google.bigtable.anviltop.AnviltopAdminServiceMessages.ListTablesResponse;
+import com.google.bigtable.admin.table.v1.ColumnFamily;
+import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
+import com.google.bigtable.admin.table.v1.CreateTableRequest;
+import com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest;
+import com.google.bigtable.admin.table.v1.DeleteTableRequest;
+import com.google.bigtable.admin.table.v1.DeleteTableRequest.Builder;
+import com.google.bigtable.admin.table.v1.ListTablesRequest;
+import com.google.bigtable.admin.table.v1.ListTablesResponse;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.Logger;
+import com.google.cloud.bigtable.hbase.adapters.ClusterMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
-import com.google.cloud.hadoop.hbase.AnviltopAdminClient;
-import com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
+import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
+import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
+import com.google.cloud.hadoop.hbase.BigtableAdminClient;
 
 public class BigtableAdmin implements Admin {
 
   private static final Logger LOG = new Logger(BigtableAdmin.class);
-  
+
   /**
    * Bigtable doesn't require disabling tables before deletes or schema changes. Some clients do
    * call disable first, and then check for disable before deletes or schema changes. We're keeping
@@ -64,14 +69,17 @@ public class BigtableAdmin implements Admin {
   private final Configuration configuration;
   private final BigtableOptions options;
   private final BigtableConnection connection;
-  private final AnviltopAdminClient bigtableAdminClient;
+  private final BigtableAdminClient bigtableAdminClient;
+
+  private ClusterMetadataSetter clusterMetadataSetter;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
+  private final TableAdapter tableAdapter;
 
   public BigtableAdmin(
       BigtableOptions options,
       Configuration configuration,
       BigtableConnection connection,
-      AnviltopAdminClient bigtableAdminClient,
+      BigtableAdminClient bigtableAdminClient,
       Set<TableName> disabledTables) {
     LOG.debug("Creating BigtableAdmin");
     this.configuration = configuration;
@@ -79,6 +87,8 @@ public class BigtableAdmin implements Admin {
     this.connection = connection;
     this.bigtableAdminClient = bigtableAdminClient;
     this.disabledTables = disabledTables;
+    this.clusterMetadataSetter = ClusterMetadataSetter.from(options);
+    this.tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
   }
 
   @Override
@@ -125,8 +135,9 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public HTableDescriptor[] listTables(Pattern pattern) throws IOException {
+    // NOTE: We don't have systables.
     ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-    builder.setProjectId(options.getProjectId());
+    clusterMetadataSetter.setMetadata(builder);
     ListTablesResponse response;
     try {
       response = bigtableAdminClient.listTables(builder.build());
@@ -134,9 +145,12 @@ public class BigtableAdmin implements Admin {
       throw new IOException("Failed to listTables", throwable);
     }
     List<HTableDescriptor> result = new ArrayList<>();
-    for (String tableName : response.getTableNameList()) {
-      if (pattern.matcher(tableName).matches()) {
-        result.add(new HTableDescriptor(TableName.valueOf(tableName)));
+    for (com.google.bigtable.admin.table.v1.Table table : response.getTablesList()) {
+      // Convert the fully qualified Bigtable table name into an HBase table name before
+      // comparing against the pattern.
+      HTableDescriptor tableDescriptor = tableAdapter.adapt(table);
+      if (pattern.matcher(tableDescriptor.getTableName().getNameAsString()).matches()) {
+        result.add(tableDescriptor);
       }
     }
 
@@ -146,7 +160,6 @@ public class BigtableAdmin implements Admin {
   @Override
   public HTableDescriptor[] listTables(final Pattern pattern, final boolean includeSysTables)
       throws IOException {
-    // We don't have systables.
     return listTables(pattern);
   }
 
@@ -160,17 +173,15 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public TableName[] listTableNames(Pattern pattern) throws IOException {
-    ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-    builder.setProjectId(options.getProjectId());
-    ListTablesResponse response = bigtableAdminClient.listTables(builder.build());
-    List<TableName> result = new ArrayList<>();
-    for (String tableName : response.getTableNameList()) {
-      if (pattern.matcher(tableName).matches()) {
-        result.add(TableName.valueOf(tableName));
-      }
-    }
+    return getTableNames(listTables(pattern));
+  }
 
-    return result.toArray(new TableName[result.size()]);
+  private TableName[] getTableNames(HTableDescriptor[] tableList) {
+    TableName[] tableNames = new TableName[tableList.length];
+    for (int i=0; i<tableList.length; i++) {
+      tableNames[i] = tableList[i].getTableName();
+    }
+    return tableNames;
   }
 
   @Override
@@ -194,33 +205,33 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public TableName[] listTableNames() throws IOException {
-    HTableDescriptor[] tableDescriptors = listTables();
-    TableName[] tableNames = new TableName[tableDescriptors.length];
-    int i = 0;
-    for (HTableDescriptor tableDescriptor : tableDescriptors) {
-      tableNames[i] = tableDescriptor.getTableName();
-      i++;
-    }
-    return tableNames;
+    return getTableNames(listTables());
   }
 
 
   @Override
   public HTableDescriptor getTableDescriptor(TableName tableName)
       throws TableNotFoundException, IOException {
-    throw new UnsupportedOperationException("getTableDescriptor");  // TODO
+    if (tableName == null) {
+      return null;
+    }
+
+    HTableDescriptor[] response = listTables(tableName.getNameAsString());
+    if (response.length > 0) {
+      return response[0];
+    } else {
+      throw new TableNotFoundException(tableName.getNameAsString());
+    }
   }
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
   @Deprecated
   public String[] getTableNames(String regex) throws IOException {
-    HTableDescriptor[] tableDescriptors = listTables();
+    HTableDescriptor[] tableDescriptors = listTables(regex);
     String[] tableNames = new String[tableDescriptors.length];
-    int i = 0;
-    for (HTableDescriptor tableDescriptor : tableDescriptors) {
-      tableNames[i] = tableDescriptor.getNameAsString();
-      i++;
+    for (int i = 0; i < tableDescriptors.length; i++) {
+      tableNames[i] = tableDescriptors[i].getNameAsString();
     }
     return tableNames;
   }
@@ -228,12 +239,9 @@ public class BigtableAdmin implements Admin {
   @Override
   public void createTable(HTableDescriptor desc) throws IOException {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    builder.setProjectId(options.getProjectId()).setTableNameBytes(
-      ByteString.copyFrom(desc.getTableName().getName()));
-
-    for (HColumnDescriptor column : desc.getColumnFamilies()) {
-      builder.addColumnFamilies(columnDescriptorAdapter.adapt(column));
-    }
+    clusterMetadataSetter.setMetadata(builder);
+    builder.setTableId(desc.getTableName().getQualifierAsString());
+    builder.setTable(tableAdapter.adapt(desc));
     try {
       bigtableAdminClient.createTable(builder.build());
     } catch (Throwable throwable) {
@@ -263,11 +271,10 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void deleteTable(TableName tableName) throws IOException {
+    Builder deleteBuilder = DeleteTableRequest.newBuilder();
+    TableMetadataSetter.from(tableName, options).setMetadata(deleteBuilder);
     try {
-      bigtableAdminClient.deleteTable(DeleteTableRequest.newBuilder()
-          .setProjectId(options.getProjectId())
-          .setTableNameBytes(ByteString.copyFrom(tableName.getQualifier()))
-          .build());
+      bigtableAdminClient.deleteTable(deleteBuilder.build());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
@@ -421,13 +428,20 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
+    TableMetadataSetter tableMetadataSetter = TableMetadataSetter.from(tableName, options);
+
+    ColumnFamily.Builder columnFamily =
+        columnDescriptorAdapter.adapt(column);
+
+    CreateColumnFamilyRequest.Builder createColumnFamilyBuilder =
+        CreateColumnFamilyRequest.newBuilder()
+            .setColumnFamilyId(column.getNameAsString())
+            .setColumnFamily(columnFamily);
+
+    tableMetadataSetter.setMetadata(createColumnFamilyBuilder);
+
     try {
-      bigtableAdminClient.createFamily(
-          CreateFamilyRequest.newBuilder()
-              .setProjectId(options.getProjectId())
-              .setTableName(tableName.getQualifierAsString())
-              .setFamily(columnDescriptorAdapter.adapt(column))
-              .build());
+      bigtableAdminClient.createColumnFamily(createColumnFamilyBuilder.build());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
@@ -447,12 +461,11 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
+    ColumnFamilyFormatter formatter = ColumnFamilyFormatter.from(tableName, options);
+    String bigtableColumnName = formatter.formatForBigtable(Bytes.toString(columnName));
     try {
-      bigtableAdminClient.deleteFamily(
-          DeleteFamilyRequest.newBuilder()
-              .setProjectId(options.getProjectId())
-              .setTableName(tableName.getQualifierAsString())
-              .setFamilyNameBytes(ByteString.copyFrom(columnName)).build());
+      bigtableAdminClient.deleteColumnFamily(
+          DeleteColumnFamilyRequest.newBuilder().setName(bigtableColumnName).build());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(

@@ -1,7 +1,6 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopData;
-import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
+import com.google.bigtable.admin.table.v1.ColumnFamily;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -9,6 +8,7 @@ import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
 import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -24,8 +24,8 @@ import java.util.Set;
 @RunWith(JUnit4.class)
 public class TestColumnDescriptorAdapter {
 
-  ColumnDescriptorAdapter adapter;
-  HColumnDescriptor descriptor;
+  private ColumnDescriptorAdapter adapter;
+  private HColumnDescriptor descriptor;
 
   @Before
   public void setup() {
@@ -81,7 +81,7 @@ public class TestColumnDescriptorAdapter {
     descriptor.setScope(1); // REPLICATION_SCOPE
     descriptor.setInMemory(true);
 
-    AnviltopData.ColumnFamily.Builder result = adapter.adapt(descriptor)
+    ColumnFamily.Builder result = adapter.adapt(descriptor)
         .clearName()
         .clearGcExpression();
 
@@ -91,42 +91,93 @@ public class TestColumnDescriptorAdapter {
   }
 
   @Test
+  @Ignore("The name of the column family is in a higher level object like Table or the create column request")
   public void columnFamilyNameIsPreserved() {
-    Assert.assertEquals(descriptor.getNameAsString(), adapter.adapt(descriptor).getName());
+    String adapted = adapter.adapt(descriptor).getName();
+    Assert.assertTrue(adapted.endsWith(descriptor.getNameAsString()));
   }
 
   @Test
   public void ttlIsPreservedInGcExpression() {
     // TTL of 1 day (in seconds):
     descriptor.setTimeToLive(86400);
-    AnviltopData.ColumnFamilyOrBuilder result = adapter.adapt(descriptor);
-
+    ColumnFamily.Builder result = adapter.adapt(descriptor);
     Assert.assertEquals("(age() > 86400000000) || (version() > 1)", result.getGcExpression());
+  }
+
+  @Test
+  public void ttlIsPreservedInColumnFamily() {
+    // TTL of 1 day (in microseconds):
+    String expression = "(age() > 86400000000) || (version() > 1)";
+    HColumnDescriptor descriptor = adapter.adapt("family", asColumnFamily(expression));
+    Assert.assertEquals(1, descriptor.getMaxVersions());
+    Assert.assertEquals(86400, descriptor.getTimeToLive());
   }
 
   @Test
   public void maxVersionsIsPreservedInGcExpression() {
     descriptor.setMaxVersions(10);
-    AnviltopData.ColumnFamilyOrBuilder result = adapter.adapt(descriptor);
+    ColumnFamily.Builder result = adapter.adapt(descriptor);
     Assert.assertEquals("(version() > 10)", result.getGcExpression());
   }
 
   @Test
-  public void minAndMaxMayBeSpecifiedTogetherWIthTtl() {
+  public void maxVersionsIsPreservedInColumnFamily() {
+    String expression = "(version() > 10)";
+    HColumnDescriptor descriptor = adapter.adapt("family", asColumnFamily(expression));
+    Assert.assertEquals(10, descriptor.getMaxVersions());
+  }
+
+  @Test
+  public void minMaxTtlInDescriptor() {
     descriptor.setMaxVersions(20);
     descriptor.setMinVersions(10);
     descriptor.setTimeToLive(86400); // 1 day in seconds
-    AnviltopData.ColumnFamilyOrBuilder result = adapter.adapt(descriptor);
+    ColumnFamily.Builder result = adapter.adapt(descriptor);
     Assert.assertEquals(
         "(age() > 86400000000 && version() > 10) || (version() > 20)",
         result.getGcExpression());
   }
 
   @Test
-  public void minVersionsMustBeLessThanMaxVersions() {
+  public void minMaxTtlInColumnFamily() {
+    String expression = "(age() > 86400000000 && version() > 10) || (version() > 20)";
+    HColumnDescriptor descriptor = adapter.adapt("family", asColumnFamily(expression));
+    Assert.assertEquals(20, descriptor.getMaxVersions());
+    Assert.assertEquals(10, descriptor.getMinVersions());
+    Assert.assertEquals(86400, descriptor.getTimeToLive());
+  }
+
+  public static ColumnFamily asColumnFamily(String expression) {
+    return ColumnFamily.newBuilder().setGcExpression(expression).build();
+  }
+
+  @Test
+  public void minVersionsMustBeLessThanMaxversion() {
     descriptor.setMaxVersions(10);
     descriptor.setMinVersions(20);
     expectedException.expect(IllegalStateException.class);
     adapter.adapt(descriptor);
+  }
+
+  @Test
+  public void minVersionsMustBeLessThanMaxversionInExpression() {
+    String expression = "(age() > 86400000000 && version() > 20) || (version() > 10)";
+    expectedException.expect(IllegalStateException.class);
+    adapter.adapt("family", asColumnFamily(expression));
+  }
+
+  @Test
+  public void badExpressionLessThan(){
+    String expression = "(version() < 1)";
+    expectedException.expect(IllegalStateException.class);
+    adapter.adapt("family", asColumnFamily(expression));
+  }
+
+  @Test
+  public void badExpressionBlank(){
+    String expression = "";
+    expectedException.expect(IllegalStateException.class);
+    adapter.adapt("family", asColumnFamily(expression));
   }
 }

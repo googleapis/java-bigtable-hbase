@@ -1,10 +1,11 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.client.util.Strings;
-import com.google.bigtable.anviltop.AnviltopData;
+import com.google.bigtable.admin.table.v1.ColumnFamily;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -20,13 +21,13 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Adapt a single instance of an HBase {@link HColumnDescriptor} to
- * an instance of {@link AnviltopData.ColumnFamily}
+ * an instance of {@link ColumnFamily}
  */
 public class ColumnDescriptorAdapter {
 
   /**
    * Configuration keys that we can support unconditionally and we provide
-   * a mapped version of the column descriptor to bigtable.
+   * a mapped version of the column descriptor to Bigtable.
    */
   public static final Set<String> SUPPORTED_OPTION_KEYS =
       ImmutableSet.of(
@@ -130,7 +131,7 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * Construct an bigtable GC expression from the given column descriptor.
+   * Construct an Bigtable GC expression from the given column descriptor.
    */
   public static String buildGarbageCollectionExpression(HColumnDescriptor columnDescriptor) {
     int maxVersions = columnDescriptor.getMaxVersions();
@@ -159,22 +160,106 @@ public class ColumnDescriptorAdapter {
     return buffer.toString();
   }
 
+  static Splitter gcExpressionOrSplitter = Splitter.on("|").trimResults().omitEmptyStrings();
+  static Splitter gcExpressionAndSplitter = Splitter.on("&").trimResults().omitEmptyStrings();
+
   /**
-   * Adapt a single instance of an HBase {@link HColumnDescriptor} to
-   * an instance of {@link AnviltopData.ColumnFamily}
+   * Parse a Bigtable GC-Expression that is in line with
+   * {@link #buildGarbageCollectionExpression(HColumnDescriptor)} into a the provided
+   * {@link HColumnDescriptor}.  This method will likely throw IllegalStateException if the 
+   * GC Expression isn't similar to buildGarbageCollectionExpression's expression.
    */
-  public AnviltopData.ColumnFamily.Builder adapt(HColumnDescriptor columnDescriptor) {
+  public static void convertGarbageCollectionExpression(String gcExpression,
+      HColumnDescriptor columnDescriptor) {
+    String maxVersionExpression = null;
+    String minVersionExpression = null;
+    String ttlExpression = null;
+    if (gcExpression.contains("||")) {
+      for (String expression : gcExpressionOrSplitter.split(gcExpression)) {
+        if (expression.contains("age()")) {
+          for (String expressionComponent : gcExpressionAndSplitter.split(expression)) {
+            if (expressionComponent.contains("age()")
+                && expressionComponent.contains(">")) {
+              ttlExpression = expressionComponent.replaceAll("[()]", "");
+            } else if (expressionComponent.contains("version()")
+                && expressionComponent.contains(">")) {
+              minVersionExpression = expressionComponent.replaceAll("[()]", "");
+            } else {
+              throw new IllegalStateException(String.format(
+                "Expression: '%s' could not be parsed.", expression));
+            }
+          }
+        } else if (expression.contains("version()") && expression.contains(">")) {
+          maxVersionExpression = expression.replaceAll("[()]", "");
+        } else {
+          throw new IllegalStateException(String.format(
+            "Expression: '%s' could not be parsed.", expression));
+        }
+      }
+    } else if (gcExpression.contains("version()") && gcExpression.contains(">")) {
+      maxVersionExpression = gcExpression.replaceAll("[()]", "");
+    } else {
+      throw new IllegalStateException(String.format(
+        "Expression: '%s' could not be parsed.", maxVersionExpression));
+    }
+
+    int maxVersions = getInteger(maxVersionExpression);
+    columnDescriptor.setMaxVersions(maxVersions);
+
+    if (minVersionExpression != null) {
+      int minVersions = getInteger(minVersionExpression);
+      Preconditions.checkState(minVersions < maxVersions,
+          "HColumnDescriptor min versions must be less than max versions.");
+      columnDescriptor.setMinVersions(minVersions);
+    }
+    if (ttlExpression != null) {
+      long bigtableTtl = getLong(ttlExpression);
+      int ttlSeconds =
+          (int) TimeUnit.SECONDS.convert(bigtableTtl, BigtableConstants.BIGTABLE_TIMEUNIT);
+      if (ttlSeconds != HColumnDescriptor.DEFAULT_TTL) {
+        columnDescriptor.setTimeToLive(ttlSeconds);
+      }
+    }
+  }
+
+  private static Integer getInteger(String expression) {
+    return Integer.valueOf(getNumber(expression));
+  }
+
+  private static Long getLong(String expression) {
+    return Long.valueOf(getNumber(expression));
+  }
+
+  public static String getNumber(String expression) {
+    return expression.replaceFirst(".*> *(\\d+).*", "$1");
+  }
+
+  /**
+   * <p>Adapt a single instance of an HBase {@link HColumnDescriptor} to
+   * an instance of {@link com.google.bigtable.admin.table.v1.ColumnFamily.Builder}.</p>
+   *
+   * <p>NOTE: This method does not set the name of the ColumnFamily.Builder.  The assumption is
+   * that the CreateTableRequest or CreateColumFamilyRequest takes care of the naming.  As of now
+   * (3/11/2015), the server insists on having a blank name.</p>
+   */
+  public ColumnFamily.Builder adapt(HColumnDescriptor columnDescriptor) {
     throwIfRequestingUnknownFeatures(columnDescriptor);
     throwIfRequestingUnsupportedFeatures(columnDescriptor);
 
-    AnviltopData.ColumnFamily.Builder resultBuilder = AnviltopData.ColumnFamily.newBuilder();
-
-    resultBuilder.setName(columnDescriptor.getNameAsString());
+    ColumnFamily.Builder resultBuilder = ColumnFamily.newBuilder();
     String gcExpression = buildGarbageCollectionExpression(columnDescriptor);
     if (!Strings.isNullOrEmpty(gcExpression)) {
       resultBuilder.setGcExpression(gcExpression);
     }
-
     return resultBuilder;
+  }
+
+  public HColumnDescriptor adapt(String familyName, ColumnFamily columnFamily) {
+    HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(familyName);
+    String gcExpression = columnFamily.getGcExpression();
+    if (gcExpression != null) {
+      convertGarbageCollectionExpression(gcExpression, hColumnDescriptor);
+    }
+    return hColumnDescriptor;
   }
 }

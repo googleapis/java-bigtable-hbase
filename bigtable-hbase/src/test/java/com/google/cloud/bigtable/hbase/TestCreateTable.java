@@ -13,7 +13,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
+import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -22,7 +22,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 
@@ -31,7 +30,6 @@ public class TestCreateTable extends AbstractTest {
    * Requirement 1.8 - Table names must match [_a-zA-Z0-9][-_.a-zA-Z0-9]*
    */
   @Test
-  @Category(KnownGap.class)
   public void testTableNames() throws IOException {
     String[] goodNames = {
         "a",
@@ -40,7 +38,10 @@ public class TestCreateTable extends AbstractTest {
         "_x",
         "a-._5x",
         "_a-._5x",
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-."
+        // TODO(sduskis): Join the last 2 strings once the Bigtable backend supports table names
+        // longer than 50 characters.
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi",
+        "jklmnopqrstuvwxyz1234567890_-."
     };
     String[] badNames = {
         "-x",
