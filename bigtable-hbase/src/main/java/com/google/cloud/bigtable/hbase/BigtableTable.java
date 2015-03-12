@@ -13,8 +13,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
+import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
@@ -30,6 +30,7 @@ import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
+import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.common.util.concurrent.ListeningExecutorService;
