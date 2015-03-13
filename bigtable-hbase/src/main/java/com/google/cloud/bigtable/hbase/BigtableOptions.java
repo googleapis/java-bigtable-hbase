@@ -13,8 +13,12 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import io.netty.channel.EventLoopGroup;
+import io.netty.handler.ssl.SslContext;
+
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.hadoop.hbase.ServerName;
 
@@ -24,19 +28,13 @@ import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
 import com.google.common.base.Preconditions;
 
-import org.apache.hadoop.hbase.ServerName;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.concurrent.ScheduledExecutorService;
-
-import io.netty.channel.EventLoopGroup;
-import io.netty.handler.ssl.SslContext;
-
 /**
  * An immutable class providing access to configuration options for Bigtable.
  */
 public class BigtableOptions {
+
+  private static final Logger LOG = new Logger(BigtableOptions.class);
+
   /**
    * A mutable builder for BigtableConnectionOptions.
    */
@@ -47,6 +45,7 @@ public class BigtableOptions {
     private Credentials credential;
     private InetAddress host;
     private InetAddress adminHost;
+    private InetAddress clusterAdminHost;
     private int port;
     private String callTimingReportPath;
     private String callStatusReportPath;
@@ -56,6 +55,11 @@ public class BigtableOptions {
 
     public Builder setAdminHost(InetAddress host) {
       this.adminHost = host;
+      return this;
+    }
+
+    public Builder setClusterAdminHost(InetAddress host) {
+      this.clusterAdminHost = host;
       return this;
     }
 
@@ -120,6 +124,7 @@ public class BigtableOptions {
       }
 
       return new BigtableOptions(
+          clusterAdminHost,
           adminHost,
           host,
           port,
@@ -135,6 +140,7 @@ public class BigtableOptions {
     }
   }
 
+  private final InetAddress clusterAdminHost;
   private final InetAddress adminHost;
   private final InetAddress host;
   private final int port;
@@ -150,6 +156,7 @@ public class BigtableOptions {
 
 
   public BigtableOptions(
+      InetAddress clusterAdminHost,
       InetAddress adminHost,
       InetAddress host,
       int port,
@@ -169,6 +176,7 @@ public class BigtableOptions {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(cluster), "Cluster must not be empty or null.");
     this.adminHost = Preconditions.checkNotNull(adminHost);
+    this.clusterAdminHost = clusterAdminHost;
     this.host = Preconditions.checkNotNull(host);
     this.port = port;
     this.credential = credential;
@@ -180,6 +188,19 @@ public class BigtableOptions {
     this.cluster = cluster;
     this.rpcRetryExecutorService = rpcRetryExecutorService;
     this.customEventLoopGroup = customEventLoopGroup;
+
+    LOG.info("Connection Configuration: project: %s, cluster: %s, host:port %s:%s, "
+        + "admin host:port %s:%s, using transport %s.",
+        getProjectId(),
+        cluster,
+        host,
+        port,
+        adminHost,
+        443,
+        TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS);
+    if (clusterAdminHost != null) {
+      LOG.info("Cluster API host: %s" , clusterAdminHost);
+    }
   }
 
   public String getProjectId() {
@@ -205,20 +226,25 @@ public class BigtableOptions {
   }
 
   public TransportOptions getTransportOptions() throws IOException {
+    return createTransportOptions(this.host);
+  }
+
+  public TransportOptions getAdminTransportOptions() throws IOException {
+    return createTransportOptions(this.adminHost);
+  }
+
+  public TransportOptions getClusterAdminTransportOptions() throws IOException {
+    return createTransportOptions(this.clusterAdminHost);
+  }
+
+  private TransportOptions createTransportOptions(InetAddress host) throws IOException {
+    // TODO: Should sslContext be cached?
+    SslContext sslContext = SslContext.newClientContext();
     return new TransportOptions(
         TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
         host,
         port,
-        SslContext.newClientContext(),
-        customEventLoopGroup);
-  }
-
-  public TransportOptions getAdminTransportOptions() throws IOException {
-    return new TransportOptions(
-        TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
-        adminHost,
-        port,
-        SslContext.newClientContext(),
+        sslContext,
         customEventLoopGroup);
   }
 

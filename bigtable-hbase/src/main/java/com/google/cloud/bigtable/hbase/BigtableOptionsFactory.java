@@ -46,6 +46,7 @@ public class BigtableOptionsFactory {
 
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
   public static final int DEFAULT_BIGTABLE_PORT = 443;
+  public static final String BIGTABLE_CLUSTER_ADMIN_HOST_KEY = "google.bigtable.cluster.admin.endpoint.host";
   public static final String BIGTABLE_ADMIN_HOST_KEY = "google.bigtable.admin.endpoint.host";
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
@@ -155,6 +156,15 @@ public class BigtableOptionsFactory {
       LOG.debug("Admin endpoint host not configured, assuming we should use data endpoint.");
       adminHost = host;
     }
+
+    String clusterAdminHost = configuration.get(BIGTABLE_CLUSTER_ADMIN_HOST_KEY);
+    if (Strings.isNullOrEmpty(adminHost)) {
+      // Most environments don't need cluster admin.
+      LOG.debug("Cluster Admin endpoint host not configured.");
+    } else {
+      optionsBuilder.setClusterAdminHost(InetAddress.getByName(clusterAdminHost));
+    }
+
 
     if (overrideIpAddress == null) {
       LOG.debug("Admin endpoint host %s", host);

@@ -19,6 +19,10 @@
         <value>${google.bigtable.admin.endpoint.host}</value>
     </property>
     <property>
+        <name>google.bigtable.cluster.admin.endpoint.host</name>
+        <value>${google.bigtable.cluster.admin.endpoint.host}</value>
+    </property>
+    <property>
         <name>google.bigtable.project.id</name>
         <value>autonomous-mote-782</value>
     </property>
@@ -44,10 +48,10 @@
     </property>
     <property>
         <name>google.bigtable.auth.service.account.email</name>
-        <value>450300683590-th0dk93ks4nicmug2ts9d05f7p2q0mda@developer.gserviceaccount.com</value>
+        <value>${google.bigtable.auth.test.service.account.email}</value>
     </property>
     <property>
         <name>google.bigtable.auth.service.account.keyfile</name>
-        <value>/google/data/ro/users/mg/mgaro/My Test Project-d5c2dc57b0de.p12</value>
+        <value>${google.bigtable.auth.test.service.account.keyfile}</value>
     </property>
 </configuration>

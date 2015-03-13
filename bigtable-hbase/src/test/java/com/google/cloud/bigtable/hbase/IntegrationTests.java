@@ -1,7 +1,9 @@
 package com.google.cloud.bigtable.hbase;
 
-import com.google.api.client.util.Strings;
-import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -21,10 +23,8 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import com.google.api.client.util.Strings;
+import com.google.common.base.Preconditions;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
@@ -85,6 +85,10 @@ public class IntegrationTests {
         BASE_CONFIGURATION.get(HConnection.HBASE_CLIENT_CONNECTION_IMPL, ""));
   }
 
+  protected static boolean isBigtable() {
+    return !useMiniCluster();
+  }
+
   public static MiniDFSCluster getMiniCluster() {
     return testingUtility.getDFSCluster();
   }
@@ -103,9 +107,7 @@ public class IntegrationTests {
     try (Connection connection = ConnectionFactory.createConnection(configuration);
         Admin admin = connection.getAdmin();) {
       HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
-      HTableDescriptor htd = new HTableDescriptor(tableName);
-      htd.addFamily(hcd);
-      admin.createTable(htd);
+      admin.createTable(new HTableDescriptor(tableName).addFamily(hcd));
     }
   }
 

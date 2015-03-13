@@ -252,6 +252,7 @@
                                 <exclude>**/TestBufferedMutator.java</exclude>
                                 <exclude>**/TestCheckAndMutate.java</exclude>
                                 <exclude>**/TestColumnFamilyAdmin.java</exclude>
+                                <exclude>**/TestClusterAPI.java</exclude>
                                 <exclude>**/TestCreateTable.java</exclude>
                                 <exclude>**/TestDisableTable.java</exclude>
                                 <exclude>**/TestDelete.java</exclude>

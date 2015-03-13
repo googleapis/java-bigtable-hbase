@@ -54,7 +54,13 @@ public class TestIncrement extends AbstractTest {
   @Category(KnownGap.class)
   public void testIncrement() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    try (Table table = connection.getTable(TABLE_NAME)){
+      testIncrement(dataHelper, table);
+    }
+  }
+
+  public static void testIncrement(DataGenerationHelper dataHelper, Table table)
+      throws IOException {
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     long value1 = new Random().nextInt();
@@ -87,8 +93,6 @@ public class TestIncrement extends AbstractTest {
       Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual1))));
     Assert.assertEquals("Value2=" + value2 + " & Incr2=" + incr2, value2 + incr2,
       Bytes.toLong(CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qual2))));
-
-    table.close();
   }
 
   /**
