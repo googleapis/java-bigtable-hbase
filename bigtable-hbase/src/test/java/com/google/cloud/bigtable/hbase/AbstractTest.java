@@ -53,10 +53,16 @@ public abstract class AbstractTest {
     @Override
     protected void before() throws Throwable {
       connection = createNewConnection();
+      onConnectionCreated();
     }
 
     @Override
     protected void after() {
+      try {
+        preConnectionClose();
+      } catch (IOException e) {
+        new Logger(AbstractTest.this.getClass()).warn("Could not perform preClose", e);
+      }
       try {
         connection.close();
       } catch (IOException e) {
@@ -69,6 +75,16 @@ public abstract class AbstractTest {
   public Connection createNewConnection() throws IOException {
     Configuration conf = IntegrationTests.getConfiguration();
     return ConnectionFactory.createConnection(conf);
+  }
+
+  /** Hook to setup class level resources after the connection is created. */
+  @SuppressWarnings("unused")
+  protected void onConnectionCreated() throws IOException {
+  }
+
+  /** Hook to remove class level resources after the connection is created. */
+  @SuppressWarnings("unused")
+  protected void preConnectionClose() throws IOException {
   }
 
   protected static class QualifierValue implements Comparable<QualifierValue> {

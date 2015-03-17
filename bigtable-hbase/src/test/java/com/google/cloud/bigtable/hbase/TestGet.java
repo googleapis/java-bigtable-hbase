@@ -462,7 +462,6 @@ public class TestGet extends AbstractTest {
    * Requirement 3.16 - When submitting an array of Get operations, if one fails, they all fail.
    */
   @Test
-  @Category(KnownGap.class)
   public void testOneBadApple() throws IOException {
     // Initialize data
     Table table = connection.getTable(TABLE_NAME);

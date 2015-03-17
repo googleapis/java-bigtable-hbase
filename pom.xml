@@ -16,7 +16,7 @@
         <!-- As soon as stubby is public, this goes away -->
        <stubby.driver.group>com.google.bigtable.hbase</stubby.driver.group>
        <stubby.driver.artifact>bigtable-grpc-interface</stubby.driver.artifact>
-       <stubby.driver.version>0.5-SNAPSHOT</stubby.driver.version>
+       <stubby.driver.version>0.6-SNAPSHOT</stubby.driver.version>
        <bigtable.grpc.repo.dir>bigtable-grpc-repo</bigtable.grpc.repo.dir>
 
        <hbase.version>1.0.0</hbase.version>
