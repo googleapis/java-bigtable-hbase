@@ -20,7 +20,7 @@ import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
-import com.google.cloud.bigtable.hbase.adapters.BigtableRowAdapter;
+import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
@@ -79,7 +79,7 @@ public class BigtableTable implements Table {
   protected final BigtableOptions options;
   protected final BigtableClient client;
   protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> bigtableRowAdapter =
-      new BigtableRowAdapter();
+      new RowAdapter();
   protected final PutAdapter putAdapter;
   protected final AppendAdapter appendAdapter = new AppendAdapter();
   protected final IncrementAdapter incrementAdapter = new IncrementAdapter();

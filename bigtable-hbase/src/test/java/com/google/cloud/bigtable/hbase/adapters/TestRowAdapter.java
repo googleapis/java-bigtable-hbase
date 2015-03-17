@@ -1,25 +1,12 @@
-/*
- * Copyright (c) 2014 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
- */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.anviltop.AnviltopData;
-import com.google.bigtable.anviltop.AnviltopData.Row;
+import com.google.bigtable.v1.Cell;
+import com.google.bigtable.v1.Column;
+import com.google.bigtable.v1.Family;
+import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.protobuf.ByteString;
 
-import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -28,48 +15,58 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+/**
+ * Test for BigtableRowAdapter.
+ */
 @RunWith(JUnit4.class)
 public class TestRowAdapter {
   protected RowAdapter adapter = new RowAdapter();
-  protected QualifierTestHelper qualifierTestHelper = new QualifierTestHelper();
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   @Test
   public void testRowKeyNotPresentWhenNoCellsReturned() {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Row.Builder rowBuilder = Row.newBuilder();
-    rowBuilder.setRowKey(ByteString.copyFrom(rowKey));
-
+    rowBuilder.setKey(ByteString.copyFrom(rowKey));
 
     Result result = adapter.adaptResponse(rowBuilder.build());
     Assert.assertNull(result.getRow());
   }
 
   @Test
+  public void testNullIsAnEmptyResult() {
+    Row row = null;
+    Result result = adapter.adaptResponse(row);
+    Assert.assertNull(result.getRow());
+  }
+
+  @Test
   public void testSingleCellResult() {
     byte[] rowKey = dataHelper.randomData("rk1-");
-    byte[] columnFamily = Bytes.toBytes("cf");
+    String columnFamily = "cf";
     byte[] qualfier = dataHelper.randomData("col1");
     byte[] value = dataHelper.randomData("val1");
     long bigtableTimestamp = 10000L;
-    byte[] fullQualifier = qualifierTestHelper.makeFullQualifier(columnFamily, qualfier);
 
     Row.Builder rowBuilder = Row.newBuilder();
-    rowBuilder.setRowKey(ByteString.copyFrom(rowKey));
+    rowBuilder.setKey(ByteString.copyFrom(rowKey));
 
-    AnviltopData.Column.Builder columnBuilder = rowBuilder.addColumnsBuilder();
-    columnBuilder.setColumnName(ByteString.copyFrom(fullQualifier));
+    Family.Builder familyBuilder = rowBuilder.addFamiliesBuilder();
+    familyBuilder.setName(columnFamily);
 
-    AnviltopData.Cell.Builder cellBuilder = columnBuilder.addCellsBuilder();
+    Column.Builder columnBuilder = familyBuilder.addColumnsBuilder();
+    columnBuilder.setQualifier(ByteString.copyFrom(qualfier));
+
+    Cell.Builder cellBuilder = columnBuilder.addCellsBuilder();
     cellBuilder.setValue(ByteString.copyFrom(value));
     cellBuilder.setTimestampMicros(bigtableTimestamp);
 
     Result result = adapter.adaptResponse(rowBuilder.build());
     Assert.assertEquals(1, result.size());
 
-    Cell cell = result.listCells().get(0);
+    org.apache.hadoop.hbase.Cell cell = result.listCells().get(0);
     Assert.assertArrayEquals(value, CellUtil.cloneValue(cell));
-    Assert.assertArrayEquals(columnFamily, CellUtil.cloneFamily(cell));
+    Assert.assertArrayEquals(Bytes.toBytes(columnFamily), CellUtil.cloneFamily(cell));
     Assert.assertArrayEquals(qualfier, CellUtil.cloneQualifier(cell));
     Assert.assertArrayEquals(rowKey, CellUtil.cloneRow(cell));
     Assert.assertEquals(bigtableTimestamp / 1000L, cell.getTimestamp());
@@ -78,39 +75,41 @@ public class TestRowAdapter {
   @Test
   public void testMultipleCellsInSingleColumnResult() {
     byte[] rowKey = dataHelper.randomData("rk1-");
-    byte[] columnFamily = Bytes.toBytes("cf");
+    String columnFamily = "cf";
     byte[] qualfier = dataHelper.randomData("col1");
     byte[] value1 = dataHelper.randomData("val1");
     long bigtableTimestamp1 = 20000L;
     byte[] value2 = dataHelper.randomData("val2");
     long bigtableTimestamp2 = 10000L;
-    byte[] fullQualifier = qualifierTestHelper.makeFullQualifier(columnFamily, qualfier);
 
     Row.Builder rowBuilder = Row.newBuilder();
-    rowBuilder.setRowKey(ByteString.copyFrom(rowKey));
+    rowBuilder.setKey(ByteString.copyFrom(rowKey));
 
-    AnviltopData.Column.Builder columnBuilder = rowBuilder.addColumnsBuilder();
-    columnBuilder.setColumnName(ByteString.copyFrom(fullQualifier));
+    Family.Builder familyBuilder = rowBuilder.addFamiliesBuilder();
+    familyBuilder.setName(columnFamily);
 
-    AnviltopData.Cell.Builder cellBuilder = columnBuilder.addCellsBuilder();
+    Column.Builder columnBuilder = familyBuilder.addColumnsBuilder();
+    columnBuilder.setQualifier(ByteString.copyFrom(qualfier));
+
+    Cell.Builder cellBuilder = columnBuilder.addCellsBuilder();
     cellBuilder.setValue(ByteString.copyFrom(value1));
     cellBuilder.setTimestampMicros(bigtableTimestamp1);
 
-    cellBuilder = columnBuilder.addCellsBuilder();
-    cellBuilder.setValue(ByteString.copyFrom(value2));
-    cellBuilder.setTimestampMicros(bigtableTimestamp2);
+    Cell.Builder cellBuilder2 = columnBuilder.addCellsBuilder();
+    cellBuilder2.setValue(ByteString.copyFrom(value2));
+    cellBuilder2.setTimestampMicros(bigtableTimestamp2);
 
     Result result = adapter.adaptResponse(rowBuilder.build());
     Assert.assertEquals(2, result.size());
 
-    Cell cell1 = result.listCells().get(0);
-    Assert.assertArrayEquals(columnFamily, CellUtil.cloneFamily(cell1));
+    org.apache.hadoop.hbase.Cell cell1 = result.listCells().get(0);
+    Assert.assertArrayEquals(Bytes.toBytes(columnFamily), CellUtil.cloneFamily(cell1));
     Assert.assertArrayEquals(qualfier, CellUtil.cloneQualifier(cell1));
     Assert.assertArrayEquals(value1, CellUtil.cloneValue(cell1));
     Assert.assertEquals(bigtableTimestamp1 / 1000L, cell1.getTimestamp());
 
-    Cell cell2 = result.listCells().get(1);
-    Assert.assertArrayEquals(columnFamily, CellUtil.cloneFamily(cell2));
+    org.apache.hadoop.hbase.Cell cell2 = result.listCells().get(1);
+    Assert.assertArrayEquals(Bytes.toBytes(columnFamily), CellUtil.cloneFamily(cell2));
     Assert.assertArrayEquals(qualfier, CellUtil.cloneQualifier(cell2));
     Assert.assertArrayEquals(value2, CellUtil.cloneValue(cell2));
     Assert.assertEquals(bigtableTimestamp2 / 1000L, cell2.getTimestamp());
@@ -119,46 +118,47 @@ public class TestRowAdapter {
   @Test
   public void testMultipleCellsAreSortedByColumnName() {
     byte[] rowKey = dataHelper.randomData("rk1-");
-    byte[] columnFamily = Bytes.toBytes("cf");
-    byte[] qualfier1 = dataHelper.randomData("col1");
-    byte[] qualfier2 = dataHelper.randomData("col2");
-    byte[] value1 = dataHelper.randomData("val1");
-    long bigtableTimestamp1 = 10000L;
-    byte[] value2 = dataHelper.randomData("val2");
-    long bigtableTimestamp2 = 10000L;
-    byte[] fullQualifier1 = qualifierTestHelper.makeFullQualifier(columnFamily, qualfier1);
-    byte[] fullQualifier2 = qualifierTestHelper.makeFullQualifier(columnFamily, qualfier2);
+    String columnFamily = "cf";
+    byte[] qualfierA = dataHelper.randomData("colA");
+    byte[] qualfierB = dataHelper.randomData("colB");
+    byte[] valueA = dataHelper.randomData("valA");
+    long bigtableTimestampA = 10000L;
+    byte[] valueB = dataHelper.randomData("valB");
+    long bigtableTimestampB = 10000L;
 
     Row.Builder rowBuilder = Row.newBuilder();
-    rowBuilder.setRowKey(ByteString.copyFrom(rowKey));
+    rowBuilder.setKey(ByteString.copyFrom(rowKey));
 
-    AnviltopData.Column.Builder columnBuilder = rowBuilder.addColumnsBuilder();
-    columnBuilder.setColumnName(ByteString.copyFrom(fullQualifier1));
+    Family.Builder familyBuilder = rowBuilder.addFamiliesBuilder();
+    familyBuilder.setName(columnFamily);
 
-    AnviltopData.Cell.Builder cellBuilder = columnBuilder.addCellsBuilder();
-    cellBuilder.setValue(ByteString.copyFrom(value1));
-    cellBuilder.setTimestampMicros(bigtableTimestamp1);
+    Column.Builder columnBuilderB = familyBuilder.addColumnsBuilder();
+    columnBuilderB.setQualifier(ByteString.copyFrom(qualfierB));
 
-    columnBuilder = rowBuilder.addColumnsBuilder();
-    columnBuilder.setColumnName(ByteString.copyFrom(fullQualifier2));
+    Cell.Builder cellBuilderB = columnBuilderB.addCellsBuilder();
+    cellBuilderB.setValue(ByteString.copyFrom(valueB));
+    cellBuilderB.setTimestampMicros(bigtableTimestampB);
 
-    cellBuilder = columnBuilder.addCellsBuilder();
-    cellBuilder.setValue(ByteString.copyFrom(value2));
-    cellBuilder.setTimestampMicros(bigtableTimestamp2);
+    Column.Builder columnBuilderA = familyBuilder.addColumnsBuilder();
+    columnBuilderA.setQualifier(ByteString.copyFrom(qualfierA));
+
+    Cell.Builder cellBuilderA = columnBuilderA.addCellsBuilder();
+    cellBuilderA.setValue(ByteString.copyFrom(valueA));
+    cellBuilderA.setTimestampMicros(bigtableTimestampA);
 
     Result result = adapter.adaptResponse(rowBuilder.build());
     Assert.assertEquals(2, result.size());
 
-    Cell cell1 = result.listCells().get(0);
-    Assert.assertArrayEquals(columnFamily, CellUtil.cloneFamily(cell1));
-    Assert.assertArrayEquals(qualfier1, CellUtil.cloneQualifier(cell1));
-    Assert.assertArrayEquals(value1, CellUtil.cloneValue(cell1));
-    Assert.assertEquals(bigtableTimestamp1 / 1000L, cell1.getTimestamp());
+    org.apache.hadoop.hbase.Cell cellA = result.listCells().get(0);
+    Assert.assertArrayEquals(Bytes.toBytes(columnFamily), CellUtil.cloneFamily(cellA));
+    Assert.assertArrayEquals(qualfierA, CellUtil.cloneQualifier(cellA));
+    Assert.assertArrayEquals(valueA, CellUtil.cloneValue(cellA));
+    Assert.assertEquals(bigtableTimestampA / 1000L, cellA.getTimestamp());
 
-    Cell cell2 = result.listCells().get(1);
-    Assert.assertArrayEquals(columnFamily, CellUtil.cloneFamily(cell2));
-    Assert.assertArrayEquals(qualfier2, CellUtil.cloneQualifier(cell2));
-    Assert.assertArrayEquals(value2, CellUtil.cloneValue(cell2));
-    Assert.assertEquals(bigtableTimestamp2 / 1000L, cell2.getTimestamp());
+    org.apache.hadoop.hbase.Cell cellB = result.listCells().get(1);
+    Assert.assertArrayEquals(Bytes.toBytes(columnFamily), CellUtil.cloneFamily(cellB));
+    Assert.assertArrayEquals(qualfierB, CellUtil.cloneQualifier(cellB));
+    Assert.assertArrayEquals(valueB, CellUtil.cloneValue(cellB));
+    Assert.assertEquals(bigtableTimestampB / 1000L, cellB.getTimestamp());
   }
 }

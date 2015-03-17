@@ -15,7 +15,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
-import com.google.cloud.bigtable.hbase.adapters.BigtableRowAdapter;
+import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
@@ -61,7 +61,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   protected final BatchExecutor batchExecutor;
 
   protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> bigtableRowAdapter =
-      new BigtableRowAdapter();
+      new RowAdapter();
   protected final ScanAdapter scanAdapter = new ScanAdapter(new FilterAdapter());
   protected final GetAdapter getAdapter = new GetAdapter(scanAdapter);
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
