@@ -34,7 +34,6 @@ public class TestBigtableOptionsFactory {
     configuration.set(BigtableOptionsFactory.ZONE_KEY, TEST_ZONE_NAME);
   }
 
-
   @Test
   public void testProjectIdIsRequired() throws IOException {
     Configuration configuration = new Configuration();
@@ -91,5 +90,20 @@ public class TestBigtableOptionsFactory {
     Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
     Assert.assertEquals(TEST_CLUSTER_NAME, options.getCluster());
     Assert.assertEquals(TEST_ZONE_NAME, options.getZone());
+  }
+
+  @Test
+  public void executorAndEventLoopGroupArePopulatedWhenDaemonizing() throws IOException {
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    configuration.setBoolean(BigtableOptionsFactory.ENABLE_DAEMONIZED_THREADS_KEY, true);
+    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+    Assert.assertNotNull(
+        "ScheduledExecutor expected.",
+        options.getChannelOptions().getScheduledExecutorService());
+    Assert.assertNotNull(
+        "EventLoopGroup expected",
+        options.getTransportOptions().getEventLoopGroup());
   }
 }

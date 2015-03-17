@@ -15,6 +15,7 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.hadoop.conf.Configuration;
 
@@ -24,6 +25,13 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.concurrent.ExecutorServiceFactory;
 
 /**
  * Static methods to convert an instance of {@link Configuration}
@@ -31,6 +39,10 @@ import java.security.GeneralSecurityException;
  */
 public class BigtableOptionsFactory {
   protected static final Logger LOG = new Logger(BigtableOptionsFactory.class);
+
+  public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
+  public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
+  public static final int RETRY_THREAD_COUNT = 2;
 
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
   public static final int DEFAULT_BIGTABLE_PORT = 443;
@@ -82,6 +94,16 @@ public class BigtableOptionsFactory {
    */
   public static final String ENABLE_GRPC_RETRIES_KEY = "google.bigtable.grpc.retry.enable";
   public static final boolean ENABLE_GRPC_RETRIES_DEFAULT = true;
+
+  /**
+   * When enabled, RPC related thread pools will be constructed to use daemon threads which will
+   * allow the JVM to shutdown without properly closing connections, etc.
+   *
+   * Setting this to true is not recommended for production systems.
+   */
+  public static final String ENABLE_DAEMONIZED_THREADS_KEY =
+      "google.bigtable.not_recommended.daemonized.io.threadpools.enable";
+  public static final boolean ENABLE_DAEMONIZED_THREADS_DEFAULT = false;
 
   public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
     BigtableOptions.Builder optionsBuilder = new BigtableOptions.Builder();
@@ -179,6 +201,31 @@ public class BigtableOptionsFactory {
       }
     } catch (GeneralSecurityException gse) {
       throw new IOException("Failed to acquire credential.", gse);
+    }
+
+    if (configuration.getBoolean(
+        ENABLE_DAEMONIZED_THREADS_KEY, ENABLE_DAEMONIZED_THREADS_DEFAULT)) {
+      LOG.info("Enabling daemonized threads.");
+      EventLoopGroup elg = new NioEventLoopGroup(0, new ExecutorServiceFactory() {
+        @Override
+        public ExecutorService newExecutorService(int parallelism) {
+          return Executors.newFixedThreadPool(
+              parallelism,
+              new ThreadFactoryBuilder()
+                  .setDaemon(true)
+                  .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build());
+        }
+      });
+      optionsBuilder.setCustomEventLoopGroup(elg);
+
+      ScheduledExecutorService retryExecutor =
+          Executors.newScheduledThreadPool(
+              RETRY_THREAD_COUNT,
+              new ThreadFactoryBuilder()
+                  .setDaemon(true)
+                  .setNameFormat(RETRY_THREADPOOL_NAME + "-%d")
+                  .build());
+      optionsBuilder.setRpcRetryExecutorService(retryExecutor);
     }
 
     // Set up aggregate performance and call error rate logging:

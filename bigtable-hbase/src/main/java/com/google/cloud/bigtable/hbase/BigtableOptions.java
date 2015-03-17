@@ -23,6 +23,10 @@ import org.apache.hadoop.hbase.ServerName;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.concurrent.ScheduledExecutorService;
+
+import io.netty.channel.EventLoopGroup;
+import io.netty.handler.ssl.SslContext;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
@@ -42,6 +46,8 @@ public class BigtableOptions {
     private String callTimingReportPath;
     private String callStatusReportPath;
     private boolean retriesEnabled;
+    private ScheduledExecutorService rpcRetryExecutorService;
+    private EventLoopGroup customEventLoopGroup;
 
     public Builder setAdminHost(InetAddress host) {
       this.adminHost = host;
@@ -93,6 +99,16 @@ public class BigtableOptions {
       return this;
     }
 
+    public Builder setRpcRetryExecutorService(ScheduledExecutorService scheduledExecutorService) {
+      this.rpcRetryExecutorService = scheduledExecutorService;
+      return this;
+    }
+
+    public Builder setCustomEventLoopGroup(EventLoopGroup eventLoopGroup) {
+      this.customEventLoopGroup = eventLoopGroup;
+      return this;
+    }
+
     public BigtableOptions build() {
       if (adminHost == null) {
         adminHost = host;
@@ -108,7 +124,9 @@ public class BigtableOptions {
           cluster,
           retriesEnabled,
           callTimingReportPath,
-          callStatusReportPath);
+          callStatusReportPath,
+          rpcRetryExecutorService,
+          customEventLoopGroup);
     }
   }
 
@@ -122,6 +140,8 @@ public class BigtableOptions {
   private final boolean retriesEnabled;
   private final String callTimingReportPath;
   private final String callStatusReportPath;
+  private final ScheduledExecutorService rpcRetryExecutorService;
+  private final EventLoopGroup customEventLoopGroup;
 
 
   public BigtableOptions(
@@ -134,7 +154,9 @@ public class BigtableOptions {
       String cluster,
       boolean retriesEnabled,
       String callTimingReportPath,
-      String callStatusReportPath) {
+      String callStatusReportPath,
+      ScheduledExecutorService rpcRetryExecutorService,
+      EventLoopGroup customEventLoopGroup) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
     Preconditions.checkArgument(
@@ -151,6 +173,8 @@ public class BigtableOptions {
     this.callStatusReportPath = callStatusReportPath;
     this.zone = zone;
     this.cluster = cluster;
+    this.rpcRetryExecutorService = rpcRetryExecutorService;
+    this.customEventLoopGroup = customEventLoopGroup;
   }
 
   public String getProjectId() {
@@ -171,6 +195,7 @@ public class BigtableOptions {
     optionsBuilder.setCallStatusReportPath(callStatusReportPath);
     optionsBuilder.setCredential(credential);
     optionsBuilder.setEnableRetries(retriesEnabled);
+    optionsBuilder.setScheduledExecutorService(rpcRetryExecutorService);
     return optionsBuilder.build();
   }
 
@@ -178,14 +203,18 @@ public class BigtableOptions {
     return new TransportOptions(
         TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
         host,
-        port);
+        port,
+        SslContext.newClientContext(),
+        customEventLoopGroup);
   }
 
   public TransportOptions getAdminTransportOptions() throws IOException {
     return new TransportOptions(
         TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
         adminHost,
-        port);
+        port,
+        SslContext.newClientContext(),
+        customEventLoopGroup);
   }
 
   public ServerName getServerName() {
