@@ -1,18 +1,19 @@
 package com.google.cloud.bigtable.hbase;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
+import java.util.List;
+
 import com.google.api.client.googleapis.compute.ComputeCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.SecurityUtils;
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.collect.ImmutableList;
-
-import java.io.File;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.List;
 
 /**
  * Simple factory for creating OAuth Credential objects for use with Bigtable.
@@ -52,9 +53,6 @@ public class CredentialFactory {
           CLOUD_BIGTABLE_WRITER_SCOPE,
           CLOUD_BIGTABLE_ADMIN_SCOPE);
 
-  // JSON factory used for formatting credential-handling payloads.
-  private static final JsonFactory JSON_FACTORY = new JacksonFactory();
-
   // HTTP transport used for created credentials to perform token-refresh handshakes with remote
   // credential servers. Initialized lazily to move the possibility of throwing
   // GeneralSecurityException to the time a caller actually tries to get a credential.
@@ -77,11 +75,11 @@ public class CredentialFactory {
    * GCE VM. See: <a href="https://developers.google.com/compute/docs/authentication"
    * >Authenticating from Google Compute Engine</a>.
    */
-  public static Credential getCredentialFromMetadataServiceAccount()
+  public static Credentials getCredentialFromMetadataServiceAccount()
       throws IOException, GeneralSecurityException {
-    Credential cred = new ComputeCredential(getHttpTransport(), JSON_FACTORY);
+    Credentials cred = new ComputeEngineCredentials(getHttpTransport());
     try {
-      cred.refreshToken();
+      cred.refresh();
     } catch (IOException e) {
       throw new IOException("Error getting access token from metadata server at: " +
           ComputeCredential.TOKEN_SERVER_ENCODED_URL, e);
@@ -97,7 +95,7 @@ public class CredentialFactory {
    * @param serviceAccountEmail Email address of the service account associated with the keyfile.
    * @param privateKeyFile Full local path to private keyfile.
    */
-  public static Credential getCredentialFromPrivateKeyServiceAccount(
+  public static Credentials getCredentialFromPrivateKeyServiceAccount(
       String serviceAccountEmail, String privateKeyFile)
       throws IOException, GeneralSecurityException {
     return getCredentialFromPrivateKeyServiceAccount(
@@ -113,15 +111,15 @@ public class CredentialFactory {
    * @param privateKeyFile Full local path to private keyfile.
    * @param scopes List of well-formed desired scopes to use with the credential.
    */
-  public static Credential getCredentialFromPrivateKeyServiceAccount(
+  public static Credentials getCredentialFromPrivateKeyServiceAccount(
       String serviceAccountEmail, String privateKeyFile, List<String> scopes)
       throws IOException, GeneralSecurityException {
-    return new GoogleCredential.Builder()
-        .setTransport(getHttpTransport())
-        .setJsonFactory(JSON_FACTORY)
-        .setServiceAccountId(serviceAccountEmail)
-        .setServiceAccountScopes(scopes)
-        .setServiceAccountPrivateKeyFromP12File(new File(privateKeyFile))
-        .build();
+    String clientId = null;
+    String privateKeyId = null;
+    PrivateKey privateKey =
+        SecurityUtils.loadPrivateKeyFromKeyStore(SecurityUtils.getPkcs12KeyStore(),
+          new FileInputStream(privateKeyFile), "notasecret", "privatekey", "notasecret");
+    return new ServiceAccountCredentials(clientId, serviceAccountEmail, privateKey, privateKeyId,
+        scopes);
   }
 }

@@ -13,8 +13,13 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.api.client.auth.oauth2.Credential;
+import java.io.IOException;
+import java.net.InetAddress;
+
+import org.apache.hadoop.hbase.ServerName;
+
 import com.google.api.client.util.Strings;
+import com.google.auth.Credentials;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
 import com.google.common.base.Preconditions;
@@ -39,7 +44,7 @@ public class BigtableOptions {
     private String projectId;
     private String zone;
     private String cluster;
-    private Credential credential;
+    private Credentials credential;
     private InetAddress host;
     private InetAddress adminHost;
     private int port;
@@ -64,7 +69,7 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setCredential(Credential credential) {
+    public Builder setCredential(Credentials credential) {
       this.credential = credential;
       return this;
     }
@@ -133,7 +138,7 @@ public class BigtableOptions {
   private final InetAddress adminHost;
   private final InetAddress host;
   private final int port;
-  private final Credential credential;
+  private final Credentials credential;
   private final String projectId;
   private final String zone;
   private final String cluster;
@@ -148,7 +153,7 @@ public class BigtableOptions {
       InetAddress adminHost,
       InetAddress host,
       int port,
-      Credential credential,
+      Credentials credential,
       String projectId,
       String zone,
       String cluster,
