@@ -469,11 +469,16 @@ public class FilterAdapter {
         outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));
         outputStream.write(Bytes.toBytes("}, latest))"));
         outputStream.write(STREAM_FILTER_BYTES);
+        if (filter.getOffset() > 0) {
+          outputStream.write(
+              Bytes.toBytes(
+                  String.format("skip_items(%s)", filter.getOffset())));
+          outputStream.write(STREAM_FILTER_BYTES);
+        }
         outputStream.write(
             Bytes.toBytes(
                 String.format(
-                    "skip_items(%s) | itemlimit(%s)",
-                    filter.getOffset(),
+                    "itemlimit(%s)",
                     filter.getLimit())));
       }
     }
