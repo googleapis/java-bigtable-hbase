@@ -14,9 +14,8 @@
     <properties>
         <!-- As soon as stubby is public, this goes away -->
        <stubby.driver.remote.directory>gs://anviltop-builds/data</stubby.driver.remote.directory>
-       <!-- stubby.driver.file>driver_deploy.jar</stubby.driver.file -->
-       <stubby.driver.file>auth_refresh_driver.jar</stubby.driver.file>
-       <bigtable.grpc.repo.fullpath>${project.basedir}/../${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
+       <stubby.driver.file>driver_deploy.jar</stubby.driver.file>
+       <bigtable.grpc.repo.fullpath>${user.home}/.m2/repository</bigtable.grpc.repo.fullpath>
     </properties>
 
     <build>
