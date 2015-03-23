@@ -30,7 +30,7 @@
        <alpn.version>7.0.0.v20140317</alpn.version>
        <google.api.client.version>1.19.0</google.api.client.version>
        <google.bigtable.auth.service.account.enable>false</google.bigtable.auth.service.account.enable>
-       <google.bigtable.admin.endpoint.host>test-table-admin-bigtable.googleapis.com</google.bigtable.admin.endpoint.host>
+       <google.bigtable.admin.endpoint.host>test-bigtabletableadmin.sandbox.googleapis.com</google.bigtable.admin.endpoint.host>
        <google.bigtable.endpoint.host>test-bigtable.googleapis.com</google.bigtable.endpoint.host>
        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
