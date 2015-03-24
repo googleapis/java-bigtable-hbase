@@ -6,6 +6,8 @@ import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.util.List;
 
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.compute.ComputeCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
@@ -121,5 +123,9 @@ public class CredentialFactory {
           new FileInputStream(privateKeyFile), "notasecret", "privatekey", "notasecret");
     return new ServiceAccountCredentials(clientId, serviceAccountEmail, privateKey, privateKeyId,
         scopes);
+  }
+
+  public static Credentials getApplicationDefaultCredential() throws IOException {
+    return GoogleCredential.getApplicationDefault();
   }
 }

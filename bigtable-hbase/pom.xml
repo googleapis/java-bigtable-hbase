@@ -20,6 +20,7 @@
 
     <properties>
         <bigtable.grpc.repo.fullpath>${project.basedir}/../${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
+        <google-api-client.version>1.19.1</google-api-client.version>
     </properties>
 
     <profiles>
@@ -217,10 +218,12 @@
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client-jackson2</artifactId>
+            <version>${google-api-client.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client-java6</artifactId>
+            <version>${google-api-client.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.oauth-client</groupId>
