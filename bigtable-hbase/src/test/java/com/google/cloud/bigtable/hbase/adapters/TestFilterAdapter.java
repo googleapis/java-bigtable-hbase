@@ -9,11 +9,13 @@ import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.SkipFilter;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -29,6 +31,13 @@ import java.io.IOException;
 
 @RunWith(JUnit4.class)
 public class TestFilterAdapter {
+
+  private static final Filter UNSUPPORTED_FILTER = new FilterBase() {
+    @Override
+    public ReturnCode filterKeyValue(Cell cell) throws IOException {
+      return ReturnCode.INCLUDE;
+    }
+  };
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -188,14 +197,33 @@ public class TestFilterAdapter {
   }
 
   @Test
+  public void testSkipFilter() throws IOException {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    ValueFilter valueFilter = new ValueFilter(
+        CompareOp.EQUAL,
+        new BinaryComparator(
+            Bytes.toBytes("Hello, SkipFilter")));
+    SkipFilter filter = new SkipFilter(valueFilter);
+    filterAdapter.adaptFilterTo(filter, outputStream);
+
+    Assert.assertEquals(
+        "(row_has((value_match({Hello\\,\\ SkipFilter}))) ? (col({.*:\\C*}, all)))",
+        Bytes.toString(outputStream.toByteArray()));
+  }
+
+  @Test
+  public void testSkipFilterWithUnsupportedChildFilters() {
+    SkipFilter filter = new SkipFilter(UNSUPPORTED_FILTER);
+    expectedException.expect(FilterAdapter.UnsupportedFilterException.class);
+    expectedException.expectMessage("Don't know how to adapt Filter class ");
+    expectedException.expectMessage("TestFilterAdapter$");
+    filterAdapter.throwIfUnsupportedFilter(filter);
+  }
+
+  @Test
   public void testUnsupportedFilterType() {
     // Let's make a filter that there's 0% chance that we have an adapter for:
-    Filter filter = new FilterBase() {
-      @Override
-      public ReturnCode filterKeyValue(Cell cell) throws IOException {
-        return ReturnCode.INCLUDE;
-      }
-    };
+    Filter filter = UNSUPPORTED_FILTER;
 
     expectedException.expect(FilterAdapter.UnsupportedFilterException.class);
     expectedException.expectMessage("Don't know how to adapt Filter class ");

@@ -17,6 +17,12 @@ public class ReaderExpressionHelper {
   public static final byte[] ALL_FAMILIES_BYTES = Bytes.toBytes(ALL_FAMILIES);
   public static final String ALL_VERSIONS = "all";
   public static final String LATEST_VERSION = "latest";
+  public static final String ALL_CELLS =
+      "col({" + ALL_FAMILIES + ":" + ALL_QUALIFIERS + "}, " + ALL_VERSIONS + ")";
+  public static final byte[] ALL_CELLS_BYTES = Bytes.toBytes(ALL_CELLS);
+  public static final String ALL_LATEST_CELLS =
+      "col({" + ALL_FAMILIES + ":" + ALL_QUALIFIERS + "}, " + LATEST_VERSION + ")";
+  public static final byte[] ALL_LATEST_CELLS_BYTES = Bytes.toBytes(ALL_LATEST_CELLS);
   public static final byte[] INTERLEAVE_CHARACTERS = Bytes.toBytes(" + ");
   public static final byte[] PIPE_CHARACTER_BYTES = Bytes.toBytes(" | ");
   private final static byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");

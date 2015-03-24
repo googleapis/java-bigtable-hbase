@@ -4,8 +4,10 @@ import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Throwables;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter.ReaderExpressionScope;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
@@ -20,12 +22,14 @@ import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.SkipFilter;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,17 +52,20 @@ public class FilterAdapter {
    * a reason may be provided by the adapter.
    */
   public static class FilterSupportStatus {
+    private static final Joiner REASON_JOINER = Joiner.on(", ");
 
     /**
      * A static instance for all supported Filter adaptations.
      */
     public static final FilterSupportStatus SUPPORTED = new FilterSupportStatus(true, null);
+
     /**
      * Used to indicate an internal error where an adapter for a single Filter type is passed an
      * instance of an incompatible Filter type.
      */
     public static final FilterSupportStatus NOT_SUPPORTED_WRONG_TYPE =
         newNotSupported("Wrong filter type passed to adapter.");
+
     /**
      * Static helper to construct not support adaptations due to no adapter being available for
      * the given Filter type.
@@ -77,6 +84,21 @@ public class FilterAdapter {
      */
     static FilterSupportStatus newNotSupported(String reason) {
       return new FilterSupportStatus(false, reason);
+    }
+
+    /**
+     * Construct a new FilterSupportStatus that aggregates many not-supported statuses.
+     */
+    static FilterSupportStatus newAggregateNotSupported(
+        String reson, List<FilterSupportStatus> childStatuses) {
+      List<String> reasons = Lists.transform(
+          childStatuses, new Function<FilterSupportStatus, String>(){
+            @Override
+            public String apply(FilterSupportStatus status) {
+              return status.getReason();
+            }
+          });
+      return new FilterSupportStatus(false, REASON_JOINER.join(reasons));
     }
 
     private boolean isSupported;
@@ -198,9 +220,12 @@ public class FilterAdapter {
 
     @Override
     public void adaptFilterTo(Filter filter, OutputStream stream) {
+      FilterSupportStatus status = isSupported(filter);
       Preconditions.checkState(
-          isSupported(filter).isSupported(),
-          "Unsupported Filter passed to adaptFilterTo.");
+          status.isSupported(),
+          String.format(
+              "Unsupported Filter passed to adaptFilterTo. Found status %s",
+              status.getReason()));
 
       try {
         adaptTypedFilterTo(getTypedFilter(filter), stream);
@@ -382,12 +407,15 @@ public class FilterAdapter {
     @Override
     void adaptTypedFilterTo(ColumnCountGetFilter filter, OutputStream outputStream)
         throws IOException {
-      outputStream.write(Bytes.toBytes("((col({"));
-      outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
-      outputStream.write(':');
-      outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));
-      outputStream.write(Bytes.toBytes(
-          String.format("}, latest)) | itemlimit(%s))", filter.getLimit())));
+      try (ScanAdapter.ReaderExpressionScope scope =
+          new ScanAdapter.ReaderExpressionScope(outputStream, '(', ')')) {
+        try (ScanAdapter.ReaderExpressionScope colScope =
+            new ScanAdapter.ReaderExpressionScope(outputStream, '(', ')')) {
+          outputStream.write(ReaderExpressionHelper.ALL_LATEST_CELLS_BYTES);
+        }
+        outputStream.write(ReaderExpressionHelper.PIPE_CHARACTER_BYTES);
+        outputStream.write(Bytes.toBytes(String.format("itemlimit(%s)", filter.getLimit())));
+      }
     }
 
     @Override
@@ -463,11 +491,10 @@ public class FilterAdapter {
         throws IOException {
       try (ScanAdapter.ReaderExpressionScope scope =
           new ScanAdapter.ReaderExpressionScope(outputStream, '(', ')')) {
-        outputStream.write(Bytes.toBytes("(col({"));
-        outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
-        outputStream.write(':');
-        outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));
-        outputStream.write(Bytes.toBytes("}, latest))"));
+        try (ScanAdapter.ReaderExpressionScope colScope =
+            new ScanAdapter.ReaderExpressionScope(outputStream, '(', ')')) {
+          outputStream.write(ReaderExpressionHelper.ALL_LATEST_CELLS_BYTES);
+        }
         outputStream.write(STREAM_FILTER_BYTES);
         if (filter.getOffset() > 0) {
           outputStream.write(
@@ -588,6 +615,43 @@ public class FilterAdapter {
     }
   }
 
+  class SkipFilterAdapter extends AbstractSingleFilterAdapter<SkipFilter> {
+    protected SkipFilterAdapter() {
+      super(SkipFilter.class);
+    }
+
+    @Override
+    void adaptTypedFilterTo(SkipFilter filter, OutputStream outputStream) throws IOException {
+      Filter childFilter = filter.getFilter();
+      // Emit (row_has(childFilter) ? (col({.*:\\C*}, all)))
+      try (ReaderExpressionScope rowHasOuter =
+          new ReaderExpressionScope(outputStream, '(', ')')) {
+        try (ReaderExpressionScope rowHas =
+            new ReaderExpressionScope(outputStream, "row_has((", "))")) {
+          FilterAdapter.this.adaptFilterTo(childFilter, outputStream);
+        }
+
+        outputStream.write(Bytes.toBytes(" ? "));
+        try (ReaderExpressionScope allCells =
+            new ReaderExpressionScope(outputStream, '(', ')')) {
+          outputStream.write(ReaderExpressionHelper.ALL_CELLS_BYTES);
+        }
+      }
+    }
+
+    @Override
+    FilterSupportStatus isTypedFilterSupported(SkipFilter filter) {
+      List<FilterSupportStatus> childStatuses = new ArrayList<>();
+      collectUnsuportedFilterStatuses(filter.getFilter(), childStatuses);
+      if (!childStatuses.isEmpty()) {
+        // At least one unsupported filter was found.
+        return FilterSupportStatus.newAggregateNotSupported(
+            "SkipFilter child filters not supported", childStatuses);
+      }
+      return FilterSupportStatus.SUPPORTED;
+    }
+  }
+
   /**
    * A map of Class entries mapping to SingleFilterAdapter instances. Each supported Filter
    * subclass should have an entry in this map.
@@ -623,6 +687,9 @@ public class FilterAdapter {
     adapterMap.put(
         MultipleColumnPrefixFilter.class,
         new MultipleColumnPrefixFilterAdapter(readerExpressionHelper));
+    adapterMap.put(
+        SkipFilter.class,
+        new SkipFilterAdapter());
   }
 
   /**
