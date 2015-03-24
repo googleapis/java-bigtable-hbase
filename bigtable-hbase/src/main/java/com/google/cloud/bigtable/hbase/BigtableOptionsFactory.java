@@ -74,16 +74,15 @@ public class BigtableOptionsFactory {
   public static final boolean BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT = false;
 
   /**
-   * Key to set when using P12 keyfile authentication. The value should be the service account email
-   * address as displayed. If this value is not set and using service accounts is enabled, a
-   * metadata server account will be used.
+   * Key to set to the service account email address. If this value is not set
+   * and using service accounts is enabled, a metadata server account will be used.
    */
   public static final String BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY =
       "google.bigtable.auth.service.account.email";
 
   /**
    * Key to set to a location where a P12 keyfile can be found that corresponds to the provided
-   * service account email address.
+   * service account email address. If not set, the application default credential is used.
    */
   public static final String BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY =
       "google.bigtable.auth.service.account.keyfile";
@@ -175,19 +174,18 @@ public class BigtableOptionsFactory {
         String serviceAccountEmail = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
 
         if (!Strings.isNullOrEmpty(serviceAccountEmail)) {
-          LOG.debug(
-              "Service account %s specified, using p12 authentication flow.", serviceAccountEmail);
-          // Using P12 keyfile based OAuth:
+          LOG.debug("Service account %s specified.", serviceAccountEmail);
           String keyfileLocation =
               configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
-
-          Preconditions.checkState(
-              !Strings.isNullOrEmpty(keyfileLocation),
-              "Key file location must be specified when setting service account email");
-          LOG.debug("Using p12 keyfile: %s", keyfileLocation);
-          optionsBuilder.setCredential(
-              CredentialFactory.getCredentialFromPrivateKeyServiceAccount(
-                  serviceAccountEmail, keyfileLocation));
+          if (Strings.isNullOrEmpty(keyfileLocation)) {
+            LOG.debug("Using application default credential.");
+            optionsBuilder.setCredential(CredentialFactory.getApplicationDefaultCredential());
+          } else {
+            LOG.debug("Using p12 keyfile: %s", keyfileLocation);
+            optionsBuilder.setCredential(
+                CredentialFactory.getCredentialFromPrivateKeyServiceAccount(
+                    serviceAccountEmail, keyfileLocation));
+          }
         } else {
           optionsBuilder.setCredential(CredentialFactory.getCredentialFromMetadataServiceAccount());
         }
