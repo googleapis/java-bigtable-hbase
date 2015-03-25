@@ -1,19 +1,20 @@
 package com.google.cloud.bigtable.hbase;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.security.PrivateKey;
-import java.util.List;
-
 import com.google.api.client.googleapis.compute.ComputeCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.util.SecurityUtils;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.collect.ImmutableList;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
+import java.util.List;
 
 /**
  * Simple factory for creating OAuth Credential objects for use with Bigtable.
@@ -121,5 +122,17 @@ public class CredentialFactory {
           new FileInputStream(privateKeyFile), "notasecret", "privatekey", "notasecret");
     return new ServiceAccountCredentials(clientId, serviceAccountEmail, privateKey, privateKeyId,
         scopes);
+  }
+
+  /**
+   * Initializes OAuth2 application default credentials based on the environment the code is running
+   * in. If a service account is to be used with JSON file, set the environment variable with name
+   * "GOOGLE_APPLICATION_CREDENTIALS" to the JSON file path. For more details on application default
+   * credentials:
+   * <a href="https://developers.google.com/accounts/docs/application-default-credentials" >
+   * Application Default Credentials</a>.
+   */
+  public static Credentials getApplicationDefaultCredential() throws IOException {
+    return GoogleCredentials.getApplicationDefault().createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
   }
 }
