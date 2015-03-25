@@ -126,6 +126,11 @@ public class CredentialFactory {
         scopes);
   }
 
+  /**
+   * Initializes OAuth2 application default credentials based on the environment the code is running
+   * in. <a href="https://developers.google.com/accounts/docs/application-default-credentials" >
+   * Application Default Credentials</a>.
+   */
   public static Credentials getApplicationDefaultCredential() throws IOException {
     return GoogleCredentials.getApplicationDefault();
   }
