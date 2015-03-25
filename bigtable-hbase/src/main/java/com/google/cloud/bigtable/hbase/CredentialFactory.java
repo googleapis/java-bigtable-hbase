@@ -6,8 +6,6 @@ import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.util.List;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.compute.ComputeCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
