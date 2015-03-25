@@ -16,6 +16,7 @@ public class ReaderExpressionHelper {
   public static final String ALL_FAMILIES = ".*";
   public static final byte[] ALL_FAMILIES_BYTES = Bytes.toBytes(ALL_FAMILIES);
   public static final String ALL_VERSIONS = "all";
+  public static final byte[] ALL_VERSIONS_BYTES = Bytes.toBytes(ALL_VERSIONS);
   public static final String LATEST_VERSION = "latest";
   public static final byte[] INTERLEAVE_CHARACTERS = Bytes.toBytes(" + ");
   public static final byte[] PIPE_CHARACTER_BYTES = Bytes.toBytes(" | ");

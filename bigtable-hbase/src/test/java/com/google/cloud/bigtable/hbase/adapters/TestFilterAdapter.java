@@ -1,13 +1,15 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
+import com.google.cloud.bigtable.hbase.adapters.FilterAdapter.ColumnRangeFilterAdapter;
 import com.google.common.collect.ImmutableList;
 
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
@@ -34,7 +36,9 @@ public class TestFilterAdapter {
   public ExpectedException expectedException = ExpectedException.none();
 
   FilterAdapter filterAdapter = new FilterAdapter();
-
+  Scan emptyScan = new Scan();
+  FilterAdapter.FilterContext emptyScanContext =
+      new FilterAdapter.FilterContext(emptyScan);
   @Test
   public void testValueFilterFiltersOnValue() throws IOException {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -44,7 +48,7 @@ public class TestFilterAdapter {
         CompareFilter.CompareOp.EQUAL,
         new BinaryComparator(filterValue));
 
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
 
     Assert.assertArrayEquals(Bytes.toBytes("value_match({foobar})"), outputStream.toByteArray());
   }
@@ -64,7 +68,7 @@ public class TestFilterAdapter {
 
     filter.setFilterIfMissing(false);
     filter.setLatestVersionOnly(false);
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
 
     Assert.assertEquals(
             "(row_has((col({f:someColumn}, all))) ? "
@@ -77,7 +81,7 @@ public class TestFilterAdapter {
 
     filter.setFilterIfMissing(false);
     filter.setLatestVersionOnly(true);
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
 
     Assert.assertEquals(
         "(row_has((col({f:someColumn}, latest))) ? "
@@ -90,7 +94,7 @@ public class TestFilterAdapter {
 
     filter.setFilterIfMissing(true);
     filter.setLatestVersionOnly(false);
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
 
     Assert.assertEquals(
         "(row_has(((col({f:someColumn}, all)) | "
@@ -101,7 +105,7 @@ public class TestFilterAdapter {
 
     filter.setFilterIfMissing(true);
     filter.setLatestVersionOnly(true);
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
 
     Assert.assertEquals(
         "(row_has(((col({f:someColumn}, latest)) | "
@@ -115,7 +119,7 @@ public class TestFilterAdapter {
   public void testColumnCountGetFilter() throws IOException {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     ColumnCountGetFilter filter = new ColumnCountGetFilter(10);
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
     Assert.assertArrayEquals(
         Bytes.toBytes("((col({.*:\\C*}, latest)) | itemlimit(10))"), outputStream.toByteArray());
   }
@@ -125,7 +129,7 @@ public class TestFilterAdapter {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     // Return 10 items after skipping 20 items.
     ColumnPaginationFilter filter = new ColumnPaginationFilter(10, 20);
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
     Assert.assertArrayEquals(
         Bytes.toBytes("((col({.*:\\C*}, latest)) | skip_items(20) | itemlimit(10))"),
         outputStream.toByteArray());
@@ -136,7 +140,7 @@ public class TestFilterAdapter {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     // Return all columns in all families that are prefixed by "prefix".
     ColumnPrefixFilter filter = new ColumnPrefixFilter(Bytes.toBytes("prefix"));
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
     Assert.assertArrayEquals(
         Bytes.toBytes("(col({.*:prefix.*}, all))"), outputStream.toByteArray());
   }
@@ -148,7 +152,7 @@ public class TestFilterAdapter {
     MultipleColumnPrefixFilter filter =
         new MultipleColumnPrefixFilter(
             new byte[][]{Bytes.toBytes("prefix"), Bytes.toBytes("prefix2")});
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
     Assert.assertArrayEquals(
         Bytes.toBytes("((col({.*:prefix.*}, all)) + (col({.*:prefix2.*}, all)))"),
         outputStream.toByteArray());
@@ -160,7 +164,7 @@ public class TestFilterAdapter {
     // Return all columns in all families that are prefixed by "prefix".
 
     TimestampsFilter filter = new TimestampsFilter(ImmutableList.<Long>of(1L, 2L, 3L));
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
     Assert.assertArrayEquals(
         Bytes.toBytes("((ts(1000,1000)) + (ts(2000,2000)) + (ts(3000,3000)))"),
         outputStream.toByteArray());
@@ -172,7 +176,7 @@ public class TestFilterAdapter {
     // Return all columns in all families that are prefixed by "prefix".
 
     KeyOnlyFilter filter = new KeyOnlyFilter();
-    filterAdapter.adaptFilterTo(filter, outputStream);
+    filterAdapter.adaptFilterTo(emptyScanContext, filter, outputStream);
     Assert.assertArrayEquals(
         Bytes.toBytes("strip_value()"),
         outputStream.toByteArray());
@@ -184,7 +188,7 @@ public class TestFilterAdapter {
 
     KeyOnlyFilter filter = new KeyOnlyFilter(true);
     expectedException.expectMessage("KeyOnlyFilters with lenAsVal = true are not supported");
-    filterAdapter.throwIfUnsupportedFilter(filter);
+    filterAdapter.throwIfUnsupportedFilter(emptyScan, filter);
   }
 
   @Test
@@ -200,7 +204,7 @@ public class TestFilterAdapter {
     expectedException.expect(FilterAdapter.UnsupportedFilterException.class);
     expectedException.expectMessage("Don't know how to adapt Filter class ");
     expectedException.expectMessage("TestFilterAdapter$");
-    filterAdapter.throwIfUnsupportedFilter(filter);
+    filterAdapter.throwIfUnsupportedFilter(emptyScan, filter);
   }
 
   @Test
@@ -216,6 +220,27 @@ public class TestFilterAdapter {
         "Unsupported filters encountered: " +
             "FilterSupportStatus{isSupported=false, reason='CompareOp.EQUAL is the only "
             + "supported ValueFilter compareOp. Found: 'NOT_EQUAL''}");
-    filterAdapter.throwIfUnsupportedFilter(filter);
+    filterAdapter.throwIfUnsupportedFilter(emptyScan, filter);
+  }
+
+  @Test
+  public void testColumnRangeFilterThrowsWithNoFamilies() throws IOException {
+    ColumnRangeFilter filter = new ColumnRangeFilter(
+        Bytes.toBytes("a"), true, Bytes.toBytes("b"), true);
+    expectedException.expect(FilterAdapter.UnsupportedFilterException.class);
+    expectedException.expectMessage(ColumnRangeFilterAdapter.UNSUPPORTED_EXCEPTION_MESSAGE);
+    filterAdapter.throwIfUnsupportedFilter(emptyScan, filter);
+  }
+
+  @Test
+  public void testColumnRangeFilterWithASingleFamily() throws IOException {
+    ColumnRangeFilter filter = new ColumnRangeFilter(
+        Bytes.toBytes("a"), true, Bytes.toBytes("b"), false);
+    Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    filterAdapter.adaptFilterTo(familyScan, filter, outputStream);
+    Assert.assertEquals(
+        "(col([foo:a,foo:b),all))",
+        Bytes.toString(outputStream.toByteArray()));
   }
 }
