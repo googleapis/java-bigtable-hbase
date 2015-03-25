@@ -257,7 +257,6 @@ public class TestFilters extends AbstractTest {
    * combinations of start/end keys being inclusive/exclusive.
    */
   @Test
-  @Category(KnownGap.class)
   public void testColumnRangeFilter() throws Exception {
     // Initialize
     Table table = connection.getTable(TABLE_NAME);
@@ -273,14 +272,14 @@ public class TestFilters extends AbstractTest {
 
     // Filter for "B" exclusive, "C" exclusive
     Filter filter = new ColumnRangeFilter(Bytes.toBytes("B"), false, Bytes.toBytes("C"), false);
-    Get get = new Get(rowKey).setFilter(filter);
+    Get get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
     Result result = table.get(get);
     Assert.assertEquals("Should only return \"BB\"", 1, result.size());
     Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
 
     // Filter for "B" exclusive, "C" inclusive
     filter = new ColumnRangeFilter(Bytes.toBytes("B"), false, Bytes.toBytes("C"), true);
-    get = new Get(rowKey).setFilter(filter);
+    get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
     result = table.get(get);
     Assert.assertEquals("Should return \"BB\", \"C\"", 2, result.size());
     Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
@@ -288,7 +287,7 @@ public class TestFilters extends AbstractTest {
 
     // Filter for "B" inclusive, "C" exclusive
     filter = new ColumnRangeFilter(Bytes.toBytes("B"), true, Bytes.toBytes("C"), false);
-    get = new Get(rowKey).setFilter(filter);
+    get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
     result = table.get(get);
     Assert.assertEquals("Should return \"B\", \"BB\"", 2, result.size());
     Assert.assertEquals("B", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
@@ -296,7 +295,7 @@ public class TestFilters extends AbstractTest {
 
     // Filter for "B" inclusive, "C" inclusive
     filter = new ColumnRangeFilter(Bytes.toBytes("B"), true, Bytes.toBytes("C"), true);
-    get = new Get(rowKey).setFilter(filter);
+    get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
     result = table.get(get);
     Assert.assertEquals("Should return \"B\", \"BB\", \"C\"", 3, result.size());
     Assert.assertEquals("B", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));

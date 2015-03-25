@@ -117,10 +117,10 @@ public class ScanAdapter implements OperationAdapter<Scan, ReadRowsRequest.Build
   /**
    * Write an adapted Filter to the given OutputStream.
    */
-  public void writeFilterStream(OutputStream stream, Filter filter) {
+  public void writeFilterStream(OutputStream stream, Scan scan, Filter filter) {
     try {
       stream.write(Bytes.toBytes(" | "));
-      filterAdapter.adaptFilterTo(filter, stream);
+      filterAdapter.adaptFilterTo(scan, filter, stream);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -170,7 +170,7 @@ public class ScanAdapter implements OperationAdapter<Scan, ReadRowsRequest.Build
       }
 
       if (scan.getFilter() != null) {
-        writeFilterStream(outputStream, scan.getFilter());
+        writeFilterStream(outputStream, scan, scan.getFilter());
       }
 
       return outputStream.toByteArray();
@@ -189,7 +189,7 @@ public class ScanAdapter implements OperationAdapter<Scan, ReadRowsRequest.Build
 
   public void throwIfUnsupportedScan(Scan scan) {
     if (scan.getFilter() != null) {
-      filterAdapter.throwIfUnsupportedFilter(scan.getFilter());
+      filterAdapter.throwIfUnsupportedFilter(scan, scan.getFilter());
     }
 
     if (scan.getMaxResultsPerColumnFamily() != -1) {

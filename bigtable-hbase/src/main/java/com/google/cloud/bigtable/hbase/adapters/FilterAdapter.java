@@ -9,10 +9,12 @@ import com.google.common.collect.ImmutableList;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
@@ -137,6 +139,21 @@ public class FilterAdapter {
   }
 
   /**
+   * Provides contextual information for transforming and validating filters.
+   */
+  static class FilterContext {
+    private final Scan scan;
+
+    public FilterContext(Scan scan) {
+      this.scan = scan;
+    }
+
+    public Scan getScan() {
+      return scan;
+    }
+  }
+
+  /**
    * An instance of SingleFilterAdapter knows how to adapt a single Filter class into a bigtable
    * reader expression.
    */
@@ -145,12 +162,12 @@ public class FilterAdapter {
     /**
      * Adapt the given filter to the given output stream.
      */
-    void adaptFilterTo(Filter filter, OutputStream stream);
+    void adaptFilterTo(FilterContext context, Filter filter, OutputStream stream);
 
     /**
      * Determine if the given Filter is a supported filter.
      */
-    FilterSupportStatus isSupported(Filter filter);
+    FilterSupportStatus isSupported(FilterContext context, Filter filter);
   }
 
   /**
@@ -168,12 +185,13 @@ public class FilterAdapter {
     /**
      * Adapt a typed filter to the output stream.
      */
-    abstract void adaptTypedFilterTo(T filter, OutputStream outputStream) throws IOException;
+    abstract void adaptTypedFilterTo(
+        FilterContext context, T filter, OutputStream outputStream) throws IOException;
 
     /**
      * Indicate whether a typed filter is supported.
      */
-    abstract FilterSupportStatus isTypedFilterSupported(T filter);
+    abstract FilterSupportStatus isTypedFilterSupported(FilterContext context, T filter);
 
     @SuppressWarnings("unchecked")
     T unchecked(Filter filter) {
@@ -197,22 +215,22 @@ public class FilterAdapter {
     }
 
     @Override
-    public void adaptFilterTo(Filter filter, OutputStream stream) {
+    public void adaptFilterTo(FilterContext context, Filter filter, OutputStream stream) {
       Preconditions.checkState(
-          isSupported(filter).isSupported(),
+          isSupported(context, filter).isSupported(),
           "Unsupported Filter passed to adaptFilterTo.");
 
       try {
-        adaptTypedFilterTo(getTypedFilter(filter), stream);
+        adaptTypedFilterTo(context, getTypedFilter(filter), stream);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
     }
 
     @Override
-    public FilterSupportStatus isSupported(Filter filter) {
+    public FilterSupportStatus isSupported(FilterContext context, Filter filter) {
       if (isFilterAProperSublcass(filter)) {
-        return isTypedFilterSupported(getTypedFilter(filter));
+        return isTypedFilterSupported(context, getTypedFilter(filter));
       } else {
         return FilterSupportStatus.NOT_SUPPORTED_WRONG_TYPE;
       }
@@ -231,7 +249,8 @@ public class FilterAdapter {
     }
 
     @Override
-    void adaptTypedFilterTo(ValueFilter filter, OutputStream outputStream) {
+    void adaptTypedFilterTo(
+        FilterContext context, ValueFilter filter, OutputStream outputStream) {
       try {
         outputStream.write(Bytes.toBytes("value_match({"));
         readerExpressionHelper.writeQuotedExpression(
@@ -243,7 +262,8 @@ public class FilterAdapter {
     }
 
     @Override
-    FilterSupportStatus isTypedFilterSupported(ValueFilter filter) {
+    FilterSupportStatus isTypedFilterSupported(
+        FilterContext context, ValueFilter filter) {
       if (!filter.getOperator().equals(CompareFilter.CompareOp.EQUAL)) {
         return FilterSupportStatus.newNotSupported(String.format(
             "CompareOp.EQUAL is the only supported ValueFilter compareOp. Found: '%s'",
@@ -324,7 +344,8 @@ public class FilterAdapter {
     }
 
     @Override
-    void adaptTypedFilterTo(SingleColumnValueFilter filter, OutputStream outputStream)
+    void adaptTypedFilterTo(
+        FilterContext context, SingleColumnValueFilter filter, OutputStream outputStream)
         throws IOException {
       if (filter.getFilterIfMissing()) {
         writeRowHasWithValueMatch(filter, outputStream);
@@ -357,7 +378,8 @@ public class FilterAdapter {
     }
 
     @Override
-    FilterSupportStatus isTypedFilterSupported(SingleColumnValueFilter filter) {
+    FilterSupportStatus isTypedFilterSupported(
+        FilterContext context, SingleColumnValueFilter filter) {
       if (!filter.getOperator().equals(CompareFilter.CompareOp.EQUAL)) {
         return FilterSupportStatus.newNotSupported(String.format(
             "CompareOp.EQUAL is the only supported SingleColumnValueFilterAdapter compareOp. "
@@ -380,7 +402,8 @@ public class FilterAdapter {
     }
 
     @Override
-    void adaptTypedFilterTo(ColumnCountGetFilter filter, OutputStream outputStream)
+    void adaptTypedFilterTo(
+        FilterContext context, ColumnCountGetFilter filter, OutputStream outputStream)
         throws IOException {
       outputStream.write(Bytes.toBytes("((col({"));
       outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
@@ -391,7 +414,8 @@ public class FilterAdapter {
     }
 
     @Override
-    FilterSupportStatus isTypedFilterSupported(ColumnCountGetFilter filter) {
+    FilterSupportStatus isTypedFilterSupported(
+        FilterContext context, ColumnCountGetFilter filter) {
       return FilterSupportStatus.SUPPORTED;
     }
   }
@@ -407,13 +431,15 @@ public class FilterAdapter {
     }
 
     @Override
-    void adaptTypedFilterTo(FirstKeyOnlyFilter filter, OutputStream outputStream)
+    void adaptTypedFilterTo(
+        FilterContext context, FirstKeyOnlyFilter filter, OutputStream outputStream)
         throws IOException {
       outputStream.write(Bytes.toBytes("itemlimit(1)"));
     }
 
     @Override
-    FilterSupportStatus isTypedFilterSupported(FirstKeyOnlyFilter filter) {
+    FilterSupportStatus isTypedFilterSupported(
+        FilterContext context, FirstKeyOnlyFilter filter) {
       return FilterSupportStatus.SUPPORTED;
     }
   }
@@ -428,7 +454,9 @@ public class FilterAdapter {
     }
 
     @Override
-    void adaptTypedFilterTo(TimestampsFilter filter, OutputStream outputStream) throws IOException {
+    void adaptTypedFilterTo(
+        FilterContext context, TimestampsFilter filter, OutputStream outputStream)
+        throws IOException {
       try (ScanAdapter.ReaderExpressionScope scope =
           new ScanAdapter.ReaderExpressionScope(outputStream, '(', ')')) {
         int timestampIndex = 0;
@@ -446,7 +474,8 @@ public class FilterAdapter {
     }
 
     @Override
-    FilterSupportStatus isTypedFilterSupported(TimestampsFilter filter) {
+    FilterSupportStatus isTypedFilterSupported(
+        FilterContext context, TimestampsFilter filter) {
       return FilterSupportStatus.SUPPORTED;
     }
   }
@@ -459,7 +488,8 @@ public class FilterAdapter {
     }
 
     @Override
-    void adaptTypedFilterTo(ColumnPaginationFilter filter, OutputStream outputStream)
+    void adaptTypedFilterTo(
+        FilterContext context, ColumnPaginationFilter filter, OutputStream outputStream)
         throws IOException {
       try (ScanAdapter.ReaderExpressionScope scope =
           new ScanAdapter.ReaderExpressionScope(outputStream, '(', ')')) {
@@ -484,7 +514,8 @@ public class FilterAdapter {
     }
 
     @Override
-    FilterSupportStatus isTypedFilterSupported(ColumnPaginationFilter filter) {
+    FilterSupportStatus isTypedFilterSupported(
+        FilterContext context, ColumnPaginationFilter filter) {
       return FilterSupportStatus.SUPPORTED;
     }
   }
@@ -501,7 +532,8 @@ public class FilterAdapter {
     }
 
     @Override
-    void adaptTypedFilterTo(ColumnPrefixFilter filter, OutputStream outputStream)
+    void adaptTypedFilterTo(
+        FilterContext context, ColumnPrefixFilter filter, OutputStream outputStream)
         throws IOException {
       outputStream.write(Bytes.toBytes("(col({"));
       outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
@@ -513,7 +545,8 @@ public class FilterAdapter {
     }
 
     @Override
-    FilterSupportStatus isTypedFilterSupported(ColumnPrefixFilter filter) {
+    FilterSupportStatus isTypedFilterSupported(
+        FilterContext context, ColumnPrefixFilter filter) {
       return FilterSupportStatus.SUPPORTED;
     }
   }
@@ -532,7 +565,8 @@ public class FilterAdapter {
     }
 
     @Override
-    void adaptTypedFilterTo(MultipleColumnPrefixFilter filter, OutputStream outputStream)
+    void adaptTypedFilterTo(
+        FilterContext context, MultipleColumnPrefixFilter filter, OutputStream outputStream)
         throws IOException {
       try (ScanAdapter.ReaderExpressionScope scope =
           new ScanAdapter.ReaderExpressionScope(outputStream, '(', ')')) {
@@ -553,7 +587,8 @@ public class FilterAdapter {
     }
 
     @Override
-    FilterSupportStatus isTypedFilterSupported(MultipleColumnPrefixFilter filter) {
+    FilterSupportStatus isTypedFilterSupported(
+        FilterContext context, MultipleColumnPrefixFilter filter) {
       return FilterSupportStatus.SUPPORTED;
     }
   }
@@ -574,15 +609,71 @@ public class FilterAdapter {
     }
 
     @Override
-    void adaptTypedFilterTo(KeyOnlyFilter filter, OutputStream outputStream) throws IOException {
+    void adaptTypedFilterTo(
+        FilterContext context, KeyOnlyFilter filter, OutputStream outputStream)
+        throws IOException {
       outputStream.write(Bytes.toBytes("strip_value()"));
     }
 
     @Override
-    FilterSupportStatus isTypedFilterSupported(KeyOnlyFilter filter) {
+    FilterSupportStatus isTypedFilterSupported(
+        FilterContext context, KeyOnlyFilter filter) {
       if (filter.transformCell(TEST_CELL).getValueLength() != 0) {
         return FilterSupportStatus.newNotSupported(
             "KeyOnlyFilters with lenAsVal = true are not supported");
+      }
+      return FilterSupportStatus.SUPPORTED;
+    }
+  }
+
+  static class ColumnRangeFilterAdapter extends AbstractSingleFilterAdapter<ColumnRangeFilter> {
+    static final String UNSUPPORTED_EXCEPTION_MESSAGE =
+        "Scan or Get operations using ColumnRangeFilter must "
+            + "have a single family specified with #addFamily().";
+    private final ReaderExpressionHelper helper;
+
+    protected ColumnRangeFilterAdapter(ReaderExpressionHelper helper) {
+      super(ColumnRangeFilter.class);
+      this.helper = helper;
+    }
+
+    @Override
+    void adaptTypedFilterTo(
+        FilterContext context, ColumnRangeFilter filter, OutputStream outputStream)
+        throws IOException {
+
+      byte lowerBoundMarker = (byte) (filter.getMinColumnInclusive() ? '[' : '(');
+      byte upperBoundMarker = (byte) (filter.getMaxColumnInclusive() ? ']' : ')');
+      byte[] family = getSingleFamily(context.getScan());
+
+      try (ReaderExpressionScope scope = new ReaderExpressionScope(outputStream, "(col(", "))")) {
+        outputStream.write(lowerBoundMarker);
+
+        outputStream.write(family);
+        outputStream.write(BigtableConstants.BIGTABLE_COLUMN_SEPARATOR_BYTE);
+        helper.writeQuotedExpression(filter.getMinColumn(), outputStream);
+        outputStream.write((byte) ',');
+
+        outputStream.write(family);
+        outputStream.write(BigtableConstants.BIGTABLE_COLUMN_SEPARATOR_BYTE);
+        helper.writeQuotedExpression(filter.getMaxColumn(), outputStream);
+
+        outputStream.write(upperBoundMarker);
+        outputStream.write((byte)',');
+        outputStream.write(ReaderExpressionHelper.ALL_VERSIONS_BYTES);
+      }
+    }
+
+    byte[] getSingleFamily(Scan scan) {
+      return scan.getFamilies()[0];
+    }
+
+    @Override
+    FilterSupportStatus isTypedFilterSupported(FilterContext context, ColumnRangeFilter filter) {
+      // We require a single column family to be specified:
+      int familyCount = context.getScan().numFamilies();
+      if (familyCount != 1) {
+        return FilterSupportStatus.newNotSupported(UNSUPPORTED_EXCEPTION_MESSAGE);
       }
       return FilterSupportStatus.SUPPORTED;
     }
@@ -623,6 +714,8 @@ public class FilterAdapter {
     adapterMap.put(
         MultipleColumnPrefixFilter.class,
         new MultipleColumnPrefixFilterAdapter(readerExpressionHelper));
+    adapterMap.put(ColumnRangeFilter.class,
+        new ColumnRangeFilterAdapter(readerExpressionHelper));
   }
 
   /**
@@ -642,8 +735,8 @@ public class FilterAdapter {
    * Given a MUST_PASS_ALL FilterList, construct a pipe expression, write the equivalent
    * bigtable reader expression to the output stream.
    */
-  protected void adaptFilterListTo(FilterList filterList, OutputStream stream)
-      throws IOException {
+  protected void adaptFilterListTo(
+      FilterContext context, FilterList filterList, OutputStream stream)  throws IOException {
 
     byte[] operatorBytes = STREAM_INTERLEAVE_BYTES;
     if (filterList.getOperator() == FilterList.Operator.MUST_PASS_ALL) {
@@ -659,7 +752,7 @@ public class FilterAdapter {
         if (filterIndex++ > 0) {
           stream.write(operatorBytes);
         }
-        adaptFilterTo(filter, stream);
+        adaptFilterTo(context, filter, stream);
       }
     }
   }
@@ -667,20 +760,30 @@ public class FilterAdapter {
   /**
    * Adapt a single non-FilterList Filter to the given OutputStream.
    */
-  protected void adaptSingleFilterTo(Filter filter, OutputStream stream) {
+  protected void adaptSingleFilterTo(FilterContext context, Filter filter, OutputStream stream) {
     SingleFilterAdapter adapter = getAdapterForFilterOrThrow(filter);
-    adapter.adaptFilterTo(filter, stream);
+    adapter.adaptFilterTo(context, filter, stream);
   }
 
   /**
    * Adapt a Filter or FilterList to the given OutputStream.
    */
-  public void adaptFilterTo(Filter filter, OutputStream outputStream) throws IOException {
+  public void adaptFilterTo(
+      Scan scan, Filter filter, OutputStream outputStream) throws IOException {
+    FilterContext context = new FilterContext(scan);
+    adaptFilterTo(context, filter, outputStream);
+  }
+
+  /**
+   * Adapt a Filter or FilterList to the given OutputStream.
+   */
+  public void adaptFilterTo(
+      FilterContext context, Filter filter, OutputStream outputStream) throws IOException {
     if (filter instanceof FilterList) {
       FilterList filterList = (FilterList) filter;
-      adaptFilterListTo(filterList, outputStream);
+      adaptFilterListTo(context, filterList, outputStream);
     } else {
-      adaptSingleFilterTo(filter, outputStream);
+      adaptSingleFilterTo(context, filter, outputStream);
     }
   }
 
@@ -691,18 +794,18 @@ public class FilterAdapter {
    * unsupported Filter was found.
    */
   protected void collectUnsuportedFilterStatuses(
-      Filter filter, List<FilterSupportStatus> statuses) {
+      FilterContext context, Filter filter, List<FilterSupportStatus> statuses) {
     if (filter instanceof FilterList) {
       FilterList filterList = (FilterList) filter;
       for (Filter subFilter : filterList.getFilters()) {
-        collectUnsuportedFilterStatuses(subFilter, statuses);
+        collectUnsuportedFilterStatuses(context, subFilter, statuses);
       }
     } else {
       SingleFilterAdapter adapter = adapterMap.get(filter.getClass());
       if (adapter == null) {
         statuses.add(FilterSupportStatus.newUnknownFilterType(filter));
       } else {
-        FilterSupportStatus status = adapter.isSupported(filter);
+        FilterSupportStatus status = adapter.isSupported(context, filter);
         if (!status.isSupported()) {
           statuses.add(status);
         }
@@ -714,9 +817,10 @@ public class FilterAdapter {
    * Throw a new UnsupportedFilterException if the given filter cannot be adapted to bigtable
    * reader expressions.
    */
-  public void throwIfUnsupportedFilter(Filter filter) {
+  public void throwIfUnsupportedFilter(Scan scan, Filter filter) {
     List<FilterSupportStatus> filterSupportStatuses = new ArrayList<>();
-    collectUnsuportedFilterStatuses(filter, filterSupportStatuses);
+    FilterContext context = new FilterContext(scan);
+    collectUnsuportedFilterStatuses(context, filter, filterSupportStatuses);
     if (!filterSupportStatuses.isEmpty()) {
       throw new UnsupportedFilterException(filterSupportStatuses);
     }
