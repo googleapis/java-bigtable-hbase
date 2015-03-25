@@ -14,6 +14,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.util.SecurityUtils;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.collect.ImmutableList;
 
@@ -126,6 +127,6 @@ public class CredentialFactory {
   }
 
   public static Credentials getApplicationDefaultCredential() throws IOException {
-    return GoogleCredential.getApplicationDefault();
+    return GoogleCredentials.getApplicationDefault();
   }
 }
