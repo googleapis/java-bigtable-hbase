@@ -19,6 +19,10 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.hadoop.conf.Configuration;
 
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.concurrent.ExecutorServiceFactory;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.FileSystems;
@@ -28,10 +32,6 @@ import java.security.GeneralSecurityException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.ExecutorServiceFactory;
 
 /**
  * Static methods to convert an instance of {@link Configuration}
@@ -52,6 +52,7 @@ public class BigtableOptionsFactory {
   public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
   public static final String ZONE_KEY = "google.bigtable.zone.name";
   public static final String CALL_REPORT_DIRECTORY_KEY = "google.bigtable.call.report.directory";
+  public static final String SERVICE_ACCOUNT_JSON_ENV_VARIABLE = "GOOGLE_APPLICATION_CREDENTIALS";
 
   /**
    * If set, bypass DNS host lookup and use the given IP address.
@@ -172,15 +173,15 @@ public class BigtableOptionsFactory {
           BIGTABE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
         LOG.debug("Using service accounts");
 
+        String serviceAccountJson = System.getenv().get(SERVICE_ACCOUNT_JSON_ENV_VARIABLE);
         String serviceAccountEmail = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
-
-        if (!Strings.isNullOrEmpty(serviceAccountEmail)) {
-          LOG.debug(
-              "Service account %s specified, using p12 authentication flow.", serviceAccountEmail);
-          // Using P12 keyfile based OAuth:
+        if (!Strings.isNullOrEmpty(serviceAccountJson)) {
+          LOG.debug("Using JSON file: %s", serviceAccountJson);
+          optionsBuilder.setCredential(CredentialFactory.getApplicationDefaultCredential());
+        } else if (!Strings.isNullOrEmpty(serviceAccountEmail)) {
+          LOG.debug("Service account %s specified.", serviceAccountEmail);
           String keyfileLocation =
               configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
-
           Preconditions.checkState(
               !Strings.isNullOrEmpty(keyfileLocation),
               "Key file location must be specified when setting service account email");
