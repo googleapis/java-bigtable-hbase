@@ -75,15 +75,16 @@ public class BigtableOptionsFactory {
   public static final boolean BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT = false;
 
   /**
-   * Key to set to the service account email address. If this value is not set
-   * and using service accounts is enabled, a metadata server account will be used.
+   * Key to set when using P12 keyfile authentication. The value should be the service account email
+   * address as displayed. If this value is not set and using service accounts is enabled, a
+   * metadata server account will be used.
    */
   public static final String BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY =
       "google.bigtable.auth.service.account.email";
 
   /**
    * Key to set to a location where a P12 keyfile can be found that corresponds to the provided
-   * service account email address. If not set, the application default credential is used.
+   * service account email address.
    */
   public static final String BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY =
       "google.bigtable.auth.service.account.keyfile";
