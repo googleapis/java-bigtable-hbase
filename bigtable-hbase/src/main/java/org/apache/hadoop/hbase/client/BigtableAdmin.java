@@ -521,70 +521,70 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void flushRegion(byte[] bytes) throws IOException {
-    throw new UnsupportedOperationException("flushRegion");  // TODO
+    LOG.info("flushRegion is a no-op");
   }
 
   @Override
   public void compact(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("compact");  // TODO
+    LOG.info("compact is a no-op");
   }
 
   @Override
   public void compactRegion(byte[] bytes) throws IOException {
-    throw new UnsupportedOperationException("compactRegion");  // TODO
+    LOG.info("compactRegion is a no-op");
   }
 
   @Override
   public void compact(TableName tableName, byte[] bytes) throws IOException {
-    throw new UnsupportedOperationException("compact");  // TODO
+    LOG.info("compact is a no-op");
   }
 
   @Override
   public void compactRegion(byte[] bytes, byte[] bytes2) throws IOException {
-    throw new UnsupportedOperationException("compactRegion");  // TODO
+    LOG.info("compactRegion is a no-op");
   }
 
   @Override
   public void majorCompact(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("majorCompact");  // TODO
+    LOG.info("majorCompact is a no-op");
   }
 
   @Override
   public void majorCompactRegion(byte[] bytes) throws IOException {
-    throw new UnsupportedOperationException("majorCompactRegion");  // TODO
+    LOG.info("majorCompactRegion is a no-op");
   }
 
   @Override
   public void majorCompact(TableName tableName, byte[] bytes) throws IOException {
-    throw new UnsupportedOperationException("majorCompact");  // TODO
+    LOG.info("majorCompact is a no-op");
   }
 
   @Override
   public void majorCompactRegion(byte[] bytes, byte[] bytes2) throws IOException {
-    throw new UnsupportedOperationException("majorCompactRegion");  // TODO
+    LOG.info("majorCompactRegion is a no-op");
   }
 
   @Override
   public void compactRegionServer(ServerName serverName, boolean b) throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    LOG.info("compactRegionServer is a no-op");
   }
 
   @Override
   public void move(byte[] encodedRegionName, byte[] destServerName)
       throws HBaseIOException, MasterNotRunningException, ZooKeeperConnectionException {
-    throw new UnsupportedOperationException("move");  // TODO
+    LOG.info("move is a no-op");
   }
 
   @Override
   public void assign(byte[] regionName)
       throws MasterNotRunningException, ZooKeeperConnectionException, IOException {
-    throw new UnsupportedOperationException("assign");  // TODO
+    LOG.info("assign is a no-op");
   }
 
   @Override
   public void unassign(byte[] regionName, boolean force)
       throws MasterNotRunningException, ZooKeeperConnectionException, IOException {
-    throw new UnsupportedOperationException("unassign");  // TODO
+    LOG.info("unassign is a no-op");
   }
 
   @Override
@@ -623,17 +623,17 @@ public class BigtableAdmin implements Admin {
   @Override
   public void mergeRegions(byte[] encodedNameOfRegionA, byte[] encodedNameOfRegionB,
       boolean forcible) throws IOException {
-    throw new UnsupportedOperationException("mergeRegions");  // TODO
+    LOG.info("mergeRegions is a no-op");
   }
 
   @Override
   public void split(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("split");  // TODO
+    LOG.info("split is a no-op");
   }
 
   @Override
   public void splitRegion(byte[] bytes) throws IOException {
-    throw new UnsupportedOperationException("splitRegion");  // TODO
+    LOG.info("splitRegion is a no-op");
   }
 
   @Override
@@ -643,7 +643,7 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void splitRegion(byte[] bytes, byte[] bytes2) throws IOException {
-    throw new UnsupportedOperationException("splitRegion");  // TODO
+    LOG.info("split is a no-op");
   }
 
   @Override
