@@ -63,11 +63,6 @@
             </build>
         </profile>
         <profile>
-            <!-- This profile exists to prevent failed builds. It should be removed as soon as the
-            build definitions are updated -->
-            <id>anviltopIntegrationTest</id>
-        </profile>
-        <profile>
             <id>anviltopGapTest</id>
             <build>
                 <plugins>
