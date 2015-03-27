@@ -118,9 +118,9 @@ public class IntegrationTests {
       if (useMiniCluster()) {
         testingUtility = new HBaseTestingUtility();
         testingUtility.startMiniCluster(1);
-        configuration = testingUtility.getConfiguration();
+        setConfiguration(testingUtility.getConfiguration());
       } else {
-        configuration = BASE_CONFIGURATION;
+        setConfiguration(BASE_CONFIGURATION);
       }
       createTable(TABLE_NAME);
     }
@@ -141,4 +141,8 @@ public class IntegrationTests {
       }
     }
   };
+  
+  public static void setConfiguration(Configuration configuration) {
+    IntegrationTests.configuration = configuration;
+  }
 }

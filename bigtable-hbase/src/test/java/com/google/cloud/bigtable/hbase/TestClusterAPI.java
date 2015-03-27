@@ -48,8 +48,8 @@ public class TestClusterAPI {
     if (!IntegrationTests.isBigtable()) {
       return;
     }
+    IntegrationTests.setConfiguration(IntegrationTests.BASE_CONFIGURATION);
     Configuration config = IntegrationTests.getConfiguration();
-
     BigtableOptions bigtableOptions = BigtableOptionsFactory.fromConfiguration(config);
     BigtableClusterAdminClient client = createClusterAdminStub(bigtableOptions);
 
