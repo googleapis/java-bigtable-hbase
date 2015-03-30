@@ -9,7 +9,8 @@ import com.google.common.base.Preconditions;
  * Utility class that will set given project and cluster name within service messages.
  */
 public class ClusterMetadataSetter {
-  public static final String BIGTABLE_V1_CLUSTER_FMT = "projects/%s/zones/%s/clusters/%s";
+  public static final String BIGTABLE_V1_CLUSTER_FMT =
+      "projects/%s/zones/%s/clusters/%s";
 
   public static ClusterMetadataSetter from(BigtableOptions options) {
     return new ClusterMetadataSetter(

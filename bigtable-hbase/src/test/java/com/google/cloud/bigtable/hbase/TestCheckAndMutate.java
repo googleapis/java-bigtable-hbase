@@ -44,12 +44,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndPutSameQual() throws IOException {
     // Initialize
-    try (Table table = connection.getTable(TABLE_NAME)) {
-      testCheckAndMutate(dataHelper, table);
-    }
-  }
-
-  public static void testCheckAndMutate(DataGenerationHelper dataHelper, Table table) throws IOException {
+    Table table = connection.getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
     byte[] value1 = dataHelper.randomData("value-");
@@ -79,6 +74,8 @@ public class TestCheckAndMutate extends AbstractTest {
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, qual);
     Assert.assertArrayEquals(value2, CellUtil.cloneValue(cells.get(0)));
     Assert.assertArrayEquals(value1, CellUtil.cloneValue(cells.get(1)));
+
+    table.close();
   }
 
   /**

@@ -1,9 +1,7 @@
 package com.google.cloud.bigtable.hbase;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import com.google.api.client.util.Strings;
+import com.google.common.base.Preconditions;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -23,8 +21,10 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-import com.google.api.client.util.Strings;
-import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
@@ -85,10 +85,6 @@ public class IntegrationTests {
         BASE_CONFIGURATION.get(HConnection.HBASE_CLIENT_CONNECTION_IMPL, ""));
   }
 
-  protected static boolean isBigtable() {
-    return !useMiniCluster();
-  }
-
   public static MiniDFSCluster getMiniCluster() {
     return testingUtility.getDFSCluster();
   }
@@ -107,7 +103,9 @@ public class IntegrationTests {
     try (Connection connection = ConnectionFactory.createConnection(configuration);
         Admin admin = connection.getAdmin();) {
       HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
-      admin.createTable(new HTableDescriptor(tableName).addFamily(hcd));
+      HTableDescriptor htd = new HTableDescriptor(tableName);
+      htd.addFamily(hcd);
+      admin.createTable(htd);
     }
   }
 
@@ -118,9 +116,9 @@ public class IntegrationTests {
       if (useMiniCluster()) {
         testingUtility = new HBaseTestingUtility();
         testingUtility.startMiniCluster(1);
-        setConfiguration(testingUtility.getConfiguration());
+        configuration = testingUtility.getConfiguration();
       } else {
-        setConfiguration(BASE_CONFIGURATION);
+        configuration = BASE_CONFIGURATION;
       }
       createTable(TABLE_NAME);
     }
@@ -141,8 +139,4 @@ public class IntegrationTests {
       }
     }
   };
-  
-  public static void setConfiguration(Configuration configuration) {
-    IntegrationTests.configuration = configuration;
-  }
 }
