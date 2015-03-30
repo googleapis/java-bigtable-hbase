@@ -32,6 +32,7 @@
        <google.bigtable.auth.service.account.enable>false</google.bigtable.auth.service.account.enable>
        <google.bigtable.admin.endpoint.host>test-bigtabletableadmin.sandbox.googleapis.com</google.bigtable.admin.endpoint.host>
        <google.bigtable.endpoint.host>test-bigtable.sandbox.googleapis.com</google.bigtable.endpoint.host>
+       <google.bigtable.cluster.admin.endpoint.host>test-bigtableclusteradmin.sandbox.googleapis.com</google.bigtable.cluster.admin.endpoint.host>
        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

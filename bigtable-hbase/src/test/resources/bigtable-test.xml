@@ -19,6 +19,10 @@
         <value>${google.bigtable.admin.endpoint.host}</value>
     </property>
     <property>
+        <name>google.bigtable.cluster.admin.endpoint.host</name>
+        <value>${google.bigtable.cluster.admin.endpoint.host}</value>
+    </property>
+    <property>
         <name>google.bigtable.project.id</name>
         <value>autonomous-mote-782</value>
     </property>
