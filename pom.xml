@@ -33,8 +33,6 @@
        <google.bigtable.admin.endpoint.host>test-bigtabletableadmin.sandbox.googleapis.com</google.bigtable.admin.endpoint.host>
        <google.bigtable.endpoint.host>test-bigtable.sandbox.googleapis.com</google.bigtable.endpoint.host>
        <google.bigtable.cluster.admin.endpoint.host>test-bigtableclusteradmin.sandbox.googleapis.com</google.bigtable.cluster.admin.endpoint.host>
-       <google.bigtable.auth.test.service.account.email>450300683590-th0dk93ks4nicmug2ts9d05f7p2q0mda@developer.gserviceaccount.com</google.bigtable.auth.test.service.account.email>
-       <google.bigtable.auth.test.service.account.keyfile>/google/data/ro/users/mg/mgaro/My Test Project-d5c2dc57b0de.p12</google.bigtable.auth.test.service.account.keyfile>
        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

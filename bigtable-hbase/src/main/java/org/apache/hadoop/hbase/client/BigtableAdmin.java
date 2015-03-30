@@ -245,7 +245,6 @@ public class BigtableAdmin implements Admin {
     try {
       bigtableAdminClient.createTable(builder.build());
     } catch (Throwable throwable) {
-      throwable.printStackTrace();
       throw new IOException(
           String.format(
               "Failed to create table '%s'",

@@ -8,7 +8,6 @@ import com.google.bigtable.admin.cluster.v1.ListClustersRequest;
 import com.google.bigtable.admin.cluster.v1.ListZonesRequest;
 import com.google.bigtable.admin.cluster.v1.ListZonesResponse;
 import com.google.bigtable.admin.cluster.v1.Zone;
-import com.google.cloud.bigtable.hbase.adapters.ClusterMetadataSetter;
 import com.google.cloud.hadoop.hbase.BigtableClusterAdminClient;
 import com.google.cloud.hadoop.hbase.BigtableClusterAdminGrpcClient;
 import com.google.common.util.concurrent.UncheckedExecutionException;
@@ -67,9 +66,7 @@ public class TestClusterAPI {
 
     List<Zone> zoneList = getZones(client, projectId);
     String fullyQualifiedZoneName = selectZone(zoneList);
-    String clusterId =
-        fullyQualifiedZoneName + ClusterMetadataSetter.BIGTABLE_VA_CLUSTER_SEPARATOR
-            + TEST_CLUSTER_ID;
+    String clusterId = fullyQualifiedZoneName + "/clusters/" + TEST_CLUSTER_ID;
 
     if (createCluster) {
       Cluster cluster = createACluster(client, fullyQualifiedZoneName, TEST_CLUSTER_ID);
@@ -176,9 +173,7 @@ public class TestClusterAPI {
   private Configuration newConfiguration(Configuration base, String fullyQualifiedClusterId) {
     Configuration newConfig = new Configuration(base);
     String zone = fullyQualifiedClusterId.replaceFirst(".*/zones/([^/]+)/.*", "$1");
-    String cluster =
-        fullyQualifiedClusterId.replaceFirst(".*"
-            + ClusterMetadataSetter.BIGTABLE_VA_CLUSTER_SEPARATOR + "([^/]+)", "$1");
+    String cluster = fullyQualifiedClusterId.replaceFirst(".*/clusters/([^/]+)", "$1");
 
     newConfig.set(BigtableOptionsFactory.ZONE_KEY, zone);
     newConfig.set(BigtableOptionsFactory.CLUSTER_KEY, cluster);

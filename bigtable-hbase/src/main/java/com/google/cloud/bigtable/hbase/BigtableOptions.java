@@ -53,13 +53,13 @@ public class BigtableOptions {
     private ScheduledExecutorService rpcRetryExecutorService;
     private EventLoopGroup customEventLoopGroup;
 
-    public Builder setAdminHost(InetAddress host) {
-      this.adminHost = host;
+    public Builder setAdminHost(InetAddress adminHost) {
+      this.adminHost = adminHost;
       return this;
     }
 
-    public Builder setClusterAdminHost(InetAddress host) {
-      this.clusterAdminHost = host;
+    public Builder setClusterAdminHost(InetAddress clusterAdminHost) {
+      this.clusterAdminHost = clusterAdminHost;
       return this;
     }
 
@@ -155,7 +155,7 @@ public class BigtableOptions {
   private final EventLoopGroup customEventLoopGroup;
 
 
-  public BigtableOptions(
+  private BigtableOptions(
       InetAddress clusterAdminHost,
       InetAddress adminHost,
       InetAddress host,
@@ -189,17 +189,17 @@ public class BigtableOptions {
     this.rpcRetryExecutorService = rpcRetryExecutorService;
     this.customEventLoopGroup = customEventLoopGroup;
 
-    LOG.info("Connection Configuration: project: %s, cluster: %s, host:port %s:%s, "
+    LOG.debug("Connection Configuration: project: %s, cluster: %s, host:port %s:%s, "
         + "admin host:port %s:%s, using transport %s.",
         getProjectId(),
         cluster,
         host,
         port,
         adminHost,
-        443,
+        port,
         TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS);
     if (clusterAdminHost != null) {
-      LOG.info("Cluster API host: %s" , clusterAdminHost);
+      LOG.debug("Cluster API host: %s" , clusterAdminHost);
     }
   }
 
@@ -234,6 +234,7 @@ public class BigtableOptions {
   }
 
   public TransportOptions getClusterAdminTransportOptions() throws IOException {
+    Preconditions.checkNotNull("clusterAdminHost was not set.", clusterAdminHost);
     return createTransportOptions(this.clusterAdminHost);
   }
 
