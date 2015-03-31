@@ -23,6 +23,22 @@ public class ReaderExpressionHelper {
   private final static byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");
 
   /**
+   * Write unquoted to the OutputStream applying just Bigtable reader
+   * expression quoting. Used when the supplied value is NOT a regular expression.
+   *
+   * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
+   * @param outputStream A stream to write quoted output to
+   * @param unquoted
+   * @param outputStream
+   */
+  public void writeFilterQuotedExpression(byte[] unquoted, OutputStream outputStream)
+      throws IOException{
+    QuoteFilterExpressionStream  quoteFilterExpressionStream =
+        new QuoteFilterExpressionStream(outputStream);
+    quoteFilterExpressionStream.write(unquoted);
+  }
+
+  /**
    * Write unquoted to the OutputStream applying both RE2:QuoteMeta and Bigtable reader
    * expression quoting.
    * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
