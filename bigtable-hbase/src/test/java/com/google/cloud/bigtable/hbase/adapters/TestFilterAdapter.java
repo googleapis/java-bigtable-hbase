@@ -240,7 +240,22 @@ public class TestFilterAdapter {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     filterAdapter.adaptFilterTo(familyScan, filter, outputStream);
     Assert.assertEquals(
-        "(col([foo:a,foo:b),all))",
+        "(col([{foo:a},{foo:b}),all))",
+        Bytes.toString(outputStream.toByteArray()));
+  }
+
+  @Test
+  /** ColumnRangeFilter doesn't accept regular expressions so don't quote them
+   * like a regular expression **/
+  public void testColumnRangeFilterQuoting() throws IOException {
+    ColumnRangeFilter filter = new ColumnRangeFilter(
+        Bytes.toBytes(".$"), true, Bytes.toBytes(".$@"), false);
+    Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo.bar"));
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    filterAdapter.adaptFilterTo(familyScan, filter, outputStream);
+    // @ is quoted to @@, all other charecters are literals
+    Assert.assertEquals(
+        "(col([{foo.bar:.$},{foo.bar:.$@@}),all))",
         Bytes.toString(outputStream.toByteArray()));
   }
 }
