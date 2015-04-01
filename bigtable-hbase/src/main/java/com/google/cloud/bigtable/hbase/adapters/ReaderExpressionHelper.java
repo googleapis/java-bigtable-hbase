@@ -33,7 +33,7 @@ public class ReaderExpressionHelper {
    */
   public void writeFilterQuotedExpression(byte[] unquoted, OutputStream outputStream)
       throws IOException{
-    QuoteFilterExpressionStream  quoteFilterExpressionStream =
+    QuoteFilterExpressionStream quoteFilterExpressionStream =
         new QuoteFilterExpressionStream(outputStream);
     quoteFilterExpressionStream.write(unquoted);
   }
