@@ -90,16 +90,17 @@ public class ScanAdapter implements OperationAdapter<Scan, ReadRowsRequest.Build
       byte[] unquotedQualifier,
       int maxVersions) {
     try {
-      if (family == null) {
-        family = Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES);
-      }
 
       String versionPart =
           maxVersions == Integer.MAX_VALUE ?
               ReaderExpressionHelper.ALL_VERSIONS : Integer.toString(maxVersions);
       try (ReaderExpressionScope scope = new ReaderExpressionScope(outputStream, "(col(", "))")) {
         outputStream.write('{');
-        outputStream.write(family);
+        if (family == null) {
+            outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
+        } else {
+            readerExpressionHelper.writeQuotedExpression(family, outputStream);
+        }
         outputStream.write(':');
         if (unquotedQualifier == null) {
           outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));
