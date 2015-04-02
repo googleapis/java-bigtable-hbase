@@ -44,12 +44,24 @@ public class ReaderExpressionHelper {
    * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
    * @param outputStream A stream to write quoted output to
    */
+  // TODO(angusdavis) consider making this static.
   public void writeQuotedExpression(byte[] unquoted, OutputStream outputStream)
       throws  IOException {
     QuoteFilterExpressionStream quoteFilterExpressionStream =
         new QuoteFilterExpressionStream(outputStream);
     QuoteMetaOutputStream quoteMetaOutputStream =
         new QuoteMetaOutputStream(quoteFilterExpressionStream);
+    quoteMetaOutputStream.write(unquoted);
+  }
+
+  /**
+   * Write unquoted to the OutputStream applying RE2:QuoteMeta quoting.
+   */
+  // TODO(angusdavis) consider making this static.
+  public void writeQuotedRegularExpression(byte[] unquoted, OutputStream outputStream)
+      throws IOException {
+    QuoteMetaOutputStream quoteMetaOutputStream =
+        new QuoteMetaOutputStream(outputStream);
     quoteMetaOutputStream.write(unquoted);
   }
 

@@ -1,6 +1,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.cloud.bigtable.hbase.adapters.FilterAdapter.ColumnRangeFilterAdapter;
+import com.google.cloud.bigtable.hbase.adapters.filters.UnsupportedFilterException;
 import com.google.common.collect.ImmutableList;
 
 import org.apache.hadoop.hbase.Cell;
@@ -39,6 +40,7 @@ public class TestFilterAdapter {
   Scan emptyScan = new Scan();
   FilterAdapter.FilterContext emptyScanContext =
       new FilterAdapter.FilterContext(emptyScan);
+
   @Test
   public void testValueFilterFiltersOnValue() throws IOException {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -201,7 +203,7 @@ public class TestFilterAdapter {
       }
     };
 
-    expectedException.expect(FilterAdapter.UnsupportedFilterException.class);
+    expectedException.expect(UnsupportedFilterException.class);
     expectedException.expectMessage("Don't know how to adapt Filter class ");
     expectedException.expectMessage("TestFilterAdapter$");
     filterAdapter.throwIfUnsupportedFilter(emptyScan, filter);
@@ -215,7 +217,7 @@ public class TestFilterAdapter {
         CompareFilter.CompareOp.NOT_EQUAL,
         new BinaryComparator(filterValue));
 
-    expectedException.expect(FilterAdapter.UnsupportedFilterException.class);
+    expectedException.expect(UnsupportedFilterException.class);
     expectedException.expectMessage(
         "Unsupported filters encountered: " +
             "FilterSupportStatus{isSupported=false, reason='CompareOp.EQUAL is the only "
@@ -227,7 +229,7 @@ public class TestFilterAdapter {
   public void testColumnRangeFilterThrowsWithNoFamilies() throws IOException {
     ColumnRangeFilter filter = new ColumnRangeFilter(
         Bytes.toBytes("a"), true, Bytes.toBytes("b"), true);
-    expectedException.expect(FilterAdapter.UnsupportedFilterException.class);
+    expectedException.expect(UnsupportedFilterException.class);
     expectedException.expectMessage(ColumnRangeFilterAdapter.UNSUPPORTED_EXCEPTION_MESSAGE);
     filterAdapter.throwIfUnsupportedFilter(emptyScan, filter);
   }
