@@ -98,7 +98,7 @@ public class ScanAdapter implements OperationAdapter<Scan, ReadRowsRequest.Build
         outputStream.write('{');
         if (family == null) {
             outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_FAMILIES));
-        }else{
+        } else {
             readerExpressionHelper.writeQuotedExpression(family, outputStream);
         }
         outputStream.write(':');
