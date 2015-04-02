@@ -649,18 +649,14 @@ public class FilterAdapter {
       try (ReaderExpressionScope scope = new ReaderExpressionScope(outputStream, "(col(", "))")) {
         outputStream.write(lowerBoundMarker);
 
-        outputStream.write(Bytes.toBytes("{"));
-        helper.writeFilterQuotedExpression(family, outputStream);
+        outputStream.write(family);
         outputStream.write(BigtableConstants.BIGTABLE_COLUMN_SEPARATOR_BYTE);
-        helper.writeFilterQuotedExpression(filter.getMinColumn(), outputStream);
-        outputStream.write(Bytes.toBytes("}"));
+        helper.writeQuotedExpression(filter.getMinColumn(), outputStream);
         outputStream.write((byte) ',');
 
-        outputStream.write(Bytes.toBytes("{"));
-        helper.writeFilterQuotedExpression(family, outputStream);
+        outputStream.write(family);
         outputStream.write(BigtableConstants.BIGTABLE_COLUMN_SEPARATOR_BYTE);
-        helper.writeFilterQuotedExpression(filter.getMaxColumn(), outputStream);
-        outputStream.write(Bytes.toBytes("}"));
+        helper.writeQuotedExpression(filter.getMaxColumn(), outputStream);
 
         outputStream.write(upperBoundMarker);
         outputStream.write((byte)',');
