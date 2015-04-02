@@ -99,7 +99,7 @@ public class ScanAdapter implements OperationAdapter<Scan, ReadRowsRequest.Build
               ReaderExpressionHelper.ALL_VERSIONS : Integer.toString(maxVersions);
       try (ReaderExpressionScope scope = new ReaderExpressionScope(outputStream, "(col(", "))")) {
         outputStream.write('{');
-        readerExpressionHelper.writeQuotedExpression(family, outputStream);
+        outputStream.write(family);
         outputStream.write(':');
         if (unquotedQualifier == null) {
           outputStream.write(Bytes.toBytes(ReaderExpressionHelper.ALL_QUALIFIERS));

@@ -208,13 +208,13 @@ public class TestGetAdapter {
 
   @Test
   public void testBigtableReaderSpecialCharactersAreQuoted() throws IOException {
-    String family = "f.1";
-    String qualifier = "f.oo }{ @";
+    String family = "f1";
+    String qualifier = "foo }{ @";
 
     Get get = makeValidGet(dataHelper.randomData("special"));
     get.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier));
     ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
-    Assert.assertEquals("((col({f\\.1:f\\.oo\\ \\@}\\@{\\ \\@@}, all)))",
+    Assert.assertEquals("((col({f1:foo\\ \\@}\\@{\\ \\@@}, all)))",
         rowRequestBuilder.getDEPRECATEDStringFilter());
   }
 
