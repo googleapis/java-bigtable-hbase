@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.util.Threads;
 
 import com.google.api.client.repackaged.com.google.common.base.Throwables;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
+import com.google.cloud.bigtable.hbase.BigtableClientPool;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
@@ -46,6 +47,21 @@ import com.google.cloud.hadoop.hbase.TransportOptions;
 
 public class BigtableConnection implements Connection, Closeable {
   public static final String MAX_INFLIGHT_RPCS = "MAX_INFLIGHT_RPCS";
+
+
+  /**
+   * The number of grpc channels to open for asynchronous processing such as puts.
+   */
+  public static final String BIGTABLE_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
+  public static final int BIGTABLE_CHANNEL_COUNT_DEFAULT = 4;
+
+  /**
+   * The maximum length of time to keep a Bigtable grpc channel open.
+   */
+  public static final String BIGTABLE_CHANNEL_TIMEOUT_MS_KEY =
+      "google.bigtable.grpc.channel.timeout.ms";
+  public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
+
   private static final Logger LOG = new Logger(BigtableConnection.class);
 
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
@@ -82,46 +98,29 @@ public class BigtableConnection implements Connection, Closeable {
     }
 
     this.options = BigtableOptionsFactory.fromConfiguration(conf);
-    TransportOptions transportOptions = options.getTransportOptions();
-    ChannelOptions channelOptions = options.getChannelOptions();
-    TransportOptions adminTransportOptions = options.getAdminTransportOptions();
 
-    LOG.info("Opening connection for project %s on data host:port %s:%s, "
-        + "admin host:port %s:%s, using transport %s.",
-        options.getProjectId(),
-        options.getTransportOptions().getHost(),
-        options.getTransportOptions().getPort(),
-        options.getAdminTransportOptions().getHost(),
-        options.getAdminTransportOptions().getPort(),
-        options.getTransportOptions().getTransport());
+    final ExecutorService executorService = batchPool;
+    int channelCount =
+        conf.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
+    
+    long channelTimeout =
+        conf.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
 
-    this.client = getBigtableClient(
-        transportOptions,
-        channelOptions,
-        batchPool);
-    this.bigtableAdminClient = getAdminClient(
-        adminTransportOptions,
-        channelOptions,
-        batchPool);
+    this.client = new BigtableClientPool(channelCount, channelTimeout, executorService,
+    new BigtableClientPool.BigtableClientFactory() {
+          @Override
+          public BigtableClient create() {
+            try {
+              ChannelOptions channelOptions = options.getChannelOptions();
+              return BigtableGrpcClient.createClient(options.getTransportOptions(), channelOptions,
+                  executorService);
+            } catch (IOException e) {
+              LOG.warn("Could not create transport options", e);
+              return null;
+            }
+          }
+        });
     this.tableConfig = new TableConfiguration(conf);
-  }
-
-  private BigtableAdminClient getAdminClient(
-      TransportOptions transportOptions,
-      ChannelOptions channelOptions,
-      ExecutorService executorService) {
-
-    return BigtableAdminGrpcClient.createClient(
-        transportOptions, channelOptions, executorService);
-  }
-
-  protected BigtableClient getBigtableClient(
-      TransportOptions transportOptions,
-      ChannelOptions channelOptions,
-      ExecutorService executorService) {
-
-    return BigtableGrpcClient.createClient(
-        transportOptions, channelOptions, executorService);
   }
 
   @Override
@@ -201,6 +200,12 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public Admin getAdmin() throws IOException {
+    if (bigtableAdminClient == null) {
+      TransportOptions adminTransportOptions = options.getAdminTransportOptions();
+      ChannelOptions channelOptions = options.getChannelOptions();
+      this.bigtableAdminClient =
+          BigtableAdminGrpcClient.createClient(adminTransportOptions, channelOptions, batchPool);
+    }
     return new BigtableAdmin(options, conf, this, bigtableAdminClient, this.disabledTables);
   }
 
@@ -232,8 +237,12 @@ public class BigtableConnection implements Connection, Closeable {
       return;
     }
     try {
-      bigtableAdminClient.close();
-      client.close();
+      if (bigtableAdminClient != null) {
+        bigtableAdminClient.close();
+      }
+      if (client != null) {
+        client.close();
+      }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
