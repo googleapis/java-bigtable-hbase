@@ -1,9 +1,17 @@
+/*
+ * Copyright (c) 2014 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.cloud.bigtable.hbase;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
@@ -20,10 +28,22 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Empty;
 import com.google.protobuf.ServiceException;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ * Maintains a pool of {@link BigtableClient}s and uses them in a round robin fashion to make RPC
+ * calls. This is a temporary performance fix as well as stane connection fix. Longer term fixes are
+ * in the works to the gRPC and other technologies on which BigtableClient relies.
+ */
 public class BigtableClientPool implements BigtableClient {
 
   protected static final Logger LOG = new Logger(BigtableClientPool.class);
 
+  /** Creates a functional BigtableClient so it can be added to the pool. */
   public interface BigtableClientFactory {
     BigtableClient create();
   }
@@ -42,11 +62,20 @@ public class BigtableClientPool implements BigtableClient {
       return client;
     }
 
-    public boolean isFinished() {
-      if (end < 0) {
-        return false;
-      }
-      return System.currentTimeMillis() > this.end;
+    public void close() throws Exception {
+      this.client.close();
+      this.client = null;
+    }
+
+    public boolean needsRefresh() {
+      return this.end > 0 && System.currentTimeMillis() > this.end;
+    }
+
+    public BigtableClient refresh(BigtableClient client, long end) {
+      BigtableClient oldClient = client;
+      this.end = end;
+      this.client = client;
+      return oldClient;
     }
   }
 
@@ -58,59 +87,76 @@ public class BigtableClientPool implements BigtableClient {
   private final List<TimedBigtableClient> delegates = new ArrayList<>();
   private final BigtableClientFactory factory;
   private final AtomicInteger requestCount = new AtomicInteger();
-  private final Executor executor;
-  private boolean closed = false;
-  private Object closeSignal = new String("");
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public BigtableClientPool(final int channelPoolSize, long timeoutMs, Executor executor,
-      BigtableClientFactory factory) {
+      final BigtableClientFactory factory) {
     this.factory = factory;
     this.timeoutMs = timeoutMs;
     delegates.add(createChannel());
-    this.executor = executor;
-    initPool(channelPoolSize, executor);
-  }
-
-  public void initPool(final int channelPoolSize, Executor executor) {
-    executor.execute(new Runnable() {
+    Runnable createClientRunnable = new Runnable() {
       @Override
       public void run() {
-        while (!closed) {
-          boolean created = false;
-          if (delegates.size() < channelPoolSize) {
-            boolean adding = false;
+        TimedBigtableClient wrapper = null;
+        for (int i = 0; i < MAX_CREATE_RETRIES; i++) {
+          try {
+            wrapper = new TimedBigtableClient(factory.create(), caculateTimeout());
             synchronized (delegates) {
-              adding = !closed && delegates.size() < channelPoolSize;
+              delegates.add(wrapper);
+              delegates.notifyAll();
             }
-            if (adding) {
-              try {
-                TimedBigtableClient channel = createChannel();
-                if (channel != null) {
-                  created = true;
-                  synchronized (delegates) {
-                    delegates.add(channel);
-                    delegates.notify();
-                  }
-                }
-              } catch (Exception e) {
-                LOG.warn("Could not create a channel.", e);
-              }
+            break;
+          } catch (Exception e) {
+            LOG.warn("Could not create a connection.  Attempt #" + i , e);
+          }
+          // Is this a temporal issue?
+          try {
+            Thread.sleep(SLEEP_TIME);
+          } catch (InterruptedException e) {
+          }
+        }
+
+        if (wrapper == null) {
+          LOG.error("Could not create a connection.");
+          return;
+        }
+
+        int errorCount = 0;
+        while(!closed.get() || errorCount > MAX_CREATE_RETRIES) {
+          if (wrapper.needsRefresh()) {
+            try {
+              LOG.info("Refreshing client");
+              BigtableClient oldClient = wrapper.refresh(factory.create(), caculateTimeout());
+              oldClient.close();
+              errorCount = 0;
+            } catch (Exception e) {
+              errorCount++;
+              LOG.warn("Could not refresh the connection. Will try again shortly. "
+                  + "This is attempt #%d of %d", e, errorCount, MAX_CREATE_RETRIES);
             }
           }
-          if (!created && !closed) {
-            try {
-              synchronized (closeSignal) {
-                if (!closed) {
-                  closeSignal.wait(SLEEP_TIME);
-                }
+          synchronized (closed) {
+            if (!closed.get()) {
+              try {
+                closed.wait(SLEEP_TIME);
+              } catch (InterruptedException e) {
+                // ignore;
               }
-            } catch (InterruptedException e) {
-              LOG.info("Sleep interrupted in Channel creator thread.", e);
             }
           }
         }
       }
-    });
+    };
+    for (int i=0;i<channelPoolSize;i++){
+      executor.execute(createClientRunnable);
+    }
+  }
+
+  private long caculateTimeout(){
+    // Set the timeout. Use a random variability to reduce jetteriness.
+    double randomizedPercentage = 1 - (.05 * Math.random());
+    long randomizedEnd = this.timeoutMs < 0 ? -1L : (long) (this.timeoutMs * randomizedPercentage);
+    return randomizedEnd <=0 ? randomizedEnd : randomizedEnd + System.currentTimeMillis();
   }
 
   /**
@@ -129,18 +175,16 @@ public class BigtableClientPool implements BigtableClient {
 
   @Override
   public void close() throws Exception {
-    this.closed = true;
-    synchronized (closeSignal) {
-      closeSignal.notify();
+    this.closed.set(true);
+    synchronized (closed) {
+      closed.notify();
     }
-    List<TimedBigtableClient> toClose = null;
     synchronized (delegates) {
-      toClose = new ArrayList<>(delegates);
+      for (TimedBigtableClient wrapper : delegates) {
+        wrapper.close();
+      }
       delegates.clear();
       delegates.notifyAll();
-    }
-    for (TimedBigtableClient wrapper : toClose) {
-      close(wrapper);
     }
   }
 
@@ -200,52 +244,22 @@ public class BigtableClientPool implements BigtableClient {
   private BigtableClient getDelegate() {
     int requestNum = requestCount.getAndIncrement();
     int waited = 0;
-    while (waited < MAX_CREATE_RETRIES && !closed) {
+    while (waited < MAX_CREATE_RETRIES && !closed.get()) {
       if (!delegates.isEmpty()) {
         TimedBigtableClient wrapper = null;
-        try {
-          wrapper = delegates.get(requestNum % delegates.size());
-          if (wrapper != null) {
-            if (wrapper.isFinished()) {
-              synchronized (delegates) {
-                delegates.remove(wrapper);
-              }
-              close(wrapper);
-            } else {
-              return wrapper.getClient();
-            }
-          }
-        } catch (IndexOutOfBoundsException | ArithmeticException e) {
-          // The client must have been reduced in size between the isEmpty() and the call the
-          // delegates.get(). This would only happen if this ChannelSet were used across threads.
-          // Using this class across threads is not recommended.
-        }
+        wrapper = delegates.get(requestNum % delegates.size());
+        return wrapper.getClient();
       } else {
         synchronized (delegates) {
-          if (delegates.isEmpty()) {
-            try {
-              waited++;
-              delegates.wait(SLEEP_TIME);
-            } catch (InterruptedException e) {
-              LOG.info("Could not sleep in getChannel.", e);
-            }
+          try {
+            waited++;
+            delegates.wait(SLEEP_TIME);
+          } catch (InterruptedException e) {
+            LOG.info("Could not sleep in getChannel.", e);
           }
         }
       }
     }
     throw new IllegalStateException("Could not get a Channel.");
-  }
-
-  private void close(final TimedBigtableClient wrapper) {
-    this.executor.execute(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          wrapper.getClient().close();
-        } catch (Exception e) {
-          LOG.warn("Could not close channel in getChannel.", e);
-        }
-      }
-    });
   }
 }
