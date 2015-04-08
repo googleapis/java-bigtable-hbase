@@ -26,6 +26,7 @@ import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
+import com.google.cloud.hadoop.hbase.TransportOptions.BigtableTransports;
 import com.google.common.base.Preconditions;
 
 /**
@@ -189,7 +190,7 @@ public class BigtableOptions {
     this.rpcRetryExecutorService = rpcRetryExecutorService;
     this.customEventLoopGroup = customEventLoopGroup;
 
-    LOG.debug("Connection Configuration: project: %s, cluster: %s, host:port %s:%s, "
+    LOG.info("Connection Configuration: project: %s, cluster: %s, host:port %s:%s, "
         + "admin host:port %s:%s, using transport %s.",
         getProjectId(),
         cluster,
@@ -197,7 +198,7 @@ public class BigtableOptions {
         port,
         adminHost,
         port,
-        TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS);
+        getTransportType());
     if (clusterAdminHost != null) {
       LOG.debug("Cluster API host: %s" , clusterAdminHost);
     }
@@ -225,6 +226,18 @@ public class BigtableOptions {
     return optionsBuilder.build();
   }
 
+  public InetAddress getHost() {
+    return host;
+  }
+
+  public InetAddress getAdminHost() {
+    return adminHost;
+  }
+
+  public int getPort() {
+    return port;
+  }
+
   public TransportOptions getTransportOptions() throws IOException {
     return createTransportOptions(this.host);
   }
@@ -242,11 +255,15 @@ public class BigtableOptions {
     // TODO: Should sslContext be cached?
     SslContext sslContext = SslContext.newClientContext();
     return new TransportOptions(
-        TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
+        getTransportType(),
         host,
         port,
         sslContext,
         customEventLoopGroup);
+  }
+
+  public BigtableTransports getTransportType() {
+    return TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS;
   }
 
   public ServerName getServerName() {
