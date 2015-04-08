@@ -1,5 +1,24 @@
 package com.google.cloud.bigtable.hbase;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
+import javax.annotation.Nullable;
+
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.coprocessor.Batch;
+
 import com.google.api.client.util.Preconditions;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
@@ -20,25 +39,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
-
-import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
-import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.coprocessor.Batch;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import javax.annotation.Nullable;
 
 /**
  * Class to help BigtableTable with batch operations on an BigtableClient.
@@ -163,6 +163,19 @@ public class BatchExecutor {
     return client.mutateRowAsync(requestBuilder.build());
   }
 
+
+  Function<List<com.google.bigtable.v1.Row>, com.google.bigtable.v1.Row> rowsToRowConverter =
+      new Function<List<com.google.bigtable.v1.Row>, com.google.bigtable.v1.Row>() {
+        @Override
+        public com.google.bigtable.v1.Row apply(List<com.google.bigtable.v1.Row> rows) {
+          if (rows.isEmpty()) {
+            return null;
+          } else {
+            return rows.get(0);
+          }
+        }
+      };
+
   /**
    * Adapt and issue a single Get request returning a ListenableFuture
    * for the GetRowResponse.
@@ -174,21 +187,7 @@ public class BatchExecutor {
 
     ReadRowsRequest request = builder.build();
 
-    ListenableFuture<List<com.google.bigtable.v1.Row>> rowsFuture =
-        client.readRowsAsync(request);
-
-    return Futures.transform(
-        rowsFuture,
-        new Function<List<com.google.bigtable.v1.Row>, com.google.bigtable.v1.Row>() {
-          @Override
-          public com.google.bigtable.v1.Row apply(List<com.google.bigtable.v1.Row> rows) {
-            if (rows.isEmpty()) {
-              return null;
-            } else {
-              return rows.get(0);
-            }
-          }
-        });
+    return Futures.transform(client.readRowsAsync(request), rowsToRowConverter);
   }
 
   /**
@@ -251,86 +250,48 @@ public class BatchExecutor {
   <R extends Row,T> ListenableFuture<Object> issueRowRequest(
       final Row row, final Batch.Callback<T> callback, final Object[] results, final int index) {
     LOG.trace("issueRowRequest(Row, Batch.Callback, Object[], index");
-    final SettableFuture<Object> resultFuture = SettableFuture.create();
+    SettableFuture<Object> resultFuture = SettableFuture.create();
     results[index] = null;
-    if (row instanceof Delete) {
-      ListenableFuture<Empty> rpcResponseFuture =
-          issueDeleteRequest((Delete) row);
-      Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, Empty>(
+    ListenableFuture<? extends GeneratedMessage> future = issueRequest(row);
+    if (future != null) {
+      Futures.addCallback(future,
+          new RpcResultFutureCallback<T, GeneratedMessage>(
               row, callback, index, results, resultFuture) {
             @Override
-            Object adaptResponse(Empty response) {
-              return new Result();
-            }
-          },
-          service);
-    } else  if (row instanceof Get) {
-      ListenableFuture<com.google.bigtable.v1.Row> rpcResponseFuture =
-          issueGetRequest((Get) row);
-      Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, com.google.bigtable.v1.Row>(
-              row, callback, index, results, resultFuture) {
-            @Override
-            Object adaptResponse(com.google.bigtable.v1.Row response) {
-              return rowToResultAdapter.adaptResponse(response);
-            }
-          },
-          service);
-    } else if (row instanceof Append) {
-      ListenableFuture<com.google.bigtable.v1.Row> rpcResponseFuture =
-          issueAppendRequest((Append) row);
-      Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, com.google.bigtable.v1.Row>(
-              row, callback, index, results, resultFuture) {
-            @Override
-            Object adaptResponse(com.google.bigtable.v1.Row response) {
-              return rowToResultAdapter.adaptResponse(response);
-            }
-          },
-          service);
-    } else if (row instanceof Increment) {
-      ListenableFuture<com.google.bigtable.v1.Row> rpcResponseFuture =
-          issueIncrementRequest((Increment) row);
-      Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, com.google.bigtable.v1.Row>(
-              row, callback, index, results, resultFuture) {
-            @Override
-            Object adaptResponse(com.google.bigtable.v1.Row response) {
-              return rowToResultAdapter.adaptResponse(response);
-            }
-          },
-          service);
-    } else if (row instanceof Put) {
-      ListenableFuture<Empty> rpcResponseFuture =
-          issuePutRequest((Put) row);
-      Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, Empty>(
-              row, callback, index, results, resultFuture) {
-            @Override
-            Object adaptResponse(Empty response) {
-              return new Result();
-            }
-          },
-          service);
-    } else if (row instanceof RowMutations) {
-      ListenableFuture<Empty> rpcResponseFuture =
-          issueRowMutationsRequest((RowMutations) row);
-      Futures.addCallback(rpcResponseFuture,
-          new RpcResultFutureCallback<T, Empty>(
-              row, callback, index, results, resultFuture) {
-            @Override
-            Object adaptResponse(Empty response) {
-              return new Result();
+            Object adaptResponse(GeneratedMessage response) {
+              if (response instanceof com.google.bigtable.v1.Row) {
+                return rowToResultAdapter.adaptResponse((com.google.bigtable.v1.Row) response);
+              } else {
+                return new Result();
+              }
             }
           },
           service);
     } else {
-      LOG.error("Encountered unknown action type %s", row.getClass());
       resultFuture.setException(new UnsupportedOperationException(
           String.format("Unknown action type %s", row.getClass().getCanonicalName())));
     }
     return resultFuture;
+  }
+
+  ListenableFuture<? extends GeneratedMessage> issueRequest(Row row) {
+    if (row instanceof Put) {
+      return issuePutRequest((Put) row);
+    } else if (row instanceof Delete) {
+      return issueDeleteRequest((Delete) row);
+    } else if (row instanceof Append) {
+      return issueAppendRequest((Append) row);
+    } else if (row instanceof Increment) {
+      return issueIncrementRequest((Increment) row);
+    } else if (row instanceof Get) {
+      return issueGetRequest((Get) row);
+    } else if (row instanceof RowMutations) {
+      return issueRowMutationsRequest((RowMutations) row);
+    }
+
+    LOG.error("Encountered unknown action type %s", row.getClass());
+    return Futures.immediateFailedFuture(
+        new IllegalArgumentException("Encountered unknown action type: " + row.getClass()));
   }
 
   /**
