@@ -1,9 +1,7 @@
 package com.google.cloud.bigtable.hbase;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import com.google.api.client.util.Strings;
+import com.google.common.base.Preconditions;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -23,8 +21,10 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-import com.google.api.client.util.Strings;
-import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
@@ -57,7 +57,6 @@ public class IntegrationTests {
 
   // testingUtility, connection, and configuration are provided via the connectionResource later
   protected static HBaseTestingUtility testingUtility;
-  protected static Connection connection;
   protected static Configuration configuration;
 
   static {
@@ -103,16 +102,14 @@ public class IntegrationTests {
   @ClassRule
   public static Timeout timeoutRule = new Timeout((int) TimeUnit.MINUTES.toMillis(5));
 
-  public static void createTable(TableName tableName) throws IOException {
-    try (Connection connection = ConnectionFactory.createConnection(configuration);
-        Admin admin = connection.getAdmin();) {
-      HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
-      admin.createTable(new HTableDescriptor(tableName).addFamily(hcd));
-    }
+  public static void createTable(Admin admin, TableName tableName) throws IOException {
+    HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
+    admin.createTable(new HTableDescriptor(tableName).addFamily(hcd));
   }
 
   @ClassRule
   public static ExternalResource connectionResource = new ExternalResource() {
+
     @Override
     protected void before() throws Throwable {
       if (useMiniCluster()) {
@@ -122,18 +119,21 @@ public class IntegrationTests {
       } else {
         setConfiguration(BASE_CONFIGURATION);
       }
-      createTable(TABLE_NAME);
+      connection = ConnectionFactory.createConnection(configuration);
+      admin = connection.getAdmin();
+      createTable(admin, TABLE_NAME);
     }
 
     @Override
     protected void after() {
-      try (Connection connection = ConnectionFactory.createConnection(configuration);
-          Admin admin = connection.getAdmin();) {
+      try {
         admin.disableTable(TABLE_NAME);
         admin.deleteTable(TABLE_NAME);
         if (useMiniCluster()) {
           testingUtility.shutdownMiniCluster();
         }
+        admin.close();
+        connection.close();
       } catch (Exception e) {
         // shutdownMiniCluster throws Exception, while getAdmin and others throw IOException.
         // Both result in the same desired outcome here.
@@ -141,7 +141,18 @@ public class IntegrationTests {
       }
     }
   };
-  
+
+  private static Connection connection;
+  private static Admin admin;
+
+  public static Connection getConnection() {
+    return connection;
+  }
+
+  public static Admin getAdmin() {
+    return admin;
+  }
+
   public static void setConfiguration(Configuration configuration) {
     IntegrationTests.configuration = configuration;
   }

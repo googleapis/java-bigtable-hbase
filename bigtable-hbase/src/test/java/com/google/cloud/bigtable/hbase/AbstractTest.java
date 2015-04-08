@@ -52,7 +52,7 @@ public abstract class AbstractTest {
 
     @Override
     protected void before() throws Throwable {
-      connection = createNewConnection();
+      connection = IntegrationTests.getConnection();
       onConnectionCreated();
     }
 
@@ -62,11 +62,6 @@ public abstract class AbstractTest {
         preConnectionClose();
       } catch (IOException e) {
         new Logger(AbstractTest.this.getClass()).warn("Could not perform preClose", e);
-      }
-      try {
-        connection.close();
-      } catch (IOException e) {
-        throw new RuntimeException("Failed to close connection after test completion.");
       }
     }
   };

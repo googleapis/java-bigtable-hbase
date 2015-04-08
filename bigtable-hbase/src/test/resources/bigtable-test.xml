@@ -43,6 +43,10 @@
         <value>true</value>
     </property>
     <property>
+        <name>hbase.hconnection.threads.max</name>
+        <value>32</value>
+    </property>
+    <property>
         <name>google.bigtable.call.report.directory</name>
         <value>${google.bigtable.call.report.directory}</value>
     </property>
@@ -53,5 +57,9 @@
     <property>
         <name>google.bigtable.auth.service.account.keyfile</name>
         <value>/google/data/ro/users/mg/mgaro/My Test Project-d5c2dc57b0de.p12</value>
+    </property>
+    <property>
+        <name>google.bigtable.grpc.channel.count</name>
+        <value>2</value>
     </property>
 </configuration>

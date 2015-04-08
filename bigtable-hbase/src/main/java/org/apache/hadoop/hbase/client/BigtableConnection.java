@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.util.Threads;
 import com.google.api.client.repackaged.com.google.common.base.Throwables;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableClientPool;
+import com.google.cloud.bigtable.hbase.BigtableClientPool.BigtableClientFactory;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
@@ -93,33 +94,7 @@ public class BigtableConnection implements Connection, Closeable {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
 
-    if (batchPool == null) {
-      batchPool = getBatchPool();
-    }
-
     this.options = BigtableOptionsFactory.fromConfiguration(conf);
-
-    final ExecutorService executorService = batchPool;
-    int channelCount =
-        conf.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
-    
-    long channelTimeout =
-        conf.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
-
-    this.client = new BigtableClientPool(channelCount, channelTimeout, executorService,
-    new BigtableClientPool.BigtableClientFactory() {
-          @Override
-          public BigtableClient create() {
-            try {
-              ChannelOptions channelOptions = options.getChannelOptions();
-              return BigtableGrpcClient.createClient(options.getTransportOptions(), channelOptions,
-                  executorService);
-            } catch (IOException e) {
-              LOG.warn("Could not create transport options", e);
-              return null;
-            }
-          }
-        });
     this.tableConfig = new TableConfiguration(conf);
   }
 
@@ -135,7 +110,7 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new BigtableTable(tableName, options, conf, client, pool);
+    return new BigtableTable(tableName, options, conf, getClient(), getBatchPool());
   }
 
   @Override
@@ -156,7 +131,7 @@ public class BigtableConnection implements Connection, Closeable {
         params.getTableName(),
         bufferCount,
         params.getWriteBufferSize(),
-        client,
+        getClient(),
         options,
         params.getPool(),
         params.getListener());
@@ -167,6 +142,34 @@ public class BigtableConnection implements Connection, Closeable {
     return getBufferedMutator(new BufferedMutatorParams(tableName));
   }
 
+  private synchronized BigtableClient getClient() {
+    if (this.client == null) {
+      int channelCount =
+          conf.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
+
+      long channelTimeout =
+          conf.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
+
+      BigtableClientFactory clientFactory = new BigtableClientPool.BigtableClientFactory() {
+        @Override
+        public BigtableClient create() {
+          try {
+            ChannelOptions channelOptions = options.getChannelOptions();
+            return BigtableGrpcClient.createClient(options.getTransportOptions(), channelOptions,
+                getBatchPool());
+          } catch (IOException e) {
+            LOG.warn("Could not create transport options", e);
+            return null;
+          }
+        }
+      };
+
+      this.client =
+          new BigtableClientPool(channelCount, channelTimeout, getBatchPool(), clientFactory);
+    }
+    return client;
+
+  }
   /** This should not be used.  The hbase shell needs this in hbsae 0.99.2.  Remove this once
    * 1.0.0 comes out
    */
@@ -204,7 +207,7 @@ public class BigtableConnection implements Connection, Closeable {
       TransportOptions adminTransportOptions = options.getAdminTransportOptions();
       ChannelOptions channelOptions = options.getChannelOptions();
       this.bigtableAdminClient =
-          BigtableAdminGrpcClient.createClient(adminTransportOptions, channelOptions, batchPool);
+          BigtableAdminGrpcClient.createClient(adminTransportOptions, channelOptions, getBatchPool());
     }
     return new BigtableAdmin(options, conf, this, bigtableAdminClient, this.disabledTables);
   }
