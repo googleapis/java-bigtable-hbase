@@ -52,12 +52,41 @@ public class BatchExecutor {
    */
   public static final byte[] NO_REGION = new byte[0];
 
+  private static final Function<List<com.google.bigtable.v1.Row>, com.google.bigtable.v1.Row> ROWS_TO_ROW_CONVERTER =
+      new Function<List<com.google.bigtable.v1.Row>, com.google.bigtable.v1.Row>() {
+        @Override
+        public com.google.bigtable.v1.Row apply(List<com.google.bigtable.v1.Row> rows) {
+          if (rows.isEmpty()) {
+            return null;
+          } else {
+            return rows.get(0);
+          }
+        }
+      };
+
+  private static final class RowResultConverter implements Function<GeneratedMessage, Object> {
+    private final ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter;
+
+    public RowResultConverter(ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter) {
+      this.rowToResultAdapter = rowToResultAdapter;
+    }
+
+    @Override
+    public Object apply(GeneratedMessage response) {
+      if (response instanceof com.google.bigtable.v1.Row) {
+        return rowToResultAdapter.adaptResponse((com.google.bigtable.v1.Row) response);
+      } else {
+        return new Result();
+      }
+    }
+  }
+
   /**
    * A callback for ListenableFutures issued as a result of an RPC
    * @param <R>
    * @param <T> The response messsage type.
    */
-  static abstract class RpcResultFutureCallback<R, T extends GeneratedMessage>
+  static class RpcResultFutureCallback<R, T extends GeneratedMessage>
       implements FutureCallback<T> {
 
     private final Row row;
@@ -65,24 +94,22 @@ public class BatchExecutor {
     private final int index;
     private final Object[] resultsArray;
     private final SettableFuture<Object> resultFuture;
+    private final Function<T, Object> adapter;
 
     public RpcResultFutureCallback(
         Row row,
         Batch.Callback<R> callback,
         int index,
         Object[] resultsArray,
-        SettableFuture<Object> resultFuture) {
+        SettableFuture<Object> resultFuture,
+        Function<T, Object> adapter) {
       this.row = row;
       this.callback = callback;
       this.index = index;
       this.resultsArray = resultsArray;
       this.resultFuture = resultFuture;
+      this.adapter = adapter;
     }
-
-    /**
-     * Adapt a proto result into a client result
-     */
-    abstract Object adaptResponse(T response);
 
     @SuppressWarnings("unchecked")
     R unchecked(Object o) {
@@ -92,7 +119,7 @@ public class BatchExecutor {
     @Override
     public void onSuccess(T t) {
       try {
-        Object result = adaptResponse(t);
+        Object result = adapter.apply(t);
         resultsArray[index] = result;
         if (callback != null) {
           callback.update(NO_REGION, row.getRow(), unchecked(result));
@@ -127,6 +154,7 @@ public class BatchExecutor {
   protected final AppendAdapter appendAdapter;
   protected final IncrementAdapter incrementAdapter;
   protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter;
+  protected final RowResultConverter rowResultConverter;
 
   public BatchExecutor(
       BigtableClient client,
@@ -151,6 +179,7 @@ public class BatchExecutor {
     this.appendAdapter = appendAdapter;
     this.incrementAdapter = incrementAdapter;
     this.rowToResultAdapter = rowToResultAdapter;
+    rowResultConverter = new RowResultConverter(rowToResultAdapter);
   }
 
   /**
@@ -163,19 +192,6 @@ public class BatchExecutor {
     return client.mutateRowAsync(requestBuilder.build());
   }
 
-
-  Function<List<com.google.bigtable.v1.Row>, com.google.bigtable.v1.Row> rowsToRowConverter =
-      new Function<List<com.google.bigtable.v1.Row>, com.google.bigtable.v1.Row>() {
-        @Override
-        public com.google.bigtable.v1.Row apply(List<com.google.bigtable.v1.Row> rows) {
-          if (rows.isEmpty()) {
-            return null;
-          } else {
-            return rows.get(0);
-          }
-        }
-      };
-
   /**
    * Adapt and issue a single Get request returning a ListenableFuture
    * for the GetRowResponse.
@@ -184,10 +200,8 @@ public class BatchExecutor {
     LOG.trace("issueGetRequest(Get)");
     ReadRowsRequest.Builder builder = getAdapter.adapt(get);
     tableMetadataSetter.setMetadata(builder);
-
     ReadRowsRequest request = builder.build();
-
-    return Futures.transform(client.readRowsAsync(request), rowsToRowConverter);
+    return Futures.transform(client.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
   }
 
   /**
@@ -253,24 +267,10 @@ public class BatchExecutor {
     SettableFuture<Object> resultFuture = SettableFuture.create();
     results[index] = null;
     ListenableFuture<? extends GeneratedMessage> future = issueRequest(row);
-    if (future != null) {
-      Futures.addCallback(future,
-          new RpcResultFutureCallback<T, GeneratedMessage>(
-              row, callback, index, results, resultFuture) {
-            @Override
-            Object adaptResponse(GeneratedMessage response) {
-              if (response instanceof com.google.bigtable.v1.Row) {
-                return rowToResultAdapter.adaptResponse((com.google.bigtable.v1.Row) response);
-              } else {
-                return new Result();
-              }
-            }
-          },
-          service);
-    } else {
-      resultFuture.setException(new UnsupportedOperationException(
-          String.format("Unknown action type %s", row.getClass().getCanonicalName())));
-    }
+    Futures.addCallback(future,
+      new RpcResultFutureCallback<T, GeneratedMessage>(
+          row, callback, index, results, resultFuture, rowResultConverter),
+      service);
     return resultFuture;
   }
 
