@@ -57,7 +57,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class BigtableBufferedMutator implements BufferedMutator {
 
   protected static final Logger LOG = new Logger(BigtableBufferedMutator.class);
-  public static final int MAX_IN_FLIGHT_TO_PROCESS = 10;
 
   // Flush is not properly synchronized with respect to waiting. It will never exit
   // improperly, but it might wait more than it has to. Setting this to a low value ensures
