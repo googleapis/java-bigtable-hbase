@@ -16,9 +16,8 @@ import java.util.List;
 
 /**
  * Adapt a bigtable.v1.Row to an hbase client Result.
- * TODO(angusdavis): Rename to RowAdapter once anviltop has been fully removed.
  */
-public class BigtableRowAdapter implements ResponseAdapter<Row, Result> {
+public class RowAdapter implements ResponseAdapter<Row, Result> {
   @Override
   public Result adaptResponse(Row response) {
     if (response == null) {
