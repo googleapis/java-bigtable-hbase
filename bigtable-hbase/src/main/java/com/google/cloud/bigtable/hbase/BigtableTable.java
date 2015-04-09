@@ -51,7 +51,7 @@ import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
-import com.google.cloud.bigtable.hbase.adapters.BigtableRowAdapter;
+import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
@@ -78,8 +78,7 @@ public class BigtableTable implements Table {
   protected final TableName tableName;
   protected final BigtableOptions options;
   protected final BigtableClient client;
-  protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> bigtableRowAdapter =
-      new BigtableRowAdapter();
+  protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> rowAdapter = new RowAdapter();
   protected final PutAdapter putAdapter;
   protected final AppendAdapter appendAdapter = new AppendAdapter();
   protected final IncrementAdapter incrementAdapter = new IncrementAdapter();
@@ -89,7 +88,7 @@ public class BigtableTable implements Table {
   protected final ScanAdapter scanAdapter = new ScanAdapter(new FilterAdapter());
   protected final GetAdapter getAdapter = new GetAdapter(scanAdapter);
   protected final BigtableResultScannerAdapter bigtableResultScannerAdapter =
-      new BigtableResultScannerAdapter(bigtableRowAdapter);
+      new BigtableResultScannerAdapter(rowAdapter);
   protected final Configuration configuration;
   protected final BatchExecutor batchExecutor;
   private final ListeningExecutorService executorService;
@@ -129,7 +128,7 @@ public class BigtableTable implements Table {
         rowMutationsAdapter,
         appendAdapter,
         incrementAdapter,
-        bigtableRowAdapter);
+        rowAdapter);
   }
 
   @Override
@@ -207,7 +206,7 @@ public class BigtableTable implements Table {
     try {
       com.google.cloud.hadoop.hbase.ResultScanner<com.google.bigtable.v1.Row> scanner =
           client.readRows(readRowsRequest.build());
-      Result response = bigtableRowAdapter.adaptResponse(scanner.next());
+      Result response = rowAdapter.adaptResponse(scanner.next());
       scanner.close();
 
       return response;
@@ -415,7 +414,7 @@ public class BigtableTable implements Table {
       // The bigtable API will always return the mutated results. In order to maintain
       // compatibility, simply return null when results were not requested.
       if (append.isReturnResults()) {
-        return bigtableRowAdapter.adaptResponse(response);
+        return rowAdapter.adaptResponse(response);
       } else {
         return null;
       }
@@ -440,7 +439,7 @@ public class BigtableTable implements Table {
 
     try {
       com.google.bigtable.v1.Row response = client.readModifyWriteRow(incrementRowRequest.build());
-      return bigtableRowAdapter.adaptResponse(response);
+      return rowAdapter.adaptResponse(response);
     } catch (Throwable e) {
       LOG.error("Encountered RuntimeException when executing increment.", e);
       throw new IOException(

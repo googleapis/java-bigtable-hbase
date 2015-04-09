@@ -197,7 +197,7 @@ public class BigtableOptions {
         port,
         adminHost,
         port,
-        TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS);
+        TransportOptions.BigtableTransports.HTTP2_NETTY_TLS);
     if (clusterAdminHost != null) {
       LOG.debug("Cluster API host: %s" , clusterAdminHost);
     }
@@ -239,10 +239,9 @@ public class BigtableOptions {
   }
 
   private TransportOptions createTransportOptions(InetAddress host) throws IOException {
-    // TODO: Should sslContext be cached?
     SslContext sslContext = SslContext.newClientContext();
     return new TransportOptions(
-        TransportOptions.AnviltopTransports.HTTP2_NETTY_TLS,
+        TransportOptions.BigtableTransports.HTTP2_NETTY_TLS,
         host,
         port,
         sslContext,
