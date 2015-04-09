@@ -107,6 +107,11 @@ public class BigtableOptionsFactory {
       "google.bigtable.not_recommended.daemonized.io.threadpools.enable";
   public static final boolean ENABLE_DAEMONIZED_THREADS_DEFAULT = false;
 
+  // TODO(angusdavis): Remove this key once fully transitioned
+  public static final String ENABLE_PROTO_FILTER_LANGUAGE_KEY =
+      "google.bigtable.tmp.proto.filter.language.enable";
+  public static final boolean ENABLE_PROTO_FILTER_LANGUAGE_DEFAULT = false;
+
   public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
     BigtableOptions.Builder optionsBuilder = new BigtableOptions.Builder();
 

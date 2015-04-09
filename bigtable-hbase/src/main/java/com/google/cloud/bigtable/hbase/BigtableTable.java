@@ -43,27 +43,33 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hdfs.DFSClient.Conf;
 
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.bigtable.v1.ReadRowsRequest.Builder;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
+import com.google.cloud.bigtable.hbase.adapters.GetProtoAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
+import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ScanProtoAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
+import com.google.cloud.hadoop.hbase.Driver.Operation;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
@@ -86,14 +92,15 @@ public class BigtableTable implements Table {
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected final MutationAdapter mutationAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
-  protected final ScanAdapter scanAdapter = new ScanAdapter(new FilterAdapter());
-  protected final GetAdapter getAdapter = new GetAdapter(scanAdapter);
+  protected final OperationAdapter<Scan, ReadRowsRequest.Builder> scanAdapter;
+  protected final OperationAdapter<Get, ReadRowsRequest.Builder> getAdapter;
   protected final BigtableResultScannerAdapter bigtableResultScannerAdapter =
       new BigtableResultScannerAdapter(bigtableRowAdapter);
   protected final Configuration configuration;
   protected final BatchExecutor batchExecutor;
   private final ListeningExecutorService executorService;
   private final TableMetadataSetter metadataSetter;
+
   /**
    * Constructed by BigtableConnection
    *
@@ -118,6 +125,8 @@ public class BigtableTable implements Table {
     rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
     this.executorService = MoreExecutors.listeningDecorator(executorService);
     this.metadataSetter = TableMetadataSetter.from(tableName, options);
+    this.scanAdapter = createScanAdapter(configuration);
+    this.getAdapter = createGetAdapter(configuration);
     this.batchExecutor = new BatchExecutor(
         client,
         options,
@@ -577,6 +586,7 @@ public class BigtableTable implements Table {
 
     metadataSetter.setMetadata(requestBuilder);
 
+    // TODO(angusdavis): Migrate to proto filter language:
     requestBuilder.setRowKey(ByteString.copyFrom(row));
     Scan scan = new Scan().addColumn(family, qualifier);
     scan.setMaxVersions(1);
@@ -593,9 +603,8 @@ public class BigtableTable implements Table {
     } else {
       scan.setFilter(new ValueFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(value)));
     }
-
     requestBuilder.setDEPRECATEDField3Bytes(
-        ByteString.copyFrom(scanAdapter.buildFilterByteString(scan)));
+        ByteString.copyFrom(new ScanAdapter(new FilterAdapter()).buildFilterByteString(scan)));
 
     if (CompareFilter.CompareOp.EQUAL.equals(compareOp)) {
       requestBuilder.addAllTrueMutations(mutations);
@@ -625,5 +634,23 @@ public class BigtableTable implements Table {
         projectId,
         tableName,
         Bytes.toStringBinary(rowKey));
+  }
+
+  private OperationAdapter<Scan, ReadRowsRequest.Builder> createScanAdapter(Configuration conf) {
+    if (conf.getBoolean(
+        BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_KEY,
+        BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_DEFAULT)) {
+      return new ScanProtoAdapter(new FilterAdapter());
+    }
+    return new ScanAdapter(new FilterAdapter());
+  }
+
+  private OperationAdapter<Get, ReadRowsRequest.Builder> createGetAdapter(Configuration conf) {
+    if (conf.getBoolean(
+        BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_KEY,
+        BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_DEFAULT)) {
+      return new GetProtoAdapter(new ScanProtoAdapter(new FilterAdapter()));
+    }
+    return new GetAdapter(new ScanAdapter(new FilterAdapter()));
   }
 }

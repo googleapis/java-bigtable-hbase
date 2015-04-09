@@ -147,7 +147,7 @@ public class BatchExecutor {
   protected final BigtableOptions options;
   protected final TableMetadataSetter tableMetadataSetter;
   protected final ListeningExecutorService service;
-  protected final GetAdapter getAdapter;
+  protected final OperationAdapter<Get, ReadRowsRequest.Builder> getAdapter;
   protected final OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
   protected final OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
@@ -161,7 +161,7 @@ public class BatchExecutor {
       BigtableOptions options,
       TableMetadataSetter tableMetadataSetter,
       ListeningExecutorService service,
-      GetAdapter getAdapter,
+      OperationAdapter<Get, ReadRowsRequest.Builder> getAdapter,
       OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
       OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
       RowMutationsAdapter rowMutationsAdapter,

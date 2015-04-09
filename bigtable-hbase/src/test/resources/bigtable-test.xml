@@ -47,6 +47,10 @@
         <value>${google.bigtable.call.report.directory}</value>
     </property>
     <property>
+        <name>google.bigtable.tmp.proto.filter.language.enable</name>
+        <value>false</value>
+    </property>
+    <property>
         <name>google.bigtable.auth.service.account.email</name>
         <value>450300683590-th0dk93ks4nicmug2ts9d05f7p2q0mda@developer.gserviceaccount.com</value>
     </property>

@@ -56,7 +56,7 @@ public class ReaderExpressionHelper {
   /**
    * An OutputStream that performs RE2:QuoteMeta as bytes are written.
    */
-  protected static class QuoteMetaOutputStream extends OutputStream {
+  static class QuoteMetaOutputStream extends OutputStream {
     protected final OutputStream delegate;
 
     public QuoteMetaOutputStream(OutputStream delegate) {
