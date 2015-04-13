@@ -1,5 +1,6 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.ReadRowsRequest.Builder;
 import com.google.bigtable.v1.RowFilter;
@@ -9,7 +10,6 @@ import com.google.bigtable.v1.RowRange;
 import com.google.bigtable.v1.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper.QuoteMetaOutputStream;
-import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.TimeRange;

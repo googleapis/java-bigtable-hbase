@@ -14,11 +14,9 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
-import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;

@@ -1,8 +1,8 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.bigtable.v1.ColumnRange;
 import com.google.bigtable.v1.RowFilter;
-import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;

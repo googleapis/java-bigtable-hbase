@@ -1,14 +1,22 @@
 package org.apache.hadoop.hbase.client;
 
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
+import com.google.bigtable.admin.table.v1.ColumnFamily;
+import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
+import com.google.bigtable.admin.table.v1.CreateTableRequest;
+import com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest;
+import com.google.bigtable.admin.table.v1.DeleteTableRequest;
+import com.google.bigtable.admin.table.v1.DeleteTableRequest.Builder;
+import com.google.bigtable.admin.table.v1.ListTablesRequest;
+import com.google.bigtable.admin.table.v1.ListTablesResponse;
+import com.google.cloud.bigtable.hbase.BigtableOptions;
+import com.google.cloud.bigtable.hbase.Logger;
+import com.google.cloud.bigtable.hbase.adapters.ClusterMetadataSetter;
+import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
+import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
+import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
+import com.google.cloud.hadoop.hbase.BigtableAdminClient;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -37,22 +45,14 @@ import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import com.google.bigtable.admin.table.v1.ColumnFamily;
-import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
-import com.google.bigtable.admin.table.v1.CreateTableRequest;
-import com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest;
-import com.google.bigtable.admin.table.v1.DeleteTableRequest;
-import com.google.bigtable.admin.table.v1.DeleteTableRequest.Builder;
-import com.google.bigtable.admin.table.v1.ListTablesRequest;
-import com.google.bigtable.admin.table.v1.ListTablesResponse;
-import com.google.cloud.bigtable.hbase.BigtableOptions;
-import com.google.cloud.bigtable.hbase.Logger;
-import com.google.cloud.bigtable.hbase.adapters.ClusterMetadataSetter;
-import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
-import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
-import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
-import com.google.cloud.hadoop.hbase.BigtableAdminClient;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class BigtableAdmin implements Admin {
 
