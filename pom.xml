@@ -8,7 +8,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>bigtable-grpc-interface</module>
         <module>bigtable-hbase</module>
     </modules>
 

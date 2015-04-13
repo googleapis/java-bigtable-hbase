@@ -19,7 +19,7 @@
     </repositories>
 
     <properties>
-        <bigtable.grpc.repo.fullpath>${project.basedir}/../${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
+        <bigtable.grpc.repo.fullpath>${project.basedir}/${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
     </properties>
 
     <profiles>
@@ -165,11 +165,6 @@
     </profiles>
     <dependencies>
         <dependency>
-            <groupId>bigtable-client</groupId>
-            <artifactId>bigtable-grpc-interface</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>${stubby.driver.group}</groupId>
             <artifactId>${stubby.driver.artifact}</artifactId>
         </dependency>
@@ -280,6 +275,35 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.1</version>
+            </plugin>
+            <plugin>
+                <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <version>1.3.2</version>
+                <executions>
+                    <execution>
+                        <id>install-grpc-client</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${project.basedir}/bin/make_grpc_interface.sh</executable>
+                            <arguments>
+                                <argument>bigtable-grpc-interface-${project.version}.jar</argument>
+                                <argument>${stubby.driver.group}</argument>
+                                <argument>${stubby.driver.artifact}</argument>
+                                <argument>${stubby.driver.version}</argument>
+                                <argument>${bigtable.grpc.repo.fullpath}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <executions>
                     <execution>
@@ -379,10 +403,6 @@
                             <artifactSet>
                                 <includes>
                                     <include>${stubby.driver.group}:*</include>
-                                    <include>com.google.api-client:*</include>
-                                    <include>com.google.http-client:*</include>
-                                    <include>com.google.oauth-client:*</include>
-                                    <include>com.fasterxml.jackson.core:*</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
