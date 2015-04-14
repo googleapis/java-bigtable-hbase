@@ -19,7 +19,7 @@
     </repositories>
 
     <properties>
-        <bigtable.grpc.repo.fullpath>${project.basedir}/${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
+        <bigtable.grpc.repo.fullpath>${project.basedir}/../${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
     </properties>
 
     <profiles>

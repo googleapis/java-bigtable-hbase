@@ -1,10 +1,11 @@
 #!/bin/bash
 
-FILE=$1
-GROUP=$2
-ARTIFACT_ID=$3
-VERSION=$4
-REPO_PATH=$5
+DIRECTORY=$1
+FILE=$2
+GROUP=$3
+ARTIFACT_ID=$4
+VERSION=$5
+REPO_PATH=$6
 
 echo "cd ../bigtable-grpc-interface"
 cd ../bigtable-grpc-interface
