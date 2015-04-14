@@ -56,9 +56,9 @@ public class IntegrationTests {
   public static final Configuration BASE_CONFIGURATION = HBaseConfiguration.create();
 
   // testingUtility, connection, and configuration are provided via the connectionResource later
-  protected static HBaseTestingUtility testingUtility;
-  protected static Connection connection;
-  protected static Configuration configuration;
+  private static HBaseTestingUtility testingUtility;
+  private static Connection connection;
+  private static Configuration configuration;
 
   static {
     TABLE_NAME = newTestTableName();
@@ -104,8 +104,7 @@ public class IntegrationTests {
   public static Timeout timeoutRule = new Timeout((int) TimeUnit.MINUTES.toMillis(5));
 
   public static void createTable(TableName tableName) throws IOException {
-    try (Connection connection = ConnectionFactory.createConnection(configuration);
-        Admin admin = connection.getAdmin();) {
+    try (Admin admin = connection.getAdmin();) {
       HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
       admin.createTable(new HTableDescriptor(tableName).addFamily(hcd));
     }
@@ -122,27 +121,40 @@ public class IntegrationTests {
       } else {
         setConfiguration(BASE_CONFIGURATION);
       }
+      connection = ConnectionFactory.createConnection(configuration);
       createTable(TABLE_NAME);
     }
 
     @Override
     protected void after() {
-      try (Connection connection = ConnectionFactory.createConnection(configuration);
-          Admin admin = connection.getAdmin();) {
+      try (Admin admin = connection.getAdmin();) {
         admin.disableTable(TABLE_NAME);
         admin.deleteTable(TABLE_NAME);
-        if (useMiniCluster()) {
-          testingUtility.shutdownMiniCluster();
-        }
       } catch (Exception e) {
-        // shutdownMiniCluster throws Exception, while getAdmin and others throw IOException.
-        // Both result in the same desired outcome here.
-        throw new RuntimeException("Error shutting down test cluster", e);
+        throw new RuntimeException("Error deleting table after the integration tests", e);
+      }
+
+      try {
+        connection.close();
+      } catch (IOException e) {
+        throw new RuntimeException("Error closing the connection after the integration tests", e);
+      }
+
+      if (useMiniCluster()) {
+        try {
+          testingUtility.shutdownMiniCluster();
+        } catch (Exception e) {
+          throw new RuntimeException("Error shutting down test cluster after the integration tests", e);
+        }
       }
     }
   };
   
   public static void setConfiguration(Configuration configuration) {
     IntegrationTests.configuration = configuration;
+  }
+  
+  public static Connection getConnection() {
+    return connection;
   }
 }
