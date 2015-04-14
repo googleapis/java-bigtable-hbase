@@ -38,7 +38,7 @@ public class TestTimestamp extends AbstractTest {
   @Test
   public void testArbitraryTimestamp() throws IOException {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQual-");
     int numVersions = 4;

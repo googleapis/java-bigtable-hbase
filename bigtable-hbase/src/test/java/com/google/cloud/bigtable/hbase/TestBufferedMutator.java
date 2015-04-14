@@ -37,7 +37,7 @@ public class TestBufferedMutator extends AbstractTest {
 
   @Test
   public void testAutoFlushOff() throws Exception {
-    try (BufferedMutator mutator = connection.getBufferedMutator(TABLE_NAME);
+    try (BufferedMutator mutator = getConnection().getBufferedMutator(TABLE_NAME);
         Table tableForRead = createNewConnection().getTable(TABLE_NAME);) {
       // Set up the tiny write and read
       mutator.mutate(getPut());
@@ -52,7 +52,7 @@ public class TestBufferedMutator extends AbstractTest {
 
   @Test
   public void testAutoFlushOn() throws Exception {
-    try (Table mutator = connection.getTable(TABLE_NAME);
+    try (Table mutator = getConnection().getTable(TABLE_NAME);
         Table tableForRead = createNewConnection().getTable(TABLE_NAME);) {
       mutator.put(getPut());
       Assert.assertEquals("Expecting one result", 1, tableForRead.get(getGet()).size());
@@ -65,7 +65,7 @@ public class TestBufferedMutator extends AbstractTest {
     int maxSize = 1024;
     BufferedMutatorParams params = new BufferedMutatorParams(TABLE_NAME)
         .writeBufferSize(maxSize);
-    try (BufferedMutator mutator = connection.getBufferedMutator(params)) {
+    try (BufferedMutator mutator = getConnection().getBufferedMutator(params)) {
       // HBase 1.0.0 has a bug in it. It returns maxSize instead of the buffer size for
       // getWriteBufferSize.  https://issues.apache.org/jira/browse/HBASE-13113
       Assert.assertTrue(

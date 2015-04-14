@@ -40,8 +40,8 @@ public abstract class AbstractTest {
     }
   };
 
-  public Connection connection;
-  // A new connection is generated per test:
+  private Connection connection;
+
   @Rule
   public ExternalResource connectionResource = new ExternalResource() {
     @Override
@@ -72,13 +72,15 @@ public abstract class AbstractTest {
   }
 
   /** Hook to setup class level resources after the connection is created. */
-  @SuppressWarnings("unused")
   protected void setup() throws IOException {
   }
 
   /** Hook to remove class level resources after the connection is created. */
-  @SuppressWarnings("unused")
   protected void tearDown() throws IOException {
+  }
+
+  protected Connection getConnection() {
+    return connection;
   }
 
   protected static class QualifierValue implements Comparable<QualifierValue> {

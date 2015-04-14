@@ -40,7 +40,7 @@ public class TestColumnFamilyAdmin extends AbstractTest {
 
   @Override
   protected void setup() throws IOException {
-    admin = connection.getAdmin();
+    admin = getConnection().getAdmin();
     tableName = IntegrationTests.newTestTableName();
 
     descriptor = new HTableDescriptor(tableName);

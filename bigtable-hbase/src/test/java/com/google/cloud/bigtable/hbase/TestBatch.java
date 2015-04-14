@@ -53,7 +53,7 @@ public class TestBatch extends AbstractTest {
   @Category(KnownGap.class)
   public void testBatchPutGetAndDelete() throws IOException, InterruptedException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] value1 = dataHelper.randomData("value-");
@@ -127,7 +127,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchIncrement() throws IOException, InterruptedException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     Random random = new Random();
@@ -166,7 +166,7 @@ public class TestBatch extends AbstractTest {
   @Test
   public void testBatchAppend() throws IOException, InterruptedException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey1 = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] value1_1 = dataHelper.randomData("value-");
@@ -211,7 +211,7 @@ public class TestBatch extends AbstractTest {
   @Category(KnownGap.class)
   public void testBatchWithException() throws IOException, InterruptedException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[][] rowKeys = dataHelper.randomData("testrow-", 5);
     byte[][] quals = dataHelper.randomData("qual-", 5);
     byte[][] values = dataHelper.randomData("value-", 5);
@@ -276,7 +276,7 @@ public class TestBatch extends AbstractTest {
   @Category(KnownGap.class)
   public void testRowMutations() throws IOException, InterruptedException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = dataHelper.randomData("qual-", 3);
     byte[][] values = dataHelper.randomData("value-", 3);

@@ -29,7 +29,7 @@ import java.util.UUID;
 public class TestListTables extends AbstractTest {
   @Test
   public void testTableNames() throws IOException {
-    Admin admin = connection.getAdmin();
+    Admin admin = getConnection().getAdmin();
     TableName tableName1 = TableName.valueOf("list_table1-" + UUID.randomUUID().toString());
     TableName tableName2 = TableName.valueOf("list_table2-" + UUID.randomUUID().toString());
 
