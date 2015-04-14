@@ -39,7 +39,7 @@ public class TestColumnFamilyAdmin extends AbstractTest {
   private HTableDescriptor descriptor;
 
   @Override
-  protected void onConnectionCreated() throws IOException {
+  protected void preTesting() throws IOException {
     admin = connection.getAdmin();
     tableName = IntegrationTests.newTestTableName();
 
@@ -50,7 +50,7 @@ public class TestColumnFamilyAdmin extends AbstractTest {
   }
 
   @Override
-  protected void preConnectionClose() throws IOException {
+  protected void postTesting() throws IOException {
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
   }

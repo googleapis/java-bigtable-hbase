@@ -40,19 +40,24 @@ public class TestListTables extends AbstractTest {
     descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
     admin.createTable(descriptor);
 
-    Assert.assertTrue(admin.tableExists(tableName1));
-    Assert.assertFalse(admin.tableExists(tableName2));
-    Assert.assertTrue(ArrayUtils.contains(admin.listTableNames(), tableName1));
-    Assert.assertFalse(ArrayUtils.contains(admin.listTableNames(), tableName2));
-
+    {
+      Assert.assertTrue(admin.tableExists(tableName1));
+      Assert.assertFalse(admin.tableExists(tableName2));
+      TableName[] tableList = admin.listTableNames();
+      Assert.assertTrue(ArrayUtils.contains(tableList, tableName1));
+      Assert.assertFalse(ArrayUtils.contains(tableList, tableName2));
+    }
     descriptor = new HTableDescriptor(tableName2);
     descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
     admin.createTable(descriptor);
 
-    Assert.assertTrue(admin.tableExists(tableName1));
-    Assert.assertTrue(admin.tableExists(tableName2));
-    Assert.assertTrue(ArrayUtils.contains(admin.listTableNames(), tableName1));
-    Assert.assertTrue(ArrayUtils.contains(admin.listTableNames(), tableName2));
+    {
+      Assert.assertTrue(admin.tableExists(tableName1));
+      Assert.assertTrue(admin.tableExists(tableName2));
+      TableName[] tableList = admin.listTableNames();
+      Assert.assertTrue(ArrayUtils.contains(tableList, tableName1));
+      Assert.assertTrue(ArrayUtils.contains(tableList, tableName2));
+    }
 
     // Clean up: disable (for hbase compatibility) and delete.
     admin.disableTable(tableName1);

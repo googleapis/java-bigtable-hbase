@@ -104,8 +104,7 @@ public class IntegrationTests {
   public static Timeout timeoutRule = new Timeout((int) TimeUnit.MINUTES.toMillis(5));
 
   public static void createTable(TableName tableName) throws IOException {
-    try (Connection connection = ConnectionFactory.createConnection(configuration);
-        Admin admin = connection.getAdmin();) {
+    try (Admin admin = connection.getAdmin();) {
       HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
       admin.createTable(new HTableDescriptor(tableName).addFamily(hcd));
     }
@@ -122,24 +121,39 @@ public class IntegrationTests {
       } else {
         setConfiguration(BASE_CONFIGURATION);
       }
+      connection = ConnectionFactory.createConnection(configuration);
       createTable(TABLE_NAME);
     }
 
     @Override
     protected void after() {
-      try (Connection connection = ConnectionFactory.createConnection(configuration);
-          Admin admin = connection.getAdmin();) {
+      try (Admin admin = connection.getAdmin();) {
         admin.disableTable(TABLE_NAME);
         admin.deleteTable(TABLE_NAME);
-        if (useMiniCluster()) {
-          testingUtility.shutdownMiniCluster();
-        }
       } catch (Exception e) {
         // shutdownMiniCluster throws Exception, while getAdmin and others throw IOException.
         // Both result in the same desired outcome here.
         throw new RuntimeException("Error shutting down test cluster", e);
       }
-    }
+      
+      try {
+        connection.close();
+      } catch (IOException e) {
+        // shutdownMiniCluster throws Exception, while getAdmin and others throw IOException.
+        // Both result in the same desired outcome here.
+        throw new RuntimeException("Error shutting down test cluster", e);
+      }
+
+      if (useMiniCluster()) {
+        try {
+          testingUtility.shutdownMiniCluster();
+        } catch (Exception e) {
+          // shutdownMiniCluster throws Exception, while getAdmin and others throw IOException.
+          // Both result in the same desired outcome here.
+          throw new RuntimeException("Error shutting down test cluster", e);
+        }
+      }
+}
   };
   
   public static void setConfiguration(Configuration configuration) {

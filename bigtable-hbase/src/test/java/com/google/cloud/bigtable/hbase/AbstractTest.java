@@ -40,7 +40,6 @@ public abstract class AbstractTest {
     }
   };
 
-  // Populated by our connectionResource rule below:
   public Connection connection;
   // A new connection is generated per test:
   @Rule
@@ -52,21 +51,16 @@ public abstract class AbstractTest {
 
     @Override
     protected void before() throws Throwable {
-      connection = createNewConnection();
-      onConnectionCreated();
+      connection = IntegrationTests.connection;
+      preTesting();
     }
 
     @Override
     protected void after() {
       try {
-        preConnectionClose();
+        postTesting();
       } catch (IOException e) {
         new Logger(AbstractTest.this.getClass()).warn("Could not perform preClose", e);
-      }
-      try {
-        connection.close();
-      } catch (IOException e) {
-        throw new RuntimeException("Failed to close connection after test completion.");
       }
     }
   };
@@ -79,12 +73,12 @@ public abstract class AbstractTest {
 
   /** Hook to setup class level resources after the connection is created. */
   @SuppressWarnings("unused")
-  protected void onConnectionCreated() throws IOException {
+  protected void preTesting() throws IOException {
   }
 
   /** Hook to remove class level resources after the connection is created. */
   @SuppressWarnings("unused")
-  protected void preConnectionClose() throws IOException {
+  protected void postTesting() throws IOException {
   }
 
   protected static class QualifierValue implements Comparable<QualifierValue> {
