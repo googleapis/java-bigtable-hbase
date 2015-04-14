@@ -42,7 +42,7 @@ public class BigtableOptionsFactory {
 
   public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
   public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
-  public static final int RETRY_THREAD_COUNT = 2;
+  public static final int RETRY_THREAD_COUNT = 4;
 
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
   public static final int DEFAULT_BIGTABLE_PORT = 443;
@@ -124,7 +124,7 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_CHANNEL_TIMEOUT_MS_KEY =
       "google.bigtable.grpc.channel.timeout.ms";
   public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
-  
+
   public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
     BigtableOptions.Builder optionsBuilder = new BigtableOptions.Builder();
 

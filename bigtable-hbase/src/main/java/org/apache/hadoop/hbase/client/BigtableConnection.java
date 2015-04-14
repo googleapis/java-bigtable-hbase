@@ -45,7 +45,26 @@ import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
 
 public class BigtableConnection implements Connection, Closeable {
-  public static final String MAX_INFLIGHT_RPCS = "MAX_INFLIGHT_RPCS";
+  public static final String MAX_INFLIGHT_RPCS_KEY =
+      "google.bigtable.buffered.mutator.max.inflight.rpcs";
+
+  // Default rpc count per channel.
+  public static final int MAX_INFLIGHT_RPCS_DEFAULT = 2000;
+
+  /**
+   * The maximum amount of memory to be used for asynchronous buffered mutator RPCs.
+   */
+  public static final String BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY =
+      "google.bigtable.buffered.mutator.max.memory";
+
+  // Default to 16MB.
+  //
+  // HBase uses 2MB as the write buffer size.  Their limit is the size to reach before performing
+  // a batch async write RPC.  Our limit is a memory cap for async RPC after which we throttle.
+  // HBase does not throttle like we do.
+  public static final long BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT =
+      8 * TableConfiguration.WRITE_BUFFER_SIZE_DEFAULT;
+
   private static final Logger LOG = new Logger(BigtableConnection.class);
 
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
@@ -151,11 +170,12 @@ public class BigtableConnection implements Connection, Closeable {
       params.writeBufferSize(tableConfig.getWriteBufferSize());
     }
 
-    int bufferCount = conf.getInt(MAX_INFLIGHT_RPCS, 30);
+    int defaultRpcCount = MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
+    int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
 
     return new BigtableBufferedMutator(conf,
         params.getTableName(),
-        bufferCount,
+        maxInflightRpcs,
         params.getWriteBufferSize(),
         client,
         options,
@@ -165,7 +185,12 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public BufferedMutator getBufferedMutator(TableName tableName) throws IOException {
-    return getBufferedMutator(new BufferedMutatorParams(tableName));
+    long maxMemory = conf.getLong(
+        BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
+        BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT);
+    return getBufferedMutator(
+        new BufferedMutatorParams(tableName)
+            .writeBufferSize(maxMemory));
   }
 
   /** This should not be used.  The hbase shell needs this in hbsae 0.99.2.  Remove this once
@@ -247,10 +272,7 @@ public class BigtableConnection implements Connection, Closeable {
       // shared HTable thread executor not yet initialized
       synchronized (this) {
         if (batchPool == null) {
-          int maxThreads = conf.getInt("hbase.hconnection.threads.max", 256);
-          if (maxThreads == 0) {
-            maxThreads = Runtime.getRuntime().availableProcessors() * 8;
-          }
+          int maxThreads = getMaxThreads();
           long keepAliveTime = conf.getLong(
               "hbase.hconnection.threads.keepalivetime", 60);
           LinkedBlockingQueue<Runnable> workQueue =
@@ -268,6 +290,14 @@ public class BigtableConnection implements Connection, Closeable {
       }
     }
     return this.batchPool;
+  }
+
+  private int getMaxThreads() {
+    int maxThreads = conf.getInt("hbase.hconnection.threads.max", 256);
+    if (maxThreads == 0) {
+      maxThreads = Runtime.getRuntime().availableProcessors() * 8;
+    }
+    return maxThreads;
   }
 
   // Copied from org.apache.hadoop.hbase.client.HConnectionManager#shutdownBatchPool()
