@@ -287,4 +287,8 @@ public class BigtableOptions {
   public ServerName getServerName() {
     return ServerName.valueOf(host.getHostName(), port, 0);
   }
+
+  public int getChannelCount() {
+    return channelCount;
+  }
 }
