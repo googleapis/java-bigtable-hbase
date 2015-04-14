@@ -51,14 +51,14 @@ public abstract class AbstractTest {
 
     @Override
     protected void before() throws Throwable {
-      connection = IntegrationTests.connection;
-      preTesting();
+      connection = IntegrationTests.getConnection();
+      setup();
     }
 
     @Override
     protected void after() {
       try {
-        postTesting();
+        tearDown();
       } catch (IOException e) {
         new Logger(AbstractTest.this.getClass()).warn("Could not perform preClose", e);
       }
@@ -73,12 +73,12 @@ public abstract class AbstractTest {
 
   /** Hook to setup class level resources after the connection is created. */
   @SuppressWarnings("unused")
-  protected void preTesting() throws IOException {
+  protected void setup() throws IOException {
   }
 
   /** Hook to remove class level resources after the connection is created. */
   @SuppressWarnings("unused")
-  protected void postTesting() throws IOException {
+  protected void tearDown() throws IOException {
   }
 
   protected static class QualifierValue implements Comparable<QualifierValue> {

@@ -56,9 +56,9 @@ public class IntegrationTests {
   public static final Configuration BASE_CONFIGURATION = HBaseConfiguration.create();
 
   // testingUtility, connection, and configuration are provided via the connectionResource later
-  protected static HBaseTestingUtility testingUtility;
-  protected static Connection connection;
-  protected static Configuration configuration;
+  private static HBaseTestingUtility testingUtility;
+  private static Connection connection;
+  private static Configuration configuration;
 
   static {
     TABLE_NAME = newTestTableName();
@@ -131,32 +131,30 @@ public class IntegrationTests {
         admin.disableTable(TABLE_NAME);
         admin.deleteTable(TABLE_NAME);
       } catch (Exception e) {
-        // shutdownMiniCluster throws Exception, while getAdmin and others throw IOException.
-        // Both result in the same desired outcome here.
-        throw new RuntimeException("Error shutting down test cluster", e);
+        throw new RuntimeException("Error deleting table after the integration tests", e);
       }
-      
+
       try {
         connection.close();
       } catch (IOException e) {
-        // shutdownMiniCluster throws Exception, while getAdmin and others throw IOException.
-        // Both result in the same desired outcome here.
-        throw new RuntimeException("Error shutting down test cluster", e);
+        throw new RuntimeException("Error closing the connection after the integration tests", e);
       }
 
       if (useMiniCluster()) {
         try {
           testingUtility.shutdownMiniCluster();
         } catch (Exception e) {
-          // shutdownMiniCluster throws Exception, while getAdmin and others throw IOException.
-          // Both result in the same desired outcome here.
-          throw new RuntimeException("Error shutting down test cluster", e);
+          throw new RuntimeException("Error shutting down test cluster after the integration tests", e);
         }
       }
-}
+    }
   };
   
   public static void setConfiguration(Configuration configuration) {
     IntegrationTests.configuration = configuration;
+  }
+  
+  public static Connection getConnection() {
+    return connection;
   }
 }
