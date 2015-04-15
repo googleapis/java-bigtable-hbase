@@ -1,11 +1,11 @@
 package com.google.cloud.bigtable.hbase;
 
+import com.google.bigtable.repackaged.com.google.protobuf.ServiceException;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.cloud.hadoop.hbase.ResultScanner;
-import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;

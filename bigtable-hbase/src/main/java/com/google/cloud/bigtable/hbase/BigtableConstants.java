@@ -14,7 +14,7 @@
 package com.google.cloud.bigtable.hbase;
 
 
-import com.google.protobuf.ByteString;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 
 import java.util.concurrent.TimeUnit;
 

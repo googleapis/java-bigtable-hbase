@@ -1,13 +1,13 @@
 package com.google.cloud.bigtable.hbase;
 
-import com.google.api.client.googleapis.compute.ComputeCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.util.SecurityUtils;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.bigtable.repackaged.com.google.api.client.googleapis.compute.ComputeCredential;
+import com.google.bigtable.repackaged.com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.bigtable.repackaged.com.google.api.client.http.HttpTransport;
+import com.google.bigtable.repackaged.com.google.api.client.util.SecurityUtils;
 import com.google.common.collect.ImmutableList;
 
 import java.io.FileInputStream;

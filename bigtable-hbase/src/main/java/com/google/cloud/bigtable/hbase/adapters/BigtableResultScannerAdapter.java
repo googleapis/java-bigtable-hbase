@@ -1,7 +1,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.api.client.util.Throwables;
 import com.google.bigtable.v1.Row;
+import com.google.common.base.Throwables;
 
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;

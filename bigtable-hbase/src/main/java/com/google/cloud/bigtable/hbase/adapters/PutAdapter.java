@@ -13,11 +13,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.SetCell.Builder;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
-import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;

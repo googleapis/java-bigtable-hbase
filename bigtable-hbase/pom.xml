@@ -38,12 +38,6 @@
                                         <include>**/IntegrationTests.java</include>
                                     </includes>
                                     <reportNameSuffix>local-mini-cluster</reportNameSuffix>
-                                    <classpathDependencyExcludes>
-                                        <!-- Shading makes including this work when deploying to a cluster.
-                                        Including non-shaded items on the classpath makes this test in particular
-                                        unhappy. -->
-                                        <classpathDependencyExclude>bigtable-hbase:*</classpathDependencyExclude>
-                                    </classpathDependencyExcludes>
                                 </configuration>
                             </execution>
                         </executions>
@@ -80,12 +74,6 @@
                                     <argLine>
                                         -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
                                     </argLine>
-                                    <classpathDependencyExcludes>
-                                        <!-- protobuf and netty are included in the grpc-interface jar -->
-                                        <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
-                                        <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
-                                        <classpathDependencyExclude>com.google.guava:guava</classpathDependencyExclude>
-                                    </classpathDependencyExcludes>
                                     <forkCount>1</forkCount>
                                     <includes>
                                         <include>**/IntegrationTestsGap.java</include>
@@ -130,12 +118,6 @@
                                     <argLine>
                                         -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
                                     </argLine>
-                                    <classpathDependencyExcludes>
-                                        <!-- protobuf and netty are included in the grpc-interface jar -->
-                                        <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
-                                        <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
-                                        <classpathDependencyExclude>com.google.guava:guava</classpathDependencyExclude>
-                                    </classpathDependencyExcludes>
                                     <forkCount>1</forkCount>
                                     <includes>
                                         <include>**/TestClusterAPI.java</include>
@@ -158,79 +140,84 @@
             <artifactId>bigtable-grpc-interface</artifactId>
             <version>${project.version}</version>
             <exclusions>
-		        <exclusion>
-		            <groupId>com.google.protobuf</groupId>
-		            <artifactId>protobuf-java</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.netty</groupId>
-		            <artifactId>netty-codec</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.netty</groupId>
-		            <artifactId>netty-buffer</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.netty</groupId>
-		            <artifactId>netty-codec-http</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.netty</groupId>
-		            <artifactId>netty-codec-http2</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.netty</groupId>
-		            <artifactId>netty-common</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.netty</groupId>
-		            <artifactId>netty-handler</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.netty</groupId>
-		            <artifactId>netty-resolver</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.netty</groupId>
-		            <artifactId>netty-transport</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.grpc</groupId>
-		            <artifactId>grpc-netty</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>bigtable-client</groupId>
-		            <artifactId>bigtable-proto</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.grpc</groupId>
-		            <artifactId>grpc-auth</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.grpc</groupId>
-		            <artifactId>grpc-core</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>io.grpc</groupId>
-		            <artifactId>grpc-stub</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>com.google.api-client</groupId>
-		            <artifactId>google-api-client-java6</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>com.google.oauth-client</groupId>
-		            <artifactId>google-oauth-client</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>com.google.guava</groupId>
-		            <artifactId>guava</artifactId>
-		        </exclusion>
-		        <exclusion>
-		            <groupId>com.google.http-client</groupId>
-		            <artifactId>google-http-client</artifactId>
-		        </exclusion>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-codec</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-buffer</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-codec-http</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-codec-http2</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-handler</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-resolver</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-transport</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-netty</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>bigtable-client</groupId>
+                    <artifactId>bigtable-proto</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-auth</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-stub</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.api-client</groupId>
+                    <artifactId>google-api-client-java6</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.oauth-client</groupId>
+                    <artifactId>google-oauth-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.oauth-client</groupId>
+                    <artifactId>google-oauth-client-java6</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>com.google.http-client</groupId>
+                  <artifactId>google-http-client</artifactId>
+                </exclusion>
             </exclusions>
+            
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -318,22 +305,6 @@
             <groupId>org.mortbay.jetty.alpn</groupId>
             <artifactId>alpn-boot</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.google.api-client</groupId>
-            <artifactId>google-api-client-jackson2</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.api-client</groupId>
-            <artifactId>google-api-client-java6</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.oauth-client</groupId>
-            <artifactId>google-oauth-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.oauth-client</groupId>
-            <artifactId>google-oauth-client-java6</artifactId>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -344,11 +315,6 @@
                 <configuration>
                     <useProjectReferences>false</useProjectReferences>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -384,10 +350,6 @@
                                 <exclude>**/TestScan.java</exclude>
                                 <exclude>**/TestTimestamp.java</exclude>
                             </excludes>
-                            <classpathDependencyExcludes>
-                                <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
-                                <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
-                            </classpathDependencyExcludes>
                         </configuration>
                     </execution>
                     <execution>
@@ -404,12 +366,6 @@
                             <argLine>
                                 -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
                             </argLine>
-                            <!-- protobuf and netty are included in the grpc-interface jar -->
-                            <classpathDependencyExcludes>
-                                <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
-                                <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
-                                <classpathDependencyExclude>com.google.guava:guava</classpathDependencyExclude>
-                            </classpathDependencyExcludes>
                             <forkCount>1</forkCount>
                             <includes>
                                 <include>**/IntegrationTestsNoKnownGap.java</include>
@@ -451,35 +407,9 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <include>bigtable-hbase:*</include>
+                                    <include>bigtable-client:*</include>
                                 </includes>
                             </artifactSet>
-                            <relocations>
-                                <relocation>
-                                    <pattern>com.google.common</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.common</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.protobuf</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.protobuf</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.fasterxml</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.fasterxml</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.apache.commons.codec</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.codec</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>io.netty</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.api</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.api</shadedPattern>
-                                </relocation>
-                            </relocations>
                         </configuration>
                     </execution>
                 </executions>

@@ -13,14 +13,13 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.bigtable.repackaged.io.netty.channel.EventLoopGroup;
+import com.google.bigtable.repackaged.io.netty.channel.nio.NioEventLoopGroup;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.hadoop.conf.Configuration;
-
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.io.IOException;
 import java.net.InetAddress;

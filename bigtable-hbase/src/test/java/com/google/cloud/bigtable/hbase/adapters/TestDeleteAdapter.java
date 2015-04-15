@@ -13,7 +13,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import java.util.concurrent.TimeUnit;
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.Mutation;
+import com.google.bigtable.v1.Mutation.MutationCase;
+import com.google.bigtable.v1.TimestampRange;
+import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -24,11 +28,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.Mutation;
-import com.google.bigtable.v1.Mutation.MutationCase;
-import com.google.bigtable.v1.TimestampRange;
-import com.google.cloud.bigtable.hbase.DataGenerationHelper;
+import java.util.concurrent.TimeUnit;
 
 
 @RunWith(JUnit4.class)
