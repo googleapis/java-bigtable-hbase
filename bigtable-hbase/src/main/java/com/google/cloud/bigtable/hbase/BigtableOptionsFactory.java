@@ -21,7 +21,6 @@ import org.apache.hadoop.conf.Configuration;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.ExecutorServiceFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -29,7 +28,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -235,16 +233,9 @@ public class BigtableOptionsFactory {
     if (configuration.getBoolean(
         ENABLE_DAEMONIZED_THREADS_KEY, ENABLE_DAEMONIZED_THREADS_DEFAULT)) {
       LOG.info("Enabling daemonized threads.");
-      EventLoopGroup elg = new NioEventLoopGroup(0, new ExecutorServiceFactory() {
-        @Override
-        public ExecutorService newExecutorService(int parallelism) {
-          return Executors.newFixedThreadPool(
-              parallelism,
-              new ThreadFactoryBuilder()
-                  .setDaemon(true)
-                  .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build());
-        }
-      });
+      EventLoopGroup elg =
+          new NioEventLoopGroup(0, new ThreadFactoryBuilder().setDaemon(true)
+              .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build());
       optionsBuilder.setCustomEventLoopGroup(elg);
 
       ScheduledExecutorService retryExecutor =
