@@ -42,7 +42,7 @@ public class BigtableOptionsFactory {
 
   public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
   public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
-  public static final int RETRY_THREAD_COUNT = 2;
+  public static final int RETRY_THREAD_COUNT = 4;
 
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
   public static final int DEFAULT_BIGTABLE_PORT = 443;
@@ -111,6 +111,19 @@ public class BigtableOptionsFactory {
   public static final String ENABLE_PROTO_FILTER_LANGUAGE_KEY =
       "google.bigtable.tmp.proto.filter.language.enable";
   public static final boolean ENABLE_PROTO_FILTER_LANGUAGE_DEFAULT = false;
+
+  /**
+   * The number of grpc channels to open for asynchronous processing such as puts.
+   */
+  public static final String BIGTABLE_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
+  public static final int BIGTABLE_CHANNEL_COUNT_DEFAULT = 2;
+
+  /**
+   * The maximum length of time to keep a Bigtable grpc channel open.
+   */
+  public static final String BIGTABLE_CHANNEL_TIMEOUT_MS_KEY =
+      "google.bigtable.grpc.channel.timeout.ms";
+  public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
 
   public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
     BigtableOptions.Builder optionsBuilder = new BigtableOptions.Builder();
@@ -268,6 +281,14 @@ public class BigtableOptionsFactory {
         ENABLE_GRPC_RETRIES_KEY, ENABLE_GRPC_RETRIES_DEFAULT);
     LOG.debug("gRPC retries enabled: %s", enableRetries);
     optionsBuilder.setRetriesEnabled(enableRetries);
+
+    int channelCount =
+        configuration.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
+    optionsBuilder.setChannelCount(channelCount);
+
+    long channelTimeout =
+        configuration.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
+    optionsBuilder.setChannelTimeoutMs(channelTimeout);
 
     return optionsBuilder.build();
   }

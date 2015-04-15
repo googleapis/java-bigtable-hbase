@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.concurrent.ScheduledExecutorService;
 
+import javax.net.ssl.SSLException;
+
 import org.apache.hadoop.hbase.ServerName;
 
 import com.google.api.client.util.Strings;
@@ -52,6 +54,8 @@ public class BigtableOptions {
     private boolean retriesEnabled;
     private ScheduledExecutorService rpcRetryExecutorService;
     private EventLoopGroup customEventLoopGroup;
+    private int channelCount = 1;
+    private long timeoutMs = -1L;
 
     public Builder setAdminHost(InetAddress adminHost) {
       this.adminHost = adminHost;
@@ -118,6 +122,19 @@ public class BigtableOptions {
       return this;
     }
 
+    public Builder setChannelCount(int channelCount) {
+      Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
+      this.channelCount = channelCount;
+      return this;
+    }
+
+    public Builder setChannelTimeoutMs(long timeoutMs) {
+      Preconditions.checkArgument(timeoutMs >= -1,
+        "ChannelTimeoutMs has to be positive, or -1 for none.");
+      this.timeoutMs = timeoutMs;
+      return this;
+    }
+
     public BigtableOptions build() {
       if (adminHost == null) {
         adminHost = host;
@@ -136,7 +153,9 @@ public class BigtableOptions {
           callTimingReportPath,
           callStatusReportPath,
           rpcRetryExecutorService,
-          customEventLoopGroup);
+          customEventLoopGroup,
+          channelCount,
+          timeoutMs);
     }
   }
 
@@ -153,7 +172,8 @@ public class BigtableOptions {
   private final String callStatusReportPath;
   private final ScheduledExecutorService rpcRetryExecutorService;
   private final EventLoopGroup customEventLoopGroup;
-
+  private final int channelCount;
+  private final long timeoutMs;
 
   private BigtableOptions(
       InetAddress clusterAdminHost,
@@ -168,7 +188,9 @@ public class BigtableOptions {
       String callTimingReportPath,
       String callStatusReportPath,
       ScheduledExecutorService rpcRetryExecutorService,
-      EventLoopGroup customEventLoopGroup) {
+      EventLoopGroup customEventLoopGroup,
+      int channelCount,
+      long timeoutMs) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
     Preconditions.checkArgument(
@@ -188,6 +210,8 @@ public class BigtableOptions {
     this.cluster = cluster;
     this.rpcRetryExecutorService = rpcRetryExecutorService;
     this.customEventLoopGroup = customEventLoopGroup;
+    this.channelCount = channelCount;
+    this.timeoutMs = timeoutMs;
 
     LOG.debug("Connection Configuration: project: %s, cluster: %s, host:port %s:%s, "
         + "admin host:port %s:%s, using transport %s.",
@@ -222,6 +246,8 @@ public class BigtableOptions {
     optionsBuilder.setCredential(credential);
     optionsBuilder.setEnableRetries(retriesEnabled);
     optionsBuilder.setScheduledExecutorService(rpcRetryExecutorService);
+    optionsBuilder.setChannelCount(channelCount);
+    optionsBuilder.setTimeoutMs(timeoutMs);
     return optionsBuilder.build();
   }
 
@@ -239,16 +265,30 @@ public class BigtableOptions {
   }
 
   private TransportOptions createTransportOptions(InetAddress host) throws IOException {
-    SslContext sslContext = SslContext.newClientContext();
     return new TransportOptions(
         TransportOptions.BigtableTransports.HTTP2_NETTY_TLS,
         host,
         port,
-        sslContext,
+        new TransportOptions.SslContextFactory() {
+          @Override
+          public SslContext create() {
+            try {
+              // We create multiple channels via refreshing and pooling channel implementation.  
+              // Each one needs its own SslContext.
+              return SslContext.newClientContext();
+            } catch (SSLException e) {
+              throw new IllegalStateException("Could not create an ssl context.", e);
+            }
+          }
+        },
         customEventLoopGroup);
   }
 
   public ServerName getServerName() {
     return ServerName.valueOf(host.getHostName(), port, 0);
+  }
+
+  public int getChannelCount() {
+    return channelCount;
   }
 }

@@ -145,7 +145,7 @@ public class TestClusterAPI {
 
   private List<Zone> getZones(BigtableClusterAdminClient client, String projectId) {
     ListZonesResponse zones =
-        client.listZones(ListZonesRequest.newBuilder().setName("/projects/" + projectId).build());
+        client.listZones(ListZonesRequest.newBuilder().setName("projects/" + projectId).build());
     List<Zone> zoneList = zones.getZonesList();
     Assert.assertTrue("Zones must exist", !zoneList.isEmpty());
     return zoneList;
