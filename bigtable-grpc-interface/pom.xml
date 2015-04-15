@@ -145,6 +145,7 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
+                                    <include>bigtable-client:*</include>
                                     <include>com.google.api-client:*</include>
                                     <include>com.google.guava:*</include>
                                     <include>com.google.http-client:*</include>

@@ -9,7 +9,7 @@
 
     <modules>
         <module>bigtable-hbase</module>
-        <module>bigtable-grpc-interface-wrapper</module>
+        <module>bigtable-grpc-interface</module>
     </modules>
 
     <properties>
