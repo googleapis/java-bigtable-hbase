@@ -36,7 +36,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteRow() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
@@ -63,7 +63,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteEmptyRow() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
 
     Delete delete = new Delete(rowKey);
@@ -79,7 +79,7 @@ public class TestDelete extends AbstractTest {
   @Category(KnownGap.class)
   public void testDeleteLatestColumnVersion() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
@@ -114,7 +114,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteSpecificColumnVersion() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
@@ -151,7 +151,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteAllColumnVersions() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
@@ -190,7 +190,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteOlderColumnVersions() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
@@ -226,7 +226,7 @@ public class TestDelete extends AbstractTest {
   @Test
   public void testDeleteFamily() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
@@ -262,7 +262,7 @@ public class TestDelete extends AbstractTest {
   @Category(KnownGap.class)
   public void testDeleteOlderFamilyColumns() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");
@@ -304,7 +304,7 @@ public class TestDelete extends AbstractTest {
   @Category(KnownGap.class)
   public void testDeleteFamilyWithSpecificTimestamp() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
     byte[] qual2 = dataHelper.randomData("qual-");

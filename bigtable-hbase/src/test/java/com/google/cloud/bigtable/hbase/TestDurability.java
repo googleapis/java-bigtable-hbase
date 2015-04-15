@@ -54,7 +54,7 @@ public class TestDurability extends AbstractTest {
     Put put = new Put(rowKey);
     put.setDurability(durability);
     put.addColumn(COLUMN_FAMILY, testQualifier, testValue);
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     table.put(put);
 
     // Get

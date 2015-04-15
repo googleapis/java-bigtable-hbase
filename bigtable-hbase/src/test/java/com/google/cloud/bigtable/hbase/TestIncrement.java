@@ -54,7 +54,7 @@ public class TestIncrement extends AbstractTest {
   @Category(KnownGap.class)
   public void testIncrement() throws IOException {
     // Initialize data
-    try (Table table = connection.getTable(TABLE_NAME)){
+    try (Table table = getConnection().getTable(TABLE_NAME)){
       testIncrement(dataHelper, table);
     }
   }
@@ -115,7 +115,7 @@ public class TestIncrement extends AbstractTest {
   @Category(KnownGap.class)
   public void testIncrementWithTimerange() throws IOException {
     // Initialize data
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
 
@@ -183,7 +183,7 @@ public class TestIncrement extends AbstractTest {
     long oneMinute = 60 * 1000;
     long fifteenMinutes = 15 * 60 * 1000;
 
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = Bytes.toBytes("testrow-" + RandomStringUtils.randomAlphanumeric(8));
     byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
     Put put = new Put(rowKey);
@@ -218,7 +218,7 @@ public class TestIncrement extends AbstractTest {
   @Category(KnownGap.class)
   public void testFailOnIncrementInt() throws IOException {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     int value = new Random().nextInt();
@@ -239,7 +239,7 @@ public class TestIncrement extends AbstractTest {
   @Category(KnownGap.class)
   public void testFailOnIncrementString() throws IOException {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = dataHelper.randomData("value-");
@@ -259,7 +259,7 @@ public class TestIncrement extends AbstractTest {
   @Test
   public void testIncrementEightBytes() throws IOException {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
     byte[] value = new byte[8];
@@ -288,12 +288,12 @@ public class TestIncrement extends AbstractTest {
     byte[] incrementTable = Bytes.toBytes("increment_table");
 
     TableName incrementTableName = TableName.valueOf(incrementTable);
-    Admin admin = connection.getAdmin();
+    Admin admin = getConnection().getAdmin();
     HTableDescriptor tableDescriptor = new HTableDescriptor(incrementTableName);
     tableDescriptor.addFamily(new HColumnDescriptor(incrementFamily).setMaxVersions(1));
     admin.createTable(tableDescriptor);
 
-    Table table = connection.getTable(incrementTableName);
+    Table table = getConnection().getTable(incrementTableName);
 
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual1 = dataHelper.randomData("qual-");
