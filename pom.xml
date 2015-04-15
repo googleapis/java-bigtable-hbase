@@ -8,17 +8,11 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>bigtable-hbase</module>
         <module>bigtable-grpc-interface</module>
+        <module>bigtable-hbase</module>
     </modules>
 
     <properties>
-        <!-- As soon as stubby is public, this goes away -->
-       <stubby.driver.group>com.google.bigtable.hbase</stubby.driver.group>
-       <stubby.driver.artifact>bigtable-grpc-dependency</stubby.driver.artifact>
-       <stubby.driver.version>0.7-SNAPSHOT</stubby.driver.version>
-       <bigtable.grpc.repo.dir>bigtable-grpc-repo</bigtable.grpc.repo.dir>
-
        <hbase.version>1.0.0</hbase.version>
        <hadoop.version>2.4.1</hadoop.version>
        <compat.module>hbase-hadoop2-compat</compat.module>
@@ -84,11 +78,6 @@
                 <groupId>org.mortbay.jetty.alpn</groupId>
                 <artifactId>alpn-boot</artifactId>
                 <version>${alpn.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${stubby.driver.group}</groupId>
-                <artifactId>${stubby.driver.artifact}</artifactId>
-                <version>${stubby.driver.version}</version>
             </dependency>
 
             <!-- OAuth token acquisition dependencies -->
@@ -209,34 +198,12 @@
                         <groupId>com.google.protobuf</groupId>
                         <artifactId>protobuf-java</artifactId>
                     </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty-all</artifactId>
-                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hbase</groupId>
                 <artifactId>hbase-server</artifactId>
                 <version>${hbase.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.google.protobuf</groupId>
-                        <artifactId>protobuf-java</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty-all</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hbase</groupId>
@@ -244,20 +211,6 @@
                 <version>${hbase.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.google.protobuf</groupId>
-                        <artifactId>protobuf-java</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty-all</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hbase</groupId>

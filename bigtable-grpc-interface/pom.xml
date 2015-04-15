@@ -28,7 +28,9 @@
        <compileSource>1.7</compileSource>
        <grpc.version>0.1.0-SNAPSHOT</grpc.version>
        <netty.version>4.1.0.Beta5-SNAPSHOT</netty.version>
-
+<!--
+       <netty.version>5.0.0.Alpha3-SNAPSHOT</netty.version>
+-->
        <!-- For Netty HTTP2/TLS negotiation -->
        <google.api.client.version>1.19.0</google.api.client.version>
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
