@@ -1,11 +1,11 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.api.client.util.Preconditions;
-import com.google.api.client.util.Throwables;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter.ReaderExpressionScope;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterSupportStatus;
 import com.google.cloud.bigtable.hbase.adapters.filters.UnsupportedFilterException;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 
 import org.apache.hadoop.hbase.Cell;

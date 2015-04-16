@@ -13,7 +13,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.protobuf.GeneratedMessage;
+import com.google.bigtable.repackaged.com.google.protobuf.GeneratedMessage;
 
 import org.apache.hadoop.hbase.client.Result;
 

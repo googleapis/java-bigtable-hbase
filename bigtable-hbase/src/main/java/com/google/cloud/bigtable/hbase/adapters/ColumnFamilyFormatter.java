@@ -1,9 +1,9 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
-import org.apache.hadoop.hbase.TableName;
-
 import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.common.base.Preconditions;
+
+import org.apache.hadoop.hbase.TableName;
 
 public class ColumnFamilyFormatter {
 

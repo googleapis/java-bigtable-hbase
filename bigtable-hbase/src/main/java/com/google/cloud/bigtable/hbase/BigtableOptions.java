@@ -13,22 +13,21 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.handler.ssl.SslContext;
+import com.google.auth.Credentials;
+import com.google.bigtable.repackaged.io.netty.channel.EventLoopGroup;
+import com.google.bigtable.repackaged.io.netty.handler.ssl.SslContext;
+import com.google.cloud.hadoop.hbase.ChannelOptions;
+import com.google.cloud.hadoop.hbase.TransportOptions;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+
+import org.apache.hadoop.hbase.ServerName;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.net.ssl.SSLException;
-
-import org.apache.hadoop.hbase.ServerName;
-
-import com.google.api.client.util.Strings;
-import com.google.auth.Credentials;
-import com.google.cloud.hadoop.hbase.ChannelOptions;
-import com.google.cloud.hadoop.hbase.TransportOptions;
-import com.google.common.base.Preconditions;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.

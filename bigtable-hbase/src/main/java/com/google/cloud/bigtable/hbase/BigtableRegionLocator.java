@@ -1,11 +1,11 @@
 package com.google.cloud.bigtable.hbase;
 
+import com.google.bigtable.repackaged.com.google.common.collect.ImmutableList;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
-import com.google.common.collect.ImmutableList;
 
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;

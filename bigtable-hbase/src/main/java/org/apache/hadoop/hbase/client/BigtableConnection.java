@@ -15,22 +15,6 @@
 // Because MasterKeepAliveConnection is default scope, we have to use this package.  :-/
 package org.apache.hadoop.hbase.client;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.util.Threads;
-
-import com.google.api.client.repackaged.com.google.common.base.Throwables;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -43,6 +27,22 @@ import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.cloud.hadoop.hbase.BigtableGrpcClient;
 import com.google.cloud.hadoop.hbase.ChannelOptions;
 import com.google.cloud.hadoop.hbase.TransportOptions;
+import com.google.common.base.Throwables;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.util.Threads;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class BigtableConnection implements Connection, Closeable {
   public static final String MAX_INFLIGHT_RPCS_KEY =

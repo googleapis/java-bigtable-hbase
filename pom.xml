@@ -13,12 +13,6 @@
     </modules>
 
     <properties>
-        <!-- As soon as stubby is public, this goes away -->
-       <stubby.driver.group>com.google.bigtable.hbase</stubby.driver.group>
-       <stubby.driver.artifact>bigtable-grpc-interface</stubby.driver.artifact>
-       <stubby.driver.version>0.7-SNAPSHOT</stubby.driver.version>
-       <bigtable.grpc.repo.dir>bigtable-grpc-repo</bigtable.grpc.repo.dir>
-
        <hbase.version>1.0.0</hbase.version>
        <hadoop.version>2.4.1</hadoop.version>
        <compat.module>hbase-hadoop2-compat</compat.module>
@@ -28,7 +22,6 @@
 
        <!-- For Netty HTTP2/TLS negotiation -->
        <alpn.version>7.0.0.v20140317</alpn.version>
-       <google.api.client.version>1.19.0</google.api.client.version>
        <google.bigtable.auth.service.account.enable>false</google.bigtable.auth.service.account.enable>
        <google.bigtable.admin.endpoint.host>test-bigtabletableadmin.sandbox.googleapis.com</google.bigtable.admin.endpoint.host>
        <google.bigtable.endpoint.host>test-bigtable.sandbox.googleapis.com</google.bigtable.endpoint.host>
@@ -85,46 +78,6 @@
                 <artifactId>alpn-boot</artifactId>
                 <version>${alpn.version}</version>
             </dependency>
-            <dependency>
-                <groupId>${stubby.driver.group}</groupId>
-                <artifactId>${stubby.driver.artifact}</artifactId>
-                <version>${stubby.driver.version}</version>
-            </dependency>
-            <!-- Somewhat recent, but we will still shade the version shipped with grpc -->
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-all</artifactId>
-                <version>5.0.0.Alpha2</version>
-            </dependency>
-
-            <!-- OAuth token acquisition dependencies -->
-            <dependency>
-                <groupId>com.google.api-client</groupId>
-                <artifactId>google-api-client-jackson2</artifactId>
-                <version>${google.api.client.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.api-client</groupId>
-                <artifactId>google-api-client-java6</artifactId>
-                <version>${google.api.client.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <!-- this version hides too many things -->
-                        <groupId>com.google.guava</groupId>
-                        <artifactId>guava-jdk5</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>com.google.oauth-client</groupId>
-                <artifactId>google-oauth-client</artifactId>
-                <version>${google.api.client.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.oauth-client</groupId>
-                <artifactId>google-oauth-client-java6</artifactId>
-                <version>${google.api.client.version}</version>
-            </dependency>
 
             <!-- Hadoop dependencies -->
             <dependency>
@@ -151,16 +104,6 @@
                 <artifactId>hadoop-minicluster</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.google.protobuf</groupId>
-                        <artifactId>protobuf-java</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
@@ -173,12 +116,6 @@
                 <artifactId>hadoop-yarn-api</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.google.protobuf</groupId>
-                        <artifactId>protobuf-java</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
@@ -210,12 +147,6 @@
                 <groupId>org.apache.hbase</groupId>
                 <artifactId>hbase-client</artifactId>
                 <version>${hbase.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.google.protobuf</groupId>
-                        <artifactId>protobuf-java</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hbase</groupId>

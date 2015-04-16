@@ -1,7 +1,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.v1.RowFilter;
+import com.google.common.base.Preconditions;
 
 import org.apache.hadoop.hbase.filter.Filter;
 

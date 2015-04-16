@@ -1,12 +1,24 @@
 package com.google.cloud.bigtable.hbase;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import javax.annotation.Nullable;
+import com.google.bigtable.repackaged.com.google.common.base.Function;
+import com.google.bigtable.repackaged.com.google.common.util.concurrent.FutureCallback;
+import com.google.bigtable.repackaged.com.google.common.util.concurrent.Futures;
+import com.google.bigtable.repackaged.com.google.common.util.concurrent.ListenableFuture;
+import com.google.bigtable.repackaged.com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.bigtable.repackaged.com.google.common.util.concurrent.SettableFuture;
+import com.google.bigtable.repackaged.com.google.protobuf.Empty;
+import com.google.bigtable.repackaged.com.google.protobuf.GeneratedMessage;
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.ReadModifyWriteRowRequest;
+import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
+import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
+import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
+import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
+import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
+import com.google.cloud.hadoop.hbase.BigtableClient;
+import com.google.common.base.Preconditions;
 
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
@@ -19,26 +31,13 @@ import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 
-import com.google.api.client.util.Preconditions;
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.ReadModifyWriteRowRequest;
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
-import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
-import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
-import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
-import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
-import com.google.cloud.hadoop.hbase.BigtableClient;
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.Empty;
-import com.google.protobuf.GeneratedMessage;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
+import javax.annotation.Nullable;
 
 /**
  * Class to help BigtableTable with batch operations on an BigtableClient.

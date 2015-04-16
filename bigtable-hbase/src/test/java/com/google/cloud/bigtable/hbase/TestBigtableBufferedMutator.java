@@ -1,6 +1,6 @@
 package com.google.cloud.bigtable.hbase;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.bigtable.repackaged.com.google.common.util.concurrent.ListenableFuture;
 
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BigtableConnection;
