@@ -5,6 +5,7 @@ import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
+import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Get;
@@ -24,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 public class TestGetProtoAdapter {
 
   private GetProtoAdapter getAdapter =
-      new GetProtoAdapter(new ScanProtoAdapter(new FilterAdapter()));
+      new GetProtoAdapter(new ScanProtoAdapter(FilterAdapter.buildAdapter()));
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   private Get makeValidGet(byte[] rowKey) throws IOException {
