@@ -106,6 +106,11 @@
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
             <version>${grpc.version}</version>
         </dependency>
@@ -169,6 +174,7 @@
                                     <include>com.google.http-client:*</include>
                                     <include>com.google.oauth-client:*</include>
                                     <include>com.google.protobuf:*</include>
+                                    <include>com.twitter:hpack</include>
                                     <include>com.fasterxml.jackson.core:*</include>
                                     <include>io.netty:*</include>
                                     <include>io.grpc:*</include>
