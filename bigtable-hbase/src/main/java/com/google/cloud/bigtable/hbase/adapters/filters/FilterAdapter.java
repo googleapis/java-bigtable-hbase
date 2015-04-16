@@ -4,12 +4,16 @@ import com.google.bigtable.v1.RowFilter;
 import com.google.common.collect.ImmutableList;
 
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
+import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 
@@ -41,6 +45,14 @@ public class FilterAdapter {
         TimestampsFilter.class, new TimestampsFilterAdapter());
     adapter.addFilterAdapter(
         ValueFilter.class, new ValueFilterAdapter());
+    adapter.addFilterAdapter(
+        SingleColumnValueFilter.class, new SingleColumnValueFilterAdapter());
+    adapter.addFilterAdapter(
+        ColumnPaginationFilter.class, new ColumnPaginationFilterAdapter());
+    adapter.addFilterAdapter(
+        FirstKeyOnlyFilter.class, new FirstKeyOnlyFilterAdapter());
+    adapter.addFilterAdapter(
+        ColumnCountGetFilter.class, new ColumnCountGetFilterAdapter());
 
     // Passing the FilterAdapter in to the FilterListAdapter is a bit
     // unfortunate, but makes adapting the FilterList's subfilters simpler.

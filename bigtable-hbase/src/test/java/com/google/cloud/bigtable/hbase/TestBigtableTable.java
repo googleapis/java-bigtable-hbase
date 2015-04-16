@@ -3,8 +3,11 @@ package com.google.cloud.bigtable.hbase;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
+import com.google.bigtable.v1.RowFilter;
+import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.cloud.hadoop.hbase.ResultScanner;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
@@ -109,7 +112,24 @@ public class TestBigtableTable {
     Assert.assertEquals(
         "projects/testproject/zones/testzone/clusters/testcluster/tables/testtable",
         argument.getValue().getTableName());
-    String expectedFilter = "((col({family:qualifier}, 1)))";
-    Assert.assertEquals(expectedFilter, argument.getValue().getDEPRECATEDStringFilter());
+    Chain expectedColumnSpecFilter =
+        Chain.newBuilder()
+          .addFilters(
+              RowFilter.newBuilder()
+                  .setChain(
+                      Chain.newBuilder()
+                          .addFilters(
+                              RowFilter.newBuilder()
+                                  .setFamilyNameRegexFilter("family"))
+                          .addFilters(
+                              RowFilter.newBuilder()
+                                  .setColumnQualifierRegexFilter(
+                                      ByteString.copyFromUtf8("qualifier")))))
+            .addFilters(RowFilter.newBuilder().setCellsPerColumnLimitFilter(1))
+        .build();
+
+    Assert.assertEquals(
+        expectedColumnSpecFilter,
+        argument.getValue().getFilter().getChain());
   }
 }

@@ -2,6 +2,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -52,6 +53,12 @@ public class ReaderExpressionHelper {
     QuoteMetaOutputStream quoteMetaOutputStream =
         new QuoteMetaOutputStream(quoteFilterExpressionStream);
     quoteMetaOutputStream.write(unquoted);
+  }
+
+  public byte[] quoteRegularExpression(byte[] unquoted) throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(unquoted.length * 2);
+    writeQuotedRegularExpression(unquoted, baos);
+    return baos.toByteArray();
   }
 
   /**

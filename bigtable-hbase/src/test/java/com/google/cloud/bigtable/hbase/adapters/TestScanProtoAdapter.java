@@ -4,6 +4,7 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.ReadRowsRequest.TargetCase;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
+import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -21,7 +22,7 @@ import java.io.IOException;
 @RunWith(JUnit4.class)
 public class TestScanProtoAdapter {
 
-  private ScanProtoAdapter scanAdapter = new ScanProtoAdapter(new FilterAdapter());
+  private ScanProtoAdapter scanAdapter = new ScanProtoAdapter(FilterAdapter.buildAdapter());
 
   @Test
   public void testStartAndEndKeysAreSet() {

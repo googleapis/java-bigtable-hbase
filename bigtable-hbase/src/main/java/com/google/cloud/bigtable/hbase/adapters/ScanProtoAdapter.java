@@ -8,7 +8,9 @@ import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.bigtable.v1.RowRange;
 import com.google.bigtable.v1.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper.QuoteMetaOutputStream;
+import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -30,7 +32,6 @@ public class ScanProtoAdapter
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
 
   private final FilterAdapter filterAdapter;
-  // TOOD(angusdavis): Migrate this to proto filter adapter post PR/186.
   public ScanProtoAdapter(FilterAdapter filterAdapter) {
     this.filterAdapter = filterAdapter;
   }
@@ -60,9 +61,8 @@ public class ScanProtoAdapter
     }
 
     if (scan.getFilter() != null) {
-      // TODO(angusdavis): Wire in proto user filter adapters post PR/186
-      // RowFilter userFilter = createUserFilter();
-      // chainBuilder.addFilters(userFilter);
+      RowFilter userFilter = createUserFilter(scan);
+      chainBuilder.addFilters(userFilter);
     }
 
     if (chainBuilder.getFiltersCount() == 1) {
@@ -95,6 +95,15 @@ public class ScanProtoAdapter
           "IOException when writing to ByteArrayOutputStream", e);
     }
     return baos.toByteArray();
+  }
+
+  private RowFilter createUserFilter(Scan scan) {
+    try {
+      return filterAdapter
+          .adaptFilter(new FilterAdapterContext(scan), scan.getFilter());
+    } catch (IOException ioe) {
+      throw new RuntimeException("Failed to adapt filter", ioe);
+    }
   }
 
   private RowFilter createColumnQualifierFilter(byte[] unquotedQualifier) {

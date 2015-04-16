@@ -639,7 +639,9 @@ public class BigtableTable implements Table {
     if (conf.getBoolean(
         BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_KEY,
         BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_DEFAULT)) {
-      return new ScanProtoAdapter(new FilterAdapter());
+      // This ugly line goes away as soon as the original FilterAdapter is removed:
+      return new ScanProtoAdapter(
+          com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter.buildAdapter());
     }
     return new ScanAdapter(new FilterAdapter());
   }
@@ -648,7 +650,10 @@ public class BigtableTable implements Table {
     if (conf.getBoolean(
         BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_KEY,
         BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_DEFAULT)) {
-      return new GetProtoAdapter(new ScanProtoAdapter(new FilterAdapter()));
+      // This ugly line goes away as soon as the original FilterAdapter is removed:
+      return new GetProtoAdapter(
+          new ScanProtoAdapter(
+              com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter.buildAdapter()));
     }
     return new GetAdapter(new ScanAdapter(new FilterAdapter()));
   }
