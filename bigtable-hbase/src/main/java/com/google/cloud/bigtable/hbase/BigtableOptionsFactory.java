@@ -18,6 +18,7 @@ import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.BigtableConnection;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -97,16 +98,6 @@ public class BigtableOptionsFactory {
   public static final String ENABLE_GRPC_RETRIES_KEY = "google.bigtable.grpc.retry.enable";
   public static final boolean ENABLE_GRPC_RETRIES_DEFAULT = true;
 
-  /**
-   * When enabled, RPC related thread pools will be constructed to use daemon threads which will
-   * allow the JVM to shutdown without properly closing connections, etc.
-   *
-   * Setting this to true is not recommended for production systems.
-   */
-  public static final String ENABLE_DAEMONIZED_THREADS_KEY =
-      "google.bigtable.not_recommended.daemonized.io.threadpools.enable";
-  public static final boolean ENABLE_DAEMONIZED_THREADS_DEFAULT = false;
-
   // TODO(angusdavis): Remove this key once fully transitioned
   public static final String ENABLE_PROTO_FILTER_LANGUAGE_KEY =
       "google.bigtable.tmp.proto.filter.language.enable";
@@ -124,6 +115,20 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_CHANNEL_TIMEOUT_MS_KEY =
       "google.bigtable.grpc.channel.timeout.ms";
   public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
+
+  static {
+    Runnable shutDownRunnable = new Runnable() {
+      @Override
+      public void run() {
+        int activeConnectionCount = BigtableConnection.getActiveConnectionCount();
+        if (activeConnectionCount > 0) {
+          LOG.warn("Shutdown is commencing and you have open %d connections. "
+              + "Data could be lost if there are onging requests. ", activeConnectionCount);
+        }
+      }
+    };
+    Runtime.getRuntime().addShutdownHook(new Thread(shutDownRunnable));
+  }
 
   public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
     BigtableOptions.Builder optionsBuilder = new BigtableOptions.Builder();
@@ -232,30 +237,26 @@ public class BigtableOptionsFactory {
       throw new IOException("Failed to acquire credential.", gse);
     }
 
-    if (configuration.getBoolean(
-        ENABLE_DAEMONIZED_THREADS_KEY, ENABLE_DAEMONIZED_THREADS_DEFAULT)) {
-      LOG.info("Enabling daemonized threads.");
-      EventLoopGroup elg = new NioEventLoopGroup(0, new ExecutorServiceFactory() {
-        @Override
-        public ExecutorService newExecutorService(int parallelism) {
-          return Executors.newFixedThreadPool(
-              parallelism,
-              new ThreadFactoryBuilder()
-                  .setDaemon(true)
-                  .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build());
-        }
-      });
-      optionsBuilder.setCustomEventLoopGroup(elg);
+    EventLoopGroup elg = new NioEventLoopGroup(0, new ExecutorServiceFactory() {
+      @Override
+      public ExecutorService newExecutorService(int parallelism) {
+        return Executors.newFixedThreadPool(
+            parallelism,
+            new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build());
+      }
+    });
+    optionsBuilder.setCustomEventLoopGroup(elg);
 
-      ScheduledExecutorService retryExecutor =
-          Executors.newScheduledThreadPool(
-              RETRY_THREAD_COUNT,
-              new ThreadFactoryBuilder()
-                  .setDaemon(true)
-                  .setNameFormat(RETRY_THREADPOOL_NAME + "-%d")
-                  .build());
-      optionsBuilder.setRpcRetryExecutorService(retryExecutor);
-    }
+    ScheduledExecutorService retryExecutor =
+        Executors.newScheduledThreadPool(
+            RETRY_THREAD_COUNT,
+            new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat(RETRY_THREADPOOL_NAME + "-%d")
+                .build());
+    optionsBuilder.setRpcRetryExecutorService(retryExecutor);
 
     // Set up aggregate performance and call error rate logging:
     if (!Strings.isNullOrEmpty(configuration.get(CALL_REPORT_DIRECTORY_KEY))) {

@@ -17,6 +17,7 @@ package org.apache.hadoop.hbase.client;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -24,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -57,6 +59,10 @@ public class BigtableConnection implements Connection, Closeable {
   public static final String BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY =
       "google.bigtable.buffered.mutator.max.memory";
 
+  private static final AtomicInteger SEQUENCE_GENERATOR = new AtomicInteger();
+  private static final Set<Integer> ACTIVE_CONNECTIONS =
+      Collections.synchronizedSet(new HashSet<Integer>());
+
   // Default to 16MB.
   //
   // HBase uses 2MB as the write buffer size.  Their limit is the size to reach before performing
@@ -79,9 +85,14 @@ public class BigtableConnection implements Connection, Closeable {
   private volatile boolean cleanupPool = false;
   private final BigtableOptions options;
   private final TableConfiguration tableConfig;
+  private final Integer id;
 
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
+
+  public static int getActiveConnectionCount() {
+    return ACTIVE_CONNECTIONS.size();
+  }
 
   public BigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
@@ -95,6 +106,9 @@ public class BigtableConnection implements Connection, Closeable {
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
+
+    id = SEQUENCE_GENERATOR.incrementAndGet();
+    ACTIVE_CONNECTIONS.add(id);
 
     if (batchPool == null) {
       batchPool = getBatchPool();
@@ -263,6 +277,7 @@ public class BigtableConnection implements Connection, Closeable {
       throw Throwables.propagate(e);
     }
     shutdownBatchPool();
+    ACTIVE_CONNECTIONS.remove(id);
     this.closed = true;
   }
 
