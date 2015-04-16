@@ -70,7 +70,7 @@ public class TestBasicOps extends AbstractTest {
   @Test
   public void testNullQualifier() throws IOException {
     // Initialize values
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] testValue = dataHelper.randomData("testValue-");
 
@@ -162,7 +162,7 @@ public class TestBasicOps extends AbstractTest {
 
   private void putGetDeleteExists(byte[] rowKey, byte[] testQualifier, byte[] testValue)
       throws IOException {
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
 
     // Put
     Put put = new Put(rowKey);

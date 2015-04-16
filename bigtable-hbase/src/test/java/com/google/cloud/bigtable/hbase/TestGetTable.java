@@ -27,14 +27,14 @@ import java.util.concurrent.Executors;
 public class TestGetTable extends AbstractTest {
   @Test
   public void testGetTable1() throws Exception {
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }
 
   @Test
   public void testGetTable2() throws Exception {
-    Table table = connection.getTable(TABLE_NAME, Executors.newFixedThreadPool(1));
+    Table table = getConnection().getTable(TABLE_NAME, Executors.newFixedThreadPool(1));
     Assert.assertEquals(TABLE_NAME, table.getName());
     table.close();
   }

@@ -45,7 +45,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndPutSameQual() throws IOException {
     // Initialize
-    try (Table table = connection.getTable(TABLE_NAME)) {
+    try (Table table = getConnection().getTable(TABLE_NAME)) {
       testCheckAndMutate(dataHelper, table);
     }
   }
@@ -88,7 +88,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndDeleteSameQual() throws IOException {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
     byte[] value1 = dataHelper.randomData("value-");
@@ -118,7 +118,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndPutDiffQual() throws IOException {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual1 = dataHelper.randomData("qualifier-");
     byte[] qual2 = dataHelper.randomData("qualifier-");
@@ -159,7 +159,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndDeleteDiffQual() throws IOException {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual1 = dataHelper.randomData("qualifier-");
     byte[] qual2 = dataHelper.randomData("qualifier-");
@@ -201,7 +201,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndPutDiffRow() throws IOException {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey1 = dataHelper.randomData("rowKey-");
     byte[] rowKey2 = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
@@ -219,7 +219,7 @@ public class TestCheckAndMutate extends AbstractTest {
   @Test
   public void testCheckAndDeleteDiffRow() throws IOException {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey1 = dataHelper.randomData("rowKey-");
     byte[] rowKey2 = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");

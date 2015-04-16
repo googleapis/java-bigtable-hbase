@@ -70,7 +70,7 @@ public class TestCreateTable extends AbstractTest {
         "a" + RandomStringUtils.random(10, false, false)
     };
 
-    Admin admin = connection.getAdmin();
+    Admin admin = getConnection().getAdmin();
 
     for (String badName : badNames) {
       boolean failed = false;

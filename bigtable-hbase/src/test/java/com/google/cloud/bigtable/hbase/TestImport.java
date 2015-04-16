@@ -42,7 +42,7 @@ public class TestImport extends AbstractTest {
   @Test
   @Category(KnownGap.class)
   public void testMapReduce() throws IOException, ClassNotFoundException, InterruptedException {
-    Table oldTable = connection.getTable(TABLE_NAME);
+    Table oldTable = getConnection().getTable(TABLE_NAME);
 
     // Put a value.
     byte[] rowKey = dataHelper.randomData("testrow-");
@@ -60,7 +60,7 @@ public class TestImport extends AbstractTest {
     Assert.assertArrayEquals(CellUtil.cloneValue(cells.get(0)), value);
 
     // Run the export.
-    Configuration conf = connection.getConfiguration();
+    Configuration conf = getConnection().getConfiguration();
 
     //conf.set("fs.defaultFS", "file:///");
     FileSystem dfs = IntegrationTests.getMiniCluster().getFileSystem();
@@ -77,10 +77,10 @@ public class TestImport extends AbstractTest {
 
     // Create new table.
     TableName newTableName = IntegrationTests.newTestTableName();
-    Table newTable = connection.getTable(newTableName);
+    Table newTable = getConnection().getTable(newTableName);
 
     // Change for method in IntegrationTests
-    Admin admin = connection.getAdmin();
+    Admin admin = getConnection().getAdmin();
     HColumnDescriptor hcd = new HColumnDescriptor(IntegrationTests.COLUMN_FAMILY);
     HTableDescriptor htd = new HTableDescriptor(newTableName);
     htd.addFamily(hcd);

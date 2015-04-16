@@ -36,7 +36,7 @@ public class TestAppend extends AbstractTest {
   @Test
   public void testAppend() throws Exception {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualifier = dataHelper.randomData("qualifier-");
     byte[] value1 = dataHelper.randomData("value1-");
@@ -67,7 +67,7 @@ public class TestAppend extends AbstractTest {
   @Test
   public void testAppendToEmptyCell() throws Exception {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualifier = dataHelper.randomData("qualifier-");
     byte[] value = dataHelper.randomData("value1-");
@@ -88,7 +88,7 @@ public class TestAppend extends AbstractTest {
   @Test
   public void testAppendNoResult() throws Exception {
     // Initialize
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qual = dataHelper.randomData("qualifier-");
     byte[] value1 = dataHelper.randomData("value-");

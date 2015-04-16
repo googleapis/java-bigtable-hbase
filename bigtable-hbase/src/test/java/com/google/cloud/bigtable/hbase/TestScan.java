@@ -53,7 +53,7 @@ public class TestScan extends AbstractTest {
   @Test
   public void testGetScannerNoQualifiers() throws IOException {
     // Initialize variables
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");
     int numValues = 3;
     byte[][] quals = dataHelper.randomData("qual-", numValues);
@@ -95,7 +95,7 @@ public class TestScan extends AbstractTest {
     int rowsToWrite = 100;
 
     // Initialize variables
-    Table table = connection.getTable(TABLE_NAME);
+    Table table = getConnection().getTable(TABLE_NAME);
 
     byte[][] rowKeys = new byte[rowsToWrite][];
     rowKeys[0] = dataHelper.randomData("scan_row_");
