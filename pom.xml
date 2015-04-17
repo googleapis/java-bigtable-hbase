@@ -11,6 +11,7 @@
         <module>bigtable-download-deps</module>
         <module>bigtable-grpc-interface</module>
         <module>bigtable-hbase</module>
+        <module>bigtable-hbase-integration-tests</module>
     </modules>
 
     <properties>

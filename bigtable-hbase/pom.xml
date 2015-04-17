@@ -22,147 +22,6 @@
         <bigtable.grpc.repo.fullpath>${project.basedir}/../${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
     </properties>
 
-    <profiles>
-        <profile>
-            <id>hbaseLocalMiniClusterTest</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>api-integration-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>none</phase>
-                            </execution>
-                            <execution>
-                                <id>local-hbase-cluster-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>integration-test</phase>
-                                <configuration>
-                                    <includes>
-                                        <include>**/IntegrationTests.java</include>
-                                    </includes>
-                                    <reportNameSuffix>local-mini-cluster</reportNameSuffix>
-                                    <classpathDependencyExcludes>
-                                        <!-- Shading makes including this work when deploying to a cluster.
-                                        Including non-shaded items on the classpath makes this test in particular
-                                        unhappy. -->
-                                        <classpathDependencyExclude>${stubby.driver.group}:${stubby.driver.artifact}</classpathDependencyExclude>
-                                    </classpathDependencyExcludes>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>anviltopGapTest</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>api-integration-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>none</phase>
-                            </execution>
-                            <execution>
-                                <id>api-gap-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>integration-test</phase>
-                                <configuration>
-                                    <!-- ALPN is needed for SSL engine rewrites and the stubby driver for its version of guava -->
-                                    <!-- to enable netty logging, include:
-                                    -Djava.util.logging.config.file=src/test/resources/logging.properties
-                                    -->
-                                    <argLine>
-                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
-                                    </argLine>
-                                    <classpathDependencyExcludes>
-                                        <!-- protobuf and netty are included in the grpc-interface jar -->
-                                        <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
-                                        <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
-                                        <classpathDependencyExclude>com.google.guava:guava</classpathDependencyExclude>
-                                    </classpathDependencyExcludes>
-                                    <forkCount>1</forkCount>
-                                    <includes>
-                                        <include>**/IntegrationTestsGap.java</include>
-                                    </includes>
-                                    <reportNameSuffix>bigtable-server</reportNameSuffix>
-                                    <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>clusterApiTest</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>api-integration-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>none</phase>
-                            </execution>
-                            <execution>
-                                <id>cluster-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>integration-test</phase>
-                                <configuration>
-                                    <!-- ALPN is needed for SSL engine rewrites and the stubby driver for its version of guava -->
-                                    <!-- to enable netty logging, include:
-                                    -Djava.util.logging.config.file=src/test/resources/logging.properties
-                                    -->
-                                    <argLine>
-                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
-                                    </argLine>
-                                    <classpathDependencyExcludes>
-                                        <!-- protobuf and netty are included in the grpc-interface jar -->
-                                        <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
-                                        <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
-                                        <classpathDependencyExclude>com.google.guava:guava</classpathDependencyExclude>
-                                    </classpathDependencyExcludes>
-                                    <forkCount>1</forkCount>
-                                    <includes>
-                                        <include>**/TestClusterAPI.java</include>
-                                    </includes>
-                                    <reportNameSuffix>bigtable-server</reportNameSuffix>
-                                    <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
     <dependencies>
         <dependency>
             <groupId>bigtable-client</groupId>
@@ -290,27 +149,7 @@
                         </goals>
                         <configuration>
                             <excludes>
-                                <exclude>**/IntegrationTests.java</exclude>
-                                <exclude>**/TestAppend.java</exclude>
-                                <exclude>**/TestBasicOps.java</exclude>
-                                <exclude>**/TestBatch.java</exclude>
-                                <exclude>**/TestBufferedMutator.java</exclude>
-                                <exclude>**/TestCheckAndMutate.java</exclude>
-                                <exclude>**/TestColumnFamilyAdmin.java</exclude>
                                 <exclude>**/TestClusterAPI.java</exclude>
-                                <exclude>**/TestCreateTable.java</exclude>
-                                <exclude>**/TestDisableTable.java</exclude>
-                                <exclude>**/TestDelete.java</exclude>
-                                <exclude>**/TestDurability.java</exclude>
-                                <exclude>**/TestFilters.java</exclude>
-                                <exclude>**/TestGet.java</exclude>
-                                <exclude>**/TestGetTable.java</exclude>
-                                <exclude>**/TestImport.java</exclude>
-                                <exclude>**/TestIncrement.java</exclude>
-                                <exclude>**/TestListTables.java</exclude>
-                                <exclude>**/TestPut.java</exclude>
-                                <exclude>**/TestScan.java</exclude>
-                                <exclude>**/TestTimestamp.java</exclude>
                             </excludes>
                             <classpathDependencyExcludes>
                                 <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
@@ -340,7 +179,7 @@
                             </classpathDependencyExcludes>
                             <forkCount>1</forkCount>
                             <includes>
-                                <include>**/IntegrationTestsNoKnownGap.java</include>
+                                <include>**/TestClusterAPI.java</include>
                             </includes>
                             <reportNameSuffix>bigtable-server</reportNameSuffix>
                             <systemPropertyVariables>
