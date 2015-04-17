@@ -17,13 +17,13 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-import com.google.api.client.util.Strings;
 import com.google.common.base.Preconditions;
 
 @RunWith(Suite.class)
@@ -76,13 +76,15 @@ public class IntegrationTests {
           AbstractTest.class.getClassLoader().getResourceAsStream(extraResources);
       if (resourceStream != null) {
         configuration.addResource(resourceStream);
+      } else {
+        Assert.fail(extraResources + " was not found");
       }
     }
   }
 
   protected static boolean useMiniCluster() {
-    return Strings.isNullOrEmpty(
-        BASE_CONFIGURATION.get(HConnection.HBASE_CLIENT_CONNECTION_IMPL, ""));
+    String value = BASE_CONFIGURATION.get(HConnection.HBASE_CLIENT_CONNECTION_IMPL, "");
+    return value == null || value.isEmpty();
   }
 
   protected static boolean isBigtable() {

@@ -25,8 +25,6 @@ import org.junit.runners.model.Statement;
 
 import java.io.IOException;
 
-import javax.validation.constraints.NotNull;
-
 public abstract class AbstractTest {
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
@@ -87,7 +85,7 @@ public abstract class AbstractTest {
     protected final byte[] qualifier;
     protected final byte[] value;
 
-    public QualifierValue(@NotNull byte[] qualifier, @NotNull byte[] value) {
+    public QualifierValue(byte[] qualifier, byte[] value) {
       this.qualifier = qualifier;
       this.value = value;
     }
