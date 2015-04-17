@@ -378,6 +378,7 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
+                                    <include>bigtable-client:*</include>
                                     <include>${stubby.driver.group}:*</include>
                                     <include>com.google.api-client:*</include>
                                     <include>com.google.http-client:*</include>
