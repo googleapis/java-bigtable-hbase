@@ -69,7 +69,6 @@ import com.google.cloud.bigtable.hbase.adapters.ScanProtoAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
-import com.google.cloud.hadoop.hbase.Driver.Operation;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;

@@ -22,7 +22,6 @@ import org.apache.hadoop.hbase.client.BigtableConnection;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.ExecutorServiceFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -30,9 +29,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Static methods to convert an instance of {@link Configuration}
@@ -237,17 +236,11 @@ public class BigtableOptionsFactory {
       throw new IOException("Failed to acquire credential.", gse);
     }
 
-    EventLoopGroup elg = new NioEventLoopGroup(0, new ExecutorServiceFactory() {
-      @Override
-      public ExecutorService newExecutorService(int parallelism) {
-        return Executors.newFixedThreadPool(
-            parallelism,
-            new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build());
-      }
-    });
-    optionsBuilder.setCustomEventLoopGroup(elg);
+    ThreadFactory threadFactory = new ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build();
+    EventLoopGroup elg = new NioEventLoopGroup(0, threadFactory);
+   optionsBuilder.setCustomEventLoopGroup(elg);
 
     ScheduledExecutorService retryExecutor =
         Executors.newScheduledThreadPool(

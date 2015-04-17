@@ -11,26 +11,11 @@
     <artifactId>bigtable-hbase</artifactId>
     <packaging>jar</packaging>
 
-    <repositories>
-        <repository>
-            <id>repo</id>
-            <url>file://${bigtable.grpc.repo.fullpath}</url>
-        </repository>
-    </repositories>
-
-    <properties>
-        <bigtable.grpc.repo.fullpath>${project.basedir}/../${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>bigtable-client</groupId>
             <artifactId>bigtable-grpc-interface</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${stubby.driver.group}</groupId>
-            <artifactId>${stubby.driver.artifact}</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -218,11 +203,16 @@
                             <artifactSet>
                                 <includes>
                                     <include>bigtable-client:*</include>
-                                    <include>${stubby.driver.group}:*</include>
                                     <include>com.google.api-client:*</include>
+                                    <include>com.google.auth:*</include>
+                                    <include>com.google.guava:*</include>
                                     <include>com.google.http-client:*</include>
                                     <include>com.google.oauth-client:*</include>
+                                    <include>com.google.protobuf:*</include>
+                                    <include>com.twitter:hpack</include>
                                     <include>com.fasterxml.jackson.core:*</include>
+                                    <include>io.netty:*</include>
+                                    <include>io.grpc:*</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
