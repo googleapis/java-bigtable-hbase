@@ -21,16 +21,6 @@ public class TransportOptions {
   }
 
   /**
-   * Temporary class that mimics the old signature of available transport implementations.
-   * 
-   * TODO(sduskis): Remove this once github is updated.
-   */
-  @Deprecated
-  public static class AnviltopTransports {
-    public static final BigtableTransports HTTP2_NETTY_TLS = BigtableTransports.HTTP2_NETTY_TLS;
-  }
-
-  /**
    * Creates a SslContext.
    */
   public interface SslContextFactory {

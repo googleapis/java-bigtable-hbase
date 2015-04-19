@@ -1,4 +1,4 @@
-anviltop-client
+bigtable-client
 ===============
 
 HBase client extension to access Bigtable.
