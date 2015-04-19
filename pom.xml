@@ -255,9 +255,9 @@
     </dependencyManagement>
 
     <scm>
-        <connection>scm:git:https://github.com/GoogleCloudPlatform/anviltop-client.git</connection>
-        <url>scm:git:https://github.com/GoogleCloudPlatform/anviltop-client.git</url>
-        <developerConnection>scm:git:https://github.com/GoogleCloudPlatform/anviltop-client.git</developerConnection>
+        <connection>scm:git:https://github.com/GoogleCloudPlatform/bigtable-client.git</connection>
+        <url>scm:git:https://github.com/GoogleCloudPlatform/bigtable-client.git</url>
+        <developerConnection>scm:git:https://github.com/GoogleCloudPlatform/bigtable-client.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 

@@ -68,7 +68,7 @@ public class BigtableChannels {
       final ChannelOptions channelOptions, final ExecutorService executor, boolean createPool) {
     Preconditions.checkArgument(
         transportOptions.getTransport() == TransportOptions.BigtableTransports.HTTP2_NETTY_TLS,
-        "Anviltop requires the NETTY_TLS transport.");
+        "Bigtable requires the NETTY_TLS transport.");
 
     int channelCount = channelOptions.getChannelCount();
     long timeoutMs = channelOptions.getTimeoutMs();
