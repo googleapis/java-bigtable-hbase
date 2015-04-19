@@ -2,7 +2,7 @@
 
 Please follow the following steps when contributing code to this project.
 
-1. Fork a copy of the project to your own account, work from there, and submit a pull request back to the master branch under GoogleCloudPlatform/anviltop-client when you are ready to submit.
+1. Fork a copy of the project to your own account, work from there, and submit a pull request back to the master branch under GoogleCloudPlatform/bigtable-client when you are ready to submit.
 2. Please keep all submissions a reasonable size.  Try not to add multiple features in the same PR.
 3. Add the following header to every Java file:
 
