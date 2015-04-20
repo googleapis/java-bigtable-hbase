@@ -40,7 +40,7 @@
                         </goals>
                         <configuration>
                             <shadeTestJar>true</shadeTestJar>
-                            <shadedArtifactAttached>try</shadedArtifactAttached>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>shaded</shadedClassifierName>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
                             <artifactSet>

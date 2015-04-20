@@ -240,7 +240,7 @@ public class BigtableOptionsFactory {
         .setDaemon(true)
         .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build();
     EventLoopGroup elg = new NioEventLoopGroup(0, threadFactory);
-   optionsBuilder.setCustomEventLoopGroup(elg);
+    optionsBuilder.setCustomEventLoopGroup(elg);
 
     ScheduledExecutorService retryExecutor =
         Executors.newScheduledThreadPool(
