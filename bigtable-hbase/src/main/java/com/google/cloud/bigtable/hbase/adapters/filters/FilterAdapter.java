@@ -13,6 +13,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.RandomRowFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
@@ -53,6 +54,8 @@ public class FilterAdapter {
         FirstKeyOnlyFilter.class, new FirstKeyOnlyFilterAdapter());
     adapter.addFilterAdapter(
         ColumnCountGetFilter.class, new ColumnCountGetFilterAdapter());
+    adapter.addFilterAdapter(
+        RandomRowFilter.class, new RandomRowFilterAdapter());
 
     // Passing the FilterAdapter in to the FilterListAdapter is a bit
     // unfortunate, but makes adapting the FilterList's subfilters simpler.
