@@ -1241,8 +1241,8 @@ public class TestFilters extends AbstractTest {
     Result[] results = scanner.next(100);
 
     Assert.assertTrue(
-        "Using p=0.5, expected half of added rows.",
-        40 <= results.length && results.length <= 60);
+        String.format("Using p=0.5, expected half of added rows, found %s", results.length),
+        25 <= results.length && results.length <= 75);
   }
 
   @Test
