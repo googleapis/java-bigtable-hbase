@@ -81,11 +81,9 @@ public class TestClusterAPI {
     List<Cluster> clusters = getClusters(client, projectId);
 
     // cleanup any old clusters
-    boolean createCluster = true;
     for (Cluster cluster : clusters) {
       if (cluster.getName().contains(TEST_CLUSTER_ID)) {
         dropCluster(client, cluster.getName());
-        // createCluster = false;
       }
     }
 
@@ -93,10 +91,8 @@ public class TestClusterAPI {
     String fullyQualifiedZoneName = selectZone(zoneList);
     String clusterId = fullyQualifiedZoneName + "/clusters/" + TEST_CLUSTER_ID;
 
-    if (createCluster) {
-      Cluster cluster = createACluster(client, fullyQualifiedZoneName, TEST_CLUSTER_ID);
-      waitForOperation(client, cluster.getCurrentOperation().getName(), MAX_WAIT_SECONDS);
-    }
+    Cluster cluster = createACluster(client, fullyQualifiedZoneName, TEST_CLUSTER_ID);
+    waitForOperation(client, cluster.getCurrentOperation().getName(), MAX_WAIT_SECONDS);
 
     Configuration newConfig = newConfiguration(config, clusterId);
     TableName autoDeletedTableName =
@@ -183,9 +179,15 @@ public class TestClusterAPI {
 
   private Cluster createACluster(BigtableClusterAdminClient client, String zoneName,
       String clusterId) {
-    CreateClusterRequest request =
-        CreateClusterRequest.newBuilder().setName(zoneName).setClusterId(clusterId)
-            .setCluster(Cluster.newBuilder().setServeNodes(1).build()).build();
+    Cluster cluster = Cluster.newBuilder()
+        .setDisplayName(clusterId)
+        .setServeNodes(3)
+        .build();
+    CreateClusterRequest request = CreateClusterRequest.newBuilder()
+        .setName(zoneName)
+        .setClusterId(clusterId)
+        .setCluster(cluster)
+        .build();
     return client.createCluster(request);
   }
 
