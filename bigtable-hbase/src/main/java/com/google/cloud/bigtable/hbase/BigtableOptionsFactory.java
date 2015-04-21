@@ -47,9 +47,14 @@ public class BigtableOptionsFactory {
 
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
   public static final int DEFAULT_BIGTABLE_PORT = 443;
-  public static final String BIGTABLE_CLUSTER_ADMIN_HOST_KEY = "google.bigtable.cluster.admin.endpoint.host";
+  public static final String BIGTABLE_CLUSTER_ADMIN_HOST_KEY =
+      "google.bigtable.cluster.admin.endpoint.host";
+  public static final String BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT =
+      "bigtableclusteradmin.googleapis.com";
   public static final String BIGTABLE_ADMIN_HOST_KEY = "google.bigtable.admin.endpoint.host";
+  public static final String BIGTABLE_ADMIN_HOST_DEFAULT = "bigtabletableadmin.googleapis.com";
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
+  public static final String BIGTABLE_HOST_DEFAULT = "bigtable.googleapis.com";
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
   public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
   public static final String ZONE_KEY = "google.bigtable.zone.name";
@@ -157,7 +162,7 @@ public class BigtableOptionsFactory {
       overrideIpAddress = InetAddress.getByName(overrideIp);
     }
 
-    String host = configuration.get(BIGTABLE_HOST_KEY);
+    String host = configuration.get(BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(host),
         String.format("API endpoint host must be supplied via %s", BIGTABLE_HOST_KEY));
@@ -169,13 +174,14 @@ public class BigtableOptionsFactory {
       optionsBuilder.setHost(InetAddress.getByAddress(host, overrideIpAddress.getAddress()));
     }
 
-    String adminHost = configuration.get(BIGTABLE_ADMIN_HOST_KEY);
+    String adminHost = configuration.get(BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT);
     if (Strings.isNullOrEmpty(adminHost)) {
       LOG.debug("Admin endpoint host not configured, assuming we should use data endpoint.");
       adminHost = host;
     }
 
-    String clusterAdminHost = configuration.get(BIGTABLE_CLUSTER_ADMIN_HOST_KEY);
+    String clusterAdminHost = configuration.get(
+        BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT);
     if (Strings.isNullOrEmpty(adminHost)) {
       // Most environments don't need cluster admin.
       LOG.debug("Cluster Admin endpoint host not configured.");
