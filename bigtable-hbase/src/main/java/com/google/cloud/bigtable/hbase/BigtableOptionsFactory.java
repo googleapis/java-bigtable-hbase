@@ -98,11 +98,6 @@ public class BigtableOptionsFactory {
   public static final String ENABLE_GRPC_RETRIES_KEY = "google.bigtable.grpc.retry.enable";
   public static final boolean ENABLE_GRPC_RETRIES_DEFAULT = true;
 
-  // TODO(angusdavis): Remove this key once fully transitioned
-  public static final String ENABLE_PROTO_FILTER_LANGUAGE_KEY =
-      "google.bigtable.tmp.proto.filter.language.enable";
-  public static final boolean ENABLE_PROTO_FILTER_LANGUAGE_DEFAULT = true;
-
   /**
    * The number of grpc channels to open for asynchronous processing such as puts.
    */

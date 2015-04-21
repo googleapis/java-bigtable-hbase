@@ -53,8 +53,6 @@ import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
-import com.google.cloud.bigtable.hbase.adapters.FilterAdapter;
-import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetProtoAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
@@ -62,10 +60,10 @@ import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanProtoAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
+import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.hadoop.hbase.BigtableClient;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -90,6 +88,7 @@ public class BigtableTable implements Table {
   protected final RowMutationsAdapter rowMutationsAdapter;
   protected final OperationAdapter<Scan, ReadRowsRequest.Builder> scanAdapter;
   protected final OperationAdapter<Get, ReadRowsRequest.Builder> getAdapter;
+  protected final FilterAdapter filterAdapter;
   protected final BigtableResultScannerAdapter bigtableResultScannerAdapter =
       new BigtableResultScannerAdapter(rowAdapter);
   protected final Configuration configuration;
@@ -121,8 +120,9 @@ public class BigtableTable implements Table {
     rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
     this.executorService = MoreExecutors.listeningDecorator(executorService);
     this.metadataSetter = TableMetadataSetter.from(tableName, options);
-    this.scanAdapter = createScanAdapter(configuration);
-    this.getAdapter = createGetAdapter(configuration);
+    this.filterAdapter = FilterAdapter.buildAdapter();
+    this.scanAdapter = new ScanProtoAdapter(this.filterAdapter);
+    this.getAdapter = new GetProtoAdapter(new ScanProtoAdapter(this.filterAdapter));
     this.batchExecutor = new BatchExecutor(
         client,
         options,
@@ -568,21 +568,11 @@ public class BigtableTable implements Table {
       throw new DoNotRetryIOException("Action's getRow must match the passed row");
     }
 
-    if (!CompareFilter.CompareOp.EQUAL.equals(compareOp)
-        && !CompareFilter.CompareOp.NOT_EQUAL.equals(compareOp)) {
-      throw new UnsupportedOperationException(
-          String.format(
-              "compareOp values other than EQUAL or NOT_EQUAL are not supported in "
-                  + "checkAndMutate. Found %s",
-              compareOp));
-    }
-
     CheckAndMutateRowRequest.Builder requestBuilder =
         CheckAndMutateRowRequest.newBuilder();
 
     metadataSetter.setMetadata(requestBuilder);
 
-    // TODO(angusdavis): Migrate to proto filter language:
     requestBuilder.setRowKey(ByteString.copyFrom(row));
     Scan scan = new Scan().addColumn(family, qualifier);
     scan.setMaxVersions(1);
@@ -592,22 +582,19 @@ public class BigtableTable implements Table {
       // if there is any cell. We don't actually want an extra filter for either of these cases,
       // but we do need to invert the compare op.
       if (CompareFilter.CompareOp.EQUAL.equals(compareOp)) {
-        compareOp = CompareFilter.CompareOp.NOT_EQUAL;
+        requestBuilder.addAllFalseMutations(mutations);
       } else if (CompareFilter.CompareOp.NOT_EQUAL.equals(compareOp)) {
-        compareOp = CompareFilter.CompareOp.EQUAL;
+        requestBuilder.addAllTrueMutations(mutations);
       }
     } else {
-      scan.setFilter(new ValueFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(value)));
-    }
-    requestBuilder.setDEPRECATEDField3Bytes(
-        ByteString.copyFrom(new ScanAdapter(new FilterAdapter()).buildFilterByteString(scan)));
-
-    if (CompareFilter.CompareOp.EQUAL.equals(compareOp)) {
+      ValueFilter valueFilter =
+          new ValueFilter(compareOp, new BinaryComparator(value));
+      scan.setFilter(valueFilter);
       requestBuilder.addAllTrueMutations(mutations);
-    } else if (CompareFilter.CompareOp.NOT_EQUAL.equals(compareOp)) {
-      requestBuilder.addAllFalseMutations(mutations);
     }
-
+    requestBuilder.setPredicateFilter(
+        new ScanProtoAdapter(filterAdapter)
+            .buildFilter(scan));
     return requestBuilder;
   }
 
@@ -630,28 +617,5 @@ public class BigtableTable implements Table {
         projectId,
         tableName,
         Bytes.toStringBinary(rowKey));
-  }
-
-  private OperationAdapter<Scan, ReadRowsRequest.Builder> createScanAdapter(Configuration conf) {
-    if (conf.getBoolean(
-        BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_KEY,
-        BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_DEFAULT)) {
-      // This ugly line goes away as soon as the original FilterAdapter is removed:
-      return new ScanProtoAdapter(
-          com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter.buildAdapter());
-    }
-    return new ScanAdapter(new FilterAdapter());
-  }
-
-  private OperationAdapter<Get, ReadRowsRequest.Builder> createGetAdapter(Configuration conf) {
-    if (conf.getBoolean(
-        BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_KEY,
-        BigtableOptionsFactory.ENABLE_PROTO_FILTER_LANGUAGE_DEFAULT)) {
-      // This ugly line goes away as soon as the original FilterAdapter is removed:
-      return new GetProtoAdapter(
-          new ScanProtoAdapter(
-              com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter.buildAdapter()));
-    }
-    return new GetAdapter(new ScanAdapter(new FilterAdapter()));
   }
 }
