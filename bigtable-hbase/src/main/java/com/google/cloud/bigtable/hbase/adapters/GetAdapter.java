@@ -9,12 +9,11 @@ import org.apache.hadoop.hbase.client.Scan;
 /**
  * A Get adapter that transform the Get into a ReadRowsRequest using the proto-based
  * filter language.
- * TODO(angusdavis): Rename this GetAdapter when fully implemented.
  */
-public class GetProtoAdapter implements OperationAdapter<Get, ReadRowsRequest.Builder> {
+public class GetAdapter implements OperationAdapter<Get, ReadRowsRequest.Builder> {
 
-  protected final ScanProtoAdapter scanAdapter;
-  public GetProtoAdapter(ScanProtoAdapter scanAdapter) {
+  protected final ScanAdapter scanAdapter;
+  public GetAdapter(ScanAdapter scanAdapter) {
     this.scanAdapter = scanAdapter;
   }
 

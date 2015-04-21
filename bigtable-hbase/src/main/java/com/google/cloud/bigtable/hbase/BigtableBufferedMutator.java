@@ -37,13 +37,13 @@ import org.apache.hadoop.hbase.client.Row;
 
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
-import com.google.cloud.bigtable.hbase.adapters.GetProtoAdapter;
+import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ScanProtoAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
@@ -195,8 +195,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
     DeleteAdapter deleteAdapter = new DeleteAdapter();
     PutAdapter putAdapter = new PutAdapter(configuration);
-    ScanProtoAdapter scanAdapter = new ScanProtoAdapter(FilterAdapter.buildAdapter());
-    GetProtoAdapter getAdapter = new GetProtoAdapter(scanAdapter);
+    ScanAdapter scanAdapter = new ScanAdapter(FilterAdapter.buildAdapter());
+    GetAdapter getAdapter = new GetAdapter(scanAdapter);
 
     RowMutationsAdapter rowMutationsAdapter =
         new RowMutationsAdapter(

@@ -17,12 +17,12 @@ import java.io.IOException;
 
 /**
  * Lightweight tests for the ScanAdapter. Many of the methods, such as filter building are
- * already tested in {@link TestGetProtoAdapter}.
+ * already tested in {@link TestGetAdapter}.
  */
 @RunWith(JUnit4.class)
-public class TestScanProtoAdapter {
+public class TestScanAdapter {
 
-  private ScanProtoAdapter scanAdapter = new ScanProtoAdapter(FilterAdapter.buildAdapter());
+  private ScanAdapter scanAdapter = new ScanAdapter(FilterAdapter.buildAdapter());
 
   @Test
   public void testStartAndEndKeysAreSet() {

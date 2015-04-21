@@ -53,14 +53,14 @@ import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
-import com.google.cloud.bigtable.hbase.adapters.GetProtoAdapter;
+import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ScanProtoAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
@@ -121,8 +121,8 @@ public class BigtableTable implements Table {
     this.executorService = MoreExecutors.listeningDecorator(executorService);
     this.metadataSetter = TableMetadataSetter.from(tableName, options);
     this.filterAdapter = FilterAdapter.buildAdapter();
-    this.scanAdapter = new ScanProtoAdapter(this.filterAdapter);
-    this.getAdapter = new GetProtoAdapter(new ScanProtoAdapter(this.filterAdapter));
+    this.scanAdapter = new ScanAdapter(this.filterAdapter);
+    this.getAdapter = new GetAdapter(new ScanAdapter(this.filterAdapter));
     this.batchExecutor = new BatchExecutor(
         client,
         options,
@@ -593,7 +593,7 @@ public class BigtableTable implements Table {
       requestBuilder.addAllTrueMutations(mutations);
     }
     requestBuilder.setPredicateFilter(
-        new ScanProtoAdapter(filterAdapter)
+        new ScanAdapter(filterAdapter)
             .buildFilter(scan));
     return requestBuilder;
   }

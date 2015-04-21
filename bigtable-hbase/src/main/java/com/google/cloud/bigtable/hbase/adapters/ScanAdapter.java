@@ -24,15 +24,14 @@ import java.util.NavigableSet;
 
 /**
  * An adapter for Scan operation that makes use of the proto filter language.
- * TODO(angusdavis): Rename this to 'ScanAdapter' when we've fully migrated.
  */
-public class ScanProtoAdapter
+public class ScanAdapter
     implements OperationAdapter<Scan, ReadRowsRequest.Builder> {
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
 
   private final FilterAdapter filterAdapter;
-  public ScanProtoAdapter(FilterAdapter filterAdapter) {
+  public ScanAdapter(FilterAdapter filterAdapter) {
     this.filterAdapter = filterAdapter;
   }
 

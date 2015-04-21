@@ -19,13 +19,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Unit tests for the {@link GetProtoAdapter}
+ * Unit tests for the {@link GetAdapter}
  */
 @RunWith(JUnit4.class)
-public class TestGetProtoAdapter {
+public class TestGetAdapter {
 
-  private GetProtoAdapter getAdapter =
-      new GetProtoAdapter(new ScanProtoAdapter(FilterAdapter.buildAdapter()));
+  private GetAdapter getAdapter =
+      new GetAdapter(new ScanAdapter(FilterAdapter.buildAdapter()));
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   private Get makeValidGet(byte[] rowKey) throws IOException {
