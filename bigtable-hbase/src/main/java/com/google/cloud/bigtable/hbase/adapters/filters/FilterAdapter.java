@@ -14,6 +14,7 @@ import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.RandomRowFilter;
+import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
@@ -46,8 +47,12 @@ public class FilterAdapter {
         TimestampsFilter.class, new TimestampsFilterAdapter());
     adapter.addFilterAdapter(
         ValueFilter.class, new ValueFilterAdapter());
+    SingleColumnValueFilterAdapter scvfa = new SingleColumnValueFilterAdapter();
     adapter.addFilterAdapter(
-        SingleColumnValueFilter.class, new SingleColumnValueFilterAdapter());
+        SingleColumnValueFilter.class, scvfa);
+    adapter.addFilterAdapter(
+        SingleColumnValueExcludeFilter.class,
+        new SingleColumnValueExcludeFilterAdapter(scvfa));
     adapter.addFilterAdapter(
         ColumnPaginationFilter.class, new ColumnPaginationFilterAdapter());
     adapter.addFilterAdapter(

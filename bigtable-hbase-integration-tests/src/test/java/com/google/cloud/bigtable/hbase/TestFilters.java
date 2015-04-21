@@ -44,6 +44,7 @@ import org.apache.hadoop.hbase.filter.NullComparator;
 import org.apache.hadoop.hbase.filter.RandomRowFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
+import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.SubstringComparator;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
@@ -1242,6 +1243,43 @@ public class TestFilters extends AbstractTest {
     Assert.assertTrue(
         "Using p=0.5, expected half of added rows.",
         40 <= results.length && results.length <= 60);
+  }
+
+  @Test
+  public void testSingleColumnValueExcludeFilter() throws IOException {
+    byte[] rowKey1 = dataHelper.randomData("scvfrk1");
+    byte[] qualifier1 = dataHelper.randomData("scvfq1");
+    byte[] qualifier2 = dataHelper.randomData("scvfq2");
+    byte[] value1_1 = dataHelper.randomData("val1.1");
+    byte[] value2_1 = dataHelper.randomData("val2.1");
+
+    Table table = getConnection().getTable(TABLE_NAME);
+    Put put = new Put(rowKey1);
+    put.addColumn(COLUMN_FAMILY, qualifier1, value1_1);
+    put.addColumn(COLUMN_FAMILY, qualifier2, value2_1);
+    table.put(put);
+
+    Scan scan = new Scan();
+    scan.addFamily(COLUMN_FAMILY);
+
+    SingleColumnValueExcludeFilter excludeFilter =
+        new SingleColumnValueExcludeFilter(COLUMN_FAMILY, qualifier1, CompareOp.EQUAL, value1_1);
+    excludeFilter.setFilterIfMissing(true);
+    excludeFilter.setLatestVersionOnly(false);
+
+    scan.setFilter(excludeFilter);
+
+    ResultScanner scanner = table.getScanner(scan);
+    Result[] results = scanner.next(10);
+    // Expect 1 row with value2_1 in qualifier2:
+    Assert.assertEquals(1, results.length);
+    Result result = results[0];
+    Assert.assertEquals(1, result.size());
+    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, qualifier2));
+    Assert.assertFalse(result.containsColumn(COLUMN_FAMILY, qualifier1));
+    Assert.assertArrayEquals(
+        value2_1,
+        CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qualifier2)));
   }
 
   private Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
