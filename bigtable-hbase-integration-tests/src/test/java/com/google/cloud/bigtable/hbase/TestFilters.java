@@ -41,6 +41,7 @@ import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.NullComparator;
+import org.apache.hadoop.hbase.filter.RandomRowFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
@@ -53,6 +54,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -1213,6 +1215,33 @@ public class TestFilters extends AbstractTest {
     scan.setFilter(filter);
     results = table.getScanner(scan).next(10);
     Assert.assertEquals(0, results.length);
+  }
+
+  @Test
+  public void testRandomRowFilter() throws IOException {
+    byte[][] rowKeys = dataHelper.randomData("trandA", 100);
+    byte[] qualifier = dataHelper.randomData("trandq-");
+    byte[] value = dataHelper.randomData("value-");
+    Table table = getConnection().getTable(TABLE_NAME);
+
+    List<Put> puts = new ArrayList<>();
+    for (byte[] rowKey : rowKeys) {
+      Put put = new Put(rowKey);
+      put.addColumn(COLUMN_FAMILY, qualifier, value);
+      puts.add(put);
+    }
+    table.put(puts);
+    Scan scan = new Scan();
+    scan.setStartRow(Bytes.toBytes("trandA"));
+    scan.setStopRow(Bytes.toBytes("trandB"));
+    RandomRowFilter filter = new RandomRowFilter(0.5f);
+    scan.setFilter(filter);
+    ResultScanner scanner = table.getScanner(scan);
+    Result[] results = scanner.next(100);
+
+    Assert.assertTrue(
+        "Using p=0.5, expected half of added rows.",
+        40 <= results.length && results.length <= 60);
   }
 
   private Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
