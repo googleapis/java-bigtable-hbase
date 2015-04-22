@@ -151,10 +151,6 @@
                             <excludes>
                                 <exclude>**/TestClusterAPI.java</exclude>
                             </excludes>
-                            <classpathDependencyExcludes>
-                                <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
-                                <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
-                            </classpathDependencyExcludes>
                         </configuration>
                     </execution>
                     <execution>
@@ -174,8 +170,6 @@
                             <!-- protobuf and netty are included in the grpc-interface jar -->
                             <classpathDependencyExcludes>
                                 <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
-                                <classpathDependencyExclude>com.google.protobuf:protobuf-java</classpathDependencyExclude>
-                                <classpathDependencyExclude>com.google.guava:guava</classpathDependencyExclude>
                             </classpathDependencyExcludes>
                             <forkCount>1</forkCount>
                             <includes>
@@ -217,12 +211,18 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <include>bigtable-client:*</include>
                                     <include>${stubby.driver.group}:*</include>
+                                    <include>bigtable-client:*</include>
                                     <include>com.google.api-client:*</include>
+                                    <include>com.google.auth:*</include>
+                                    <include>com.google.guava:*</include>
                                     <include>com.google.http-client:*</include>
                                     <include>com.google.oauth-client:*</include>
+                                    <include>com.google.protobuf:*</include>
+                                    <include>com.twitter:hpack</include>
                                     <include>com.fasterxml.jackson.core:*</include>
+                                    <include>io.netty:*</include>
+                                    <include>io.grpc:*</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
