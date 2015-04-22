@@ -49,6 +49,9 @@ public class BigtableChannels {
   private static final String POST_RETRY_REPORT_ENTRY = "PostRetry";
   /** Number of threads to use to initiate retry calls */
   private static final int RETRY_THREAD_COUNT = 5;
+  
+  /** Number of seconds to wait for a termination before trying again. */
+  private static final int CHANNEL_TERMINATE_WAIT_SECONDS = 5;
 
   /**
    * Create a new Channel, optionally adding OAuth2 support.
@@ -116,6 +119,14 @@ public class BigtableChannels {
       @Override
       public void close() throws IOException {
         channelImpl.shutdown();
+        while (!channelImpl.isTerminated()) {
+          try {
+            channelImpl.awaitTerminated(CHANNEL_TERMINATE_WAIT_SECONDS, TimeUnit.SECONDS);
+          } catch (InterruptedException e) {
+            Thread.interrupted();
+            throw new IOException("Interrupted while sleeping for close", e);
+          }
+        }
       }
     }; 
   }
