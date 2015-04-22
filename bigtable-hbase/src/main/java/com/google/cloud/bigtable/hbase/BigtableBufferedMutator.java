@@ -69,8 +69,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private static final long WAIT_MILLIS = 250;
 
   // In flush, wait up to this number of milliseconds without any operations completing.  If
-  // this amount of time goes by without any updates, flush will throw an exception.
-  private static final long MAX_UNCHANGED_WAIT_MS = 30000;
+  // this amount of time goes by without any updates, flush will log a warning.  Flush()
+  // will still wait to complete.
+  private static final long INTERVAL_NO_SUCCESS_WARNING = 300000;
 
   /**
    * This class ensures that operations meet heap size and max RPC counts.  A wait will occur
@@ -97,16 +98,20 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
 
     public synchronized void waitUntilAllOperationsAreDone() throws InterruptedException {
+      boolean performedWarning = false;
       while(!pendingOperationsWithSize.isEmpty()) {
-        if (lastOperationChange + MAX_UNCHANGED_WAIT_MS < System.currentTimeMillis()) {
+        if (!performedWarning
+            && lastOperationChange + INTERVAL_NO_SUCCESS_WARNING < System.currentTimeMillis()) {
           long lastUpdated = (System.currentTimeMillis() - lastOperationChange) / 1000;
-          String message =
-              String.format("No operations completed within the last %d seconds."
-                  + "There are still %d operations in progress.", lastUpdated,
-                pendingOperationsWithSize.size());
-          throw new IllegalStateException(message);
+          LOG.warn("No operations completed within the last %d seconds."
+              + "There are still %d operations in progress.", lastUpdated,
+            pendingOperationsWithSize.size());
+          performedWarning = true;
         }
         wait(WAIT_MILLIS);
+      }
+      if (performedWarning) {
+        LOG.info("flush() completed");
       }
     }
 
