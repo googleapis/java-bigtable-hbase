@@ -14,6 +14,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
@@ -305,7 +307,13 @@ public class BigtableTable implements Table {
 
     CheckAndMutateRowRequest.Builder requestBuilder =
         makeConditionalMutationRequestBuilder(
-            row, family, qualifier, compareOp, value, put, putAdapter.adapt(put).getMutationsList());
+            row,
+            family,
+            qualifier,
+            compareOp,
+            value,
+            put.getRow(),
+            putAdapter.adapt(put).getMutationsList());
 
     try {
       CheckAndMutateRowResponse response =
@@ -365,7 +373,7 @@ public class BigtableTable implements Table {
             qualifier,
             compareOp,
             value,
-            delete,
+            delete.getRow(),
             deleteAdapter.adapt(delete).getMutationsList());
 
     try {
@@ -384,10 +392,38 @@ public class BigtableTable implements Table {
   }
 
   @Override
-  public boolean checkAndMutate(final byte [] row, final byte [] family, final byte [] qualifier,
-                                final CompareFilter.CompareOp compareOp, final byte [] value, final RowMutations rm)
+  public boolean checkAndMutate(
+      final byte [] row, final byte [] family, final byte [] qualifier,
+      final CompareFilter.CompareOp compareOp, final byte [] value, final RowMutations rm)
       throws IOException {
-    throw new UnsupportedOperationException();  // TODO
+    List<Mutation> adaptedMutations = new ArrayList<>();
+    for (org.apache.hadoop.hbase.client.Mutation mut : rm.getMutations()) {
+      adaptedMutations.addAll(mutationAdapter.adapt(mut).getMutationsList());
+    }
+
+    CheckAndMutateRowRequest.Builder requestBuilder =
+        makeConditionalMutationRequestBuilder(
+            row,
+            family,
+            qualifier,
+            compareOp,
+            value,
+            rm.getRow(),
+            adaptedMutations);
+
+    try {
+      CheckAndMutateRowResponse response =
+          client.checkAndMutateRow(requestBuilder.build());
+      return wasMutationApplied(requestBuilder, response);
+    } catch (Throwable throwable) {
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "checkAndMutate",
+              options.getProjectId(),
+              tableName.getQualifierAsString(),
+              row),
+          throwable);
+    }
   }
 
   @Override
@@ -561,10 +597,11 @@ public class BigtableTable implements Table {
       byte[] qualifier,
       CompareFilter.CompareOp compareOp,
       byte[] value,
-      Row action,
+      byte[] actionRow,
       List<com.google.bigtable.v1.Mutation> mutations) throws IOException {
 
-    if (!Arrays.equals(action.getRow(), row)) {
+    if (!Arrays.equals(actionRow, row)) {
+      // The following odd exception message is for compat with HBase.
       throw new DoNotRetryIOException("Action's getRow must match the passed row");
     }
 
