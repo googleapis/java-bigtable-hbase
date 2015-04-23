@@ -15,18 +15,14 @@
     </modules>
 
     <properties>
-        <!-- As soon as stubby is public, this goes away -->
-       <stubby.driver.group>com.google.bigtable.hbase</stubby.driver.group>
-       <stubby.driver.artifact>bigtable-grpc-interface</stubby.driver.artifact>
-       <stubby.driver.version>0.7-SNAPSHOT</stubby.driver.version>
-       <bigtable.grpc.repo.dir>bigtable-grpc-repo</bigtable.grpc.repo.dir>
-
        <hbase.version>1.0.0</hbase.version>
        <hadoop.version>2.4.1</hadoop.version>
        <compat.module>hbase-hadoop2-compat</compat.module>
        <junit.version>4.11</junit.version>
        <mockito.version>1.9.5</mockito.version>
        <compileSource>1.7</compileSource>
+       <protobuff-java.version>3.0.0-alpha-2</protobuff-java.version>
+       <grpc.version>0.1.0-SNAPSHOT</grpc.version>
 
        <!-- For Netty HTTP2/TLS negotiation -->
        <alpn.version>7.0.0.v20140317</alpn.version>
@@ -43,6 +39,10 @@
         <repository>
             <id>Apache Snapshots Repository</id>
             <url>https://repository.apache.org/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>Sonatype Snapshots Repository</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </repository>
     </repositories>
 
@@ -81,22 +81,10 @@
                 <scope>test</scope>
             </dependency>
 
-            <!-- Google Cloud Bigtable API dependencies -->
             <dependency>
                 <groupId>org.mortbay.jetty.alpn</groupId>
                 <artifactId>alpn-boot</artifactId>
                 <version>${alpn.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${stubby.driver.group}</groupId>
-                <artifactId>${stubby.driver.artifact}</artifactId>
-                <version>${stubby.driver.version}</version>
-            </dependency>
-            <!-- Somewhat recent, but we will still shade the version shipped with grpc -->
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-all</artifactId>
-                <version>5.0.0.Alpha2</version>
             </dependency>
 
             <!-- OAuth token acquisition dependencies -->
