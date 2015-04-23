@@ -5,14 +5,11 @@ import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.bigtable.v1.ValueRange;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.ValueFilter;
-import org.apache.hadoop.hbase.protobuf.generated.ComparatorProtos;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -21,11 +18,6 @@ import java.io.IOException;
  * Adapt a single HBase ValueFilter.
  */
 public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
-
-  private static final RowFilter ACCEPT_ALL_FILTER =
-      RowFilter.newBuilder()
-          .setFamilyNameRegexFilter(ReaderExpressionHelper.ALL_FAMILIES)
-          .build();
 
   private ReaderExpressionHelper helper = new ReaderExpressionHelper();
 
@@ -113,7 +105,7 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,
         // include an always-match filter.
-        return ACCEPT_ALL_FILTER;
+        return FilterAdapterHelper.ACCEPT_ALL_FILTER;
       default:
         throw new IllegalStateException(
             String.format("Cannot handle unknown compare op %s", compareOp));
@@ -122,22 +114,14 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
 
   private RowFilter adaptRegexStringComparator(
       CompareOp compareOp, RegexStringComparator comparator) {
-    // This is unfortunate. The RegexStringComparator does not expose pattern
-    // via a getter.
-    ComparatorProtos.RegexStringComparator comparatorProto = null;
-    try {
-       comparatorProto =
-          ComparatorProtos.RegexStringComparator.parseFrom(comparator.toByteArray());
-    } catch (InvalidProtocolBufferException e) {
-      throw new IllegalArgumentException("Failed to convert comparator to proto form.");
-    }
+    String pattern = FilterAdapterHelper.extractRegexPattern(comparator);
     switch (compareOp) {
       case EQUAL:
         return RowFilter.newBuilder()
-            .setValueRegexFilter(ByteString.copyFromUtf8(comparatorProto.getPattern()))
+            .setValueRegexFilter(ByteString.copyFromUtf8(pattern))
             .build();
       case NO_OP:
-        return ACCEPT_ALL_FILTER;
+        return FilterAdapterHelper.ACCEPT_ALL_FILTER;
       case LESS:
       case LESS_OR_EQUAL:
       case NOT_EQUAL:

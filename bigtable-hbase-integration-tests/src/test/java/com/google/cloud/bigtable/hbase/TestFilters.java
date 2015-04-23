@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.NullComparator;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
+import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.RandomRowFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
@@ -1308,6 +1309,71 @@ public class TestFilters extends AbstractTest {
     for (int i = 0; i < rowCount; i++) {
       Assert.assertArrayEquals(rowKeys[i], results[i].getRow());
     }
+  }
+
+  @Test
+  public void testQualifierFilter() throws IOException {
+    byte[] rowKey = dataHelper.randomData("testQaulifierFilter");
+    byte[] qualA = dataHelper.randomData("qualA");
+    byte[] qualAValue = dataHelper.randomData("qualA-value");
+    byte[] qualB = dataHelper.randomData("qualB");
+    byte[] qualBValue = dataHelper.randomData("qualB-value");
+    byte[] qualC = dataHelper.randomData("qualC");
+    byte[] qualCValue = dataHelper.randomData("qualC-value");
+    Table table = getConnection().getTable(TABLE_NAME);
+    Put put = new Put(rowKey);
+    put.addColumn(COLUMN_FAMILY, qualA, qualAValue);
+    put.addColumn(COLUMN_FAMILY, qualB, qualBValue);
+    put.addColumn(COLUMN_FAMILY, qualC, qualCValue);
+    table.put(put);
+
+    Get get = new Get(rowKey).addFamily(COLUMN_FAMILY);
+
+    QualifierFilter equalsQualA =
+        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA));
+    get.setFilter(equalsQualA);
+    Result result = table.get(get);
+    Assert.assertEquals(1, result.size());
+
+    QualifierFilter greaterThanQualA =
+        new QualifierFilter(CompareOp.GREATER, new BinaryComparator(qualA));
+    get.setFilter(greaterThanQualA);
+    result = table.get(get);
+    Assert.assertEquals(2, result.size());
+
+    QualifierFilter greaterThanEqualQualA =
+        new QualifierFilter(
+            CompareOp.GREATER_OR_EQUAL, new BinaryComparator(qualA));
+    get.setFilter(greaterThanEqualQualA);
+    result = table.get(get);
+    Assert.assertEquals(3, result.size());
+
+    QualifierFilter lessThanQualB =
+        new QualifierFilter(CompareOp.LESS, new BinaryComparator(qualB));
+    get.setFilter(lessThanQualB);
+    result = table.get(get);
+    Assert.assertEquals(1, result.size());
+
+    QualifierFilter lessThanEqualQualB =
+        new QualifierFilter(CompareOp.LESS_OR_EQUAL, new BinaryComparator(qualB));
+    get.setFilter(lessThanEqualQualB);
+    result = table.get(get);
+    Assert.assertEquals(2, result.size());
+
+    QualifierFilter notEqualQualB =
+        new QualifierFilter(CompareOp.NOT_EQUAL, new BinaryComparator(qualB));
+    get.setFilter(notEqualQualB);
+    result = table.get(get);
+    Assert.assertEquals(2, result.size());
+    Assert.assertArrayEquals(qualAValue, result.getValue(COLUMN_FAMILY, qualA));
+    Assert.assertArrayEquals(qualCValue, result.getValue(COLUMN_FAMILY, qualC));
+
+    // \\C* is not supported by Java regex.
+    QualifierFilter regexQualFilter =
+        new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("qualA.*"));
+    get.setFilter(regexQualFilter);
+    result = table.get(get);
+    Assert.assertEquals(1, result.size());
   }
 
   private Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
