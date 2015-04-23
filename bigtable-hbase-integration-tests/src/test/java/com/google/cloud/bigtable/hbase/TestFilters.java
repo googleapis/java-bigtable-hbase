@@ -41,6 +41,7 @@ import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.NullComparator;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.RandomRowFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
@@ -1280,6 +1281,33 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(
         value2_1,
         CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qualifier2)));
+  }
+
+  @Test
+  public void testPrefixFilter() throws IOException {
+    String prefix = "testPrefixFilter";
+    int rowCount = 10;
+    byte[][] rowKeys = dataHelper.randomData(prefix, rowCount);
+    List<Put> puts = new ArrayList<>();
+    for (byte[] rowKey : rowKeys) {
+      puts.add(
+          new Put(rowKey)
+              .addColumn(COLUMN_FAMILY, Bytes.toBytes("q1"), Bytes.toBytes("val1")));
+    }
+    Table table = getConnection().getTable(TABLE_NAME);
+    table.put(puts);
+
+    PrefixFilter filter = new PrefixFilter(Bytes.toBytes(prefix));
+    Scan scan = new Scan().addFamily(COLUMN_FAMILY).setFilter(filter);
+    ResultScanner scanner = table.getScanner(scan);
+    Result[] results = scanner.next(rowCount + 2);
+    Assert.assertEquals(rowCount, results.length);
+    Arrays.sort(rowKeys, Bytes.BYTES_COMPARATOR);
+    // Both results[] and rowKeys[] should be in the same order now. Iterate over both
+    // and verify rowkeys.
+    for (int i = 0; i < rowCount; i++) {
+      Assert.assertArrayEquals(rowKeys[i], results[i].getRow());
+    }
   }
 
   private Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
