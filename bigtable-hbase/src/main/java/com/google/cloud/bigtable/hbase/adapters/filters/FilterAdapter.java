@@ -45,9 +45,11 @@ public class FilterAdapter {
         MultipleColumnPrefixFilter.class, new MultipleColumnPrefixFilterAdapter());
     adapter.addFilterAdapter(
         TimestampsFilter.class, new TimestampsFilterAdapter());
+    ValueFilterAdapter valueFilterAdapter = new ValueFilterAdapter();
     adapter.addFilterAdapter(
-        ValueFilter.class, new ValueFilterAdapter());
-    SingleColumnValueFilterAdapter scvfa = new SingleColumnValueFilterAdapter();
+        ValueFilter.class, valueFilterAdapter);
+    SingleColumnValueFilterAdapter scvfa =
+        new SingleColumnValueFilterAdapter(valueFilterAdapter);
     adapter.addFilterAdapter(
         SingleColumnValueFilter.class, scvfa);
     adapter.addFilterAdapter(
