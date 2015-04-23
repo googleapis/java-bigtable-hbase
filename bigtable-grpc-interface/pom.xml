@@ -31,14 +31,9 @@
     <dependencies>
         <dependency>
             <groupId>bigtable-client</groupId>
-            <artifactId>bigtable-download-deps</artifactId>
+            <artifactId>bigtable-protos</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>${stubby.driver.group}</groupId>
-            <artifactId>${stubby.driver.artifact}</artifactId>
-        </dependency>
-
 
         <dependency>
             <groupId>com.google.protobuf</groupId>

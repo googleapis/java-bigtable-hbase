@@ -29,10 +29,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>${stubby.driver.group}</groupId>
-            <artifactId>${stubby.driver.artifact}</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
             <type>test-jar</type>
@@ -211,7 +207,6 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <include>${stubby.driver.group}:*</include>
                                     <include>bigtable-client:*</include>
                                     <include>com.google.api-client:*</include>
                                     <include>com.google.auth:*</include>
