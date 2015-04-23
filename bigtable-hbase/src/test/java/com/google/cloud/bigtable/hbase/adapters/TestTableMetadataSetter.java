@@ -9,19 +9,17 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestTableMetadataSetter {
 
-  ClusterMetadataSetter clusterMetadataSetter =
-      new ClusterMetadataSetter("some-project", "some-zone", "some-cluster");
-
-  String tableName = "some-table";
-  TableMetadataSetter tableMetadataSetter =
-      new TableMetadataSetter(TableName.valueOf(tableName), "some-project", "some-zone",
-          "some-cluster");
-
   @Test
   public void testGoodHBaseName() {
-    String hbaseName =
-        clusterMetadataSetter.toHBaseTableName(tableMetadataSetter.getFormattedV1TableName());
+    ClusterMetadataSetter clusterMetadataSetter =
+        new ClusterMetadataSetter("some-project", "some-zone", "some-cluster");
 
-    Assert.assertEquals(tableName, hbaseName);
+    String bigtableTbleName =
+        TableMetadataSetter.getName("some-project", "some-zone", "some-cluster",
+          TableName.valueOf("some-table"));
+
+    String hbaseName = clusterMetadataSetter.toHBaseTableName(bigtableTbleName);
+
+    Assert.assertEquals("some-table", hbaseName);
   }
 }

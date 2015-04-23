@@ -1,6 +1,9 @@
 package org.apache.hadoop.hbase.client;
 
 
+import io.grpc.Status;
+import io.grpc.Status.OperationRuntimeException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,8 +46,10 @@ import com.google.bigtable.admin.table.v1.CreateTableRequest;
 import com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest;
 import com.google.bigtable.admin.table.v1.DeleteTableRequest;
 import com.google.bigtable.admin.table.v1.DeleteTableRequest.Builder;
+import com.google.bigtable.admin.table.v1.GetTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
 import com.google.bigtable.admin.table.v1.ListTablesResponse;
+import com.google.bigtable.admin.table.v1.Table;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.Logger;
 import com.google.cloud.bigtable.hbase.adapters.ClusterMetadataSetter;
@@ -53,6 +58,7 @@ import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
 import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.hadoop.hbase.BigtableAdminClient;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
 public class BigtableAdmin implements Admin {
 
@@ -130,31 +136,22 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public HTableDescriptor[] listTables() throws IOException {
-    return listTables(".*");
+    // NOTE: We don't have systables.
+    return getTableDescriptors(listTableNames());
+  }
+
+  private HTableDescriptor[] getTableDescriptors(TableName[] tableNames) throws IOException {
+    HTableDescriptor[] response = new HTableDescriptor[tableNames.length];
+    for (int i = 0; i < tableNames.length; i++) {
+      response[i] = getTableDescriptor(tableNames[i]);
+    }
+    return response;
   }
 
   @Override
   public HTableDescriptor[] listTables(Pattern pattern) throws IOException {
     // NOTE: We don't have systables.
-    ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-    clusterMetadataSetter.setMetadata(builder);
-    ListTablesResponse response;
-    try {
-      response = bigtableAdminClient.listTables(builder.build());
-    } catch (Throwable throwable) {
-      throw new IOException("Failed to listTables", throwable);
-    }
-    List<HTableDescriptor> result = new ArrayList<>();
-    for (com.google.bigtable.admin.table.v1.Table table : response.getTablesList()) {
-      // Convert the fully qualified Bigtable table name into an HBase table name before
-      // comparing against the pattern.
-      HTableDescriptor tableDescriptor = tableAdapter.adapt(table);
-      if (pattern.matcher(tableDescriptor.getTableName().getNameAsString()).matches()) {
-        result.add(tableDescriptor);
-      }
-    }
-
-    return result.toArray(new HTableDescriptor[result.size()]);
+    return getTableDescriptors(listTableNames(pattern));
   }
 
   @Override
@@ -173,15 +170,15 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public TableName[] listTableNames(Pattern pattern) throws IOException {
-    return getTableNames(listTables(pattern));
-  }
+    List<TableName> result = new ArrayList<>();
 
-  private TableName[] getTableNames(HTableDescriptor[] tableList) {
-    TableName[] tableNames = new TableName[tableList.length];
-    for (int i=0; i<tableList.length; i++) {
-      tableNames[i] = tableList[i].getTableName();
+    for (TableName tableName : listTableNames()) {
+      if (pattern.matcher(tableName.getNameAsString()).matches()) {
+        result.add(tableName);
+      }
     }
-    return tableNames;
+
+    return result.toArray(new TableName[result.size()]);
   }
 
   @Override
@@ -204,10 +201,43 @@ public class BigtableAdmin implements Admin {
   }
 
   @Override
+  /**
+   * Lists all table names for the cluster provided in the configuration.
+   */
   public TableName[] listTableNames() throws IOException {
-    return getTableNames(listTables());
+    return asTableNames(requestTableList().getTablesList());
   }
 
+  /**
+   * Request a list of Tables for the cluster.  The {@link Table}s in the response will only
+   * contain fully qualified Bigtable table names, and not column family information.
+   */
+  private ListTablesResponse requestTableList() throws IOException {
+    try {
+      ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
+      clusterMetadataSetter.setMetadata(builder);
+      return bigtableAdminClient.listTables(builder.build());
+    } catch (Throwable throwable) {
+      throw new IOException("Failed to listTables", throwable);
+    }
+  }
+
+  /**
+   * Convert a list of Bigtable {@link Table}s to hbase {@link TableName}.
+   */
+  private TableName[] asTableNames(List<Table> tablesList) {
+    TableName[] result = new TableName[tablesList.size()];
+    for (int i = 0; i < tablesList.size(); i++) {
+      // This will contain things like project, zone and cluster.
+      String bigtableFullTableName = tablesList.get(i).getName();
+
+      // Strip out the Bigtable info.
+      String name = clusterMetadataSetter.toHBaseTableName(bigtableFullTableName);
+
+      result[i] = TableName.valueOf(name);
+    }
+    return result;
+  }
 
   @Override
   public HTableDescriptor getTableDescriptor(TableName tableName)
@@ -216,11 +246,21 @@ public class BigtableAdmin implements Admin {
       return null;
     }
 
-    HTableDescriptor[] response = listTables(tableName.getNameAsString());
-    if (response.length > 0) {
-      return response[0];
-    } else {
-      throw new TableNotFoundException(tableName.getNameAsString());
+    String bigtableTableName = TableMetadataSetter.getBigtableName(tableName, options);
+    GetTableRequest request = GetTableRequest.newBuilder().setName(bigtableTableName).build();
+
+    try {
+      return tableAdapter.adapt(bigtableAdminClient.getTable(request));
+    } catch (UncheckedExecutionException e) {
+      if (e.getCause() != null && e.getCause() instanceof OperationRuntimeException) {
+        Status status = ((OperationRuntimeException) e.getCause()).getStatus();
+        if (status.getCode() == Status.NOT_FOUND.getCode()) {
+          throw new TableNotFoundException(tableName);
+        }
+      }
+      throw new IOException("Failed to getTableDescriptor() on " + tableName, e);
+    } catch (Throwable throwable) {
+      throw new IOException("Failed to getTableDescriptor() on " + tableName, throwable);
     }
   }
 
