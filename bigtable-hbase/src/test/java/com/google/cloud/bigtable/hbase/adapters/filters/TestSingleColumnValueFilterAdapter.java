@@ -19,7 +19,8 @@ import java.io.IOException;
 @RunWith(JUnit4.class)
 public class TestSingleColumnValueFilterAdapter  {
 
-  SingleColumnValueFilterAdapter adapter = new SingleColumnValueFilterAdapter();
+  SingleColumnValueFilterAdapter adapter =
+      new SingleColumnValueFilterAdapter(new ValueFilterAdapter());
 
   @Test
   public void latestVersionOnlyComparisonsAreDone() throws IOException {
