@@ -22,7 +22,10 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -229,6 +232,57 @@ public class TestCheckAndMutate extends AbstractTest {
     expectedException.expectMessage("Action's getRow must match the passed row");
     table.checkAndDelete(rowKey2, COLUMN_FAMILY, qual, null, delete);
 
+    table.close();
+  }
+
+  @Test
+  public void testCheckAndMutate() throws IOException {
+    // Initialize
+    Table table = getConnection().getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("rowKey-");
+    byte[] qualCheck = dataHelper.randomData("qualifier-");
+    byte[] qualPut = dataHelper.randomData("qualifier-");
+    byte[] qualDelete = dataHelper.randomData("qualifier-");
+    byte[] valuePut = dataHelper.randomData("value-");
+    byte[] valueCheck = dataHelper.randomData("value-");
+
+    // Delete all versions of a column if the latest version matches
+    Delete delete = new Delete(rowKey).addColumns(COLUMN_FAMILY, qualDelete);
+    RowMutations rm = new RowMutations(rowKey);
+    rm.add(new Put(rowKey).addColumn(COLUMN_FAMILY, qualPut, valuePut));
+    rm.add(new Delete(rowKey).addColumns(COLUMN_FAMILY, qualDelete));
+
+    boolean success = table.checkAndMutate(
+        rowKey, COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valueCheck, rm);
+    Assert.assertFalse("Column doesn't exist.  Should fail.", success);
+    success = table.checkAndMutate(rowKey, COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, null, rm);
+    Assert.assertTrue(success);
+
+    // Add a value now
+    Put put = new Put(rowKey)
+        .addColumn(COLUMN_FAMILY, qualCheck, valueCheck)
+        .addColumn(COLUMN_FAMILY, qualDelete, Bytes.toBytes("todelete"));
+    table.put(put);
+    // Fail on null check, now there's a value there
+    success = table.checkAndMutate(rowKey, COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, null, rm);
+    Assert.assertFalse("Null check should fail", success);
+    // valuePut is in qualPut and not in qualCheck so this will fail:
+    success = table.checkAndMutate(
+        rowKey, COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valuePut, rm);
+    Assert.assertFalse("Wrong value should fail", success);
+    success = table.checkAndMutate(
+        rowKey, COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valueCheck, rm);
+    Assert.assertTrue(success);
+
+    Result row = table.get(new Get(rowKey).addFamily(COLUMN_FAMILY));
+    // QualCheck and QualPut should exist
+    Assert.assertEquals(2, row.size());
+    Assert.assertFalse(
+        "QualDelete should be deleted",
+        row.containsColumn(COLUMN_FAMILY, qualDelete));
+    Assert.assertTrue(
+        "QualPut should exist",
+        row.containsColumn(COLUMN_FAMILY, qualPut));
     table.close();
   }
 }
