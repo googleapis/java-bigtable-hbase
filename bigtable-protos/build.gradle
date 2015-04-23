@@ -1,0 +1,28 @@
+apply plugin: 'protobuf'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.1.0'
+    }
+}
+
+dependencies {
+    compile 'io.grpc:grpc-all:0.1.0-SNAPSHOT',
+            'org.glassfish:javax.json:1.0.4'
+}
+
+protocDep = 'com.google.protobuf:protoc:3.0.0-alpha-2'
+protobufNativeCodeGenPluginDeps = ["java_plugin:io.grpc:protoc-gen-grpc-java:0.1.0-SNAPSHOT"]
+generatedFileDir =  "${projectDir}/target/generated-sources"

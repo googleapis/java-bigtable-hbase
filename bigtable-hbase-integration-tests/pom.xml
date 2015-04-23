@@ -52,7 +52,7 @@
                                 </goals>
                                 <phase>integration-test</phase>
                                 <configuration>
-                                    <!-- ALPN is needed for SSL engine rewrites and the stubby driver for its version of guava -->
+                                    <!-- ALPN is needed for SSL engine rewrites -->
                                     <!-- to enable netty logging, include:
                                     -Djava.util.logging.config.file=src/test/resources/logging.properties
                                     -->
@@ -103,7 +103,7 @@
                                 </goals>
                                 <phase>integration-test</phase>
                                 <configuration>
-                                    <!-- ALPN is needed for SSL engine rewrites and the stubby driver for its version of guava -->
+                                    <!-- ALPN is needed for SSL engine rewrites -->
                                     <!-- to enable netty logging, include:
                                     -Djava.util.logging.config.file=src/test/resources/logging.properties
                                     -->

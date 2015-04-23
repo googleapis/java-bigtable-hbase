@@ -11,39 +11,21 @@
     <artifactId>bigtable-grpc-interface</artifactId>
     <packaging>jar</packaging>
 
-    <repositories>
-        <repository>
-            <id>repo</id>
-            <url>file://${bigtable.grpc.repo.fullpath}</url>
-        </repository>
-        <repository>
-            <id>Sonatype Snapshots Repository</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
-
     <properties>
-        <bigtable.grpc.repo.fullpath>${project.basedir}/../${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
-        <grpc.version>0.1.0-SNAPSHOT</grpc.version>
         <netty.version>4.1.0.Beta5-SNAPSHOT</netty.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>bigtable-client</groupId>
-            <artifactId>bigtable-download-deps</artifactId>
+            <artifactId>bigtable-protos</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>${stubby.driver.group}</groupId>
-            <artifactId>${stubby.driver.artifact}</artifactId>
-        </dependency>
-
 
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>3.0.0-alpha-2</version>
+            <version>${protobuff-java.version}</version>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
