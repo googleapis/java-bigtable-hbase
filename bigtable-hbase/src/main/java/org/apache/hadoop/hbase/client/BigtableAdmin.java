@@ -952,4 +952,10 @@ public class BigtableAdmin implements Admin {
   public void rollWALWriter(ServerName serverName) throws IOException, FailedLogCloseException {
     throw new UnsupportedOperationException("rollWALWriter");  // TODO
   }
+
+  @Override
+  public String toString() {
+    return String
+        .format("BigtableAdmin-0x%s. %s", Integer.toHexString(hashCode()), getConnection());
+  }
 }

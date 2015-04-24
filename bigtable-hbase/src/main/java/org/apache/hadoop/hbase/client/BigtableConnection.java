@@ -281,6 +281,13 @@ public class BigtableConnection implements Connection, Closeable {
     this.closed = true;
   }
 
+  @Override
+  public String toString() {
+    return String.format("BigtableConnection-0x%s.  Project: %s, Zone: %sm Cluster: %s",
+      Integer.toHexString(hashCode()), options.getProjectId(), options.getZone(),
+      options.getCluster());
+  }
+
   // Copied from org.apache.hadoop.hbase.client.HConnectionManager#getBatchPool()
   private ExecutorService getBatchPool() {
     if (batchPool == null) {

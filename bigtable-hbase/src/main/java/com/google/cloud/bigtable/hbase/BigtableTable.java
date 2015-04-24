@@ -579,6 +579,16 @@ public class BigtableTable implements Table {
     throw new UnsupportedOperationException();  // TODO
   }
 
+  @Override
+  public String toString() {
+    return String.format("BigtableTable-0x%s.  Table: %s, Project: %s, Zone: %sm Cluster: %s",
+        Integer.toHexString(hashCode()),
+        tableName,
+        options.getProjectId(),
+        options.getZone(),
+        options.getCluster());
+  }
+
   protected boolean wasMutationApplied(
       CheckAndMutateRowRequest.Builder requestBuilder,
       CheckAndMutateRowResponse response) {
