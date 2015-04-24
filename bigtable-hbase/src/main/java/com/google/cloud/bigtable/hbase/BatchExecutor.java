@@ -29,7 +29,7 @@ import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
-import com.google.cloud.hadoop.hbase.BigtableClient;
+import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;

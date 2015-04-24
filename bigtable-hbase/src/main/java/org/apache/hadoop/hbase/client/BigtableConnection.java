@@ -39,12 +39,12 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.Logger;
-import com.google.cloud.hadoop.hbase.BigtableAdminClient;
-import com.google.cloud.hadoop.hbase.BigtableAdminGrpcClient;
-import com.google.cloud.hadoop.hbase.BigtableClient;
-import com.google.cloud.hadoop.hbase.BigtableGrpcClient;
-import com.google.cloud.hadoop.hbase.ChannelOptions;
-import com.google.cloud.hadoop.hbase.TransportOptions;
+import com.google.cloud.bigtable.grpc.BigtableAdminClient;
+import com.google.cloud.bigtable.grpc.BigtableAdminGrpcClient;
+import com.google.cloud.bigtable.grpc.BigtableClient;
+import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
+import com.google.cloud.bigtable.grpc.ChannelOptions;
+import com.google.cloud.bigtable.grpc.TransportOptions;
 
 public class BigtableConnection implements Connection, Closeable {
   public static final String MAX_INFLIGHT_RPCS_KEY =

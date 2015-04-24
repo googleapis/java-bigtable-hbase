@@ -66,7 +66,7 @@ import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
-import com.google.cloud.hadoop.hbase.BigtableClient;
+import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
@@ -212,7 +212,7 @@ public class BigtableTable implements Table {
     metadataSetter.setMetadata(readRowsRequest);
 
     try {
-      com.google.cloud.hadoop.hbase.ResultScanner<com.google.bigtable.v1.Row> scanner =
+      com.google.cloud.bigtable.grpc.ResultScanner<com.google.bigtable.v1.Row> scanner =
           client.readRows(readRowsRequest.build());
       Result response = rowAdapter.adaptResponse(scanner.next());
       scanner.close();
@@ -243,7 +243,7 @@ public class BigtableTable implements Table {
     metadataSetter.setMetadata(request);
 
     try {
-      com.google.cloud.hadoop.hbase.ResultScanner<com.google.bigtable.v1.Row> scanner =
+      com.google.cloud.bigtable.grpc.ResultScanner<com.google.bigtable.v1.Row> scanner =
           client.readRows(request.build());
       return bigtableResultScannerAdapter.adapt(scanner);
     } catch (Throwable throwable) {

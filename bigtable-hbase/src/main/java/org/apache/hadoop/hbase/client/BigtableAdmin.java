@@ -57,7 +57,7 @@ import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
 import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
-import com.google.cloud.hadoop.hbase.BigtableAdminClient;
+import com.google.cloud.bigtable.grpc.BigtableAdminClient;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 public class BigtableAdmin implements Admin {
