@@ -5,9 +5,11 @@ import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
 import com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest;
 import com.google.bigtable.admin.table.v1.DeleteTableRequest;
+import com.google.bigtable.admin.table.v1.GetTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
 import com.google.bigtable.admin.table.v1.ListTablesResponse;
 import com.google.bigtable.admin.table.v1.RenameTableRequest;
+import com.google.bigtable.admin.table.v1.Table;
 
 import java.util.concurrent.ExecutorService;
 
@@ -49,6 +51,11 @@ public class BigtableAdminGrpcClient implements BigtableAdminClient {
   @Override
   public ListTablesResponse listTables(ListTablesRequest request) {
     return blockingStub.listTables(request);
+  }
+
+  @Override
+  public Table getTable(GetTableRequest request) {
+    return blockingStub.getTable(request);
   }
 
   @Override

@@ -4,9 +4,11 @@ import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
 import com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest;
 import com.google.bigtable.admin.table.v1.DeleteTableRequest;
+import com.google.bigtable.admin.table.v1.GetTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
 import com.google.bigtable.admin.table.v1.ListTablesResponse;
 import com.google.bigtable.admin.table.v1.RenameTableRequest;
+import com.google.bigtable.admin.table.v1.Table;
 
 /**
  * A client for the Cloud Bigtable Table Admin API.
@@ -17,6 +19,11 @@ public interface BigtableAdminClient extends AutoCloseable {
    * Lists the names of all tables served from a specified cluster.
    */
   ListTablesResponse listTables(ListTablesRequest request);
+
+  /**
+   * Gets the details of a table.
+   */
+  Table getTable(GetTableRequest request);
 
   /**
    * Creates a new table, to be served from a specified cluster.
