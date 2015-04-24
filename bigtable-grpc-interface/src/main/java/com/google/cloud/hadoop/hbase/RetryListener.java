@@ -1,5 +1,7 @@
 package com.google.cloud.hadoop.hbase;
 
+import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
+
 import io.grpc.Call;
 import io.grpc.Metadata;
 import io.grpc.Status;
@@ -55,7 +57,14 @@ class RetryListener<RequestT, ResponseT> extends Call.Listener<ResponseT> {
     delegate.onClose(status, trailers);
   }
 
-  private static boolean isRetriableStatus(Status.Code code) {
-    return code == Status.Code.INTERNAL;
+  @VisibleForTesting
+  static boolean isRetriableStatus(Status.Code code) {
+    switch (code) {
+      case INTERNAL:
+      case UNAVAILABLE:
+        return true;
+      default:
+        return false;
+    }
   }
 }
