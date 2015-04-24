@@ -283,7 +283,7 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public String toString() {
-    return String.format("BigtableConnection-0x%s.  Project: %s, Zone: %sm Cluster: %s",
+    return String.format("BigtableConnection-0x%s.  Project: %s, Zone: %s, Cluster: %s",
       Integer.toHexString(hashCode()), options.getProjectId(), options.getZone(),
       options.getCluster());
   }
