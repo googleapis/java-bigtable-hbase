@@ -11,7 +11,8 @@ import java.io.OutputStream;
  * // TODO(AngusDavis): Move more ScanAdapter and FilterAdapter writing logic to here.
  */
 public class ReaderExpressionHelper {
-
+  public static final String ANY_BYTE = "\\C";
+  public static final byte[] ANY_BYTE_BYTES = Bytes.toBytes(ANY_BYTE);
   public static final String ALL_QUALIFIERS = "\\C*";
   public static final byte[] ALL_QUALIFIERS_BYTES = Bytes.toBytes(ALL_QUALIFIERS);
   public static final String ALL_FAMILIES = ".*";
@@ -75,7 +76,7 @@ public class ReaderExpressionHelper {
   /**
    * An OutputStream that performs RE2:QuoteMeta as bytes are written.
    */
-  static class QuoteMetaOutputStream extends OutputStream {
+  public static class QuoteMetaOutputStream extends OutputStream {
     protected final OutputStream delegate;
 
     public QuoteMetaOutputStream(OutputStream delegate) {
@@ -116,7 +117,7 @@ public class ReaderExpressionHelper {
    * An OutputStream that performs bigtable reader filter expression language quoting of
    * '@', '{', and '}' by pre-pending a '@' to each.
    */
-  protected static class QuoteFilterExpressionStream extends OutputStream {
+  public static class QuoteFilterExpressionStream extends OutputStream {
     protected final OutputStream delegate;
 
     public QuoteFilterExpressionStream(OutputStream delegate) {
