@@ -1,22 +1,16 @@
 package com.google.cloud.hadoop.hbase;
 
 import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
 
 import io.grpc.Call;
 import io.grpc.Metadata;
 import io.grpc.Status;
-
-import java.util.Set;
 
 /**
  * A Call.Listener that listens for lower-level Call failures and if detected, attempts
  * to retry the call if the call supports retrying.
  */
 class RetryListener<RequestT, ResponseT> extends Call.Listener<ResponseT> {
-
-  public static final Set<Status.Code> RETRIABLE_STATUSES =
-      ImmutableSet.of(Status.Code.INTERNAL, Status.Code.UNAVAILABLE);
 
   private final RetryingCall<RequestT, ResponseT> retryingCall;
   private final RequestT payload;
@@ -65,6 +59,12 @@ class RetryListener<RequestT, ResponseT> extends Call.Listener<ResponseT> {
 
   @VisibleForTesting
   static boolean isRetriableStatus(Status.Code code) {
-    return RETRIABLE_STATUSES.contains(code);
+    switch (code) {
+      case INTERNAL:
+      case UNAVAILABLE:
+        return true;
+      default:
+        return false;
+    }
   }
 }
