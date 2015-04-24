@@ -5,8 +5,8 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
-import com.google.cloud.hadoop.hbase.BigtableClient;
-import com.google.cloud.hadoop.hbase.ResultScanner;
+import com.google.cloud.bigtable.grpc.BigtableClient;
+import com.google.cloud.bigtable.grpc.ResultScanner;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
