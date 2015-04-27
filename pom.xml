@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>bigtable-client</groupId>
+    <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client</artifactId>
     <version>0.1.5-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -243,9 +243,9 @@
     </dependencyManagement>
 
     <scm>
-        <connection>scm:git:https://github.com/GoogleCloudPlatform/bigtable-client.git</connection>
-        <url>scm:git:https://github.com/GoogleCloudPlatform/bigtable-client.git</url>
-        <developerConnection>scm:git:https://github.com/GoogleCloudPlatform/bigtable-client.git</developerConnection>
+        <connection>scm:git:https://github.com/GoogleCloudPlatform/cloud-bigtable-client.git</connection>
+        <url>scm:git:https://github.com/GoogleCloudPlatform/cloud-bigtable-client.git</url>
+        <developerConnection>scm:git:https://github.com/GoogleCloudPlatform/cloud-bigtable-client.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
