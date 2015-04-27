@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>bigtable-client</groupId>
+        <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-client</artifactId>
         <version>0.1.5-SNAPSHOT</version>
     </parent>
@@ -24,7 +24,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>bigtable-client</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-grpc-interface</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -207,7 +207,7 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <include>bigtable-client:*</include>
+                                    <include>${project.groupId}:*</include>
                                     <include>com.google.api-client:*</include>
                                     <include>com.google.auth:*</include>
                                     <include>com.google.guava:*</include>
