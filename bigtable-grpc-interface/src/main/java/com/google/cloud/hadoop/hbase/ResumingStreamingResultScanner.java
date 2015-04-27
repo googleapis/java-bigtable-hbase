@@ -69,7 +69,8 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
         return result;
       } catch (IOExceptionWithStatus ioe) {
         Status status = ioe.getStatus();
-        if (status.getCode() == Status.INTERNAL.getCode()) {
+        if (status.getCode() == Status.INTERNAL.getCode()
+            || status.getCode() == Status.UNAVAILABLE.getCode()) {
           long nextBackOff = currentBackoff.nextBackOffMillis();
           if (nextBackOff == BackOff.STOP) {
             throw new BigtableRetriesExhaustedException(
