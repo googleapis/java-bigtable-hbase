@@ -15,7 +15,7 @@
     </modules>
 
     <properties>
-       <hbase.version>1.0.0</hbase.version>
+       <hbase.version>1.0.1</hbase.version>
        <hadoop.version>2.4.1</hadoop.version>
        <compat.module>hbase-hadoop2-compat</compat.module>
        <junit.version>4.11</junit.version>
@@ -43,6 +43,10 @@
         <repository>
             <id>Sonatype Snapshots Repository</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>HBase 1.0.1 temporary repo</id>
+            <url>https://repository.apache.org/content/repositories/orgapachehbase-1075</url>
         </repository>
     </repositories>
 
