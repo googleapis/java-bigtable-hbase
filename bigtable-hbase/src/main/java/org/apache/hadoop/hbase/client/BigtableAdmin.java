@@ -9,6 +9,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -298,17 +299,20 @@ public class BigtableAdmin implements Admin {
   @Override
   public void createTable(HTableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions)
       throws IOException {
-    throw new UnsupportedOperationException("createTable");  // TODO
+    LOG.warn("Creating table, but ignoring parameters startKey, endKey and numRegions");
+    createTable(desc);
   }
 
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
-    throw new UnsupportedOperationException("createTable");  // TODO
+    LOG.warn("Creating table, but ignoring parameters splitKeys");
+    createTable(desc);
   }
 
   @Override
   public void createTableAsync(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
-    throw new UnsupportedOperationException("createTableAsync");  // TODO
+    LOG.warn("Creating the table synchronously");
+    createTable(desc);
   }
 
   @Override
@@ -328,12 +332,21 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public HTableDescriptor[] deleteTables(String regex) throws IOException {
-    throw new UnsupportedOperationException("deleteTables");  // TODO
+    return deleteTables(Pattern.compile(regex));
   }
 
   @Override
   public HTableDescriptor[] deleteTables(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("deleteTables");  // TODO
+    List<HTableDescriptor> failed = new LinkedList<HTableDescriptor>();
+    for (HTableDescriptor table : listTables(pattern)) {
+      try {
+        deleteTable(table.getTableName());
+      } catch (IOException ex) {
+        LOG.info("Failed to delete table " + table.getTableName(), ex);
+        failed.add(table);
+      }
+    }
+    return failed.toArray(new HTableDescriptor[failed.size()]);
   }
 
   @Override
@@ -450,7 +463,7 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public boolean isTableAvailable(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("isTableAvailable");  // TODO
+    return tableExists(tableName);
   }
 
   @Override
@@ -680,7 +693,7 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public void split(TableName tableName, byte[] bytes) throws IOException {
-    throw new UnsupportedOperationException("split");  // TODO
+    LOG.info("split is a no-op");
   }
 
   @Override

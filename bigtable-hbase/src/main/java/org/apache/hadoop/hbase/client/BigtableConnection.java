@@ -171,7 +171,7 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new BigtableTable(tableName, options, conf, client, pool);
+    return new BigtableTable(this, tableName, options, client, pool);
   }
 
   @Override

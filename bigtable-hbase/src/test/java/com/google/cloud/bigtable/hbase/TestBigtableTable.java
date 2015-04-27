@@ -12,6 +12,7 @@ import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.BigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -42,7 +43,10 @@ public class TestBigtableTable {
   public static final String TEST_ZONE = "testzone";
 
   @Mock
+  public BigtableConnection mockConnection;
+  @Mock
   public BigtableClient mockClient;
+
   public BigtableTable table;
 
   @Before
@@ -58,10 +62,12 @@ public class TestBigtableTable {
     builder.setZone(TEST_ZONE);
     builder.setCredential(null);
     BigtableOptions options = builder.build();
+    Configuration config = new Configuration();
+    Mockito.when(mockConnection.getConfiguration()).thenReturn(config);
     table = new BigtableTable(
+        mockConnection,
         TableName.valueOf(TEST_TABLE),
         options,
-        new Configuration(),
         mockClient,
         Executors.newCachedThreadPool());
   }
