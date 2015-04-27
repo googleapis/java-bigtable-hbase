@@ -5,6 +5,7 @@ import io.grpc.Status;
 import io.grpc.Status.OperationRuntimeException;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,6 +59,7 @@ import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
 import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.grpc.BigtableAdminClient;
+import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 public class BigtableAdmin implements Admin {
@@ -955,7 +957,13 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public String toString() {
-    return String
-        .format("BigtableAdmin-0x%s. %s", Integer.toHexString(hashCode()), getConnection());
+    InetAddress adminHost = options.getAdminHost();
+    return MoreObjects.toStringHelper(BigtableAdmin.class)
+        .add("connectionId", connection.getId())
+        .add("zone", options.getZone())
+        .add("project", options.getProjectId())
+        .add("cluster", options.getCluster())
+        .add("adminHost", adminHost)
+        .toString();
   }
 }

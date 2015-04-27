@@ -14,6 +14,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.BigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
@@ -67,6 +69,7 @@ import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.grpc.BigtableClient;
+import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
@@ -581,12 +584,14 @@ public class BigtableTable implements Table {
 
   @Override
   public String toString() {
-    return String.format("BigtableTable-0x%s.  Table: %s, Project: %s, Zone: %sm Cluster: %s",
-        Integer.toHexString(hashCode()),
-        tableName,
-        options.getProjectId(),
-        options.getZone(),
-        options.getCluster());
+    InetAddress host = options.getHost();
+    return MoreObjects.toStringHelper(BigtableTable.class)
+        .add("hashCode", "0x" + Integer.toHexString(hashCode()))
+        .add("zone", options.getZone())
+        .add("project", options.getProjectId())
+        .add("cluster", options.getCluster())
+        .add("host", host)
+        .toString();
   }
 
   protected boolean wasMutationApplied(
