@@ -27,6 +27,7 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.BigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
@@ -53,9 +54,9 @@ import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
@@ -63,12 +64,12 @@ import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
+import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
-import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -96,27 +97,25 @@ public class BigtableTable implements Table {
   protected final FilterAdapter filterAdapter;
   protected final BigtableResultScannerAdapter bigtableResultScannerAdapter =
       new BigtableResultScannerAdapter(rowAdapter);
-  protected final Configuration configuration;
   protected final BatchExecutor batchExecutor;
   private final ListeningExecutorService executorService;
   private final TableMetadataSetter metadataSetter;
 
+  private final BigtableConnection bigtableConnection;
+
   /**
    * Constructed by BigtableConnection
-   *
-   * @param tableName
-   * @param client
    */
-  public BigtableTable(TableName tableName,
+  public BigtableTable(BigtableConnection bigtableConnection,
+      TableName tableName,
       BigtableOptions options,
-      Configuration configuration,
       BigtableClient client,
       ExecutorService executorService) {
+    this.bigtableConnection = bigtableConnection;
     this.tableName = tableName;
     this.options = options;
     this.client = client;
-    this.configuration = configuration;
-    putAdapter = new PutAdapter(configuration);
+    putAdapter = new PutAdapter(getConfiguration());
     mutationAdapter = new MutationAdapter(
         deleteAdapter,
         putAdapter,
@@ -148,8 +147,8 @@ public class BigtableTable implements Table {
   }
 
   @Override
-  public Configuration getConfiguration() {
-    return this.configuration;
+  public final Configuration getConfiguration() {
+    return this.bigtableConnection.getConfiguration();
   }
 
   public ExecutorService getPool(){
@@ -158,8 +157,9 @@ public class BigtableTable implements Table {
 
   @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
-    // TODO: Also include column family information
-    return new HTableDescriptor(tableName);
+    try (Admin admin = this.bigtableConnection.getAdmin()) {
+      return admin.getTableDescriptor(tableName);
+    }
   }
 
   @Override
