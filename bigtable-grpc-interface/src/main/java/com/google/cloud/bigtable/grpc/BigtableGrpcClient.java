@@ -1,5 +1,6 @@
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
@@ -340,5 +341,10 @@ public class BigtableGrpcClient implements BigtableClient {
   @Override
   public void close() throws IOException {
     bigtableChannel.close();
+  }
+
+  @VisibleForTesting
+  BigtableGrpcClientOptions getClientOptions() {
+    return clientOptions;
   }
 }
