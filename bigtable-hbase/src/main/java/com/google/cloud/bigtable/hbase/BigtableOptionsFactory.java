@@ -103,6 +103,14 @@ public class BigtableOptionsFactory {
   public static final boolean ENABLE_GRPC_RETRIES_DEFAULT = true;
 
   /**
+   * Key to set to a boolean flag indicating whether or not to retry grpc call on deadline exceeded.
+   * This flag is used only when grpc retries is enabled.
+   */
+  public static final String ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY =
+      "google.bigtable.grpc.retry.deadlineexceeded.enable";
+  public static final boolean ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_DEFAULT = true;
+
+  /**
    * The number of grpc channels to open for asynchronous processing such as puts.
    */
   public static final String BIGTABLE_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
@@ -276,6 +284,11 @@ public class BigtableOptionsFactory {
         ENABLE_GRPC_RETRIES_KEY, ENABLE_GRPC_RETRIES_DEFAULT);
     LOG.debug("gRPC retries enabled: %s", enableRetries);
     optionsBuilder.setRetriesEnabled(enableRetries);
+
+    boolean retryOnDeadlineExceeded = configuration.getBoolean(
+        ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY, ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_DEFAULT);
+    LOG.debug("gRPC retry on deadline exceeded enabled: %s", retryOnDeadlineExceeded);
+    optionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
 
     int channelCount =
         configuration.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);

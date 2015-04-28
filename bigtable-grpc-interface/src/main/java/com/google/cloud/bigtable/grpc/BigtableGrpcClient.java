@@ -133,6 +133,7 @@ public class BigtableGrpcClient implements BigtableClient {
         new BigtableGrpcClientOptions.Builder();
     clientOptionsBuilder.getStreamingRetryOptionsBuilder()
         .setEnableRetries(unaryCallRetryOptions.enableRetries())
+        .setRetryOnDeadlineExceeded(unaryCallRetryOptions.retryOnDeadlineExceeded())
         .setInitialBackoffMillis(unaryCallRetryOptions.getInitialBackoffMillis())
         .setMaxElapsedBackoffMillis(unaryCallRetryOptions.getMaxElaspedBackoffMillis())
         .setBackoffMultiplier(unaryCallRetryOptions.getBackoffMultiplier());
