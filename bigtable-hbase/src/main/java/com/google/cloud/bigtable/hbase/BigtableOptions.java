@@ -15,6 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.api.client.util.Strings;
+import com.google.auth.Credentials;
+import com.google.cloud.bigtable.grpc.ChannelOptions;
+import com.google.cloud.bigtable.grpc.TransportOptions;
+import com.google.common.base.Preconditions;
+
+import org.apache.hadoop.hbase.ServerName;
+
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContext;
 
@@ -23,14 +31,6 @@ import java.net.InetAddress;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.net.ssl.SSLException;
-
-import org.apache.hadoop.hbase.ServerName;
-
-import com.google.api.client.util.Strings;
-import com.google.auth.Credentials;
-import com.google.cloud.bigtable.grpc.ChannelOptions;
-import com.google.cloud.bigtable.grpc.TransportOptions;
-import com.google.common.base.Preconditions;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
@@ -54,6 +54,7 @@ public class BigtableOptions {
     private String callTimingReportPath;
     private String callStatusReportPath;
     private boolean retriesEnabled;
+    private boolean retryOnDeadlineExceeded;
     private ScheduledExecutorService rpcRetryExecutorService;
     private EventLoopGroup customEventLoopGroup;
     private int channelCount = 1;
@@ -114,6 +115,11 @@ public class BigtableOptions {
       return this;
     }
 
+    public Builder setRetryOnDeadlineExceeded(boolean retryOnDeadlineExceeded) {
+      this.retryOnDeadlineExceeded = retryOnDeadlineExceeded;
+      return this;
+    }
+
     public Builder setRpcRetryExecutorService(ScheduledExecutorService scheduledExecutorService) {
       this.rpcRetryExecutorService = scheduledExecutorService;
       return this;
@@ -152,6 +158,7 @@ public class BigtableOptions {
           zone,
           cluster,
           retriesEnabled,
+          retryOnDeadlineExceeded,
           callTimingReportPath,
           callStatusReportPath,
           rpcRetryExecutorService,
@@ -170,6 +177,7 @@ public class BigtableOptions {
   private final String zone;
   private final String cluster;
   private final boolean retriesEnabled;
+  private final boolean retryOnDeadlineExceeded;
   private final String callTimingReportPath;
   private final String callStatusReportPath;
   private final ScheduledExecutorService rpcRetryExecutorService;
@@ -187,6 +195,7 @@ public class BigtableOptions {
       String zone,
       String cluster,
       boolean retriesEnabled,
+      boolean retryOnDeadlineExceeded,
       String callTimingReportPath,
       String callStatusReportPath,
       ScheduledExecutorService rpcRetryExecutorService,
@@ -206,6 +215,7 @@ public class BigtableOptions {
     this.credential = credential;
     this.projectId = projectId;
     this.retriesEnabled = retriesEnabled;
+    this.retryOnDeadlineExceeded = retryOnDeadlineExceeded;
     this.callTimingReportPath = callTimingReportPath;
     this.callStatusReportPath = callStatusReportPath;
     this.zone = zone;
@@ -247,6 +257,7 @@ public class BigtableOptions {
     optionsBuilder.setCallStatusReportPath(callStatusReportPath);
     optionsBuilder.setCredential(credential);
     optionsBuilder.setEnableRetries(retriesEnabled);
+    optionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
     optionsBuilder.setScheduledExecutorService(rpcRetryExecutorService);
     optionsBuilder.setChannelCount(channelCount);
     optionsBuilder.setTimeoutMs(timeoutMs);

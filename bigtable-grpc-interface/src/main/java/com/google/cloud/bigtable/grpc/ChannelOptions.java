@@ -81,6 +81,16 @@ public class ChannelOptions {
     }
 
     /**
+     * Enable retry on deadline exceeded.
+     * Deprecated, use the RetryOptions.Builder returned from getUnaryCallRetryOptionsBuilder().
+     */
+    @Deprecated
+    public Builder setRetryOnDeadlineExceeded(boolean retryOnDeadlineExceeded) {
+      retryOptionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
+      return this;
+    }
+
+    /**
      * The amount of time in miliiseconds we will wait for our first error retry.
      * Deprecated, use the RetryOptions.Builder returned from getUnaryCallRetryOptionsBuilder().
      */
