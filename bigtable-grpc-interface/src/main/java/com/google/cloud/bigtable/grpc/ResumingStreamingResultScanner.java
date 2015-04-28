@@ -32,6 +32,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
   private final Builder backOffBuilder;
   private final ReadRowsRequest originalRequest;
+  private final boolean retryOnDeadlineExceeded;
 
   private BackOff currentBackoff;
   private ResultScanner<Row> currentDelegate;
@@ -45,6 +46,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     Preconditions.checkArgument(
         !originalRequest.getAllowRowInterleaving(),
         "Row interleaving is not supported when using resumable streams");
+    retryOnDeadlineExceeded = retryOptions.retryOnDeadlineExceeded();
     this.backOffBuilder = new ExponentialBackOff.Builder()
         .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
         .setMaxElapsedTimeMillis(retryOptions.getMaxElaspedBackoffMillis())
@@ -68,9 +70,10 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
         return result;
       } catch (IOExceptionWithStatus ioe) {
-        Status status = ioe.getStatus();
-        if (status.getCode() == Status.INTERNAL.getCode()
-            || status.getCode() == Status.UNAVAILABLE.getCode()) {
+        Status.Code code = ioe.getStatus().getCode();
+        if (code == Status.INTERNAL.getCode()
+            || code == Status.UNAVAILABLE.getCode()
+            || (retryOnDeadlineExceeded && code == Status.DEADLINE_EXCEEDED.getCode())) {
           long nextBackOff = currentBackoff.nextBackOffMillis();
           if (nextBackOff == BackOff.STOP) {
             throw new BigtableRetriesExhaustedException(

@@ -26,7 +26,6 @@ import io.grpc.Status.OperationRuntimeException;
 
 import java.io.IOException;
 
-
 /**
  * Test for the {@link ResumingStreamingResultScanner}
  */
@@ -40,12 +39,19 @@ public class ResumingStreamingResultScannerTest {
   @Mock
   BigtableResultScannerFactory mockScannerFactory;
 
-  RetryOptions retryOptions = new RetryOptions(true, 100, 2, 500);
+  RetryOptions retryOptions;
   ReadRowsRequest readRowsRequest = ReadRowsRequest.getDefaultInstance();
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
+    retryOptions = new RetryOptions.Builder()
+        .setEnableRetries(true)
+        .setRetryOnDeadlineExceeded(true)
+        .setInitialBackoffMillis(100)
+        .setBackoffMultiplier(2D)
+        .setMaxElapsedBackoffMillis(500)
+        .build();
   }
 
   static Row buildRow(String rowKey) {
@@ -78,6 +84,11 @@ public class ResumingStreamingResultScannerTest {
   @Test
   public void testUnavailableErrorsResume() throws IOException {
     doErrorsResume(Status.UNAVAILABLE);
+  }
+
+  @Test
+  public void testDeadlineExceededErrorsResume() throws IOException {
+    doErrorsResume(Status.DEADLINE_EXCEEDED);
   }
 
   private void doErrorsResume(Status status) throws IOException {
@@ -123,7 +134,23 @@ public class ResumingStreamingResultScannerTest {
   }
 
   @Test
-  public void testNonInternalErrorsDoNotResume() throws IOException {
+  public void testFailedPreconditionErrorsDoNotResume() throws IOException {
+    doErrorsDoNotResume(Status.FAILED_PRECONDITION);
+  }
+
+  @Test
+  public void testDeadlineExceededErrorsDoNotResume_flagDisabled() throws IOException {
+    retryOptions = new RetryOptions.Builder()
+        .setEnableRetries(true)
+        .setRetryOnDeadlineExceeded(false) // Disable retryOnDeadlineExceeded
+        .setInitialBackoffMillis(100)
+        .setBackoffMultiplier(2D)
+        .setMaxElapsedBackoffMillis(500)
+        .build();
+    doErrorsDoNotResume(Status.DEADLINE_EXCEEDED);
+  }
+
+  private void doErrorsDoNotResume(Status status) throws IOException {
     Row row1 = buildRow("row1");
     Row row2 = buildRow("row2");
 
@@ -143,9 +170,7 @@ public class ResumingStreamingResultScannerTest {
     when(mockScanner.next())
         .thenReturn(row1)
         .thenReturn(row2)
-        .thenThrow(
-            new IOExceptionWithStatus(
-                "Test", new OperationRuntimeException(Status.FAILED_PRECONDITION)));
+        .thenThrow(new IOExceptionWithStatus("Test", new OperationRuntimeException(status)));
 
     assertRowKey("row1", scanner.next());
     assertRowKey("row2", scanner.next());
