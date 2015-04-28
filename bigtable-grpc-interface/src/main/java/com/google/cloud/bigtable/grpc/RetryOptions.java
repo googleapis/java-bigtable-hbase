@@ -24,6 +24,7 @@ public class RetryOptions {
     public static final int DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS = 60 * 1000;
 
     private boolean enableRetries = false;
+    private boolean retryOnDeadlineExceeded = true;
     private int initialBackoffMillis = DEFAULT_INITIAL_BACKOFF_MILLIS;
     private double backoffMultiplier = DEFAULT_BACKOFF_MULTIPLIER;
     private int maxElaspedBackoffMillis = DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
@@ -33,6 +34,14 @@ public class RetryOptions {
      */
     public Builder setEnableRetries(boolean enabled) {
       this.enableRetries = enabled;
+      return this;
+    }
+
+    /**
+     * Enable or disable retry on deadline exceeded.
+     */
+    public Builder setRetryOnDeadlineExceeded(boolean enabled) {
+      this.retryOnDeadlineExceeded = enabled;
       return this;
     }
 
@@ -64,22 +73,27 @@ public class RetryOptions {
      * Construct a new RetryOptions object.
      */
     public RetryOptions build() {
-      return new RetryOptions(
-          enableRetries, initialBackoffMillis, backoffMultiplier, maxElaspedBackoffMillis);
+      return new RetryOptions(enableRetries, retryOnDeadlineExceeded, initialBackoffMillis,
+          backoffMultiplier, maxElaspedBackoffMillis);
     }
   }
 
   private final boolean retriesEnabled;
+  // Retry when the response status is deadline exceeded and {@code retriesEnabled} is set to
+  // {@code true}.
+  private final boolean retryOnDeadlineExceeded;
   private final int initialBackoffMillis;
   private final int maxElaspedBackoffMillis;
   private final double backoffMultiplier;
 
-  public RetryOptions(
+  private RetryOptions(
       boolean retriesEnabled,
+      boolean retryOnDeadlineExceeded,
       int initialBackoffMillis,
       double backoffMultiplier,
       int maxElaspedBackoffMillis) {
     this.retriesEnabled = retriesEnabled;
+    this.retryOnDeadlineExceeded = retryOnDeadlineExceeded;
     this.initialBackoffMillis = initialBackoffMillis;
     this.maxElaspedBackoffMillis = maxElaspedBackoffMillis;
     this.backoffMultiplier = backoffMultiplier;
@@ -111,5 +125,12 @@ public class RetryOptions {
    */
   public boolean enableRetries() {
     return retriesEnabled;
+  }
+
+  /**
+   * Whether to retry on deadline exceeded.
+   */
+  public boolean retryOnDeadlineExceeded() {
+    return retryOnDeadlineExceeded;
   }
 }
