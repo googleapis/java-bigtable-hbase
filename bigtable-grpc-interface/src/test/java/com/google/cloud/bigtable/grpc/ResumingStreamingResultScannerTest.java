@@ -14,14 +14,15 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.protobuf.ByteString;
 
-import io.grpc.Status;
-import io.grpc.Status.OperationRuntimeException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import io.grpc.Status;
+import io.grpc.Status.OperationRuntimeException;
 
 import java.io.IOException;
 
@@ -71,6 +72,15 @@ public class ResumingStreamingResultScannerTest {
 
   @Test
   public void testInternalErrorsResume() throws IOException {
+    doErrorsResume(Status.INTERNAL);
+  }
+
+  @Test
+  public void testUnavailableErrorsResume() throws IOException {
+    doErrorsResume(Status.UNAVAILABLE);
+  }
+
+  private void doErrorsResume(Status status) throws IOException {
     Row row1 = buildRow("row1");
     Row row2 = buildRow("row2");
     Row row3 = buildRow("row3");
@@ -92,7 +102,7 @@ public class ResumingStreamingResultScannerTest {
         .thenReturn(row1)
         .thenReturn(row2)
         .thenThrow(
-            new IOExceptionWithStatus("Test", new OperationRuntimeException(Status.INTERNAL)))
+            new IOExceptionWithStatus("Test", new OperationRuntimeException(status)))
         .thenThrow(
             new IOException(
                 "Next invoked on scanner post-exception. This is most "
