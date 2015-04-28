@@ -26,17 +26,6 @@ limitations under the License.
     <artifactId>bigtable-hbase-integration-tests</artifactId>
     <packaging>jar</packaging>
 
-    <repositories>
-        <repository>
-            <id>repo</id>
-            <url>file://${bigtable.grpc.repo.fullpath}</url>
-        </repository>
-    </repositories>
-
-    <properties>
-        <bigtable.grpc.repo.fullpath>${project.basedir}/../${bigtable.grpc.repo.dir}</bigtable.grpc.repo.fullpath>
-    </properties>
-
     <profiles>
         <profile>
             <id>bigtableIntegrationTest</id>
