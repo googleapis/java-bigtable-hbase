@@ -26,6 +26,9 @@ import org.junit.Test;
 import java.io.IOException;
 
 public class TestCreateTable extends AbstractTest {
+
+  private static final Logger LOG = new Logger(TestCreateTable.class);
+
   /**
    * Requirement 1.8 - Table names must match [_a-zA-Z0-9][-_.a-zA-Z0-9]*
    */
@@ -88,9 +91,24 @@ public class TestCreateTable extends AbstractTest {
       TableName tableName = TableName.valueOf(goodName);
       HTableDescriptor descriptor = new HTableDescriptor(tableName);
       descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-      admin.createTable(descriptor);
-      admin.disableTable(tableName);
-      admin.deleteTable(tableName);
+
+      try {
+        // TODO(kevinsi): Currently the integration test is shared. We need to make a unique cluster
+        // per test environment for a cleaner testing scenario.
+        if (admin.tableExists(tableName)) {
+          LOG.warn("Not creating the table since it exists: %s", tableName);
+        } else {
+          admin.createTable(descriptor);
+        }
+      } finally {
+        try {
+          admin.disableTable(tableName);
+          admin.deleteTable(tableName);
+        } catch (Throwable t) {
+          // Log the error and ignore it.
+          LOG.warn("Error cleaning up the table", t);
+        }
+      }
     }
   }
 }
