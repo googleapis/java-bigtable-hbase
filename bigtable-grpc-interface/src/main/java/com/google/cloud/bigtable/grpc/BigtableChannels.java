@@ -1,6 +1,8 @@
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.v1.BigtableServiceGrpc;
+import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.common.base.Preconditions;
@@ -52,6 +54,9 @@ public class BigtableChannels {
   
   /** Number of seconds to wait for a termination before trying again. */
   private static final int CHANNEL_TERMINATE_WAIT_SECONDS = 5;
+
+  private static final Map<MethodDescriptor<?, ?>, Predicate<?>> METHODS_TO_RETRY_MAP =
+      createMethodRetryMap();
 
   /**
    * Create a new Channel, optionally adding OAuth2 support.
@@ -168,8 +173,6 @@ public class BigtableChannels {
     }
 
     if (channelOptions.getUnaryCallRetryOptions().enableRetries()) {
-      Map<MethodDescriptor<?, ?>, Predicate<?>> methodsToRetry = createMethodRetryMap();
-
       ScheduledExecutorService scheduledRetries;
       if (channelOptions.getScheduledExecutorService() != null) {
         scheduledRetries = channelOptions.getScheduledExecutorService();
@@ -184,7 +187,7 @@ public class BigtableChannels {
       channel = new UnaryCallRetryInterceptor(
           channel,
           scheduledRetries,
-          methodsToRetry,
+          METHODS_TO_RETRY_MAP,
           unaryCallRetryOptions.getInitialBackoffMillis(),
           unaryCallRetryOptions.getBackoffMultiplier(),
           unaryCallRetryOptions.getMaxElaspedBackoffMillis());
@@ -209,24 +212,47 @@ public class BigtableChannels {
    * Create a Map of MethodDescriptor instances to predicates that will be used to
    * specify which method calls should be retried and which should not.
    */
-  private static Map<MethodDescriptor<?, ?>, Predicate<?>> createMethodRetryMap() {
-    Predicate<MutateRowRequest> retryMutationsWithTimestamps =
-        new Predicate<MutateRowRequest>() {
+  @VisibleForTesting
+  static Map<MethodDescriptor<?, ?>, Predicate<?>> createMethodRetryMap() {
+    Predicate<MutateRowRequest> retryMutationsWithTimestamps = new Predicate<MutateRowRequest>() {
+      @Override
+      public boolean apply(@Nullable MutateRowRequest mutateRowRequest) {
+        if (mutateRowRequest == null) {
+          return false;
+        }
+        for (Mutation mut : mutateRowRequest.getMutationsList()) {
+          if (mut.getSetCell().getTimestampMicros() == -1) {
+            return false;
+          }
+        }
+        return true;
+      }
+    };
+
+    Predicate<CheckAndMutateRowRequest> retryCheckAndMutateWithTimestamps =
+        new Predicate<CheckAndMutateRowRequest>() {
           @Override
-          public boolean apply(@Nullable MutateRowRequest mutateRowRequest) {
-            if (mutateRowRequest == null) {
+          public boolean apply(@Nullable CheckAndMutateRowRequest checkAndMutateRowRequest) {
+            if (checkAndMutateRowRequest == null) {
               return false;
             }
-            for (Mutation mut : mutateRowRequest.getMutationsList()) {
+            for (Mutation mut : checkAndMutateRowRequest.getTrueMutationsList()) {
+              if (mut.getSetCell().getTimestampMicros() == -1) {
+                return false;
+              }
+            }
+            for (Mutation mut : checkAndMutateRowRequest.getFalseMutationsList()) {
               if (mut.getSetCell().getTimestampMicros() == -1) {
                 return false;
               }
             }
             return true;
-          }};
+          }
+        };
 
     return ImmutableMap.<MethodDescriptor<?, ?>, Predicate<?>>builder()
         .put(BigtableServiceGrpc.CONFIG.mutateRow, retryMutationsWithTimestamps)
+        .put(BigtableServiceGrpc.CONFIG.checkAndMutateRow, retryCheckAndMutateWithTimestamps)
         .build();
   }
 
