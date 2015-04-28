@@ -1,5 +1,5 @@
-bigtable-client
-===============
+cloud-bigtable-client
+=====================
 
 HBase client extension to access Bigtable.
 
