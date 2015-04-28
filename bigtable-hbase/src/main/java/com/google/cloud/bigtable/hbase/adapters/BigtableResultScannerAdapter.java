@@ -21,7 +21,7 @@ public class BigtableResultScannerAdapter {
   }
 
   public ResultScanner adapt(
-      final com.google.cloud.hadoop.hbase.ResultScanner<Row> bigtableResultScanner) {
+      final com.google.cloud.bigtable.grpc.ResultScanner<Row> bigtableResultScanner) {
     return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {

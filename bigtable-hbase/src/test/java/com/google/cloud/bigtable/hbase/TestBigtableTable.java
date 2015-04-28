@@ -5,13 +5,14 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
-import com.google.cloud.hadoop.hbase.BigtableClient;
-import com.google.cloud.hadoop.hbase.ResultScanner;
+import com.google.cloud.bigtable.grpc.BigtableClient;
+import com.google.cloud.bigtable.grpc.ResultScanner;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.BigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -42,7 +43,10 @@ public class TestBigtableTable {
   public static final String TEST_ZONE = "testzone";
 
   @Mock
+  public BigtableConnection mockConnection;
+  @Mock
   public BigtableClient mockClient;
+
   public BigtableTable table;
 
   @Before
@@ -58,10 +62,12 @@ public class TestBigtableTable {
     builder.setZone(TEST_ZONE);
     builder.setCredential(null);
     BigtableOptions options = builder.build();
+    Configuration config = new Configuration();
+    Mockito.when(mockConnection.getConfiguration()).thenReturn(config);
     table = new BigtableTable(
+        mockConnection,
         TableName.valueOf(TEST_TABLE),
         options,
-        new Configuration(),
         mockClient,
         Executors.newCachedThreadPool());
   }

@@ -17,6 +17,7 @@ package org.apache.hadoop.hbase.client;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -39,12 +40,13 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.Logger;
-import com.google.cloud.hadoop.hbase.BigtableAdminClient;
-import com.google.cloud.hadoop.hbase.BigtableAdminGrpcClient;
-import com.google.cloud.hadoop.hbase.BigtableClient;
-import com.google.cloud.hadoop.hbase.BigtableGrpcClient;
-import com.google.cloud.hadoop.hbase.ChannelOptions;
-import com.google.cloud.hadoop.hbase.TransportOptions;
+import com.google.cloud.bigtable.grpc.BigtableAdminClient;
+import com.google.cloud.bigtable.grpc.BigtableAdminGrpcClient;
+import com.google.cloud.bigtable.grpc.BigtableClient;
+import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
+import com.google.cloud.bigtable.grpc.ChannelOptions;
+import com.google.cloud.bigtable.grpc.TransportOptions;
+import com.google.common.base.MoreObjects;
 
 public class BigtableConnection implements Connection, Closeable {
   public static final String MAX_INFLIGHT_RPCS_KEY =
@@ -169,7 +171,7 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new BigtableTable(tableName, options, conf, client, pool);
+    return new BigtableTable(this, tableName, options, client, pool);
   }
 
   @Override
@@ -283,9 +285,16 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public String toString() {
-    return String.format("BigtableConnection-0x%s.  Project: %s, Zone: %sm Cluster: %s",
-      Integer.toHexString(hashCode()), options.getProjectId(), options.getZone(),
-      options.getCluster());
+    InetAddress host = options.getHost();
+    InetAddress adminHost = options.getAdminHost();
+    return MoreObjects.toStringHelper(BigtableConnection.class)
+      .add("id", id)
+      .add("zone", options.getZone())
+      .add("project", options.getProjectId())
+      .add("cluster", options.getCluster())
+      .add("host", host)
+      .add("adminHost", adminHost)
+      .toString();
   }
 
   // Copied from org.apache.hadoop.hbase.client.HConnectionManager#getBatchPool()
@@ -334,5 +343,9 @@ public class BigtableConnection implements Connection, Closeable {
         this.batchPool.shutdownNow();
       }
     }
+  }
+
+  public Integer getId() {
+    return id;
   }
 }

@@ -26,8 +26,8 @@ import org.apache.hadoop.hbase.ServerName;
 
 import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
-import com.google.cloud.hadoop.hbase.ChannelOptions;
-import com.google.cloud.hadoop.hbase.TransportOptions;
+import com.google.cloud.bigtable.grpc.ChannelOptions;
+import com.google.cloud.bigtable.grpc.TransportOptions;
 import com.google.common.base.Preconditions;
 
 /**
@@ -251,6 +251,14 @@ public class BigtableOptions {
     return optionsBuilder.build();
   }
 
+  public InetAddress getHost() {
+    return host;
+  }
+
+  public InetAddress getAdminHost() {
+    return adminHost;
+  }
+
   public TransportOptions getTransportOptions() throws IOException {
     return createTransportOptions(this.host);
   }
@@ -273,7 +281,7 @@ public class BigtableOptions {
           @Override
           public SslContext create() {
             try {
-              // We create multiple channels via refreshing and pooling channel implementation.  
+              // We create multiple channels via refreshing and pooling channel implementation.
               // Each one needs its own SslContext.
               return SslContext.newClientContext();
             } catch (SSLException e) {
