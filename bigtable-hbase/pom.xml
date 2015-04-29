@@ -40,11 +40,6 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-minicluster</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-annotations</artifactId>
             <scope>provided</scope>
         </dependency>
@@ -92,12 +87,6 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
@@ -113,10 +102,6 @@ limitations under the License.
             <artifactId>${compat.module}</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mortbay.jetty.alpn</groupId>
-            <artifactId>alpn-boot</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
@@ -168,9 +153,6 @@ limitations under the License.
                                 -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
                             </argLine>
                             <!-- protobuf and netty are included in the grpc-interface jar -->
-                            <classpathDependencyExcludes>
-                                <classpathDependencyExclude>io.netty:netty-all</classpathDependencyExclude>
-                            </classpathDependencyExcludes>
                             <forkCount>1</forkCount>
                             <includes>
                                 <include>**/TestClusterAPI.java</include>
@@ -208,20 +190,21 @@ limitations under the License.
                             <shadeTestJar>true</shadeTestJar>
                             <shadedArtifactAttached>false</shadedArtifactAttached>
                             <shadedClassifierName>shaded</shadedClassifierName>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <include>${project.groupId}:*</include>
+                                    <include>com.google.cloud.bigtable:bigtable-protos</include>
+                                    <include>com.google.cloud.bigtable:bigtable-grpc-interface</include>
                                     <include>com.google.api-client:*</include>
                                     <include>com.google.auth:*</include>
-                                    <include>com.google.guava:*</include>
+                                    <include>com.google.guava:guava</include>
                                     <include>com.google.http-client:*</include>
                                     <include>com.google.oauth-client:*</include>
                                     <include>com.google.protobuf:*</include>
                                     <include>com.twitter:hpack</include>
                                     <include>com.fasterxml.jackson.core:*</include>
-                                    <include>io.netty:*</include>
-                                    <include>io.grpc:*</include>
+                                    <include>io.netty:netty-all</include>
+                                    <include>io.grpc:grpc-all</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
