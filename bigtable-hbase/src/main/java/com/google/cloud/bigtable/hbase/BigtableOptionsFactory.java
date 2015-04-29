@@ -116,7 +116,7 @@ public class BigtableOptionsFactory {
    * The number of grpc channels to open for asynchronous processing such as puts.
    */
   public static final String BIGTABLE_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
-  public static final int BIGTABLE_CHANNEL_COUNT_DEFAULT = 2;
+  public static final int BIGTABLE_CHANNEL_COUNT_DEFAULT = 4;
 
   /**
    * The maximum length of time to keep a Bigtable grpc channel open.
