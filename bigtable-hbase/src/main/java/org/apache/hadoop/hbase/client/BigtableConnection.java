@@ -66,13 +66,13 @@ public class BigtableConnection implements Connection, Closeable {
   private static final Set<Integer> ACTIVE_CONNECTIONS =
       Collections.synchronizedSet(new HashSet<Integer>());
 
-  // Default to 16MB.
+  // Default to 32MB.
   //
   // HBase uses 2MB as the write buffer size.  Their limit is the size to reach before performing
   // a batch async write RPC.  Our limit is a memory cap for async RPC after which we throttle.
   // HBase does not throttle like we do.
   public static final long BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT =
-      8 * TableConfiguration.WRITE_BUFFER_SIZE_DEFAULT;
+      16 * TableConfiguration.WRITE_BUFFER_SIZE_DEFAULT;
 
   private static final Logger LOG = new Logger(BigtableConnection.class);
 
