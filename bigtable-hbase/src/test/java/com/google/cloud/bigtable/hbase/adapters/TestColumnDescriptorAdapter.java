@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.admin.table.v1.ColumnFamily;
+import com.google.bigtable.admin.table.v1.ColumnFamily.Builder;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -190,9 +191,8 @@ public class TestColumnDescriptorAdapter {
   }
 
   @Test
-  public void badExpressionBlank(){
-    String expression = "";
-    expectedException.expect(IllegalStateException.class);
-    adapter.adapt("family", asColumnFamily(expression));
+  public void testBlankExpression(){
+    HColumnDescriptor result = adapter.adapt("family", asColumnFamily(""));
+    Assert.assertEquals(new HColumnDescriptor("family"), result);
   }
 }
