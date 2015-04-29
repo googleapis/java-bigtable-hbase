@@ -82,13 +82,13 @@ limitations under the License.
                                     <goal>shade</goal>
                                 </goals>
                                 <configuration>
-                                    <shadeTestJar>true</shadeTestJar>
+                                    <shadeTestJar>false</shadeTestJar>
                                     <shadedArtifactAttached>false</shadedArtifactAttached>
                                     <shadedClassifierName>shaded</shadedClassifierName>
-                                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                                    <createDependencyReducedPom>true</createDependencyReducedPom>
                                     <artifactSet>
                                         <includes>
-                                            <include>{project.groupId}:bigtable-protos-internal</include>
+                                            <include>com.google.cloud.bigtable:bigtable-protos-internal</include>
                                         </includes>
                                     </artifactSet>
                                 </configuration>
