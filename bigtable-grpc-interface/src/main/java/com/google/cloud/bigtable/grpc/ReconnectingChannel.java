@@ -177,50 +177,56 @@ public class ReconnectingChannel implements CloseableChannel {
     if (delegate == null || !requiresRefresh() || updateRunnable != null) {
       return;
     }
-
-    updateRunnable = new Runnable() {
-      @Override
-      public void run() {
-        CountingChannel toClose = null;
-        WriteLock writeLock = null;
-        try {
-          CountingChannel newChannel = new CountingChannel(factory.create());
-          writeLock = delegateLock.writeLock();
-          writeLock.lock();
-          // Double check that a previous call didn't refresh the connection since this thread
-          // acquired the write lock.
-          if (delegate != null && requiresRefresh()) {
-            toClose = delegate;
-            delegate = newChannel;
-            nextRefresh = calculateNewRefreshTime();
-          } else {
-            toClose = newChannel;
-          }
-        } finally {
-          updateRunnable = null;
-          if (toClose != null) {
-            closingAsynchronously.incrementAndGet();
-          }
-          if (writeLock != null) {
-            writeLock.unlock();
-          }
+    
+    synchronized (this) {
+      if (updateRunnable != null) {
+        return;
+      }
+      updateRunnable = new Runnable() {
+        @Override
+        public void run() {
+          CountingChannel toClose = null;
+          WriteLock writeLock = null;
           try {
-            toClose.close();
-          } catch (IOException e) {
-            log.log(Level.WARNING, "Could not close a recycled delegate", e);
-          } catch (InterruptedException e) {
-            Thread.interrupted();
+            CountingChannel newChannel = new CountingChannel(factory.create());
+            writeLock = delegateLock.writeLock();
+            writeLock.lock();
+            // Double check that a previous call didn't refresh the connection since this thread
+            // acquired the write lock.
+            if (delegate != null && requiresRefresh()) {
+              toClose = delegate;
+              delegate = newChannel;
+              nextRefresh = calculateNewRefreshTime();
+            } else {
+              toClose = newChannel;
+            }
           } finally {
-            synchronized (closingAsynchronously) {
-              if (closingAsynchronously.decrementAndGet() == 0) {
-                closingAsynchronously.notify();
+            updateRunnable = null;
+            if (toClose != null) {
+              closingAsynchronously.incrementAndGet();
+            }
+            if (writeLock != null) {
+              writeLock.unlock();
+            }
+            try {
+              toClose.close();
+            } catch (IOException e) {
+              log.log(Level.WARNING, "Could not close a recycled delegate", e);
+            } catch (InterruptedException e) {
+              Thread.interrupted();
+            } finally {
+              synchronized (closingAsynchronously) {
+                if (closingAsynchronously.decrementAndGet() == 0) {
+                  closingAsynchronously.notify();
+                }
               }
             }
           }
         }
-      }
-    };
-    executor.execute(updateRunnable);
+      };
+      executor.execute(updateRunnable);
+    }
+
   }
 
   @Override
