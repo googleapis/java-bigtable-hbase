@@ -19,6 +19,9 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
+
+import com.google.cloud.bigtable.grpc.ReconnectingChannel.TrackingCall;
+
 import io.grpc.Call;
 import io.grpc.Metadata.Headers;
 import io.grpc.MethodDescriptor;
@@ -60,49 +63,45 @@ public class ReconnectingChannelTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void test() throws IOException{
-//    when(factory.create()).thenReturn(channel);
-//    when(channel.newCall(any(MethodDescriptor.class))).thenReturn(call);
-//    ReconnectingChannel test =
-//        new ReconnectingChannel(REFRESH_MS, Executors.newFixedThreadPool(1), factory);
-//    Mockito.verify(factory, times(1)).create();
-//
-//    callAndStart(test);
-//    
-//    Mockito.verify(channel, times(1)).newCall(any(MethodDescriptor.class));
-//
-//    try {
-//      Thread.sleep(REFRESH_MS);
-//    } catch (InterruptedException ignored) {
-//      // Do nothing on interrupt.
-//    }
-//
-//    callAndStart(test);
-//    Mockito.verify(channel, times(2)).newCall(any(MethodDescriptor.class));
-//
-//    try {
-//      Thread.sleep(REFRESH_MS);
-//    } catch (InterruptedException ignored) {
-//      // Do nothing on interrupt.
-//    }
-//
-//    Mockito.verify(factory, atLeast(2)).create();
-//    Mockito.verify(channel, times(1)).close();
-//
-//    test.close();
-//    Mockito.verify(channel, times(2)).close();
-//    
-//    try {
-//      test.newCall(null);
-//      Assert.fail("Expected IllegalStateException on a closed channel");
-//    } catch (IllegalStateException expected) {
-//      // expected
-//    }
-  }
+  public void test() throws IOException {
+    when(factory.create()).thenReturn(channel);
+    when(channel.newCall(any(MethodDescriptor.class))).thenReturn(call);
+    ReconnectingChannel test =
+        new ReconnectingChannel(REFRESH_MS, Executors.newFixedThreadPool(1), factory);
+    Mockito.verify(factory, times(1)).create();
 
-  private void callAndStart(ReconnectingChannel test) {
-//    Call<Object, Object> call = test.newCall(null);
-//    call.start(null, null);
-//    call.
+    Call<Object, Object> call1 = test.newCall(null);
+    Mockito.verify(channel, times(1)).newCall(any(MethodDescriptor.class));
+
+    ((TrackingCall) call1).untrack();
+
+    try {
+      Thread.sleep(REFRESH_MS);
+    } catch (InterruptedException ignored) {
+      // Do nothing on interrupt.
+    }
+
+    Call<Object, Object> call2 = test.newCall(null);
+    Mockito.verify(channel, times(2)).newCall(any(MethodDescriptor.class));
+    ((TrackingCall) call1).untrack();
+
+    try {
+      Thread.sleep(REFRESH_MS);
+    } catch (InterruptedException ignored) {
+      // Do nothing on interrupt.
+    }
+
+    Mockito.verify(factory, atLeast(2)).create();
+    Mockito.verify(channel, times(1)).close();
+
+    test.close();
+    Mockito.verify(channel, times(2)).close();
+
+    try {
+      test.newCall(null);
+      Assert.fail("Expected IllegalStateException on a closed channel");
+    } catch (IllegalStateException expected) {
+      // expected
+    }
   }
 }

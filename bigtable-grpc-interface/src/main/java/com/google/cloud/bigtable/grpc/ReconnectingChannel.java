@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import io.grpc.Call;
@@ -58,7 +59,8 @@ public class ReconnectingChannel implements CloseableChannel {
    * .shutdown() calls gracefully, but isn't due to a bug. Once they fix the bug, remove
    * TrackingCall and CountingChannel. Also, uncomment ReconnectingChannelTest.
    */
-  private static class TrackingCall<RequestT, ResponseT>
+  @VisibleForTesting
+  static class TrackingCall<RequestT, ResponseT>
       extends ClientInterceptors.ForwardingCall<RequestT, ResponseT> {
 
     private final Integer id;
@@ -73,29 +75,33 @@ public class ReconnectingChannel implements CloseableChannel {
 
     @Override
     public void start(Call.Listener<ResponseT> responseListener, Headers headers) {
+      outstandingRequests.add(id);
       super.start(wrap(responseListener), headers);
     }
 
     @Override
     public void cancel() {
       super.cancel();
-      outstandingRequests.remove(id);
+      untrack();
     }
 
     private Call.Listener<ResponseT> wrap(Call.Listener<ResponseT> responseListener) {
-      outstandingRequests.add(id);
       return new ClientInterceptors.ForwardingListener<ResponseT>(responseListener) {
         @Override
         public void onClose(Status status, Metadata.Trailers trailers) {
           super.onClose(status, trailers);
-          outstandingRequests.remove(id);
-          if (outstandingRequests.isEmpty()) {
-            synchronized (outstandingRequests) {
-              outstandingRequests.notify();
-            }
-          }
+          untrack();
         }
       };
+    }
+
+    public void untrack() {
+      outstandingRequests.remove(id);
+      if (outstandingRequests.isEmpty()) {
+        synchronized (outstandingRequests) {
+          outstandingRequests.notify();
+        }
+      }
     }
   }
 
