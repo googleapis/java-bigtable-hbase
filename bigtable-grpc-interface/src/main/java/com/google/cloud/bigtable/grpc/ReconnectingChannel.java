@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.grpc;
 import com.google.common.base.Preconditions;
 
 import io.grpc.Call;
-import io.grpc.Channel;
-import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.Metadata;
 import io.grpc.Metadata.Headers;
@@ -60,7 +58,7 @@ public class ReconnectingChannel implements CloseableChannel {
    * .shutdown() calls gracefully, but isn't due to a bug. Once they fix the bug, remove
    * TrackingCall and CountingChannel. Also, uncomment ReconnectingChannelTest.
    */
-  private static class TrackingCall<RequestT, ResponseT> 
+  private static class TrackingCall<RequestT, ResponseT>
       extends ClientInterceptors.ForwardingCall<RequestT, ResponseT> {
 
     private final Integer id;
@@ -101,23 +99,21 @@ public class ReconnectingChannel implements CloseableChannel {
     }
   }
 
-  private static class CountingChannel implements ClientInterceptor {
+  private static class CountingChannel {
     private final CloseableChannel closableChannel;
-    private final Channel channel;
     private final Set<Integer> outstandingRequests =
         Collections.synchronizedSet(new HashSet<Integer>());
     private final AtomicInteger counter = new AtomicInteger();
 
     public CountingChannel(CloseableChannel closableChannel) {
       this.closableChannel = closableChannel;
-      this.channel = ClientInterceptors.intercept(closableChannel, this);
     }
 
-    @Override
-    public <RequestT, ResponseT> Call<RequestT, ResponseT> interceptCall(
-        MethodDescriptor<RequestT, ResponseT> descriptor, Channel channel) {
-      return new TrackingCall<>(channel.newCall(descriptor), counter.incrementAndGet(),
-          outstandingRequests);
+    public <RequestT, ResponseT> Call<RequestT, ResponseT> newCall(
+        MethodDescriptor<RequestT, ResponseT> descriptor) {
+      Call<RequestT, ResponseT> delegate = closableChannel.newCall(descriptor);
+      int id = counter.incrementAndGet();
+      return new TrackingCall<>(delegate, id, outstandingRequests);
     }
 
     public void close() throws IOException, InterruptedException {
@@ -171,7 +167,7 @@ public class ReconnectingChannel implements CloseableChannel {
         throw new IllegalStateException("Channel is closed");
       }
       checkRefresh();
-      return delegate.channel.newCall(methodDescriptor);
+      return delegate.newCall(methodDescriptor);
     } finally {
       readLock.unlock();
     }
