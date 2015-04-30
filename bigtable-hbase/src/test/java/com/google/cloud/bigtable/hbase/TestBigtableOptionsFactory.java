@@ -112,4 +112,26 @@ public class TestBigtableOptionsFactory {
         "EventLoopGroup expected",
         options.getTransportOptions().getEventLoopGroup());
   }
+  
+  @Test 
+  public void testBadChannelReconnectTimeout() throws IOException {
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    // 1 second is too low of a timeout
+    configuration.set(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, "1000");
+    expectedException.expect(IllegalArgumentException.class);
+    BigtableOptionsFactory.fromConfiguration(configuration);
+  }
+
+  
+  @Test 
+  public void testGoodChannelReconnectTimeout() throws IOException {
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    // 1 second is too low of a timeout
+    configuration.set(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, "100000");
+    BigtableOptionsFactory.fromConfiguration(configuration);
+  }
 }

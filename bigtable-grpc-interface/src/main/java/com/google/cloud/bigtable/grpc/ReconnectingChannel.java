@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -41,8 +42,6 @@ import java.util.logging.Logger;
  * A ClosableChannel that refreshes itself based on a user supplied timeout.
  */
 public class ReconnectingChannel implements CloseableChannel {
-
-  protected static final long MINIMUM_REFRESH_TIME = 5000;
 
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
   protected static final long CLOSE_WAIT_TIME = 5000;
@@ -146,11 +145,60 @@ public class ReconnectingChannel implements CloseableChannel {
   // nextRefresh and delegate need to be protected by delegateLock.
   private long nextRefresh;
   private CountingChannel delegate;
-  private Runnable updateRunnable = null;
+  private final AtomicBoolean currentlyUpdating = new AtomicBoolean(false);
+
+  private final Runnable updater = new Runnable() {
+    @Override
+    public void run() {
+      CountingChannel toClose = null;
+      WriteLock writeLock = null;
+      try {
+        CountingChannel newChannel = new CountingChannel(factory.create());
+        writeLock = delegateLock.writeLock();
+        writeLock.lock();
+        // Double check that a previous call didn't refresh the connection since this thread
+        // acquired the write lock.
+        if (delegate != null && System.currentTimeMillis() > nextRefresh) {
+          toClose = delegate;
+          delegate = newChannel;
+          nextRefresh = calculateNewRefreshTime();
+        } else {
+          toClose = newChannel;
+        }
+      } finally {
+        currentlyUpdating.set(false);
+        if (toClose != null) {
+          closingAsynchronously.incrementAndGet();
+        }
+        if (writeLock != null) {
+          writeLock.unlock();
+        }
+        if (toClose != null) {
+          close(toClose);
+        }
+      }
+    }
+
+    private void close(CountingChannel toClose) {
+      try {
+        toClose.close();
+      } catch (IOException e) {
+        log.log(Level.WARNING, "Could not close a recycled delegate", e);
+      } catch (InterruptedException e) {
+        Thread.interrupted();
+      } finally {
+        synchronized (closingAsynchronously) {
+          if (closingAsynchronously.decrementAndGet() == 0) {
+            closingAsynchronously.notify();
+          }
+        }
+      }
+    }
+  };
 
   public ReconnectingChannel(long maxRefreshTime, Executor executor, final Factory factory) {
-    Preconditions.checkArgument(maxRefreshTime > MINIMUM_REFRESH_TIME,
-        "maxRefreshTime has to be at least " + MINIMUM_REFRESH_TIME + " ms.");
+    // BigtableOptionsFactory needs to handle the real requirements.
+    Preconditions.checkArgument(maxRefreshTime > 0, "maxRefreshTime has to be greater than 0");
     this.maxRefreshTime = maxRefreshTime;
     this.executor = executor;
     this.nextRefresh = calculateNewRefreshTime();
@@ -180,59 +228,18 @@ public class ReconnectingChannel implements CloseableChannel {
   }
 
   private void checkRefresh() {
-    if (delegate == null || !requiresRefresh() || updateRunnable != null) {
-      return;
-    }
-    
-    synchronized (this) {
-      if (updateRunnable != null) {
-        return;
-      }
-      updateRunnable = new Runnable() {
-        @Override
-        public void run() {
-          CountingChannel toClose = null;
-          WriteLock writeLock = null;
-          try {
-            CountingChannel newChannel = new CountingChannel(factory.create());
-            writeLock = delegateLock.writeLock();
-            writeLock.lock();
-            // Double check that a previous call didn't refresh the connection since this thread
-            // acquired the write lock.
-            if (delegate != null && requiresRefresh()) {
-              toClose = delegate;
-              delegate = newChannel;
-              nextRefresh = calculateNewRefreshTime();
-            } else {
-              toClose = newChannel;
-            }
-          } finally {
-            updateRunnable = null;
-            if (toClose != null) {
-              closingAsynchronously.incrementAndGet();
-            }
-            if (writeLock != null) {
-              writeLock.unlock();
-            }
-            try {
-              toClose.close();
-            } catch (IOException e) {
-              log.log(Level.WARNING, "Could not close a recycled delegate", e);
-            } catch (InterruptedException e) {
-              Thread.interrupted();
-            } finally {
-              synchronized (closingAsynchronously) {
-                if (closingAsynchronously.decrementAndGet() == 0) {
-                  closingAsynchronously.notify();
-                }
-              }
-            }
-          }
+    if (requiresUpdate()) {
+      synchronized (this) {
+        if (requiresUpdate()) {
+          currentlyUpdating.set(true);
+          executor.execute(updater);
         }
-      };
-      executor.execute(updateRunnable);
+      }
     }
+  }
 
+  private boolean requiresUpdate() {
+    return delegate != null && !currentlyUpdating.get() && System.currentTimeMillis() > nextRefresh;
   }
 
   @Override
@@ -259,10 +266,6 @@ public class ReconnectingChannel implements CloseableChannel {
     } catch (InterruptedException ignored) {
       // TODO(angusdavis): rework this to allow the thread interrupted state to propagate.
     }
-  }
-
-  private boolean requiresRefresh() {
-    return System.currentTimeMillis() > nextRefresh;
   }
 
   private long calculateNewRefreshTime() {

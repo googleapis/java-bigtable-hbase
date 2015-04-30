@@ -22,10 +22,6 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.grpc.ReconnectingChannel.TrackingCall;
 
-import io.grpc.Call;
-import io.grpc.Metadata.Headers;
-import io.grpc.MethodDescriptor;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,8 +30,9 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+
+import io.grpc.Call;
+import io.grpc.MethodDescriptor;
 
 import java.io.IOException;
 import java.util.concurrent.Executors;
@@ -61,9 +58,8 @@ public class ReconnectingChannelTest {
     MockitoAnnotations.initMocks(this);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
-  public void test() throws IOException {
+  public void testCreate() throws IOException {
     when(factory.create()).thenReturn(channel);
     when(channel.newCall(any(MethodDescriptor.class))).thenReturn(call);
     ReconnectingChannel test =
@@ -94,6 +90,10 @@ public class ReconnectingChannelTest {
     Mockito.verify(factory, atLeast(2)).create();
     Mockito.verify(channel, times(1)).close();
 
+    test.close();
+    Mockito.verify(channel, times(2)).close();
+
+    // Test that a second .close() doesn't break things. 
     test.close();
     Mockito.verify(channel, times(2)).close();
 
