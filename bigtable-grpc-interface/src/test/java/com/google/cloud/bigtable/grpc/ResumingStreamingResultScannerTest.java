@@ -106,7 +106,21 @@ public class ResumingStreamingResultScannerTest {
     doErrorsResume(Status.DEADLINE_EXCEEDED);
   }
 
+  @Test
+  public void testAbortedErrorsResume() throws IOException {
+    doErrorsResume(Status.ABORTED);
+  }
+
   private void doErrorsResume(Status status) throws IOException {
+    doErrorsResume(new IOExceptionWithStatus("Test", new OperationRuntimeException(status)));
+  }
+
+  @Test
+  public void testReadTimeoutResume() throws IOException {
+    doErrorsResume(new ReadTimeoutException("ReadTimeoutTest"));
+  }
+
+  private void doErrorsResume(IOException expectedIOException) throws IOException {
     Row row1 = buildRow("row1");
     Row row2 = buildRow("row2");
     Row row3 = buildRow("row3");
@@ -127,8 +141,7 @@ public class ResumingStreamingResultScannerTest {
     when(mockScanner.next())
         .thenReturn(row1)
         .thenReturn(row2)
-        .thenThrow(
-            new IOExceptionWithStatus("Test", new OperationRuntimeException(status)))
+        .thenThrow(expectedIOException)
         .thenThrow(
             new IOException(
                 "Next invoked on scanner post-exception. This is most "
@@ -145,6 +158,7 @@ public class ResumingStreamingResultScannerTest {
     assertRowKey("row4", scanner.next());
 
     verify(mockScannerFactory, times(1)).createScanner(eq(readRowsRequest));
+    verify(mockScanner, times(1)).close();
     verify(mockScannerFactory, times(1)).createScanner(eq(expectedResumeRequest.build()));
   }
 

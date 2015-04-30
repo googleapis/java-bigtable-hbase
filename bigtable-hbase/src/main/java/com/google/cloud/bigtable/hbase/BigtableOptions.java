@@ -258,6 +258,8 @@ public class BigtableOptions {
     optionsBuilder.setCredential(credential);
     optionsBuilder.setEnableRetries(retriesEnabled);
     optionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
+    // TODO(kevinsi): Make this configurable.
+    optionsBuilder.maxElapsedBackoffMillis(180000); // 3 minutes
     optionsBuilder.setScheduledExecutorService(rpcRetryExecutorService);
     optionsBuilder.setChannelCount(channelCount);
     optionsBuilder.setTimeoutMs(timeoutMs);
