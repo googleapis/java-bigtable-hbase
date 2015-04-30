@@ -20,7 +20,7 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
-import io.grpc.MethodDescriptor;
+import com.google.cloud.bigtable.grpc.ReconnectingChannel.TrackingCall;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,6 +30,9 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+
+import io.grpc.Call;
+import io.grpc.MethodDescriptor;
 
 import java.io.IOException;
 import java.util.concurrent.Executors;
@@ -47,22 +50,26 @@ public class ReconnectingChannelTest {
   @Mock
   private CloseableChannel channel;
 
+  @Mock
+  private Call call;
+
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
-  public void test() throws IOException{
+  public void testCreate() throws IOException {
     when(factory.create()).thenReturn(channel);
-    when(channel.newCall(any(MethodDescriptor.class))).thenReturn(null);
+    when(channel.newCall(any(MethodDescriptor.class))).thenReturn(call);
     ReconnectingChannel test =
         new ReconnectingChannel(REFRESH_MS, Executors.newFixedThreadPool(1), factory);
     Mockito.verify(factory, times(1)).create();
 
-    test.newCall(null);
+    Call<Object, Object> call1 = test.newCall(null);
     Mockito.verify(channel, times(1)).newCall(any(MethodDescriptor.class));
+
+    ((TrackingCall) call1).untrack();
 
     try {
       Thread.sleep(REFRESH_MS);
@@ -70,8 +77,9 @@ public class ReconnectingChannelTest {
       // Do nothing on interrupt.
     }
 
-    test.newCall(null);
+    Call<Object, Object> call2 = test.newCall(null);
     Mockito.verify(channel, times(2)).newCall(any(MethodDescriptor.class));
+    ((TrackingCall) call1).untrack();
 
     try {
       Thread.sleep(REFRESH_MS);
@@ -84,7 +92,11 @@ public class ReconnectingChannelTest {
 
     test.close();
     Mockito.verify(channel, times(2)).close();
-    
+
+    // Test that a second .close() doesn't break things. 
+    test.close();
+    Mockito.verify(channel, times(2)).close();
+
     try {
       test.newCall(null);
       Assert.fail("Expected IllegalStateException on a closed channel");
