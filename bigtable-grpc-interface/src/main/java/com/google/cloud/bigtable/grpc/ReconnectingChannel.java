@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.common.base.Preconditions;
+
 import io.grpc.Call;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
@@ -41,6 +43,8 @@ import java.util.logging.Logger;
  */
 public class ReconnectingChannel implements CloseableChannel {
 
+  protected static final long MINIMUM_REFRESH_TIME = 5000;
+
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
   protected static final long CLOSE_WAIT_TIME = 5000;
 
@@ -54,10 +58,10 @@ public class ReconnectingChannel implements CloseableChannel {
   /**
    * TODO: This class was introduced because of a temporary issue in gRPC. It should be handling
    * .shutdown() calls gracefully, but isn't due to a bug. Once they fix the bug, remove
-   * TrackingCall and CountingChannel.  Also, uncomment ReconnectingChannelTest.
+   * TrackingCall and CountingChannel. Also, uncomment ReconnectingChannelTest.
    */
-  private static class TrackingCall<RequestT, ResponseT> extends
-      ClientInterceptors.ForwardingCall<RequestT, ResponseT> {
+  private static class TrackingCall<RequestT, ResponseT> 
+      extends ClientInterceptors.ForwardingCall<RequestT, ResponseT> {
 
     private final Integer id;
     private final Set<Integer> outstandingRequests;
@@ -67,7 +71,6 @@ public class ReconnectingChannel implements CloseableChannel {
       super(delegate);
       this.id = id;
       this.outstandingRequests = outstandingRequests;
-      outstandingRequests.add(id);
     }
 
     @Override
@@ -75,7 +78,14 @@ public class ReconnectingChannel implements CloseableChannel {
       super.start(wrap(responseListener), headers);
     }
 
+    @Override
+    public void cancel() {
+      super.cancel();
+      outstandingRequests.remove(id);
+    }
+
     private Call.Listener<ResponseT> wrap(Call.Listener<ResponseT> responseListener) {
+      outstandingRequests.add(id);
       return new ClientInterceptors.ForwardingListener<ResponseT>(responseListener) {
         @Override
         public void onClose(Status status, Metadata.Trailers trailers) {
@@ -94,8 +104,8 @@ public class ReconnectingChannel implements CloseableChannel {
   private static class CountingChannel implements ClientInterceptor {
     private final CloseableChannel closableChannel;
     private final Channel channel;
-    private final Set<Integer> outstandingRequests = Collections
-        .synchronizedSet(new HashSet<Integer>());
+    private final Set<Integer> outstandingRequests =
+        Collections.synchronizedSet(new HashSet<Integer>());
     private final AtomicInteger counter = new AtomicInteger();
 
     public CountingChannel(CloseableChannel closableChannel) {
@@ -137,6 +147,8 @@ public class ReconnectingChannel implements CloseableChannel {
   private Runnable updateRunnable = null;
 
   public ReconnectingChannel(long maxRefreshTime, Executor executor, final Factory factory) {
+    Preconditions.checkArgument(maxRefreshTime > MINIMUM_REFRESH_TIME,
+        "maxRefreshTime has to be at least " + MINIMUM_REFRESH_TIME + " ms.");
     this.maxRefreshTime = maxRefreshTime;
     this.executor = executor;
     this.nextRefresh = calculateNewRefreshTime();
@@ -248,9 +260,8 @@ public class ReconnectingChannel implements CloseableChannel {
   private long calculateNewRefreshTime() {
     // Set the timeout. Use a random variability to reduce jetteriness when this Channel is part of
     // a pool.
-    double randomizedPercentage = 1 - (.05 * Math.random());
-    long randomizedEnd =
-        this.maxRefreshTime < 0 ? -1L : (long) (this.maxRefreshTime * randomizedPercentage);
-    return randomizedEnd <= 0 ? Integer.MAX_VALUE : (randomizedEnd + System.currentTimeMillis());
+    double randomizedPercentage = 1.0D - (.05D * Math.random());
+    long randomizedEnd = (long) (this.maxRefreshTime * randomizedPercentage);
+    return (randomizedEnd + System.currentTimeMillis());
   }
 }
