@@ -257,6 +257,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     } finally {
       lock.unlock();
     }
+    handleExceptions();
   }
 
   @Override
@@ -268,6 +269,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     } finally {
       lock.unlock();
     }
+    handleExceptions();
   }
 
   private void doFlush() throws IOException {
@@ -278,7 +280,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
       Thread.currentThread().interrupt();
     }
     LOG.trace("Done flushing");
-    handleExceptions();
   }
 
   @Override
@@ -299,13 +300,13 @@ public class BigtableBufferedMutator implements BufferedMutator {
   @Override
   public void mutate(List<? extends Mutation> mutations) throws IOException {
     // Ensure that close() or flush() aren't current being called.
+    handleExceptions();
     ReadLock lock = mutationLock.readLock();
     lock.lock();
     try {
       if (closed) {
         throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
       }
-      handleExceptions();
       for (Mutation mutation : mutations) {
         doMutation(mutation);
       }
@@ -321,13 +322,13 @@ public class BigtableBufferedMutator implements BufferedMutator {
    */
   @Override
   public void mutate(final Mutation mutation) throws IOException {
+    handleExceptions();
     ReadLock lock = mutationLock.readLock();
     lock.lock();
     try {
       if (closed) {
         throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
       }
-      handleExceptions();
       doMutation(mutation);
     } finally {
       lock.unlock();
