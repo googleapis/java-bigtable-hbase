@@ -68,13 +68,13 @@ public class ReconnectingChannel implements CloseableChannel {
     protected TrackingCall(Call<RequestT, ResponseT> delegate, Integer id,
         Set<Integer> outstandingRequests) {
       super(delegate);
+      outstandingRequests.add(id);
       this.id = id;
       this.outstandingRequests = outstandingRequests;
     }
 
     @Override
     public void start(Call.Listener<ResponseT> responseListener, Headers headers) {
-      outstandingRequests.add(id);
       super.start(wrap(responseListener), headers);
     }
 
