@@ -25,6 +25,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -102,5 +103,104 @@ public class TestAppend extends AbstractTest {
     append.setReturnResults(false);
     Result result = table.append(append);
     Assert.assertNull("Should not return result", result);
+  }
+
+  @Test
+  public void testAppendToMultipleColumns() throws Exception {
+    // Initialize
+    Table table = getConnection().getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("rowKey-");
+    byte[] qualifier1 = dataHelper.randomData("qualifier1-");
+    byte[] qualifier2 = dataHelper.randomData("qualifier2-");
+    byte[] value1 = dataHelper.randomData("value1-");
+    byte[] value2 = dataHelper.randomData("value2-");
+
+    // Put then append
+    Append append =
+        new Append(rowKey)
+            .add(COLUMN_FAMILY, qualifier1, value1)
+            .add(COLUMN_FAMILY, qualifier2, value2);
+    table.append(append);
+
+    // Test result
+    Get get = new Get(rowKey).addFamily(COLUMN_FAMILY);
+    get.setMaxVersions(5);
+    Result result = table.get(get);
+    Assert.assertEquals("There should be two cells", 2, result.size());
+    Cell cell1 = result.getColumnLatestCell(COLUMN_FAMILY, qualifier1);
+    Assert.assertEquals(
+        Bytes.toString(value1),
+        Bytes.toString(CellUtil.cloneValue(cell1)));
+    Cell cell2 = result.getColumnLatestCell(COLUMN_FAMILY, qualifier2);
+    Assert.assertEquals(
+        Bytes.toString(value2),
+        Bytes.toString(CellUtil.cloneValue(cell2)));
+  }
+
+
+  @Test
+  public void testAppendToMultipleFamilies() throws Exception {
+    // Initialize
+    Table table = getConnection().getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("rowKey-");
+    byte[] qualifier1 = dataHelper.randomData("qualifier1-");
+    byte[] value1 = dataHelper.randomData("value1-");
+    byte[] value2 = dataHelper.randomData("value2-");
+
+    // Put then append
+    Append append =
+        new Append(rowKey)
+            .add(COLUMN_FAMILY, qualifier1, value1)
+            .add(COLUMN_FAMILY2, qualifier1, value2);
+    table.append(append);
+
+    // Test result
+    Get get = new Get(rowKey)
+        .addFamily(COLUMN_FAMILY)
+        .addFamily(COLUMN_FAMILY2);
+    get.setMaxVersions(5);
+    Result result = table.get(get);
+    Assert.assertEquals("There should be two cells", 2, result.size());
+    Cell cell1 = result.getColumnLatestCell(COLUMN_FAMILY, qualifier1);
+    Assert.assertNotNull(cell1);
+    Assert.assertEquals(
+        Bytes.toString(value1),
+        Bytes.toString(CellUtil.cloneValue(cell1)));
+    Cell cell2 = result.getColumnLatestCell(COLUMN_FAMILY2, qualifier1);
+    Assert.assertNotNull(cell2);
+    Assert.assertEquals(
+        Bytes.toString(value2),
+        Bytes.toString(CellUtil.cloneValue(cell2)));
+  }
+
+  @Test
+  public void testAppendMultiFamilyEmptyQualifier() throws Exception {
+    // Initialize
+    Table table = getConnection().getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("rowKey-");
+    byte[] qualifier1 = new byte[0];
+    byte[] value1 = dataHelper.randomData("value1-");
+    byte[] value2 = dataHelper.randomData("value2-");
+
+    // Put then append
+    Append append =
+        new Append(rowKey)
+            .add(COLUMN_FAMILY, qualifier1, value1)
+            .add(COLUMN_FAMILY2, qualifier1, value2);
+    table.append(append);
+
+    // Test result
+    Get get = new Get(rowKey).addFamily(COLUMN_FAMILY).addFamily(COLUMN_FAMILY2);
+    get.setMaxVersions(5);
+    Result result = table.get(get);
+    Assert.assertEquals("There should be two cells", 2, result.size());
+    Cell cell1 = result.getColumnLatestCell(COLUMN_FAMILY, qualifier1);
+    Assert.assertEquals(
+        Bytes.toString(value1),
+        Bytes.toString(CellUtil.cloneValue(cell1)));
+    Cell cell2 = result.getColumnLatestCell(COLUMN_FAMILY2, qualifier1);
+    Assert.assertEquals(
+        Bytes.toString(value2),
+        Bytes.toString(CellUtil.cloneValue(cell2)));
   }
 }
