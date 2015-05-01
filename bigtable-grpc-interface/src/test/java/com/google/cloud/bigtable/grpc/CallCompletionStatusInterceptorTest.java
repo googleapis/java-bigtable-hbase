@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.grpc.CallCompletionStatusInterceptor.CompletionStatusGatheringCall;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Empty;
 
 import io.grpc.Call;
@@ -53,7 +54,8 @@ public class CallCompletionStatusInterceptorTest {
 
   @Test
   public void callCompletionStatusesAreRecorded() throws InterruptedException {
-    CallCompletionStatusInterceptor interceptor = new CallCompletionStatusInterceptor();
+    CallCompletionStatusInterceptor interceptor =
+        new CallCompletionStatusInterceptor(MoreExecutors.newDirectExecutorService());
 
     when(channelStub.newCall(BigtableServiceGrpc.CONFIG.mutateRow)).thenReturn(callStub);
 
