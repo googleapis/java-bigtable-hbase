@@ -17,7 +17,9 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ConcurrentHashMultiset;
+import com.google.common.collect.MapMaker;
 import com.google.common.collect.Multiset;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import io.grpc.Call;
 import io.grpc.Channel;
@@ -28,6 +30,8 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * A {@link Channel} that records the {@link Status} passed to onClose of each call issued on
@@ -77,6 +81,14 @@ public class CallCompletionStatusInterceptor implements ClientInterceptor {
     }
   }
 
+  private final ExecutorService countUpdateExecutor =
+      Executors.newSingleThreadExecutor(
+          new ThreadFactoryBuilder()
+              .setNameFormat("call-status-recorder")
+              .setDaemon(true)
+              .build());
+  // This will only be updated by the countUpdateExecutor, but can still be read
+  // elsewhere
   private final Multiset<CallCompletionStatus> callCompletionStatuses =
       ConcurrentHashMultiset.create();
 
@@ -104,8 +116,13 @@ public class CallCompletionStatusInterceptor implements ClientInterceptor {
     Listener<ResponseT> createGatheringListener(Listener<ResponseT> responseListener) {
       return new ClientInterceptors.ForwardingListener<ResponseT>(responseListener) {
         @Override
-        public void onClose(Status status, Metadata.Trailers trailers) {
-          callCompletionStatuses.add(new CallCompletionStatus(method, status));
+        public void onClose(final Status status, Metadata.Trailers trailers) {
+          countUpdateExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+              callCompletionStatuses.add(new CallCompletionStatus(method, status));
+            }
+          });
           super.onClose(status, trailers);
         }};
     }
