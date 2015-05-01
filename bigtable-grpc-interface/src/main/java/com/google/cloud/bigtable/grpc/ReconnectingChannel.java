@@ -27,6 +27,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.common.base.Preconditions;
+
 /**
  * A ClosableChannel that refreshes itself based on a user supplied timeout.
  */
@@ -57,6 +59,7 @@ public class ReconnectingChannel implements CloseableChannel {
   private CloseableChannel delegate;
 
   public ReconnectingChannel(long maxRefreshTime, Executor executor, final Factory factory) {
+    Preconditions.checkArgument(maxRefreshTime > 0, "maxRefreshTime has to be greater than 0.");
     this.maxRefreshTime = maxRefreshTime;
     this.executor = executor;
     this.delegate = factory.create();
@@ -81,7 +84,7 @@ public class ReconnectingChannel implements CloseableChannel {
   }
 
   private void checkRefresh(ReadLock readLock) {
-    if (delegate == null || !requiresRefresh()) {
+    if (!requiresRefresh()) {
       return;
     }
 
@@ -101,7 +104,7 @@ public class ReconnectingChannel implements CloseableChannel {
     try {
       // Double check that a previous call didn't refresh the connection since this thread 
       // acquired the write lock. 
-      if (delegate != null && requiresRefresh()) {
+      if (requiresRefresh()) {
         // Startup should be non-blocking and async.
         asyncClose(delegate);
         delegate = factory.create();
@@ -160,16 +163,14 @@ public class ReconnectingChannel implements CloseableChannel {
   }
 
   private boolean requiresRefresh() {
-    return System.currentTimeMillis() > nextRefresh;
+    return delegate != null && System.currentTimeMillis() > nextRefresh;
   }
-
 
   private long calculateNewRefreshTime() {
     // Set the timeout. Use a random variability to reduce jetteriness when this Channel is part of
     // a pool.
-    double randomizedPercentage = 1 - (.05 * Math.random());
-    long randomizedEnd =
-        this.maxRefreshTime < 0 ? -1L : (long) (this.maxRefreshTime * randomizedPercentage);
-    return randomizedEnd <= 0 ? randomizedEnd : (randomizedEnd + System.currentTimeMillis());
+    double randomizedPercentage = 1D - (.05D * Math.random());
+    long randomizedEnd = (long) (this.maxRefreshTime * randomizedPercentage);
+    return (randomizedEnd + System.currentTimeMillis());
   }
 }

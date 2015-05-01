@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase;
 
 
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,8 +26,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.io.IOException;
 
 @RunWith(JUnit4.class)
 public class TestBigtableOptionsFactory {
@@ -112,4 +112,33 @@ public class TestBigtableOptionsFactory {
         "EventLoopGroup expected",
         options.getTransportOptions().getEventLoopGroup());
   }
+
+  @Test
+  public void testMinGoodRefreshTime() throws IOException{
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 60000);
+    BigtableOptionsFactory.fromConfiguration(configuration);
+  }
+
+  @Test
+  public void testBadRefreshTime() throws IOException{
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 59999);
+    expectedException.expect(IllegalArgumentException.class);
+    BigtableOptionsFactory.fromConfiguration(configuration);
+  }
+
+  @Test
+  public void testZeroRefreshTime() throws IOException{
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 0);
+    BigtableOptionsFactory.fromConfiguration(configuration);
+  }
+
 }

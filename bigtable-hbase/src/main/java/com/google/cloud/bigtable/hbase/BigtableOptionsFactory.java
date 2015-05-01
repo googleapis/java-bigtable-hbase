@@ -298,6 +298,9 @@ public class BigtableOptionsFactory {
 
     long channelTimeout =
         configuration.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
+
+    Preconditions.checkArgument(channelTimeout == 0 || channelTimeout >= 60000,
+      BIGTABLE_CHANNEL_TIMEOUT_MS_KEY + " has to be at least 1 minute (60000)");
     optionsBuilder.setChannelTimeoutMs(channelTimeout);
 
     return optionsBuilder.build();
