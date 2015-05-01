@@ -132,8 +132,12 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     currentDelegate.close();
   }
 
-  private void reissueRequest() throws IOException {
-    currentDelegate.close();
+  private void reissueRequest() {
+    try {
+      currentDelegate.close();
+    } catch (IOException ioe) {
+      LOG.warn("Error closing scanner before reissuing request: ", ioe);
+    }
 
     ReadRowsRequest.Builder newRequest = originalRequest.toBuilder();
     if (lastRowKey != null) {
