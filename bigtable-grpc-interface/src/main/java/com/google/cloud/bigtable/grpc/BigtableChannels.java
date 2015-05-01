@@ -118,8 +118,7 @@ public class BigtableChannels {
       return new ReconnectingChannel(timeoutMs, executor, new ReconnectingChannel.Factory() {
         @Override
         public CloseableChannel create() {
-          CloseableChannel channel = createCloseableChannel(transportOptions, executor);
-          return new InflightCheckingChannel(channel);
+          return createCloseableChannel(transportOptions, executor);
         }
       });
     } else {
