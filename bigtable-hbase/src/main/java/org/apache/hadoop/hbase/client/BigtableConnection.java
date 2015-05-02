@@ -110,9 +110,6 @@ public class BigtableConnection implements Connection, Closeable {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
 
-    id = SEQUENCE_GENERATOR.incrementAndGet();
-    ACTIVE_CONNECTIONS.add(id);
-
     if (batchPool == null) {
       batchPool = getBatchPool();
     }
@@ -140,6 +137,9 @@ public class BigtableConnection implements Connection, Closeable {
         channelOptions,
         batchPool);
     this.tableConfig = new TableConfiguration(conf);
+
+    id = SEQUENCE_GENERATOR.incrementAndGet();
+    ACTIVE_CONNECTIONS.add(id);
   }
 
   private BigtableAdminClient getAdminClient(
@@ -268,20 +268,44 @@ public class BigtableConnection implements Connection, Closeable {
     return this.aborted;
   }
 
+  private void shutdownClients() {
+    Exception toBeThrown = null;
+    try {
+      bigtableAdminClient.close();
+    } catch (Exception e) {
+      LOG.error("Exception when shutting down the admin client.", e);
+      toBeThrown = e;
+    }
+    try {
+      client.close();
+    } catch (Exception e) {
+      LOG.error("Exception when shutting down the data client.", e);
+      // We will lose the admin exception if there was one, but attempting
+      // to carry both exceptions will lead to the stack traces not printed
+      // in most cases (see RetriesExhausted for that happening):
+      toBeThrown = e;
+    }
+    if (toBeThrown != null) {
+      throw new RuntimeException("Error when shutting down clients", toBeThrown);
+    }
+  }
+
   @Override
   public void close() {
     if (this.closed) {
       return;
     }
     try {
-      bigtableAdminClient.close();
-      client.close();
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
+      shutdownClients();
+    } finally {
+      this.closed = true;
+      ACTIVE_CONNECTIONS.remove(id);
     }
+    // If the clients are shutdown, there shouldn't be any more activity on the
+    // batch pool (assuming we created it ourselves). If exceptions were raised
+    // shutting down the clients, it's not entirely safe to shutdown the pool
+    // (via a finally block).
     shutdownBatchPool();
-    ACTIVE_CONNECTIONS.remove(id);
-    this.closed = true;
   }
 
   @Override
