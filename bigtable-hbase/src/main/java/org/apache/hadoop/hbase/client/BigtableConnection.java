@@ -54,7 +54,7 @@ public class BigtableConnection implements Connection, Closeable {
       "google.bigtable.buffered.mutator.max.inflight.rpcs";
 
   // Default rpc count per channel.
-  public static final int MAX_INFLIGHT_RPCS_DEFAULT = 2000;
+  public static final int MAX_INFLIGHT_RPCS_DEFAULT = 50;
 
   /**
    * The maximum amount of memory to be used for asynchronous buffered mutator RPCs.
