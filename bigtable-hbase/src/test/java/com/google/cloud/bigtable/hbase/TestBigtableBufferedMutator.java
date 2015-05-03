@@ -81,7 +81,7 @@ public class TestBigtableBufferedMutator {
     Mockito.verify(executor, Mockito.times(1)).issueRequest(Matchers.any(Row.class));
     Long id = underTest.sizeManager.pendingOperationsWithSize.keySet().iterator().next();
     underTest.sizeManager.operationComplete(id);
-    Assert.assertTrue(underTest.sizeManager.pendingOperationsWithSize.isEmpty());
+    Assert.assertTrue(!underTest.hasInflightRequests());
   }
 
   @Test
