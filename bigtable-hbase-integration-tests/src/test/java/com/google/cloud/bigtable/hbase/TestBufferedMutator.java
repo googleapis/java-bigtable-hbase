@@ -21,6 +21,7 @@ import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
@@ -40,7 +41,8 @@ public class TestBufferedMutator extends AbstractTest {
   @Test
   public void testAutoFlushOff() throws Exception {
     try (BufferedMutator mutator = getConnection().getBufferedMutator(TABLE_NAME);
-        Table tableForRead = createNewConnection().getTable(TABLE_NAME);) {
+        Connection c = createNewConnection();
+        Table tableForRead = c.getTable(TABLE_NAME);) {
       // Set up the tiny write and read
       mutator.mutate(getPut());
       Get get = getGet();
@@ -55,7 +57,8 @@ public class TestBufferedMutator extends AbstractTest {
   @Test
   public void testAutoFlushOn() throws Exception {
     try (Table mutator = getConnection().getTable(TABLE_NAME);
-        Table tableForRead = createNewConnection().getTable(TABLE_NAME);) {
+        Connection c = createNewConnection();
+        Table tableForRead = c.getTable(TABLE_NAME);) {
       mutator.put(getPut());
       Assert.assertEquals("Expecting one result", 1, tableForRead.get(getGet()).size());
     }
