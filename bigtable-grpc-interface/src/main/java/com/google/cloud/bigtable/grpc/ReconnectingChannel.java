@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc;
 
 import io.grpc.Call;
+import io.grpc.Metadata.Headers;
 import io.grpc.MethodDescriptor;
 
 import java.io.IOException;
@@ -44,6 +45,59 @@ public class ReconnectingChannel implements CloseableChannel {
     CloseableChannel create();
   }
 
+  private class DelayingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
+
+    final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
+    Call<RequestT, ResponseT> callDelegate = null;
+    
+    public DelayingCall(MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+      this.methodDescriptor = methodDescriptor;
+    }
+
+    @Override
+    public void start(Call.Listener<ResponseT> responseListener, Headers headers) {
+      Preconditions.checkState(callDelegate == null, "Already started");
+      ReadLock readLock = delegateLock.readLock();
+      readLock.lock();
+      try {
+        if (delegate == null) {
+          throw new IllegalStateException("Channel is closed");
+        }
+        checkRefresh(readLock);
+        callDelegate = delegate.newCall(methodDescriptor);
+        callDelegate.start(responseListener, headers);
+      } finally {
+        readLock.unlock();
+      }
+    }
+
+    @Override
+    public void request(int numMessages) {
+      Preconditions.checkState(callDelegate != null, "Not started");
+      callDelegate.request(numMessages);
+    }
+
+    @Override
+    public void cancel() {
+      if (callDelegate != null) {
+        callDelegate.cancel();
+      }
+    }
+
+    @Override
+    public void halfClose() {
+      Preconditions.checkState(callDelegate != null, "Not started");
+      callDelegate.halfClose();
+    }
+
+    @Override
+    public void sendPayload(RequestT payload) {
+      Preconditions.checkState(callDelegate != null, "Not started");
+      callDelegate.sendPayload(payload);
+    }
+
+  }
+
   // We can't do a newCall on a closed delegate.  This will ensure that refreshes don't 
   // allow a closed delegate to perform a newCall.  Once closed is called, all existing
   // calls will complete before the delegate shuts down.
@@ -70,24 +124,13 @@ public class ReconnectingChannel implements CloseableChannel {
   @Override
   public <RequestT, ResponseT> Call<RequestT, ResponseT> newCall(
       MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    ReadLock readLock = delegateLock.readLock();
-    readLock.lock();
-    try {
-      if (delegate == null) {
-        throw new IllegalStateException("Channel is closed");
-      }
-      checkRefresh(readLock);
-      return delegate.newCall(methodDescriptor);
-    } finally {
-      readLock.unlock();
-    }
+    return new DelayingCall<>(methodDescriptor);
   }
 
   private void checkRefresh(ReadLock readLock) {
     if (!requiresRefresh()) {
       return;
     }
-
     
     // A writeLock will assure that only a single thread updates to delgate.  See close() for
     // the other use of writeLocks in this class.
