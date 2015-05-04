@@ -125,20 +125,6 @@ public class BigtableOptionsFactory {
       "google.bigtable.grpc.channel.timeout.ms";
   public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
 
-  static {
-    Runnable shutDownRunnable = new Runnable() {
-      @Override
-      public void run() {
-        int activeConnectionCount = BigtableConnection.getActiveConnectionCount();
-        if (activeConnectionCount > 0) {
-          LOG.warn("Shutdown is commencing and you have open %d connections. "
-              + "Data could be lost if there are onging requests. ", activeConnectionCount);
-        }
-      }
-    };
-    Runtime.getRuntime().addShutdownHook(new Thread(shutDownRunnable));
-  }
-
   public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
     BigtableOptions.Builder optionsBuilder = new BigtableOptions.Builder();
 
