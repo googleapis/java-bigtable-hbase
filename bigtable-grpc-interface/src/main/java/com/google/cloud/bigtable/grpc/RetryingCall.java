@@ -163,4 +163,11 @@ class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
     // We are NOT retrying
     return false;
   }
+
+  @Override
+  public boolean isReady() {
+    // TODO: This should be a more sophisticated check.  This should work for now, since this is a
+    // unary call.
+    return true;
+  }
 }
