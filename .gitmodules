@@ -1,3 +1,0 @@
-[submodule "lib/grpc-java"]
-	path = lib/grpc-java
-	url = https://github.com/grpc/grpc-java.git

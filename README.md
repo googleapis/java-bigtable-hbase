@@ -35,22 +35,11 @@ Cloud Bigtable has been used by Google for 10+ years for its largest application
 ## Project setup, installation, and configuration
 **TODO**
 
-## Building
+How do I, as a developer, start working on the project?
 
-### grpc-java and Netty
-Cloud-bigtable requires grpc-java and its dependencies.
-```
-$ git submodule update --init --recursive
-$ cd lib/grpc-java/
-```
-At this point, follow the directions to install grpc-java via the [README](https://github.com/grpc/grpc-java/blob/master/README.md)
+1. What dependencies does it have (where are they expressed) and how do I install them?
+1. Can I see the project working before I change anything?
 
-### bigtable-client
-```
-$ mvn clean install -DskipTests
-```
-
-### Examples
 Additionally see our [example project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples)
 
 ## Testing
