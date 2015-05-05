@@ -26,6 +26,10 @@ limitations under the License.
     <artifactId>bigtable-grpc-interface</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <netty.version>4.1.0.Beta5-SNAPSHOT</netty.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -45,14 +49,10 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-handler</artifactId>
+            <artifactId>netty-all</artifactId>
             <version>${netty.version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-transport</artifactId>
-            <version>${netty.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client-java6</artifactId>

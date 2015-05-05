@@ -38,7 +38,6 @@ limitations under the License.
        <compileSource>1.7</compileSource>
        <protobuff-java.version>3.0.0-alpha-2</protobuff-java.version>
        <grpc.version>0.1.0-SNAPSHOT</grpc.version>
-       <netty.version>4.1.0.Beta5-SNAPSHOT</netty.version>
 
        <!-- For Netty HTTP2/TLS negotiation -->
        <alpn.version>7.0.0.v20140317</alpn.version>
@@ -50,6 +49,17 @@ limitations under the License.
        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>Apache Snapshots Repository</id>
+            <url>https://repository.apache.org/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>Sonatype Snapshots Repository</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+    </repositories>
 
     <dependencyManagement>
         <dependencies>
@@ -92,11 +102,6 @@ limitations under the License.
                 <version>${alpn.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>${protobuff-java.version}</version>
-            </dependency>
             <!-- OAuth token acquisition dependencies -->
             <dependency>
                 <groupId>com.google.api-client</groupId>
@@ -215,22 +220,12 @@ limitations under the License.
                         <groupId>com.google.protobuf</groupId>
                         <artifactId>protobuf-java</artifactId>
                     </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty-all</artifactId>
-                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hbase</groupId>
                 <artifactId>hbase-server</artifactId>
                 <version>${hbase.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty-all</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hbase</groupId>
@@ -238,12 +233,6 @@ limitations under the License.
                 <version>${hbase.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty-all</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hbase</groupId>
