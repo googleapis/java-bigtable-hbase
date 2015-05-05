@@ -25,7 +25,9 @@ limitations under the License.
 
     <artifactId>bigtable-hbase-integration-tests</artifactId>
     <packaging>jar</packaging>
-
+    <properties>
+        <google.bigtable.auth.service.account.enable>true</google.bigtable.auth.service.account.enable>
+    </properties>
     <profiles>
         <profile>
             <id>bigtableIntegrationTest</id>
