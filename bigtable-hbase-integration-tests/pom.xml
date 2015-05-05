@@ -33,6 +33,7 @@ limitations under the License.
                 <dependency>
                     <groupId>${project.groupId}</groupId>
                     <artifactId>bigtable-hbase</artifactId>
+                    <classifier>shaded</classifier>
                     <version>${project.version}</version>
                 </dependency>
             </dependencies>
@@ -84,6 +85,7 @@ limitations under the License.
                 <dependency>
                     <groupId>${project.groupId}</groupId>
                     <artifactId>bigtable-hbase</artifactId>
+                    <classifier>shaded</classifier>
                     <version>${project.version}</version>
                 </dependency>
             </dependencies>

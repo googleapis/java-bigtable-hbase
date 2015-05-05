@@ -33,6 +33,10 @@ limitations under the License.
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
             <type>test-jar</type>
@@ -192,7 +196,7 @@ limitations under the License.
                         </goals>
                         <configuration>
                             <shadeTestJar>true</shadeTestJar>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>shaded</shadedClassifierName>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
                             <artifactSet>
@@ -207,7 +211,7 @@ limitations under the License.
                                     <include>com.google.protobuf:*</include>
                                     <include>com.twitter:hpack</include>
                                     <include>com.fasterxml.jackson.core:*</include>
-                                    <include>io.netty:netty-all</include>
+                                    <include>io.netty:*</include>
                                     <include>io.grpc:grpc-all</include>
                                 </includes>
                             </artifactSet>
@@ -231,6 +235,10 @@ limitations under the License.
                                 <relocation>
                                     <pattern>io.netty</pattern>
                                     <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>io.grpc</pattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>com.google.api</pattern>
