@@ -1,4 +1,4 @@
-apply plugin: 'protobuf'
+apply plugin: 'com.google.protobuf'
 
 repositories {
     mavenCentral()
@@ -14,15 +14,9 @@ buildscript {
         mavenLocal()
     }
     dependencies {
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.1.0'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.3.1'
     }
 }
 
-dependencies {
-    compile 'io.grpc:grpc-all:0.1.0-SNAPSHOT',
-            'org.glassfish:javax.json:1.0.4'
-}
-
-protocDep = 'com.google.protobuf:protoc:3.0.0-alpha-2'
 protobufNativeCodeGenPluginDeps = ["java_plugin:io.grpc:protoc-gen-grpc-java:0.1.0-SNAPSHOT"]
 generatedFileDir =  "${projectDir}/target/generated-sources"
