@@ -39,15 +39,15 @@ limitations under the License.
     </property>
     <property>
         <name>google.bigtable.project.id</name>
-        <value>autonomous-mote-782</value>
+        <value>${google.bigtable.project.id}</value>
     </property>
     <property>
         <name>google.bigtable.zone.name</name>
-        <value>us-central1-b</value>
+        <value>${google.bigtable.zone.name}</value>
     </property>
     <property>
         <name>google.bigtable.cluster.name</name>
-        <value>cluster</value>
+        <value>${google.bigtable.cluster.name}</value>
     </property>
     <property>
         <name>google.bigtable.auth.service.account.enable</name>
@@ -63,10 +63,10 @@ limitations under the License.
     </property>
     <property>
         <name>google.bigtable.auth.service.account.email</name>
-        <value>450300683590-th0dk93ks4nicmug2ts9d05f7p2q0mda@developer.gserviceaccount.com</value>
+        <value>${google.bigtable.auth.service.account.email}</value>
     </property>
     <property>
         <name>google.bigtable.auth.service.account.keyfile</name>
-        <value>/google/data/ro/users/mg/mgaro/My Test Project-d5c2dc57b0de.p12</value>
+        <value>${google.bigtable.auth.service.account.keyfile}</value>
     </property>
 </configuration>

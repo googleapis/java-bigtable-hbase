@@ -30,24 +30,32 @@ limitations under the License.
     </modules>
 
     <properties>
-       <hbase.version>1.0.1</hbase.version>
-       <hadoop.version>2.4.1</hadoop.version>
-       <compat.module>hbase-hadoop2-compat</compat.module>
-       <junit.version>4.11</junit.version>
-       <mockito.version>1.9.5</mockito.version>
-       <compileSource>1.7</compileSource>
-       <protobuff-java.version>3.0.0-alpha-2</protobuff-java.version>
-       <grpc.version>0.1.0-SNAPSHOT</grpc.version>
-
-       <!-- For Netty HTTP2/TLS negotiation -->
-       <alpn.version>7.0.0.v20140317</alpn.version>
-       <google.api.client.version>1.19.0</google.api.client.version>
-       <google.bigtable.auth.service.account.enable>false</google.bigtable.auth.service.account.enable>
-       <google.bigtable.admin.endpoint.host>test-bigtabletableadmin.sandbox.googleapis.com</google.bigtable.admin.endpoint.host>
-       <google.bigtable.endpoint.host>test-bigtable.sandbox.googleapis.com</google.bigtable.endpoint.host>
-       <google.bigtable.cluster.admin.endpoint.host>test-bigtableclusteradmin.sandbox.googleapis.com</google.bigtable.cluster.admin.endpoint.host>
-       <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
-       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <compileSource>1.7</compileSource>
+        <!-- dependency versions -->
+        <hbase.version>1.0.1</hbase.version>
+        <hadoop.version>2.4.1</hadoop.version>
+        <compat.module>hbase-hadoop2-compat</compat.module>
+        <junit.version>4.11</junit.version>
+        <mockito.version>1.9.5</mockito.version>
+        <protobuff-java.version>3.0.0-alpha-2</protobuff-java.version>
+        <grpc.version>0.1.0-SNAPSHOT</grpc.version>
+        <google.api.client.version>1.19.0</google.api.client.version>
+        <!-- For Netty HTTP2/TLS negotiation -->
+        <alpn.version>7.0.0.v20140317</alpn.version>
+        <!-- Values for integration testing. Set these in ~/.m2/settings.xml or
+             via command-line -D flags. -->
+        <google.bigtable.auth.service.account.email></google.bigtable.auth.service.account.email>
+        <google.bigtable.auth.service.account.keyfile></google.bigtable.auth.service.account.keyfile>
+        <google.bigtable.cluster.name>cluster</google.bigtable.cluster.name>
+        <google.bigtable.zone.name>us-central1-b</google.bigtable.zone.name>
+        <google.bigtable.endpoint.host>bigtable.googleapis.com</google.bigtable.endpoint.host>
+        <google.bigtable.admin.endpoint.host>bigtabletableadmin.googleapis.com</google.bigtable.admin.endpoint.host>
+        <google.bigtable.cluster.admin.endpoint.host>bigtableclusteradmin.googleapis.com</google.bigtable.cluster.admin.endpoint.host>
+        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
+        <!-- This is false for unit tests, and overriden to be true in
+             bigtable-hbase-integration-tests/pom.xml -->
+        <google.bigtable.auth.service.account.enable>false</google.bigtable.auth.service.account.enable>
     </properties>
 
     <repositories>
