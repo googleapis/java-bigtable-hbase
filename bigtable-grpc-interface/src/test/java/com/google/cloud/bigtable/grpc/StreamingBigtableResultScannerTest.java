@@ -479,7 +479,7 @@ public class StreamingBigtableResultScannerTest {
     // Add a single response that does not complete the row or stream:
     scanner.addResult(ReadRowsResponse.newBuilder().setRowKey(rowKey).build());
 
-    expectedException.expect(IOException.class);
+    expectedException.expect(ReadTimeoutException.class);
     expectedException.expectMessage("Timeout while merging responses.");
 
     scanner.next();
