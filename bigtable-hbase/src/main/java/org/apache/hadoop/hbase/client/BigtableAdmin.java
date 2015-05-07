@@ -74,7 +74,7 @@ import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
 import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
-import com.google.cloud.bigtable.grpc.BigtableAdminClient;
+import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
@@ -93,7 +93,7 @@ public class BigtableAdmin implements Admin {
   private final Configuration configuration;
   private final BigtableOptions options;
   private final BigtableConnection connection;
-  private final BigtableAdminClient bigtableAdminClient;
+  private final BigtableTableAdminClient bigtableTableAdminClient;
 
   private ClusterMetadataSetter clusterMetadataSetter;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
@@ -103,13 +103,13 @@ public class BigtableAdmin implements Admin {
       BigtableOptions options,
       Configuration configuration,
       BigtableConnection connection,
-      BigtableAdminClient bigtableAdminClient,
+      BigtableTableAdminClient bigtableTableAdminClient,
       Set<TableName> disabledTables) {
     LOG.debug("Creating BigtableAdmin");
     this.configuration = configuration;
     this.options = options;
     this.connection = connection;
-    this.bigtableAdminClient = bigtableAdminClient;
+    this.bigtableTableAdminClient = bigtableTableAdminClient;
     this.disabledTables = disabledTables;
     this.clusterMetadataSetter = ClusterMetadataSetter.from(options);
     this.tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
@@ -234,7 +234,7 @@ public class BigtableAdmin implements Admin {
     try {
       ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
       clusterMetadataSetter.setMetadata(builder);
-      return bigtableAdminClient.listTables(builder.build());
+      return bigtableTableAdminClient.listTables(builder.build());
     } catch (Throwable throwable) {
       throw new IOException("Failed to listTables", throwable);
     }
@@ -268,7 +268,7 @@ public class BigtableAdmin implements Admin {
     GetTableRequest request = GetTableRequest.newBuilder().setName(bigtableTableName).build();
 
     try {
-      return tableAdapter.adapt(bigtableAdminClient.getTable(request));
+      return tableAdapter.adapt(bigtableTableAdminClient.getTable(request));
     } catch (UncheckedExecutionException e) {
       if (e.getCause() != null && e.getCause() instanceof OperationRuntimeException) {
         Status status = ((OperationRuntimeException) e.getCause()).getStatus();
@@ -301,7 +301,7 @@ public class BigtableAdmin implements Admin {
     builder.setTableId(desc.getTableName().getQualifierAsString());
     builder.setTable(tableAdapter.adapt(desc));
     try {
-      bigtableAdminClient.createTable(builder.build());
+      bigtableTableAdminClient.createTable(builder.build());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
@@ -335,7 +335,7 @@ public class BigtableAdmin implements Admin {
     Builder deleteBuilder = DeleteTableRequest.newBuilder();
     TableMetadataSetter.from(tableName, options).setMetadata(deleteBuilder);
     try {
-      bigtableAdminClient.deleteTable(deleteBuilder.build());
+      bigtableTableAdminClient.deleteTable(deleteBuilder.build());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
@@ -511,7 +511,7 @@ public class BigtableAdmin implements Admin {
     tableMetadataSetter.setMetadata(createColumnFamilyBuilder);
 
     try {
-      bigtableAdminClient.createColumnFamily(createColumnFamilyBuilder.build());
+      bigtableTableAdminClient.createColumnFamily(createColumnFamilyBuilder.build());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
@@ -534,7 +534,7 @@ public class BigtableAdmin implements Admin {
     ColumnFamilyFormatter formatter = ColumnFamilyFormatter.from(tableName, options);
     String bigtableColumnName = formatter.formatForBigtable(Bytes.toString(columnName));
     try {
-      bigtableAdminClient.deleteColumnFamily(
+      bigtableTableAdminClient.deleteColumnFamily(
           DeleteColumnFamilyRequest.newBuilder().setName(bigtableColumnName).build());
     } catch (Throwable throwable) {
       throw new IOException(
@@ -985,13 +985,13 @@ public class BigtableAdmin implements Admin {
 
   @Override
   public String toString() {
-    InetAddress adminHost = options.getAdminHost();
+    InetAddress tableAdminHost = options.getTableAdminHost();
     return MoreObjects.toStringHelper(BigtableAdmin.class)
         .add("connectionId", connection.getId())
         .add("zone", options.getZone())
         .add("project", options.getProjectId())
         .add("cluster", options.getCluster())
-        .add("adminHost", adminHost)
+        .add("adminHost", tableAdminHost)
         .toString();
   }
 }

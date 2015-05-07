@@ -52,8 +52,10 @@ public class BigtableOptionsFactory {
       "google.bigtable.cluster.admin.endpoint.host";
   public static final String BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT =
       "bigtableclusteradmin.googleapis.com";
-  public static final String BIGTABLE_ADMIN_HOST_KEY = "google.bigtable.admin.endpoint.host";
-  public static final String BIGTABLE_ADMIN_HOST_DEFAULT = "bigtabletableadmin.googleapis.com";
+  public static final String BIGTABLE_TABLE_ADMIN_HOST_KEY =
+      "google.bigtable.admin.endpoint.host";
+  public static final String BIGTABLE_TABLE_ADMIN_HOST_DEFAULT =
+      "bigtabletableadmin.googleapis.com";
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
   public static final String BIGTABLE_HOST_DEFAULT = "bigtable.googleapis.com";
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
@@ -157,42 +159,41 @@ public class BigtableOptionsFactory {
       overrideIpAddress = InetAddress.getByName(overrideIp);
     }
 
-    String host = configuration.get(BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT);
+    String dataHost = configuration.get(BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT);
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(host),
-        String.format("API endpoint host must be supplied via %s", BIGTABLE_HOST_KEY));
+        !Strings.isNullOrEmpty(dataHost),
+        String.format("API Data endpointa host must be supplied via %s", BIGTABLE_HOST_KEY));
     if (overrideIpAddress == null) {
-      LOG.debug("Data endpoint host %s", host);
-      optionsBuilder.setHost(InetAddress.getByName(host));
+      LOG.debug("Data endpoint host %s", dataHost);
+      optionsBuilder.setDataHost(InetAddress.getByName(dataHost));
     } else {
-      LOG.debug("Data endpoint host %s. Using override IP address.", host);
-      optionsBuilder.setHost(InetAddress.getByAddress(host, overrideIpAddress.getAddress()));
+      LOG.debug("Data endpoint host %s. Using override IP address.", dataHost);
+      optionsBuilder.setDataHost(
+          InetAddress.getByAddress(dataHost, overrideIpAddress.getAddress()));
     }
 
-    String adminHost = configuration.get(BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT);
-    if (Strings.isNullOrEmpty(adminHost)) {
-      LOG.debug("Admin endpoint host not configured, assuming we should use data endpoint.");
-      adminHost = host;
+    String tableAdminHost = configuration.get(
+        BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT);
+    if (overrideIpAddress == null) {
+      LOG.debug("Table admin endpoint host %s", tableAdminHost);
+      optionsBuilder.setTableAdminHost(InetAddress.getByName(tableAdminHost));
+    } else {
+      LOG.debug("Table admin endpoint host %s. Using override IP address.", tableAdminHost);
+      optionsBuilder.setTableAdminHost(
+          InetAddress.getByAddress(tableAdminHost, overrideIpAddress.getAddress()));
     }
 
     String clusterAdminHost = configuration.get(
         BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT);
-    if (Strings.isNullOrEmpty(adminHost)) {
-      // Most environments don't need cluster admin.
-      LOG.debug("Cluster Admin endpoint host not configured.");
-    } else {
-      optionsBuilder.setClusterAdminHost(InetAddress.getByName(clusterAdminHost));
-    }
-
-
     if (overrideIpAddress == null) {
-      LOG.debug("Admin endpoint host %s", host);
-      optionsBuilder.setAdminHost(InetAddress.getByName(adminHost));
+      LOG.debug("Cluster admin endpoint host %s", clusterAdminHost);
+      optionsBuilder.setClusterAdminHost(InetAddress.getByName(clusterAdminHost));
     } else {
-      LOG.debug("Admin endpoint host %s. Using override IP address.", host);
-      optionsBuilder.setAdminHost(
-          InetAddress.getByAddress(adminHost, overrideIpAddress.getAddress()));
+      LOG.debug("Cluster admin endpoint host %s. Using override IP address.", clusterAdminHost);
+      optionsBuilder.setClusterAdminHost(
+          InetAddress.getByAddress(clusterAdminHost, overrideIpAddress.getAddress()));
     }
+
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
     optionsBuilder.setPort(port);

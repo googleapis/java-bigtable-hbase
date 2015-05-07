@@ -586,13 +586,12 @@ public class BigtableTable implements Table {
 
   @Override
   public String toString() {
-    InetAddress host = options.getHost();
     return MoreObjects.toStringHelper(BigtableTable.class)
         .add("hashCode", "0x" + Integer.toHexString(hashCode()))
-        .add("zone", options.getZone())
         .add("project", options.getProjectId())
+        .add("zone", options.getZone())
         .add("cluster", options.getCluster())
-        .add("host", host)
+        .add("table", tableName.getNameAsString())
         .toString();
   }
 
