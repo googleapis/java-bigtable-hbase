@@ -24,6 +24,9 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.protobuf.ByteString;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import io.grpc.Status;
 
 import java.io.IOException;
@@ -34,6 +37,8 @@ import java.io.IOException;
  * encounters gRPC INTERNAL errors.
  */
 public class ResumingStreamingResultScanner extends AbstractBigtableResultScanner {
+
+  protected static final Log LOG = LogFactory.getLog(ResumingStreamingResultScanner.class);
 
   private static final ByteString NEXT_ROW_SUFFIX = ByteString.copyFrom(new byte[]{0x00});
   private final BigtableResultScannerFactory scannerFactory;
@@ -84,23 +89,42 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
         currentBackoff.reset();
 
         return result;
+      } catch (ReadTimeoutException rte) {
+        LOG.warn("ReadTimeoutException: ", rte);
+        backOffAndRetry(rte);
       } catch (IOExceptionWithStatus ioe) {
+        LOG.warn("IOExceptionWithStatus: ", ioe);
         Status.Code code = ioe.getStatus().getCode();
         if (code == Status.INTERNAL.getCode()
             || code == Status.UNAVAILABLE.getCode()
+            || code == Status.ABORTED.getCode()
             || (retryOnDeadlineExceeded && code == Status.DEADLINE_EXCEEDED.getCode())) {
-          long nextBackOff = currentBackoff.nextBackOffMillis();
-          if (nextBackOff == BackOff.STOP) {
-            throw new BigtableRetriesExhaustedException(
-                "Exhausted streaming retries.", ioe);
-          }
-          sleep(nextBackOff);
-          reissueRequest();
+          backOffAndRetry(ioe);
         } else {
           throw ioe;
         }
       }
     }
+  }
+
+  /**
+   * Backs off and reissues request.
+   *
+   * @param cause
+   * @throws IOException
+   * @throws BigtableRetriesExhaustedException if retry is exhausted.
+   */
+  private void backOffAndRetry(IOException cause) throws IOException,
+      BigtableRetriesExhaustedException {
+    long nextBackOff = currentBackoff.nextBackOffMillis();
+    if (nextBackOff == BackOff.STOP) {
+      LOG.warn("RetriesExhausted: ", cause);
+      throw new BigtableRetriesExhaustedException(
+          "Exhausted streaming retries.", cause);
+    }
+
+    sleep(nextBackOff);
+    reissueRequest();
   }
 
   @Override
@@ -109,6 +133,12 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   }
 
   private void reissueRequest() {
+    try {
+      currentDelegate.close();
+    } catch (IOException ioe) {
+      LOG.warn("Error closing scanner before reissuing request: ", ioe);
+    }
+
     ReadRowsRequest.Builder newRequest = originalRequest.toBuilder();
     if (lastRowKey != null) {
       newRequest.getRowRangeBuilder().setStartKey(nextRowKey(lastRowKey));
