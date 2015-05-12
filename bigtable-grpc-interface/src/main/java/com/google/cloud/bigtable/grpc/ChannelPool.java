@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 /**
  * Manages a set of ClosableChannels and uses them in a round robin.
  */
-public class ChannelPool implements CloseableChannel {
+public class ChannelPool extends CloseableChannel {
 
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
 
