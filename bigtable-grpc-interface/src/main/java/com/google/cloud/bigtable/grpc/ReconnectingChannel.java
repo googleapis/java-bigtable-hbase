@@ -32,7 +32,7 @@ import com.google.common.base.Preconditions;
 /**
  * A ClosableChannel that refreshes itself based on a user supplied timeout.
  */
-public class ReconnectingChannel implements CloseableChannel {
+public class ReconnectingChannel extends CloseableChannel {
 
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
   protected static final long CLOSE_WAIT_TIME = 5000;

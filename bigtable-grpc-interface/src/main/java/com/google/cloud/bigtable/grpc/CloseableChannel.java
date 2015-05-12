@@ -22,11 +22,11 @@ import java.io.IOException;
 /**
  * A {@link Channel} that allows clients to close it, freeing any resources.
  */
-public interface CloseableChannel extends Channel {
+public abstract class CloseableChannel extends Channel {
 
   /**
    * Release resources used by this channel.
    * @throws IOException
    */
-  void close() throws IOException;
+  public abstract void close() throws IOException;
 }
