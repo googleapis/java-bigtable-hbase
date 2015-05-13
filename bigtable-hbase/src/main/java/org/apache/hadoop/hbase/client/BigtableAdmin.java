@@ -343,6 +343,7 @@ public class BigtableAdmin implements Admin {
               tableName.getNameAsString()),
           throwable);
     }
+    disabledTables.remove(tableName);
   }
 
   @Override
