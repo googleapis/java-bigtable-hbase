@@ -988,7 +988,6 @@ public class BigtableAdmin implements Admin {
   public String toString() {
     InetAddress adminHost = options.getAdminHost();
     return MoreObjects.toStringHelper(BigtableAdmin.class)
-        .add("connectionId", connection.getId())
         .add("zone", options.getZone())
         .add("project", options.getProjectId())
         .add("cluster", options.getCluster())
