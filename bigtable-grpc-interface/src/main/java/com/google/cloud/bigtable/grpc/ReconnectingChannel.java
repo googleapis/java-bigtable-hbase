@@ -20,6 +20,8 @@ import io.grpc.MethodDescriptor;
 
 import java.io.IOException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -28,6 +30,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * A ClosableChannel that refreshes itself based on a user supplied timeout.
@@ -36,6 +39,20 @@ public class ReconnectingChannel extends CloseableChannel {
 
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
   protected static final long CLOSE_WAIT_TIME = 5000;
+  // This executor is used to shutdown & await termination of
+  // grpc connections. The work done on these threads should be minial
+  // as long as we don't perform a shutdownNow() call (or similar). As
+  // a result, allow there to be an unbounded number of these.
+  // It is not expected to happen often, but there are cases where
+  // shutdown will never complete and we don't want to take up a thread
+  // that could be used to indicate that a Call is completed (and would
+  // then finish client shutdown).
+  protected static final ExecutorService closeExecutor =
+      Executors.newCachedThreadPool(
+          new ThreadFactoryBuilder()
+              .setNameFormat("reconnection-async-close-%s")
+              .setDaemon(true)
+              .build());
 
   /**
    * Creates a fresh CloseableChannel.
@@ -58,13 +75,21 @@ public class ReconnectingChannel extends CloseableChannel {
   private long nextRefresh;
   private CloseableChannel delegate;
 
-  public ReconnectingChannel(long maxRefreshTime, Executor executor, final Factory factory) {
+  public ReconnectingChannel(
+      long maxRefreshTime,
+      ExecutorService executor,
+      Factory connectionFactory) {
     Preconditions.checkArgument(maxRefreshTime > 0, "maxRefreshTime has to be greater than 0.");
     this.maxRefreshTime = maxRefreshTime;
     this.executor = executor;
-    this.delegate = factory.create();
+    this.delegate = connectionFactory.create();
     this.nextRefresh = calculateNewRefreshTime();
-    this.factory = factory;
+    this.factory = connectionFactory;
+  }
+
+  public ReconnectingChannel(
+      long maxRefreshTime, Factory factory) {
+    this(maxRefreshTime, closeExecutor, factory);
   }
 
   @Override
@@ -145,7 +170,7 @@ public class ReconnectingChannel extends CloseableChannel {
 
   private void asyncClose(final CloseableChannel channel) {
     closingAsynchronously.incrementAndGet();
-    executor.execute(new Runnable() {
+    closeExecutor.execute(new Runnable() {
       @Override
       public void run() {
         try {
