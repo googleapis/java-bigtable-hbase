@@ -263,6 +263,7 @@ public class BigtableOptions {
     optionsBuilder.setScheduledExecutorService(rpcRetryExecutorService);
     optionsBuilder.setChannelCount(channelCount);
     optionsBuilder.setTimeoutMs(timeoutMs);
+    optionsBuilder.setProjectVersion(BigtableConstants.VERSION);
     return optionsBuilder.build();
   }
 

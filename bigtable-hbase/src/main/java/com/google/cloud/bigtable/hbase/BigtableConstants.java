@@ -18,12 +18,17 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.protobuf.ByteString;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Constants related to Bigtable.
  */
 public class BigtableConstants {
+
+  private static final Logger LOG = new Logger(BigtableConstants.class);
 
   /**
    * Separator between column family and column name for bigtable, as a single byte.
@@ -50,4 +55,40 @@ public class BigtableConstants {
    * TimeUnit in which Bigtable requires messages to be sent and received.
    */
   public static final TimeUnit BIGTABLE_TIMEUNIT = TimeUnit.MICROSECONDS;
+
+  /**
+   * Current project version.
+   */
+  public static final String VERSION = getVersion();
+
+  /**
+   * Gets current project version from bigtable-hbase.properties. Returns a default dev version with
+   * current timestamp if not found.
+   */
+  private static String getVersion() {
+    final String defaultVersion = "dev-" + System.currentTimeMillis();
+    try (InputStream stream =
+        BigtableConstants.class.getResourceAsStream("bigtable-hbase.properties")) {
+      if (stream == null) {
+        LOG.error("Could not load properties file bigtable-hbase.properties");
+        return defaultVersion;
+      }
+
+      Properties properties = new Properties();
+      properties.load(stream);
+      String value = properties.getProperty("project.version");
+      if (value == null) {
+        LOG.error("project.version not found in bigtable-hbase.properties.");
+      } else if (value.startsWith("$")){
+        LOG.info("project.version token is not replaced.");
+      } else {
+        return value;
+      }
+    } catch (IOException e) {
+      LOG.error(
+          String.format("Error while trying to get project.version from bigtable-hbase.properties"),
+          e);
+    }
+    return defaultVersion;
+  }
 }
