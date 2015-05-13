@@ -56,6 +56,12 @@ public class BigtableResultScannerAdapter {
           throw Throwables.propagate(ioe);
         }
       }
+
+      /* HBase 1.1.0 method */
+      // This method isn't actually called from anywhere in the hbase 1.1 codebase.
+      public boolean renewLease() {
+        throw new UnsupportedOperationException("renewLease");  // TODO
+      }
     };
   }
 }
