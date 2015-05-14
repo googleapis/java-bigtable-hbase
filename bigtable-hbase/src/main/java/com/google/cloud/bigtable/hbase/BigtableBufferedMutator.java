@@ -197,7 +197,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     InetAddress host = null;
 
     try {
-      host = options.getTransportOptions().getHost();
+      host = options.getDataTransportOptions().getHost();
     } catch (IOException e) {
       LOG.warn("Could not get the host used for writes", options);
     }

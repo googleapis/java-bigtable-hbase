@@ -88,11 +88,11 @@ public class TestBigtableOptionsFactory {
   @Test
   public void testAdminHostKeyIsUsed() throws IOException {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, TEST_HOST);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_TABLE_ADMIN_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals(TEST_HOST, options.getAdminTransportOptions().getHost().getHostName());
+    Assert.assertEquals(TEST_HOST, options.getTableAdminTransportOptions().getHost().getHostName());
   }
 
   @Test
@@ -101,7 +101,7 @@ public class TestBigtableOptionsFactory {
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals(TEST_HOST, options.getTransportOptions().getHost().getHostName());
+    Assert.assertEquals(TEST_HOST, options.getDataTransportOptions().getHost().getHostName());
     Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
     Assert.assertEquals(TEST_CLUSTER_NAME, options.getCluster());
     Assert.assertEquals(TEST_ZONE_NAME, options.getZone());
@@ -110,7 +110,7 @@ public class TestBigtableOptionsFactory {
         options.getChannelOptions().getScheduledExecutorService());
     Assert.assertNotNull(
         "EventLoopGroup expected",
-        options.getTransportOptions().getEventLoopGroup());
+        options.getDataTransportOptions().getEventLoopGroup());
   }
 
   @Test

@@ -38,10 +38,10 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Threads;
 
-import com.google.cloud.bigtable.grpc.BigtableAdminClient;
-import com.google.cloud.bigtable.grpc.BigtableAdminGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
+import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.TransportOptions;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
@@ -103,7 +103,7 @@ public class BigtableConnection implements Connection, Closeable {
   private volatile boolean aborted;
   private volatile ExecutorService batchPool = null;
   private BigtableClient client;
-  private BigtableAdminClient bigtableAdminClient;
+  private BigtableTableAdminClient bigtableTableAdminClient;
 
   private volatile boolean cleanupPool = false;
   private final BigtableOptions options;
@@ -130,46 +130,44 @@ public class BigtableConnection implements Connection, Closeable {
     }
 
     this.options = BigtableOptionsFactory.fromConfiguration(conf);
-    TransportOptions transportOptions = options.getTransportOptions();
+    TransportOptions dataTransportOptions = options.getDataTransportOptions();
     ChannelOptions channelOptions = options.getChannelOptions();
-    TransportOptions adminTransportOptions = options.getAdminTransportOptions();
+    TransportOptions tableAdminTransportOptions = options.getTableAdminTransportOptions();
 
-    LOG.info("Opening connection for project %s on data host:port %s:%s, "
-        + "admin host:port %s:%s, using transport %s.",
+    LOG.info("Opening connection for project %s on data host %s, "
+        + "table admin host %s, using transport %s.",
         options.getProjectId(),
-        options.getTransportOptions().getHost(),
-        options.getTransportOptions().getPort(),
-        options.getAdminTransportOptions().getHost(),
-        options.getAdminTransportOptions().getPort(),
-        options.getTransportOptions().getTransport());
+        dataTransportOptions.getHost(),
+        tableAdminTransportOptions.getHost(),
+        dataTransportOptions.getTransport());
 
     this.client = getBigtableClient(
-        transportOptions,
+        dataTransportOptions,
         channelOptions,
         batchPool);
-    this.bigtableAdminClient = getAdminClient(
-        adminTransportOptions,
+    this.bigtableTableAdminClient = getTableAdminClient(
+        tableAdminTransportOptions,
         channelOptions,
         batchPool);
     this.tableConfig = new TableConfiguration(conf);
   }
 
-  private BigtableAdminClient getAdminClient(
-      TransportOptions transportOptions,
+  private BigtableTableAdminClient getTableAdminClient(
+      TransportOptions tableAdminTransportOptions,
       ChannelOptions channelOptions,
       ExecutorService executorService) {
 
-    return BigtableAdminGrpcClient.createClient(
-        transportOptions, channelOptions, executorService);
+    return BigtableTableAdminGrpcClient.createClient(
+        tableAdminTransportOptions, channelOptions, executorService);
   }
 
   protected BigtableClient getBigtableClient(
-      TransportOptions transportOptions,
+      TransportOptions dataTransportOptions,
       ChannelOptions channelOptions,
       ExecutorService executorService) {
 
     return BigtableGrpcClient.createClient(
-        transportOptions, channelOptions, executorService);
+        dataTransportOptions, channelOptions, executorService);
   }
 
   @Override
@@ -269,7 +267,7 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public Admin getAdmin() throws IOException {
-    return new BigtableAdmin(options, conf, this, bigtableAdminClient, this.disabledTables);
+    return new BigtableAdmin(options, conf, this, bigtableTableAdminClient, this.disabledTables);
   }
 
   @Override
@@ -297,18 +295,18 @@ public class BigtableConnection implements Connection, Closeable {
   private void shutdownClients() {
     Exception toBeThrown = null;
     try {
-      bigtableAdminClient.close();
+      bigtableTableAdminClient.close();
     } catch (Exception e) {
-      LOG.error("Exception when shutting down the admin client.", e);
+      LOG.error("Exception when shutting down the table admin client.", e);
       toBeThrown = e;
     }
     try {
       client.close();
     } catch (Exception e) {
       LOG.error("Exception when shutting down the data client.", e);
-      // We will lose the admin exception if there was one, but attempting
-      // to carry both exceptions will lead to the stack traces not printed
-      // in most cases (see RetriesExhausted for that happening):
+      // We will lose the table admin exception if there was one, but
+      // attempting to carry both exceptions will lead to the stack traces
+      // not printed in most cases (see RetriesExhausted for that happening):
       toBeThrown = e;
     }
     if (toBeThrown != null) {
@@ -335,14 +333,14 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public String toString() {
-    InetAddress host = options.getHost();
-    InetAddress adminHost = options.getAdminHost();
+    InetAddress dataHost = options.getDataHost();
+    InetAddress tableAdminHost = options.getTableAdminHost();
     return MoreObjects.toStringHelper(BigtableConnection.class)
       .add("zone", options.getZone())
       .add("project", options.getProjectId())
       .add("cluster", options.getCluster())
-      .add("host", host)
-      .add("adminHost", adminHost)
+      .add("dataHost", dataHost)
+      .add("tableAdminHost", tableAdminHost)
       .toString();
   }
 

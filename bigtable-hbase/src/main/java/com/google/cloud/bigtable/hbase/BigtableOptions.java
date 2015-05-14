@@ -47,8 +47,8 @@ public class BigtableOptions {
     private String zone;
     private String cluster;
     private Credentials credential;
-    private InetAddress host;
-    private InetAddress adminHost;
+    private InetAddress dataHost;
+    private InetAddress tableAdminHost;
     private InetAddress clusterAdminHost;
     private int port;
     private String callTimingReportPath;
@@ -60,8 +60,8 @@ public class BigtableOptions {
     private int channelCount = 1;
     private long timeoutMs = -1L;
 
-    public Builder setAdminHost(InetAddress adminHost) {
-      this.adminHost = adminHost;
+    public Builder setTableAdminHost(InetAddress tableAdminHost) {
+      this.tableAdminHost = tableAdminHost;
       return this;
     }
 
@@ -70,8 +70,8 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setHost(InetAddress host) {
-      this.host = host;
+    public Builder setDataHost(InetAddress dataHost) {
+      this.dataHost = dataHost;
       return this;
     }
 
@@ -144,14 +144,10 @@ public class BigtableOptions {
     }
 
     public BigtableOptions build() {
-      if (adminHost == null) {
-        adminHost = host;
-      }
-
       return new BigtableOptions(
           clusterAdminHost,
-          adminHost,
-          host,
+          tableAdminHost,
+          dataHost,
           port,
           credential,
           projectId,
@@ -169,8 +165,8 @@ public class BigtableOptions {
   }
 
   private final InetAddress clusterAdminHost;
-  private final InetAddress adminHost;
-  private final InetAddress host;
+  private final InetAddress tableAdminHost;
+  private final InetAddress dataHost;
   private final int port;
   private final Credentials credential;
   private final String projectId;
@@ -187,8 +183,8 @@ public class BigtableOptions {
 
   private BigtableOptions(
       InetAddress clusterAdminHost,
-      InetAddress adminHost,
-      InetAddress host,
+      InetAddress tableAdminHost,
+      InetAddress dataHost,
       int port,
       Credentials credential,
       String projectId,
@@ -208,9 +204,9 @@ public class BigtableOptions {
         !Strings.isNullOrEmpty(zone), "Zone must not be empty or null.");
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(cluster), "Cluster must not be empty or null.");
-    this.adminHost = Preconditions.checkNotNull(adminHost);
-    this.clusterAdminHost = clusterAdminHost;
-    this.host = Preconditions.checkNotNull(host);
+    this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
+    this.clusterAdminHost = Preconditions.checkNotNull(clusterAdminHost);
+    this.dataHost = Preconditions.checkNotNull(dataHost);
     this.port = port;
     this.credential = credential;
     this.projectId = projectId;
@@ -225,18 +221,14 @@ public class BigtableOptions {
     this.channelCount = channelCount;
     this.timeoutMs = timeoutMs;
 
-    LOG.debug("Connection Configuration: project: %s, cluster: %s, host:port %s:%s, "
-        + "admin host:port %s:%s, using transport %s.",
+    LOG.debug("Connection Configuration: project: %s, cluster: %s, data host %s, "
+        + "table admin host %s, cluster admin host %s using transport %s.",
         getProjectId(),
         cluster,
-        host,
-        port,
-        adminHost,
-        port,
+        dataHost,
+        tableAdminHost,
+        clusterAdminHost,
         TransportOptions.BigtableTransports.HTTP2_NETTY_TLS);
-    if (clusterAdminHost != null) {
-      LOG.debug("Cluster API host: %s" , clusterAdminHost);
-    }
   }
 
   public String getProjectId() {
@@ -266,24 +258,27 @@ public class BigtableOptions {
     return optionsBuilder.build();
   }
 
-  public InetAddress getHost() {
-    return host;
+  public InetAddress getDataHost() {
+    return dataHost;
   }
 
-  public InetAddress getAdminHost() {
-    return adminHost;
+  public InetAddress getTableAdminHost() {
+    return tableAdminHost;
   }
 
-  public TransportOptions getTransportOptions() throws IOException {
-    return createTransportOptions(this.host);
+  public InetAddress getClusterAdminHost() {
+    return clusterAdminHost;
   }
 
-  public TransportOptions getAdminTransportOptions() throws IOException {
-    return createTransportOptions(this.adminHost);
+  public TransportOptions getDataTransportOptions() throws IOException {
+    return createTransportOptions(this.dataHost);
+  }
+
+  public TransportOptions getTableAdminTransportOptions() throws IOException {
+    return createTransportOptions(this.tableAdminHost);
   }
 
   public TransportOptions getClusterAdminTransportOptions() throws IOException {
-    Preconditions.checkNotNull("clusterAdminHost was not set.", clusterAdminHost);
     return createTransportOptions(this.clusterAdminHost);
   }
 
@@ -308,7 +303,7 @@ public class BigtableOptions {
   }
 
   public ServerName getServerName() {
-    return ServerName.valueOf(host.getHostName(), port, 0);
+    return ServerName.valueOf(dataHost.getHostName(), port, 0);
   }
 
   public int getChannelCount() {
