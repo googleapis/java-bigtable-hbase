@@ -18,6 +18,8 @@ package org.apache.hadoop.hbase.client;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +32,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import javassist.Modifier;
+import javassist.util.proxy.MethodFilter;
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.ProxyFactory;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -265,7 +272,43 @@ public class BigtableConnection implements Connection, Closeable {
 
   @Override
   public Admin getAdmin() throws IOException {
-    return new BigtableAdmin(options, conf, this, bigtableTableAdminClient, this.disabledTables);
+    // Admin has different methods depending on which hbase version contains it.  Bigtable doesn't
+    // support a lot of methods in hbase Admin, since they do not apply to Bigtable's operations.
+    // for those methods, throw UnsupportedException.
+    ProxyFactory factory = new ProxyFactory();
+    factory.setSuperclass(BigtableAdmin.class);
+
+    factory.setFilter(
+        new MethodFilter() {
+            @Override
+            public boolean isHandled(Method method) {
+                return Modifier.isAbstract(method.getModifiers());
+            }
+        }
+    );
+
+    MethodHandler handler = new MethodHandler() {
+      @Override
+      public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args)
+          throws Throwable {
+        throw new UnsupportedOperationException(thisMethod.getName() + " not supported");
+      }
+    };
+
+    Class<?>[] methodParamTypes = {
+        BigtableOptions.class,
+        Configuration.class,
+        BigtableConnection.class,
+        BigtableTableAdminClient.class,
+        Set.class
+    };
+
+    Object[] methodParams = {options, conf, this, bigtableTableAdminClient, this.disabledTables};
+    try {
+      return (Admin) factory.create(methodParamTypes, methodParams, handler);
+    } catch (Exception e) {
+      throw new IllegalStateException("Could not instantiate BigtableAdmin", e);
+    }
   }
 
   @Override
