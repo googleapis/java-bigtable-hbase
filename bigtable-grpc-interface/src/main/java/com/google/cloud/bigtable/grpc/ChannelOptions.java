@@ -31,6 +31,7 @@ public class ChannelOptions {
   public static class Builder {
     private Credentials credential;
     private String authority;
+    private String userAgent;
     private String callStatusReportPath;
     private String callTimingReportPath;
     private ScheduledExecutorService scheduledExecutorService = null;
@@ -51,6 +52,14 @@ public class ChannelOptions {
      */
     public Builder setAuthority(String authority) {
       this.authority = authority;
+      return this;
+    }
+
+    /**
+     * A user-agent to be appended to outgoing User-Agent header.
+     */
+    public Builder setUserAgent(String userAgent) {
+      this.userAgent = userAgent;
       return this;
     }
 
@@ -156,6 +165,7 @@ public class ChannelOptions {
       return new ChannelOptions(
           credential,
           authority,
+          userAgent,
           callTimingReportPath,
           callStatusReportPath,
           retryOptionsBuilder.build(),
@@ -167,6 +177,7 @@ public class ChannelOptions {
 
   private final Credentials credential;
   private final String authority;
+  private final String userAgent;
   private final String callTimingReportPath;
   private final String callStatusReportPath;
   private final RetryOptions unaryCallRetryOptions;
@@ -180,6 +191,8 @@ public class ChannelOptions {
    * @param credential A credential to use, may be null.
    * @param authority The authority to be passed in the HTTP/2 headers, or {@code null}
    * to use the default.
+   * @param userAgent The user-agent to be appended to HTTP/2 User-Agent header, or {@code null}
+   * to use the default. Example: "bigtable-hbase/1.0.0".
    * @param callTimingReportPath A client-local file to which a report of call timings
    * will be appended
    * @param callStatusReportPath A client-local file to which a report of call statuses
@@ -189,6 +202,7 @@ public class ChannelOptions {
    */
   public ChannelOptions(Credentials credential,
       String authority,
+      String userAgent,
       String callTimingReportPath,
       String callStatusReportPath,
       RetryOptions unaryCallRetryOptions,
@@ -197,6 +211,7 @@ public class ChannelOptions {
       int channelCount) {
     this.credential = credential;
     this.authority = authority;
+    this.userAgent = userAgent;
     this.callTimingReportPath = callTimingReportPath;
     this.callStatusReportPath = callStatusReportPath;
     this.scheduledExecutorService = scheduledExecutorService;
@@ -219,6 +234,14 @@ public class ChannelOptions {
    */
   public String getAuthority() {
     return authority;
+  }
+
+  /**
+   * Gets the user-agent to be appended to User-Agent header when creating new streams
+   * for the channel.
+   */
+  public String getUserAgent() {
+    return userAgent;
   }
 
   /**

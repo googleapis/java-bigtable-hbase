@@ -57,9 +57,9 @@ public class BigtableConstants {
   public static final TimeUnit BIGTABLE_TIMEUNIT = TimeUnit.MICROSECONDS;
 
   /**
-   * Current project version.
+   * A User-Agent token to be added to User-Agent request header.
    */
-  public static final String VERSION = getVersion();
+  public static final String USER_AGENT = "bigtable-hbase/" + getVersion();
 
   /**
    * Gets current project version from bigtable-hbase.properties. Returns a default dev version with
