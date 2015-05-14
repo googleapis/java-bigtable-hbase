@@ -592,6 +592,7 @@ public class BigtableTable implements Table {
         .add("zone", options.getZone())
         .add("cluster", options.getCluster())
         .add("table", tableName.getNameAsString())
+        .add("host", options.getDataHost())
         .toString();
   }
 

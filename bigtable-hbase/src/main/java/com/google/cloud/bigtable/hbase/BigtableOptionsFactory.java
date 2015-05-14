@@ -162,7 +162,7 @@ public class BigtableOptionsFactory {
     String dataHost = configuration.get(BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(dataHost),
-        String.format("API Data endpointa host must be supplied via %s", BIGTABLE_HOST_KEY));
+        String.format("API Data endpoint host must be supplied via %s", BIGTABLE_HOST_KEY));
     if (overrideIpAddress == null) {
       LOG.debug("Data endpoint host %s", dataHost);
       optionsBuilder.setDataHost(InetAddress.getByName(dataHost));
@@ -193,7 +193,6 @@ public class BigtableOptionsFactory {
       optionsBuilder.setClusterAdminHost(
           InetAddress.getByAddress(clusterAdminHost, overrideIpAddress.getAddress()));
     }
-
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
     optionsBuilder.setPort(port);
