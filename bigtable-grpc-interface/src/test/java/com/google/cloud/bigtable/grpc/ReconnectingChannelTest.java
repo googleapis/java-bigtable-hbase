@@ -19,8 +19,11 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
-
+import io.grpc.Call;
 import io.grpc.MethodDescriptor;
+
+import java.io.IOException;
+import java.util.concurrent.Executors;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,9 +34,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
-import java.util.concurrent.Executors;
-
 /**
  * Tests {@link ReconnectingChannel}
  */
@@ -42,10 +42,13 @@ public class ReconnectingChannelTest {
 
   private static final long REFRESH_MS = 500;
   @Mock
-  private ReconnectingChannel.Factory factory;
+  private ReconnectingChannel.Factory mockFactory;
 
   @Mock
-  private CloseableChannel channel;
+  private CloseableChannel mockChannel;
+
+  @Mock
+  private Call mockCall;
 
   @Before
   public void setup() {
@@ -55,23 +58,14 @@ public class ReconnectingChannelTest {
   @SuppressWarnings("unchecked")
   @Test
   public void test() throws IOException{
-    when(factory.create()).thenReturn(channel);
-    when(channel.newCall(any(MethodDescriptor.class))).thenReturn(null);
+    when(mockFactory.create()).thenReturn(mockChannel);
+    when(mockChannel.newCall(any(MethodDescriptor.class))).thenReturn(mockCall);
     ReconnectingChannel test =
-        new ReconnectingChannel(REFRESH_MS, Executors.newFixedThreadPool(1), factory);
-    Mockito.verify(factory, times(1)).create();
+        new ReconnectingChannel(REFRESH_MS, Executors.newFixedThreadPool(1), mockFactory);
+    Mockito.verify(mockFactory, times(1)).create();
 
-    test.newCall(null);
-    Mockito.verify(channel, times(1)).newCall(any(MethodDescriptor.class));
-
-    try {
-      Thread.sleep(REFRESH_MS);
-    } catch (InterruptedException ignored) {
-      // Do nothing on interrupt.
-    }
-
-    test.newCall(null);
-    Mockito.verify(channel, times(2)).newCall(any(MethodDescriptor.class));
+    test.newCall(null).start(null, null);
+    Mockito.verify(mockChannel, times(1)).newCall(any(MethodDescriptor.class));
 
     try {
       Thread.sleep(REFRESH_MS);
@@ -79,14 +73,23 @@ public class ReconnectingChannelTest {
       // Do nothing on interrupt.
     }
 
-    Mockito.verify(factory, atLeast(2)).create();
-    Mockito.verify(channel, times(1)).close();
+    test.newCall(null).start(null, null);
+    Mockito.verify(mockChannel, times(2)).newCall(any(MethodDescriptor.class));
+
+    try {
+      Thread.sleep(REFRESH_MS);
+    } catch (InterruptedException ignored) {
+      // Do nothing on interrupt.
+    }
+
+    Mockito.verify(mockFactory, atLeast(2)).create();
+    Mockito.verify(mockChannel, times(1)).close();
 
     test.close();
-    Mockito.verify(channel, times(2)).close();
+    Mockito.verify(mockChannel, times(2)).close();
     
     try {
-      test.newCall(null);
+      test.newCall(null).start(null, null);
       Assert.fail("Expected IllegalStateException on a closed channel");
     } catch (IllegalStateException expected) {
       // expected
