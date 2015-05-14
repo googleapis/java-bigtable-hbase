@@ -18,7 +18,6 @@ package org.apache.hadoop.hbase.client;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.util.Collections;
@@ -270,15 +269,18 @@ public class BigtableConnection implements Connection, Closeable {
     throw new IllegalStateException(newLocator + " was supposed to be in the cache");
   }
 
-  @Override
-  public Admin getAdmin() throws IOException {
-    // Admin has different methods depending on which hbase version contains it.  Bigtable doesn't
-    // support a lot of methods in hbase Admin, since they do not apply to Bigtable's operations.
-    // for those methods, throw UnsupportedException.
-    ProxyFactory factory = new ProxyFactory();
-    factory.setSuperclass(BigtableAdmin.class);
+  static final MethodHandler ADMIN_HANDLER = new MethodHandler() {
+    @Override
+    public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args)
+        throws Throwable {
+      throw new UnsupportedOperationException(thisMethod.getName() + " not supported");
+    }
+  };
 
-    factory.setFilter(
+  static final ProxyFactory ADMIN_FACTORY = new ProxyFactory();
+  static {
+    ADMIN_FACTORY.setSuperclass(BigtableAdmin.class);
+    ADMIN_FACTORY.setFilter(
         new MethodFilter() {
             @Override
             public boolean isHandled(Method method) {
@@ -286,26 +288,24 @@ public class BigtableConnection implements Connection, Closeable {
             }
         }
     );
+  }
 
-    MethodHandler handler = new MethodHandler() {
-      @Override
-      public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args)
-          throws Throwable {
-        throw new UnsupportedOperationException(thisMethod.getName() + " not supported");
-      }
-    };
+  static final Class<?>[] ADMIN_CONSTRUCTOR_TYPES = {
+      BigtableOptions.class,
+      Configuration.class,
+      BigtableConnection.class,
+      BigtableTableAdminClient.class,
+      Set.class
+  };
 
-    Class<?>[] methodParamTypes = {
-        BigtableOptions.class,
-        Configuration.class,
-        BigtableConnection.class,
-        BigtableTableAdminClient.class,
-        Set.class
-    };
-
-    Object[] methodParams = {options, conf, this, bigtableTableAdminClient, this.disabledTables};
+  @Override
+  // Admin has different methods depending on which hbase version contains it.  Bigtable doesn't
+  // support a lot of methods in hbase Admin, since they do not apply to Bigtable's operations.
+  // for those methods, throw UnsupportedException.
+  public Admin getAdmin() throws IOException {
+    Object[] methodParams = { options, conf, this, bigtableTableAdminClient, this.disabledTables };
     try {
-      return (Admin) factory.create(methodParamTypes, methodParams, handler);
+      return (Admin) ADMIN_FACTORY.create(ADMIN_CONSTRUCTOR_TYPES, methodParams, ADMIN_HANDLER);
     } catch (Exception e) {
       throw new IllegalStateException("Could not instantiate BigtableAdmin", e);
     }

@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -38,24 +37,12 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
-import org.apache.hadoop.hbase.regionserver.wal.FailedLogCloseException;
-import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
-import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
-import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
-import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
 
 import com.google.bigtable.admin.table.v1.ColumnFamily;
 import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
@@ -67,6 +54,7 @@ import com.google.bigtable.admin.table.v1.GetTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
 import com.google.bigtable.admin.table.v1.ListTablesResponse;
 import com.google.bigtable.admin.table.v1.Table;
+import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.Logger;
 import com.google.cloud.bigtable.hbase.adapters.ClusterMetadataSetter;
@@ -74,13 +62,12 @@ import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
 import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 public abstract class BigtableAdmin implements Admin {
 
-  private static final Logger LOG = new Logger(BigtableAdmin.class);
+  static final Logger LOG = new Logger(BigtableAdmin.class);
 
   /**
    * Bigtable doesn't require disabling tables before deletes or schema changes. Some clients do
