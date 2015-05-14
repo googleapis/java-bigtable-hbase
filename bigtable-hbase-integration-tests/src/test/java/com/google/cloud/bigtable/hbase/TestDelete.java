@@ -328,7 +328,7 @@ public class TestDelete extends AbstractTest {
 
     // Delete row
     Delete delete = new Delete(rowKey);
-    delete.deleteFamilyVersion(COLUMN_FAMILY, 2L);
+    delete.addFamilyVersion(COLUMN_FAMILY, 2L);
     table.delete(delete);
 
     // Confirm results

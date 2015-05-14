@@ -180,7 +180,7 @@ public class TestDeleteAdapter {
     long hbaseTimestamp = 1000L;
 
     Delete delete = new Delete(rowKey);
-    delete.deleteFamilyVersion(family, hbaseTimestamp);
+    delete.addFamilyVersion(family, hbaseTimestamp);
 
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Cannot perform column family deletion at timestamp");

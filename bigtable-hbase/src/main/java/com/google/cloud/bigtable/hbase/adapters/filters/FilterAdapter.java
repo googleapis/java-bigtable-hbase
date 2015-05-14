@@ -100,7 +100,7 @@ public class FilterAdapter {
    * A map of Class entries mapping to SingleFilterAdapter instances. Each supported Filter
    * subclass should have an entry in this map.
    */
-  private Map<Class<? extends Filter>, SingleFilterAdapter> adapterMap = new HashMap<>();
+  private Map<Class<? extends Filter>, SingleFilterAdapter<?>> adapterMap = new HashMap<>();
 
   private <T extends Filter> void addFilterAdapter(
       Class<T> filterType, TypedFilterAdapter<T> typedFilterAdapter) {
@@ -128,7 +128,7 @@ public class FilterAdapter {
    */
   public RowFilter adaptFilter(FilterAdapterContext context, Filter filter)
       throws IOException {
-    SingleFilterAdapter adapter = getAdapterForFilterOrThrow(filter);
+    SingleFilterAdapter<?> adapter = getAdapterForFilterOrThrow(filter);
     return adapter.adapt(context, filter);
   }
 
@@ -153,7 +153,7 @@ public class FilterAdapter {
    */
   public void collectUnsupportedStatuses(
       FilterAdapterContext context, Filter filter, List<FilterSupportStatus> statuses) {
-    SingleFilterAdapter adapter = adapterMap.get(filter.getClass());
+    SingleFilterAdapter<?> adapter = adapterMap.get(filter.getClass());
     if (adapter == null) {
       statuses.add(FilterSupportStatus.newUnknownFilterType(filter));
     } else {
@@ -165,7 +165,7 @@ public class FilterAdapter {
    * Get the adapter for the given Filter or throw an UnsupportedFilterException if one is not
    * available.
    */
-  protected SingleFilterAdapter getAdapterForFilterOrThrow(Filter filter) {
+  protected SingleFilterAdapter<?> getAdapterForFilterOrThrow(Filter filter) {
     if (adapterMap.containsKey(filter.getClass())) {
       return adapterMap.get(filter.getClass());
     } else {

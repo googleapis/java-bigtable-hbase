@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.admin.table.v1.ColumnFamily;
-import com.google.bigtable.admin.table.v1.ColumnFamily.Builder;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -31,8 +31,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.Map;
-import java.util.Set;
+import com.google.bigtable.admin.table.v1.ColumnFamily;
 
 /**
  * Tests for {@link ColumnDescriptorAdapter}.

@@ -249,7 +249,6 @@ public class TestCheckAndMutate extends AbstractTest {
     byte[] valueCheck = dataHelper.randomData("value-");
 
     // Delete all versions of a column if the latest version matches
-    Delete delete = new Delete(rowKey).addColumns(COLUMN_FAMILY, qualDelete);
     RowMutations rm = new RowMutations(rowKey);
     rm.add(new Put(rowKey).addColumn(COLUMN_FAMILY, qualPut, valuePut));
     rm.add(new Delete(rowKey).addColumns(COLUMN_FAMILY, qualDelete));

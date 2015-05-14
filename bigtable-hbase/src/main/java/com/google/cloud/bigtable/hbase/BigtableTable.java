@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
