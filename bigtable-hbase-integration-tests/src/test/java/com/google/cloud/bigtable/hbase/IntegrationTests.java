@@ -68,6 +68,7 @@ public class IntegrationTests {
   public static final TableName TABLE_NAME;
   public static final int MAX_VERSIONS = 6;
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
+  public static final byte[] COLUMN_FAMILY2 = Bytes.toBytes("test_family2");
   public static final Configuration BASE_CONFIGURATION = HBaseConfiguration.create();
 
   // testingUtility, connection, and configuration are provided via the connectionResource later
@@ -123,7 +124,11 @@ public class IntegrationTests {
   public static void createTable(TableName tableName) throws IOException {
     try (Admin admin = connection.getAdmin();) {
       HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
-      admin.createTable(new HTableDescriptor(tableName).addFamily(hcd));
+      HColumnDescriptor family2 = new HColumnDescriptor(COLUMN_FAMILY2).setMaxVersions(MAX_VERSIONS);
+      admin.createTable(
+          new HTableDescriptor(tableName)
+              .addFamily(hcd)
+              .addFamily(family2));
     }
   }
 
