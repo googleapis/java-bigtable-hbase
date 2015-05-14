@@ -112,10 +112,12 @@ public class BigtableChannels {
     return wrapChannel(channelOptions, executor, channel, createChannelClose(channel));
   }
 
-  private static CloseableChannel createRefreshingChannel(final TransportOptions transportOptions,
-      final ExecutorService executor, long timeoutMs) {
+  private static CloseableChannel createRefreshingChannel(
+      final TransportOptions transportOptions,
+      final ExecutorService executor,
+      long timeoutMs) {
     if (timeoutMs > 0) {
-      return new ReconnectingChannel(timeoutMs, executor, new ReconnectingChannel.Factory() {
+      return new ReconnectingChannel(timeoutMs, new ReconnectingChannel.Factory() {
         @Override
         public CloseableChannel create() {
           return createCloseableChannel(transportOptions, executor);

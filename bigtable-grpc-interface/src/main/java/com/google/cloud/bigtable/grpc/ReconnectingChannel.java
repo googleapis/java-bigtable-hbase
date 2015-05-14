@@ -16,10 +16,13 @@
 package com.google.cloud.bigtable.grpc;
 
 import io.grpc.Call;
+import io.grpc.Metadata.Headers;
 import io.grpc.MethodDescriptor;
 
 import java.io.IOException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -28,6 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * A ClosableChannel that refreshes itself based on a user supplied timeout.
@@ -36,12 +40,79 @@ public class ReconnectingChannel extends CloseableChannel {
 
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
   protected static final long CLOSE_WAIT_TIME = 5000;
+  // This executor is used to shutdown & await termination of
+  // grpc connections. The work done on these threads should be minial
+  // as long as we don't perform a shutdownNow() call (or similar). As
+  // a result, allow there to be an unbounded number of these.
+  // It is not expected to happen often, but there are cases where
+  // shutdown will never complete and we don't want to take up a thread
+  // that could be used to indicate that a Call is completed (and would
+  // then finish client shutdown).
+  protected static final ExecutorService closeExecutor =
+      Executors.newCachedThreadPool(
+          new ThreadFactoryBuilder()
+              .setNameFormat("reconnection-async-close-%s")
+              .setDaemon(true)
+              .build());
 
   /**
    * Creates a fresh CloseableChannel.
    */
   public interface Factory {
     CloseableChannel create();
+  }
+
+  private class DelayingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
+
+    final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
+    Call<RequestT, ResponseT> callDelegate = null;
+    
+    public DelayingCall(MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+      this.methodDescriptor = methodDescriptor;
+    }
+
+    @Override
+    public void start(Call.Listener<ResponseT> responseListener, Headers headers) {
+      Preconditions.checkState(callDelegate == null, "Already started");
+      ReadLock readLock = delegateLock.readLock();
+      readLock.lock();
+      try {
+        if (delegate == null) {
+          throw new IllegalStateException("Channel is closed");
+        }
+        checkRefresh(readLock);
+        callDelegate = delegate.newCall(methodDescriptor);
+        callDelegate.start(responseListener, headers);
+      } finally {
+        readLock.unlock();
+      }
+    }
+
+    @Override
+    public void request(int numMessages) {
+      Preconditions.checkState(callDelegate != null, "Not started");
+      callDelegate.request(numMessages);
+    }
+
+    @Override
+    public void cancel() {
+      if (callDelegate != null) {
+        callDelegate.cancel();
+      }
+    }
+
+    @Override
+    public void halfClose() {
+      Preconditions.checkState(callDelegate != null, "Not started");
+      callDelegate.halfClose();
+    }
+
+    @Override
+    public void sendPayload(RequestT payload) {
+      Preconditions.checkState(callDelegate != null, "Not started");
+      callDelegate.sendPayload(payload);
+    }
+
   }
 
   // We can't do a newCall on a closed delegate.  This will ensure that refreshes don't 
@@ -58,36 +129,33 @@ public class ReconnectingChannel extends CloseableChannel {
   private long nextRefresh;
   private CloseableChannel delegate;
 
-  public ReconnectingChannel(long maxRefreshTime, Executor executor, final Factory factory) {
+  public ReconnectingChannel(
+      long maxRefreshTime,
+      ExecutorService executor,
+      Factory connectionFactory) {
     Preconditions.checkArgument(maxRefreshTime > 0, "maxRefreshTime has to be greater than 0.");
     this.maxRefreshTime = maxRefreshTime;
     this.executor = executor;
-    this.delegate = factory.create();
+    this.delegate = connectionFactory.create();
     this.nextRefresh = calculateNewRefreshTime();
-    this.factory = factory;
+    this.factory = connectionFactory;
+  }
+
+  public ReconnectingChannel(
+      long maxRefreshTime, Factory factory) {
+    this(maxRefreshTime, closeExecutor, factory);
   }
 
   @Override
   public <RequestT, ResponseT> Call<RequestT, ResponseT> newCall(
       MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    ReadLock readLock = delegateLock.readLock();
-    readLock.lock();
-    try {
-      if (delegate == null) {
-        throw new IllegalStateException("Channel is closed");
-      }
-      checkRefresh(readLock);
-      return delegate.newCall(methodDescriptor);
-    } finally {
-      readLock.unlock();
-    }
+    return new DelayingCall<>(methodDescriptor);
   }
 
   private void checkRefresh(ReadLock readLock) {
     if (!requiresRefresh()) {
       return;
     }
-
     
     // A writeLock will assure that only a single thread updates to delgate.  See close() for
     // the other use of writeLocks in this class.
@@ -145,7 +213,7 @@ public class ReconnectingChannel extends CloseableChannel {
 
   private void asyncClose(final CloseableChannel channel) {
     closingAsynchronously.incrementAndGet();
-    executor.execute(new Runnable() {
+    closeExecutor.execute(new Runnable() {
       @Override
       public void run() {
         try {

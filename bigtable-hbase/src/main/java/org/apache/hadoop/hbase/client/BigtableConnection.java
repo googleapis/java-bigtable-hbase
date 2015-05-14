@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,34 +19,37 @@ package org.apache.hadoop.hbase.client;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Threads;
 
-import com.google.api.client.repackaged.com.google.common.base.Throwables;
-import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
-import com.google.cloud.bigtable.hbase.BigtableOptions;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
-import com.google.cloud.bigtable.hbase.BigtableTable;
-import com.google.cloud.bigtable.hbase.Logger;
 import com.google.cloud.bigtable.grpc.BigtableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableAdminGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.TransportOptions;
+import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
+import com.google.cloud.bigtable.hbase.BigtableOptions;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
+import com.google.cloud.bigtable.hbase.BigtableTable;
+import com.google.cloud.bigtable.hbase.Logger;
 import com.google.common.base.MoreObjects;
 
 public class BigtableConnection implements Connection, Closeable {
@@ -62,9 +65,26 @@ public class BigtableConnection implements Connection, Closeable {
   public static final String BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY =
       "google.bigtable.buffered.mutator.max.memory";
 
-  private static final AtomicInteger SEQUENCE_GENERATOR = new AtomicInteger();
-  private static final Set<Integer> ACTIVE_CONNECTIONS =
-      Collections.synchronizedSet(new HashSet<Integer>());
+  private static final AtomicLong SEQUENCE_GENERATOR = new AtomicLong();
+  private static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
+      Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
+
+  static {
+    Runnable shutDownRunnable = new Runnable() {
+      @Override
+      public void run() {
+        for (BigtableBufferedMutator bbm : ACTIVE_BUFFERED_MUTATORS.values()) {
+          if (bbm.hasInflightRequests()) {
+            int size = ACTIVE_BUFFERED_MUTATORS.size();
+            LOG.warn("Shutdown is commencing and you have open %d buffered mutators."
+                + "You need to close() or flush() them so that is not lost", size);
+            break;
+          }
+        }
+      }
+    };
+    Runtime.getRuntime().addShutdownHook(new Thread(shutDownRunnable));
+  }
 
   // Default to 32MB.
   //
@@ -88,14 +108,9 @@ public class BigtableConnection implements Connection, Closeable {
   private volatile boolean cleanupPool = false;
   private final BigtableOptions options;
   private final TableConfiguration tableConfig;
-  private final Integer id;
 
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
-
-  public static int getActiveConnectionCount() {
-    return ACTIVE_CONNECTIONS.size();
-  }
 
   public BigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
@@ -137,9 +152,6 @@ public class BigtableConnection implements Connection, Closeable {
         channelOptions,
         batchPool);
     this.tableConfig = new TableConfiguration(conf);
-
-    id = SEQUENCE_GENERATOR.incrementAndGet();
-    ACTIVE_CONNECTIONS.add(id);
   }
 
   private BigtableAdminClient getAdminClient(
@@ -190,14 +202,28 @@ public class BigtableConnection implements Connection, Closeable {
     int defaultRpcCount = MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
     int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
 
-    return new BigtableBufferedMutator(conf,
+    final long id = SEQUENCE_GENERATOR.incrementAndGet();
+
+    BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(conf,
         params.getTableName(),
         maxInflightRpcs,
         params.getWriteBufferSize(),
         client,
         options,
         params.getPool(),
-        params.getListener());
+        params.getListener()){
+
+      @Override
+      public void close() throws IOException {
+        try {
+          super.close();
+        } finally {
+          ACTIVE_BUFFERED_MUTATORS.remove(id);
+        }
+      }
+    };
+    ACTIVE_BUFFERED_MUTATORS.put(id, bigtableBufferedMutator);
+    return bigtableBufferedMutator;
   }
 
   @Override
@@ -299,7 +325,6 @@ public class BigtableConnection implements Connection, Closeable {
       shutdownClients();
     } finally {
       this.closed = true;
-      ACTIVE_CONNECTIONS.remove(id);
     }
     // If the clients are shutdown, there shouldn't be any more activity on the
     // batch pool (assuming we created it ourselves). If exceptions were raised
@@ -313,7 +338,6 @@ public class BigtableConnection implements Connection, Closeable {
     InetAddress host = options.getHost();
     InetAddress adminHost = options.getAdminHost();
     return MoreObjects.toStringHelper(BigtableConnection.class)
-      .add("id", id)
       .add("zone", options.getZone())
       .add("project", options.getProjectId())
       .add("cluster", options.getCluster())
@@ -368,9 +392,5 @@ public class BigtableConnection implements Connection, Closeable {
         this.batchPool.shutdownNow();
       }
     }
-  }
-
-  public Integer getId() {
-    return id;
   }
 }
