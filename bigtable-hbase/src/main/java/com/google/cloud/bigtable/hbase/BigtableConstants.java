@@ -76,9 +76,9 @@ public class BigtableConstants {
 
       Properties properties = new Properties();
       properties.load(stream);
-      String value = properties.getProperty("project.version");
+      String value = properties.getProperty("bigtable.hbase.version");
       if (value == null) {
-        LOG.error("project.version not found in bigtable-hbase.properties.");
+        LOG.error("bigtable.hbase.version not found in bigtable-hbase.properties.");
       } else if (value.startsWith("$")){
         LOG.info("project.version token is not replaced.");
       } else {

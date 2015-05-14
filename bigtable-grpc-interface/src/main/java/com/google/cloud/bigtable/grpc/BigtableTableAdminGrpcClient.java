@@ -31,13 +31,13 @@ import java.util.concurrent.ExecutorService;
 /**
  * A gRPC client for accessing the Bigtable Table Admin API.
  */
-public class BigtableAdminGrpcClient implements BigtableAdminClient {
+public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   /**
    * Factory method to create an HTTP1 based client.
    * @return A client ready to access bigtable services.
    */
-  public static BigtableAdminClient createClient(
+  public static BigtableTableAdminClient createClient(
       TransportOptions transportOptions,
       ChannelOptions channelOptions,
       ExecutorService executorService) {
@@ -47,17 +47,17 @@ public class BigtableAdminGrpcClient implements BigtableAdminClient {
         channelOptions,
         executorService);
 
-    return new BigtableAdminGrpcClient(channel);
+    return new BigtableTableAdminGrpcClient(channel);
   }
 
   protected final CloseableChannel channel;
   private final BigtableTableServiceGrpc.BigtableTableServiceBlockingStub blockingStub;
 
   /**
-   * Create a new BigtableAdminGrpcClient. When constructed, the client takes ownership of the
+   * Create a new BigtableTableAdminGrpcClient. When constructed, the client takes ownership of the
    * passed CloseableChannel and will invoke close() when the client is close()d.
    */
-  public BigtableAdminGrpcClient(
+  public BigtableTableAdminGrpcClient(
       CloseableChannel closeableChannel) {
     channel = closeableChannel;
     blockingStub = BigtableTableServiceGrpc.newBlockingStub(closeableChannel);
