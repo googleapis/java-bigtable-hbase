@@ -15,23 +15,22 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
+import org.apache.hadoop.hbase.protobuf.generated.FilterProtos;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.BytesBytesPair;
+import org.apache.hadoop.hbase.util.Pair;
+
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper.QuoteMetaOutputStream;
 import com.google.protobuf.ByteString;
-
-import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
-import org.apache.hadoop.hbase.protobuf.generated.FilterProtos;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.BytesBytesPair;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * An adapter for {@link FuzzyRowFilter}.

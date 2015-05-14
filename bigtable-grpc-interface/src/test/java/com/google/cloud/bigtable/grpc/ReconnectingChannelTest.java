@@ -23,7 +23,6 @@ import io.grpc.Call;
 import io.grpc.MethodDescriptor;
 
 import java.io.IOException;
-import java.util.concurrent.Executors;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -61,7 +60,7 @@ public class ReconnectingChannelTest {
     when(mockFactory.create()).thenReturn(mockChannel);
     when(mockChannel.newCall(any(MethodDescriptor.class))).thenReturn(mockCall);
     ReconnectingChannel test =
-        new ReconnectingChannel(REFRESH_MS, Executors.newFixedThreadPool(1), mockFactory);
+        new ReconnectingChannel(REFRESH_MS, mockFactory);
     Mockito.verify(mockFactory, times(1)).create();
 
     test.newCall(null).start(null, null);

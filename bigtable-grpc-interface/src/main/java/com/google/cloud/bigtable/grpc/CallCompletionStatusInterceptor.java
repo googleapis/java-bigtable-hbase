@@ -15,12 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ConcurrentHashMultiset;
-import com.google.common.collect.MapMaker;
-import com.google.common.collect.Multiset;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import io.grpc.Call;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
@@ -32,6 +26,11 @@ import io.grpc.Status;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ConcurrentHashMultiset;
+import com.google.common.collect.Multiset;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * A {@link Channel} that records the {@link Status} passed to onClose of each call issued on

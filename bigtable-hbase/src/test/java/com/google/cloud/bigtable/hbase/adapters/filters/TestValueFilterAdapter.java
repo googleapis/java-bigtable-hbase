@@ -15,11 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Interleave;
-import com.google.bigtable.v1.ValueRange;
-import com.google.cloud.bigtable.hbase.adapters.*;
-import com.google.protobuf.ByteString;
+import java.io.IOException;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
@@ -34,7 +30,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
+import com.google.bigtable.v1.RowFilter;
+import com.google.bigtable.v1.RowFilter.Interleave;
+import com.google.bigtable.v1.ValueRange;
+import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
 public class TestValueFilterAdapter {

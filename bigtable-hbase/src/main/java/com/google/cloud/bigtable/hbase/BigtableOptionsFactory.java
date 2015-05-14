@@ -15,13 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.BigtableConnection;
-
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 
@@ -34,6 +27,12 @@ import java.security.GeneralSecurityException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+
+import org.apache.hadoop.conf.Configuration;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Static methods to convert an instance of {@link Configuration}

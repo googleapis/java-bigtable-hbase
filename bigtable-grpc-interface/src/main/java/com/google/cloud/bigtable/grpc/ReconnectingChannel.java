@@ -20,7 +20,6 @@ import io.grpc.Metadata.Headers;
 import io.grpc.MethodDescriptor;
 
 import java.io.IOException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -123,7 +122,6 @@ public class ReconnectingChannel extends CloseableChannel {
 
   private final long maxRefreshTime;
   private final Factory factory;
-  private final Executor executor;
 
   // nextRefresh and delegate need to be protected by delegateLock.
   private long nextRefresh;
@@ -131,19 +129,12 @@ public class ReconnectingChannel extends CloseableChannel {
 
   public ReconnectingChannel(
       long maxRefreshTime,
-      ExecutorService executor,
       Factory connectionFactory) {
     Preconditions.checkArgument(maxRefreshTime > 0, "maxRefreshTime has to be greater than 0.");
     this.maxRefreshTime = maxRefreshTime;
-    this.executor = executor;
     this.delegate = connectionFactory.create();
     this.nextRefresh = calculateNewRefreshTime();
     this.factory = connectionFactory;
-  }
-
-  public ReconnectingChannel(
-      long maxRefreshTime, Factory factory) {
-    this(maxRefreshTime, closeExecutor, factory);
   }
 
   @Override

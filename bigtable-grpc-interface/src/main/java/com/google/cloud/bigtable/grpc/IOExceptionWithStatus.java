@@ -26,12 +26,10 @@ import java.io.IOException;
  */
 public class IOExceptionWithStatus extends IOException {
 
-  private final String message;
   private final OperationRuntimeException cause;
 
   public IOExceptionWithStatus(String message, OperationRuntimeException cause) {
     super(message, cause);
-    this.message = message;
     this.cause = cause;
   }
 
