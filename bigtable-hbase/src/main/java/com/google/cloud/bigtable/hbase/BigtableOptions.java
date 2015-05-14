@@ -255,6 +255,7 @@ public class BigtableOptions {
     optionsBuilder.setScheduledExecutorService(rpcRetryExecutorService);
     optionsBuilder.setChannelCount(channelCount);
     optionsBuilder.setTimeoutMs(timeoutMs);
+    optionsBuilder.setUserAgent(BigtableConstants.USER_AGENT);
     return optionsBuilder.build();
   }
 
