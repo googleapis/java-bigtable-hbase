@@ -159,7 +159,7 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
           throw new IOException("Interrupted while waiting for next result", e);
         }
         if (queueEntry == null) {
-          throw new IOException("Timeout while merging responses.");
+          throw new ReadTimeoutException("Timeout while merging responses.");
         }
 
         if (queueEntry.isCompletionMarker()) {

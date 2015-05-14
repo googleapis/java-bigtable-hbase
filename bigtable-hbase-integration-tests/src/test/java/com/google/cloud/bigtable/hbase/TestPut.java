@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY2;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
 import org.apache.commons.lang.RandomStringUtils;
@@ -354,6 +355,61 @@ public class TestPut extends AbstractTest {
       cellCount += result.size();
     }
     Assert.assertEquals("Different row, all other puts accepted", numberOfGoodPuts, cellCount);
+    table.close();
+  }
+
+  @Test
+  public void testMultipleFamilies() throws IOException {
+    // Initialize variables
+    Table table = getConnection().getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("multiFamRow-");
+    byte[][] quals = dataHelper.randomData("testQualifier-", NUM_CELLS);
+    byte[][] values = dataHelper.randomData("testValue-", NUM_CELLS * 2);
+
+    // Construct put with NUM_CELL random qualifier/value combos
+    Put put = new Put(rowKey);
+    List<QualifierValue> family1KeyValues = new ArrayList<QualifierValue>(100);
+    List<QualifierValue> family2KeyValues = new ArrayList<QualifierValue>(100);
+    for (int i = 0; i < NUM_CELLS; i++) {
+      put.addColumn(COLUMN_FAMILY, quals[i], values[i]);
+      family1KeyValues.add(new QualifierValue(quals[i], values[i]));
+      put.addColumn(IntegrationTests.COLUMN_FAMILY2, quals[i], values[NUM_CELLS + i]);
+      family2KeyValues.add(new QualifierValue(quals[i], values[NUM_CELLS + i]));
+    }
+    table.put(put);
+
+    // Get
+    Get get = new Get(rowKey);
+    Result result = table.get(get);
+    List<Cell> cells = result.listCells();
+    Assert.assertEquals(NUM_CELLS * 2, cells.size());
+    Assert.assertTrue(
+        "CF 1 should sort before CF2",
+        Bytes.compareTo(COLUMN_FAMILY, COLUMN_FAMILY2) < 0);
+    // Check results in sort order
+    Collections.sort(family1KeyValues);
+    for (int i = 0; i < NUM_CELLS; ++i) {
+      Assert.assertArrayEquals(COLUMN_FAMILY, CellUtil.cloneFamily(cells.get(i)));
+      Assert.assertArrayEquals(family1KeyValues.get(i).qualifier, CellUtil.cloneQualifier(cells.get(i)));
+      Assert.assertArrayEquals(family1KeyValues.get(i).value, CellUtil.cloneValue(cells.get(i)));
+    }
+    Collections.sort(family2KeyValues);
+    for (int i = 0; i < NUM_CELLS; ++i) {
+      int rowIndex = i + NUM_CELLS;
+      Assert.assertArrayEquals(COLUMN_FAMILY2, CellUtil.cloneFamily(cells.get(rowIndex)));
+      Assert.assertEquals(
+          Bytes.toString(family2KeyValues.get(i).qualifier),
+          Bytes.toString(CellUtil.cloneQualifier(cells.get(rowIndex))));
+      Assert.assertEquals(
+          Bytes.toString(family2KeyValues.get(i).value),
+          Bytes.toString(CellUtil.cloneValue(cells.get(rowIndex))));
+    }
+    // Delete
+    Delete delete = new Delete(rowKey);
+    table.delete(delete);
+
+    // Confirm gone
+    Assert.assertFalse(table.exists(get));
     table.close();
   }
 

@@ -141,6 +141,10 @@ public class BigtableBufferedMutator implements BufferedMutator {
             + " Please notify Google that this occurred.");
       }
     }
+
+    public synchronized boolean hasInflightRequests() {
+      return !pendingOperationsWithSize.isEmpty();
+    }
   }
 
   @VisibleForTesting
@@ -408,5 +412,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
     public void onSuccess(GeneratedMessage ignored) {
       sizeManager.operationComplete(operationSequenceId);
     }
+  }
+
+  public boolean hasInflightRequests() {
+    return sizeManager.hasInflightRequests();
   }
 }

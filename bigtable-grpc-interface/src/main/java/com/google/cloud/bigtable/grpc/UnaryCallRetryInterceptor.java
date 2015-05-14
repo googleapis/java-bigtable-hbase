@@ -33,7 +33,7 @@ import java.util.concurrent.ScheduledExecutorService;
 /**
  * A {@link Channel} that retries unary calls when an internal error occurs.
  */
-public class UnaryCallRetryInterceptor implements Channel {
+public class UnaryCallRetryInterceptor extends Channel {
 
   private final Channel delegate;
   private final ScheduledExecutorService executorService;

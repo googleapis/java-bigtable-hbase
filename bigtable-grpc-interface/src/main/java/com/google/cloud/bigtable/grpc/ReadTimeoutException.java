@@ -15,18 +15,14 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import io.grpc.Channel;
-
 import java.io.IOException;
 
 /**
- * A {@link Channel} that allows clients to close it, freeing any resources.
+ * An IOException that presents timeout when reading response.
  */
-public abstract class CloseableChannel extends Channel {
+public class ReadTimeoutException extends IOException {
 
-  /**
-   * Release resources used by this channel.
-   * @throws IOException
-   */
-  public abstract void close() throws IOException;
+  public ReadTimeoutException(String message) {
+    super(message);
+  }
 }
