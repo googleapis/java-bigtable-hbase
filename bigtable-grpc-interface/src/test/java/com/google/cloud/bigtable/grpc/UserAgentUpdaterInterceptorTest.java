@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.common.net.HttpHeaders;
 import com.google.protobuf.Empty;
 
 import org.junit.Assert;
@@ -62,7 +63,8 @@ public class UserAgentUpdaterInterceptorTest {
     Metadata.Headers headers = new Metadata.Headers();
     wrappedCall.start(responseListenerStub, headers);
 
-    Metadata.Key<String> key = Metadata.Key.of("User-Agent", Metadata.ASCII_STRING_MARSHALLER);
+    Metadata.Key<String> key =
+        Metadata.Key.of(HttpHeaders.USER_AGENT, Metadata.ASCII_STRING_MARSHALLER);
     Assert.assertEquals(userAgent, headers.get(key));
   }
 
@@ -73,7 +75,8 @@ public class UserAgentUpdaterInterceptorTest {
     Call<MutateRowRequest, Empty> wrappedCall =
         interceptor.interceptCall(BigtableServiceGrpc.CONFIG.mutateRow, channelStub);
     Metadata.Headers headers = new Metadata.Headers();
-    Metadata.Key<String> key = Metadata.Key.of("User-Agent", Metadata.ASCII_STRING_MARSHALLER);
+    Metadata.Key<String> key =
+        Metadata.Key.of(HttpHeaders.USER_AGENT, Metadata.ASCII_STRING_MARSHALLER);
     headers.put(key, "dummy");
     wrappedCall.start(responseListenerStub, headers);
 
