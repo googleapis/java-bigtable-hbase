@@ -184,6 +184,8 @@ public class BigtableChannels {
       interceptors.add(preRetryCallStatusInterceptor);
     }
 
+    interceptors.add(new ProjectVersionUpdaterInterceptor(channelOptions.getProjectVersion()));
+
     if (!interceptors.isEmpty()) {
       channel = ClientInterceptors.intercept(channel, interceptors);
       interceptors.clear();
