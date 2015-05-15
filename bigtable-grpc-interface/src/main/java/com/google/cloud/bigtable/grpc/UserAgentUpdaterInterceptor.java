@@ -29,6 +29,9 @@ import io.grpc.MethodDescriptor;
  */
 public class UserAgentUpdaterInterceptor implements ClientInterceptor {
 
+  private final static Metadata.Key<String> USER_AGENT_KEY =
+      Metadata.Key.of(HttpHeaders.USER_AGENT, Metadata.ASCII_STRING_MARSHALLER);
+
   private final String userAgent;
 
   UserAgentUpdaterInterceptor(String userAgent) {
@@ -41,15 +44,13 @@ public class UserAgentUpdaterInterceptor implements ClientInterceptor {
     return new SimpleForwardingCall<ReqT, RespT>(next.newCall(method)) {
       @Override
       public void start(Listener<RespT> responseListener, Metadata.Headers headers) {
-        Metadata.Key<String> key =
-            Metadata.Key.of(HttpHeaders.USER_AGENT, Metadata.ASCII_STRING_MARSHALLER);
-        String userAgents = headers.get(key);
+        String userAgents = headers.get(USER_AGENT_KEY);
         if (userAgents == null) {
           userAgents = userAgent;
         } else {
           userAgents += " " + userAgent;
         }
-        headers.put(key, userAgents);
+        headers.put(USER_AGENT_KEY, userAgents);
         super.start(responseListener, headers);
       }
     };
