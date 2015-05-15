@@ -27,7 +27,7 @@ import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.BigtableConnection;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -58,7 +58,7 @@ public class TestBigtableTable {
   public static final String TEST_ZONE = "testzone";
 
   @Mock
-  public BigtableConnection mockConnection;
+  public AbstractBigtableConnection mockConnection;
   @Mock
   public BigtableClient mockClient;
 

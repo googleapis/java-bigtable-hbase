@@ -26,6 +26,8 @@ limitations under the License.
         <module>bigtable-protos</module>
         <module>bigtable-grpc-interface</module>
         <module>bigtable-hbase</module>
+        <module>bigtable-hbase-1.0</module>
+        <module>bigtable-hbase-1.1</module>
         <module>bigtable-hbase-integration-tests</module>
     </modules>
 
@@ -43,6 +45,8 @@ limitations under the License.
         <google.api.client.version>1.19.0</google.api.client.version>
         <!-- For Netty HTTP2/TLS negotiation -->
         <alpn.version>7.0.0.v20140317</alpn.version>
+        <netty.version>4.1.0.Beta5</netty.version>
+
         <!-- Values for integration testing. Set these in ~/.m2/settings.xml or
              via command-line -D flags. -->
         <google.bigtable.auth.service.account.email></google.bigtable.auth.service.account.email>

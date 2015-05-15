@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import io.grpc.Status;
 import io.grpc.Status.OperationRuntimeException;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,6 +66,7 @@ import com.google.bigtable.admin.table.v1.GetTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
 import com.google.bigtable.admin.table.v1.ListTablesResponse;
 import com.google.bigtable.admin.table.v1.Table;
+import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.Logger;
 import com.google.cloud.bigtable.hbase.adapters.ClusterMetadataSetter;
@@ -74,13 +74,12 @@ import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
 import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
-public class BigtableAdmin implements Admin {
+public abstract class AbstractBigtableAdmin implements Admin {
 
-  private static final Logger LOG = new Logger(BigtableAdmin.class);
+  private static final Logger LOG = new Logger(AbstractBigtableAdmin.class);
 
   /**
    * Bigtable doesn't require disabling tables before deletes or schema changes. Some clients do
@@ -92,17 +91,17 @@ public class BigtableAdmin implements Admin {
 
   private final Configuration configuration;
   private final BigtableOptions options;
-  private final BigtableConnection connection;
+  private final AbstractBigtableConnection connection;
   private final BigtableTableAdminClient bigtableTableAdminClient;
 
   private ClusterMetadataSetter clusterMetadataSetter;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
   private final TableAdapter tableAdapter;
 
-  public BigtableAdmin(
+  public AbstractBigtableAdmin(
       BigtableOptions options,
       Configuration configuration,
-      BigtableConnection connection,
+      AbstractBigtableConnection connection,
       BigtableTableAdminClient bigtableTableAdminClient,
       Set<TableName> disabledTables) {
     LOG.debug("Creating BigtableAdmin");
@@ -113,21 +112,6 @@ public class BigtableAdmin implements Admin {
     this.disabledTables = disabledTables;
     this.clusterMetadataSetter = ClusterMetadataSetter.from(options);
     this.tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
-  }
-
-  @Override
-  public int getOperationTimeout() {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void abort(String why, Throwable e) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean isAborted() {
-    throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
@@ -366,11 +350,6 @@ public class BigtableAdmin implements Admin {
   }
 
   @Override
-  public void truncateTable(TableName tableName, boolean preserveSplits) throws IOException {
-    throw new UnsupportedOperationException("truncateTable");  // TODO
-  }
-
-  @Override
   public void enableTable(TableName tableName) throws IOException {
     TableName.isLegalFullyQualifiedTableName(tableName.getName());
     if (!this.tableExists(tableName)) {
@@ -483,21 +462,6 @@ public class BigtableAdmin implements Admin {
   }
 
   @Override
-  public boolean isTableAvailable(TableName tableName, byte[][] splitKeys) throws IOException {
-    throw new UnsupportedOperationException("isTableAvailable");  // TODO
-  }
-
-  @Override
-  public Pair<Integer, Integer> getAlterStatus(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("getAlterStatus");  // TODO
-  }
-
-  @Override
-  public Pair<Integer, Integer> getAlterStatus(byte[] tableName) throws IOException {
-    throw new UnsupportedOperationException("getAlterStatus");  // TODO
-  }
-
-  @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
     TableMetadataSetter tableMetadataSetter = TableMetadataSetter.from(tableName, options);
 
@@ -552,6 +516,88 @@ public class BigtableAdmin implements Admin {
   @Deprecated
   public void deleteColumn(String tableName, byte[] columnName) throws IOException {
     deleteColumn(TableName.valueOf(tableName), columnName);
+  }
+
+  @Override
+  public ClusterStatus getClusterStatus() throws IOException {
+    return new ClusterStatus() {
+      @Override
+      public Collection<ServerName> getServers() {
+        // TODO(sduskis): Point the server name to options.getServerName()
+        return Collections.emptyList();
+      }
+    };
+  }
+
+  @Override
+  public Configuration getConfiguration() {
+    return configuration;
+  }
+
+  @Override
+  public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
+    List<HRegionInfo> regionInfos = new ArrayList<>();
+    for (HRegionLocation location : connection.getRegionLocator(tableName).getAllRegionLocations()) {
+      regionInfos.add(location.getRegionInfo());
+    }
+    return regionInfos;
+  }
+
+  public void close() throws IOException {
+    // no-op
+  }
+
+  @Override
+  public HTableDescriptor[] getTableDescriptorsByTableName(List<TableName> tableNames)
+      throws IOException {
+    throw new UnsupportedOperationException("getTableDescriptorsByTableName");  // TODO
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(getClass())
+        .add("zone", options.getZone())
+        .add("project", options.getProjectId())
+        .add("cluster", options.getCluster())
+        .add("adminHost", options.getTableAdminHost())
+        .toString();
+  }
+
+  /* Unsupported operations */
+
+  @Override
+  public int getOperationTimeout() {
+    throw new UnsupportedOperationException("getOperationTimeout");  // TODO
+  }
+
+  @Override
+  public void abort(String why, Throwable e) {
+    throw new UnsupportedOperationException("abort");  // TODO
+  }
+
+  @Override
+  public boolean isAborted() {
+    throw new UnsupportedOperationException("isAborted");  // TODO
+  }
+
+  @Override
+  public void truncateTable(TableName tableName, boolean preserveSplits) throws IOException {
+    throw new UnsupportedOperationException("truncateTable");  // TODO
+  }
+
+  @Override
+  public boolean isTableAvailable(TableName tableName, byte[][] splitKeys) throws IOException {
+    throw new UnsupportedOperationException("isTableAvailable");  // TODO
+  }
+
+  @Override
+  public Pair<Integer, Integer> getAlterStatus(TableName tableName) throws IOException {
+    throw new UnsupportedOperationException("getAlterStatus");  // TODO
+  }
+
+  @Override
+  public Pair<Integer, Integer> getAlterStatus(byte[] tableName) throws IOException {
+    throw new UnsupportedOperationException("getAlterStatus");  // TODO
   }
 
   @Override
@@ -738,22 +784,6 @@ public class BigtableAdmin implements Admin {
   }
 
   @Override
-  public ClusterStatus getClusterStatus() throws IOException {
-    return new ClusterStatus() {
-      @Override
-      public Collection<ServerName> getServers() {
-        // TODO(sduskis): Point the server name to options.getServerName()
-        return Collections.emptyList();
-      }
-    };
-  }
-
-  @Override
-  public Configuration getConfiguration() {
-    return configuration;
-  }
-
-  @Override
   public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
     throw new UnsupportedOperationException("createNamespace");  // TODO
   }
@@ -786,26 +816,6 @@ public class BigtableAdmin implements Admin {
   @Override
   public TableName[] listTableNamesByNamespace(String name) throws IOException {
     throw new UnsupportedOperationException("listTableNamesByNamespace");  // TODO
-  }
-
-  @Override
-  public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
-    List<HRegionInfo> regionInfos = new ArrayList<>();
-    for (HRegionLocation location : connection.getRegionLocator(tableName).getAllRegionLocations()) {
-      regionInfos.add(location.getRegionInfo());
-    }
-    return regionInfos;
-  }
-
-  @Override
-  public void close() throws IOException {
-    // no-op
-  }
-
-  @Override
-  public HTableDescriptor[] getTableDescriptorsByTableName(List<TableName> tableNames)
-      throws IOException {
-    throw new UnsupportedOperationException("getTableDescriptorsByTableName");  // TODO
   }
 
   @Override
@@ -984,14 +994,4 @@ public class BigtableAdmin implements Admin {
     throw new UnsupportedOperationException("rollWALWriter");  // TODO
   }
 
-  @Override
-  public String toString() {
-    InetAddress tableAdminHost = options.getTableAdminHost();
-    return MoreObjects.toStringHelper(BigtableAdmin.class)
-        .add("zone", options.getZone())
-        .add("project", options.getProjectId())
-        .add("cluster", options.getCluster())
-        .add("adminHost", tableAdminHost)
-        .toString();
-  }
 }

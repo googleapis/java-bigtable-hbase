@@ -30,7 +30,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.BigtableConnection;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
@@ -102,12 +102,12 @@ public class BigtableTable implements Table {
   private final ListeningExecutorService executorService;
   private final TableMetadataSetter metadataSetter;
 
-  private final BigtableConnection bigtableConnection;
+  private final AbstractBigtableConnection bigtableConnection;
 
   /**
    * Constructed by BigtableConnection
    */
-  public BigtableTable(BigtableConnection bigtableConnection,
+  public BigtableTable(AbstractBigtableConnection bigtableConnection,
       TableName tableName,
       BigtableOptions options,
       BigtableClient client,

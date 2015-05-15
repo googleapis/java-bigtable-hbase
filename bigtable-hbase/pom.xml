@@ -28,6 +28,54 @@ limitations under the License.
 
     <dependencies>
         <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${protobuff-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-all</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client-java6</artifactId>
+            <version>${google.api.client.version}</version>
+            <exclusions>
+                <exclusion>
+                    <!-- this version hides too many things -->
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava-jdk5</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client</artifactId>
+            <version>${google.api.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client-java6</artifactId>
+            <version>${google.api.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>18.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client</artifactId>
+            <version>1.18.0-rc</version>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-grpc-interface</artifactId>
             <version>${project.version}</version>
@@ -172,78 +220,6 @@ limitations under the License.
                             <systemPropertyVariables>
                                 <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                             </systemPropertyVariables>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.google.cloud.bigtable.mapreduce.Driver</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <shadeTestJar>true</shadeTestJar>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
-                            <shadedClassifierName>shaded</shadedClassifierName>
-                            <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <artifactSet>
-                                <includes>
-                                    <include>com.google.cloud.bigtable:bigtable-protos</include>
-                                    <include>com.google.cloud.bigtable:bigtable-grpc-interface</include>
-                                    <include>com.google.api-client:*</include>
-                                    <include>com.google.auth:*</include>
-                                    <include>com.google.guava:guava</include>
-                                    <include>com.google.http-client:*</include>
-                                    <include>com.google.oauth-client:*</include>
-                                    <include>com.google.protobuf:*</include>
-                                    <include>com.twitter:hpack</include>
-                                    <include>com.fasterxml.jackson.core:*</include>
-                                    <include>io.netty:netty-all</include>
-                                    <include>io.grpc:grpc-all</include>
-                                </includes>
-                            </artifactSet>
-                            <relocations>
-                                <relocation>
-                                    <pattern>com.google.common</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.common</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.protobuf</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.protobuf</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.fasterxml</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.fasterxml</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.apache.commons.codec</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.codec</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>io.netty</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.api</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.api</shadedPattern>
-                                </relocation>
-                            </relocations>
                         </configuration>
                     </execution>
                 </executions>

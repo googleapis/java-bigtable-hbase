@@ -19,7 +19,7 @@ limitations under the License.
 <configuration>
     <property>
         <name>hbase.client.connection.impl</name>
-        <value>org.apache.hadoop.hbase.client.BigtableConnection</value>
+        <value>com.google.cloud.bigtable.hbase.TestBigtableConnection</value>
     </property>
     <property>
         <name>google.bigtable.endpoint.host</name>
