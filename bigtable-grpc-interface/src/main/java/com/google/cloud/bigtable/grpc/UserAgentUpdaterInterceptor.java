@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.common.net.HttpHeaders;
+
 import io.grpc.Call;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
@@ -39,7 +41,8 @@ public class UserAgentUpdaterInterceptor implements ClientInterceptor {
     return new SimpleForwardingCall<ReqT, RespT>(next.newCall(method)) {
       @Override
       public void start(Listener<RespT> responseListener, Metadata.Headers headers) {
-        Metadata.Key<String> key = Metadata.Key.of("User-Agent", Metadata.ASCII_STRING_MARSHALLER);
+        Metadata.Key<String> key =
+            Metadata.Key.of(HttpHeaders.USER_AGENT, Metadata.ASCII_STRING_MARSHALLER);
         String userAgents = headers.get(key);
         if (userAgents == null) {
           userAgents = userAgent;
