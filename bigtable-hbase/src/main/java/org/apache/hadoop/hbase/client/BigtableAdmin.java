@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -38,24 +37,12 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
-import org.apache.hadoop.hbase.regionserver.wal.FailedLogCloseException;
-import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
-import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
-import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
-import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
 
 import com.google.bigtable.admin.table.v1.ColumnFamily;
 import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
@@ -67,6 +54,7 @@ import com.google.bigtable.admin.table.v1.GetTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
 import com.google.bigtable.admin.table.v1.ListTablesResponse;
 import com.google.bigtable.admin.table.v1.Table;
+import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.Logger;
 import com.google.cloud.bigtable.hbase.adapters.ClusterMetadataSetter;
@@ -74,13 +62,12 @@ import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
 import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
-public class BigtableAdmin implements Admin {
+public abstract class BigtableAdmin implements Admin {
 
-  private static final Logger LOG = new Logger(BigtableAdmin.class);
+  static final Logger LOG = new Logger(BigtableAdmin.class);
 
   /**
    * Bigtable doesn't require disabling tables before deletes or schema changes. Some clients do
@@ -113,21 +100,6 @@ public class BigtableAdmin implements Admin {
     this.disabledTables = disabledTables;
     this.clusterMetadataSetter = ClusterMetadataSetter.from(options);
     this.tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
-  }
-
-  @Override
-  public int getOperationTimeout() {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public void abort(String why, Throwable e) {
-    throw new UnsupportedOperationException();  // TODO
-  }
-
-  @Override
-  public boolean isAborted() {
-    throw new UnsupportedOperationException();  // TODO
   }
 
   @Override
@@ -366,11 +338,6 @@ public class BigtableAdmin implements Admin {
   }
 
   @Override
-  public void truncateTable(TableName tableName, boolean preserveSplits) throws IOException {
-    throw new UnsupportedOperationException("truncateTable");  // TODO
-  }
-
-  @Override
   public void enableTable(TableName tableName) throws IOException {
     TableName.isLegalFullyQualifiedTableName(tableName.getName());
     if (!this.tableExists(tableName)) {
@@ -483,21 +450,6 @@ public class BigtableAdmin implements Admin {
   }
 
   @Override
-  public boolean isTableAvailable(TableName tableName, byte[][] splitKeys) throws IOException {
-    throw new UnsupportedOperationException("isTableAvailable");  // TODO
-  }
-
-  @Override
-  public Pair<Integer, Integer> getAlterStatus(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("getAlterStatus");  // TODO
-  }
-
-  @Override
-  public Pair<Integer, Integer> getAlterStatus(byte[] tableName) throws IOException {
-    throw new UnsupportedOperationException("getAlterStatus");  // TODO
-  }
-
-  @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
     TableMetadataSetter tableMetadataSetter = TableMetadataSetter.from(tableName, options);
 
@@ -552,42 +504,6 @@ public class BigtableAdmin implements Admin {
   @Deprecated
   public void deleteColumn(String tableName, byte[] columnName) throws IOException {
     deleteColumn(TableName.valueOf(tableName), columnName);
-  }
-
-  @Override
-  public void modifyColumn(TableName tableName, HColumnDescriptor descriptor) throws IOException {
-    throw new UnsupportedOperationException("modifyColumn");  // TODO
-  }
-
-  @Override
-  public void closeRegion(String regionname, String serverName) throws IOException {
-    throw new UnsupportedOperationException("closeRegion");  // TODO
-  }
-
-  @Override
-  public void closeRegion(byte[] regionname, String serverName) throws IOException {
-    throw new UnsupportedOperationException("closeRegion");  // TODO
-  }
-
-  @Override
-  public boolean closeRegionWithEncodedRegionName(String encodedRegionName, String serverName)
-      throws IOException {
-    throw new UnsupportedOperationException("closeRegionWithEncodedRegionName");  // TODO
-  }
-
-  @Override
-  public void closeRegion(ServerName sn, HRegionInfo hri) throws IOException {
-    throw new UnsupportedOperationException("closeRegion");  // TODO
-  }
-
-  @Override
-  public List<HRegionInfo> getOnlineRegions(ServerName sn) throws IOException {
-    throw new UnsupportedOperationException("getOnlineRegions");  // TODO
-  }
-
-  @Override
-  public void flush(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("flush");  // TODO
   }
 
   @Override
@@ -659,39 +575,6 @@ public class BigtableAdmin implements Admin {
   }
 
   @Override
-  public void offline(byte[] regionName) throws IOException {
-    throw new UnsupportedOperationException("offline");  // TODO
-  }
-
-  @Override
-  public boolean setBalancerRunning(boolean on, boolean synchronous)
-      throws MasterNotRunningException, ZooKeeperConnectionException {
-    throw new UnsupportedOperationException("setBalancerRunning");  // TODO
-  }
-
-  @Override
-  public boolean balancer()
-      throws MasterNotRunningException, ZooKeeperConnectionException {
-    throw new UnsupportedOperationException("balancer");  // TODO
-  }
-
-  @Override
-  public boolean enableCatalogJanitor(boolean enable)
-      throws MasterNotRunningException {
-    throw new UnsupportedOperationException("enableCatalogJanitor");  // TODO
-  }
-
-  @Override
-  public int runCatalogScan() throws MasterNotRunningException {
-    throw new UnsupportedOperationException("runCatalogScan");  // TODO
-  }
-
-  @Override
-  public boolean isCatalogJanitorEnabled() throws MasterNotRunningException {
-    throw new UnsupportedOperationException("isCatalogJanitorEnabled");  // TODO
-  }
-
-  @Override
   public void mergeRegions(byte[] encodedNameOfRegionA, byte[] encodedNameOfRegionB,
       boolean forcible) throws IOException {
     LOG.info("mergeRegions is a no-op");
@@ -718,26 +601,6 @@ public class BigtableAdmin implements Admin {
   }
 
   @Override
-  public void modifyTable(TableName tableName, HTableDescriptor htd) throws IOException {
-    throw new UnsupportedOperationException("modifyTable");  // TODO
-  }
-
-  @Override
-  public void shutdown() throws IOException {
-    throw new UnsupportedOperationException("shutdown");  // TODO
-  }
-
-  @Override
-  public void stopMaster() throws IOException {
-    throw new UnsupportedOperationException("stopMaster");  // TODO
-  }
-
-  @Override
-  public void stopRegionServer(String hostnamePort) throws IOException {
-    throw new UnsupportedOperationException("stopRegionServer");  // TODO
-  }
-
-  @Override
   public ClusterStatus getClusterStatus() throws IOException {
     return new ClusterStatus() {
       @Override
@@ -751,41 +614,6 @@ public class BigtableAdmin implements Admin {
   @Override
   public Configuration getConfiguration() {
     return configuration;
-  }
-
-  @Override
-  public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
-    throw new UnsupportedOperationException("createNamespace");  // TODO
-  }
-
-  @Override
-  public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException {
-    throw new UnsupportedOperationException("modifyNamespace");  // TODO
-  }
-
-  @Override
-  public void deleteNamespace(String name) throws IOException {
-    throw new UnsupportedOperationException("deleteNamespace");  // TODO
-  }
-
-  @Override
-  public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException {
-    throw new UnsupportedOperationException("getNamespaceDescriptor");  // TODO
-  }
-
-  @Override
-  public NamespaceDescriptor[] listNamespaceDescriptors() throws IOException {
-    throw new UnsupportedOperationException("listNamespaceDescriptors");  // TODO
-  }
-
-  @Override
-  public HTableDescriptor[] listTableDescriptorsByNamespace(String name) throws IOException {
-    throw new UnsupportedOperationException("listDescriptorsByNamespace");  // TODO
-  }
-
-  @Override
-  public TableName[] listTableNamesByNamespace(String name) throws IOException {
-    throw new UnsupportedOperationException("listTableNamesByNamespace");  // TODO
   }
 
   @Override
@@ -811,177 +639,6 @@ public class BigtableAdmin implements Admin {
   @Override
   public HTableDescriptor[] getTableDescriptors(List<String> names) throws IOException {
     throw new UnsupportedOperationException("getTableDescriptors");  // TODO
-  }
-
-  @Override
-  public String[] getMasterCoprocessors() {
-    throw new UnsupportedOperationException("getMasterCoprocessors");  // TODO
-  }
-
-  @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName)
-      throws IOException {
-    throw new UnsupportedOperationException("getCompactionState");
-  }
-
-  @Override
-  public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes)
-      throws IOException {
-    throw new UnsupportedOperationException("getCompactionStateForRegion");
-  }
-
-  @Override
-  public void snapshot(String snapshotName, TableName tableName)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  @Override
-  public void snapshot(byte[] snapshotName, TableName tableName)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  @Override
-  public void snapshot(String snapshotName, TableName tableName,
-      HBaseProtos.SnapshotDescription.Type type)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  @Override
-  public void snapshot(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  @Override
-  public MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException {
-    throw new UnsupportedOperationException("takeSnapshotAsync");  // TODO
-  }
-
-  @Override
-  public boolean isSnapshotFinished(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, HBaseSnapshotException, UnknownSnapshotException {
-    throw new UnsupportedOperationException("isSnapshotFinished");  // TODO
-  }
-
-  @Override
-  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  @Override
-  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  @Override
-  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  @Override
-  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  @Override
-  public void cloneSnapshot(byte[] snapshotName, TableName tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("cloneSnapshot");  // TODO
-  }
-
-  @Override
-  public void cloneSnapshot(String snapshotName, TableName tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("cloneSnapshot");  // TODO
-  }
-
-  @Override
-  public void execProcedure(String signature, String instance, Map<String, String> props)
-      throws IOException {
-    throw new UnsupportedOperationException("execProcedure");  // TODO
-  }
-
-  @Override
-  public byte[] execProcedureWithRet(String signature, String instance, Map<String, String> props)
-      throws IOException {
-    throw new UnsupportedOperationException("execProcedureWithRet");  // TODO
-  }
-
-  @Override
-  public boolean isProcedureFinished(String signature, String instance, Map<String, String> props)
-      throws IOException {
-    throw new UnsupportedOperationException("isProcedureFinished");  // TODO
-  }
-
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");  // TODO
-  }
-
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots(String regex) throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");  // TODO
-  }
-
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");  // TODO
-  }
-
-  @Override
-  public void deleteSnapshot(byte[] snapshotName) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshot");  // TODO
-  }
-
-  @Override
-  public void deleteSnapshot(String snapshotName) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshot");  // TODO
-  }
-
-  @Override
-  public void deleteSnapshots(String regex) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshots");  // TODO
-  }
-
-  @Override
-  public void deleteSnapshots(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshots");  // TODO
-  }
-
-  @Override
-  public CoprocessorRpcChannel coprocessorService() {
-    throw new UnsupportedOperationException("coprocessorService");  // TODO
-  }
-
-  @Override
-  public CoprocessorRpcChannel coprocessorService(ServerName serverName) {
-    throw new UnsupportedOperationException("coprocessorService");  // TODO
-  }
-
-  @Override
-  public void updateConfiguration(ServerName serverName) throws IOException {
-    throw new UnsupportedOperationException("updateConfiguration");  // TODO
-  }
-
-  @Override
-  public void updateConfiguration() throws IOException {
-    throw new UnsupportedOperationException("updateConfiguration");  // TODO
-  }
-
-  @Override
-  public int getMasterInfoPort() throws IOException {
-    throw new UnsupportedOperationException("getMasterInfoPort");  // TODO
-  }
-
-  @Override
-  public void rollWALWriter(ServerName serverName) throws IOException, FailedLogCloseException {
-    throw new UnsupportedOperationException("rollWALWriter");  // TODO
   }
 
   @Override

@@ -67,6 +67,10 @@ limitations under the License.
             <id>Sonatype Snapshots Repository</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </repository>
+        <repository>
+            <id>HBase 1.1RC2</id>
+            <url>https://repository.apache.org/content/repositories/orgapachehbase-1078</url>
+        </repository>
     </repositories>
 
     <dependencyManagement>
