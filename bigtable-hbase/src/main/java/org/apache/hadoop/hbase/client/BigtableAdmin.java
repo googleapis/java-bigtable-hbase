@@ -994,4 +994,28 @@ public class BigtableAdmin implements Admin {
         .add("adminHost", tableAdminHost)
         .toString();
   }
+
+  /* HBase 1.1.0 methods */
+  public boolean isBalancerEnabled() throws IOException {
+    throw new UnsupportedOperationException("isBalancerEnabled");  // TODO
+  }
+
+  public long getLastMajorCompactionTimestamp(TableName tableName) throws IOException {
+    throw new UnsupportedOperationException("getLastMajorCompactionTimestamp");  // TODO
+  }
+
+  public long getLastMajorCompactionTimestampForRegion(byte[] regionName) throws IOException {
+    throw new UnsupportedOperationException("getLastMajorCompactionTimestampForRegion");  // TODO
+  }
+
+//  public void setQuota(QuotaSettings quota) throws IOException {
+//    throw new UnsupportedOperationException("setQuota");  // TODO
+//  }
+
+  /* This method's parameter and return type do not exist in hbase 1.0.  This is not backwards
+   * compatible
+   */
+//  public QuotaRetriever getQuotaRetriever(QuotaFilter filter) throws IOException {
+//    throw new UnsupportedOperationException("getQuotaRetriever");  // TODO
+//  }
 }
