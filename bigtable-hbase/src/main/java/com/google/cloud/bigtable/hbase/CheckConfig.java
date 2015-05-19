@@ -1,0 +1,96 @@
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.cloud.bigtable.hbase;
+
+import com.google.auth.Credentials;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.BigtableConnection;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.HConnection;
+import org.apache.hadoop.util.GenericOptionsParser;
+
+import java.io.IOException;
+
+/**
+ * A simple utility class for checking and displaying common Bigtable-HBase configuration values.
+ *
+ * Expected usage: hbase com.google.cloud.bigtable.hbase.CheckConfig
+ */
+public class CheckConfig {
+  public static void main(String[] args) throws IOException {
+    Logger logger = new Logger(CheckConfig.class);
+    GenericOptionsParser optionsParser =
+        new GenericOptionsParser(HBaseConfiguration.create(), args);
+    Configuration fullConfiguration = optionsParser.getConfiguration();
+
+    BigtableOptions options;
+    try {
+      options = BigtableOptionsFactory.fromConfiguration(fullConfiguration);
+    } catch (IOException | RuntimeException exc) {
+      logger.warn("Encountered errors attempting to parse configuration.", exc);
+      return;
+    }
+
+    System.out.println(String.format("User Agent: %s", options.getChannelOptions().getUserAgent()));
+    System.out.println(String.format("Project ID: %s", options.getProjectId()));
+    System.out.println(String.format("Cluster Name: %s", options.getCluster()));
+    System.out.println(String.format("Zone: %s", options.getZone()));
+    System.out.println(String.format("Cluster admin host: %s", options.getClusterAdminHost()));
+    System.out.println(String.format("Table admin host: %s", options.getTableAdminHost()));
+    System.out.println(String.format("Data host: %s", options.getDataHost()));
+
+    Credentials credentials = options.getChannelOptions().getCredential();
+    try {
+      System.out.println("Attempting credential refresh...");
+      credentials.refresh();
+    } catch (IOException ioe) {
+      logger.warn("Encountered errors attempting to refresh credentials.", ioe);
+      return;
+    }
+
+    String configuredConnectionClass =
+        fullConfiguration.get(HConnection.HBASE_CLIENT_CONNECTION_IMPL);
+    boolean isCorrectClassSpecified =
+        BigtableConnection.class.getCanonicalName().equals(configuredConnectionClass);
+    // We can actually determine if this value is correct (disregarding custom subclasses).
+    System.out.println(
+        String.format(
+            "HBase Connection Class = %s %s",
+            configuredConnectionClass,
+            isCorrectClassSpecified ? "(OK)" : "(Configuration error)"));
+
+    System.out.println("Opening table admin connection...");
+    try (Connection conn = ConnectionFactory.createConnection(fullConfiguration)) {
+      try (Admin admin = conn.getAdmin()) {
+        System.out.println(String.format("Tables in cluster %s:", options.getCluster()));
+        TableName[] tableNames = admin.listTableNames();
+        if (tableNames.length == 0) {
+          System.out.println("No tables found.");
+        } else {
+          for (TableName table : tableNames) {
+            System.out.println(table.getNameAsString());
+          }
+        }
+      }
+      System.out.println("Closing connection...");
+    }
+  }
+}
