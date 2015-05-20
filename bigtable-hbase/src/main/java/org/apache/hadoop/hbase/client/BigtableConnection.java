@@ -127,7 +127,13 @@ public class BigtableConnection implements Connection, Closeable {
       batchPool = getBatchPool();
     }
 
-    this.options = BigtableOptionsFactory.fromConfiguration(conf);
+    try {
+      this.options = BigtableOptionsFactory.fromConfiguration(conf);
+    } catch (IOException ioe) {
+      LOG.error("Error loading BigtableOptions from Configuration.", ioe);
+      throw ioe;
+    }
+
     TransportOptions dataTransportOptions = options.getDataTransportOptions();
     ChannelOptions channelOptions = options.getChannelOptions();
     TransportOptions tableAdminTransportOptions = options.getTableAdminTransportOptions();
@@ -155,8 +161,13 @@ public class BigtableConnection implements Connection, Closeable {
       ChannelOptions channelOptions,
       ExecutorService executorService) {
 
-    return BigtableTableAdminGrpcClient.createClient(
-        tableAdminTransportOptions, channelOptions, executorService);
+    try {
+      return BigtableTableAdminGrpcClient.createClient(
+          tableAdminTransportOptions, channelOptions, executorService);
+    } catch (RuntimeException re) {
+      LOG.error("Error constructing table admin client.", re);
+      throw re;
+    }
   }
 
   protected BigtableClient getBigtableClient(
@@ -164,8 +175,13 @@ public class BigtableConnection implements Connection, Closeable {
       ChannelOptions channelOptions,
       ExecutorService executorService) {
 
-    return BigtableGrpcClient.createClient(
-        dataTransportOptions, channelOptions, executorService);
+    try {
+      return BigtableGrpcClient.createClient(
+          dataTransportOptions, channelOptions, executorService);
+    } catch (RuntimeException re) {
+      LOG.error("Error constructing data client.", re);
+      throw re;
+    }
   }
 
   @Override
