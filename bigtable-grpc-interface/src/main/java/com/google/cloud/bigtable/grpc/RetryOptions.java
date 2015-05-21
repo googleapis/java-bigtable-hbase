@@ -15,10 +15,22 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.common.collect.ImmutableSet;
+
+import io.grpc.Status;
+
+import java.util.Set;
+
 /**
  * Options for retrying requests, including back off configuration.
  */
 public class RetryOptions {
+  
+  public static final Set<Status.Code> RETRIABLE_ERROR_CODES = ImmutableSet.of(
+    Status.INTERNAL.getCode(),
+    Status.UNAVAILABLE.getCode(),
+    Status.ABORTED.getCode(),
+    Status.DEADLINE_EXCEEDED.getCode());
 
   /**
    * A Builder for ChannelOptions objects.

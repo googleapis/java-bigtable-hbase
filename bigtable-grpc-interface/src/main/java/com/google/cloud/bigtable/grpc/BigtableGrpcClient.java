@@ -16,6 +16,9 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
+import com.google.api.client.util.BackOff;
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
@@ -29,6 +32,7 @@ import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.grpc.StreamingBigtableResultScanner.RowMerger;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -38,6 +42,7 @@ import com.google.protobuf.ServiceException;
 import io.grpc.Call;
 import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 import io.grpc.stub.Calls;
 import io.grpc.stub.StreamObserver;
 
@@ -323,6 +328,56 @@ public class BigtableGrpcClient implements BigtableClient {
 
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(final ReadRowsRequest request) {
+    RetryOptions retryOptions = clientOptions.getStreamingRetryOptions();
+    ExponentialBackOff backoff = new ExponentialBackOff.Builder()
+        .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
+        .setMaxElapsedTimeMillis(retryOptions.getMaxElaspedBackoffMillis())
+        .setMultiplier(retryOptions.getBackoffMultiplier())
+        .build();
+
+    return readRowsAsyncInternalWithFallback(request, backoff);
+  }
+
+  private ListenableFuture<List<Row>> readRowsAsyncInternalWithFallback(
+      final ReadRowsRequest request,
+      final BackOff backoff) {
+    final ListenableFuture<List<Row>> resultFuture = readRowsAsyncInternal(request);
+ 
+    return Futures.withFallback(resultFuture, new FutureFallback<List<Row>>() {
+      private Sleeper sleeper = Sleeper.DEFAULT;
+
+      @Override
+      public ListenableFuture<List<Row>> create(Throwable t) throws IOException {
+        if (shouldRetry(t)) {
+          long nextBackOff = backoff.nextBackOffMillis();
+          if (nextBackOff != BackOff.STOP) {
+            sleep(nextBackOff);
+            return readRowsAsyncInternalWithFallback(request, backoff);
+          }
+        }
+        return Futures.immediateFailedFuture(t);
+      }
+
+      private boolean shouldRetry(Throwable t) {
+        if (t instanceof  IOExceptionWithStatus) {
+          Status.Code code = ((IOExceptionWithStatus) t).getStatus().getCode();
+          return RetryOptions.RETRIABLE_ERROR_CODES.contains(code);
+        }
+        return false;
+      }
+
+      private void sleep(long millis) throws IOException {
+        try {
+          sleeper.sleep(millis);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new IOException("Interrupted while sleeping for resume", e);
+        }
+      }
+    });
+  }
+
+  private ListenableFuture<List<Row>> readRowsAsyncInternal(final ReadRowsRequest request) {
     final Call<ReadRowsRequest , ReadRowsResponse> readRowsCall =
         bigtableChannel.newCall(BigtableServiceGrpc.CONFIG.readRows);
 
@@ -334,24 +389,28 @@ public class BigtableGrpcClient implements BigtableClient {
         request,
         responseCollector);
 
+    ListenableFuture<List<ReadRowsResponse>> future = responseCollector.getResponseCompleteFuture();
     return Futures.transform(
-        responseCollector.getResponseCompleteFuture(),
-        new Function<List<ReadRowsResponse>, List<Row>>() {
-          @Override
-          public List<Row> apply(List<ReadRowsResponse> responses) {
-            List<Row> result = new ArrayList<>();
-            Iterator<ReadRowsResponse> responseIterator = responses.iterator();
-            while (responseIterator.hasNext()) {
-              RowMerger currentRowMerger = new RowMerger();
-              while (responseIterator.hasNext() && !currentRowMerger.isRowCommitted()) {
-                currentRowMerger.addPartialRow(responseIterator.next());
-              }
-              result.add(currentRowMerger.buildRow());
-            }
-            return result;
-          }
-        });
+        future,
+        ReadRowsResponseToRaws);
   }
+
+  private static Function<List<ReadRowsResponse>, List<Row>> ReadRowsResponseToRaws =
+      new Function<List<ReadRowsResponse>, List<Row>>() {
+          @Override
+        public List<Row> apply(List<ReadRowsResponse> responses) {
+          List<Row> result = new ArrayList<>();
+          Iterator<ReadRowsResponse> responseIterator = responses.iterator();
+          while (responseIterator.hasNext()) {
+            RowMerger currentRowMerger = new RowMerger();
+            while (responseIterator.hasNext() && !currentRowMerger.isRowCommitted()) {
+              currentRowMerger.addPartialRow(responseIterator.next());
+            }
+            result.add(currentRowMerger.buildRow());
+          }
+          return result;
+        }
+      };
 
   @Override
   public void close() throws IOException {
