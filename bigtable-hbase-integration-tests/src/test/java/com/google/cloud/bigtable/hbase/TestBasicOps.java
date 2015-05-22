@@ -44,7 +44,7 @@ public class TestBasicOps extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = dataHelper.randomData("testValue-");
-    putGetDeleteExists(rowKey, testQualifier, testValue);
+    testPutGetDelete(true, rowKey, testQualifier, testValue);
   }
 
   /**
@@ -63,7 +63,7 @@ public class TestBasicOps extends AbstractTest {
     // TODO(carterpage) - test that column-family can work as raw binary
 
     // Put
-    putGetDeleteExists(rowKey, testQualifier, testValue);
+    testPutGetDelete(true, rowKey, testQualifier, testValue);
   }
 
   /**
@@ -127,7 +127,7 @@ public class TestBasicOps extends AbstractTest {
    */
   @Test
   public void testPutGetBigValue() throws IOException {
-    testBigValue(true);
+    testPutGetDeleteExists((10 << 20) - 1024, false, true);  // 10 MB - 1kB
   }
 
   /**
@@ -138,21 +138,11 @@ public class TestBasicOps extends AbstractTest {
    */
   @Test
   public void testPutBigValue() throws IOException {
-    testBigValue(false);
-  }
-
-  private void testBigValue(boolean doGet) throws IOException {
-    // Initialize variables
-    byte[] testRowKey = dataHelper.randomData("testrow-");
-    byte[] testQualifier = dataHelper.randomData("testQualifier-");
-    byte[] testValue = new byte[(10 << 20) - 1024];  // 10 MB - 1kB
-    new Random().nextBytes(testValue);
-    doTest(doGet, testRowKey, testQualifier, testValue);
-    putGetDeleteExists(testRowKey, testQualifier, testValue);
+    testPutGetDeleteExists((10 << 20) - 1024, false, false);  // 10 MB - 1kB
   }
 
   /**
-   * Requirement 2.4 - Maximum cell size is 10MB by default.  Can be overriden using
+   * Requirement 2.4 - Maximum cell size is 10MB by default.  Can be overridden using
    * hbase.client.keyvalue.maxsize property.
    *
    * Ensure the failure case.
@@ -160,32 +150,36 @@ public class TestBasicOps extends AbstractTest {
   @Test(expected = IllegalArgumentException.class)
   public void testPutTooBigValue() throws IOException {
     // Initialize variables
-    byte[] testRowKey = dataHelper.randomData("testrow-");
-    byte[] testQualifier = dataHelper.randomData("testQualifier-");
-    int metadataSize =  (20 + testRowKey.length + COLUMN_FAMILY.length + testQualifier.length);
-    byte[] testValue = new byte[(10 << 20) - metadataSize + 1];  // 10 MB + 1
-    new Random().nextBytes(testValue);
-    putGetDeleteExists(testRowKey, testQualifier, testValue);
+    testPutGetDeleteExists((10 << 20) + 1, true, true); // 10 MB + 1
   }
 
   @Test
   public void testPutAlmostTooBigValue() throws IOException {
     // Initialize variables
+    testPutGetDeleteExists(10 << 20, true, true); // 10 MB
+  }
+
+  void testPutGetDeleteExists(int size, boolean removeMetadataSize, boolean doGet)
+      throws IOException {
+    // Initialize variables
     byte[] testRowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
-    int metadataSize =  (20 + testRowKey.length + COLUMN_FAMILY.length + testQualifier.length);
-    byte[] testValue = new byte[(10 << 20) - metadataSize];  // 10 MB
+
+    int valueSize = size;
+    if (removeMetadataSize) {
+      int metadataSize =  (20 + testRowKey.length + COLUMN_FAMILY.length + testQualifier.length);
+      valueSize -= metadataSize;
+    }
+
+    byte[] testValue = new byte[valueSize];
     new Random().nextBytes(testValue);
-    putGetDeleteExists(testRowKey, testQualifier, testValue);
+
+    testPutGetDelete(doGet, testRowKey, testQualifier, testValue);
   }
 
-  private void putGetDeleteExists(byte[] rowKey, byte[] testQualifier, byte[] testValue)
-      throws IOException {
-    doTest(true, rowKey, testQualifier, testValue);
-  }
-
-  private void doTest(boolean doGet, byte[] rowKey, byte[] testQualifier, byte[] testValue)
-      throws IOException {
+  private void
+      testPutGetDelete(boolean doGet, byte[] rowKey, byte[] testQualifier, byte[] testValue)
+          throws IOException {
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
     Table table = getConnection().getTable(TABLE_NAME);
@@ -203,7 +197,7 @@ public class TestBasicOps extends AbstractTest {
     Get get = new Get(rowKey);
     get.addColumn(COLUMN_FAMILY, testQualifier);
 
-    // Do the got on some tests, but not others.  The rationale for that is to do performance
+    // Do the get on some tests, but not others.  The rationale for that is to do performance
     // testing on large values.
     if (doGet) {
       Result result = table.get(get);
