@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,8 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.google.common.base.Stopwatch;
 
 import java.io.IOException;
 import java.util.List;
@@ -124,12 +126,28 @@ public class TestBasicOps extends AbstractTest {
    * Cell size includes value and key info, so the value needs to a bit less than the max to work.
    */
   @Test
+  public void testPutGetBigValue() throws IOException {
+    testBigValue(true);
+  }
+
+  /**
+   * Test a put without a get. This will help allow us to see performance differences between put
+   * alone and put/get. There are (or hopefully were, by the time this is read), performance issues
+   * with testBigValue. The profile for put (uploading) is different from the profile for get
+   * (downloading).  We need a way to see where the issue is.
+   */
+  @Test
   public void testPutBigValue() throws IOException {
+    testBigValue(false);
+  }
+
+  private void testBigValue(boolean doGet) throws IOException {
     // Initialize variables
     byte[] testRowKey = dataHelper.randomData("testrow-");
     byte[] testQualifier = dataHelper.randomData("testQualifier-");
     byte[] testValue = new byte[(10 << 20) - 1024];  // 10 MB - 1kB
     new Random().nextBytes(testValue);
+    doTest(doGet, testRowKey, testQualifier, testValue);
     putGetDeleteExists(testRowKey, testQualifier, testValue);
   }
 
@@ -163,29 +181,54 @@ public class TestBasicOps extends AbstractTest {
 
   private void putGetDeleteExists(byte[] rowKey, byte[] testQualifier, byte[] testValue)
       throws IOException {
+    doTest(true, rowKey, testQualifier, testValue);
+  }
+
+  private void doTest(boolean doGet, byte[] rowKey, byte[] testQualifier, byte[] testValue)
+      throws IOException {
+    Stopwatch stopwatch = new Stopwatch();
+    stopwatch.start();
     Table table = getConnection().getTable(TABLE_NAME);
+    logger.info("Getting table took %d ms", stopwatch.elapsedMillis());
+    stopwatch.reset();
 
     // Put
     Put put = new Put(rowKey);
     put.addColumn(COLUMN_FAMILY, testQualifier, testValue);
     table.put(put);
+    logger.info("Put took %d ms", stopwatch.elapsedMillis());
+    stopwatch.reset();
 
     // Get
     Get get = new Get(rowKey);
     get.addColumn(COLUMN_FAMILY, testQualifier);
-    Result result = table.get(get);
-    Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
-    List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
-    Assert.assertEquals(1, cells.size());
-    Assert.assertArrayEquals(testValue, CellUtil.cloneValue(cells.get(0)));
 
+    // Do the got on some tests, but not others.  The rationale for that is to do performance
+    // testing on large values.
+    if (doGet) {
+      Result result = table.get(get);
+      logger.info("Get took %d ms", stopwatch.elapsedMillis());
+      stopwatch.reset();
+      Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
+      List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
+      Assert.assertEquals(1, cells.size());
+      Assert.assertArrayEquals(testValue, CellUtil.cloneValue(cells.get(0)));
+      logger.info("Verifying the get took %d ms", stopwatch.elapsedMillis());
+      stopwatch.reset();
+    }
     // Delete
     Delete delete = new Delete(rowKey);
     delete.addColumns(COLUMN_FAMILY, testQualifier);
     table.delete(delete);
+    logger.info("Delete took %d ms", stopwatch.elapsedMillis());
+    stopwatch.reset();
 
     // Confirm deleted
     Assert.assertFalse(table.exists(get));
+    logger.info("Exists took %d ms", stopwatch.elapsedMillis());
+    stopwatch.reset();
     table.close();
+
+    logger.info("Close took %d ms", stopwatch.elapsedMillis());
   }
 }
