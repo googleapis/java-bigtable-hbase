@@ -183,15 +183,13 @@ public class TestBasicOps extends AbstractTest {
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
     Table table = getConnection().getTable(TABLE_NAME);
-    logger.info("Getting table took %d ms", stopwatch.elapsedMillis());
-    stopwatch.reset();
+    print("Getting table took %d ms", stopwatch);
 
     // Put
     Put put = new Put(rowKey);
     put.addColumn(COLUMN_FAMILY, testQualifier, testValue);
     table.put(put);
-    logger.info("Put took %d ms", stopwatch.elapsedMillis());
-    stopwatch.reset();
+    print("Put took %d ms", stopwatch);
 
     // Get
     Get get = new Get(rowKey);
@@ -201,28 +199,31 @@ public class TestBasicOps extends AbstractTest {
     // testing on large values.
     if (doGet) {
       Result result = table.get(get);
-      logger.info("Get took %d ms", stopwatch.elapsedMillis());
-      stopwatch.reset();
+      print("Get took %d ms", stopwatch);
       Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
       List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
       Assert.assertEquals(1, cells.size());
       Assert.assertArrayEquals(testValue, CellUtil.cloneValue(cells.get(0)));
-      logger.info("Verifying the get took %d ms", stopwatch.elapsedMillis());
-      stopwatch.reset();
+      print("Verifying took %d ms", stopwatch);
     }
     // Delete
     Delete delete = new Delete(rowKey);
     delete.addColumns(COLUMN_FAMILY, testQualifier);
     table.delete(delete);
-    logger.info("Delete took %d ms", stopwatch.elapsedMillis());
-    stopwatch.reset();
+    print("Delete took %d ms", stopwatch);
 
     // Confirm deleted
     Assert.assertFalse(table.exists(get));
-    logger.info("Exists took %d ms", stopwatch.elapsedMillis());
+    print("Exists took %d ms", stopwatch);
     stopwatch.reset();
     table.close();
 
-    logger.info("Close took %d ms", stopwatch.elapsedMillis());
+    print("close took %d ms", stopwatch);
+  }
+
+  private void print(String string, Stopwatch stopwatch) {
+    logger.info(string, stopwatch.elapsedMillis());
+    stopwatch.reset();
+    stopwatch.start();
   }
 }
