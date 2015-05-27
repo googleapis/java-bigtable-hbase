@@ -149,14 +149,20 @@ public class TestBasicOps extends AbstractTest {
    */
   @Test(expected = IllegalArgumentException.class)
   public void testPutTooBigValue() throws IOException {
-    // Initialize variables
     testPutGetDeleteExists((10 << 20) + 1, true, true); // 10 MB + 1
   }
 
   @Test
   public void testPutAlmostTooBigValue() throws IOException {
-    // Initialize variables
     testPutGetDeleteExists(10 << 20, true, true); // 10 MB
+  }
+
+  @Test
+  /** Run a large value ten times for performance logging puproses */
+  public void testPutAlmostTooBigValueTenTimes() throws IOException {
+    for (int i = 0; i < 10; i++) {
+      testPutGetDeleteExists(10 << 20, true, true); // 10 MB
+    }
   }
 
   void testPutGetDeleteExists(int size, boolean removeMetadataSize, boolean doGet)
