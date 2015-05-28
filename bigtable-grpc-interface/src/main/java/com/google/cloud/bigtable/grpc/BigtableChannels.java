@@ -162,7 +162,7 @@ public class BigtableChannels {
         .eventLoopGroup(transportOptions.getEventLoopGroup())
         .executor(executor)
         .negotiationType(NegotiationType.TLS)
-        .streamWindowSize(1 << 20) // 1 MB
+//        .streamWindowSize(1 << 20) // 1 MB
         .build();
   }
 
