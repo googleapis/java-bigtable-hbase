@@ -15,7 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
+import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+
+import com.google.common.base.Stopwatch;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -28,9 +31,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.common.base.Stopwatch;
-
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -209,7 +211,7 @@ public class TestBasicOps extends AbstractTest {
       Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, testQualifier));
       List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, testQualifier);
       Assert.assertEquals(1, cells.size());
-      Assert.assertArrayEquals(testValue, CellUtil.cloneValue(cells.get(0)));
+      Assert.assertTrue(Arrays.equals(testValue, CellUtil.cloneValue(cells.get(0))));
       print("Verifying took %d ms", stopwatch);
     }
     // Delete
