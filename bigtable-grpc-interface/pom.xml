@@ -26,10 +26,6 @@ limitations under the License.
     <artifactId>bigtable-grpc-interface</artifactId>
     <packaging>jar</packaging>
 
-    <properties>
-        <netty.version>4.1.0.Beta5</netty.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

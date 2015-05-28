@@ -50,7 +50,7 @@ import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.Logger;
 import com.google.common.base.MoreObjects;
 
-public class BigtableConnection implements Connection, Closeable {
+public abstract class AbstractBigtableConnection implements Connection, Closeable {
   public static final String MAX_INFLIGHT_RPCS_KEY =
       "google.bigtable.buffered.mutator.max.inflight.rpcs";
 
@@ -74,8 +74,9 @@ public class BigtableConnection implements Connection, Closeable {
         for (BigtableBufferedMutator bbm : ACTIVE_BUFFERED_MUTATORS.values()) {
           if (bbm.hasInflightRequests()) {
             int size = ACTIVE_BUFFERED_MUTATORS.size();
-            LOG.warn("Shutdown is commencing and you have open %d buffered mutators."
-                + "You need to close() or flush() them so that is not lost", size);
+            new Logger(AbstractBigtableConnection.class).warn(
+              "Shutdown is commencing and you have open %d buffered mutators."
+                  + "You need to close() or flush() them so that is not lost", size);
             break;
           }
         }
@@ -92,7 +93,7 @@ public class BigtableConnection implements Connection, Closeable {
   public static final long BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT =
       16 * TableConfiguration.WRITE_BUFFER_SIZE_DEFAULT;
 
-  private static final Logger LOG = new Logger(BigtableConnection.class);
+  private final Logger LOG = new Logger(getClass());
 
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
 
@@ -110,12 +111,12 @@ public class BigtableConnection implements Connection, Closeable {
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
 
-  public BigtableConnection(Configuration conf) throws IOException {
+  public AbstractBigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
   }
 
-  BigtableConnection(Configuration conf, boolean managed, ExecutorService pool, User user)
-      throws IOException {
+  protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
+      User user) throws IOException {
     this.batchPool = pool;
     this.closed = false;
     this.conf = conf;
@@ -280,11 +281,6 @@ public class BigtableConnection implements Connection, Closeable {
   }
 
   @Override
-  public Admin getAdmin() throws IOException {
-    return new BigtableAdmin(options, conf, this, bigtableTableAdminClient, this.disabledTables);
-  }
-
-  @Override
   public void abort(final String msg, Throwable t) {
     if (t != null) {
       LOG.fatal(msg, t);
@@ -349,7 +345,7 @@ public class BigtableConnection implements Connection, Closeable {
   public String toString() {
     InetAddress dataHost = options.getDataHost();
     InetAddress tableAdminHost = options.getTableAdminHost();
-    return MoreObjects.toStringHelper(BigtableConnection.class)
+    return MoreObjects.toStringHelper(AbstractBigtableConnection.class)
       .add("zone", options.getZone())
       .add("project", options.getProjectId())
       .add("cluster", options.getCluster())
@@ -404,5 +400,22 @@ public class BigtableConnection implements Connection, Closeable {
         this.batchPool.shutdownNow();
       }
     }
+  }
+
+  @Override
+  public abstract Admin getAdmin() throws IOException;
+
+  /* Methods needed to construct a Bigtable Admin implementation: */
+
+  protected BigtableTableAdminClient getBigtableTableAdminClient() {
+    return bigtableTableAdminClient;
+  }
+
+  protected BigtableOptions getOptions() {
+    return options;
+  }
+
+  protected Set<TableName> getDisabledTables() {
+    return disabledTables;
   }
 }

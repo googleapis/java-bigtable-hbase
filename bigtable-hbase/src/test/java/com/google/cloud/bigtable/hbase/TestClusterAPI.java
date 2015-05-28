@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,6 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.BigtableConnection;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
@@ -81,7 +80,7 @@ public class TestClusterAPI {
     if (extraResources == null) {
       Assert.fail("Please set bigtable.test.extra.resources");
     }
-  
+
     InputStream resourceStream =
         TestClusterAPI.class.getClassLoader().getResourceAsStream(extraResources);
     if (resourceStream == null) {
@@ -112,7 +111,7 @@ public class TestClusterAPI {
     Configuration newConfig = newConfiguration(config, clusterId);
     TableName autoDeletedTableName =
         TableName.valueOf("auto-deleted-" + UUID.randomUUID().toString());
-    try (Connection connection = new BigtableConnection(newConfig);
+    try (Connection connection = new TestBigtableConnection(newConfig);
         Admin admin = connection.getAdmin()) {
       countTables(admin, 0);
       createTable(admin, autoDeletedTableName);
@@ -235,7 +234,7 @@ public class TestClusterAPI {
     testIncrement(dataHelper, table);
     testCheckAndMutate(dataHelper, table);
   }
-  
+
   private void testIncrement(DataGenerationHelper dataHelper, Table table)
       throws IOException {
     byte[] rowKey = dataHelper.randomData("testrow-");

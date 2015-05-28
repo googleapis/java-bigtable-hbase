@@ -25,16 +25,21 @@ limitations under the License.
 
     <artifactId>bigtable-hbase-integration-tests</artifactId>
     <packaging>jar</packaging>
+
     <properties>
         <google.bigtable.auth.service.account.enable>true</google.bigtable.auth.service.account.enable>
+        <hbase.version>1.0.1</hbase.version>
+        <google.bigtable.version.under.test>bigtable-hbase-1.0</google.bigtable.version.under.test>
+        <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_0.BigtableConnection</google.bigtable.connection.impl>
     </properties>
+
     <profiles>
         <profile>
             <id>bigtableIntegrationTest</id>
             <dependencies>
                 <dependency>
                     <groupId>${project.groupId}</groupId>
-                    <artifactId>bigtable-hbase</artifactId>
+                    <artifactId>${google.bigtable.version.under.test}</artifactId>
                     <version>${project.version}</version>
                 </dependency>
             </dependencies>
@@ -85,7 +90,7 @@ limitations under the License.
             <dependencies>
                 <dependency>
                     <groupId>${project.groupId}</groupId>
-                    <artifactId>bigtable-hbase</artifactId>
+                    <artifactId>${google.bigtable.version.under.test}</artifactId>
                     <version>${project.version}</version>
                 </dependency>
             </dependencies>
@@ -165,7 +170,7 @@ limitations under the License.
             </build>
         </profile>
     </profiles>
-    
+
     <dependencies>
         <dependency>
             <groupId>org.apache.hadoop</groupId>

@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.BigtableConnection;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.client.Put;
@@ -66,10 +66,10 @@ public class TestBigtableBufferedMutator {
 
   private void setup(ExceptionListener listener) {
     underTest = new BigtableBufferedMutator(executor,
-        BigtableConnection.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT,
+        AbstractBigtableConnection.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT,
         listener,
         null,
-        BigtableConnection.MAX_INFLIGHT_RPCS_DEFAULT,
+        AbstractBigtableConnection.MAX_INFLIGHT_RPCS_DEFAULT,
         TableName.valueOf("TABLE"));
   }
 

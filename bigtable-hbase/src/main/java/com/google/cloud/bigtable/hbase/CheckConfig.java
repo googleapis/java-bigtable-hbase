@@ -16,12 +16,13 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.auth.Credentials;
+import com.google.common.base.Strings;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.BigtableConnection;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HConnection;
@@ -68,8 +69,18 @@ public class CheckConfig {
 
     String configuredConnectionClass =
         fullConfiguration.get(HConnection.HBASE_CLIENT_CONNECTION_IMPL);
-    boolean isCorrectClassSpecified =
-        BigtableConnection.class.getCanonicalName().equals(configuredConnectionClass);
+
+    boolean isCorrectClassSpecified = false;
+
+    if (!Strings.isNullOrEmpty(configuredConnectionClass)) {
+      try {
+        Class<?> connectionClass = Class.forName(configuredConnectionClass);
+        isCorrectClassSpecified =
+            AbstractBigtableConnection.class.isAssignableFrom(connectionClass);
+      } catch (Exception e) {
+        // Ignore. Problems will be logged in the println below.
+      }
+    }
     // We can actually determine if this value is correct (disregarding custom subclasses).
     System.out.println(
         String.format(
