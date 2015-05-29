@@ -183,7 +183,7 @@ limitations under the License.
             <artifactId>hadoop-minicluster</artifactId>
             <scope>test</scope>
         </dependency>
-		<dependency>
+        <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-hadoop-compat</artifactId>
             <scope>test</scope>
@@ -235,6 +235,7 @@ limitations under the License.
             <groupId>org.mortbay.jetty.alpn</groupId>
             <artifactId>alpn-boot</artifactId>
             <version>${alpn.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

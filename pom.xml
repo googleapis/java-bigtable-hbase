@@ -122,7 +122,7 @@ limitations under the License.
             </dependency>
             <dependency>
                 <groupId>com.google.api-client</groupId>
-                <artifactId>google-api-client-java6</artifactId>
+                <artifactId>google-api-client</artifactId>
                 <version>${google.api.client.version}</version>
                 <exclusions>
                     <exclusion>
