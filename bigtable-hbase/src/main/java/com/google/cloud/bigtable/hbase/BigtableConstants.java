@@ -59,36 +59,36 @@ public class BigtableConstants {
   /**
    * A User-Agent token to be added to User-Agent request header.
    */
-  public static final String USER_AGENT = "bigtable-hbase/" + getVersion();
+  public static final String USER_AGENT = getUserAgent();
 
   /**
-   * Gets current project version from bigtable-hbase.properties. Returns a default dev version with
-   * current timestamp if not found.
+   * Gets user agent from bigtable-hbase.properties. Returns a default dev user agent with current
+   * timestamp if not found.
    */
-  private static String getVersion() {
-    final String defaultVersion = "dev-" + System.currentTimeMillis();
+  private static String getUserAgent() {
+    final String defaultUserAgent = "bigtable-hbase/dev-" + System.currentTimeMillis();
     try (InputStream stream =
         BigtableConstants.class.getResourceAsStream("bigtable-hbase.properties")) {
       if (stream == null) {
         LOG.error("Could not load properties file bigtable-hbase.properties");
-        return defaultVersion;
+        return defaultUserAgent;
       }
 
       Properties properties = new Properties();
       properties.load(stream);
-      String value = properties.getProperty("bigtable.hbase.version");
+      String value = properties.getProperty("bigtable.hbase.user_agent");
       if (value == null) {
-        LOG.error("bigtable.hbase.version not found in bigtable-hbase.properties.");
+        LOG.error("bigtable.hbase.user_agent not found in bigtable-hbase.properties.");
       } else if (value.startsWith("$")){
-        LOG.info("project.version token is not replaced.");
+        LOG.info("bigtable.hbase.user_agent property is not replaced.");
       } else {
         return value;
       }
     } catch (IOException e) {
       LOG.error(
-          String.format("Error while trying to get project.version from bigtable-hbase.properties"),
+          String.format("Error while trying to get user agent name from bigtable-hbase.properties"),
           e);
     }
-    return defaultVersion;
+    return defaultUserAgent;
   }
 }
