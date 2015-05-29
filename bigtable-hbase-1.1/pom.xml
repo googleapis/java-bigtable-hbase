@@ -42,6 +42,11 @@ limitations under the License.
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>bigtable-hbase-mapreduce</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
         </dependency>
@@ -94,6 +99,7 @@ limitations under the License.
                                     <include>com.google.cloud.bigtable:bigtable-protos</include>
                                     <include>com.google.cloud.bigtable:bigtable-grpc-interface</include>
                                     <include>com.google.cloud.bigtable:bigtable-hbase</include>
+                                    <include>com.google.cloud.bigtable:bigtable-hbase-mapreduce</include>
                                     <include>com.google.api-client:*</include>
                                     <include>com.google.auth:*</include>
                                     <include>com.google.guava:guava</include>
