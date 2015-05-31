@@ -38,6 +38,16 @@ limitations under the License.
             <artifactId>grpc-all</artifactId>
             <version>${grpc.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
