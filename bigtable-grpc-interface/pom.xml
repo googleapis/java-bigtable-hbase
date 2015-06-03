@@ -45,32 +45,15 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
+            <artifactId>netty-transport</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
             <version>${netty.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.api-client</groupId>
-            <artifactId>google-api-client-java6</artifactId>
-            <version>${google.api.client.version}</version>
-            <exclusions>
-                <exclusion>
-                    <!-- this version hides too many things -->
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava-jdk5</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.google.oauth-client</groupId>
-            <artifactId>google-oauth-client</artifactId>
-            <version>${google.api.client.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.oauth-client</groupId>
-            <artifactId>google-oauth-client-java6</artifactId>
-            <version>${google.api.client.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>

@@ -42,6 +42,16 @@ limitations under the License.
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
         </dependency>
@@ -102,7 +112,8 @@ limitations under the License.
                                     <include>com.google.protobuf:*</include>
                                     <include>com.twitter:hpack</include>
                                     <include>com.fasterxml.jackson.core:*</include>
-                                    <include>io.netty:netty-all</include>
+                                    <include>io.netty:netty-transport</include>
+                                    <include>io.netty:netty-handler</include>
                                     <include>io.grpc:grpc-all</include>
                                 </includes>
                             </artifactSet>
