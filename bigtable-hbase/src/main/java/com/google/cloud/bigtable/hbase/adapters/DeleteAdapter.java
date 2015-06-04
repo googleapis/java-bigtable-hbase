@@ -20,7 +20,7 @@ import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.Builder;
 import com.google.bigtable.v1.Mutation.DeleteFromFamily;
 import com.google.bigtable.v1.Mutation.DeleteFromRow;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.config.BigtableConstants;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;

@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
-import com.google.cloud.bigtable.hbase.BigtableOptions;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.common.base.Preconditions;
 
 /**

@@ -22,7 +22,7 @@ import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.bigtable.v1.RowRange;
 import com.google.bigtable.v1.TimestampRange;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.config.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper.QuoteMetaOutputStream;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
