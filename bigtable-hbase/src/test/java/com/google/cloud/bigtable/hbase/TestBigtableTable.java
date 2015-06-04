@@ -20,6 +20,7 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.grpc.ResultScanner;
 import com.google.protobuf.ByteString;
@@ -77,6 +78,7 @@ public class TestBigtableTable {
     builder.setCluster(TEST_CLUSTER);
     builder.setZone(TEST_ZONE);
     builder.setCredential(null);
+    builder.setUserAgent("testAgent");
     BigtableOptions options = builder.build();
     Configuration config = new Configuration();
     Mockito.when(mockConnection.getConfiguration()).thenReturn(config);

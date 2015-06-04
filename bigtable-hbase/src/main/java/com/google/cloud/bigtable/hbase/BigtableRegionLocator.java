@@ -15,21 +15,24 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.v1.SampleRowKeysRequest;
-import com.google.bigtable.v1.SampleRowKeysResponse;
-import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
-import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
-import com.google.cloud.bigtable.grpc.BigtableClient;
-import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import java.io.IOException;
-import java.util.List;
+import com.google.bigtable.v1.SampleRowKeysRequest;
+import com.google.bigtable.v1.SampleRowKeysResponse;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.BigtableClient;
+import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
+import com.google.common.collect.ImmutableList;
 
 public class BigtableRegionLocator implements RegionLocator {
   // Reuse the results from previous calls during this time.
@@ -48,7 +51,9 @@ public class BigtableRegionLocator implements RegionLocator {
     this.tableName = tableName;
     this.client = client;
     this.metadataSetter = TableMetadataSetter.from(tableName, options);
-    this.adapter = new SampledRowKeysAdapter(tableName, options.getServerName());
+    ServerName serverName =
+        ServerName.valueOf(options.getDataHost().getHostName(), options.getPort(), 0);
+    this.adapter = new SampledRowKeysAdapter(tableName, serverName);
   }
 
   /**
