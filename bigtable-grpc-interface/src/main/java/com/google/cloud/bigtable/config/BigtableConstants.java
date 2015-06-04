@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase;
+package com.google.cloud.bigtable.config;
 
 
+import com.google.cloud.bigtable.util.Logger;
 import com.google.protobuf.ByteString;
 
 import java.io.IOException;

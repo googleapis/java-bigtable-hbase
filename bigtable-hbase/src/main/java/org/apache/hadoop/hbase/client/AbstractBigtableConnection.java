@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Threads;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
@@ -43,11 +44,10 @@ import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.TransportOptions;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
-import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
-import com.google.cloud.bigtable.hbase.Logger;
+import com.google.cloud.bigtable.util.Logger;
 import com.google.common.base.MoreObjects;
 
 public abstract class AbstractBigtableConnection implements Connection, Closeable {
@@ -93,9 +93,19 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   public static final long BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT =
       16 * TableConfiguration.WRITE_BUFFER_SIZE_DEFAULT;
 
-  private final Logger LOG = new Logger(getClass());
-
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
+
+  private static BigtableOptions toBigtableOptions(Configuration conf) throws IOException {
+    try {
+      return BigtableOptionsFactory.fromConfiguration(conf);
+    } catch (IOException ioe) {
+      new Logger(AbstractBigtableConnection.class).error(
+        "Error loading BigtableOptions from Configuration.", ioe);
+      throw ioe;
+    }
+  }
+
+  private final Logger LOG = new Logger(getClass());
 
   private final Configuration conf;
   private volatile boolean closed;
@@ -112,27 +122,31 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private Set<TableName> disabledTables = new HashSet<>();
 
   public AbstractBigtableConnection(Configuration conf) throws IOException {
-    this(conf, false, null, null);
+    this(conf, toBigtableOptions(conf));
   }
 
-  protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
-      User user) throws IOException {
-    this.batchPool = pool;
-    this.closed = false;
-    this.conf = conf;
+  public AbstractBigtableConnection(Configuration conf, BigtableOptions options) throws IOException {
+    this(conf, options, false, null, null);
+  }
+
+  protected AbstractBigtableConnection(Configuration conf,
+      boolean managed, ExecutorService pool, User user) throws IOException {
+    this(conf, toBigtableOptions(conf), managed, pool, user);
+  }
+
+  protected AbstractBigtableConnection(Configuration conf, BigtableOptions options,
+      boolean managed, ExecutorService pool, User user) throws IOException {
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
 
+    this.batchPool = pool;
+    this.closed = false;
+    this.conf = conf;
+    this.options = options;
+
     if (batchPool == null) {
       batchPool = getBatchPool();
-    }
-
-    try {
-      this.options = BigtableOptionsFactory.fromConfiguration(conf);
-    } catch (IOException ioe) {
-      LOG.error("Error loading BigtableOptions from Configuration.", ioe);
-      throw ioe;
     }
 
     TransportOptions dataTransportOptions = options.getDataTransportOptions();

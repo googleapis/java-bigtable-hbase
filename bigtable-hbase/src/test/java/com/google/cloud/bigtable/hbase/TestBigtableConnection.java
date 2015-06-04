@@ -7,10 +7,12 @@ import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
+
 public class TestBigtableConnection extends AbstractBigtableConnection {
 
-  public TestBigtableConnection(Configuration conf) throws IOException {
-    super(conf);
+  public TestBigtableConnection(Configuration conf, BigtableOptions options) throws IOException {
+    super(conf, options);
   }
 
   @Override

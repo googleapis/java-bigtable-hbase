@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,16 +20,22 @@ import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 import org.apache.hadoop.conf.Configuration;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.CredentialFactory;
+import com.google.cloud.bigtable.util.Logger;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -126,7 +132,21 @@ public class BigtableOptionsFactory {
       "google.bigtable.grpc.channel.timeout.ms";
   public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
 
+  public static BigtableOptions.Builder builderFromEnvironmentVariables() throws IOException {
+    Configuration configuration = new Configuration();
+    Set<Entry<Object, Object>> entrySet = System.getProperties().entrySet();
+    for (Entry<Object, Object> entry : entrySet) {
+      configuration.set(entry.getKey().toString(), entry.getValue().toString());
+    }
+    return builderFromConfiguration(configuration);
+  }
+
   public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
+    return builderFromConfiguration(configuration).build();
+  }
+
+  static BigtableOptions.Builder builderFromConfiguration(Configuration configuration)
+      throws UnknownHostException, IOException {
     BigtableOptions.Builder optionsBuilder = new BigtableOptions.Builder();
 
     String projectId = configuration.get(PROJECT_ID_KEY);
@@ -287,7 +307,6 @@ public class BigtableOptionsFactory {
     Preconditions.checkArgument(channelTimeout == 0 || channelTimeout >= 60000,
       BIGTABLE_CHANNEL_TIMEOUT_MS_KEY + " has to be at least 1 minute (60000)");
     optionsBuilder.setChannelTimeoutMs(channelTimeout);
-
-    return optionsBuilder.build();
+    return optionsBuilder;
   }
 }

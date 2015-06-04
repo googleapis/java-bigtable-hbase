@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.client.util.Strings;
 import com.google.bigtable.admin.table.v1.ColumnFamily;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.config.BigtableConstants;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;

@@ -4,24 +4,23 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase;
+package com.google.cloud.bigtable.config;
 
 import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.TransportOptions;
+import com.google.cloud.bigtable.util.Logger;
 import com.google.common.base.Preconditions;
-
-import org.apache.hadoop.hbase.ServerName;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContext;
@@ -60,13 +59,46 @@ public class BigtableOptions {
     private int channelCount = 1;
     private long timeoutMs = -1L;
 
-    public Builder setTableAdminHost(InetAddress tableAdminHost) {
-      this.tableAdminHost = tableAdminHost;
+    public Builder setCallTimingReportPath(String callTimingReportPath) {
+      this.callTimingReportPath = callTimingReportPath;
+      return this;
+    }
+
+    public Builder setCallStatusReportPath(String callStatusReportPath) {
+      this.callStatusReportPath = callStatusReportPath;
+      return this;
+    }
+
+    public Builder setChannelCount(int channelCount) {
+      Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
+      this.channelCount = channelCount;
+      return this;
+    }
+
+    public Builder setChannelTimeoutMs(long timeoutMs) {
+      Preconditions.checkArgument(timeoutMs >= -1,
+        "ChannelTimeoutMs has to be positive, or -1 for none.");
+      this.timeoutMs = timeoutMs;
+      return this;
+    }
+
+    public Builder setCluster(String cluster) {
+      this.cluster = cluster;
       return this;
     }
 
     public Builder setClusterAdminHost(InetAddress clusterAdminHost) {
       this.clusterAdminHost = clusterAdminHost;
+      return this;
+    }
+
+    public Builder setCredential(Credentials credential) {
+      this.credential = credential;
+      return this;
+    }
+
+    public Builder setCustomEventLoopGroup(EventLoopGroup eventLoopGroup) {
+      this.customEventLoopGroup = eventLoopGroup;
       return this;
     }
 
@@ -80,33 +112,8 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setCredential(Credentials credential) {
-      this.credential = credential;
-      return this;
-    }
-
     public Builder setProjectId(String projectId) {
       this.projectId = projectId;
-      return this;
-    }
-
-    public Builder setZone(String zone) {
-      this.zone = zone;
-      return this;
-    }
-
-    public Builder setCluster(String cluster) {
-      this.cluster = cluster;
-      return this;
-    }
-
-    public Builder setCallTimingReportPath(String callTimingReportPath) {
-      this.callTimingReportPath = callTimingReportPath;
-      return this;
-    }
-
-    public Builder setCallStatusReportPath(String callStatusReportPath) {
-      this.callStatusReportPath = callStatusReportPath;
       return this;
     }
 
@@ -125,21 +132,13 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setCustomEventLoopGroup(EventLoopGroup eventLoopGroup) {
-      this.customEventLoopGroup = eventLoopGroup;
+    public Builder setTableAdminHost(InetAddress tableAdminHost) {
+      this.tableAdminHost = tableAdminHost;
       return this;
     }
 
-    public Builder setChannelCount(int channelCount) {
-      Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
-      this.channelCount = channelCount;
-      return this;
-    }
-
-    public Builder setChannelTimeoutMs(long timeoutMs) {
-      Preconditions.checkArgument(timeoutMs >= -1,
-        "ChannelTimeoutMs has to be positive, or -1 for none.");
-      this.timeoutMs = timeoutMs;
+    public Builder setZone(String zone) {
+      this.zone = zone;
       return this;
     }
 
@@ -303,11 +302,11 @@ public class BigtableOptions {
         customEventLoopGroup);
   }
 
-  public ServerName getServerName() {
-    return ServerName.valueOf(dataHost.getHostName(), port, 0);
-  }
-
   public int getChannelCount() {
     return channelCount;
+  }
+
+  public int getPort() {
+    return port;
   }
 }

@@ -19,7 +19,7 @@ import com.google.bigtable.v1.Cell;
 import com.google.bigtable.v1.Column;
 import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.Row;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.config.BigtableConstants;
 
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;

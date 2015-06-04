@@ -19,7 +19,6 @@ import io.grpc.Status;
 import io.grpc.Status.OperationRuntimeException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -29,7 +28,6 @@ import java.util.concurrent.Executors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -52,6 +50,7 @@ import com.google.bigtable.admin.cluster.v1.ListClustersRequest;
 import com.google.bigtable.admin.cluster.v1.ListZonesRequest;
 import com.google.bigtable.admin.cluster.v1.ListZonesResponse;
 import com.google.bigtable.admin.cluster.v1.Zone;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClusterAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableClusterAdminGrpcClient;
 import com.google.common.util.concurrent.UncheckedExecutionException;
@@ -74,24 +73,12 @@ public class TestClusterAPI {
       return;
     }
 
-    Configuration config = HBaseConfiguration.create();
+    BigtableOptions.Builder bigtableOptionsBuilder =
+        BigtableOptionsFactory.builderFromEnvironmentVariables();
+    BigtableOptions originalBigtableOptions = bigtableOptionsBuilder.build();
+    BigtableClusterAdminClient client = createClusterAdminStub(originalBigtableOptions);
 
-    String extraResources = System.getProperty("bigtable.test.extra.resources");
-    if (extraResources == null) {
-      Assert.fail("Please set bigtable.test.extra.resources");
-    }
-
-    InputStream resourceStream =
-        TestClusterAPI.class.getClassLoader().getResourceAsStream(extraResources);
-    if (resourceStream == null) {
-      Assert.fail(extraResources + " does not exist");
-    }
-    config.addResource(resourceStream);
-
-    BigtableOptions bigtableOptions = BigtableOptionsFactory.fromConfiguration(config);
-    BigtableClusterAdminClient client = createClusterAdminStub(bigtableOptions);
-
-    String projectId = bigtableOptions.getProjectId();
+    String projectId = originalBigtableOptions.getProjectId();
     List<Cluster> clusters = getClusters(client, projectId);
 
     // cleanup any old clusters
@@ -108,10 +95,17 @@ public class TestClusterAPI {
     Cluster cluster = createACluster(client, fullyQualifiedZoneName, TEST_CLUSTER_ID);
     waitForOperation(client, cluster.getCurrentOperation().getName(), MAX_WAIT_SECONDS);
 
-    Configuration newConfig = newConfiguration(config, clusterId);
+    bigtableOptionsBuilder
+        .setZone(clusterId.replaceFirst(".*/zones/([^/]+)/.*", "$1"))
+        .setCluster(clusterId.replaceFirst(".*/clusters/([^/]+)", "$1"));
+
+    Configuration conf = new Configuration();
+    BigtableOptions connectionOptions = bigtableOptionsBuilder.build();
+
     TableName autoDeletedTableName =
         TableName.valueOf("auto-deleted-" + UUID.randomUUID().toString());
-    try (Connection connection = new TestBigtableConnection(newConfig);
+
+    try (Connection connection = new TestBigtableConnection(conf, connectionOptions);
         Admin admin = connection.getAdmin()) {
       countTables(admin, 0);
       createTable(admin, autoDeletedTableName);
@@ -209,16 +203,6 @@ public class TestClusterAPI {
     ListClustersRequest request =
         ListClustersRequest.newBuilder().setName("projects/" + projectId).build();
     return client.listClusters(request).getClustersList();
-  }
-
-  private Configuration newConfiguration(Configuration base, String fullyQualifiedClusterId) {
-    Configuration newConfig = new Configuration(base);
-    String zone = fullyQualifiedClusterId.replaceFirst(".*/zones/([^/]+)/.*", "$1");
-    String cluster = fullyQualifiedClusterId.replaceFirst(".*/clusters/([^/]+)", "$1");
-
-    newConfig.set(BigtableOptionsFactory.ZONE_KEY, zone);
-    newConfig.set(BigtableOptionsFactory.CLUSTER_KEY, cluster);
-    return newConfig;
   }
 
   private void createTable(Admin admin, TableName tableName) throws IOException {
