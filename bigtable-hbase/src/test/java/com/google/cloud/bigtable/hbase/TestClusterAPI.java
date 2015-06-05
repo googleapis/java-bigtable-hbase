@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 
 import org.apache.hadoop.conf.Configuration;
@@ -74,24 +75,17 @@ public class TestClusterAPI {
       return;
     }
 
-    Configuration config = HBaseConfiguration.create();
-
-    String extraResources = System.getProperty("bigtable.test.extra.resources");
-    if (extraResources == null) {
-      Assert.fail("Please set bigtable.test.extra.resources");
+    Configuration configuration = new Configuration();
+    for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
+      configuration.set(entry.getKey().toString(), entry.getValue().toString());
     }
 
-    InputStream resourceStream =
-        TestClusterAPI.class.getClassLoader().getResourceAsStream(extraResources);
-    if (resourceStream == null) {
-      Assert.fail(extraResources + " does not exist");
-    }
-    config.addResource(resourceStream);
+    BigtableOptions.Builder optionsBuilder =
+        BigtableOptionsFactory.builderFromConfiguration(configuration);
+    BigtableOptions originalOptions = optionsBuilder.build();
+    BigtableClusterAdminClient client = createClusterAdminStub(originalOptions);
 
-    BigtableOptions bigtableOptions = BigtableOptionsFactory.fromConfiguration(config);
-    BigtableClusterAdminClient client = createClusterAdminStub(bigtableOptions);
-
-    String projectId = bigtableOptions.getProjectId();
+    String projectId = originalOptions.getProjectId();
     List<Cluster> clusters = getClusters(client, projectId);
 
     // cleanup any old clusters
@@ -108,10 +102,13 @@ public class TestClusterAPI {
     Cluster cluster = createACluster(client, fullyQualifiedZoneName, TEST_CLUSTER_ID);
     waitForOperation(client, cluster.getCurrentOperation().getName(), MAX_WAIT_SECONDS);
 
-    Configuration newConfig = newConfiguration(config, clusterId);
+    optionsBuilder
+        .setZone(clusterId.replaceFirst(".*/zones/([^/]+)/.*", "$1"))
+        .setCluster(clusterId.replaceFirst(".*/clusters/([^/]+)", "$1"));
+
     TableName autoDeletedTableName =
         TableName.valueOf("auto-deleted-" + UUID.randomUUID().toString());
-    try (Connection connection = new TestBigtableConnection(newConfig);
+    try (Connection connection = new TestBigtableConnection(configuration, optionsBuilder.build());
         Admin admin = connection.getAdmin()) {
       countTables(admin, 0);
       createTable(admin, autoDeletedTableName);
@@ -139,8 +136,7 @@ public class TestClusterAPI {
   private Cluster getCluster(BigtableClusterAdminClient client, String clusterName) {
     GetClusterRequest request = GetClusterRequest.newBuilder().setName(clusterName).build();
     try {
-      Cluster response = client.getCluster(request);
-      return response;
+      return client.getCluster(request);
     } catch (UncheckedExecutionException e) {
       if (e.getCause() != null && e.getCause() instanceof OperationRuntimeException) {
         Status status = ((OperationRuntimeException) e.getCause()).getStatus();
@@ -209,16 +205,6 @@ public class TestClusterAPI {
     ListClustersRequest request =
         ListClustersRequest.newBuilder().setName("projects/" + projectId).build();
     return client.listClusters(request).getClustersList();
-  }
-
-  private Configuration newConfiguration(Configuration base, String fullyQualifiedClusterId) {
-    Configuration newConfig = new Configuration(base);
-    String zone = fullyQualifiedClusterId.replaceFirst(".*/zones/([^/]+)/.*", "$1");
-    String cluster = fullyQualifiedClusterId.replaceFirst(".*/clusters/([^/]+)", "$1");
-
-    newConfig.set(BigtableOptionsFactory.ZONE_KEY, zone);
-    newConfig.set(BigtableOptionsFactory.CLUSTER_KEY, cluster);
-    return newConfig;
   }
 
   private void createTable(Admin admin, TableName tableName) throws IOException {

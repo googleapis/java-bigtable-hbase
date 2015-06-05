@@ -97,6 +97,16 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
 
+  private static BigtableOptions toOptions(Configuration conf) throws IOException {
+    try {
+      return BigtableOptionsFactory.fromConfiguration(conf);
+    } catch (IOException ioe) {
+      new Logger(AbstractBigtableConnection.class).error(
+        "Error loading BigtableOptions from Configuration.", ioe);
+      throw ioe;
+    }
+  }
+
   private final Configuration conf;
   private volatile boolean closed;
   private volatile boolean aborted;
@@ -112,27 +122,30 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private Set<TableName> disabledTables = new HashSet<>();
 
   public AbstractBigtableConnection(Configuration conf) throws IOException {
-    this(conf, false, null, null);
+    this(conf, toOptions(conf));
   }
 
-  protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
-      User user) throws IOException {
+  public AbstractBigtableConnection(Configuration conf, BigtableOptions options) throws IOException {
+    this(conf, options, false, null, null);
+  }
+
+  protected AbstractBigtableConnection(Configuration conf,
+      boolean managed, ExecutorService pool, User user) throws IOException {
+    this(conf, toOptions(conf), managed, pool, user);
+  }
+
+  protected AbstractBigtableConnection(Configuration conf, BigtableOptions options,
+      boolean managed, ExecutorService pool, User user) throws IOException {
     this.batchPool = pool;
     this.closed = false;
     this.conf = conf;
+    this.options = options;
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
 
     if (batchPool == null) {
       batchPool = getBatchPool();
-    }
-
-    try {
-      this.options = BigtableOptionsFactory.fromConfiguration(conf);
-    } catch (IOException ioe) {
-      LOG.error("Error loading BigtableOptions from Configuration.", ioe);
-      throw ioe;
     }
 
     TransportOptions dataTransportOptions = options.getDataTransportOptions();

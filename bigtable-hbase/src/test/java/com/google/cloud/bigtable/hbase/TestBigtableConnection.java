@@ -9,8 +9,8 @@ import org.apache.hadoop.hbase.client.Admin;
 
 public class TestBigtableConnection extends AbstractBigtableConnection {
 
-  public TestBigtableConnection(Configuration conf) throws IOException {
-    super(conf);
+  public TestBigtableConnection(Configuration conf, BigtableOptions options) throws IOException {
+    super(conf, options);
   }
 
   @Override
