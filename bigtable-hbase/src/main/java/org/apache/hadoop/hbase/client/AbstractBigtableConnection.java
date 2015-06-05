@@ -97,16 +97,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
 
-  private static BigtableOptions toOptions(Configuration conf) throws IOException {
-    try {
-      return BigtableOptionsFactory.fromConfiguration(conf);
-    } catch (IOException ioe) {
-      new Logger(AbstractBigtableConnection.class).error(
-        "Error loading BigtableOptions from Configuration.", ioe);
-      throw ioe;
-    }
-  }
-
   private final Configuration conf;
   private volatile boolean closed;
   private volatile boolean aborted;
@@ -125,18 +115,24 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     this(conf, false, null, null);
   }
 
-  protected AbstractBigtableConnection(Configuration conf, boolean managed,
-      ExecutorService pool, User user) throws IOException {
+  protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
+      User user) throws IOException {
     this.batchPool = pool;
     this.closed = false;
     this.conf = conf;
-    this.options = toOptions(conf);
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
 
     if (batchPool == null) {
       batchPool = getBatchPool();
+    }
+
+    try {
+      this.options = BigtableOptionsFactory.fromConfiguration(conf);
+    } catch (IOException ioe) {
+      LOG.error("Error loading BigtableOptions from Configuration.", ioe);
+      throw ioe;
     }
 
     TransportOptions dataTransportOptions = options.getDataTransportOptions();
