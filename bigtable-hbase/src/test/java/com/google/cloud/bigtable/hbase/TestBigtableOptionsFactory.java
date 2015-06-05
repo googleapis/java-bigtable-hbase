@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BigtableOptionsFactory;
 
 @RunWith(JUnit4.class)
 public class TestBigtableOptionsFactory {
@@ -57,7 +58,7 @@ public class TestBigtableOptionsFactory {
     configuration.unset(BigtableOptionsFactory.PROJECT_ID_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
-    BigtableOptionsFactory.fromConfiguration(configuration);
+    HBaseBigtableOptionsFactory.fromConfiguration(configuration);
   }
 
   @Test
@@ -66,7 +67,7 @@ public class TestBigtableOptionsFactory {
     configuration.unset(BigtableOptionsFactory.BIGTABLE_HOST_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
-    BigtableOptionsFactory.fromConfiguration(configuration);
+    HBaseBigtableOptionsFactory.fromConfiguration(configuration);
   }
 
   @Test
@@ -75,7 +76,7 @@ public class TestBigtableOptionsFactory {
     configuration.unset(BigtableOptionsFactory.CLUSTER_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
-    BigtableOptionsFactory.fromConfiguration(configuration);
+    HBaseBigtableOptionsFactory.fromConfiguration(configuration);
   }
 
   @Test
@@ -84,7 +85,7 @@ public class TestBigtableOptionsFactory {
     configuration.unset(BigtableOptionsFactory.ZONE_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
-    BigtableOptionsFactory.fromConfiguration(configuration);
+    HBaseBigtableOptionsFactory.fromConfiguration(configuration);
   }
 
   @Test
@@ -93,7 +94,7 @@ public class TestBigtableOptionsFactory {
     configuration.set(BigtableOptionsFactory.BIGTABLE_TABLE_ADMIN_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
-    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+    BigtableOptions options = HBaseBigtableOptionsFactory.fromConfiguration(configuration);
     Assert.assertEquals(TEST_HOST, options.getTableAdminTransportOptions().getHost().getHostName());
   }
 
@@ -102,7 +103,7 @@ public class TestBigtableOptionsFactory {
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
-    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+    BigtableOptions options = HBaseBigtableOptionsFactory.fromConfiguration(configuration);
     Assert.assertEquals(TEST_HOST, options.getDataTransportOptions().getHost().getHostName());
     Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
     Assert.assertEquals(TEST_CLUSTER_NAME, options.getCluster());
@@ -121,7 +122,7 @@ public class TestBigtableOptionsFactory {
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 60000);
-    BigtableOptionsFactory.fromConfiguration(configuration);
+    HBaseBigtableOptionsFactory.fromConfiguration(configuration);
   }
 
   @Test
@@ -131,7 +132,7 @@ public class TestBigtableOptionsFactory {
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 59999);
     expectedException.expect(IllegalArgumentException.class);
-    BigtableOptionsFactory.fromConfiguration(configuration);
+    HBaseBigtableOptionsFactory.fromConfiguration(configuration);
   }
 
   @Test
@@ -140,7 +141,7 @@ public class TestBigtableOptionsFactory {
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 0);
-    BigtableOptionsFactory.fromConfiguration(configuration);
+    HBaseBigtableOptionsFactory.fromConfiguration(configuration);
   }
 
 }

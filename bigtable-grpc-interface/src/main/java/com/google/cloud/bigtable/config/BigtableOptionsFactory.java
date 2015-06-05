@@ -1,19 +1,19 @@
 /*
- * Copyright 2014 Google Inc. All Rights Reserved.
+ * Copyright 2015 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase;
+package com.google.cloud.bigtable.config;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -28,8 +28,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
-import org.apache.hadoop.conf.Configuration;
-
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
@@ -43,6 +41,14 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  */
 public class BigtableOptionsFactory {
   protected static final Logger LOG = new Logger(BigtableOptionsFactory.class);
+
+  public interface PropertyRetriever {
+    String get(String key);
+    String get(String key, String defaultValue);
+    int getInt(String key, int defaultValue);
+    long getLong(String key, long defaultValue);
+    boolean getBoolean(String key, boolean defaultValue);
+  }
 
   public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
   public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
@@ -129,24 +135,24 @@ public class BigtableOptionsFactory {
       "google.bigtable.grpc.channel.timeout.ms";
   public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
 
-  public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
+  public static BigtableOptions.Builder fromProperties(PropertyRetriever properties) throws IOException {
     BigtableOptions.Builder optionsBuilder = new BigtableOptions.Builder();
 
-    String projectId = configuration.get(PROJECT_ID_KEY);
+    String projectId = properties.get(PROJECT_ID_KEY);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId),
         String.format("Project ID must be supplied via %s", PROJECT_ID_KEY));
     optionsBuilder.setProjectId(projectId);
     LOG.debug("Project ID %s", projectId);
 
-    String zone = configuration.get(ZONE_KEY);
+    String zone = properties.get(ZONE_KEY);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(zone),
         String.format("Zone must be supplied via %s", ZONE_KEY));
     optionsBuilder.setZone(zone);
     LOG.debug("Zone %s", zone);
 
-    String cluster = configuration.get(CLUSTER_KEY);
+    String cluster = properties.get(CLUSTER_KEY);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(cluster),
         String.format("Cluster must be supplied via %s", CLUSTER_KEY));
@@ -154,14 +160,14 @@ public class BigtableOptionsFactory {
     LOG.debug("Cluster %s", cluster);
 
 
-    String overrideIp = configuration.get(IP_OVERRIDE_KEY);
+    String overrideIp = properties.get(IP_OVERRIDE_KEY);
     InetAddress overrideIpAddress = null;
     if (!Strings.isNullOrEmpty(overrideIp)) {
       LOG.debug("Using override IP address %s", overrideIp);
       overrideIpAddress = InetAddress.getByName(overrideIp);
     }
 
-    String dataHost = configuration.get(BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT);
+    String dataHost = properties.get(BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(dataHost),
         String.format("API Data endpoint host must be supplied via %s", BIGTABLE_HOST_KEY));
@@ -174,7 +180,7 @@ public class BigtableOptionsFactory {
           InetAddress.getByAddress(dataHost, overrideIpAddress.getAddress()));
     }
 
-    String tableAdminHost = configuration.get(
+    String tableAdminHost = properties.get(
         BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT);
     if (overrideIpAddress == null) {
       LOG.debug("Table admin endpoint host %s", tableAdminHost);
@@ -185,7 +191,7 @@ public class BigtableOptionsFactory {
           InetAddress.getByAddress(tableAdminHost, overrideIpAddress.getAddress()));
     }
 
-    String clusterAdminHost = configuration.get(
+    String clusterAdminHost = properties.get(
         BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT);
     if (overrideIpAddress == null) {
       LOG.debug("Cluster admin endpoint host %s", clusterAdminHost);
@@ -196,23 +202,23 @@ public class BigtableOptionsFactory {
           InetAddress.getByAddress(clusterAdminHost, overrideIpAddress.getAddress()));
     }
 
-    int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
+    int port = properties.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
     optionsBuilder.setPort(port);
 
     try {
-      if (configuration.getBoolean(
+      if (properties.getBoolean(
           BIGTABE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
         LOG.debug("Using service accounts");
 
         String serviceAccountJson = System.getenv().get(SERVICE_ACCOUNT_JSON_ENV_VARIABLE);
-        String serviceAccountEmail = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
+        String serviceAccountEmail = properties.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
         if (!Strings.isNullOrEmpty(serviceAccountJson)) {
           LOG.debug("Using JSON file: %s", serviceAccountJson);
           optionsBuilder.setCredential(CredentialFactory.getApplicationDefaultCredential());
         } else if (!Strings.isNullOrEmpty(serviceAccountEmail)) {
           LOG.debug("Service account %s specified.", serviceAccountEmail);
           String keyfileLocation =
-              configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
+              properties.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
           Preconditions.checkState(
               !Strings.isNullOrEmpty(keyfileLocation),
               "Key file location must be specified when setting service account email");
@@ -223,7 +229,7 @@ public class BigtableOptionsFactory {
         } else {
           optionsBuilder.setCredential(CredentialFactory.getCredentialFromMetadataServiceAccount());
         }
-      } else if (configuration.getBoolean(
+      } else if (properties.getBoolean(
           BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT)) {
         optionsBuilder.setCredential(null); // Intended for testing purposes only.
         LOG.info("Enabling the use of null credentials. This should not be used in production.");
@@ -251,8 +257,8 @@ public class BigtableOptionsFactory {
     optionsBuilder.setRpcRetryExecutorService(retryExecutor);
 
     // Set up aggregate performance and call error rate logging:
-    if (!Strings.isNullOrEmpty(configuration.get(CALL_REPORT_DIRECTORY_KEY))) {
-      String reportDirectory = configuration.get(CALL_REPORT_DIRECTORY_KEY);
+    if (!Strings.isNullOrEmpty(properties.get(CALL_REPORT_DIRECTORY_KEY))) {
+      String reportDirectory = properties.get(CALL_REPORT_DIRECTORY_KEY);
       Path reportDirectoryPath = FileSystems.getDefault().getPath(reportDirectory);
       if (Files.exists(reportDirectoryPath)) {
         Preconditions.checkState(
@@ -270,29 +276,27 @@ public class BigtableOptionsFactory {
       optionsBuilder.setCallTimingReportPath(callTimingReport);
     }
 
-    boolean enableRetries = configuration.getBoolean(
+    boolean enableRetries = properties.getBoolean(
         ENABLE_GRPC_RETRIES_KEY, ENABLE_GRPC_RETRIES_DEFAULT);
     LOG.debug("gRPC retries enabled: %s", enableRetries);
     optionsBuilder.setRetriesEnabled(enableRetries);
 
-    boolean retryOnDeadlineExceeded = configuration.getBoolean(
+    boolean retryOnDeadlineExceeded = properties.getBoolean(
         ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY, ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_DEFAULT);
     LOG.debug("gRPC retry on deadline exceeded enabled: %s", retryOnDeadlineExceeded);
     optionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
 
     int channelCount =
-        configuration.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
+        properties.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
     optionsBuilder.setChannelCount(channelCount);
 
     long channelTimeout =
-        configuration.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
+        properties.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
 
     Preconditions.checkArgument(channelTimeout == 0 || channelTimeout >= 60000,
       BIGTABLE_CHANNEL_TIMEOUT_MS_KEY + " has to be at least 1 minute (60000)");
     optionsBuilder.setChannelTimeoutMs(channelTimeout);
 
-    optionsBuilder.setUserAgent(BigtableConstants.USER_AGENT);
-
-    return optionsBuilder.build();
+    return optionsBuilder;
   }
 }

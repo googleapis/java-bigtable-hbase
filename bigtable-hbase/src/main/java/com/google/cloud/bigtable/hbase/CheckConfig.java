@@ -46,7 +46,7 @@ public class CheckConfig {
 
     BigtableOptions options;
     try {
-      options = BigtableOptionsFactory.fromConfiguration(fullConfiguration);
+      options = HBaseBigtableOptionsFactory.fromConfiguration(fullConfiguration);
     } catch (IOException | RuntimeException exc) {
       logger.warn("Encountered errors attempting to parse configuration.", exc);
       return;
