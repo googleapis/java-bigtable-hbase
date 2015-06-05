@@ -122,24 +122,15 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private Set<TableName> disabledTables = new HashSet<>();
 
   public AbstractBigtableConnection(Configuration conf) throws IOException {
-    this(conf, toOptions(conf));
+    this(conf, false, null, null);
   }
 
-  public AbstractBigtableConnection(Configuration conf, BigtableOptions options) throws IOException {
-    this(conf, options, false, null, null);
-  }
-
-  protected AbstractBigtableConnection(Configuration conf,
-      boolean managed, ExecutorService pool, User user) throws IOException {
-    this(conf, toOptions(conf), managed, pool, user);
-  }
-
-  protected AbstractBigtableConnection(Configuration conf, BigtableOptions options,
-      boolean managed, ExecutorService pool, User user) throws IOException {
+  protected AbstractBigtableConnection(Configuration conf, boolean managed,
+      ExecutorService pool, User user) throws IOException {
     this.batchPool = pool;
     this.closed = false;
     this.conf = conf;
-    this.options = options;
+    this.options = toOptions(conf);
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }

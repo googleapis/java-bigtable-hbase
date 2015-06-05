@@ -19,18 +19,16 @@ import io.grpc.Status;
 import io.grpc.Status.OperationRuntimeException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
-import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -80,9 +78,7 @@ public class TestClusterAPI {
       configuration.set(entry.getKey().toString(), entry.getValue().toString());
     }
 
-    BigtableOptions.Builder optionsBuilder =
-        BigtableOptionsFactory.builderFromConfiguration(configuration);
-    BigtableOptions originalOptions = optionsBuilder.build();
+    BigtableOptions originalOptions = BigtableOptionsFactory.fromConfiguration(configuration);
     BigtableClusterAdminClient client = createClusterAdminStub(originalOptions);
 
     String projectId = originalOptions.getProjectId();
@@ -102,13 +98,14 @@ public class TestClusterAPI {
     Cluster cluster = createACluster(client, fullyQualifiedZoneName, TEST_CLUSTER_ID);
     waitForOperation(client, cluster.getCurrentOperation().getName(), MAX_WAIT_SECONDS);
 
-    optionsBuilder
-        .setZone(clusterId.replaceFirst(".*/zones/([^/]+)/.*", "$1"))
-        .setCluster(clusterId.replaceFirst(".*/clusters/([^/]+)", "$1"));
+    configuration.set(BigtableOptionsFactory.ZONE_KEY,
+      clusterId.replaceFirst(".*/zones/([^/]+)/.*", "$1"));
+    configuration.set(BigtableOptionsFactory.CLUSTER_KEY,
+      clusterId.replaceFirst(".*/clusters/([^/]+)", "$1"));
 
     TableName autoDeletedTableName =
         TableName.valueOf("auto-deleted-" + UUID.randomUUID().toString());
-    try (Connection connection = new TestBigtableConnection(configuration, optionsBuilder.build());
+    try (Connection connection = new TestBigtableConnection(configuration);
         Admin admin = connection.getAdmin()) {
       countTables(admin, 0);
       createTable(admin, autoDeletedTableName);
