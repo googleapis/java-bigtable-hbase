@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 
+import com.google.cloud.bigtable.config.Logger;
 import com.google.protobuf.ByteString;
 
 import java.io.IOException;

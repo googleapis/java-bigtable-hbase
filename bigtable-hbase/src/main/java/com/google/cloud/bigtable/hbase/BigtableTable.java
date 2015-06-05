@@ -55,6 +55,8 @@ import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;

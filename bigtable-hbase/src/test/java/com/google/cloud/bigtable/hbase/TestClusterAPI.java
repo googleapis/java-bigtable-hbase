@@ -51,6 +51,7 @@ import com.google.bigtable.admin.cluster.v1.ListClustersRequest;
 import com.google.bigtable.admin.cluster.v1.ListZonesRequest;
 import com.google.bigtable.admin.cluster.v1.ListZonesResponse;
 import com.google.bigtable.admin.cluster.v1.Zone;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClusterAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableClusterAdminGrpcClient;
 import com.google.common.util.concurrent.UncheckedExecutionException;

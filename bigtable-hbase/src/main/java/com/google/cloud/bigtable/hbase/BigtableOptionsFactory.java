@@ -30,6 +30,9 @@ import java.util.concurrent.ThreadFactory;
 
 import org.apache.hadoop.conf.Configuration;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.CredentialFactory;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -287,6 +290,8 @@ public class BigtableOptionsFactory {
     Preconditions.checkArgument(channelTimeout == 0 || channelTimeout >= 60000,
       BIGTABLE_CHANNEL_TIMEOUT_MS_KEY + " has to be at least 1 minute (60000)");
     optionsBuilder.setChannelTimeoutMs(channelTimeout);
+
+    optionsBuilder.setUserAgent(BigtableConstants.USER_AGENT);
 
     return optionsBuilder.build();
   }

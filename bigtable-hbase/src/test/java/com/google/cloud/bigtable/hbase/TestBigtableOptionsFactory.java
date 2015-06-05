@@ -27,6 +27,8 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
+
 @RunWith(JUnit4.class)
 public class TestBigtableOptionsFactory {
 

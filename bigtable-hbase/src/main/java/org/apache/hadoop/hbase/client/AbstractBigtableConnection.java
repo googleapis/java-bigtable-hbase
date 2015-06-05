@@ -36,6 +36,8 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Threads;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
@@ -43,11 +45,9 @@ import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.TransportOptions;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
-import com.google.cloud.bigtable.hbase.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
-import com.google.cloud.bigtable.hbase.Logger;
 import com.google.common.base.MoreObjects;
 
 public abstract class AbstractBigtableConnection implements Connection, Closeable {
