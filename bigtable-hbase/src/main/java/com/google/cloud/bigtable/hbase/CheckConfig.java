@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.auth.Credentials;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.common.base.Strings;
 
 import org.apache.hadoop.conf.Configuration;

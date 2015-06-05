@@ -13,15 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase;
-
-import com.google.api.client.util.Strings;
-import com.google.auth.Credentials;
-import com.google.cloud.bigtable.grpc.ChannelOptions;
-import com.google.cloud.bigtable.grpc.TransportOptions;
-import com.google.common.base.Preconditions;
-
-import org.apache.hadoop.hbase.ServerName;
+package com.google.cloud.bigtable.config;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContext;
@@ -31,6 +23,12 @@ import java.net.InetAddress;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.net.ssl.SSLException;
+
+import com.google.api.client.util.Strings;
+import com.google.auth.Credentials;
+import com.google.cloud.bigtable.grpc.ChannelOptions;
+import com.google.cloud.bigtable.grpc.TransportOptions;
+import com.google.common.base.Preconditions;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
@@ -59,6 +57,7 @@ public class BigtableOptions {
     private EventLoopGroup customEventLoopGroup;
     private int channelCount = 1;
     private long timeoutMs = -1L;
+    private String userAgent;
 
     public Builder setTableAdminHost(InetAddress tableAdminHost) {
       this.tableAdminHost = tableAdminHost;
@@ -143,6 +142,11 @@ public class BigtableOptions {
       return this;
     }
 
+    public Builder setUserAgent(String userAgent) {
+      this.userAgent = userAgent;
+      return this;
+    }
+
     public BigtableOptions build() {
       return new BigtableOptions(
           clusterAdminHost,
@@ -160,7 +164,8 @@ public class BigtableOptions {
           rpcRetryExecutorService,
           customEventLoopGroup,
           channelCount,
-          timeoutMs);
+          timeoutMs,
+          userAgent);
     }
   }
 
@@ -180,6 +185,7 @@ public class BigtableOptions {
   private final EventLoopGroup customEventLoopGroup;
   private final int channelCount;
   private final long timeoutMs;
+  private final String userAgent;
 
   private BigtableOptions(
       InetAddress clusterAdminHost,
@@ -197,13 +203,16 @@ public class BigtableOptions {
       ScheduledExecutorService rpcRetryExecutorService,
       EventLoopGroup customEventLoopGroup,
       int channelCount,
-      long timeoutMs) {
+      long timeoutMs,
+      String userAgent) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(zone), "Zone must not be empty or null.");
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(cluster), "Cluster must not be empty or null.");
+    Preconditions.checkArgument(
+      !Strings.isNullOrEmpty(userAgent), "UserAgent must not be empty or null.");
     this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
     this.clusterAdminHost = Preconditions.checkNotNull(clusterAdminHost);
     this.dataHost = Preconditions.checkNotNull(dataHost);
@@ -220,6 +229,7 @@ public class BigtableOptions {
     this.customEventLoopGroup = customEventLoopGroup;
     this.channelCount = channelCount;
     this.timeoutMs = timeoutMs;
+    this.userAgent = userAgent;
 
     LOG.debug("Connection Configuration: project: %s, cluster: %s, data host %s, "
         + "table admin host %s, cluster admin host %s using transport %s.",
@@ -255,7 +265,7 @@ public class BigtableOptions {
     optionsBuilder.setScheduledExecutorService(rpcRetryExecutorService);
     optionsBuilder.setChannelCount(channelCount);
     optionsBuilder.setTimeoutMs(timeoutMs);
-    optionsBuilder.setUserAgent(BigtableConstants.USER_AGENT);
+    optionsBuilder.setUserAgent(userAgent);
     return optionsBuilder.build();
   }
 
@@ -303,10 +313,10 @@ public class BigtableOptions {
         customEventLoopGroup);
   }
 
-  public ServerName getServerName() {
-    return ServerName.valueOf(dataHost.getHostName(), port, 0);
+  public int getPort() {
+    return port;
   }
-
+  
   public int getChannelCount() {
     return channelCount;
   }

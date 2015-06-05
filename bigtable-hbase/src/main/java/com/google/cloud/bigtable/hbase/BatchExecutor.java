@@ -44,6 +44,8 @@ import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;

@@ -24,7 +24,7 @@ import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.SampleRowKeysRequest;
-import com.google.cloud.bigtable.hbase.BigtableOptions;
+import com.google.cloud.bigtable.config.BigtableOptions;
 
 import org.apache.hadoop.hbase.TableName;
 
