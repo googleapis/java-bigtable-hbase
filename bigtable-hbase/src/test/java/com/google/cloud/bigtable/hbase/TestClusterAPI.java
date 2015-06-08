@@ -108,7 +108,7 @@ public class TestClusterAPI {
   }
 
   @Test
-  public void setup() throws IOException {
+  public void testClusters() throws IOException, InterruptedException {
     String shouldTest = System.getProperty("bigtable.test.cluster.api");
     if (!"true".equals(shouldTest)) {
       return;
@@ -188,17 +188,21 @@ public class TestClusterAPI {
   }
 
   private void waitForOperation(BigtableClusterAdminClient client, String operationName,
-      int maxSeconds) {
+      int maxSeconds) throws InterruptedException {
     GetOperationRequest request = GetOperationRequest.newBuilder().setName(operationName).build();
     for (int i = 0; i < maxSeconds; i++) {
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+      Thread.sleep(1000);
       Operation response = client.getOperation(request);
-      if (response.getError() != null) {
-        return;
+      if (response.getDone()) {
+        switch (response.getResultCase()) {
+          case ERROR:
+            throw new RuntimeException("Cluster could not be created: " + response.getError());
+          case RESPONSE:
+            return;
+          case RESULT_NOT_SET:
+            throw new IllegalStateException(
+                "System returned invalid response for Operation check: " + response);
+        }
       }
     }
     throw new IllegalStateException(String.format(
