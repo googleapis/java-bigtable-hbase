@@ -25,6 +25,10 @@ limitations under the License.
 
     <artifactId>bigtable-hbase-integration-tests</artifactId>
     <packaging>jar</packaging>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>
+       This project contains test cases that ought to work for either bigtable-hbase or hbase proper.
+    </description>
 
     <properties>
         <google.bigtable.auth.service.account.enable>true</google.bigtable.auth.service.account.enable>

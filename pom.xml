@@ -21,6 +21,22 @@ limitations under the License.
     <artifactId>bigtable-client</artifactId>
     <version>0.1.7-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <url>https://cloud.google.com/bigtable/</url>
+    <description>
+        This is a client to access Cloud Bigtable (https://cloud.google.com/bigtable/) via the HBase APIs.
+
+        There are a handful of modules in this project.  The bigtable-hbase-x.x projects are intendned to be the projects which users interact with.  The x.x versions in the bigtable-hbase-x.x projects represent the hbase major and minor versions which the project supports.  For example, bigtable-hbase-1.0 will integrate with all hbase 1.0.x releases and bigtable-hbase-1.1 will integrate with all hbase 1.1.* releases.
+
+        The bigtable-protos, bigtable-grpc-interface and bigtable-hbase modules are meant to be used as components of bigtable-hbase-x.x.  Those submodules may be usedful outside of the bigtable-hbase-x.x projects, but have not been thoroughly tested in other scenarios.
+    </description>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
     <modules>
         <module>bigtable-protos</module>
@@ -61,6 +77,13 @@ limitations under the License.
              bigtable-hbase-integration-tests/pom.xml -->
         <google.bigtable.auth.service.account.enable>false</google.bigtable.auth.service.account.enable>
     </properties>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <repositories>
         <repository>
@@ -276,6 +299,18 @@ limitations under the License.
         <tag>HEAD</tag>
     </scm>
 
+    <developers>
+       <developer>
+         <organization>Google</organization>
+         <organizationUrl>http://www.google.com</organizationUrl>
+       </developer>
+    </developers>
+
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/GoogleCloudPlatform/cloud-bigtable-client/issues</url>
+    </issueManagement>
+
     <build>
         <testResources>
             <testResource>
@@ -307,7 +342,75 @@ limitations under the License.
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.5.1</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.6</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>2.3</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.3</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

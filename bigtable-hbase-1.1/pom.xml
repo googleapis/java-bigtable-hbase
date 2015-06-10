@@ -25,6 +25,10 @@ limitations under the License.
 
     <artifactId>bigtable-hbase-1.1</artifactId>
     <packaging>jar</packaging>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>
+       This project contains hbase 1.1 specific implementation of bigtable hbase.
+    </description>
 
     <properties>
         <hbase.version>1.1.0</hbase.version>
@@ -77,7 +81,6 @@ limitations under the License.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
                 <executions>
                     <execution>
                         <phase>package</phase>

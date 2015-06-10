@@ -24,12 +24,12 @@ import java.io.IOException;
  */
 public interface ResultScanner<T> {
   /**
-   * Read the next row & block until a row is available. Will return null on end-of-stream.
+   * Read the next row and block until a row is available. Will return null on end-of-stream.
    */
   T next() throws IOException;
 
   /**
-   * Read the next N rows where N <= count. Will block until count are available or end-of-stream is
+   * Read the next N rows where N &lt;= count. Will block until count are available or end-of-stream is
    * reached.
    * @param count The number of rows to read.
    */
