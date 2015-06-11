@@ -41,6 +41,7 @@ limitations under the License.
                     <groupId>${project.groupId}</groupId>
                     <artifactId>${google.bigtable.version.under.test}</artifactId>
                     <version>${project.version}</version>
+                    <classifier>shaded</classifier>
                 </dependency>
             </dependencies>
             <build>
@@ -183,7 +184,7 @@ limitations under the License.
             <artifactId>hadoop-minicluster</artifactId>
             <scope>test</scope>
         </dependency>
-		<dependency>
+        <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-hadoop-compat</artifactId>
             <scope>test</scope>
