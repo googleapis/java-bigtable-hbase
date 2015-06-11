@@ -77,8 +77,10 @@ public class FilterListAdapter
       FilterAdapterContext context,
       FilterList filter) {
     List<FilterSupportStatus> unsupportedSubfilters = new ArrayList<>();
-    collectUnsupportedStatuses(context, filter, unsupportedSubfilters);
-    if (!unsupportedSubfilters.isEmpty()) {
+    try (ContextCloseable ignored = context.beginFilterList(filter)) {
+      collectUnsupportedStatuses(context, filter, unsupportedSubfilters);
+    }
+    if (unsupportedSubfilters.isEmpty()) {
       return FilterSupportStatus.SUPPORTED;
     } else {
       return FilterSupportStatus.newCompositeNotSupported(unsupportedSubfilters);
