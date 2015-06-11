@@ -30,7 +30,7 @@ public class TestTimestampsFilterAdapter {
 
   TimestampsFilterAdapter filterAdapter = new TimestampsFilterAdapter();
   Scan emptyScan = new Scan();
-  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan);
+  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan, null);
 
   @Test
   public void timestampFiltersAreAdapted() {

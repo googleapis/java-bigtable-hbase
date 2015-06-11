@@ -33,7 +33,7 @@ public class TestMultipleColumnPrefxiFilterAdapter {
 
   MultipleColumnPrefixFilterAdapter filterAdapter = new MultipleColumnPrefixFilterAdapter();
   Scan emptyScan = new Scan();
-  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan);
+  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan, null);
 
   @Test
   public void multiplePrefixesAreAdapted() throws IOException {

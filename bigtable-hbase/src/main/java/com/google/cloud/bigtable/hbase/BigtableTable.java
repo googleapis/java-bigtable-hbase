@@ -60,12 +60,13 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
+import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ReadOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
@@ -73,6 +74,8 @@ import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
+import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -95,8 +98,8 @@ public class BigtableTable implements Table {
   protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected final MutationAdapter mutationAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
-  protected final OperationAdapter<Scan, ReadRowsRequest.Builder> scanAdapter;
-  protected final OperationAdapter<Get, ReadRowsRequest.Builder> getAdapter;
+  protected final ReadOperationAdapter<Scan> scanAdapter;
+  protected final ReadOperationAdapter<Get> getAdapter;
   protected final FilterAdapter filterAdapter;
   protected final BigtableResultScannerAdapter bigtableResultScannerAdapter =
       new BigtableResultScannerAdapter(rowAdapter);
@@ -214,12 +217,14 @@ public class BigtableTable implements Table {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
-    ReadRowsRequest.Builder readRowsRequest = getAdapter.adapt(get);
+    ReadHooks readHooks = new DefaultReadHooks();
+    ReadRowsRequest.Builder readRowsRequest = getAdapter.adapt(get, readHooks);
     metadataSetter.setMetadata(readRowsRequest);
 
     try {
+      ReadRowsRequest finalRequest = readHooks.applyPreSendHook(readRowsRequest.build());
       com.google.cloud.bigtable.grpc.ResultScanner<com.google.bigtable.v1.Row> scanner =
-          client.readRows(readRowsRequest.build());
+          client.readRows(finalRequest);
       Result response = rowAdapter.adaptResponse(scanner.next());
       scanner.close();
 
@@ -245,12 +250,14 @@ public class BigtableTable implements Table {
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
-    ReadRowsRequest.Builder request = scanAdapter.adapt(scan);
+    ReadHooks readHooks = new DefaultReadHooks();
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, readHooks);
     metadataSetter.setMetadata(request);
 
     try {
+      ReadRowsRequest finalRequest = readHooks.applyPreSendHook(request.build());
       com.google.cloud.bigtable.grpc.ResultScanner<com.google.bigtable.v1.Row> scanner =
-          client.readRows(request.build());
+          client.readRows(finalRequest);
       return bigtableResultScannerAdapter.adapt(scanner);
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
@@ -647,9 +654,24 @@ public class BigtableTable implements Table {
       scan.setFilter(valueFilter);
       requestBuilder.addAllTrueMutations(mutations);
     }
+    // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
+    // them (which they shouldn't since we built the filter), throw an exception.
+    ReadHooks throwIfUsed = new ReadHooks() {
+      @Override
+      public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
+        throw new IllegalStateException(
+            "We built a bad Filter for conditional mutation.");
+      }
+
+      @Override
+      public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
+        throw new UnsupportedOperationException(
+            "We built a bad Filter for conditional mutation.");
+      }
+    };
     requestBuilder.setPredicateFilter(
         new ScanAdapter(filterAdapter)
-            .buildFilter(scan));
+            .buildFilter(scan, throwIfUsed));
     return requestBuilder;
   }
 

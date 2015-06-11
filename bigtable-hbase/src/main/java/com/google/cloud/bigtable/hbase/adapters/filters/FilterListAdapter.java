@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.bigtable.v1.RowFilter.Interleave;
+import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
+import com.google.common.base.Optional;
 
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
@@ -40,33 +42,34 @@ public class FilterListAdapter
 
   @Override
   public RowFilter adapt(FilterAdapterContext context, FilterList filter) throws IOException {
-    if (filter.getOperator() == Operator.MUST_PASS_ALL) {
-      return filterMustPassAll(context, filter);
-    } else {
-      return filterMustPassOne(context, filter);
+    try (ContextCloseable ignored = context.beginFilterList(filter)) {
+      List<RowFilter> childFilters = collectChildFilters(context, filter);
+      if (childFilters.isEmpty()) {
+        return null;
+      }
+      if (filter.getOperator() == Operator.MUST_PASS_ALL) {
+        return RowFilter.newBuilder()
+            .setChain(Chain.newBuilder().addAllFilters(childFilters))
+            .build();
+      } else {
+        return RowFilter.newBuilder()
+            .setInterleave(Interleave.newBuilder().addAllFilters(childFilters))
+            .build();
+      }
     }
   }
 
-  private RowFilter filterMustPassOne(FilterAdapterContext context, FilterList filter)
+  List<RowFilter> collectChildFilters(FilterAdapterContext context, FilterList filter)
       throws IOException {
-    Interleave.Builder interLeaveBuilder = Interleave.newBuilder();
+    List<RowFilter> result = new ArrayList<>();
     for (Filter subFilter : filter.getFilters()) {
-      interLeaveBuilder.addFilters(subFilterAdapter.adaptFilter(context, subFilter));
+      Optional<RowFilter> potentialFilter =
+          subFilterAdapter.adaptFilter(context, subFilter);
+      if (potentialFilter.isPresent()) {
+        result.add(potentialFilter.get());
+      }
     }
-    return RowFilter.newBuilder()
-        .setInterleave(interLeaveBuilder)
-        .build();
-  }
-
-  private RowFilter filterMustPassAll(FilterAdapterContext context, FilterList filter)
-      throws IOException {
-    Chain.Builder chainBuilder = Chain.newBuilder();
-    for (Filter subFilter : filter.getFilters()) {
-      chainBuilder.addFilters(subFilterAdapter.adaptFilter(context, subFilter));
-    }
-    return RowFilter.newBuilder()
-        .setChain(chainBuilder)
-        .build();
+    return result;
   }
 
   @Override

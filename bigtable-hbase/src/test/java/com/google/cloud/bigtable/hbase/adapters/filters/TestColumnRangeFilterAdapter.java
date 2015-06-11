@@ -32,7 +32,7 @@ public class TestColumnRangeFilterAdapter {
 
   ColumnRangeFilterAdapter filterAdapter = new ColumnRangeFilterAdapter();
   Scan emptyScan = new Scan();
-  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan);
+  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan, null);
 
   @Test
   public void testColumnRangeFilterThrowsWithNoFamilies() throws IOException {
@@ -47,7 +47,7 @@ public class TestColumnRangeFilterAdapter {
         Bytes.toBytes("a"), true, Bytes.toBytes("b"), false);
     Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
     RowFilter rowFilter = filterAdapter.adapt(
-        new FilterAdapterContext(familyScan), filter);
+        new FilterAdapterContext(familyScan, null), filter);
 
     Assert.assertEquals(
         "a",

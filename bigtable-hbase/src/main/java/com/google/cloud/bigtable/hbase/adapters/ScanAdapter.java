@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper.QuoteMetaOutputStream;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
+import com.google.common.base.Optional;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -40,8 +41,7 @@ import java.util.NavigableSet;
 /**
  * An adapter for Scan operation that makes use of the proto filter language.
  */
-public class ScanAdapter
-    implements OperationAdapter<Scan, ReadRowsRequest.Builder> {
+public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
 
@@ -64,7 +64,7 @@ public class ScanAdapter
   /**
    * Given a Scan, build a RowFilter that include matching columns
    */
-  public RowFilter buildFilter(Scan scan) {
+  public RowFilter buildFilter(Scan scan, ReadHooks hooks) {
     RowFilter.Chain.Builder chainBuilder = RowFilter.Chain.newBuilder();
     chainBuilder.addFilters(createColumnFamilyFilter(scan));
     chainBuilder.addFilters(createColumnLimitFilter(scan.getMaxVersions()));
@@ -75,8 +75,10 @@ public class ScanAdapter
     }
 
     if (scan.getFilter() != null) {
-      RowFilter userFilter = createUserFilter(scan);
-      chainBuilder.addFilters(userFilter);
+      Optional<RowFilter> userFilter = createUserFilter(scan, hooks);
+      if (userFilter.isPresent()) {
+        chainBuilder.addFilters(userFilter.get());
+      }
     }
 
     if (chainBuilder.getFiltersCount() == 1) {
@@ -87,11 +89,11 @@ public class ScanAdapter
   }
 
   @Override
-  public Builder adapt(Scan scan) {
+  public Builder adapt(Scan scan, ReadHooks readHooks) {
     throwIfUnsupportedScan(scan);
 
     return ReadRowsRequest.newBuilder()
-        .setFilter(buildFilter(scan))
+        .setFilter(buildFilter(scan, readHooks))
         .setRowRange(
             RowRange.newBuilder()
                 .setStartKey(ByteString.copyFrom(scan.getStartRow()))
@@ -111,10 +113,10 @@ public class ScanAdapter
     return baos.toByteArray();
   }
 
-  private RowFilter createUserFilter(Scan scan) {
+  private Optional<RowFilter> createUserFilter(Scan scan, ReadHooks hooks) {
     try {
       return filterAdapter
-          .adaptFilter(new FilterAdapterContext(scan), scan.getFilter());
+          .adaptFilter(new FilterAdapterContext(scan, hooks), scan.getFilter());
     } catch (IOException ioe) {
       throw new RuntimeException("Failed to adapt filter", ioe);
     }
@@ -201,4 +203,5 @@ public class ScanAdapter
       return interleaveBuilder.getFilters(0);
     }
   }
+
 }

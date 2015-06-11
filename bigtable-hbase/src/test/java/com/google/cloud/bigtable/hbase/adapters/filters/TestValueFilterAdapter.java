@@ -43,7 +43,7 @@ public class TestValueFilterAdapter {
 
   ValueFilterAdapter adapter = new ValueFilterAdapter();
   Scan emptyScan = new Scan();
-  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan);
+  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan, null);
 
   private void assertAdaptedForm(
       ByteArrayComparable comparable, CompareFilter.CompareOp op, RowFilter expectedFilter)

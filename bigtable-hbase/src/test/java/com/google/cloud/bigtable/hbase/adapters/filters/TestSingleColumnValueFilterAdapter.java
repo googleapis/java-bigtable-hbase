@@ -53,7 +53,7 @@ public class TestSingleColumnValueFilterAdapter  {
     filter.setLatestVersionOnly(true);
 
     RowFilter adaptedFilter = adapter.adapt(
-        new FilterAdapterContext(new Scan()),
+        new FilterAdapterContext(new Scan(), null),
         filter);
 
     assertFilterIfNotMIssingMatches(
@@ -80,7 +80,7 @@ public class TestSingleColumnValueFilterAdapter  {
     filter.setLatestVersionOnly(false);
 
     RowFilter adaptedFilter = adapter.adapt(
-        new FilterAdapterContext(new Scan()),
+        new FilterAdapterContext(new Scan(), null),
         filter);
 
     assertFilterIfNotMIssingMatches(
@@ -107,7 +107,7 @@ public class TestSingleColumnValueFilterAdapter  {
     filter.setLatestVersionOnly(false);
 
     RowFilter adaptedFilter = adapter.adapt(
-        new FilterAdapterContext(new Scan()),
+        new FilterAdapterContext(new Scan(), null),
         filter);
 
     assertColumnSpecification(

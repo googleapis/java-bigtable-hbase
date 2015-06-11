@@ -50,7 +50,7 @@ public class TestQualifierFilterAdapter {
   QualifierFilterAdapter adapter = new QualifierFilterAdapter();
   Scan scanWithOnFamily = new Scan().addFamily(Bytes.toBytes(FAMILY_NAME));
   FilterAdapterContext scanWithOnFamilyScanContext =
-      new FilterAdapterContext(scanWithOnFamily);
+      new FilterAdapterContext(scanWithOnFamily, null);
 
   private void assertAdaptedForm(
       ByteArrayComparable comparable, CompareFilter.CompareOp op, RowFilter expectedFilter)

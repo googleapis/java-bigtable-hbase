@@ -15,22 +15,64 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.FilterList;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * Context for the currently executing filter adapter.
  */
 public class FilterAdapterContext {
-  private final Scan scan;
 
-  public FilterAdapterContext(Scan scan) {
+  public interface ContextCloseable extends AutoCloseable {
+    @Override
+    void close();
+  }
+
+  private final Scan scan;
+  private Deque<FilterList> filterListStack;
+  private ReadHooks readHooks;
+
+  public FilterAdapterContext(Scan scan, ReadHooks readHooks) {
     this.scan = scan;
+    this.filterListStack = new ArrayDeque<>();
+    this.readHooks = readHooks;
   }
 
   Scan getScan() {
     return scan;
   }
 
-  // TODO: Consider adding a way for a filter to modify results that come
-  // back on the client-side (e.g., addPostProccessingStep(...)
+  public ContextCloseable beginFilterList(final FilterList lst) {
+    Preconditions.checkNotNull(lst);
+    filterListStack.push(lst);
+    return new ContextCloseable() {
+      @Override
+      public void close() {
+        Preconditions.checkState(filterListStack.peek().equals(lst));
+        filterListStack.pop();
+      }
+    };
+  }
+
+  public int getFilterListDepth() {
+    return filterListStack.size();
+  }
+
+  public Optional<FilterList> getCurrentFilterList() {
+    if (filterListStack.isEmpty()) {
+      return Optional.absent();
+    }
+    return Optional.of(filterListStack.peek());
+  }
+
+  public ReadHooks getReadHooks() {
+    return readHooks;
+  }
 }

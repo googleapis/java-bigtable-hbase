@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v1.RowFilter;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -28,6 +29,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.PageFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.RandomRowFilter;
@@ -84,6 +86,8 @@ public class FilterAdapter {
         PrefixFilter.class, new PrefixFilterAdapter());
     adapter.addFilterAdapter(
         QualifierFilter.class, new QualifierFilterAdapter());
+    adapter.addFilterAdapter(
+        PageFilter.class, new PageFilterAdapter());
 
     // Passing the FilterAdapter in to the FilterListAdapter is a bit
     // unfortunate, but makes adapting the FilterList's subfilters simpler.
@@ -126,10 +130,10 @@ public class FilterAdapter {
   /**
    * Adapt an HBase filter into a Cloud Bigtable Rowfilter.
    */
-  public RowFilter adaptFilter(FilterAdapterContext context, Filter filter)
+  public Optional<RowFilter> adaptFilter(FilterAdapterContext context, Filter filter)
       throws IOException {
     SingleFilterAdapter<?> adapter = getAdapterForFilterOrThrow(filter);
-    return adapter.adapt(context, filter);
+    return Optional.fromNullable(adapter.adapt(context, filter));
   }
 
   /**
@@ -138,7 +142,7 @@ public class FilterAdapter {
    */
   public void throwIfUnsupportedFilter(Scan scan, Filter filter) {
     List<FilterSupportStatus> filterSupportStatuses = new ArrayList<>();
-    FilterAdapterContext context = new FilterAdapterContext(scan);
+    FilterAdapterContext context = new FilterAdapterContext(scan, null);
     collectUnsupportedStatuses(context, filter, filterSupportStatuses);
     if (!filterSupportStatuses.isEmpty()) {
       throw new UnsupportedFilterException(filterSupportStatuses);

@@ -38,7 +38,7 @@ public class TestFilterListAdapter {
   // and the filter adapter.
   FilterAdapter filterAdapter = FilterAdapter.buildAdapter();
   Scan emptyScan = new Scan();
-  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan);
+  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan, null);
 
   FilterList makeFilterList(Operator filterOperator) {
     return new FilterList(
@@ -50,7 +50,7 @@ public class TestFilterListAdapter {
   @Test
   public void interleavedFiltersAreAdapted() throws IOException {
     FilterList filterList = makeFilterList(Operator.MUST_PASS_ONE);
-    RowFilter rowFilter = filterAdapter.adaptFilter(emptyScanContext, filterList);
+    RowFilter rowFilter = filterAdapter.adaptFilter(emptyScanContext, filterList).get();
     Assert.assertEquals(
         "value",
         rowFilter.getInterleave().getFilters(0).getValueRegexFilter().toStringUtf8());
@@ -62,7 +62,7 @@ public class TestFilterListAdapter {
   @Test
   public void chainedFiltersAreAdapted() throws IOException {
     FilterList filterList = makeFilterList(Operator.MUST_PASS_ALL);
-    RowFilter rowFilter = filterAdapter.adaptFilter(emptyScanContext, filterList);
+    RowFilter rowFilter = filterAdapter.adaptFilter(emptyScanContext, filterList).get();
     Assert.assertEquals(
         "value",
         rowFilter.getChain().getFilters(0).getValueRegexFilter().toStringUtf8());
