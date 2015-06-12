@@ -37,12 +37,13 @@ import java.util.concurrent.TimeUnit;
 public class StreamingBigtableResultScanner extends AbstractBigtableResultScanner {
 
   /**
-   * Builds a complete Row from partial ReadRowsResponse objects. This class
+   * <p>Builds a complete Row from partial ReadRowsResponse objects. This class
    * does not currently handle multiple interleaved rows. It is assumed that it is
    * handling results for a request with allow_row_interleaving = false.
-   * <p/>
-   * Each RowMerger object is valid only for building a single Row. Expected usage
+   * </p>
+   * <p>Each RowMerger object is valid only for building a single Row. Expected usage
    * is along the lines of:
+   * </p>
    * <pre>
    * RowMerger rm = new RowMerger();
    * while (!rm.isRowCommited()) {

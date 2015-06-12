@@ -24,7 +24,7 @@ import org.apache.hadoop.hbase.security.User;
 /**
  * HBase 1.0 specific implementation of {@link AbstractBigtableConnection}.
  * 
- * @see {@link com.google.cloud.bigtable.hbase1_0.BigtableConnection} is now the cannonical
+ * @see com.google.cloud.bigtable.hbase1_0.BigtableConnection which is now the cannonical
  *  implementation.
  */
 @Deprecated
