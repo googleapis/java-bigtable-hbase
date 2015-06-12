@@ -86,7 +86,7 @@ limitations under the License.
                         </goals>
                         <configuration>
                             <shadeTestJar>true</shadeTestJar>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>shaded</shadedClassifierName>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
                             <artifactSet>
