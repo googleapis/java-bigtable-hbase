@@ -105,7 +105,14 @@ limitations under the License.
                                     <include>com.google.protobuf:*</include>
                                     <include>com.twitter:hpack</include>
                                     <include>com.fasterxml.jackson.core:*</include>
-                                    <include>io.netty:netty-all</include>
+                                    <include>io.netty:netty-codec-http2</include>
+                                    <include>io.netty:netty-codec-http</include>
+                                    <include>io.netty:netty-codec</include>
+                                    <include>io.netty:netty-handler</include>
+                                    <include>io.netty:netty-buffer</include>
+                                    <include>io.netty:netty-common</include>
+                                    <include>io.netty:netty-transport</include>
+                                    <include>io.netty:netty-resolver</include>
                                     <include>io.grpc:grpc-all</include>
                                 </includes>
                             </artifactSet>
