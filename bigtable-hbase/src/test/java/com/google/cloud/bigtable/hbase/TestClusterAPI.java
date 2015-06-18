@@ -21,7 +21,6 @@ import io.grpc.Status.OperationRuntimeException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -52,6 +51,7 @@ import com.google.bigtable.admin.cluster.v1.ListZonesRequest;
 import com.google.bigtable.admin.cluster.v1.ListZonesResponse;
 import com.google.bigtable.admin.cluster.v1.Zone;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BigtableOptionsFactory;
 import com.google.cloud.bigtable.grpc.BigtableClusterAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableClusterAdminGrpcClient;
 import com.google.common.util.concurrent.UncheckedExecutionException;
@@ -67,6 +67,46 @@ public class TestClusterAPI {
   private static final String TEST_CLUSTER_ID = "test-cluster-api";
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
 
+  private static class EnvironmentVariableProperties implements BigtableOptionsFactory.PropertyRetriever {
+    @Override
+    public String get(String key) {
+      return System.getProperty(key);
+    }
+
+    @Override
+    public String get(String key, String defaultValue) {
+      return System.getProperty(key, defaultValue);
+    }
+
+    @Override
+    public int getInt(String key, int defaultValue) {
+      if (System.getProperties().contains(key)) {
+        return new Integer(get(key));
+      } else {
+        return defaultValue;
+      }
+    }
+
+    @Override
+    public long getLong(String key, long defaultValue) {
+      if (System.getProperties().contains(key)) {
+        return new Long(get(key));
+      } else {
+        return defaultValue;
+      }
+    }
+
+    @Override
+    public boolean getBoolean(String key, boolean defaultValue) {
+      if (System.getProperties().contains(key)) {
+        return new Boolean(get(key));
+      } else {
+        return defaultValue;
+      }
+    }
+
+  }
+
   @Test
   public void testClusters() throws IOException, InterruptedException {
     String shouldTest = System.getProperty("bigtable.test.cluster.api");
@@ -74,15 +114,13 @@ public class TestClusterAPI {
       return;
     }
 
-    Configuration configuration = new Configuration();
-    for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
-      configuration.set(entry.getKey().toString(), entry.getValue().toString());
-    }
+    BigtableOptions.Builder optionsBuilder =
+        BigtableOptionsFactory.fromProperties(new EnvironmentVariableProperties());
+    optionsBuilder.setUserAgent("TestClusterAPI - Java");
+    BigtableOptions options = optionsBuilder.build();
+    BigtableClusterAdminClient client = createClusterAdminStub(options);
 
-    BigtableOptions originalOptions = BigtableOptionsFactory.fromConfiguration(configuration);
-    BigtableClusterAdminClient client = createClusterAdminStub(originalOptions);
-
-    String projectId = originalOptions.getProjectId();
+    String projectId = options.getProjectId();
     List<Cluster> clusters = getClusters(client, projectId);
 
     // cleanup any old clusters
@@ -99,14 +137,16 @@ public class TestClusterAPI {
     Cluster cluster = createACluster(client, fullyQualifiedZoneName, TEST_CLUSTER_ID);
     waitForOperation(client, cluster.getCurrentOperation().getName(), MAX_WAIT_SECONDS);
 
-    configuration.set(BigtableOptionsFactory.ZONE_KEY,
-      clusterId.replaceFirst(".*/zones/([^/]+)/.*", "$1"));
-    configuration.set(BigtableOptionsFactory.CLUSTER_KEY,
-      clusterId.replaceFirst(".*/clusters/([^/]+)", "$1"));
+    optionsBuilder.setZone(clusterId.replaceFirst(".*/zones/([^/]+)/.*", "$1"));
+    optionsBuilder.setCluster(TEST_CLUSTER_ID);
 
     TableName autoDeletedTableName =
         TableName.valueOf("auto-deleted-" + UUID.randomUUID().toString());
-    try (Connection connection = new TestBigtableConnection(configuration);
+
+    // The Configuration is used for optional parameters, and we don't want to provide any for this
+    // test. The BigtableOptions drives the core connection configuration.
+    try (Connection connection =
+        new TestBigtableConnection(new Configuration(), optionsBuilder.build());
         Admin admin = connection.getAdmin()) {
       countTables(admin, 0);
       createTable(admin, autoDeletedTableName);

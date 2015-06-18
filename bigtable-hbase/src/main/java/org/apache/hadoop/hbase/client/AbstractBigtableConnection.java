@@ -45,9 +45,10 @@ import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.TransportOptions;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
+import com.google.cloud.bigtable.hbase.HBaseBigtableOptionsFactory;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 
 public abstract class AbstractBigtableConnection implements Connection, Closeable {
@@ -93,9 +94,19 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   public static final long BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT =
       16 * TableConfiguration.WRITE_BUFFER_SIZE_DEFAULT;
 
-  private final Logger LOG = new Logger(getClass());
-
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
+
+  static BigtableOptions getBigtableOptions(Configuration conf) throws IOException {
+    try {
+      return HBaseBigtableOptionsFactory.fromConfiguration(conf);
+    } catch (IOException ioe) {
+      new Logger(AbstractBigtableConnection.class).error(
+        "Error loading BigtableOptions from Configuration.", ioe);
+      throw ioe;
+    }
+  }
+
+  private final Logger LOG = new Logger(getClass());
 
   private final Configuration conf;
   private volatile boolean closed;
@@ -112,11 +123,22 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private Set<TableName> disabledTables = new HashSet<>();
 
   public AbstractBigtableConnection(Configuration conf) throws IOException {
-    this(conf, false, null, null);
+    this(conf, getBigtableOptions(conf));
   }
 
-  protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
-      User user) throws IOException {
+  @VisibleForTesting
+  protected AbstractBigtableConnection(Configuration conf, BigtableOptions bigtableOptions)
+      throws IOException {
+    this(conf, bigtableOptions, false, null, null);
+  }
+
+  protected AbstractBigtableConnection(Configuration conf,
+      boolean managed, ExecutorService pool, User user) throws IOException {
+    this(conf, getBigtableOptions(conf), managed, pool, user);
+  }
+
+  protected AbstractBigtableConnection(Configuration conf, BigtableOptions options,
+      boolean managed, ExecutorService pool, User user) throws IOException {
     this.batchPool = pool;
     this.closed = false;
     this.conf = conf;
@@ -128,12 +150,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       batchPool = getBatchPool();
     }
 
-    try {
-      this.options = BigtableOptionsFactory.fromConfiguration(conf);
-    } catch (IOException ioe) {
-      LOG.error("Error loading BigtableOptions from Configuration.", ioe);
-      throw ioe;
-    }
+    this.options = options;
 
     TransportOptions dataTransportOptions = options.getDataTransportOptions();
     ChannelOptions channelOptions = options.getChannelOptions();
