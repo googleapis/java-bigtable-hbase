@@ -15,12 +15,19 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
 
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
@@ -29,12 +36,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Matchers;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Tests for {@link BigtableBufferedMutator}
@@ -74,14 +79,36 @@ public class TestBigtableBufferedMutator {
   }
 
   @Test
+  public void testNoMutation() throws IOException {
+    Assert.assertFalse(underTest.hasInflightRequests());
+    Assert.assertEquals(0l, underTest.sizeManager.getHeapSize());
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
   public void testMutation() throws IOException {
-    Mockito.when(executor.issueRequest(Matchers.any(Row.class))).thenReturn(
-        Mockito.mock(ListenableFuture.class));
+    when(executor.issueRequest(any(Row.class))).thenReturn(mock(ListenableFuture.class));
     underTest.mutate(new Put(new byte[1]));
-    Mockito.verify(executor, Mockito.times(1)).issueRequest(Matchers.any(Row.class));
+    verify(executor, times(1)).issueRequest(any(Row.class));
+    Assert.assertTrue(underTest.hasInflightRequests());
     Long id = underTest.sizeManager.pendingOperationsWithSize.keySet().iterator().next();
     underTest.sizeManager.operationComplete(id);
-    Assert.assertTrue(!underTest.hasInflightRequests());
+    Assert.assertFalse(underTest.hasInflightRequests());
+    Assert.assertEquals(0l, underTest.sizeManager.getHeapSize());
+  }
+
+  @Test
+  public void testInvalidPut() throws Exception {
+    when(executor.issueRequest((Row) any())).thenThrow(new RuntimeException());
+    try {
+      underTest.mutate(new Increment(new byte[1]));
+    } catch (RuntimeException ignored) {
+      // The RuntimeException is expected behavior
+    }
+    // wait until the handling in the heapSizeExecutor kicks in.
+    Thread.sleep(1000);
+    Assert.assertFalse(underTest.hasInflightRequests());
+    Assert.assertEquals(0l, underTest.sizeManager.getHeapSize());
   }
 
   @Test
