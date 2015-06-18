@@ -105,7 +105,7 @@ limitations under the License.
                                     <include>com.google.protobuf:*</include>
                                     <include>com.twitter:hpack</include>
                                     <include>com.fasterxml.jackson.core:*</include>
-                                    <include>io.netty:netty-all</include>
+                                    <include>io.netty:*</include>
                                     <include>io.grpc:grpc-all</include>
                                 </includes>
                             </artifactSet>
