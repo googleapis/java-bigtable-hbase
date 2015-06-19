@@ -80,6 +80,37 @@ limitations under the License.
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <id>enforce-banned-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>com.google.guava:guava-jdk5:*</exclude>
+<!-- This needs to work in the near future
+                                        <exclude>io.netty:netty-all:*</exclude>
+                                        <exclude>io.netty:netty:*</exclude>
+-->
+                                    </excludes>
+                                    <includes>
+                                        <include>com.google.guava:guava:${guava.version}</include>
+                                        <include>io.nett:*:${netty.version}</include>
+                                    </includes>
+                                </bannedDependencies>
+                           </rules>
+                          <fail>true</fail>
+                      </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <executions>
                     <execution>

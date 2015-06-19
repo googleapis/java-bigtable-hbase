@@ -62,6 +62,7 @@ limitations under the License.
         <!-- For Netty HTTP2/TLS negotiation -->
         <alpn.version>7.0.0.v20140317</alpn.version>
         <netty.version>4.1.0.Beta5</netty.version>
+        <guava.version>18.0</guava.version>
 
         <!-- Values for integration testing. Set these in ~/.m2/settings.xml or
              via command-line -D flags. -->
@@ -132,6 +133,12 @@ limitations under the License.
             </dependency>
 
             <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.mortbay.jetty.alpn</groupId>
                 <artifactId>alpn-boot</artifactId>
                 <version>${alpn.version}</version>
@@ -142,6 +149,12 @@ limitations under the License.
                 <groupId>com.google.api-client</groupId>
                 <artifactId>google-api-client-jackson2</artifactId>
                 <version>${google.api.client.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava-jdk5</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.google.api-client</groupId>
@@ -149,7 +162,6 @@ limitations under the License.
                 <version>${google.api.client.version}</version>
                 <exclusions>
                     <exclusion>
-                        <!-- this version hides too many things -->
                         <groupId>com.google.guava</groupId>
                         <artifactId>guava-jdk5</artifactId>
                     </exclusion>
@@ -172,6 +184,12 @@ limitations under the License.
                 <artifactId>hadoop-common</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
@@ -179,6 +197,12 @@ limitations under the License.
                 <version>${hadoop.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
@@ -199,6 +223,10 @@ limitations under the License.
                     <exclusion>
                         <groupId>io.netty</groupId>
                         <artifactId>netty</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -233,6 +261,12 @@ limitations under the License.
                 <artifactId>hbase-common</artifactId>
                 <version>${hbase.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hbase</groupId>
@@ -240,6 +274,12 @@ limitations under the License.
                 <version>${hbase.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hbase</groupId>
@@ -278,6 +318,10 @@ limitations under the License.
                 <version>${hbase.version}</version>
                 <exclusions>
                     <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
+                    <exclusion>
                         <groupId>io.netty</groupId>
                         <artifactId>netty-all</artifactId>
                     </exclusion>
@@ -290,6 +334,10 @@ limitations under the License.
                 <type>test-jar</type>
                 <scope>test</scope>
                 <exclusions>
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
                     <exclusion>
                         <groupId>io.netty</groupId>
                         <artifactId>netty-all</artifactId>
@@ -315,6 +363,12 @@ limitations under the License.
                 <version>${hbase.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
