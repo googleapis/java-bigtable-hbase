@@ -280,6 +280,17 @@ limitations under the License.
                 <version>${hbase.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-mapreduce-client-core</artifactId>
+                <version>${hadoop.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-all</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.hbase</groupId>
                 <artifactId>hbase-client</artifactId>
                 <version>${hbase.version}</version>
@@ -287,6 +298,10 @@ limitations under the License.
                     <exclusion>
                         <groupId>com.google.protobuf</groupId>
                         <artifactId>protobuf-java</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-all</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -298,6 +313,10 @@ limitations under the License.
                     <exclusion>
                         <groupId>com.google.guava</groupId>
                         <artifactId>guava</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-all</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -311,6 +330,10 @@ limitations under the License.
                     <exclusion>
                         <groupId>com.google.guava</groupId>
                         <artifactId>guava</artifactId>
+                    <exclusion>
+                    </exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-all</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>

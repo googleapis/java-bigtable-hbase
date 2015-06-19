@@ -143,6 +143,13 @@ limitations under the License.
         </profile>
         <profile>
             <id>hbaseLocalMiniClusterTest</id>
+            <dependencies>
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-all</artifactId>
+                    <version>4.0.24.Final</version>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
                     <plugin>
