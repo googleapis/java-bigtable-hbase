@@ -43,6 +43,7 @@ limitations under the License.
         <module>bigtable-grpc-interface</module>
         <module>bigtable-hbase</module>
         <module>bigtable-hbase-1.0</module>
+        <module>bigtable-hbase-shaded</module>
         <module>bigtable-hbase-1.1</module>
         <module>bigtable-hbase-integration-tests</module>
     </modules>
