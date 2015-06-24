@@ -30,8 +30,7 @@ public  final class CreateClusterRequest extends
   }
   private CreateClusterRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -76,10 +75,11 @@ public  final class CreateClusterRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e.getMessage()).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       makeExtensionsImmutable();
     }
@@ -96,23 +96,8 @@ public  final class CreateClusterRequest extends
             com.google.bigtable.admin.cluster.v1.CreateClusterRequest.class, com.google.bigtable.admin.cluster.v1.CreateClusterRequest.Builder.class);
   }
 
-  public static final com.google.protobuf.Parser<CreateClusterRequest> PARSER =
-      new com.google.protobuf.AbstractParser<CreateClusterRequest>() {
-    public CreateClusterRequest parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return new CreateClusterRequest(input, extensionRegistry);
-    }
-  };
-
-  @java.lang.Override
-  public com.google.protobuf.Parser<CreateClusterRequest> getParserForType() {
-    return PARSER;
-  }
-
   public static final int NAME_FIELD_NUMBER = 1;
-  private java.lang.Object name_;
+  private volatile java.lang.Object name_;
   /**
    * <code>optional string name = 1;</code>
    *
@@ -158,7 +143,7 @@ public  final class CreateClusterRequest extends
   }
 
   public static final int CLUSTER_ID_FIELD_NUMBER = 2;
-  private java.lang.Object clusterId_;
+  private volatile java.lang.Object clusterId_;
   /**
    * <code>optional string cluster_id = 2;</code>
    *
@@ -256,7 +241,6 @@ public  final class CreateClusterRequest extends
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    getSerializedSize();
     if (!getNameBytes().isEmpty()) {
       output.writeBytes(1, getNameBytes());
     }
@@ -344,12 +328,17 @@ public  final class CreateClusterRequest extends
     return PARSER.parseFrom(input, extensionRegistry);
   }
 
-  public static Builder newBuilder() { return new Builder(); }
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder(com.google.bigtable.admin.cluster.v1.CreateClusterRequest prototype) {
-    return newBuilder().mergeFrom(prototype);
+  public static Builder newBuilder() {
+    return DEFAULT_INSTANCE.toBuilder();
   }
-  public Builder toBuilder() { return newBuilder(this); }
+  public static Builder newBuilder(com.google.bigtable.admin.cluster.v1.CreateClusterRequest prototype) {
+    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+  }
+  public Builder toBuilder() {
+    return this == DEFAULT_INSTANCE
+        ? new Builder() : new Builder().mergeFrom(this);
+  }
 
   @java.lang.Override
   protected Builder newBuilderForType(
@@ -867,16 +856,41 @@ public  final class CreateClusterRequest extends
   }
 
   // @@protoc_insertion_point(class_scope:google.bigtable.admin.cluster.v1.CreateClusterRequest)
-  private static final com.google.bigtable.admin.cluster.v1.CreateClusterRequest defaultInstance;static {
-    defaultInstance = new com.google.bigtable.admin.cluster.v1.CreateClusterRequest();
+  private static final com.google.bigtable.admin.cluster.v1.CreateClusterRequest DEFAULT_INSTANCE;
+  static {
+    DEFAULT_INSTANCE = new com.google.bigtable.admin.cluster.v1.CreateClusterRequest();
   }
 
   public static com.google.bigtable.admin.cluster.v1.CreateClusterRequest getDefaultInstance() {
-    return defaultInstance;
+    return DEFAULT_INSTANCE;
+  }
+
+  public static final com.google.protobuf.Parser<CreateClusterRequest> PARSER =
+      new com.google.protobuf.AbstractParser<CreateClusterRequest>() {
+    public CreateClusterRequest parsePartialFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
+        return new CreateClusterRequest(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
+    }
+  };
+
+  @java.lang.Override
+  public com.google.protobuf.Parser<CreateClusterRequest> getParserForType() {
+    return PARSER;
   }
 
   public com.google.bigtable.admin.cluster.v1.CreateClusterRequest getDefaultInstanceForType() {
-    return defaultInstance;
+    return DEFAULT_INSTANCE;
   }
 
 }
