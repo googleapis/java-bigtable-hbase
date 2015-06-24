@@ -78,6 +78,12 @@ public final class BigtableClusterServicesProto {
     com.google.protobuf.ExtensionRegistry registry =
         com.google.protobuf.ExtensionRegistry.newInstance();
     registry.add(com.google.api.AnnotationsProto.http);
+    registry.add(com.google.api.AnnotationsProto.http);
+    registry.add(com.google.api.AnnotationsProto.http);
+    registry.add(com.google.api.AnnotationsProto.http);
+    registry.add(com.google.api.AnnotationsProto.http);
+    registry.add(com.google.api.AnnotationsProto.http);
+    registry.add(com.google.api.AnnotationsProto.http);
     com.google.protobuf.Descriptors.FileDescriptor
         .internalUpdateFileDescriptor(descriptor, registry);
     com.google.api.AnnotationsProto.getDescriptor();

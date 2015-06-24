@@ -29,7 +29,8 @@ public  final class UndeleteClusterMetadata extends
   }
   private UndeleteClusterMetadata(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -75,11 +76,10 @@ public  final class UndeleteClusterMetadata extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e.getMessage()).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -94,6 +94,21 @@ public  final class UndeleteClusterMetadata extends
     return com.google.bigtable.admin.cluster.v1.BigtableClusterServiceMessagesProto.internal_static_google_bigtable_admin_cluster_v1_UndeleteClusterMetadata_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
             com.google.bigtable.admin.cluster.v1.UndeleteClusterMetadata.class, com.google.bigtable.admin.cluster.v1.UndeleteClusterMetadata.Builder.class);
+  }
+
+  public static final com.google.protobuf.Parser<UndeleteClusterMetadata> PARSER =
+      new com.google.protobuf.AbstractParser<UndeleteClusterMetadata>() {
+    public UndeleteClusterMetadata parsePartialFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return new UndeleteClusterMetadata(input, extensionRegistry);
+    }
+  };
+
+  @java.lang.Override
+  public com.google.protobuf.Parser<UndeleteClusterMetadata> getParserForType() {
+    return PARSER;
   }
 
   public static final int REQUEST_TIME_FIELD_NUMBER = 1;
@@ -174,6 +189,7 @@ public  final class UndeleteClusterMetadata extends
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
+    getSerializedSize();
     if (requestTime_ != null) {
       output.writeMessage(1, getRequestTime());
     }
@@ -254,17 +270,12 @@ public  final class UndeleteClusterMetadata extends
     return PARSER.parseFrom(input, extensionRegistry);
   }
 
+  public static Builder newBuilder() { return new Builder(); }
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder() {
-    return DEFAULT_INSTANCE.toBuilder();
-  }
   public static Builder newBuilder(com.google.bigtable.admin.cluster.v1.UndeleteClusterMetadata prototype) {
-    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    return newBuilder().mergeFrom(prototype);
   }
-  public Builder toBuilder() {
-    return this == DEFAULT_INSTANCE
-        ? new Builder() : new Builder().mergeFrom(this);
-  }
+  public Builder toBuilder() { return newBuilder(this); }
 
   @java.lang.Override
   protected Builder newBuilderForType(
@@ -723,41 +734,16 @@ public  final class UndeleteClusterMetadata extends
   }
 
   // @@protoc_insertion_point(class_scope:google.bigtable.admin.cluster.v1.UndeleteClusterMetadata)
-  private static final com.google.bigtable.admin.cluster.v1.UndeleteClusterMetadata DEFAULT_INSTANCE;
-  static {
-    DEFAULT_INSTANCE = new com.google.bigtable.admin.cluster.v1.UndeleteClusterMetadata();
+  private static final com.google.bigtable.admin.cluster.v1.UndeleteClusterMetadata defaultInstance;static {
+    defaultInstance = new com.google.bigtable.admin.cluster.v1.UndeleteClusterMetadata();
   }
 
   public static com.google.bigtable.admin.cluster.v1.UndeleteClusterMetadata getDefaultInstance() {
-    return DEFAULT_INSTANCE;
-  }
-
-  public static final com.google.protobuf.Parser<UndeleteClusterMetadata> PARSER =
-      new com.google.protobuf.AbstractParser<UndeleteClusterMetadata>() {
-    public UndeleteClusterMetadata parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
-        return new UndeleteClusterMetadata(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
-    }
-  };
-
-  @java.lang.Override
-  public com.google.protobuf.Parser<UndeleteClusterMetadata> getParserForType() {
-    return PARSER;
+    return defaultInstance;
   }
 
   public com.google.bigtable.admin.cluster.v1.UndeleteClusterMetadata getDefaultInstanceForType() {
-    return DEFAULT_INSTANCE;
+    return defaultInstance;
   }
 
 }

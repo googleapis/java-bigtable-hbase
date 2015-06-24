@@ -18,13 +18,13 @@ public class BigtableServiceGrpc {
   private static final io.grpc.stub.Method<com.google.bigtable.v1.ReadRowsRequest,
       com.google.bigtable.v1.ReadRowsResponse> METHOD_READ_ROWS =
       io.grpc.stub.Method.create(
-          io.grpc.MethodType.UNARY, "ReadRows",
+          io.grpc.MethodType.SERVER_STREAMING, "ReadRows",
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v1.ReadRowsRequest.PARSER),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v1.ReadRowsResponse.PARSER));
   private static final io.grpc.stub.Method<com.google.bigtable.v1.SampleRowKeysRequest,
       com.google.bigtable.v1.SampleRowKeysResponse> METHOD_SAMPLE_ROW_KEYS =
       io.grpc.stub.Method.create(
-          io.grpc.MethodType.UNARY, "SampleRowKeys",
+          io.grpc.MethodType.SERVER_STREAMING, "SampleRowKeys",
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v1.SampleRowKeysRequest.PARSER),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.v1.SampleRowKeysResponse.PARSER));
   private static final io.grpc.stub.Method<com.google.bigtable.v1.MutateRowRequest,
@@ -147,9 +147,11 @@ public class BigtableServiceGrpc {
 
   public static interface BigtableServiceBlockingClient {
 
-    public com.google.bigtable.v1.ReadRowsResponse readRows(com.google.bigtable.v1.ReadRowsRequest request);
+    public java.util.Iterator<com.google.bigtable.v1.ReadRowsResponse> readRows(
+        com.google.bigtable.v1.ReadRowsRequest request);
 
-    public com.google.bigtable.v1.SampleRowKeysResponse sampleRowKeys(com.google.bigtable.v1.SampleRowKeysRequest request);
+    public java.util.Iterator<com.google.bigtable.v1.SampleRowKeysResponse> sampleRowKeys(
+        com.google.bigtable.v1.SampleRowKeysRequest request);
 
     public com.google.protobuf.Empty mutateRow(com.google.bigtable.v1.MutateRowRequest request);
 
@@ -159,12 +161,6 @@ public class BigtableServiceGrpc {
   }
 
   public static interface BigtableServiceFutureClient {
-
-    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.v1.ReadRowsResponse> readRows(
-        com.google.bigtable.v1.ReadRowsRequest request);
-
-    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.v1.SampleRowKeysResponse> sampleRowKeys(
-        com.google.bigtable.v1.SampleRowKeysRequest request);
 
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> mutateRow(
         com.google.bigtable.v1.MutateRowRequest request);
@@ -193,14 +189,14 @@ public class BigtableServiceGrpc {
     @java.lang.Override
     public void readRows(com.google.bigtable.v1.ReadRowsRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.v1.ReadRowsResponse> responseObserver) {
-      asyncUnaryCall(
+      asyncServerStreamingCall(
           channel.newCall(config.readRows), request, responseObserver);
     }
 
     @java.lang.Override
     public void sampleRowKeys(com.google.bigtable.v1.SampleRowKeysRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.v1.SampleRowKeysResponse> responseObserver) {
-      asyncUnaryCall(
+      asyncServerStreamingCall(
           channel.newCall(config.sampleRowKeys), request, responseObserver);
     }
 
@@ -241,14 +237,16 @@ public class BigtableServiceGrpc {
     }
 
     @java.lang.Override
-    public com.google.bigtable.v1.ReadRowsResponse readRows(com.google.bigtable.v1.ReadRowsRequest request) {
-      return blockingUnaryCall(
+    public java.util.Iterator<com.google.bigtable.v1.ReadRowsResponse> readRows(
+        com.google.bigtable.v1.ReadRowsRequest request) {
+      return blockingServerStreamingCall(
           channel.newCall(config.readRows), request);
     }
 
     @java.lang.Override
-    public com.google.bigtable.v1.SampleRowKeysResponse sampleRowKeys(com.google.bigtable.v1.SampleRowKeysRequest request) {
-      return blockingUnaryCall(
+    public java.util.Iterator<com.google.bigtable.v1.SampleRowKeysResponse> sampleRowKeys(
+        com.google.bigtable.v1.SampleRowKeysRequest request) {
+      return blockingServerStreamingCall(
           channel.newCall(config.sampleRowKeys), request);
     }
 
@@ -283,20 +281,6 @@ public class BigtableServiceGrpc {
     protected BigtableServiceFutureStub build(io.grpc.Channel channel,
         BigtableServiceServiceDescriptor config) {
       return new BigtableServiceFutureStub(channel, config);
-    }
-
-    @java.lang.Override
-    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.v1.ReadRowsResponse> readRows(
-        com.google.bigtable.v1.ReadRowsRequest request) {
-      return unaryFutureCall(
-          channel.newCall(config.readRows), request);
-    }
-
-    @java.lang.Override
-    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.v1.SampleRowKeysResponse> sampleRowKeys(
-        com.google.bigtable.v1.SampleRowKeysRequest request) {
-      return unaryFutureCall(
-          channel.newCall(config.sampleRowKeys), request);
     }
 
     @java.lang.Override
