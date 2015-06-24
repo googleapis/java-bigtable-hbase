@@ -142,23 +142,4 @@ public interface ClusterOrBuilder extends
    * </pre>
    */
   long getSsdBytes();
-
-  /**
-   * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
-   *
-   * <pre>
-   * What storage type to use for tables in this cluster. Only configurable at
-   * cluster creation time. If unspecified, STORAGE_SSD will be used.
-   * </pre>
-   */
-  int getDefaultStorageTypeValue();
-  /**
-   * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
-   *
-   * <pre>
-   * What storage type to use for tables in this cluster. Only configurable at
-   * cluster creation time. If unspecified, STORAGE_SSD will be used.
-   * </pre>
-   */
-  com.google.bigtable.admin.cluster.v1.StorageType getDefaultStorageType();
 }

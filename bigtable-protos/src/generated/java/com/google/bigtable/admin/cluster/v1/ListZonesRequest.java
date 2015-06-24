@@ -29,7 +29,8 @@ public  final class ListZonesRequest extends
   }
   private ListZonesRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -55,11 +56,10 @@ public  final class ListZonesRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e.getMessage()).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -76,8 +76,23 @@ public  final class ListZonesRequest extends
             com.google.bigtable.admin.cluster.v1.ListZonesRequest.class, com.google.bigtable.admin.cluster.v1.ListZonesRequest.Builder.class);
   }
 
+  public static final com.google.protobuf.Parser<ListZonesRequest> PARSER =
+      new com.google.protobuf.AbstractParser<ListZonesRequest>() {
+    public ListZonesRequest parsePartialFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return new ListZonesRequest(input, extensionRegistry);
+    }
+  };
+
+  @java.lang.Override
+  public com.google.protobuf.Parser<ListZonesRequest> getParserForType() {
+    return PARSER;
+  }
+
   public static final int NAME_FIELD_NUMBER = 1;
-  private volatile java.lang.Object name_;
+  private java.lang.Object name_;
   /**
    * <code>optional string name = 1;</code>
    *
@@ -136,6 +151,7 @@ public  final class ListZonesRequest extends
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
+    getSerializedSize();
     if (!getNameBytes().isEmpty()) {
       output.writeBytes(1, getNameBytes());
     }
@@ -209,17 +225,12 @@ public  final class ListZonesRequest extends
     return PARSER.parseFrom(input, extensionRegistry);
   }
 
+  public static Builder newBuilder() { return new Builder(); }
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder() {
-    return DEFAULT_INSTANCE.toBuilder();
-  }
   public static Builder newBuilder(com.google.bigtable.admin.cluster.v1.ListZonesRequest prototype) {
-    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    return newBuilder().mergeFrom(prototype);
   }
-  public Builder toBuilder() {
-    return this == DEFAULT_INSTANCE
-        ? new Builder() : new Builder().mergeFrom(this);
-  }
+  public Builder toBuilder() { return newBuilder(this); }
 
   @java.lang.Override
   protected Builder newBuilderForType(
@@ -450,41 +461,16 @@ public  final class ListZonesRequest extends
   }
 
   // @@protoc_insertion_point(class_scope:google.bigtable.admin.cluster.v1.ListZonesRequest)
-  private static final com.google.bigtable.admin.cluster.v1.ListZonesRequest DEFAULT_INSTANCE;
-  static {
-    DEFAULT_INSTANCE = new com.google.bigtable.admin.cluster.v1.ListZonesRequest();
+  private static final com.google.bigtable.admin.cluster.v1.ListZonesRequest defaultInstance;static {
+    defaultInstance = new com.google.bigtable.admin.cluster.v1.ListZonesRequest();
   }
 
   public static com.google.bigtable.admin.cluster.v1.ListZonesRequest getDefaultInstance() {
-    return DEFAULT_INSTANCE;
-  }
-
-  public static final com.google.protobuf.Parser<ListZonesRequest> PARSER =
-      new com.google.protobuf.AbstractParser<ListZonesRequest>() {
-    public ListZonesRequest parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
-        return new ListZonesRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
-    }
-  };
-
-  @java.lang.Override
-  public com.google.protobuf.Parser<ListZonesRequest> getParserForType() {
-    return PARSER;
+    return defaultInstance;
   }
 
   public com.google.bigtable.admin.cluster.v1.ListZonesRequest getDefaultInstanceForType() {
-    return DEFAULT_INSTANCE;
+    return defaultInstance;
   }
 
 }

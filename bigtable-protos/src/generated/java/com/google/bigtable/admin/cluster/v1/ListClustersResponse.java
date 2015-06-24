@@ -30,7 +30,8 @@ public  final class ListClustersResponse extends
   }
   private ListClustersResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -66,11 +67,10 @@ public  final class ListClustersResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e.getMessage()).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         clusters_ = java.util.Collections.unmodifiableList(clusters_);
@@ -91,6 +91,21 @@ public  final class ListClustersResponse extends
     return com.google.bigtable.admin.cluster.v1.BigtableClusterServiceMessagesProto.internal_static_google_bigtable_admin_cluster_v1_ListClustersResponse_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
             com.google.bigtable.admin.cluster.v1.ListClustersResponse.class, com.google.bigtable.admin.cluster.v1.ListClustersResponse.Builder.class);
+  }
+
+  public static final com.google.protobuf.Parser<ListClustersResponse> PARSER =
+      new com.google.protobuf.AbstractParser<ListClustersResponse>() {
+    public ListClustersResponse parsePartialFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return new ListClustersResponse(input, extensionRegistry);
+    }
+  };
+
+  @java.lang.Override
+  public com.google.protobuf.Parser<ListClustersResponse> getParserForType() {
+    return PARSER;
   }
 
   public static final int CLUSTERS_FIELD_NUMBER = 1;
@@ -215,6 +230,7 @@ public  final class ListClustersResponse extends
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
+    getSerializedSize();
     for (int i = 0; i < clusters_.size(); i++) {
       output.writeMessage(1, clusters_.get(i));
     }
@@ -295,17 +311,12 @@ public  final class ListClustersResponse extends
     return PARSER.parseFrom(input, extensionRegistry);
   }
 
+  public static Builder newBuilder() { return new Builder(); }
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder() {
-    return DEFAULT_INSTANCE.toBuilder();
-  }
   public static Builder newBuilder(com.google.bigtable.admin.cluster.v1.ListClustersResponse prototype) {
-    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    return newBuilder().mergeFrom(prototype);
   }
-  public Builder toBuilder() {
-    return this == DEFAULT_INSTANCE
-        ? new Builder() : new Builder().mergeFrom(this);
-  }
+  public Builder toBuilder() { return newBuilder(this); }
 
   @java.lang.Override
   protected Builder newBuilderForType(
@@ -1139,41 +1150,16 @@ public  final class ListClustersResponse extends
   }
 
   // @@protoc_insertion_point(class_scope:google.bigtable.admin.cluster.v1.ListClustersResponse)
-  private static final com.google.bigtable.admin.cluster.v1.ListClustersResponse DEFAULT_INSTANCE;
-  static {
-    DEFAULT_INSTANCE = new com.google.bigtable.admin.cluster.v1.ListClustersResponse();
+  private static final com.google.bigtable.admin.cluster.v1.ListClustersResponse defaultInstance;static {
+    defaultInstance = new com.google.bigtable.admin.cluster.v1.ListClustersResponse();
   }
 
   public static com.google.bigtable.admin.cluster.v1.ListClustersResponse getDefaultInstance() {
-    return DEFAULT_INSTANCE;
-  }
-
-  public static final com.google.protobuf.Parser<ListClustersResponse> PARSER =
-      new com.google.protobuf.AbstractParser<ListClustersResponse>() {
-    public ListClustersResponse parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
-        return new ListClustersResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
-    }
-  };
-
-  @java.lang.Override
-  public com.google.protobuf.Parser<ListClustersResponse> getParserForType() {
-    return PARSER;
+    return defaultInstance;
   }
 
   public com.google.bigtable.admin.cluster.v1.ListClustersResponse getDefaultInstanceForType() {
-    return DEFAULT_INSTANCE;
+    return defaultInstance;
   }
 
 }
