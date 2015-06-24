@@ -29,8 +29,7 @@ public  final class UndeleteClusterRequest extends
   }
   private UndeleteClusterRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -56,10 +55,11 @@ public  final class UndeleteClusterRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e.getMessage()).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       makeExtensionsImmutable();
     }
@@ -76,23 +76,8 @@ public  final class UndeleteClusterRequest extends
             com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest.class, com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest.Builder.class);
   }
 
-  public static final com.google.protobuf.Parser<UndeleteClusterRequest> PARSER =
-      new com.google.protobuf.AbstractParser<UndeleteClusterRequest>() {
-    public UndeleteClusterRequest parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return new UndeleteClusterRequest(input, extensionRegistry);
-    }
-  };
-
-  @java.lang.Override
-  public com.google.protobuf.Parser<UndeleteClusterRequest> getParserForType() {
-    return PARSER;
-  }
-
   public static final int NAME_FIELD_NUMBER = 1;
-  private java.lang.Object name_;
+  private volatile java.lang.Object name_;
   /**
    * <code>optional string name = 1;</code>
    *
@@ -149,7 +134,6 @@ public  final class UndeleteClusterRequest extends
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    getSerializedSize();
     if (!getNameBytes().isEmpty()) {
       output.writeBytes(1, getNameBytes());
     }
@@ -223,12 +207,17 @@ public  final class UndeleteClusterRequest extends
     return PARSER.parseFrom(input, extensionRegistry);
   }
 
-  public static Builder newBuilder() { return new Builder(); }
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder(com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest prototype) {
-    return newBuilder().mergeFrom(prototype);
+  public static Builder newBuilder() {
+    return DEFAULT_INSTANCE.toBuilder();
   }
-  public Builder toBuilder() { return newBuilder(this); }
+  public static Builder newBuilder(com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest prototype) {
+    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+  }
+  public Builder toBuilder() {
+    return this == DEFAULT_INSTANCE
+        ? new Builder() : new Builder().mergeFrom(this);
+  }
 
   @java.lang.Override
   protected Builder newBuilderForType(
@@ -454,16 +443,41 @@ public  final class UndeleteClusterRequest extends
   }
 
   // @@protoc_insertion_point(class_scope:google.bigtable.admin.cluster.v1.UndeleteClusterRequest)
-  private static final com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest defaultInstance;static {
-    defaultInstance = new com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest();
+  private static final com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest DEFAULT_INSTANCE;
+  static {
+    DEFAULT_INSTANCE = new com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest();
   }
 
   public static com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest getDefaultInstance() {
-    return defaultInstance;
+    return DEFAULT_INSTANCE;
+  }
+
+  public static final com.google.protobuf.Parser<UndeleteClusterRequest> PARSER =
+      new com.google.protobuf.AbstractParser<UndeleteClusterRequest>() {
+    public UndeleteClusterRequest parsePartialFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
+        return new UndeleteClusterRequest(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
+    }
+  };
+
+  @java.lang.Override
+  public com.google.protobuf.Parser<UndeleteClusterRequest> getParserForType() {
+    return PARSER;
   }
 
   public com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest getDefaultInstanceForType() {
-    return defaultInstance;
+    return DEFAULT_INSTANCE;
   }
 
 }

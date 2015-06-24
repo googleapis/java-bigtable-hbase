@@ -17,8 +17,8 @@ syntax = "proto3";
 package google.bigtable.v1;
 
 import "google/api/annotations.proto";
-import "google/bigtable/v1approved/bigtable_data.proto";
-import "google/bigtable/v1approved/bigtable_service_messages.proto";
+import "google/bigtable/v1/bigtable_data.proto";
+import "google/bigtable/v1/bigtable_service_messages.proto";
 import "google/protobuf/empty.proto";
 
 option java_generic_services = true;
@@ -33,7 +33,7 @@ service BigtableService {
   // the same Reader filter to each. Depending on their size, rows may be
   // broken up across multiple responses, but atomicity of each row will still
   // be preserved.
-  rpc ReadRows(ReadRowsRequest) returns (stream ReadRowsResponse) {
+  rpc ReadRows(ReadRowsRequest) returns (ReadRowsResponse) {
     option (google.api.http) = { post: "/v1/{table_name=projects/*/zones/*/clusters/*/tables/*}/rows:read" body: "*" };
   }
 
@@ -41,7 +41,7 @@ service BigtableService {
   // delimit contiguous sections of the table of approximately equal size,
   // which can be used to break up the data for distributed tasks like
   // mapreduces.
-  rpc SampleRowKeys(SampleRowKeysRequest) returns (stream SampleRowKeysResponse) {
+  rpc SampleRowKeys(SampleRowKeysRequest) returns (SampleRowKeysResponse) {
     option (google.api.http) = { get: "/v1/{table_name=projects/*/zones/*/clusters/*/tables/*}/rows:sampleKeys" };
   }
 
