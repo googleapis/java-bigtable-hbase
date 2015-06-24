@@ -38,7 +38,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>${protobuff-java.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
