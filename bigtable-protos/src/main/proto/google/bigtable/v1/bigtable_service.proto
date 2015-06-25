@@ -17,8 +17,8 @@ syntax = "proto3";
 package google.bigtable.v1;
 
 import "google/api/annotations.proto";
-import "google/bigtable/v1approved/bigtable_data.proto";
-import "google/bigtable/v1approved/bigtable_service_messages.proto";
+import "google/bigtable/v1/bigtable_data.proto";
+import "google/bigtable/v1/bigtable_service_messages.proto";
 import "google/protobuf/empty.proto";
 
 option java_generic_services = true;

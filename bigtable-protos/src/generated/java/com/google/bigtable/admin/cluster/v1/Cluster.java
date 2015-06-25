@@ -24,6 +24,7 @@ public  final class Cluster extends
     serveNodes_ = 0;
     hddBytes_ = 0L;
     ssdBytes_ = 0L;
+    defaultStorageType_ = 0;
   }
 
   @java.lang.Override
@@ -33,8 +34,7 @@ public  final class Cluster extends
   }
   private Cluster(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -104,13 +104,20 @@ public  final class Cluster extends
             ssdBytes_ = input.readInt64();
             break;
           }
+          case 64: {
+            int rawValue = input.readEnum();
+
+            defaultStorageType_ = rawValue;
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e.getMessage()).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       makeExtensionsImmutable();
     }
@@ -127,23 +134,8 @@ public  final class Cluster extends
             com.google.bigtable.admin.cluster.v1.Cluster.class, com.google.bigtable.admin.cluster.v1.Cluster.Builder.class);
   }
 
-  public static final com.google.protobuf.Parser<Cluster> PARSER =
-      new com.google.protobuf.AbstractParser<Cluster>() {
-    public Cluster parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return new Cluster(input, extensionRegistry);
-    }
-  };
-
-  @java.lang.Override
-  public com.google.protobuf.Parser<Cluster> getParserForType() {
-    return PARSER;
-  }
-
   public static final int NAME_FIELD_NUMBER = 1;
-  private java.lang.Object name_;
+  private volatile java.lang.Object name_;
   /**
    * <code>optional string name = 1;</code>
    *
@@ -274,7 +266,7 @@ public  final class Cluster extends
   }
 
   public static final int DISPLAY_NAME_FIELD_NUMBER = 4;
-  private java.lang.Object displayName_;
+  private volatile java.lang.Object displayName_;
   /**
    * <code>optional string display_name = 4;</code>
    *
@@ -358,6 +350,32 @@ public  final class Cluster extends
     return ssdBytes_;
   }
 
+  public static final int DEFAULT_STORAGE_TYPE_FIELD_NUMBER = 8;
+  private int defaultStorageType_;
+  /**
+   * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
+   *
+   * <pre>
+   * What storage type to use for tables in this cluster. Only configurable at
+   * cluster creation time. If unspecified, STORAGE_SSD will be used.
+   * </pre>
+   */
+  public int getDefaultStorageTypeValue() {
+    return defaultStorageType_;
+  }
+  /**
+   * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
+   *
+   * <pre>
+   * What storage type to use for tables in this cluster. Only configurable at
+   * cluster creation time. If unspecified, STORAGE_SSD will be used.
+   * </pre>
+   */
+  public com.google.bigtable.admin.cluster.v1.StorageType getDefaultStorageType() {
+    com.google.bigtable.admin.cluster.v1.StorageType result = com.google.bigtable.admin.cluster.v1.StorageType.valueOf(defaultStorageType_);
+    return result == null ? com.google.bigtable.admin.cluster.v1.StorageType.UNRECOGNIZED : result;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -370,7 +388,6 @@ public  final class Cluster extends
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    getSerializedSize();
     if (!getNameBytes().isEmpty()) {
       output.writeBytes(1, getNameBytes());
     }
@@ -391,6 +408,9 @@ public  final class Cluster extends
     }
     if (ssdBytes_ != 0L) {
       output.writeInt64(7, ssdBytes_);
+    }
+    if (defaultStorageType_ != com.google.bigtable.admin.cluster.v1.StorageType.STORAGE_UNSPECIFIED.getNumber()) {
+      output.writeEnum(8, defaultStorageType_);
     }
   }
 
@@ -427,6 +447,10 @@ public  final class Cluster extends
     if (ssdBytes_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(7, ssdBytes_);
+    }
+    if (defaultStorageType_ != com.google.bigtable.admin.cluster.v1.StorageType.STORAGE_UNSPECIFIED.getNumber()) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeEnumSize(8, defaultStorageType_);
     }
     memoizedSerializedSize = size;
     return size;
@@ -486,12 +510,17 @@ public  final class Cluster extends
     return PARSER.parseFrom(input, extensionRegistry);
   }
 
-  public static Builder newBuilder() { return new Builder(); }
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder(com.google.bigtable.admin.cluster.v1.Cluster prototype) {
-    return newBuilder().mergeFrom(prototype);
+  public static Builder newBuilder() {
+    return DEFAULT_INSTANCE.toBuilder();
   }
-  public Builder toBuilder() { return newBuilder(this); }
+  public static Builder newBuilder(com.google.bigtable.admin.cluster.v1.Cluster prototype) {
+    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+  }
+  public Builder toBuilder() {
+    return this == DEFAULT_INSTANCE
+        ? new Builder() : new Builder().mergeFrom(this);
+  }
 
   @java.lang.Override
   protected Builder newBuilderForType(
@@ -560,6 +589,8 @@ public  final class Cluster extends
 
       ssdBytes_ = 0L;
 
+      defaultStorageType_ = 0;
+
       return this;
     }
 
@@ -597,6 +628,7 @@ public  final class Cluster extends
       result.serveNodes_ = serveNodes_;
       result.hddBytes_ = hddBytes_;
       result.ssdBytes_ = ssdBytes_;
+      result.defaultStorageType_ = defaultStorageType_;
       onBuilt();
       return result;
     }
@@ -634,6 +666,9 @@ public  final class Cluster extends
       }
       if (other.getSsdBytes() != 0L) {
         setSsdBytes(other.getSsdBytes());
+      }
+      if (other.defaultStorageType_ != 0) {
+        setDefaultStorageTypeValue(other.getDefaultStorageTypeValue());
       }
       onChanged();
       return this;
@@ -1325,6 +1360,75 @@ public  final class Cluster extends
       onChanged();
       return this;
     }
+
+    private int defaultStorageType_ = 0;
+    /**
+     * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
+     *
+     * <pre>
+     * What storage type to use for tables in this cluster. Only configurable at
+     * cluster creation time. If unspecified, STORAGE_SSD will be used.
+     * </pre>
+     */
+    public int getDefaultStorageTypeValue() {
+      return defaultStorageType_;
+    }
+    /**
+     * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
+     *
+     * <pre>
+     * What storage type to use for tables in this cluster. Only configurable at
+     * cluster creation time. If unspecified, STORAGE_SSD will be used.
+     * </pre>
+     */
+    public Builder setDefaultStorageTypeValue(int value) {
+      defaultStorageType_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
+     *
+     * <pre>
+     * What storage type to use for tables in this cluster. Only configurable at
+     * cluster creation time. If unspecified, STORAGE_SSD will be used.
+     * </pre>
+     */
+    public com.google.bigtable.admin.cluster.v1.StorageType getDefaultStorageType() {
+      com.google.bigtable.admin.cluster.v1.StorageType result = com.google.bigtable.admin.cluster.v1.StorageType.valueOf(defaultStorageType_);
+      return result == null ? com.google.bigtable.admin.cluster.v1.StorageType.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
+     *
+     * <pre>
+     * What storage type to use for tables in this cluster. Only configurable at
+     * cluster creation time. If unspecified, STORAGE_SSD will be used.
+     * </pre>
+     */
+    public Builder setDefaultStorageType(com.google.bigtable.admin.cluster.v1.StorageType value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      
+      defaultStorageType_ = value.getNumber();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
+     *
+     * <pre>
+     * What storage type to use for tables in this cluster. Only configurable at
+     * cluster creation time. If unspecified, STORAGE_SSD will be used.
+     * </pre>
+     */
+    public Builder clearDefaultStorageType() {
+      
+      defaultStorageType_ = 0;
+      onChanged();
+      return this;
+    }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return this;
@@ -1340,16 +1444,41 @@ public  final class Cluster extends
   }
 
   // @@protoc_insertion_point(class_scope:google.bigtable.admin.cluster.v1.Cluster)
-  private static final com.google.bigtable.admin.cluster.v1.Cluster defaultInstance;static {
-    defaultInstance = new com.google.bigtable.admin.cluster.v1.Cluster();
+  private static final com.google.bigtable.admin.cluster.v1.Cluster DEFAULT_INSTANCE;
+  static {
+    DEFAULT_INSTANCE = new com.google.bigtable.admin.cluster.v1.Cluster();
   }
 
   public static com.google.bigtable.admin.cluster.v1.Cluster getDefaultInstance() {
-    return defaultInstance;
+    return DEFAULT_INSTANCE;
+  }
+
+  public static final com.google.protobuf.Parser<Cluster> PARSER =
+      new com.google.protobuf.AbstractParser<Cluster>() {
+    public Cluster parsePartialFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
+        return new Cluster(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
+    }
+  };
+
+  @java.lang.Override
+  public com.google.protobuf.Parser<Cluster> getParserForType() {
+    return PARSER;
   }
 
   public com.google.bigtable.admin.cluster.v1.Cluster getDefaultInstanceForType() {
-    return defaultInstance;
+    return DEFAULT_INSTANCE;
   }
 
 }
