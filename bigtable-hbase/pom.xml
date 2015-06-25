@@ -106,7 +106,6 @@ limitations under the License.
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -153,10 +152,6 @@ limitations under the License.
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client-java6</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
         </dependency>
     </dependencies>
     <build>
