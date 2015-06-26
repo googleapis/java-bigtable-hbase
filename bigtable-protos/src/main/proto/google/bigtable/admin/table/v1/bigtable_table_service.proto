@@ -17,11 +17,10 @@ syntax = "proto3";
 package google.bigtable.admin.table.v1;
 
 import "google/api/annotations.proto";
-import "google/bigtable/admin/table/v1approved/bigtable_table_data.proto";
-import "google/bigtable/admin/table/v1approved/bigtable_table_service_messages.proto";
+import "google/bigtable/admin/table/v1/bigtable_table_data.proto";
+import "google/bigtable/admin/table/v1/bigtable_table_service_messages.proto";
 import "google/protobuf/empty.proto";
 
-option java_generic_services = true;
 option java_multiple_files = true;
 option java_outer_classname = "BigtableTableServicesProto";
 option java_package = "com.google.bigtable.admin.table.v1";
