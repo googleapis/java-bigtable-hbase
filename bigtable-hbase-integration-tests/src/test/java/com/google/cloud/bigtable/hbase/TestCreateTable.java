@@ -19,13 +19,18 @@ import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.RegionLocator;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
+import java.util.List;
 
 public class TestCreateTable extends AbstractTest {
 
@@ -113,4 +118,63 @@ public class TestCreateTable extends AbstractTest {
       }
     }
   }
+  
+  @Test
+  @Category(KnownGap.class)
+  public void testSplitKeys() throws IOException {
+    byte[][] splits = new byte[][] {
+        Bytes.toBytes("AAA"),
+        Bytes.toBytes("BBB"),
+        Bytes.toBytes("CCC"),
+    };
+    
+    Admin admin = getConnection().getAdmin();
+    
+    TableName tableName = TableName.valueOf("TestTableWithSplits");
+    HTableDescriptor descriptor = new HTableDescriptor(tableName);
+    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+    
+    try {
+      if (admin.tableExists(tableName)) {
+        LOG.warn("Not creating the table since it exists: %s", tableName);
+      } else {
+        admin.createTable(descriptor, splits);
+        List<HRegionLocation> regions = null;
+        try (RegionLocator locator = 
+            getConnection().getRegionLocator(tableName)) {
+           regions = locator.getAllRegionLocations();
+        } 
+        // The number of regions should be the number of splits + 1.
+        Assert.assertEquals(splits.length + 1, regions.size());
+        for (int i = 0; i < regions.size(); i++) {
+          HRegionLocation region = regions.get(i);
+          String start_key = Bytes.toString(
+              region.getRegionInfo().getStartKey());
+          String end_key = Bytes.toString(region.getRegionInfo().getEndKey());
+                           
+          // Check start & end keys vs what was requested.
+          if (i == 0) {
+            // First split: the end key must be the first element of splits.
+            Assert.assertEquals(Bytes.toString(splits[0]), end_key);
+          } else if (i == regions.size() - 1) {
+            // Last split: the start key must be the last element of splits.
+            Assert.assertEquals(Bytes.toString(splits[splits.length - 1]),
+                start_key);
+          } else {
+            // For all others: start_key = splits[i-i], end_key = splits[i].
+            Assert.assertEquals(Bytes.toString(splits[i-1]), start_key);
+            Assert.assertEquals(Bytes.toString(splits[i]), end_key);
+          }
+        }
+      }
+    } finally {
+      try {
+        admin.disableTable(tableName);
+        admin.deleteTable(tableName);
+      } catch (Throwable t) {
+        // Log the error and ignore it.
+        LOG.warn("Error cleaning up the table", t);
+      }
+    }
+  }   
 }
