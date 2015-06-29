@@ -93,16 +93,16 @@ public class TestClusterAPI {
     }
 
     List<Zone> zoneList = getZones(client, projectId);
-    String fullyQualifiedZoneName = selectZone(zoneList);
-    String clusterId = fullyQualifiedZoneName + "/clusters/" + TEST_CLUSTER_ID;
+    String zoneName = getZoneName(originalOptions.getZone(), zoneList);
+    String clusterName = zoneName + "/clusters/" + TEST_CLUSTER_ID;
 
-    Cluster cluster = createACluster(client, fullyQualifiedZoneName, TEST_CLUSTER_ID);
+    Cluster cluster = createACluster(client, zoneName, TEST_CLUSTER_ID);
     waitForOperation(client, cluster.getCurrentOperation().getName(), MAX_WAIT_SECONDS);
 
     configuration.set(BigtableOptionsFactory.ZONE_KEY,
-      clusterId.replaceFirst(".*/zones/([^/]+)/.*", "$1"));
+      clusterName.replaceFirst(".*/zones/([^/]+)/.*", "$1"));
     configuration.set(BigtableOptionsFactory.CLUSTER_KEY,
-      clusterId.replaceFirst(".*/clusters/([^/]+)", "$1"));
+      clusterName.replaceFirst(".*/clusters/([^/]+)", "$1"));
 
     TableName autoDeletedTableName =
         TableName.valueOf("auto-deleted-" + UUID.randomUUID().toString());
@@ -120,7 +120,7 @@ public class TestClusterAPI {
       dropTable(connection, tableToDelete);
       countTables(admin, 1);
     } finally {
-      dropCluster(client, clusterId);
+      dropCluster(client, clusterName);
     }
   }
 
@@ -184,9 +184,15 @@ public class TestClusterAPI {
     return zoneList;
   }
 
-  private String selectZone(List<Zone> zoneList) {
-    int zoneNumber = (int) (zoneList.size() * Math.random());
-    return zoneList.get(zoneNumber).getName().replaceFirst("^/", "");
+  // Iterates over the zones and returns the full name of the selected one.
+  private String getZoneName(String target_zone_id, List<Zone> zoneList) {
+    for (Zone zone : zoneList) {
+      if (zone.getName().contains(target_zone_id)) {
+        return zone.getName();
+      }
+    }
+    Assert.fail("Target zone (" + target_zone_id + ") was not found");
+    return "";
   }
 
   private Cluster createACluster(BigtableClusterAdminClient client, String zoneName,
@@ -298,11 +304,11 @@ public class TestClusterAPI {
     }
   }
 
-  private void dropCluster(BigtableClusterAdminClient client, String fullyQualifiedClusterId) {
+  private void dropCluster(BigtableClusterAdminClient client, String clusterName) {
     DeleteClusterRequest request =
-        DeleteClusterRequest.newBuilder().setName(fullyQualifiedClusterId).build();
+        DeleteClusterRequest.newBuilder().setName(clusterName).build();
     client.deleteCluster(request);
-    Assert.assertNull(getCluster(client, fullyQualifiedClusterId));
+    Assert.assertNull(getCluster(client, clusterName));
   }
 
 }
