@@ -66,6 +66,7 @@ public class TestClusterAPI {
   private static final int MAX_WAIT_SECONDS = 20;
   private static final String TEST_CLUSTER_ID = "test-cluster-api";
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
+  public static final int MAX_VERSIONS = 6;
 
   @Test
   public void testClusters() throws IOException, InterruptedException {
@@ -216,9 +217,9 @@ public class TestClusterAPI {
   }
 
   private void createTable(Admin admin, TableName tableName) throws IOException {
-    HTableDescriptor descriptor = new HTableDescriptor(tableName);
-    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-    admin.createTable(descriptor);
+    Assert.assertFalse("Table should not exist", admin.tableExists(tableName));
+    HColumnDescriptor hcd = new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(MAX_VERSIONS);
+    admin.createTable(new HTableDescriptor(tableName).addFamily(hcd));
     Assert.assertTrue("Table does not exist", admin.tableExists(tableName));
   }
 
