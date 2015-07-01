@@ -280,10 +280,27 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   @Override
   public void createTable(HTableDescriptor desc) throws IOException {
+    createTable(desc, null);
+  }
+
+  @Override
+  public void createTable(HTableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions)
+      throws IOException {
+    LOG.warn("Creating table, but ignoring parameters startKey, endKey and numRegions");
+    createTable(desc, null);
+  }
+
+  @Override
+  public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
     clusterMetadataSetter.setMetadata(builder);
     builder.setTableId(desc.getTableName().getQualifierAsString());
     builder.setTable(tableAdapter.adapt(desc));
+    if (splitKeys != null) {
+      for (byte[] splitKey : splitKeys) {
+        builder.addInitialSplitKeys(Bytes.toString(splitKey));
+      }
+    }
     try {
       bigtableTableAdminClient.createTable(builder.build());
     } catch (Throwable throwable) {
@@ -296,22 +313,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   @Override
-  public void createTable(HTableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions)
-      throws IOException {
-    LOG.warn("Creating table, but ignoring parameters startKey, endKey and numRegions");
-    createTable(desc);
-  }
-
-  @Override
-  public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
-    LOG.warn("Creating table, but ignoring parameters splitKeys");
-    createTable(desc);
-  }
-
-  @Override
   public void createTableAsync(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     LOG.warn("Creating the table synchronously");
-    createTable(desc);
+    createTable(desc, splitKeys);
   }
 
   @Override
