@@ -253,7 +253,6 @@ limitations under the License.
         <dependency>
             <groupId>org.mortbay.jetty.alpn</groupId>
             <artifactId>alpn-boot</artifactId>
-            <version>${alpn.version}</version>
         </dependency>
     </dependencies>
     <build>
