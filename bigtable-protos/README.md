@@ -56,10 +56,37 @@ Retrieved from https://github.com/google/protobuf.git
 
 # Generating the java gRPC implementations
 
-The gRPC java generation process requires protoc 3 to create the java artifacts and gradle to drive the process.  
+The gRPC Java generation process requires protoc 3
+to create the Java artifacts and gradle to drive the process.
 
-Protoc can be installed via the instructions at: https://github.com/grpc/grpc-java#build-protobuf.  Installing it isn't always trivial; you may have to Google error messages to understand what to install next; there are plenty of answers on stackoverfolw for protobuf installation requirements.  
+Protoc can be installed via the instructions at:
+https://github.com/grpc/grpc-java#build-protobuf.
+Installing it isn't always trivial;
+you may have to Google error messages to understand what to install next;
+there are plenty of answers on StackOverflow
+for protobuf installation requirements.  
 
-Gradle version 2.3+ also has to be on your path; you can get it from https://gradle.org/downloads/.
+Gradle version 2.3+ also has to be on your path;
+you can get it from https://gradle.org/downloads/.
 
-Once that's done, the easiest way to generate the java files is to run *gradle :generateProto*.  That will generate the java source files in target/generated-sources/main.  Manually delete src/generated/java/com and move target/generated-sources/main/com to src/generated/java/.
+Once that's done, the easiest way to generate the Java files
+is to run *gradle :generateProto*.
+That will generate the Java source files in target/generated-sources/main.
+Manually delete src/generated/java/com and move
+target/generated-sources/main/com to src/generated/java/.
+
+# Generating the Python protos
+
+Just like with the Java implementation, you'll need protoc version 3 to compile
+these protos (check this with `protoc --version`).
+
+After that, run the following:
+
+```bash
+$ cd bigtable-protos
+$ mkdir -p src/generated/python
+$ cd src/main/proto
+$ protoc google/bigtable/v1/*.proto --python_out=../../generated/python
+```
+
+Your generated files (`*_pb2.py`) should be inside `src/generated/python`.
