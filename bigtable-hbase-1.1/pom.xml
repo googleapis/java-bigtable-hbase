@@ -84,7 +84,29 @@ limitations under the License.
                         </goals>
                         <configuration>
                             <shadeTestJar>true</shadeTestJar>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                          <!--
+                                KEEP shadedArtifactAttached=false.  DO NOTE CHANGE shadedArtifactAttached to true!
+
+                                Dependencies get messed up if shadedArtifactAttached=true.  The relocations
+                                are vital to get around dependency mismatches between hbase and cloud bigtable.
+                                Specifically, CBT and hbase use different versions of guava and netty.  Relocations
+                                are a way to get around those types of incompatibilities.
+
+                                Using shadedArtifactAttached=true causes some tricky issues.  If =true is on,
+                                then the main artifact isn't usable, because of the incompatibility issues in the artifacts found
+                                in the relocations section.  If HBase updates its dependencies to compatible versions, then 
+                                this project will not need to relocate and include those dependencies in a shaded jar.
+
+                                As an example, the start up of hbase requires guava, and using a newer version of guava causes 
+                                startup issues.  If an older version of guava is in the classpath, then HBase classes will load 
+                                fine, but CBT will have runtime issues.
+
+                                Additionally, if shadedArtifactAttached=true there are even ssues using the shaded classifier.
+                                Using the shaded classifier will pull in the right bigtable-hbase-1.1-shaded-${project.version}.jar,
+                                but it will also pull in bigtable-hbase and bigtable-protos as dependencies, which might
+                                cause classloading issues in some cases like web apps.
+                            -->
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
                             <shadedClassifierName>shaded</shadedClassifierName>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
                             <artifactSet>
