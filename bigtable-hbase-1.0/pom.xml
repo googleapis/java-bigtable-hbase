@@ -36,10 +36,6 @@ limitations under the License.
 
     <dependencies>
         <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-        </dependency>
-        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase</artifactId>
             <version>${project.version}</version>
@@ -92,14 +88,13 @@ limitations under the License.
                                 <bannedDependencies>
                                     <excludes>
                                         <exclude>com.google.guava:guava-jdk5:*</exclude>
-<!-- This needs to work in the near future
+                                        <exclude>io.grpc:grpc-all:*</exclude>
                                         <exclude>io.netty:netty-all:*</exclude>
                                         <exclude>io.netty:netty:*</exclude>
--->
                                     </excludes>
                                     <includes>
                                         <include>com.google.guava:guava:${guava.version}</include>
-                                        <include>io.nett:*:${netty.version}</include>
+                                        <include>io.netty:*:${netty.version}</include>
                                     </includes>
                                 </bannedDependencies>
                            </rules>
@@ -135,15 +130,8 @@ limitations under the License.
                                     <include>com.google.protobuf:*</include>
                                     <include>com.twitter:hpack</include>
                                     <include>com.fasterxml.jackson.core:*</include>
-                                    <include>io.netty:netty-codec-http2</include>
-                                    <include>io.netty:netty-codec-http</include>
-                                    <include>io.netty:netty-codec</include>
-                                    <include>io.netty:netty-handler</include>
-                                    <include>io.netty:netty-buffer</include>
-                                    <include>io.netty:netty-common</include>
-                                    <include>io.netty:netty-transport</include>
-                                    <include>io.netty:netty-resolver</include>
-                                    <include>io.grpc:grpc-all</include>
+                                    <include>io.netty:*</include>
+                                    <include>io.grpc:*</include>
                                 </includes>
                             </artifactSet>
                             <relocations>

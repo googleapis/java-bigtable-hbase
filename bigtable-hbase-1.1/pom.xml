@@ -36,10 +36,6 @@ limitations under the License.
 
     <dependencies>
         <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-        </dependency>
-        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-hbase</artifactId>
             <version>${project.version}</version>
@@ -112,7 +108,9 @@ limitations under the License.
                                     <include>io.netty:netty-common</include>
                                     <include>io.netty:netty-transport</include>
                                     <include>io.netty:netty-resolver</include>
-                                    <include>io.grpc:grpc-all</include>
+                                    <include>io.grpc:grpc-core</include>
+                                    <include>io.grpc:grpc-stub</include>
+                                    <include>io.grpc:grpc-protobuf</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
