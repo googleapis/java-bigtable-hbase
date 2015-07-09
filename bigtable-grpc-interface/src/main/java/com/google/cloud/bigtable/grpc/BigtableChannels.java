@@ -62,7 +62,7 @@ public class BigtableChannels {
 
   /** Entry in call reports that indicates an entry is from before retries */
   private static final String PRE_RETRY_REPORT_ENTRY = "PreRetry";
-  /** Entry in call reports tha tindicates an entry is from after retries */
+  /** Entry in call reports that indicates an entry is from after retries */
   private static final String POST_RETRY_REPORT_ENTRY = "PostRetry";
   /** Number of threads to use to initiate retry calls */
   private static final int RETRY_THREAD_COUNT = 5;
