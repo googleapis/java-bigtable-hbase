@@ -16,6 +16,8 @@
 // Because MasterKeepAliveConnection is default scope, we have to use this package.  :-/
 package org.apache.hadoop.hbase.client;
 
+import io.netty.handler.ssl.SslContext;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -26,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +39,10 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Threads;
 
+import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc;
+import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc.BigtableTableServiceServiceDescriptor;
+import com.google.bigtable.v1.BigtableServiceGrpc;
+import com.google.bigtable.v1.BigtableServiceGrpc.BigtableServiceServiceDescriptor;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
@@ -49,6 +56,7 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.common.base.MoreObjects;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public abstract class AbstractBigtableConnection implements Connection, Closeable {
   public static final String MAX_INFLIGHT_RPCS_KEY =
@@ -68,6 +76,43 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
 
   static {
+    // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
+    ExecutorService connectionStartupExecutor =
+        Executors.newCachedThreadPool(
+            new ThreadFactoryBuilder()
+                .setNameFormat("AbstractBigtableConnection-startup-%s")
+                .setDaemon(true)
+                .build());
+    connectionStartupExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        // The first invocation of BigtableOptions.SSL_CONTEXT_FACTORY.create() is expensive.
+        // Create a throw away object in order to speed up the creation of the first
+        // BigtableConnection which uses SslContexts under the covers.
+        @SuppressWarnings("unused")
+        SslContext warmup = BigtableOptions.SSL_CONTEXT_FACTORY.create();
+      }
+    });
+    connectionStartupExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        // The first invocation of BigtableServiceGrpc.CONFIG is expensive.
+        // Reference it so that it gets constructed asynchronously.
+        @SuppressWarnings("unused")
+        BigtableServiceServiceDescriptor warmup = BigtableServiceGrpc.CONFIG;
+      }
+    });
+    connectionStartupExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        // The first invocation of BigtableTableServiceGrpcs.CONFIG is expensive.
+        // Reference it so that it gets constructed asynchronously.
+        @SuppressWarnings("unused")
+        BigtableTableServiceServiceDescriptor warmup = BigtableTableServiceGrpc.CONFIG;
+      }
+    });
+    connectionStartupExecutor.shutdown();
+
     Runnable shutDownRunnable = new Runnable() {
       @Override
       public void run() {
