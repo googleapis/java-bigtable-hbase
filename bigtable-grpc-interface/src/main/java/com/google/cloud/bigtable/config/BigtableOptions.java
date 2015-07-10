@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.config;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContext;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -34,6 +33,21 @@ import com.google.common.base.Preconditions;
  * An immutable class providing access to configuration options for Bigtable.
  */
 public class BigtableOptions {
+
+  public static final TransportOptions.SslContextFactory SSL_CONTEXT_FACTORY =
+      new TransportOptions.SslContextFactory() {
+        @SuppressWarnings("deprecation")
+        @Override
+        public SslContext create() {
+          try {
+            // We create multiple channels via refreshing and pooling channel implementation.
+            // Each one needs its own SslContext.
+            return SslContext.newClientContext();
+          } catch (SSLException e) {
+            throw new IllegalStateException("Could not create an ssl context.", e);
+          }
+        }
+      };
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
@@ -233,7 +247,7 @@ public class BigtableOptions {
 
     LOG.debug("Connection Configuration: project: %s, cluster: %s, data host %s, "
         + "table admin host %s, cluster admin host %s using transport %s.",
-        getProjectId(),
+        projectId,
         cluster,
         dataHost,
         tableAdminHost,
@@ -281,35 +295,24 @@ public class BigtableOptions {
     return clusterAdminHost;
   }
 
-  public TransportOptions getDataTransportOptions() throws IOException {
+  public TransportOptions getDataTransportOptions() {
     return createTransportOptions(this.dataHost);
   }
 
-  public TransportOptions getTableAdminTransportOptions() throws IOException {
+  public TransportOptions getTableAdminTransportOptions() {
     return createTransportOptions(this.tableAdminHost);
   }
 
-  public TransportOptions getClusterAdminTransportOptions() throws IOException {
+  public TransportOptions getClusterAdminTransportOptions() {
     return createTransportOptions(this.clusterAdminHost);
   }
 
-  private TransportOptions createTransportOptions(InetAddress host) throws IOException {
+  private TransportOptions createTransportOptions(InetAddress host) {
     return new TransportOptions(
         TransportOptions.BigtableTransports.HTTP2_NETTY_TLS,
         host,
         port,
-        new TransportOptions.SslContextFactory() {
-          @Override
-          public SslContext create() {
-            try {
-              // We create multiple channels via refreshing and pooling channel implementation.
-              // Each one needs its own SslContext.
-              return SslContext.newClientContext();
-            } catch (SSLException e) {
-              throw new IllegalStateException("Could not create an ssl context.", e);
-            }
-          }
-        },
+        SSL_CONTEXT_FACTORY,
         customEventLoopGroup);
   }
 
