@@ -285,6 +285,8 @@ public class BigtableOptionsFactory {
     // TODO(kevinsi): Make this configurable.
     retryOptionsBuilder.setMaxElapsedBackoffMillis(180000); // 3 minutes
 
+    optionsBuilder.setRetryOptions(retryOptionsBuilder.build());
+
     int channelCount =
         configuration.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
     optionsBuilder.setChannelCount(channelCount);

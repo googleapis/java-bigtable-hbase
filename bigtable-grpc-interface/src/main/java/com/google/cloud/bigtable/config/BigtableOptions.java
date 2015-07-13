@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.config;
 
-import io.grpc.transport.netty.GrpcSslContexts;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.SslContext;
 
@@ -44,7 +43,7 @@ public class BigtableOptions {
           try {
             // We create multiple channels via refreshing and pooling channel implementation.
             // Each one needs its own SslContext.
-            return GrpcSslContexts.forClient().build();
+            return SslContext.newClientContext();
           } catch (SSLException e) {
             throw new IllegalStateException("Could not create an ssl context.", e);
           }
