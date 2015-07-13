@@ -23,6 +23,7 @@ import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.grpc.ResultScanner;
+import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
@@ -69,7 +70,7 @@ public class TestBigtableTable {
   public void setup() throws UnknownHostException {
     MockitoAnnotations.initMocks(this);
     BigtableOptions.Builder builder = new BigtableOptions.Builder();
-    builder.setRetriesEnabled(false);
+    builder.setRetryOptions(new RetryOptions.Builder().setEnableRetries(false).build());
     builder.setClusterAdminHost(InetAddress.getByName("localhost"));
     builder.setTableAdminHost(InetAddress.getByName("localhost"));
     builder.setDataHost(InetAddress.getByName("localhost"));
@@ -104,7 +105,7 @@ public class TestBigtableTable {
   }
 
   @Test
-  public void getRequestsAreFullyPopulated() throws ServiceException, IOException {
+  public void getRequestsAreFullyPopulated() throws IOException {
     Mockito.when(mockClient.readRows(Mockito.any(ReadRowsRequest.class)))
         .thenReturn(new ResultScanner<Row>() {
           @Override

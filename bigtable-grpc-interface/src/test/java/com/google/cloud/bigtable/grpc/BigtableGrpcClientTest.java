@@ -32,9 +32,11 @@ public class BigtableGrpcClientTest {
   @Test
   public void RetryOnDeadlineExceeded_enabled() {
     ChannelOptions channelOptions = new ChannelOptions.Builder()
-        .setBackoffMultiplier(20)
-        .setEnableRetries(true)
-        .setRetryOnDeadlineExceeded(true)
+        .setRetryOptions(new RetryOptions.Builder()
+            .setEnableRetries(true)
+            .setBackoffMultiplier(20)
+            .setRetryOnDeadlineExceeded(true)
+            .build())
         .build();
     BigtableGrpcClient bigtableGrpcClient = (BigtableGrpcClient) BigtableGrpcClient.createClient(
         transportOptions, channelOptions, executorService);
@@ -47,9 +49,11 @@ public class BigtableGrpcClientTest {
   @Test
   public void RetryOnDeadlineExceeded_disabled() {
     ChannelOptions channelOptions = new ChannelOptions.Builder()
-        .setBackoffMultiplier(20)
-        .setEnableRetries(true)
-        .setRetryOnDeadlineExceeded(false)
+        .setRetryOptions(new RetryOptions.Builder()
+          .setEnableRetries(true)
+          .setBackoffMultiplier(20)
+          .setRetryOnDeadlineExceeded(false)
+          .build())
         .build();
     BigtableGrpcClient bigtableGrpcClient = (BigtableGrpcClient) BigtableGrpcClient.createClient(
         transportOptions, channelOptions, executorService);
