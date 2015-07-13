@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClient;
+import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.ResultScanner;
 import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.protobuf.ByteString;
@@ -69,18 +70,24 @@ public class TestBigtableTable {
   @Before
   public void setup() throws UnknownHostException {
     MockitoAnnotations.initMocks(this);
-    BigtableOptions.Builder builder = new BigtableOptions.Builder();
-    builder.setRetryOptions(new RetryOptions.Builder().setEnableRetries(false).build());
-    builder.setClusterAdminHost(InetAddress.getByName("localhost"));
-    builder.setTableAdminHost(InetAddress.getByName("localhost"));
-    builder.setDataHost(InetAddress.getByName("localhost"));
-    builder.setPort(0);
-    builder.setProjectId(TEST_PROJECT);
-    builder.setCluster(TEST_CLUSTER);
-    builder.setZone(TEST_ZONE);
-    builder.setCredential(null);
-    builder.setUserAgent("testAgent");
-    BigtableOptions options = builder.build();
+    ChannelOptions channelOptions = new ChannelOptions.Builder()
+        .setRetryOptions(new RetryOptions.Builder().setEnableRetries(false).build())
+        .setCredential(null)
+        .setUserAgent("testAgent")
+        .build();
+
+    InetAddress localhost = InetAddress.getByName("localhost");
+    BigtableOptions options = new BigtableOptions.Builder()
+        .setClusterAdminHost(localhost)
+        .setTableAdminHost(localhost)
+        .setDataHost(localhost)
+        .setPort(0)
+        .setProjectId(TEST_PROJECT)
+        .setCluster(TEST_CLUSTER)
+        .setZone(TEST_ZONE)
+        .setChannelOptions(channelOptions)
+        .build();
+
     Configuration config = new Configuration();
     Mockito.when(mockConnection.getConfiguration()).thenReturn(config);
     table = new BigtableTable(
