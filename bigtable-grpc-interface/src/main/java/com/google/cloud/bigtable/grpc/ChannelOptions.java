@@ -35,7 +35,7 @@ public class ChannelOptions {
     private String callStatusReportPath;
     private String callTimingReportPath;
     private ScheduledExecutorService scheduledExecutorService = null;
-    private RetryOptions.Builder retryOptionsBuilder = new RetryOptions.Builder();
+    private RetryOptions retryOptions = null;
     private long timeoutMs = -1;
     private int channelCount = 1;
 
@@ -80,63 +80,6 @@ public class ChannelOptions {
     }
 
     /**
-     * Enable retries on the channel.
-     * Deprecated, use the RetryOptions.Builder returned from getUnaryCallRetryOptionsBuilder().
-     */
-    @Deprecated
-    public Builder setEnableRetries(boolean enableRetries) {
-      retryOptionsBuilder.setEnableRetries(enableRetries);
-      return this;
-    }
-
-    /**
-     * Enable retry on deadline exceeded.
-     * Deprecated, use the RetryOptions.Builder returned from getUnaryCallRetryOptionsBuilder().
-     */
-    @Deprecated
-    public Builder setRetryOnDeadlineExceeded(boolean retryOnDeadlineExceeded) {
-      retryOptionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
-      return this;
-    }
-
-    /**
-     * The amount of time in miliiseconds we will wait for our first error retry.
-     * Deprecated, use the RetryOptions.Builder returned from getUnaryCallRetryOptionsBuilder().
-     */
-    @Deprecated
-    public Builder setInitialBackoffMillis(int initialBackoffMillis) {
-      retryOptionsBuilder.setInitialBackoffMillis(initialBackoffMillis);
-      return this;
-    }
-
-    /**
-     * Multiplier we will apply to backoff times between retries.
-     * Deprecated, use the RetryOptions.Builder returned from getUnaryCallRetryOptionsBuilder().
-     */
-    @Deprecated
-    public Builder setBackoffMultiplier(double multiplier) {
-      retryOptionsBuilder.setBackoffMultiplier(multiplier);
-      return this;
-    }
-
-    /**
-     * Maximum amount of time we will retry an operation that is failing.
-     * Deprecated, use the RetryOptions.Builder returned from getUnaryCallRetryOptionsBuilder().
-     */
-    @Deprecated
-    public Builder maxElapsedBackoffMillis(int maxElaspedBackoffMillis) {
-      retryOptionsBuilder.setMaxElapsedBackoffMillis(maxElaspedBackoffMillis);
-      return this;
-    }
-
-    /**
-     * Get a builder for retry options.
-     */
-    public RetryOptions.Builder getUnaryCallRetryOptionsBuilder() {
-      return retryOptionsBuilder;
-    }
-
-    /**
      * The ScheduledExecutorService to use to perform rpc retries.
      */
     public Builder setScheduledExecutorService(ScheduledExecutorService scheduledExecutorService) {
@@ -154,6 +97,14 @@ public class ChannelOptions {
     }
 
     /**
+     * The retry options.
+     */
+    public Builder setRetryOptions(RetryOptions retryOptions) {
+      this.retryOptions = retryOptions;
+      return this;
+    }
+    
+    /**
      * The timeout after which a Channel should be discarded.
      */
     public Builder setTimeoutMs(long timeoutMs) {
@@ -168,7 +119,7 @@ public class ChannelOptions {
           userAgent,
           callTimingReportPath,
           callStatusReportPath,
-          retryOptionsBuilder.build(),
+          retryOptions,
           scheduledExecutorService,
           timeoutMs,
           channelCount);

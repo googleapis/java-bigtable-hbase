@@ -33,6 +33,7 @@ import org.apache.hadoop.conf.Configuration;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -270,15 +271,19 @@ public class BigtableOptionsFactory {
       optionsBuilder.setCallTimingReportPath(callTimingReport);
     }
 
+    RetryOptions.Builder retryOptionsBuilder = new RetryOptions.Builder();
     boolean enableRetries = configuration.getBoolean(
         ENABLE_GRPC_RETRIES_KEY, ENABLE_GRPC_RETRIES_DEFAULT);
     LOG.debug("gRPC retries enabled: %s", enableRetries);
-    optionsBuilder.setRetriesEnabled(enableRetries);
+    retryOptionsBuilder.setEnableRetries(enableRetries);
 
     boolean retryOnDeadlineExceeded = configuration.getBoolean(
         ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY, ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_DEFAULT);
     LOG.debug("gRPC retry on deadline exceeded enabled: %s", retryOnDeadlineExceeded);
-    optionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
+    retryOptionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
+
+    // TODO(kevinsi): Make this configurable.
+    retryOptionsBuilder.setMaxElapsedBackoffMillis(180000); // 3 minutes
 
     int channelCount =
         configuration.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
