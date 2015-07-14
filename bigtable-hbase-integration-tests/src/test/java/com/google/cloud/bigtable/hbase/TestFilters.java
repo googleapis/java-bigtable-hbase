@@ -1383,6 +1383,7 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
+  @Category(KnownGap.class)
   public void testPageFilters() throws IOException {
     byte[][] rowKeys = dataHelper.randomData("pageFilter-", 100);
     byte[] qualA = dataHelper.randomData("qualA");
