@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ import org.apache.hadoop.conf.Configuration;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -44,6 +45,10 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  */
 public class BigtableOptionsFactory {
   protected static final Logger LOG = new Logger(BigtableOptionsFactory.class);
+
+  // TODO(sduskis): all default options should be moved to their appropriate *Options classes
+  // This class is specific to HBase's configuration approach.  The defaults ought to be used in
+  // the context of a stand alone java client, eventually.
 
   public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
   public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
@@ -118,6 +123,15 @@ public class BigtableOptionsFactory {
   public static final boolean ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_DEFAULT = true;
 
   /**
+   * Key to set to a boolean flag indicating the maximum amount of time to wait for retries, given
+   * a backoff policy on errors.
+   * This flag is used only when grpc retries is enabled.
+   */
+  public static final String MAX_ELAPSED_BACKOFF_MILLIS_KEY =
+      "google.bigtable.grpc.retry.max.elapsed.backoff.ms";
+  public static final int MAX_ELAPSED_BACKOFF_MS_DEFAULT = 3 * 60 * 1000; // 3 minutes
+
+  /**
    * The number of grpc channels to open for asynchronous processing such as puts.
    */
   public static final String BIGTABLE_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
@@ -131,29 +145,32 @@ public class BigtableOptionsFactory {
   public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
 
   public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
-    BigtableOptions.Builder optionsBuilder = new BigtableOptions.Builder();
+    ChannelOptions channelOptions = createChannelOptions(configuration);
 
+    BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
     String projectId = configuration.get(PROJECT_ID_KEY);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId),
         String.format("Project ID must be supplied via %s", PROJECT_ID_KEY));
-    optionsBuilder.setProjectId(projectId);
+    bigtableOptionsBuilder.setProjectId(projectId);
     LOG.debug("Project ID %s", projectId);
 
     String zone = configuration.get(ZONE_KEY);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(zone),
         String.format("Zone must be supplied via %s", ZONE_KEY));
-    optionsBuilder.setZone(zone);
+    bigtableOptionsBuilder.setZone(zone);
     LOG.debug("Zone %s", zone);
 
     String cluster = configuration.get(CLUSTER_KEY);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(cluster),
         String.format("Cluster must be supplied via %s", CLUSTER_KEY));
-    optionsBuilder.setCluster(cluster);
+    bigtableOptionsBuilder.setCluster(cluster);
     LOG.debug("Cluster %s", cluster);
 
+    // TODO(sduskis): InetAddress.getByName is expensive.  This can be parallelized to speed up
+    // startup.
 
     String overrideIp = configuration.get(IP_OVERRIDE_KEY);
     InetAddress overrideIpAddress = null;
@@ -168,10 +185,10 @@ public class BigtableOptionsFactory {
         String.format("API Data endpoint host must be supplied via %s", BIGTABLE_HOST_KEY));
     if (overrideIpAddress == null) {
       LOG.debug("Data endpoint host %s", dataHost);
-      optionsBuilder.setDataHost(InetAddress.getByName(dataHost));
+      bigtableOptionsBuilder.setDataHost(InetAddress.getByName(dataHost));
     } else {
       LOG.debug("Data endpoint host %s. Using override IP address.", dataHost);
-      optionsBuilder.setDataHost(
+      bigtableOptionsBuilder.setDataHost(
           InetAddress.getByAddress(dataHost, overrideIpAddress.getAddress()));
     }
 
@@ -179,10 +196,10 @@ public class BigtableOptionsFactory {
         BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT);
     if (overrideIpAddress == null) {
       LOG.debug("Table admin endpoint host %s", tableAdminHost);
-      optionsBuilder.setTableAdminHost(InetAddress.getByName(tableAdminHost));
+      bigtableOptionsBuilder.setTableAdminHost(InetAddress.getByName(tableAdminHost));
     } else {
       LOG.debug("Table admin endpoint host %s. Using override IP address.", tableAdminHost);
-      optionsBuilder.setTableAdminHost(
+      bigtableOptionsBuilder.setTableAdminHost(
           InetAddress.getByAddress(tableAdminHost, overrideIpAddress.getAddress()));
     }
 
@@ -190,17 +207,35 @@ public class BigtableOptionsFactory {
         BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT);
     if (overrideIpAddress == null) {
       LOG.debug("Cluster admin endpoint host %s", clusterAdminHost);
-      optionsBuilder.setClusterAdminHost(InetAddress.getByName(clusterAdminHost));
+      bigtableOptionsBuilder.setClusterAdminHost(InetAddress.getByName(clusterAdminHost));
     } else {
       LOG.debug("Cluster admin endpoint host %s. Using override IP address.", clusterAdminHost);
-      optionsBuilder.setClusterAdminHost(
+      bigtableOptionsBuilder.setClusterAdminHost(
           InetAddress.getByAddress(clusterAdminHost, overrideIpAddress.getAddress()));
     }
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
-    optionsBuilder.setPort(port);
+    bigtableOptionsBuilder.setPort(port);
 
+    // TODO(sduskis): The elg event group needs to be closed when the BigtableConnection is closed.
+    // add a ClientCloseHandler somewhere on the BigtableOptions or channel options and then
+    // close it when the BigtableConnection is closed.
+    ThreadFactory threadFactory = new ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build();
+    EventLoopGroup elg = new NioEventLoopGroup(0, threadFactory);
+    bigtableOptionsBuilder.setCustomEventLoopGroup(elg);
+
+    bigtableOptionsBuilder.setChannelOptions(channelOptions);
+
+    return bigtableOptionsBuilder.build();
+  }
+
+  private static ChannelOptions createChannelOptions(Configuration configuration)
+      throws IOException {
+    ChannelOptions.Builder channelOptionsBuilder = new ChannelOptions.Builder();
     try {
+      // TODO(sduskis): creating credentials is expensive.  Creating this can be parallelized.
       if (configuration.getBoolean(
           BIGTABE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
         LOG.debug("Using service accounts");
@@ -209,7 +244,7 @@ public class BigtableOptionsFactory {
         String serviceAccountEmail = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
         if (!Strings.isNullOrEmpty(serviceAccountJson)) {
           LOG.debug("Using JSON file: %s", serviceAccountJson);
-          optionsBuilder.setCredential(CredentialFactory.getApplicationDefaultCredential());
+          channelOptionsBuilder.setCredential(CredentialFactory.getApplicationDefaultCredential());
         } else if (!Strings.isNullOrEmpty(serviceAccountEmail)) {
           LOG.debug("Service account %s specified.", serviceAccountEmail);
           String keyfileLocation =
@@ -218,15 +253,16 @@ public class BigtableOptionsFactory {
               !Strings.isNullOrEmpty(keyfileLocation),
               "Key file location must be specified when setting service account email");
           LOG.debug("Using p12 keyfile: %s", keyfileLocation);
-          optionsBuilder.setCredential(
+          channelOptionsBuilder.setCredential(
               CredentialFactory.getCredentialFromPrivateKeyServiceAccount(
                   serviceAccountEmail, keyfileLocation));
         } else {
-          optionsBuilder.setCredential(CredentialFactory.getCredentialFromMetadataServiceAccount());
+          channelOptionsBuilder.setCredential(CredentialFactory
+              .getCredentialFromMetadataServiceAccount());
         }
       } else if (configuration.getBoolean(
           BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT)) {
-        optionsBuilder.setCredential(null); // Intended for testing purposes only.
+        channelOptionsBuilder.setCredential(null); // Intended for testing purposes only.
         LOG.info("Enabling the use of null credentials. This should not be used in production.");
       } else {
         throw new IllegalStateException(
@@ -236,12 +272,9 @@ public class BigtableOptionsFactory {
       throw new IOException("Failed to acquire credential.", gse);
     }
 
-    ThreadFactory threadFactory = new ThreadFactoryBuilder()
-        .setDaemon(true)
-        .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build();
-    EventLoopGroup elg = new NioEventLoopGroup(0, threadFactory);
-    optionsBuilder.setCustomEventLoopGroup(elg);
-
+    // TODO(sduskis): retryExecutor needs to be closed when the BigtableConnection is closed.
+    // add a ClientCloseHandler somewhere on the BigtableOptions or channel options and then
+    // close it when the BigtableConnection is closed.
     ScheduledExecutorService retryExecutor =
         Executors.newScheduledThreadPool(
             RETRY_THREAD_COUNT,
@@ -249,7 +282,12 @@ public class BigtableOptionsFactory {
                 .setDaemon(true)
                 .setNameFormat(RETRY_THREADPOOL_NAME + "-%d")
                 .build());
-    optionsBuilder.setRpcRetryExecutorService(retryExecutor);
+    channelOptionsBuilder.setScheduledExecutorService(retryExecutor);
+
+    // TODO(sduskis): I think that this call report directory mechanism doesn't work anymore as is.
+    // We need to make sure that if we want this feature, that we have only a single interceptor
+    // for all BigtableChannels.  Right now, we create one interceptor per channel, so there
+    // are at least 2: 1 for admin and 1 for data.
 
     // Set up aggregate performance and call error rate logging:
     if (!Strings.isNullOrEmpty(configuration.get(CALL_REPORT_DIRECTORY_KEY))) {
@@ -267,10 +305,31 @@ public class BigtableOptionsFactory {
           reportDirectoryPath.resolve("call_timing.txt").toAbsolutePath().toString();
       LOG.debug("Logging call status aggregates to %s", callStatusReport);
       LOG.debug("Logging call timing aggregates to %s", callTimingReport);
-      optionsBuilder.setCallStatusReportPath(callStatusReport);
-      optionsBuilder.setCallTimingReportPath(callTimingReport);
+      channelOptionsBuilder.setCallStatusReportPath(callStatusReport);
+      channelOptionsBuilder.setCallTimingReportPath(callTimingReport);
     }
 
+    channelOptionsBuilder.setRetryOptions(createRetryOptions(configuration));
+
+    int channelCount =
+        configuration.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
+    channelOptionsBuilder.setChannelCount(channelCount);
+
+    long channelTimeout =
+        configuration.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
+
+    // Connection refresh takes a couple of seconds. 1 minute is the bare minimum that this should
+    // be allowed to be set at.
+    Preconditions.checkArgument(channelTimeout == 0 || channelTimeout >= 60000,
+      BIGTABLE_CHANNEL_TIMEOUT_MS_KEY + " has to be 0 (no timeout) or 1 minute+ (60000)");
+    channelOptionsBuilder.setTimeoutMs(channelTimeout);
+
+    channelOptionsBuilder.setUserAgent(BigtableConstants.USER_AGENT);
+
+    return channelOptionsBuilder.build();
+  }
+
+  private static RetryOptions createRetryOptions(Configuration configuration) {
     RetryOptions.Builder retryOptionsBuilder = new RetryOptions.Builder();
     boolean enableRetries = configuration.getBoolean(
         ENABLE_GRPC_RETRIES_KEY, ENABLE_GRPC_RETRIES_DEFAULT);
@@ -282,24 +341,11 @@ public class BigtableOptionsFactory {
     LOG.debug("gRPC retry on deadline exceeded enabled: %s", retryOnDeadlineExceeded);
     retryOptionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
 
-    // TODO(kevinsi): Make this configurable.
-    retryOptionsBuilder.setMaxElapsedBackoffMillis(180000); // 3 minutes
+    int maxElapsedBackoffMillis = configuration.getInt(
+        MAX_ELAPSED_BACKOFF_MILLIS_KEY, MAX_ELAPSED_BACKOFF_MS_DEFAULT);
+    LOG.debug("gRPC retry maxElapsedBackoffMillis: %d", maxElapsedBackoffMillis);
+    retryOptionsBuilder.setMaxElapsedBackoffMillis(maxElapsedBackoffMillis);
 
-    optionsBuilder.setRetryOptions(retryOptionsBuilder.build());
-
-    int channelCount =
-        configuration.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
-    optionsBuilder.setChannelCount(channelCount);
-
-    long channelTimeout =
-        configuration.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
-
-    Preconditions.checkArgument(channelTimeout == 0 || channelTimeout >= 60000,
-      BIGTABLE_CHANNEL_TIMEOUT_MS_KEY + " has to be at least 1 minute (60000)");
-    optionsBuilder.setChannelTimeoutMs(channelTimeout);
-
-    optionsBuilder.setUserAgent(BigtableConstants.USER_AGENT);
-
-    return optionsBuilder.build();
+    return retryOptionsBuilder.build();
   }
 }

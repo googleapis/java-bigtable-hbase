@@ -15,7 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
+import com.google.cloud.bigtable.config.BigtableOptions.Builder;
 import com.google.common.base.Preconditions;
 
 import java.util.concurrent.ScheduledExecutorService;
@@ -91,7 +93,6 @@ public class ChannelOptions {
      * The number of channels to create.
      */
     public Builder setChannelCount(int channelCount) {
-      Preconditions.checkState(channelCount > 0);
       this.channelCount  = channelCount;
       return this;
     }
@@ -160,6 +161,12 @@ public class ChannelOptions {
       ScheduledExecutorService scheduledExecutorService,
       long timeoutMs,
       int channelCount) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(userAgent),
+        "UserAgent must not be empty or null");
+    Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
+    Preconditions.checkArgument(timeoutMs >= -1,
+      "ChannelTimeoutMs has to be positive, or -1 for none.");
+
     this.credential = credential;
     this.authority = authority;
     this.userAgent = userAgent;
