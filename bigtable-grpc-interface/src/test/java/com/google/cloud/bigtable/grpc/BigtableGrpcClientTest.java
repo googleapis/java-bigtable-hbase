@@ -37,6 +37,7 @@ public class BigtableGrpcClientTest {
             .setBackoffMultiplier(20)
             .setRetryOnDeadlineExceeded(true)
             .build())
+        .setUserAgent("test user agent")
         .build();
     BigtableGrpcClient bigtableGrpcClient = (BigtableGrpcClient) BigtableGrpcClient.createClient(
         transportOptions, channelOptions, executorService);
@@ -54,6 +55,7 @@ public class BigtableGrpcClientTest {
           .setBackoffMultiplier(20)
           .setRetryOnDeadlineExceeded(false)
           .build())
+        .setUserAgent("test user agent")
         .build();
     BigtableGrpcClient bigtableGrpcClient = (BigtableGrpcClient) BigtableGrpcClient.createClient(
         transportOptions, channelOptions, executorService);
