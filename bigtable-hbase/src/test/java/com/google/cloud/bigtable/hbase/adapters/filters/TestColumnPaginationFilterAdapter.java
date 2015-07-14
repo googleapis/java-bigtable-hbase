@@ -40,7 +40,7 @@ public class TestColumnPaginationFilterAdapter {
   public void integerLimitsAreApplied() throws IOException {
     ColumnPaginationFilter filter = new ColumnPaginationFilter(10, 20);
     RowFilter adaptedFilter = adapter.adapt(
-        new FilterAdapterContext(new Scan()), filter);
+        new FilterAdapterContext(new Scan(), null), filter);
     Assert.assertEquals(
         RowFilter.newBuilder()
             .setChain(
@@ -59,7 +59,7 @@ public class TestColumnPaginationFilterAdapter {
   public void zeroOffsetLimitIsSupported() throws IOException {
     ColumnPaginationFilter filter = new ColumnPaginationFilter(10, 0);
     RowFilter adaptedFilter = adapter.adapt(
-        new FilterAdapterContext(new Scan()), filter);
+        new FilterAdapterContext(new Scan(), null), filter);
     Assert.assertEquals(
         RowFilter.newBuilder()
             .setChain(
@@ -78,7 +78,7 @@ public class TestColumnPaginationFilterAdapter {
         new ColumnPaginationFilter(10, Bytes.toBytes("q1"));
     RowFilter adaptedFilter = adapter.adapt(
         new FilterAdapterContext(
-            new Scan().addFamily(Bytes.toBytes("f1"))),
+            new Scan().addFamily(Bytes.toBytes("f1")), null),
         filter);
     Assert.assertEquals(
         RowFilter.newBuilder()

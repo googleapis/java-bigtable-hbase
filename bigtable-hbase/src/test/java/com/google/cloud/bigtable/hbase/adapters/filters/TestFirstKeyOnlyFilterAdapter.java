@@ -34,7 +34,7 @@ public class TestFirstKeyOnlyFilterAdapter {
   @Test
   public void onlyTheFirstKeyFromEachRowIsEmitted() throws IOException {
     RowFilter adaptedFilter = adapter.adapt(
-        new FilterAdapterContext(new Scan()), new FirstKeyOnlyFilter());
+        new FilterAdapterContext(new Scan(), null), new FirstKeyOnlyFilter());
     Assert.assertEquals(
         RowFilter.newBuilder()
             .setCellsPerRowLimitFilter(1)

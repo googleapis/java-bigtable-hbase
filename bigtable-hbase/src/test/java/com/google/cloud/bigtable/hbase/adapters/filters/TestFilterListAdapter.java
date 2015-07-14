@@ -20,16 +20,20 @@ import com.google.bigtable.v1.RowFilter;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(JUnit4.class)
 public class TestFilterListAdapter {
@@ -38,7 +42,12 @@ public class TestFilterListAdapter {
   // and the filter adapter.
   FilterAdapter filterAdapter = FilterAdapter.buildAdapter();
   Scan emptyScan = new Scan();
-  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan);
+  FilterAdapterContext emptyScanContext = null;
+
+  @Before
+  public void setup() {
+    emptyScanContext = new FilterAdapterContext(emptyScan, null);
+  }
 
   FilterList makeFilterList(Operator filterOperator) {
     return new FilterList(
@@ -50,7 +59,7 @@ public class TestFilterListAdapter {
   @Test
   public void interleavedFiltersAreAdapted() throws IOException {
     FilterList filterList = makeFilterList(Operator.MUST_PASS_ONE);
-    RowFilter rowFilter = filterAdapter.adaptFilter(emptyScanContext, filterList);
+    RowFilter rowFilter = filterAdapter.adaptFilter(emptyScanContext, filterList).get();
     Assert.assertEquals(
         "value",
         rowFilter.getInterleave().getFilters(0).getValueRegexFilter().toStringUtf8());
@@ -62,12 +71,55 @@ public class TestFilterListAdapter {
   @Test
   public void chainedFiltersAreAdapted() throws IOException {
     FilterList filterList = makeFilterList(Operator.MUST_PASS_ALL);
-    RowFilter rowFilter = filterAdapter.adaptFilter(emptyScanContext, filterList);
+    RowFilter rowFilter = filterAdapter.adaptFilter(emptyScanContext, filterList).get();
     Assert.assertEquals(
         "value",
         rowFilter.getChain().getFilters(0).getValueRegexFilter().toStringUtf8());
     Assert.assertEquals(
         "value2",
         rowFilter.getChain().getFilters(1).getValueRegexFilter().toStringUtf8());
+  }
+
+  @Test
+  public void compositeFilterSupportStatusIsReturnedForUnsupportedChildFilters() {
+    FilterListAdapter filterListAdapter = new FilterListAdapter(new FilterAdapter() {
+      @Override
+      public void collectUnsupportedStatuses(FilterAdapterContext context, Filter filter,
+          List<FilterSupportStatus> statuses) {
+        Assert.assertEquals(
+            "FilterListDepth should be incremented in isFilterSupported.",
+            1,
+            context.getFilterListDepth());
+        statuses.add(FilterSupportStatus.newNotSupported("Test"));
+      }
+    });
+
+    FilterList filterList = makeFilterList(Operator.MUST_PASS_ALL);
+    FilterSupportStatus status = filterListAdapter.isFilterSupported(emptyScanContext, filterList);
+    Assert.assertFalse(
+        "collectUnsupportedStatuses should have been invoked returning unsupported statuses.",
+        status.isSupported());
+  }
+
+  @Test
+  public void collectUnsupportedStatusesStartsANewContext() {
+    FilterListAdapter filterListAdapter = new FilterListAdapter(new FilterAdapter() {
+      @Override
+      public void collectUnsupportedStatuses(FilterAdapterContext context, Filter filter,
+          List<FilterSupportStatus> statuses) {
+        Assert.assertEquals(
+            "FilterListDepth should be incremented in isFilterSupported.",
+            1,
+            context.getFilterListDepth());
+        statuses.add(FilterSupportStatus.newNotSupported("Test"));
+      }
+    });
+
+    Assert.assertEquals("Initial depth should be 0.", 0, emptyScanContext.getFilterListDepth());
+    FilterList filterList = makeFilterList(Operator.MUST_PASS_ALL);
+    FilterSupportStatus status = filterListAdapter.isFilterSupported(emptyScanContext, filterList);
+    Assert.assertFalse(
+        "collectUnsupportedStatuses should have been invoked returning unsupported statuses.",
+        status.isSupported());
   }
 }

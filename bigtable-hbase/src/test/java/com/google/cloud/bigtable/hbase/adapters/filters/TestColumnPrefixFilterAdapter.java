@@ -32,7 +32,7 @@ public class TestColumnPrefixFilterAdapter {
 
   ColumnPrefixFilterAdapter adapter = new ColumnPrefixFilterAdapter();
   Scan emptyScan = new Scan();
-  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan);
+  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan, null);
 
   @Test
   public void columnPrefixFiltersAreAdapted() throws IOException {

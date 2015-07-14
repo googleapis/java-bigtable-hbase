@@ -31,7 +31,7 @@ public class TestKeyOnlyFilterAdapter {
 
   KeyOnlyFilterAdapter filterAdapter = new KeyOnlyFilterAdapter();
   Scan emptyScan = new Scan();
-  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan);
+  FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan, null);
 
   @Test
   public void stripValuesIsApplied() throws IOException {

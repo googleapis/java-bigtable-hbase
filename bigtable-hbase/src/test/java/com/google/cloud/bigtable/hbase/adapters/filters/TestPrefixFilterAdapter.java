@@ -40,7 +40,7 @@ public class TestPrefixFilterAdapter {
     String prefix = "Foobar";
     PrefixFilter filter = new PrefixFilter(Bytes.toBytes(prefix));
     Scan emptyScan = new Scan();
-    FilterAdapterContext context = new FilterAdapterContext(emptyScan);
+    FilterAdapterContext context = new FilterAdapterContext(emptyScan, null);
 
     byte[] prefixRegex = Bytes.toBytes(prefix + "\\C*");
     Assert.assertEquals(

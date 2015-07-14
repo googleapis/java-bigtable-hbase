@@ -21,6 +21,7 @@ import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
+import com.google.common.base.Function;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Get;
@@ -42,6 +43,17 @@ public class TestGetAdapter {
   private GetAdapter getAdapter =
       new GetAdapter(new ScanAdapter(FilterAdapter.buildAdapter()));
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
+  private ReadHooks throwingReadHooks = new ReadHooks() {
+    @Override
+    public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
+      throw new IllegalStateException("Read hooks not supported in tests.");
+    }
+
+    @Override
+    public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
+      throw new IllegalStateException("Read hooks not supported in tests.");
+    }
+  };
 
   private Get makeValidGet(byte[] rowKey) throws IOException {
     Get get = new Get(rowKey);
@@ -52,7 +64,7 @@ public class TestGetAdapter {
   @Test
   public void rowKeyIsSetInRequest() throws IOException {
     Get get = makeValidGet(dataHelper.randomData("rk1"));
-    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
     ByteString adaptedRowKey = rowRequestBuilder.getRowKey();
     Assert.assertEquals(
         new String(get.getRow(), StandardCharsets.UTF_8),
@@ -63,7 +75,7 @@ public class TestGetAdapter {
   public void maxVersionsIsSet() throws IOException {
     Get get = makeValidGet(dataHelper.randomData("rk1"));
     get.setMaxVersions(10);
-    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
     Assert.assertEquals(
         Chain.newBuilder()
             .addFilters(RowFilter.newBuilder()
@@ -78,7 +90,7 @@ public class TestGetAdapter {
   public void columnFamilyIsSet() throws IOException {
     Get get = makeValidGet(dataHelper.randomData("rk1"));
     get.addFamily(Bytes.toBytes("f1"));
-    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
     Assert.assertEquals(
         Chain.newBuilder()
             .addFilters(RowFilter.newBuilder()
@@ -93,7 +105,7 @@ public class TestGetAdapter {
   public void columnQualifierIsSet() throws IOException {
     Get get = makeValidGet(dataHelper.randomData("rk1"));
     get.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("q1"));
-    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
     Assert.assertEquals(
         Chain.newBuilder()
             .addFilters(
@@ -113,7 +125,7 @@ public class TestGetAdapter {
     Get get = makeValidGet(dataHelper.randomData("rk1"));
     get.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("q1"));
     get.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("q2"));
-    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get);
+    ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
     Assert.assertEquals(
         Chain.newBuilder()
             .addFilters(

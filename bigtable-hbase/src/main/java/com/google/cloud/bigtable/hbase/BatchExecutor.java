@@ -39,14 +39,17 @@ import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
+import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ReadOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
+import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -163,7 +166,7 @@ public class BatchExecutor {
   protected final BigtableOptions options;
   protected final TableMetadataSetter tableMetadataSetter;
   protected final ListeningExecutorService service;
-  protected final OperationAdapter<Get, ReadRowsRequest.Builder> getAdapter;
+  protected final ReadOperationAdapter<Get> getAdapter;
   protected final OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
   protected final OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
@@ -177,7 +180,7 @@ public class BatchExecutor {
       BigtableOptions options,
       TableMetadataSetter tableMetadataSetter,
       ListeningExecutorService service,
-      OperationAdapter<Get, ReadRowsRequest.Builder> getAdapter,
+      ReadOperationAdapter<Get> getAdapter,
       OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
       OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
       RowMutationsAdapter rowMutationsAdapter,
@@ -214,9 +217,11 @@ public class BatchExecutor {
    */
   ListenableFuture<com.google.bigtable.v1.Row> issueGetRequest(Get get) {
     LOG.trace("issueGetRequest(Get)");
-    ReadRowsRequest.Builder builder = getAdapter.adapt(get);
+    ReadHooks readHooks = new DefaultReadHooks();
+    ReadRowsRequest.Builder builder = getAdapter.adapt(get, readHooks);
     tableMetadataSetter.setMetadata(builder);
-    ReadRowsRequest request = builder.build();
+    ReadRowsRequest request = readHooks.applyPreSendHook(builder.build());
+
     return Futures.transform(client.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
   }
 

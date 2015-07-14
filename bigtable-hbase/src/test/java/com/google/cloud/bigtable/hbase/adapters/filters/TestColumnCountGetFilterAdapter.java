@@ -36,7 +36,7 @@ public class TestColumnCountGetFilterAdapter {
   public void testSimpleColumnCount() throws IOException {
     RowFilter adaptedFilter =
         adapter.adapt(
-            new FilterAdapterContext(new Scan()),
+            new FilterAdapterContext(new Scan(), null),
             new ColumnCountGetFilter(2));
     Assert.assertEquals(
         RowFilter.newBuilder()

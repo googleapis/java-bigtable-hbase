@@ -37,7 +37,7 @@ import java.util.List;
 public class TestFuzzyRowFilterAdapter {
   FuzzyRowFilterAdapter adapter = new FuzzyRowFilterAdapter();
   Scan emptyScan = new Scan();
-  FilterAdapterContext context = new FilterAdapterContext(emptyScan);
+  FilterAdapterContext context = new FilterAdapterContext(emptyScan, null);
 
   @Test
   public void fuzzyKeysAreTranslatedToRegularExpressions() throws IOException {

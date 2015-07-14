@@ -20,6 +20,7 @@ import com.google.bigtable.v1.ReadRowsRequest.TargetCase;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
+import com.google.common.base.Function;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -38,6 +39,17 @@ import java.io.IOException;
 public class TestScanAdapter {
 
   private ScanAdapter scanAdapter = new ScanAdapter(FilterAdapter.buildAdapter());
+  private ReadHooks throwingReadHooks = new ReadHooks() {
+    @Override
+    public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
+      throw new IllegalStateException("Read hooks not supported in TestScanAdapter.");
+    }
+
+    @Override
+    public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
+      throw new IllegalStateException("Read hooks not supported in TestScanAdapter.");
+    }
+  };
 
   @Test
   public void testStartAndEndKeysAreSet() {
@@ -46,7 +58,7 @@ public class TestScanAdapter {
     Scan scan = new Scan();
     scan.setStartRow(startKey);
     scan.setStopRow(stopKey);
-    ReadRowsRequest.Builder request = scanAdapter.adapt(scan);
+    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
     Assert.assertEquals(TargetCase.ROW_RANGE, request.getTargetCase());
     Assert.assertArrayEquals(startKey, request.getRowRange().getStartKey().toByteArray());
     Assert.assertArrayEquals(stopKey, request.getRowRange().getEndKey().toByteArray());
@@ -56,7 +68,7 @@ public class TestScanAdapter {
   public void maxVersionsIsSet() throws IOException {
     Scan scan = new Scan();
     scan.setMaxVersions(10);
-    ReadRowsRequest.Builder rowRequestBuilder = scanAdapter.adapt(scan);
+    ReadRowsRequest.Builder rowRequestBuilder = scanAdapter.adapt(scan, throwingReadHooks);
     Assert.assertEquals(
         Chain.newBuilder()
             .addFilters(RowFilter.newBuilder()

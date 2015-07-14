@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
@@ -39,10 +40,13 @@ import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.NullComparator;
+import org.apache.hadoop.hbase.filter.PageFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.RandomRowFilter;
@@ -1376,6 +1380,35 @@ public class TestFilters extends AbstractTest {
     get.setFilter(regexQualFilter);
     result = table.get(get);
     Assert.assertEquals(1, result.size());
+  }
+
+  @Test
+  public void testPageFilters() throws IOException {
+    byte[][] rowKeys = dataHelper.randomData("pageFilter-", 100);
+    byte[] qualA = dataHelper.randomData("qualA");
+    byte[] value = Bytes.toBytes("Important data goes here");
+    Table table = getConnection().getTable(TABLE_NAME);
+    for (byte[] rowKey : rowKeys) {
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qualA, value);
+      table.put(put);
+    }
+
+    Scan scan = new Scan(Bytes.toBytes("pageFilter-"));
+
+    PageFilter pageFilter = new PageFilter(20);
+    scan.setFilter(pageFilter);
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      Assert.assertEquals(20,  Iterators.size(scanner.iterator()));
+    }
+
+    FilterList filterList = new FilterList(
+        Operator.MUST_PASS_ALL,
+        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA)),
+        pageFilter);
+    scan.setFilter(filterList);
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      Assert.assertEquals(20,  Iterators.size(scanner.iterator()));
+    }
   }
 
   private Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
