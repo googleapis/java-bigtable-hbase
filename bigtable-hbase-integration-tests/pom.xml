@@ -47,7 +47,6 @@ limitations under the License.
                     <groupId>${project.groupId}</groupId>
                     <artifactId>${google.bigtable.project.under.test}</artifactId>
                     <version>${google.bigtable.version.under.test}</version>
-                    <classifier>shaded</classifier>
                 </dependency>
             </dependencies>
             <build>

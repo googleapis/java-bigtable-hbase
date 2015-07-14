@@ -107,7 +107,6 @@ limitations under the License.
                                 cause classloading issues in some cases like web apps.
                             -->
                             <shadedArtifactAttached>false</shadedArtifactAttached>
-                            <shadedClassifierName>shaded</shadedClassifierName>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
