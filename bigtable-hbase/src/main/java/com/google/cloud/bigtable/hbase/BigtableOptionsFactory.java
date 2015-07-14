@@ -33,6 +33,7 @@ import org.apache.hadoop.conf.Configuration;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.ClientCloseHandler;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.common.base.Preconditions;
@@ -145,8 +146,6 @@ public class BigtableOptionsFactory {
   public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
 
   public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
-    ChannelOptions channelOptions = createChannelOptions(configuration);
-
     BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
     String projectId = configuration.get(PROJECT_ID_KEY);
     Preconditions.checkArgument(
@@ -217,16 +216,19 @@ public class BigtableOptionsFactory {
     int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
     bigtableOptionsBuilder.setPort(port);
 
-    // TODO(sduskis): The elg event group needs to be closed when the BigtableConnection is closed.
-    // add a ClientCloseHandler somewhere on the BigtableOptions or channel options and then
-    // close it when the BigtableConnection is closed.
     ThreadFactory threadFactory = new ThreadFactoryBuilder()
         .setDaemon(true)
         .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build();
-    EventLoopGroup elg = new NioEventLoopGroup(0, threadFactory);
+    final EventLoopGroup elg = new NioEventLoopGroup(0, threadFactory);
     bigtableOptionsBuilder.setCustomEventLoopGroup(elg);
 
-    bigtableOptionsBuilder.setChannelOptions(channelOptions);
+    bigtableOptionsBuilder.setChannelOptions(createChannelOptions(configuration));
+    createChannelOptions(configuration).addClientCloseHandler(new ClientCloseHandler() {
+      @Override
+      public void close() throws IOException {
+        elg.shutdownGracefully();
+      }
+    });
 
     return bigtableOptionsBuilder.build();
   }
@@ -272,10 +274,7 @@ public class BigtableOptionsFactory {
       throw new IOException("Failed to acquire credential.", gse);
     }
 
-    // TODO(sduskis): retryExecutor needs to be closed when the BigtableConnection is closed.
-    // add a ClientCloseHandler somewhere on the BigtableOptions or channel options and then
-    // close it when the BigtableConnection is closed.
-    ScheduledExecutorService retryExecutor =
+    final ScheduledExecutorService retryExecutor =
         Executors.newScheduledThreadPool(
             RETRY_THREAD_COUNT,
             new ThreadFactoryBuilder()
@@ -326,7 +325,16 @@ public class BigtableOptionsFactory {
 
     channelOptionsBuilder.setUserAgent(BigtableConstants.USER_AGENT);
 
-    return channelOptionsBuilder.build();
+    ChannelOptions channelOptions = channelOptionsBuilder.build();
+
+    channelOptions.addClientCloseHandler(new ClientCloseHandler() {
+      @Override
+      public void close() throws IOException {
+        retryExecutor.shutdownNow();
+      }
+    });
+
+    return channelOptions;
   }
 
   private static RetryOptions createRetryOptions(Configuration configuration) {

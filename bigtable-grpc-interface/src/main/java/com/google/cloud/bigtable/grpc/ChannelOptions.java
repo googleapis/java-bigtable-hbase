@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+
 import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
-import com.google.cloud.bigtable.config.BigtableOptions.Builder;
 import com.google.common.base.Preconditions;
-
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Options for constructing an Bigtable RPC channel.
@@ -104,7 +105,7 @@ public class ChannelOptions {
       this.retryOptions = retryOptions;
       return this;
     }
-    
+
     /**
      * The timeout after which a Channel should be discarded.
      */
@@ -136,7 +137,7 @@ public class ChannelOptions {
   private final ScheduledExecutorService scheduledExecutorService;
   private final long timeoutMs;
   private final int channelCount;
-
+  private final List<ClientCloseHandler> clientCloseHandlers = new ArrayList<>();
 
   /**
    * Construct a ChannelOptions object
@@ -161,6 +162,8 @@ public class ChannelOptions {
       ScheduledExecutorService scheduledExecutorService,
       long timeoutMs,
       int channelCount) {
+    Preconditions.checkArgument(credential == null || scheduledExecutorService != null,
+      "scheduledExecutorService has to be set if credentials are supplied");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(userAgent),
         "UserAgent must not be empty or null");
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
@@ -240,5 +243,19 @@ public class ChannelOptions {
    */
   public int getChannelCount() {
     return channelCount;
+  }
+
+  /**
+   * The list of {@link }ClientCloseHandler}s to invoke when a connection closes.
+   */
+  public List<ClientCloseHandler> getClientCloseHandlers() {
+    return clientCloseHandlers;
+  }
+
+  /**
+   * Add a {@link }ClientCloseHandler} to be closed when the connection closes.
+   */
+  public void addClientCloseHandler(ClientCloseHandler clientCloseHandler){
+    this.clientCloseHandlers.add(clientCloseHandler);
   }
 }

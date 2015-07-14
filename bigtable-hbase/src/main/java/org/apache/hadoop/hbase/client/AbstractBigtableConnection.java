@@ -21,6 +21,7 @@ import io.netty.handler.ssl.SslContext;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,17 +40,20 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Threads;
 
+import com.google.api.client.http.HttpTransport;
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc;
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc.BigtableTableServiceServiceDescriptor;
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.BigtableServiceGrpc.BigtableServiceServiceDescriptor;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
+import com.google.cloud.bigtable.grpc.ClientCloseHandler;
 import com.google.cloud.bigtable.grpc.TransportOptions;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -334,7 +338,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     }
     this.aborted = true;
     close();
-    this.closed = true;
   }
 
   @Override
@@ -378,6 +381,14 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       shutdownClients();
     } finally {
       this.closed = true;
+    }
+    ChannelOptions channelOptions = this.options.getChannelOptions();
+    for (ClientCloseHandler clientCloseHandler : channelOptions.getClientCloseHandlers()) {
+      try {
+        clientCloseHandler.close();
+      } catch (IOException e) {
+        throw new RuntimeException("Error when shutting down clients", e);
+      }
     }
     // If the clients are shutdown, there shouldn't be any more activity on the
     // batch pool (assuming we created it ourselves). If exceptions were raised
