@@ -145,8 +145,6 @@ public class BigtableOptionsFactory {
   public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
 
   public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
-    ChannelOptions channelOptions = createChannelOptions(configuration);
-
     BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
     String projectId = configuration.get(PROJECT_ID_KEY);
     Preconditions.checkArgument(
@@ -226,7 +224,7 @@ public class BigtableOptionsFactory {
     EventLoopGroup elg = new NioEventLoopGroup(0, threadFactory);
     bigtableOptionsBuilder.setCustomEventLoopGroup(elg);
 
-    bigtableOptionsBuilder.setChannelOptions(channelOptions);
+    bigtableOptionsBuilder.setChannelOptions(createChannelOptions(configuration));
 
     return bigtableOptionsBuilder.build();
   }
