@@ -26,6 +26,8 @@ import com.google.bigtable.admin.table.v1.ListTablesResponse;
 import com.google.bigtable.admin.table.v1.RenameTableRequest;
 import com.google.bigtable.admin.table.v1.Table;
 
+import io.grpc.Channel;
+
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -34,15 +36,20 @@ import java.util.concurrent.ExecutorService;
 public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   /**
-   * Factory method to create an HTTP1 based client.
-   * @return A client ready to access bigtable services.
+   * Create a new BigtableTableAdminClient. Note, the caller needs to take responsibility of
+   * managing the life-cycle of the channel's dependencies found in {@link TransportOptions} and
+   * {@link ChannelOptions}. See
+   * {@link BigtableChannels#createChannel(TransportOptions, ChannelOptions, ExecutorService)} for
+   * how the channel is constructed and how it can be closed.
+   * {@link ChannelOptions#getClientCloseHandlers()} is one way to close the channel.
+   * @return A client ready to access Cloud Bigtable table admin services.
    */
   public static BigtableTableAdminClient createClient(
       TransportOptions transportOptions,
       ChannelOptions channelOptions,
       ExecutorService executorService) {
 
-    CloseableChannel channel = BigtableChannels.createChannel(
+    Channel channel = BigtableChannels.createChannel(
         transportOptions,
         channelOptions,
         executorService);
@@ -50,17 +57,10 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
     return new BigtableTableAdminGrpcClient(channel);
   }
 
-  protected final CloseableChannel channel;
   private final BigtableTableServiceGrpc.BigtableTableServiceBlockingStub blockingStub;
 
-  /**
-   * Create a new BigtableTableAdminGrpcClient. When constructed, the client takes ownership of the
-   * passed CloseableChannel and will invoke close() when the client is close()d.
-   */
-  public BigtableTableAdminGrpcClient(
-      CloseableChannel closeableChannel) {
-    channel = closeableChannel;
-    blockingStub = BigtableTableServiceGrpc.newBlockingStub(closeableChannel);
+  public BigtableTableAdminGrpcClient(Channel channel) {
+    blockingStub = BigtableTableServiceGrpc.newBlockingStub(channel);
   }
 
   @Override
@@ -96,10 +96,5 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   @Override
   public void renameTable(RenameTableRequest request) {
     blockingStub.renameTable(request);
-  }
-  
-  @Override
-  public void close() throws Exception {
-    channel.close();
   }
 }

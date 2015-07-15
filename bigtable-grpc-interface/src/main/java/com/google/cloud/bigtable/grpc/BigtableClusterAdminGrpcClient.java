@@ -29,6 +29,8 @@ import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc;
 import com.google.longrunning.OperationsGrpc.OperationsBlockingStub;
 
+import io.grpc.Channel;
+
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -37,15 +39,20 @@ import java.util.concurrent.ExecutorService;
 public class BigtableClusterAdminGrpcClient implements BigtableClusterAdminClient{
 
   /**
-   * Factory method to create an gRPC based client.
-   * @return A client ready to access Bigtable cluster services.
+   * Create a new BigtableClusterAdminGrpcClient. Note, the caller needs to take responsibility of
+   * managing the life-cycle of the channel's dependencies found in {@link TransportOptions} and
+   * {@link ChannelOptions}. See
+   * {@link BigtableChannels#createChannel(TransportOptions, ChannelOptions, ExecutorService)} for
+   * how the channel is constructed and how it can be closed.
+   * {@link ChannelOptions#getClientCloseHandlers()} is one way to close the channel.
+   * @return A client ready to access Cloud Bigtable cluster admin services.
    */
   public static BigtableClusterAdminGrpcClient createClient(
       TransportOptions transportOptions,
       ChannelOptions channelOptions,
       ExecutorService executorService) {
 
-    CloseableChannel channel = BigtableChannels.createChannel(
+    Channel channel = BigtableChannels.createChannel(
         transportOptions,
         channelOptions,
         executorService);
@@ -55,13 +62,11 @@ public class BigtableClusterAdminGrpcClient implements BigtableClusterAdminClien
 
   private final BigtableClusterServiceGrpc.BigtableClusterServiceBlockingStub blockingStub;
   private final OperationsBlockingStub operationsStub;
-  private final CloseableChannel channel;
 
 
-  public BigtableClusterAdminGrpcClient(CloseableChannel channel) {
+  public BigtableClusterAdminGrpcClient(Channel channel) {
     blockingStub = BigtableClusterServiceGrpc.newBlockingStub(channel);
     operationsStub = OperationsGrpc.newBlockingStub(channel);
-    this.channel = channel;
   }
 
   @Override
@@ -101,7 +106,6 @@ public class BigtableClusterAdminGrpcClient implements BigtableClusterAdminClien
   
   @Override
   public void close() throws Exception {
-    channel.close();
   }
 
 }

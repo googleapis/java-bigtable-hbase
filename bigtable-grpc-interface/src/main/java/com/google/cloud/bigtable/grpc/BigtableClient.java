@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * Interface to access v1 final Bigtable service methods
  */
-public interface BigtableClient extends AutoCloseable {
+public interface BigtableClient {
 
   /**
    * Mutate a row atomically.

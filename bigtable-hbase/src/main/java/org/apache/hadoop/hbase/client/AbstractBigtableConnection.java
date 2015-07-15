@@ -338,7 +338,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     }
     this.aborted = true;
     close();
-    this.closed = true;
   }
 
   @Override
@@ -351,38 +350,20 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     return this.aborted;
   }
 
-  private void shutdownClients() {
-    Exception toBeThrown = null;
-    try {
-      bigtableTableAdminClient.close();
-    } catch (Exception e) {
-      LOG.error("Exception when shutting down the table admin client.", e);
-      toBeThrown = e;
-    }
-    try {
-      client.close();
-    } catch (Exception e) {
-      LOG.error("Exception when shutting down the data client.", e);
-      // We will lose the table admin exception if there was one, but
-      // attempting to carry both exceptions will lead to the stack traces
-      // not printed in most cases (see RetriesExhausted for that happening):
-      toBeThrown = e;
-    }
-    if (toBeThrown != null) {
-      throw new RuntimeException("Error when shutting down clients", toBeThrown);
-    }
-  }
-
   @Override
   public void close() {
     if (this.closed) {
       return;
     }
-    try {
-      shutdownClients();
-    } finally {
-      this.closed = true;
+    ChannelOptions channelOptions = this.options.getChannelOptions();
+    for (Closeable clientCloseHandler : channelOptions.getClientCloseHandlers()) {
+      try {
+        clientCloseHandler.close();
+      } catch (IOException e) {
+        throw new RuntimeException("Error when shutting down clients", e);
+      }
     }
+    this.closed = true;
     // If the clients are shutdown, there shouldn't be any more activity on the
     // batch pool (assuming we created it ourselves). If exceptions were raised
     // shutting down the clients, it's not entirely safe to shutdown the pool
