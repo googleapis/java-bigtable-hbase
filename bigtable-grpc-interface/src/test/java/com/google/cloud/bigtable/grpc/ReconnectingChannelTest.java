@@ -47,7 +47,7 @@ public class ReconnectingChannelTest {
   private CloseableChannel mockChannel;
 
   @Mock
-  private Call mockCall;
+  private Call<?, ?> mockCall;
 
   @Before
   public void setup() {

@@ -72,6 +72,7 @@ public class FuzzyRowFilterAdapter implements TypedFilterAdapter<FuzzyRowFilter>
       }
     }
     ByteString quotedValue = ByteString.copyFrom(baos.toByteArray());
+    quotingStream.close();
     return RowFilter.newBuilder().setRowKeyRegexFilter(quotedValue).build();
   }
 

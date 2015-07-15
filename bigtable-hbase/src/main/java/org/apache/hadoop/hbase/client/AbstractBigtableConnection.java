@@ -47,9 +47,11 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
+import com.google.cloud.bigtable.grpc.BigtableGrpcClientOptions;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
+import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.cloud.bigtable.grpc.TransportOptions;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -220,10 +222,12 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       TransportOptions dataTransportOptions,
       ChannelOptions channelOptions,
       ExecutorService executorService) {
-
     try {
-      return BigtableGrpcClient.createClient(
-          dataTransportOptions, channelOptions, executorService);
+      RetryOptions retryOptions = channelOptions.getUnaryCallRetryOptions();
+      BigtableGrpcClientOptions clientOptions =
+          BigtableGrpcClientOptions.fromRetryOptions(retryOptions);
+      return BigtableGrpcClient.createClient(dataTransportOptions, channelOptions, clientOptions,
+        executorService);
     } catch (RuntimeException re) {
       LOG.error("Error constructing data client.", re);
       throw re;

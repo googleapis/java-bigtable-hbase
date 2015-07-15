@@ -22,6 +22,8 @@ import java.io.IOException;
  */
 public class ReadTimeoutException extends IOException {
 
+  private static final long serialVersionUID = 4115316291347038875L;
+
   public ReadTimeoutException(String message) {
     super(message);
   }

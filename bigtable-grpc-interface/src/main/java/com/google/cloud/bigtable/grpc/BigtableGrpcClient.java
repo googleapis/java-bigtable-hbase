@@ -135,32 +135,8 @@ public class BigtableGrpcClient implements BigtableClient {
   }
 
   /**
-   * Factory method to create a bigtable client.
-   * @return A client ready to access Bigtable services.
-   */
-  @Deprecated
-  public static BigtableClient createClient(
-      TransportOptions transportOptions,
-      ChannelOptions channelOptions,
-      ExecutorService executorService) {
-
-    RetryOptions unaryCallRetryOptions = channelOptions.getUnaryCallRetryOptions();
-    BigtableGrpcClientOptions.Builder clientOptionsBuilder =
-        new BigtableGrpcClientOptions.Builder();
-    clientOptionsBuilder.getStreamingRetryOptionsBuilder()
-        .setEnableRetries(unaryCallRetryOptions.enableRetries())
-        .setRetryOnDeadlineExceeded(unaryCallRetryOptions.retryOnDeadlineExceeded())
-        .setInitialBackoffMillis(unaryCallRetryOptions.getInitialBackoffMillis())
-        .setMaxElapsedBackoffMillis(unaryCallRetryOptions.getMaxElaspedBackoffMillis())
-        .setBackoffMultiplier(unaryCallRetryOptions.getBackoffMultiplier());
-
-    return createClient(
-        transportOptions, channelOptions, clientOptionsBuilder.build(), executorService);
-  }
-
-  /**
-   * Factory method to create a bigtable client.
-   * @return A client ready to access Bigtable services.
+   * Factory method to create a Cloud Bigtable data client.
+   * @return A client ready to access Cloud Bigtable data services.
    */
   public static BigtableClient createClient(
       TransportOptions transportOptions,

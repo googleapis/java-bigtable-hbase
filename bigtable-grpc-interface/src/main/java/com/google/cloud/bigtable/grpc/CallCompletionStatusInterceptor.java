@@ -18,7 +18,8 @@ package com.google.cloud.bigtable.grpc;
 import io.grpc.Call;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
-import io.grpc.ClientInterceptors;
+import io.grpc.ForwardingCall.SimpleForwardingCall;
+import io.grpc.ForwardingCallListener.SimpleForwardingCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -113,7 +114,7 @@ public class CallCompletionStatusInterceptor implements ClientInterceptor {
    */
   @VisibleForTesting
   class CompletionStatusGatheringCall<RequestT, ResponseT>
-      extends ClientInterceptors.ForwardingCall<RequestT, ResponseT> {
+      extends SimpleForwardingCall<RequestT, ResponseT> {
 
     private final MethodDescriptor<RequestT, ResponseT> method;
 
@@ -127,7 +128,7 @@ public class CallCompletionStatusInterceptor implements ClientInterceptor {
      * Wrap a Listener that will record the final Call status in onClose.
      */
     Listener<ResponseT> createGatheringListener(Listener<ResponseT> responseListener) {
-      return new ClientInterceptors.ForwardingListener<ResponseT>(responseListener) {
+      return new SimpleForwardingCallListener<ResponseT>(responseListener) {
         @Override
         public void onClose(final Status status, Metadata.Trailers trailers) {
           countUpdateExecutor.submit(new Runnable() {

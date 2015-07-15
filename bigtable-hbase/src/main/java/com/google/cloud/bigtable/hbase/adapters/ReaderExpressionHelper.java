@@ -48,44 +48,39 @@ public class ReaderExpressionHelper {
    * @param unquoted
    * @param outputStream
    */
-  public void writeFilterQuotedExpression(byte[] unquoted, OutputStream outputStream)
+  public static void writeFilterQuotedExpression(byte[] unquoted, OutputStream outputStream)
       throws IOException{
     QuoteFilterExpressionStream quoteFilterExpressionStream =
         new QuoteFilterExpressionStream(outputStream);
     quoteFilterExpressionStream.write(unquoted);
+    quoteFilterExpressionStream.close();
   }
 
   /**
    * Write unquoted to the OutputStream applying both RE2:QuoteMeta and Bigtable reader
    * expression quoting.
-   * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
    * @param outputStream A stream to write quoted output to
+   * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
    */
-  // TODO(angusdavis) consider making this static.
-  public void writeQuotedExpression(byte[] unquoted, OutputStream outputStream)
+  public static void writeQuotedExpression(OutputStream outputStream, byte[] unquoted)
       throws  IOException {
-    QuoteFilterExpressionStream quoteFilterExpressionStream =
-        new QuoteFilterExpressionStream(outputStream);
-    QuoteMetaOutputStream quoteMetaOutputStream =
-        new QuoteMetaOutputStream(quoteFilterExpressionStream);
-    quoteMetaOutputStream.write(unquoted);
+    writeQuotedRegularExpression(new QuoteFilterExpressionStream(outputStream), unquoted);
   }
 
-  public byte[] quoteRegularExpression(byte[] unquoted) throws IOException {
+  public static byte[] quoteRegularExpression(byte[] unquoted) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(unquoted.length * 2);
-    writeQuotedRegularExpression(unquoted, baos);
+    writeQuotedRegularExpression(baos, unquoted);
     return baos.toByteArray();
   }
 
   /**
    * Write unquoted to the OutputStream applying RE2:QuoteMeta quoting.
    */
-  // TODO(angusdavis) consider making this static.
-  public void writeQuotedRegularExpression(byte[] unquoted, OutputStream outputStream)
+  public static void writeQuotedRegularExpression(OutputStream outputStream, byte[] unquoted)
       throws IOException {
-    QuoteMetaOutputStream quoteMetaOutputStream =
-        new QuoteMetaOutputStream(outputStream);
+    QuoteMetaOutputStream quoteMetaOutputStream = new QuoteMetaOutputStream(outputStream);
     quoteMetaOutputStream.write(unquoted);
+    quoteMetaOutputStream.close();
   }
 
   /**
@@ -141,10 +136,15 @@ public class ReaderExpressionHelper {
 
     @Override
     public void write(int unquoted) throws IOException {
-      if (unquoted == '@' || unquoted == '{' || unquoted == '}') {
+      switch(unquoted) {
+      case '@':
+      case '{':
+      case '}':
         delegate.write('@');
+      default:
+        // fall through
+        delegate.write(unquoted);
       }
-      delegate.write(unquoted);
     }
   }
 }

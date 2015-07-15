@@ -28,14 +28,12 @@ import java.io.IOException;
  * Adapter for HBase {@link PrefixFilter} instances.
  */
 public class PrefixFilterAdapter implements TypedFilterAdapter<PrefixFilter> {
-  private ReaderExpressionHelper helper = new ReaderExpressionHelper();
-
   @Override
   public RowFilter adapt(FilterAdapterContext context, PrefixFilter filter)
       throws IOException {
     ByteArrayOutputStream baos =
         new ByteArrayOutputStream(filter.getPrefix().length * 2);
-    helper.writeQuotedRegularExpression(filter.getPrefix(), baos);
+    ReaderExpressionHelper.writeQuotedRegularExpression(baos, filter.getPrefix());
     // Unquoted all bytes:
     baos.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
     ByteString quotedValue = ByteString.copyFrom(baos.toByteArray());

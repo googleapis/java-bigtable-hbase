@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.common.base.Preconditions;
 
-import io.grpc.Status.OperationRuntimeException;
+import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 
@@ -60,8 +60,8 @@ class ResultQueueEntry<T> {
 
   public T getResponseOrThrow() throws IOException {
     if (throwable != null) {
-      if (throwable instanceof OperationRuntimeException) {
-        throw new IOExceptionWithStatus(EXCEPTION_MESSAGE, (OperationRuntimeException) throwable);
+      if (throwable instanceof StatusRuntimeException) {
+        throw new IOExceptionWithStatus(EXCEPTION_MESSAGE, (StatusRuntimeException) throwable);
       }
       throw new IOException(EXCEPTION_MESSAGE, throwable);
     }

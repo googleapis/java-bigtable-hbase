@@ -24,7 +24,7 @@ import com.google.bigtable.v1.RowRange;
 import com.google.bigtable.v1.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper.QuoteMetaOutputStream;
+import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.common.base.Optional;
 import com.google.protobuf.ByteString;
@@ -32,7 +32,6 @@ import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.TimeRange;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -101,16 +100,12 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   }
 
   private static byte[] quoteRegex(byte[] unquoted)  {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream(unquoted.length * 2);
-    QuoteMetaOutputStream metaQuotingStream =
-        new QuoteMetaOutputStream(baos);
     try {
-      metaQuotingStream.write(unquoted);
+      return ReaderExpressionHelper.quoteRegularExpression(unquoted);
     } catch (IOException e) {
       throw new IllegalStateException(
           "IOException when writing to ByteArrayOutputStream", e);
     }
-    return baos.toByteArray();
   }
 
   private Optional<RowFilter> createUserFilter(Scan scan, ReadHooks hooks) {

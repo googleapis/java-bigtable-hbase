@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import io.grpc.Status;
-import io.grpc.Status.OperationRuntimeException;
+import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -132,13 +132,14 @@ public class TestClusterAPI {
       expectedCount, Arrays.asList(tables)), expectedCount, actualCount);
   }
 
+  @SuppressWarnings("deprecation")
   private Cluster getCluster(BigtableClusterAdminClient client, String clusterName) {
     GetClusterRequest request = GetClusterRequest.newBuilder().setName(clusterName).build();
     try {
       return client.getCluster(request);
     } catch (UncheckedExecutionException e) {
-      if (e.getCause() != null && e.getCause() instanceof OperationRuntimeException) {
-        Status status = ((OperationRuntimeException) e.getCause()).getStatus();
+      if (e.getCause() != null && e.getCause() instanceof StatusRuntimeException) {
+        Status status = ((StatusRuntimeException) e.getCause()).getStatus();
         if (status.getCode() == Status.NOT_FOUND.getCode()) {
           return null;
         }
