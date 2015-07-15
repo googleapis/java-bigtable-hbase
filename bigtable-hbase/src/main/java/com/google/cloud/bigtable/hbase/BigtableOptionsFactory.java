@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.FileSystems;
@@ -33,7 +34,6 @@ import org.apache.hadoop.conf.Configuration;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.ClientCloseHandler;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.common.base.Preconditions;
@@ -223,7 +223,7 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setCustomEventLoopGroup(elg);
 
     bigtableOptionsBuilder.setChannelOptions(createChannelOptions(configuration));
-    createChannelOptions(configuration).addClientCloseHandler(new ClientCloseHandler() {
+    createChannelOptions(configuration).addClientCloseHandler(new Closeable() {
       @Override
       public void close() throws IOException {
         elg.shutdownGracefully();
@@ -327,7 +327,7 @@ public class BigtableOptionsFactory {
 
     ChannelOptions channelOptions = channelOptionsBuilder.build();
 
-    channelOptions.addClientCloseHandler(new ClientCloseHandler() {
+    channelOptions.addClientCloseHandler(new Closeable() {
       @Override
       public void close() throws IOException {
         retryExecutor.shutdownNow();

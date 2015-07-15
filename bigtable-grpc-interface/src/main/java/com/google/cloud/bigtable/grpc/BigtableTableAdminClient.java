@@ -28,7 +28,7 @@ import com.google.bigtable.admin.table.v1.Table;
 /**
  * A client for the Cloud Bigtable Table Admin API.
  */
-public interface BigtableTableAdminClient extends AutoCloseable {
+public interface BigtableTableAdminClient {
 
   /**
    * Lists the names of all tables served from a specified cluster.

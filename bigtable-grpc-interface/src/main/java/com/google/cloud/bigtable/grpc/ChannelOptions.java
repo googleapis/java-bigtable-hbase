@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,7 +40,7 @@ public class ChannelOptions {
     private String callTimingReportPath;
     private ScheduledExecutorService scheduledExecutorService = null;
     private RetryOptions retryOptions = null;
-    private long timeoutMs = -1;
+    private long timeoutMs = 0;
     private int channelCount = 1;
 
     /**
@@ -137,7 +138,7 @@ public class ChannelOptions {
   private final ScheduledExecutorService scheduledExecutorService;
   private final long timeoutMs;
   private final int channelCount;
-  private final List<ClientCloseHandler> clientCloseHandlers = new ArrayList<>();
+  private final List<Closeable> clientCloseHandlers = new ArrayList<>();
 
   /**
    * Construct a ChannelOptions object
@@ -248,14 +249,14 @@ public class ChannelOptions {
   /**
    * The list of {@link }ClientCloseHandler}s to invoke when a connection closes.
    */
-  public List<ClientCloseHandler> getClientCloseHandlers() {
+  public List<Closeable> getClientCloseHandlers() {
     return clientCloseHandlers;
   }
 
   /**
    * Add a {@link }ClientCloseHandler} to be closed when the connection closes.
    */
-  public void addClientCloseHandler(ClientCloseHandler clientCloseHandler){
+  public void addClientCloseHandler(Closeable clientCloseHandler){
     this.clientCloseHandlers.add(clientCloseHandler);
   }
 }

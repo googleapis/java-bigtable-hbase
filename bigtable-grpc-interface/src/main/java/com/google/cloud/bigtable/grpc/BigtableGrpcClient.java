@@ -41,7 +41,6 @@ import io.grpc.MethodDescriptor;
 import io.grpc.stub.Calls;
 import io.grpc.stub.StreamObserver;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -168,7 +167,7 @@ public class BigtableGrpcClient implements BigtableClient {
       BigtableGrpcClientOptions clientOptions,
       ExecutorService executorService) {
 
-    CloseableChannel channel = BigtableChannels.createChannel(
+    Channel channel = BigtableChannels.createChannel(
         transportOptions,
         channelOptions,
         executorService,
@@ -183,12 +182,12 @@ public class BigtableGrpcClient implements BigtableClient {
    */
   public static final int SCANNER_BUFFER_SIZE = 32;
   
-  private final CloseableChannel bigtableChannel;
+  private final Channel bigtableChannel;
   private final ExecutorService executorService;
   private final BigtableGrpcClientOptions clientOptions;
 
   public BigtableGrpcClient(
-      CloseableChannel closeableChannel,
+      Channel closeableChannel,
       ExecutorService executorService,
       BigtableGrpcClientOptions clientOptions) {
     this.bigtableChannel = closeableChannel;
@@ -351,11 +350,6 @@ public class BigtableGrpcClient implements BigtableClient {
             return result;
           }
         });
-  }
-
-  @Override
-  public void close() throws IOException {
-    bigtableChannel.close();
   }
 
   @VisibleForTesting

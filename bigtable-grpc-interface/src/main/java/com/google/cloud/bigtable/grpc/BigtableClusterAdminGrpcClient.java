@@ -29,6 +29,8 @@ import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc;
 import com.google.longrunning.OperationsGrpc.OperationsBlockingStub;
 
+import io.grpc.Channel;
+
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -45,7 +47,7 @@ public class BigtableClusterAdminGrpcClient implements BigtableClusterAdminClien
       ChannelOptions channelOptions,
       ExecutorService executorService) {
 
-    CloseableChannel channel = BigtableChannels.createChannel(
+    Channel channel = BigtableChannels.createChannel(
         transportOptions,
         channelOptions,
         executorService);
@@ -55,13 +57,11 @@ public class BigtableClusterAdminGrpcClient implements BigtableClusterAdminClien
 
   private final BigtableClusterServiceGrpc.BigtableClusterServiceBlockingStub blockingStub;
   private final OperationsBlockingStub operationsStub;
-  private final CloseableChannel channel;
 
 
-  public BigtableClusterAdminGrpcClient(CloseableChannel channel) {
+  public BigtableClusterAdminGrpcClient(Channel channel) {
     blockingStub = BigtableClusterServiceGrpc.newBlockingStub(channel);
     operationsStub = OperationsGrpc.newBlockingStub(channel);
-    this.channel = channel;
   }
 
   @Override
@@ -101,7 +101,6 @@ public class BigtableClusterAdminGrpcClient implements BigtableClusterAdminClien
   
   @Override
   public void close() throws Exception {
-    channel.close();
   }
 
 }

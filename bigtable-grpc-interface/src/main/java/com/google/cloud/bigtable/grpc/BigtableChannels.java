@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,6 @@ import com.google.common.collect.Multiset;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import io.grpc.Call;
 import io.grpc.Channel;
 import io.grpc.ChannelImpl;
 import io.grpc.ClientInterceptor;
@@ -41,6 +40,7 @@ import io.grpc.transport.netty.NegotiationType;
 import io.grpc.transport.netty.NettyChannelBuilder;
 
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -66,9 +66,9 @@ public class BigtableChannels {
   private static final String POST_RETRY_REPORT_ENTRY = "PostRetry";
   /** Number of threads to use to initiate retry calls */
   private static final int RETRY_THREAD_COUNT = 5;
-  
+
   /** Number of seconds to wait for a termination before trying again. */
-  private static final int CHANNEL_TERMINATE_WAIT_SECONDS = 5;
+  public static final int CHANNEL_TERMINATE_WAIT_MS = 5;
 
   private static final Map<MethodDescriptor<?, ?>, Predicate<?>> METHODS_TO_RETRY_MAP =
       createMethodRetryMap();
@@ -76,7 +76,7 @@ public class BigtableChannels {
   /**
    * Create a new Channel, optionally adding OAuth2 support.
    */
-  public static CloseableChannel createChannel(TransportOptions transportOptions,
+  public static Channel createChannel(TransportOptions transportOptions,
        ChannelOptions channelOptions, ExecutorService executor) {
     return createChannel(transportOptions, channelOptions, executor, false);
   }
@@ -87,87 +87,66 @@ public class BigtableChannels {
    * <p> To create a pool, createPool has to be true and channel count has to be greater than one.
    * </p>
    */
-  public static CloseableChannel createChannel(final TransportOptions transportOptions,
+  public static Channel createChannel(final TransportOptions transportOptions,
       final ChannelOptions channelOptions, final ExecutorService executor, boolean createPool) {
     Preconditions.checkArgument(
         transportOptions.getTransport() == TransportOptions.BigtableTransports.HTTP2_NETTY_TLS,
         "Bigtable requires the NETTY_TLS transport.");
 
-    int channelCount = channelOptions.getChannelCount();
+    int channelCount = createPool ? channelOptions.getChannelCount() : 1;
     long timeoutMs = channelOptions.getTimeoutMs();
 
-    CloseableChannel channel = null;
-    if (channelCount > 1 && createPool) {
-      CloseableChannel channels[] = new CloseableChannel[channelCount];
-      for (int i = 0; i < channelCount; i++) {
-        CloseableChannel channelImpl =
-            createRefreshingChannel(transportOptions, executor, timeoutMs);
-        channels[i] = channelImpl;
-      }
-      CloseableChannel pooledChannel = new ChannelPool(channels);
-      channel = pooledChannel;
-    } else {
-      channel = createRefreshingChannel(transportOptions, executor, timeoutMs);
+    Channel channels[] = new Channel[channelCount];
+    for (int i = 0; i < channelCount; i++) {
+      ReconnectingChannel reconnectingChannel =
+          createReconnectingChannel(transportOptions, executor, timeoutMs);
+      channelOptions.addClientCloseHandler(reconnectingChannel);
+      channels[i] = reconnectingChannel;
     }
-    return wrapChannel(channelOptions, executor, channel, createChannelClose(channel));
+    Channel channel = new ChannelPool(channels);
+    return wrapChannel(channelOptions, executor, channel);
   }
 
-  private static CloseableChannel createRefreshingChannel(
-      final TransportOptions transportOptions,
-      final ExecutorService executor,
-      long timeoutMs) {
-    if (timeoutMs > 0) {
-      return new ReconnectingChannel(timeoutMs, new ReconnectingChannel.Factory() {
-        @Override
-        public CloseableChannel create() {
-          return createCloseableChannel(transportOptions, executor);
-        }
-      });
-    } else {
-      return createCloseableChannel(transportOptions, executor);
-    }
-  }
-
-  private static CloseableChannel createCloseableChannel(TransportOptions transportOptions,
-      ExecutorService executor){
-    final ChannelImpl channelImpl = createChannel(transportOptions, executor);
-    return new CloseableChannel() {
+  private static ReconnectingChannel createReconnectingChannel(
+      final TransportOptions transportOptions, final ExecutorService executor, long timeoutMs) {
+    return new ReconnectingChannel(timeoutMs, new ReconnectingChannel.Factory() {
       @Override
-      public <RequestT, ResponseT> Call<RequestT, ResponseT> newCall(
-          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-        return channelImpl.newCall(methodDescriptor);
+      public Channel createChannel() {
+        return NettyChannelBuilder
+            .forAddress(
+                new InetSocketAddress(transportOptions.getHost(), transportOptions.getPort()))
+            .sslContext(transportOptions.createSslContext())
+            .eventLoopGroup(transportOptions.getEventLoopGroup())
+            .executor(executor)
+            .negotiationType(NegotiationType.TLS)
+            .streamWindowSize(1 << 20) // 1 MB
+            .build();
       }
-      
+
       @Override
-      public void close() throws IOException {
-        channelImpl.shutdown();
-        while (!channelImpl.isTerminated()) {
-          try {
-            channelImpl.awaitTerminated(CHANNEL_TERMINATE_WAIT_SECONDS, TimeUnit.SECONDS);
-          } catch (InterruptedException e) {
-            Thread.interrupted();
-            throw new IOException("Interrupted while sleeping for close", e);
+      public Closeable createClosable(final Channel channel) {
+        return new Closeable() {
+
+          @Override
+          public void close() throws IOException {
+            ChannelImpl channelImpl = (ChannelImpl) channel;
+            channelImpl.shutdown();
+            while (!channelImpl.isTerminated()) {
+              try {
+                channelImpl.awaitTerminated(CHANNEL_TERMINATE_WAIT_MS, TimeUnit.MILLISECONDS);
+              } catch (InterruptedException e) {
+                Thread.interrupted();
+                throw new IOException("Interrupted while sleeping for close", e);
+              }
+            }
           }
-        }
+        };
       }
-    }; 
+    });
   }
 
-  private static ChannelImpl createChannel(TransportOptions transportOptions,
-      ExecutorService executor) {
-    return NettyChannelBuilder
-        .forAddress(
-            new InetSocketAddress(transportOptions.getHost(), transportOptions.getPort()))
-        .sslContext(transportOptions.createSslContext())
-        .eventLoopGroup(transportOptions.getEventLoopGroup())
-        .executor(executor)
-        .negotiationType(NegotiationType.TLS)
-        .streamWindowSize(1 << 20) // 1 MB
-        .build();
-  }
-
-  private static CloseableChannel wrapChannel(ChannelOptions channelOptions,
-      ExecutorService executor, Channel channel, ClientCloseHandler onClientClose) {
+  private static Channel wrapChannel(ChannelOptions channelOptions,
+      ExecutorService executor, Channel channel) {
     List<ClientInterceptor> interceptors = new ArrayList<>();
     if (channelOptions.getCredential() != null) {
       interceptors.add(new ClientAuthInterceptor(channelOptions.getCredential(), executor));
@@ -198,9 +177,7 @@ public class BigtableChannels {
         scheduledRetries = channelOptions.getScheduledExecutorService();
       } else {
         scheduledRetries = createScheduledRetryPool();
-
-        onClientClose = createChainedCloseHandler(
-            onClientClose, createExecutorCloseHandler(scheduledRetries));
+        channelOptions.addClientCloseHandler(createExecutorCloseHandler(scheduledRetries));
       }
 
       RetryOptions unaryCallRetryOptions = channelOptions.getUnaryCallRetryOptions();
@@ -225,7 +202,7 @@ public class BigtableChannels {
       channel = ClientInterceptors.intercept(channel, postRetryCallStatusInterceptor);
     }
 
-    return createCloseableChannel(channel, onClientClose);
+    return channel;
   }
 
   /**
@@ -291,59 +268,12 @@ public class BigtableChannels {
    * Create a ClientCloseHandler that attempts to shutdown the given ExecutorService via
    * MoreExecutors.shutdownAndAwaitTermination.
    */
-  private static ClientCloseHandler createExecutorCloseHandler(
+  private static Closeable createExecutorCloseHandler(
       final ExecutorService executorService) {
-    return new ClientCloseHandler() {
+    return new Closeable() {
       @Override
       public void close() throws IOException {
         MoreExecutors.shutdownAndAwaitTermination(executorService, 30, TimeUnit.SECONDS);
-      }
-    };
-  }
-
-  /**
-   * Chain two ClientCloseHandler objects together such that when close() is invoked on the result,
-   * close() is first invoked on from and then close is invoked on to.
-   */
-  private static ClientCloseHandler createChainedCloseHandler(
-      final ClientCloseHandler from, final ClientCloseHandler to) {
-    return new ClientCloseHandler() {
-      @Override
-      public void close() throws IOException {
-        from.close();
-        to.close();
-      }
-    };
-  }
-
-  /**
-   * Create a ClientCloseHandler that stops the given ClosableChannel.
-   */
-  private static ClientCloseHandler createChannelClose(final CloseableChannel channel) {
-    return new ClientCloseHandler() {
-      @Override
-      public void close() throws IOException {
-        channel.close();
-      }
-    };
-  }
-
-  /**
-   * Given a channel, create a CloseableChannel that invokces onClientClose when the close
-   * method is invoked.
-   */
-  private static CloseableChannel createCloseableChannel(
-      final Channel channel, final ClientCloseHandler onClientClose) {
-    return new CloseableChannel() {
-      @Override
-      public void close() throws IOException {
-        onClientClose.close();
-      }
-
-      @Override
-      public <ReqT, RespT> Call<ReqT, RespT> newCall(
-          MethodDescriptor<ReqT, RespT> methodDescriptor) {
-        return channel.newCall(methodDescriptor);
       }
     };
   }

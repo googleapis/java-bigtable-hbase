@@ -352,21 +352,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   private void shutdownClients() {
     Exception toBeThrown = null;
-    try {
-      bigtableTableAdminClient.close();
-    } catch (Exception e) {
-      LOG.error("Exception when shutting down the table admin client.", e);
-      toBeThrown = e;
-    }
-    try {
-      client.close();
-    } catch (Exception e) {
-      LOG.error("Exception when shutting down the data client.", e);
-      // We will lose the table admin exception if there was one, but
-      // attempting to carry both exceptions will lead to the stack traces
-      // not printed in most cases (see RetriesExhausted for that happening):
-      toBeThrown = e;
-    }
     if (toBeThrown != null) {
       throw new RuntimeException("Error when shutting down clients", toBeThrown);
     }
@@ -383,7 +368,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       this.closed = true;
     }
     ChannelOptions channelOptions = this.options.getChannelOptions();
-    for (ClientCloseHandler clientCloseHandler : channelOptions.getClientCloseHandlers()) {
+    for (Closeable clientCloseHandler : channelOptions.getClientCloseHandlers()) {
       try {
         clientCloseHandler.close();
       } catch (IOException e) {
