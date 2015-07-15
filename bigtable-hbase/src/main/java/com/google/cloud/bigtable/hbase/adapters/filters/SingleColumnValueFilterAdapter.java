@@ -15,17 +15,18 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
-import com.google.bigtable.v1.RowFilter.Condition;
-import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
-import com.google.protobuf.ByteString;
+import static com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper.quoteRegularExpression;
+
+import java.io.IOException;
 
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.IOException;
+import com.google.bigtable.v1.RowFilter;
+import com.google.bigtable.v1.RowFilter.Chain;
+import com.google.bigtable.v1.RowFilter.Condition;
+import com.google.protobuf.ByteString;
 
 /**
  * Adapt SingleColumnValueFilter instances into bigtable RowFilters.
@@ -36,7 +37,6 @@ public class SingleColumnValueFilterAdapter implements TypedFilterAdapter<Single
       RowFilter.newBuilder()
           .setCellsPerColumnLimitFilter(Integer.MAX_VALUE)
           .build();
-  private final ReaderExpressionHelper helper = new ReaderExpressionHelper();
   private final ValueFilterAdapter delegateAdapter;
   public SingleColumnValueFilterAdapter(ValueFilterAdapter delegateAdapter) {
     this.delegateAdapter = delegateAdapter;
@@ -66,10 +66,10 @@ public class SingleColumnValueFilterAdapter implements TypedFilterAdapter<Single
         .setChain(Chain.newBuilder()
             .addFilters(RowFilter.newBuilder()
                 .setFamilyNameRegexFilter(
-                    Bytes.toString(helper.quoteRegularExpression(filter.getFamily()))))
+                    Bytes.toString(quoteRegularExpression(filter.getFamily()))))
             .addFilters(RowFilter.newBuilder()
                 .setColumnQualifierRegexFilter(
-                    ByteString.copyFrom(helper.quoteRegularExpression(filter.getQualifier()))))
+                    ByteString.copyFrom(quoteRegularExpression(filter.getQualifier()))))
             .addFilters(createVersionLimitFilter(filter)))
         .build();
   }

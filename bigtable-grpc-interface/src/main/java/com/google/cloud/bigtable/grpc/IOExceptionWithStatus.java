@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.grpc;
 
 import io.grpc.Status;
-import io.grpc.Status.OperationRuntimeException;
+import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 
@@ -26,9 +26,10 @@ import java.io.IOException;
  */
 public class IOExceptionWithStatus extends IOException {
 
-  private final OperationRuntimeException cause;
+  private static final long serialVersionUID = 8642100644073789860L;
+  private final StatusRuntimeException cause;
 
-  public IOExceptionWithStatus(String message, OperationRuntimeException cause) {
+  public IOExceptionWithStatus(String message, StatusRuntimeException cause) {
     super(message, cause);
     this.cause = cause;
   }
@@ -36,6 +37,8 @@ public class IOExceptionWithStatus extends IOException {
   /**
    * Status from the provided OperationRuntimeException.
    */
+  // TODO: cause.getStatus() sends JVCM warnings, even though it shouldn't.  The gRPC team
+  // ought to fix that.
   public Status getStatus() {
     return cause.getStatus();
   }

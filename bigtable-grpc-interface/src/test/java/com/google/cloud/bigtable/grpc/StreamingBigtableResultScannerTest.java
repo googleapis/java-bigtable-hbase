@@ -417,6 +417,7 @@ public class StreamingBigtableResultScannerTest {
 
     expectedException.expectMessage("End of stream marker encountered while merging a row.");
     expectedException.expect(IllegalStateException.class);
+    @SuppressWarnings("unused")
     Row resultRow = scanner.next();
   }
 

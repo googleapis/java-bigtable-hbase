@@ -22,16 +22,25 @@ import java.util.concurrent.TimeUnit;
  */
 public class BigtableGrpcClientOptions {
 
+  private static int DEFAULT_STREAMING_BUFFER_SIZE = BigtableGrpcClient.SCANNER_BUFFER_SIZE;
+  // We can timeout when reading large cells with a low value here. With a 10MB
+  // cell limit, 60 seconds allows our connection to drop to ~170kbyte/s. A 10 second
+  // timeout requires 1Mbyte/s
+  private static int DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS =
+      (int) TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
+
+  public static BigtableGrpcClientOptions fromRetryOptions(RetryOptions unaryCallRetryOptions) {
+    return new BigtableGrpcClientOptions(DEFAULT_STREAMING_BUFFER_SIZE,
+        DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS, unaryCallRetryOptions);
+  }
+
   /**
    * Builder for BigtableGrpcClientOptions.
    */
   public static class Builder {
-    private int streamingBufferSize = BigtableGrpcClient.SCANNER_BUFFER_SIZE;
-    // We can timeout when reading large cells with a low value here. With a 10MB
-    // cell limit, 60 seconds allows our connection to drop to ~170kbyte/s. A 10 second
-    // timeout requires 1Mbyte/s
-    private int readPartialRowTimeoutMillis =
-        (int) TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
+    private int streamingBufferSize = DEFAULT_STREAMING_BUFFER_SIZE;
+    private int readPartialRowTimeoutMillis = DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
+
     private RetryOptions.Builder streamingRetryOptionsBuilder =
         new RetryOptions.Builder();
 

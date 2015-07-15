@@ -37,7 +37,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import io.grpc.Status;
-import io.grpc.Status.OperationRuntimeException;
+import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 
@@ -112,7 +112,7 @@ public class ResumingStreamingResultScannerTest {
   }
 
   private void doErrorsResume(Status status) throws IOException {
-    doErrorsResume(new IOExceptionWithStatus("Test", new OperationRuntimeException(status)));
+    doErrorsResume(new IOExceptionWithStatus("Test", new StatusRuntimeException(status)));
   }
 
   @Test
@@ -199,7 +199,7 @@ public class ResumingStreamingResultScannerTest {
     when(mockScanner.next())
         .thenReturn(row1)
         .thenReturn(row2)
-        .thenThrow(new IOExceptionWithStatus("Test", new OperationRuntimeException(status)));
+        .thenThrow(new IOExceptionWithStatus("Test", new StatusRuntimeException(status)));
 
     assertRowKey("row1", scanner.next());
     assertRowKey("row2", scanner.next());

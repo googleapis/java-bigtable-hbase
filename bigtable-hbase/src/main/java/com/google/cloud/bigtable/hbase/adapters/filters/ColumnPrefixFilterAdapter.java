@@ -37,9 +37,8 @@ public class ColumnPrefixFilterAdapter implements TypedFilterAdapter<ColumnPrefi
 
     // Quoting for RE2 can result in at most length * 2 characters written. Pre-allocate
     // that much space in the ByteArrayOutputStream to prevent reallocation later.
-    ByteArrayOutputStream outputStream =
-        new ByteArrayOutputStream(prefix.length * 2);
-    readerExpressionHelper.writeQuotedRegularExpression(prefix, outputStream);
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(prefix.length * 2);
+    ReaderExpressionHelper.writeQuotedRegularExpression(outputStream, prefix);
     outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
 
     return RowFilter.newBuilder()

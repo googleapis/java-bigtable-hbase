@@ -34,8 +34,6 @@ import java.io.IOException;
  */
 public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
 
-  private ReaderExpressionHelper helper = new ReaderExpressionHelper();
-
   @Override
   public RowFilter adapt(FilterAdapterContext context, ValueFilter filter) throws IOException {
     if (filter.getComparator() instanceof BinaryComparator) {
@@ -70,7 +68,7 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
     byte[] comparatorValue = comparator.getValue();
     ByteArrayOutputStream baos =
         new ByteArrayOutputStream(comparatorValue.length * 2);
-    helper.writeQuotedRegularExpression(comparatorValue, baos);
+    ReaderExpressionHelper.writeQuotedRegularExpression(baos, comparatorValue);
     ByteString quotedValue = ByteString.copyFrom(baos.toByteArray());
     switch (compareOp) {
       case LESS:

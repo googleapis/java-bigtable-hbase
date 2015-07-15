@@ -17,7 +17,7 @@ package org.apache.hadoop.hbase.client;
 
 
 import io.grpc.Status;
-import io.grpc.Status.OperationRuntimeException;
+import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -254,8 +254,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
     try {
       return tableAdapter.adapt(bigtableTableAdminClient.getTable(request));
     } catch (UncheckedExecutionException e) {
-      if (e.getCause() != null && e.getCause() instanceof OperationRuntimeException) {
-        Status status = ((OperationRuntimeException) e.getCause()).getStatus();
+      if (e.getCause() != null && e.getCause() instanceof StatusRuntimeException) {
+        @SuppressWarnings("deprecation")
+        Status status = ((StatusRuntimeException) e.getCause()).getStatus();
         if (status.getCode() == Status.NOT_FOUND.getCode()) {
           throw new TableNotFoundException(tableName);
         }

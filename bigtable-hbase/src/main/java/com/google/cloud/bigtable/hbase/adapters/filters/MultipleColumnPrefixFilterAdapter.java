@@ -32,8 +32,6 @@ import java.io.IOException;
 public class MultipleColumnPrefixFilterAdapter
     implements TypedFilterAdapter<MultipleColumnPrefixFilter> {
 
-  ReaderExpressionHelper readerExpressionHelper = new ReaderExpressionHelper();
-
   @Override
   public RowFilter adapt(
       FilterAdapterContext context,
@@ -46,7 +44,7 @@ public class MultipleColumnPrefixFilterAdapter
       }
       outputStream.reset();
 
-      readerExpressionHelper.writeQuotedExpression(prefix, outputStream);
+      ReaderExpressionHelper.writeQuotedExpression(outputStream, prefix);
       outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
 
       RowFilter.Builder singlePrefixBuilder = RowFilter.newBuilder();

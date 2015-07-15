@@ -26,7 +26,6 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
@@ -43,8 +42,6 @@ public class QualifierFilterAdapter implements TypedFilterAdapter<QualifierFilte
       FilterSupportStatus.newNotSupported(
           "QualifierFilter must have a BinaryComparator with any "
               + "CompareOp or a RegexStringComparator with a EQUAL COmpareOp.");
-
-  private final ReaderExpressionHelper helper = new ReaderExpressionHelper();
 
   @Override
   public RowFilter adapt(FilterAdapterContext context, QualifierFilter filter)
@@ -65,11 +62,8 @@ public class QualifierFilterAdapter implements TypedFilterAdapter<QualifierFilte
   private RowFilter adaptBinaryComparator(
       FilterAdapterContext context, CompareOp compareOp, BinaryComparator comparator)
       throws IOException {
-    byte[] comparatorValue = comparator.getValue();
-    ByteArrayOutputStream baos =
-        new ByteArrayOutputStream(comparatorValue.length * 2);
-    helper.writeQuotedRegularExpression(comparatorValue, baos);
-    ByteString quotedValue = ByteString.copyFrom(baos.toByteArray());
+    byte[] quoted = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
+    ByteString quotedValue = ByteString.copyFrom(quoted);
     switch (compareOp) {
       case LESS:
         return RowFilter.newBuilder()

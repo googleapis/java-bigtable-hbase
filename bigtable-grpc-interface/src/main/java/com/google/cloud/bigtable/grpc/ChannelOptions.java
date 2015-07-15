@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
-import com.google.cloud.bigtable.config.BigtableOptions.Builder;
 import com.google.common.base.Preconditions;
 
 import java.util.concurrent.ScheduledExecutorService;
