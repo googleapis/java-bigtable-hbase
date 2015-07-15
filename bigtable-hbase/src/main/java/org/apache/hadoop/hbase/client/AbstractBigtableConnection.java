@@ -21,6 +21,9 @@ import io.netty.handler.ssl.SslContext;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,11 +42,13 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Threads;
 
+import com.google.api.client.http.HttpTransport;
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc;
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc.BigtableTableServiceServiceDescriptor;
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.BigtableServiceGrpc.BigtableServiceServiceDescriptor;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
@@ -113,6 +118,38 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         BigtableTableServiceServiceDescriptor warmup = BigtableTableServiceGrpc.CONFIG;
       }
     });
+    connectionStartupExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        // The first invocation of CredentialFactory.getHttpTransport() is expensive.
+        // Reference it so that it gets constructed asynchronously.
+        try {
+          @SuppressWarnings("unused")
+          HttpTransport warmup = CredentialFactory.getHttpTransport();
+        } catch (IOException | GeneralSecurityException e) {
+          new Logger(AbstractBigtableConnection.class).warn(
+            "Could not asynchronously initialze httpTransport", e);
+        }
+      }
+    });
+    for (final String host : Arrays.asList(BigtableOptionsFactory.BIGTABLE_HOST_DEFAULT,
+      BigtableOptionsFactory.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT,
+      BigtableOptionsFactory.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT)) {
+      connectionStartupExecutor.execute(new Runnable() {
+        @Override
+        public void run() {
+          // The first invocation of BigtableTableServiceGrpcs.CONFIG is expensive.
+          // Reference it so that it gets constructed asynchronously.
+          try {
+            @SuppressWarnings("unused")
+            InetAddress warmup = InetAddress.getByName(host);
+          } catch (UnknownHostException e) {
+            new Logger(AbstractBigtableConnection.class).warn(
+              "Could not asynchronously initialze host: " + host, e);
+          }
+        }
+      });
+    }
     connectionStartupExecutor.shutdown();
 
     Runnable shutDownRunnable = new Runnable() {

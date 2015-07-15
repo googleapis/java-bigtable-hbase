@@ -21,13 +21,16 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 
 import org.apache.hadoop.conf.Configuration;
 
@@ -145,31 +148,77 @@ public class BigtableOptionsFactory {
       "google.bigtable.grpc.channel.timeout.ms";
   public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
 
-  public static BigtableOptions fromConfiguration(Configuration configuration) throws IOException {
+  public static BigtableOptions fromConfiguration(final Configuration configuration)
+      throws IOException {
+    // Creating the channel options is slow.  Specifically, the credential creation is slow.
+    // There are some slow operations in configureBigtableOptions as well, specifically
+    // the InetAddress.getByName.  The slowest operation by far is the credential creation,
+    // so do it in parallel.
+    //
+    // The retryExecutor is available for use.  While it's a bit weird to use retryExecutor, but
+    // since it's already built and not used elsewhere, might as well use it here.
+    final ScheduledExecutorService retryExecutor =
+        Executors.newScheduledThreadPool(
+            RETRY_THREAD_COUNT,
+            new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat(RETRY_THREADPOOL_NAME + "-%d")
+                .build());
+
+    Future<ChannelOptions> channelOptionFuture =
+        retryExecutor.submit(new Callable<ChannelOptions>() {
+          @Override
+          public ChannelOptions call() throws Exception {
+            return createChannelOptions(configuration, retryExecutor);
+          }
+        });
+
+
+    BigtableOptions.Builder bigtableOptionsBuilder = createBigtableOptions(configuration);
+
+    final EventLoopGroup elg =
+        new NioEventLoopGroup(0, new ThreadFactoryBuilder().setDaemon(true)
+            .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build());
+    bigtableOptionsBuilder.setCustomEventLoopGroup(elg);
+
+    ChannelOptions channelOptions = null;
+    try {
+      channelOptions = channelOptionFuture.get();
+    } catch (InterruptedException e) {
+      throw new IOException("Could not initialize credentials", e);
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      }
+      throw new IOException("Could not initialize credentials", e);
+    }
+    bigtableOptionsBuilder.setChannelOptions(channelOptions);
+
+    channelOptions.addClientCloseHandler(new Closeable() {
+      @Override
+      public void close() throws IOException {
+        elg.shutdownGracefully();
+      }
+    });
+
+    channelOptions.addClientCloseHandler(new Closeable() {
+      @Override
+      public void close() throws IOException {
+        retryExecutor.shutdownNow();
+      }
+    });
+
+    return bigtableOptionsBuilder.build();
+  }
+
+  private static BigtableOptions.Builder createBigtableOptions(final Configuration configuration)
+      throws UnknownHostException {
     BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
-    String projectId = configuration.get(PROJECT_ID_KEY);
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(projectId),
-        String.format("Project ID must be supplied via %s", PROJECT_ID_KEY));
-    bigtableOptionsBuilder.setProjectId(projectId);
-    LOG.debug("Project ID %s", projectId);
 
-    String zone = configuration.get(ZONE_KEY);
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(zone),
-        String.format("Zone must be supplied via %s", ZONE_KEY));
-    bigtableOptionsBuilder.setZone(zone);
-    LOG.debug("Zone %s", zone);
-
-    String cluster = configuration.get(CLUSTER_KEY);
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(cluster),
-        String.format("Cluster must be supplied via %s", CLUSTER_KEY));
-    bigtableOptionsBuilder.setCluster(cluster);
-    LOG.debug("Cluster %s", cluster);
-
-    // TODO(sduskis): InetAddress.getByName is expensive.  This can be parallelized to speed up
-    // startup.
+    bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
+    bigtableOptionsBuilder.setZone(getValue(configuration, ZONE_KEY, "Zone"));
+    bigtableOptionsBuilder.setCluster(getValue(configuration, CLUSTER_KEY, "Cluster"));
 
     String overrideIp = configuration.get(IP_OVERRIDE_KEY);
     InetAddress overrideIpAddress = null;
@@ -178,66 +227,49 @@ public class BigtableOptionsFactory {
       overrideIpAddress = InetAddress.getByName(overrideIp);
     }
 
-    String dataHost = configuration.get(BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT);
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(dataHost),
-        String.format("API Data endpoint host must be supplied via %s", BIGTABLE_HOST_KEY));
-    if (overrideIpAddress == null) {
-      LOG.debug("Data endpoint host %s", dataHost);
-      bigtableOptionsBuilder.setDataHost(InetAddress.getByName(dataHost));
-    } else {
-      LOG.debug("Data endpoint host %s. Using override IP address.", dataHost);
-      bigtableOptionsBuilder.setDataHost(
-          InetAddress.getByAddress(dataHost, overrideIpAddress.getAddress()));
-    }
+    bigtableOptionsBuilder.setDataHost(getHost(configuration, overrideIpAddress,
+      BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT, "API Data"));
 
-    String tableAdminHost = configuration.get(
-        BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT);
-    if (overrideIpAddress == null) {
-      LOG.debug("Table admin endpoint host %s", tableAdminHost);
-      bigtableOptionsBuilder.setTableAdminHost(InetAddress.getByName(tableAdminHost));
-    } else {
-      LOG.debug("Table admin endpoint host %s. Using override IP address.", tableAdminHost);
-      bigtableOptionsBuilder.setTableAdminHost(
-          InetAddress.getByAddress(tableAdminHost, overrideIpAddress.getAddress()));
-    }
+    bigtableOptionsBuilder.setTableAdminHost(getHost(configuration, overrideIpAddress,
+      BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT, "Table Admin"));
 
-    String clusterAdminHost = configuration.get(
-        BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT);
-    if (overrideIpAddress == null) {
-      LOG.debug("Cluster admin endpoint host %s", clusterAdminHost);
-      bigtableOptionsBuilder.setClusterAdminHost(InetAddress.getByName(clusterAdminHost));
-    } else {
-      LOG.debug("Cluster admin endpoint host %s. Using override IP address.", clusterAdminHost);
-      bigtableOptionsBuilder.setClusterAdminHost(
-          InetAddress.getByAddress(clusterAdminHost, overrideIpAddress.getAddress()));
-    }
+    bigtableOptionsBuilder.setClusterAdminHost(getHost(configuration, overrideIpAddress,
+      BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT, "Cluster Admin"));
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
     bigtableOptionsBuilder.setPort(port);
-
-    ThreadFactory threadFactory = new ThreadFactoryBuilder()
-        .setDaemon(true)
-        .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build();
-    final EventLoopGroup elg = new NioEventLoopGroup(0, threadFactory);
-    bigtableOptionsBuilder.setCustomEventLoopGroup(elg);
-
-    bigtableOptionsBuilder.setChannelOptions(createChannelOptions(configuration));
-    createChannelOptions(configuration).addClientCloseHandler(new Closeable() {
-      @Override
-      public void close() throws IOException {
-        elg.shutdownGracefully();
-      }
-    });
-
-    return bigtableOptionsBuilder.build();
+    return bigtableOptionsBuilder;
   }
 
-  private static ChannelOptions createChannelOptions(Configuration configuration)
-      throws IOException {
+  private static String getValue(final Configuration configuration, String key, String type) {
+    String value = configuration.get(key);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(value),
+        String.format("%s must be supplied via %s", type, key));
+    LOG.debug("%s %s", type, value);
+    return value;
+  }
+
+  private static InetAddress getHost(Configuration configuration, InetAddress overrideIpAddress,
+      String key, String defaultVal, String type) throws UnknownHostException {
+    String hostName = configuration.get(key, defaultVal);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(hostName),
+        String.format("%s endpoint host must be supplied via %s", type, key));
+
+    if (overrideIpAddress == null) {
+      LOG.debug("%s endpoint host %s", type, hostName);
+      return InetAddress.getByName(hostName);
+    } else {
+      LOG.debug("%s endpoint host %s. Using override IP address.", type, hostName);
+      return InetAddress.getByAddress(hostName, overrideIpAddress.getAddress());
+    }
+  }
+
+  private static ChannelOptions createChannelOptions(Configuration configuration,
+      final ScheduledExecutorService retryExecutor) throws IOException {
     ChannelOptions.Builder channelOptionsBuilder = new ChannelOptions.Builder();
     try {
-      // TODO(sduskis): creating credentials is expensive.  Creating this can be parallelized.
       if (configuration.getBoolean(
           BIGTABE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
         LOG.debug("Using service accounts");
@@ -274,13 +306,6 @@ public class BigtableOptionsFactory {
       throw new IOException("Failed to acquire credential.", gse);
     }
 
-    final ScheduledExecutorService retryExecutor =
-        Executors.newScheduledThreadPool(
-            RETRY_THREAD_COUNT,
-            new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat(RETRY_THREADPOOL_NAME + "-%d")
-                .build());
     channelOptionsBuilder.setScheduledExecutorService(retryExecutor);
 
     // TODO(sduskis): I think that this call report directory mechanism doesn't work anymore as is.
@@ -325,16 +350,7 @@ public class BigtableOptionsFactory {
 
     channelOptionsBuilder.setUserAgent(BigtableConstants.USER_AGENT);
 
-    ChannelOptions channelOptions = channelOptionsBuilder.build();
-
-    channelOptions.addClientCloseHandler(new Closeable() {
-      @Override
-      public void close() throws IOException {
-        retryExecutor.shutdownNow();
-      }
-    });
-
-    return channelOptions;
+    return channelOptionsBuilder.build();
   }
 
   private static RetryOptions createRetryOptions(Configuration configuration) {
