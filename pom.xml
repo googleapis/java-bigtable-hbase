@@ -44,6 +44,7 @@ limitations under the License.
         <module>bigtable-hbase</module>
         <module>bigtable-hbase-1.0</module>
         <module>bigtable-hbase-1.1</module>
+        <module>bigtable-hbase-mapreduce</module>
         <module>bigtable-hbase-integration-tests</module>
     </modules>
 
@@ -349,6 +350,12 @@ limitations under the License.
             </dependency>
 
             <!-- HBase dependencies -->
+            <dependency>
+                <groupId>org.apache.hbase</groupId>
+                <artifactId>hbase-annotations</artifactId>
+                <version>${hbase.version}</version>
+                <scope>provided</scope>
+            </dependency>
             <dependency>
                 <groupId>org.apache.hbase</groupId>
                 <artifactId>hbase-common</artifactId>
