@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.FileSystems;
@@ -215,16 +216,19 @@ public class BigtableOptionsFactory {
     int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
     bigtableOptionsBuilder.setPort(port);
 
-    // TODO(sduskis): The elg event group needs to be closed when the BigtableConnection is closed.
-    // add a ClientCloseHandler somewhere on the BigtableOptions or channel options and then
-    // close it when the BigtableConnection is closed.
     ThreadFactory threadFactory = new ThreadFactoryBuilder()
         .setDaemon(true)
         .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build();
-    EventLoopGroup elg = new NioEventLoopGroup(0, threadFactory);
+    final EventLoopGroup elg = new NioEventLoopGroup(0, threadFactory);
     bigtableOptionsBuilder.setCustomEventLoopGroup(elg);
 
     bigtableOptionsBuilder.setChannelOptions(createChannelOptions(configuration));
+    createChannelOptions(configuration).addClientCloseHandler(new Closeable() {
+      @Override
+      public void close() throws IOException {
+        elg.shutdownGracefully();
+      }
+    });
 
     return bigtableOptionsBuilder.build();
   }
@@ -270,10 +274,7 @@ public class BigtableOptionsFactory {
       throw new IOException("Failed to acquire credential.", gse);
     }
 
-    // TODO(sduskis): retryExecutor needs to be closed when the BigtableConnection is closed.
-    // add a ClientCloseHandler somewhere on the BigtableOptions or channel options and then
-    // close it when the BigtableConnection is closed.
-    ScheduledExecutorService retryExecutor =
+    final ScheduledExecutorService retryExecutor =
         Executors.newScheduledThreadPool(
             RETRY_THREAD_COUNT,
             new ThreadFactoryBuilder()
@@ -324,7 +325,16 @@ public class BigtableOptionsFactory {
 
     channelOptionsBuilder.setUserAgent(BigtableConstants.USER_AGENT);
 
-    return channelOptionsBuilder.build();
+    ChannelOptions channelOptions = channelOptionsBuilder.build();
+
+    channelOptions.addClientCloseHandler(new Closeable() {
+      @Override
+      public void close() throws IOException {
+        retryExecutor.shutdownNow();
+      }
+    });
+
+    return channelOptions;
   }
 
   private static RetryOptions createRetryOptions(Configuration configuration) {

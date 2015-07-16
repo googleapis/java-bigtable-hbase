@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,10 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import io.grpc.Call;
+import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import org.junit.Assert;
@@ -36,6 +38,7 @@ import org.mockito.MockitoAnnotations;
 /**
  * Tests {@link ReconnectingChannel}
  */
+@SuppressWarnings("unchecked")
 @RunWith(JUnit4.class)
 public class ReconnectingChannelTest {
 
@@ -44,7 +47,10 @@ public class ReconnectingChannelTest {
   private ReconnectingChannel.Factory mockFactory;
 
   @Mock
-  private CloseableChannel mockChannel;
+  private Channel mockChannel;
+
+  @Mock
+  private Closeable mockCloseable;
 
   @Mock
   private Call<?, ?> mockCall;
@@ -52,18 +58,18 @@ public class ReconnectingChannelTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
+    when(mockFactory.createChannel()).thenReturn(mockChannel);
+    when(mockFactory.createClosable(any(Channel.class))).thenReturn(mockCloseable);
+    when(mockChannel.newCall(any(MethodDescriptor.class))).thenReturn(mockCall);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void test() throws IOException{
-    when(mockFactory.create()).thenReturn(mockChannel);
-    when(mockChannel.newCall(any(MethodDescriptor.class))).thenReturn(mockCall);
-    ReconnectingChannel test =
-        new ReconnectingChannel(REFRESH_MS, mockFactory);
-    Mockito.verify(mockFactory, times(1)).create();
+    ReconnectingChannel underTest = new ReconnectingChannel(REFRESH_MS, mockFactory);
 
-    test.newCall(null).start(null, null);
+    Mockito.verify(mockFactory, times(1)).createChannel();
+
+    underTest.newCall(null).start(null, null);
     Mockito.verify(mockChannel, times(1)).newCall(any(MethodDescriptor.class));
 
     try {
@@ -72,7 +78,7 @@ public class ReconnectingChannelTest {
       // Do nothing on interrupt.
     }
 
-    test.newCall(null).start(null, null);
+    underTest.newCall(null).start(null, null);
     Mockito.verify(mockChannel, times(2)).newCall(any(MethodDescriptor.class));
 
     try {
@@ -81,17 +87,24 @@ public class ReconnectingChannelTest {
       // Do nothing on interrupt.
     }
 
-    Mockito.verify(mockFactory, atLeast(2)).create();
-    Mockito.verify(mockChannel, times(1)).close();
+    Mockito.verify(mockFactory, atLeast(2)).createChannel();
+    Mockito.verify(mockCloseable, times(1)).close();
 
-    test.close();
-    Mockito.verify(mockChannel, times(2)).close();
-    
+    underTest.close();
+    Mockito.verify(mockCloseable, times(2)).close();
+
     try {
-      test.newCall(null).start(null, null);
+      underTest.newCall(null).start(null, null);
       Assert.fail("Expected IllegalStateException on a closed channel");
     } catch (IllegalStateException expected) {
       // expected
     }
+  }
+
+  @Test
+  public void testZeroRefreshMs() throws IOException {
+    ReconnectingChannel underTest = new ReconnectingChannel(0, mockFactory);
+    Assert.assertFalse(underTest.requiresRefresh());
+    underTest.close();
   }
 }

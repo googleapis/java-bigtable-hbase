@@ -41,7 +41,6 @@ import io.grpc.MethodDescriptor;
 import io.grpc.stub.Calls;
 import io.grpc.stub.StreamObserver;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -135,7 +134,12 @@ public class BigtableGrpcClient implements BigtableClient {
   }
 
   /**
-   * Factory method to create a Cloud Bigtable data client.
+   * Create a new BigtableGrpcClient. Note, the caller needs to take responsibility of managing the
+   * life-cycle of the channel's dependencies found in {@link TransportOptions} and
+   * {@link ChannelOptions}. See
+   * {@link BigtableChannels#createChannel(TransportOptions, ChannelOptions, ExecutorService)} for
+   * how the channel is constructed and how it can be closed.
+   * {@link ChannelOptions#getClientCloseHandlers()} is one way to close the channel.
    * @return A client ready to access Cloud Bigtable data services.
    */
   public static BigtableClient createClient(
@@ -144,11 +148,10 @@ public class BigtableGrpcClient implements BigtableClient {
       BigtableGrpcClientOptions clientOptions,
       ExecutorService executorService) {
 
-    CloseableChannel channel = BigtableChannels.createChannel(
+    Channel channel = BigtableChannels.createChannel(
         transportOptions,
         channelOptions,
-        executorService,
-        true);
+        executorService);
 
     return new BigtableGrpcClient(channel, executorService, clientOptions);
   }
@@ -159,15 +162,15 @@ public class BigtableGrpcClient implements BigtableClient {
    */
   public static final int SCANNER_BUFFER_SIZE = 32;
   
-  private final CloseableChannel bigtableChannel;
+  private final Channel channel;
   private final ExecutorService executorService;
   private final BigtableGrpcClientOptions clientOptions;
 
   public BigtableGrpcClient(
-      CloseableChannel closeableChannel,
+      Channel channel,
       ExecutorService executorService,
       BigtableGrpcClientOptions clientOptions) {
-    this.bigtableChannel = closeableChannel;
+    this.channel = channel;
     this.executorService = executorService;
     this.clientOptions = clientOptions;
   }
@@ -184,13 +187,13 @@ public class BigtableGrpcClient implements BigtableClient {
   @Override
   public Empty mutateRow(MutateRowRequest request) throws ServiceException {
     return Calls.blockingUnaryCall(
-        bigtableChannel.newCall(BigtableServiceGrpc.CONFIG.mutateRow), request);
+        channel.newCall(BigtableServiceGrpc.CONFIG.mutateRow), request);
   }
 
   @Override
   public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request) {
     return listenableAsyncCall(
-        bigtableChannel,
+        channel,
         BigtableServiceGrpc.CONFIG.mutateRow, request);
   }
 
@@ -198,34 +201,34 @@ public class BigtableGrpcClient implements BigtableClient {
   public CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request)
       throws ServiceException {
     return Calls.blockingUnaryCall(
-        bigtableChannel.newCall(BigtableServiceGrpc.CONFIG.checkAndMutateRow), request);
+        channel.newCall(BigtableServiceGrpc.CONFIG.checkAndMutateRow), request);
   }
 
   @Override
   public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request) {
     return listenableAsyncCall(
-        bigtableChannel,
+        channel,
         BigtableServiceGrpc.CONFIG.checkAndMutateRow, request);
   }
 
   @Override
   public Row readModifyWriteRow(ReadModifyWriteRowRequest request) {
     return Calls.blockingUnaryCall(
-        bigtableChannel.newCall(BigtableServiceGrpc.CONFIG.readModifyWriteRow), request);
+        channel.newCall(BigtableServiceGrpc.CONFIG.readModifyWriteRow), request);
   }
 
   @Override
   public ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRowRequest request) {
     return listenableAsyncCall(
-        bigtableChannel,
+        channel,
         BigtableServiceGrpc.CONFIG.readModifyWriteRow, request);
   }
 
   @Override
   public ImmutableList<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request) {
     return ImmutableList.copyOf(Calls.blockingServerStreamingCall(
-        bigtableChannel.newCall(BigtableServiceGrpc.CONFIG.sampleRowKeys), request));
+        channel.newCall(BigtableServiceGrpc.CONFIG.sampleRowKeys), request));
   }
 
   @Override
@@ -234,7 +237,7 @@ public class BigtableGrpcClient implements BigtableClient {
     CollectingStreamObserver<SampleRowKeysResponse> responseBuffer =
         new CollectingStreamObserver<>();
     Calls.asyncServerStreamingCall(
-        bigtableChannel.newCall(BigtableServiceGrpc.CONFIG.sampleRowKeys),
+        channel.newCall(BigtableServiceGrpc.CONFIG.sampleRowKeys),
         request,
         responseBuffer);
     return Futures.transform(
@@ -272,7 +275,7 @@ public class BigtableGrpcClient implements BigtableClient {
     }
 
     final Call<ReadRowsRequest , ReadRowsResponse> readRowsCall =
-        bigtableChannel.newCall(BigtableServiceGrpc.CONFIG.readRows);
+        channel.newCall(BigtableServiceGrpc.CONFIG.readRows);
 
     // If the scanner is close()d before we're done streaming, we want to cancel the RPC:
     CancellationToken cancellationToken = new CancellationToken();
@@ -300,7 +303,7 @@ public class BigtableGrpcClient implements BigtableClient {
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(final ReadRowsRequest request) {
     final Call<ReadRowsRequest , ReadRowsResponse> readRowsCall =
-        bigtableChannel.newCall(BigtableServiceGrpc.CONFIG.readRows);
+        channel.newCall(BigtableServiceGrpc.CONFIG.readRows);
 
     CollectingStreamObserver<ReadRowsResponse> responseCollector =
         new CollectingStreamObserver<>();
@@ -329,13 +332,13 @@ public class BigtableGrpcClient implements BigtableClient {
         });
   }
 
-  @Override
-  public void close() throws IOException {
-    bigtableChannel.close();
-  }
-
   @VisibleForTesting
   BigtableGrpcClientOptions getClientOptions() {
     return clientOptions;
+  }
+
+  @VisibleForTesting
+  public Channel getChannel() {
+    return channel;
   }
 }

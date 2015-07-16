@@ -16,23 +16,23 @@
 package com.google.cloud.bigtable.grpc;
 
 import io.grpc.Call;
+import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
  * Manages a set of ClosableChannels and uses them in a round robin.
  */
-public class ChannelPool extends CloseableChannel {
+public class ChannelPool extends Channel {
 
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
 
-  private final CloseableChannel[] channels;
+  private final Channel[] channels;
   private final AtomicInteger requestCount = new AtomicInteger();
 
-  public ChannelPool(CloseableChannel[] channels) {
+  public ChannelPool(Channel[] channels) {
     this.channels = channels;
   }
 
@@ -42,12 +42,5 @@ public class ChannelPool extends CloseableChannel {
     int currentRequestNum = requestCount.getAndIncrement();
     int index = Math.abs(currentRequestNum % channels.length);
     return channels[index].newCall(methodDescriptor);
-  }
-
-  @Override
-  public void close() throws IOException {
-    for (CloseableChannel closeableChannel : channels) {
-      closeableChannel.close();
-    }
   }
 }

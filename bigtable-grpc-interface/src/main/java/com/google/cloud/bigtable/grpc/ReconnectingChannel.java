@@ -16,9 +16,11 @@
 package com.google.cloud.bigtable.grpc;
 
 import io.grpc.Call;
+import io.grpc.Channel;
 import io.grpc.Metadata.Headers;
 import io.grpc.MethodDescriptor;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,25 +31,26 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * A ClosableChannel that refreshes itself based on a user supplied timeout.
  */
-public class ReconnectingChannel extends CloseableChannel {
+public class ReconnectingChannel extends Channel implements Closeable {
 
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
-  protected static final long CLOSE_WAIT_TIME = 5000;
+
   // This executor is used to shutdown & await termination of
-  // grpc connections. The work done on these threads should be minial
+  // grpc connections. The work done on these threads should be minimal
   // as long as we don't perform a shutdownNow() call (or similar). As
   // a result, allow there to be an unbounded number of these.
   // It is not expected to happen often, but there are cases where
   // shutdown will never complete and we don't want to take up a thread
   // that could be used to indicate that a Call is completed (and would
   // then finish client shutdown).
-  protected static final ExecutorService closeExecutor =
+  protected final ExecutorService closeExecutor =
       Executors.newCachedThreadPool(
           new ThreadFactoryBuilder()
               .setNameFormat("reconnection-async-close-%s")
@@ -58,7 +61,8 @@ public class ReconnectingChannel extends CloseableChannel {
    * Creates a fresh CloseableChannel.
    */
   public interface Factory {
-    CloseableChannel create();
+    Channel createChannel();
+    Closeable createClosable(Channel channel);
   }
 
   private class DelayingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
@@ -125,14 +129,14 @@ public class ReconnectingChannel extends CloseableChannel {
 
   // nextRefresh and delegate need to be protected by delegateLock.
   private long nextRefresh;
-  private CloseableChannel delegate;
+  private Channel delegate;
 
   public ReconnectingChannel(
       long maxRefreshTime,
       Factory connectionFactory) {
-    Preconditions.checkArgument(maxRefreshTime > 0, "maxRefreshTime has to be greater than 0.");
+    Preconditions.checkArgument(maxRefreshTime >= 0L, "maxRefreshTime cannot be less than 0.");
     this.maxRefreshTime = maxRefreshTime;
-    this.delegate = connectionFactory.create();
+    this.delegate = connectionFactory.createChannel();
     this.nextRefresh = calculateNewRefreshTime();
     this.factory = connectionFactory;
   }
@@ -166,7 +170,7 @@ public class ReconnectingChannel extends CloseableChannel {
       if (requiresRefresh()) {
         // Startup should be non-blocking and async.
         asyncClose(delegate);
-        delegate = factory.create();
+        delegate = factory.createChannel();
         nextRefresh = calculateNewRefreshTime();
       }
     } finally {
@@ -177,7 +181,7 @@ public class ReconnectingChannel extends CloseableChannel {
   
   @Override
   public void close() throws IOException {
-    CloseableChannel toClose = null;
+    Channel toClose = null;
 
     WriteLock writeLock = delegateLock.writeLock();
     writeLock.lock();
@@ -187,28 +191,29 @@ public class ReconnectingChannel extends CloseableChannel {
     } finally {
       writeLock.unlock();
     }
-    if (toClose != null) {
-      toClose.close();
+    final Channel channel = toClose;
+    if (channel != null) {
+      factory.createClosable(channel).close();
     }
     synchronized (closingAsynchronously) {
       while (closingAsynchronously.get() > 0) {
         try {
-          closingAsynchronously.wait(CLOSE_WAIT_TIME);
-        } catch (InterruptedException ignored){
-          // TODO(angusdavis): rework this to allow the thread
-          // interrupted state to propagate.
+          closingAsynchronously.wait(BigtableChannels.CHANNEL_TERMINATE_WAIT_MS);
+        } catch (InterruptedException e){
+          throw new IOException("Could not close all channels.", e);
         }
       }
     }
+    closeExecutor.shutdownNow();
   }
 
-  private void asyncClose(final CloseableChannel channel) {
+  private void asyncClose(final Channel channel) {
     closingAsynchronously.incrementAndGet();
     closeExecutor.execute(new Runnable() {
       @Override
       public void run() {
         try {
-          channel.close();
+          factory.createClosable(channel).close();
         } catch (IOException e) {
           log.log(Level.WARNING, "Could not close a recycled delegate", e);
         } finally {
@@ -221,8 +226,9 @@ public class ReconnectingChannel extends CloseableChannel {
     });
   }
 
-  private boolean requiresRefresh() {
-    return delegate != null && System.currentTimeMillis() > nextRefresh;
+  @VisibleForTesting
+  boolean requiresRefresh() {
+    return delegate != null && maxRefreshTime > 0 && System.currentTimeMillis() > nextRefresh;
   }
 
   private long calculateNewRefreshTime() {
