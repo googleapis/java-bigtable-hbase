@@ -16,12 +16,16 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v1.RowFilter;
+import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
+import com.google.common.base.Optional;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.PageFilter;
+import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -120,5 +124,27 @@ public class TestFilterListAdapter {
     Assert.assertFalse(
         "collectUnsupportedStatuses should have been invoked returning unsupported statuses.",
         status.isSupported());
+  }
+
+  @Test
+  /**
+   * FilterListAdapter should handle the fact that PageFilterAdapter returns null.
+   */
+  public void testPageFilter() throws IOException {
+    byte[] qualA = Bytes.toBytes("qualA");
+    PageFilter pageFilter = new PageFilter(20);
+    FilterList filterList = new FilterList(
+      Operator.MUST_PASS_ALL,
+      new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA)),
+      pageFilter);
+    FilterAdapter adapter = FilterAdapter.buildAdapter();
+    Optional<RowFilter> adapted =
+        adapter.adaptFilter(new FilterAdapterContext(new Scan(), new DefaultReadHooks()),
+          filterList);
+    Assert.assertTrue(adapted.isPresent());
+    Optional<RowFilter> qualifierAdapted =
+        adapter.adaptFilter(new FilterAdapterContext(new Scan(), new DefaultReadHooks()),
+          filterList.getFilters().get(0));
+    Assert.assertEquals(qualifierAdapted.get(), adapted.get());
   }
 }
