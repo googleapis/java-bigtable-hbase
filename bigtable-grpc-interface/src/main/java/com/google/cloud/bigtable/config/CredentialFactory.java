@@ -78,7 +78,7 @@ public class CredentialFactory {
    * Returns shared httpTransport instance; initializes httpTransport if it hasn't already been
    * initialized.
    */
-  private static synchronized HttpTransport getHttpTransport()
+  public static synchronized HttpTransport getHttpTransport()
       throws IOException, GeneralSecurityException {
     if (httpTransport == null) {
       httpTransport = GoogleNetHttpTransport.newTrustedTransport();
