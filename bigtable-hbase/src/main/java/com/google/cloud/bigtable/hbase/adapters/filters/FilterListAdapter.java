@@ -46,8 +46,9 @@ public class FilterListAdapter
       List<RowFilter> childFilters = collectChildFilters(context, filter);
       if (childFilters.isEmpty()) {
         return null;
-      }
-      if (filter.getOperator() == Operator.MUST_PASS_ALL) {
+      } else if (childFilters.size() == 1) {
+        return childFilters.get(0);
+      } else  if (filter.getOperator() == Operator.MUST_PASS_ALL) {
         return RowFilter.newBuilder()
             .setChain(Chain.newBuilder().addAllFilters(childFilters))
             .build();
