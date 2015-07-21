@@ -31,38 +31,13 @@ import com.google.longrunning.OperationsGrpc.OperationsBlockingStub;
 
 import io.grpc.Channel;
 
-import java.util.concurrent.ExecutorService;
-
 /**
  * A gRPC client for accessing the Bigtable Cluster Admin API.
  */
 public class BigtableClusterAdminGrpcClient implements BigtableClusterAdminClient{
 
-  /**
-   * Create a new BigtableClusterAdminGrpcClient. Note, the caller needs to take responsibility of
-   * managing the life-cycle of the channel's dependencies found in {@link TransportOptions} and
-   * {@link ChannelOptions}. See
-   * {@link BigtableChannels#createChannel(TransportOptions, ChannelOptions, ExecutorService)} for
-   * how the channel is constructed and how it can be closed.
-   * {@link ChannelOptions#getClientCloseHandlers()} is one way to close the channel.
-   * @return A client ready to access Cloud Bigtable cluster admin services.
-   */
-  public static BigtableClusterAdminGrpcClient createClient(
-      TransportOptions transportOptions,
-      ChannelOptions channelOptions,
-      ExecutorService executorService) {
-
-    Channel channel = BigtableChannels.createChannel(
-        transportOptions,
-        channelOptions,
-        executorService);
-
-    return new BigtableClusterAdminGrpcClient(channel);
-  }
-
   private final BigtableClusterServiceGrpc.BigtableClusterServiceBlockingStub blockingStub;
   private final OperationsBlockingStub operationsStub;
-
 
   public BigtableClusterAdminGrpcClient(Channel channel) {
     blockingStub = BigtableClusterServiceGrpc.newBlockingStub(channel);

@@ -134,29 +134,6 @@ public class BigtableGrpcClient implements BigtableClient {
   }
 
   /**
-   * Create a new BigtableGrpcClient. Note, the caller needs to take responsibility of managing the
-   * life-cycle of the channel's dependencies found in {@link TransportOptions} and
-   * {@link ChannelOptions}. See
-   * {@link BigtableChannels#createChannel(TransportOptions, ChannelOptions, ExecutorService)} for
-   * how the channel is constructed and how it can be closed.
-   * {@link ChannelOptions#getClientCloseHandlers()} is one way to close the channel.
-   * @return A client ready to access Cloud Bigtable data services.
-   */
-  public static BigtableClient createClient(
-      TransportOptions transportOptions,
-      ChannelOptions channelOptions,
-      BigtableGrpcClientOptions clientOptions,
-      ExecutorService executorService) {
-
-    Channel channel = BigtableChannels.createChannel(
-        transportOptions,
-        channelOptions,
-        executorService);
-
-    return new BigtableGrpcClient(channel, executorService, clientOptions);
-  }
-
-  /**
    * The number of rows to read in before blocking.
    * TODO: Wire this into a settable option.
    */

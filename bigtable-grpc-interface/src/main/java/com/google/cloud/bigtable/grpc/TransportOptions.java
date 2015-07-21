@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,8 @@ import io.netty.handler.ssl.SslContext;
 
 import java.io.IOException;
 import java.net.InetAddress;
+
+import javax.net.ssl.SSLException;
 
 /**
  * Options for constructing the transport to Anviltop.
@@ -41,6 +43,21 @@ public class TransportOptions {
   public interface SslContextFactory {
     SslContext create();
   }
+
+  public static final SslContextFactory SSL_CONTEXT_FACTORY =
+      new TransportOptions.SslContextFactory() {
+        @SuppressWarnings("deprecation")
+        @Override
+        public SslContext create() {
+          try {
+            // We create multiple channels via refreshing and pooling channel implementation.
+            // Each one needs its own SslContext.
+            return SslContext.newClientContext();
+          } catch (SSLException e) {
+            throw new IllegalStateException("Could not create an ssl context.", e);
+          }
+        }
+      };
 
   private final BigtableTransports transport;
   private final InetAddress endpointAddress;

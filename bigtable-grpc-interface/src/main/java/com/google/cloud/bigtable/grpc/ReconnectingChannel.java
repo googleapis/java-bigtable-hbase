@@ -41,6 +41,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class ReconnectingChannel extends Channel implements Closeable {
 
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
+  public static final long CHANNEL_TERMINATE_WAIT_MS = 5000;
 
   // This executor is used to shutdown & await termination of
   // grpc connections. The work done on these threads should be minimal
@@ -198,7 +199,7 @@ public class ReconnectingChannel extends Channel implements Closeable {
     synchronized (closingAsynchronously) {
       while (closingAsynchronously.get() > 0) {
         try {
-          closingAsynchronously.wait(BigtableChannels.CHANNEL_TERMINATE_WAIT_MS);
+          closingAsynchronously.wait(CHANNEL_TERMINATE_WAIT_MS);
         } catch (InterruptedException e){
           throw new IOException("Could not close all channels.", e);
         }
