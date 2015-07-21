@@ -227,14 +227,10 @@ public class BigtableSession implements AutoCloseable {
 
   public synchronized BigtableClient getDataClient() {
     if (this.client == null) {
-      BigtableGrpcClientOptions clientOptions =
-          BigtableGrpcClientOptions.fromRetryOptions(options.getChannelOptions()
-              .getUnaryCallRetryOptions());
-
       Channel channel = createChannel(
         createTransportOptions(options.getDataHost()),
-        options.getChannelOptions().getChannelCount());
-      this.client = new BigtableGrpcClient(channel, batchPool, clientOptions);
+        options.getChannelCount());
+      this.client = new BigtableGrpcClient(channel, batchPool, options.getRetryOptions());
     }
 
     return client;
@@ -270,12 +266,11 @@ public class BigtableSession implements AutoCloseable {
    * </p>
    */
   protected Channel createChannel(final TransportOptions transportOptions, int channelCount) {
-    ChannelOptions channelOptions = options.getChannelOptions();
 
     Preconditions.checkArgument(
       transportOptions.getTransport() == TransportOptions.BigtableTransports.HTTP2_NETTY_TLS,
       "Bigtable requires the NETTY_TLS transport.");
-    long timeoutMs = channelOptions.getTimeoutMs();
+    long timeoutMs = options.getTimeoutMs();
 
     Channel channels[] = new Channel[channelCount];
     for (int i = 0; i < channelCount; i++) {
@@ -285,7 +280,7 @@ public class BigtableSession implements AutoCloseable {
       channels[i] = reconnectingChannel;
     }
     Channel channel = new ChannelPool(channels);
-    return wrapChannel(channelOptions, batchPool, channel);
+    return wrapChannel(channel);
   }
 
   protected ReconnectingChannel createReconnectingChannel(
@@ -347,34 +342,33 @@ public class BigtableSession implements AutoCloseable {
     }
   }
 
-  private Channel wrapChannel(ChannelOptions channelOptions,
-      ExecutorService executor, Channel channel) {
+  private Channel wrapChannel(Channel channel) {
     List<ClientInterceptor> interceptors = new ArrayList<>();
-    if (channelOptions.getCredential() != null) {
-      interceptors.add(new ClientAuthInterceptor(channelOptions.getCredential(), executor));
+    if (options.getCredential() != null) {
+      interceptors.add(new ClientAuthInterceptor(options.getCredential(), batchPool));
     }
 
-    if (channelOptions.getAuthority() != null) {
+    if (options.getAuthority() != null) {
       Metadata.Headers headers = new Metadata.Headers();
-      headers.setAuthority(channelOptions.getAuthority());
+      headers.setAuthority(options.getAuthority());
       interceptors.add(MetadataUtils.newAttachHeadersInterceptor(headers));
     }
 
     CallCompletionStatusInterceptor preRetryCallStatusInterceptor = null;
-    if (!Strings.isNullOrEmpty(channelOptions.getCallStatusReportPath())) {
+    if (!Strings.isNullOrEmpty(options.getCallStatusReportPath())) {
       preRetryCallStatusInterceptor = new CallCompletionStatusInterceptor();
       interceptors.add(preRetryCallStatusInterceptor);
     }
 
-    interceptors.add(new UserAgentUpdaterInterceptor(channelOptions.getUserAgent()));
+    interceptors.add(new UserAgentUpdaterInterceptor(options.getUserAgent()));
 
     if (!interceptors.isEmpty()) {
       channel = ClientInterceptors.intercept(channel, interceptors);
       interceptors.clear();
     }
 
-    if (channelOptions.getUnaryCallRetryOptions().enableRetries()) {
-      RetryOptions unaryCallRetryOptions = channelOptions.getUnaryCallRetryOptions();
+    if (options.getRetryOptions().enableRetries()) {
+      RetryOptions unaryCallRetryOptions = options.getRetryOptions();
       channel = new UnaryCallRetryInterceptor(
           channel,
           scheduledRetries,
@@ -384,12 +378,12 @@ public class BigtableSession implements AutoCloseable {
           unaryCallRetryOptions.getMaxElaspedBackoffMillis());
     }
 
-    if (!Strings.isNullOrEmpty(channelOptions.getCallStatusReportPath())) {
+    if (!Strings.isNullOrEmpty(options.getCallStatusReportPath())) {
       CallCompletionStatusInterceptor postRetryCallStatusInterceptor =
           new CallCompletionStatusInterceptor();
 
       registerCallStatusReportingShutdownHook(
-          channelOptions.getCallStatusReportPath(),
+          options.getCallStatusReportPath(),
           preRetryCallStatusInterceptor,
           postRetryCallStatusInterceptor);
 

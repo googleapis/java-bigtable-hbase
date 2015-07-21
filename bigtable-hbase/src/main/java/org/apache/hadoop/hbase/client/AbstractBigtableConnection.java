@@ -162,7 +162,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       params.writeBufferSize(tableConfig.getWriteBufferSize());
     }
 
-    int defaultRpcCount = MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelOptions().getChannelCount();
+    int defaultRpcCount = MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
     int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();

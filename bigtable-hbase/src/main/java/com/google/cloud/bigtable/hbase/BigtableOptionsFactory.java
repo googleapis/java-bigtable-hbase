@@ -23,7 +23,6 @@ import static com.google.cloud.bigtable.config.BigtableOptions.DEFAULT_BIGTABLE_
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -157,7 +156,7 @@ public class BigtableOptionsFactory {
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
     bigtableOptionsBuilder.setPort(port);
-    bigtableOptionsBuilder.setChannelOptions(createChannelOptions(configuration));
+    setChannelOptions(bigtableOptionsBuilder, configuration);
 
     return bigtableOptionsBuilder.build();
   }
@@ -187,12 +186,12 @@ public class BigtableOptionsFactory {
     }
   }
 
-  private static ChannelOptions createChannelOptions(Configuration configuration)
-      throws IOException {
+  private static void
+      setChannelOptions(BigtableOptions.Builder builder, Configuration configuration)
+          throws IOException {
     // TODO: This belongs in BigtableSessions.  There needs to be some configuration taken out of
     // Configuration, moved to ChannelOptions.  The retrieval of Credentials should be in
     // BigtableSessions.
-    ChannelOptions.Builder channelOptionsBuilder = new ChannelOptions.Builder();
     try {
       if (configuration.getBoolean(
           BIGTABE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
@@ -202,7 +201,7 @@ public class BigtableOptionsFactory {
         String serviceAccountEmail = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
         if (!Strings.isNullOrEmpty(serviceAccountJson)) {
           LOG.debug("Using JSON file: %s", serviceAccountJson);
-          channelOptionsBuilder.setCredential(CredentialFactory.getApplicationDefaultCredential());
+          builder.setCredential(CredentialFactory.getApplicationDefaultCredential());
         } else if (!Strings.isNullOrEmpty(serviceAccountEmail)) {
           LOG.debug("Service account %s specified.", serviceAccountEmail);
           String keyfileLocation =
@@ -211,16 +210,16 @@ public class BigtableOptionsFactory {
               !Strings.isNullOrEmpty(keyfileLocation),
               "Key file location must be specified when setting service account email");
           LOG.debug("Using p12 keyfile: %s", keyfileLocation);
-          channelOptionsBuilder.setCredential(
+          builder.setCredential(
               CredentialFactory.getCredentialFromPrivateKeyServiceAccount(
                   serviceAccountEmail, keyfileLocation));
         } else {
-          channelOptionsBuilder.setCredential(CredentialFactory
+          builder.setCredential(CredentialFactory
               .getCredentialFromMetadataServiceAccount());
         }
       } else if (configuration.getBoolean(
           BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT)) {
-        channelOptionsBuilder.setCredential(null); // Intended for testing purposes only.
+        builder.setCredential(null); // Intended for testing purposes only.
         LOG.info("Enabling the use of null credentials. This should not be used in production.");
       } else {
         throw new IllegalStateException(
@@ -251,15 +250,15 @@ public class BigtableOptionsFactory {
           reportDirectoryPath.resolve("call_timing.txt").toAbsolutePath().toString();
       LOG.debug("Logging call status aggregates to %s", callStatusReport);
       LOG.debug("Logging call timing aggregates to %s", callTimingReport);
-      channelOptionsBuilder.setCallStatusReportPath(callStatusReport);
-      channelOptionsBuilder.setCallTimingReportPath(callTimingReport);
+      builder.setCallStatusReportPath(callStatusReport);
+      builder.setCallTimingReportPath(callTimingReport);
     }
 
-    channelOptionsBuilder.setRetryOptions(createRetryOptions(configuration));
+    builder.setRetryOptions(createRetryOptions(configuration));
 
     int channelCount =
         configuration.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
-    channelOptionsBuilder.setChannelCount(channelCount);
+    builder.setChannelCount(channelCount);
 
     long channelTimeout =
         configuration.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
@@ -268,11 +267,9 @@ public class BigtableOptionsFactory {
     // be allowed to be set at.
     Preconditions.checkArgument(channelTimeout == 0 || channelTimeout >= 60000,
       BIGTABLE_CHANNEL_TIMEOUT_MS_KEY + " has to be 0 (no timeout) or 1 minute+ (60000)");
-    channelOptionsBuilder.setTimeoutMs(channelTimeout);
+    builder.setTimeoutMs(channelTimeout);
 
-    channelOptionsBuilder.setUserAgent(BigtableConstants.USER_AGENT);
-
-    return channelOptionsBuilder.build();
+    builder.setUserAgent(BigtableConstants.USER_AGENT);
   }
 
   private static RetryOptions createRetryOptions(Configuration configuration) {

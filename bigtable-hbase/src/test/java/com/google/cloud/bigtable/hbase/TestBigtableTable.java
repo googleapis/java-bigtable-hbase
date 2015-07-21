@@ -22,7 +22,6 @@ import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClient;
-import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.ResultScanner;
 import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.protobuf.ByteString;
@@ -70,11 +69,6 @@ public class TestBigtableTable {
   @Before
   public void setup() throws UnknownHostException {
     MockitoAnnotations.initMocks(this);
-    ChannelOptions channelOptions = new ChannelOptions.Builder()
-        .setRetryOptions(new RetryOptions.Builder().setEnableRetries(false).build())
-        .setCredential(null)
-        .setUserAgent("testAgent")
-        .build();
 
     InetAddress localhost = InetAddress.getByName("localhost");
     BigtableOptions options = new BigtableOptions.Builder()
@@ -85,7 +79,9 @@ public class TestBigtableTable {
         .setProjectId(TEST_PROJECT)
         .setCluster(TEST_CLUSTER)
         .setZone(TEST_ZONE)
-        .setChannelOptions(channelOptions)
+        .setRetryOptions(new RetryOptions.Builder().setEnableRetries(false).build())
+        .setCredential(null)
+        .setUserAgent("testAgent")
         .build();
 
     Configuration config = new Configuration();

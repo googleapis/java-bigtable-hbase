@@ -141,15 +141,15 @@ public class BigtableGrpcClient implements BigtableClient {
   
   private final Channel channel;
   private final ExecutorService executorService;
-  private final BigtableGrpcClientOptions clientOptions;
+  private final RetryOptions retryOptions;
 
   public BigtableGrpcClient(
       Channel channel,
       ExecutorService executorService,
-      BigtableGrpcClientOptions clientOptions) {
+      RetryOptions retryOptions) {
     this.channel = channel;
     this.executorService = executorService;
-    this.clientOptions = clientOptions;
+    this.retryOptions = retryOptions;
   }
 
   protected static <T, V> ListenableFuture<V> listenableAsyncCall(
@@ -230,7 +230,7 @@ public class BigtableGrpcClient implements BigtableClient {
 
   @Override
   public ResultScanner<Row> readRows(ReadRowsRequest request) {
-    return readRows(request, clientOptions.getStreamingRetryOptions().enableRetries());
+    return readRows(request, retryOptions.enableRetries());
   }
 
   /**
@@ -241,7 +241,7 @@ public class BigtableGrpcClient implements BigtableClient {
     // scanner during operation.
     if (resumable) {
       return new ResumingStreamingResultScanner(
-          clientOptions.getStreamingRetryOptions(),
+        retryOptions,
           request,
           new BigtableResultScannerFactory() {
             @Override
@@ -265,9 +265,9 @@ public class BigtableGrpcClient implements BigtableClient {
 
     StreamingBigtableResultScanner resultScanner =
         new StreamingBigtableResultScanner(
-            clientOptions.getStreamingBufferSize(),
-            clientOptions.getReadPartialRowTimeoutMillis(),
-            cancellationToken);
+          retryOptions.getStreamingBufferSize(),
+          retryOptions.getReadPartialRowTimeoutMillis(),
+          cancellationToken);
 
     Calls.asyncServerStreamingCall(
         readRowsCall,
@@ -307,11 +307,6 @@ public class BigtableGrpcClient implements BigtableClient {
             return result;
           }
         });
-  }
-
-  @VisibleForTesting
-  BigtableGrpcClientOptions getClientOptions() {
-    return clientOptions;
   }
 
   @VisibleForTesting
