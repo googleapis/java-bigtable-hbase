@@ -52,7 +52,7 @@ public class CheckConfig {
       return;
     }
 
-    System.out.println(String.format("User Agent: %s", options.getChannelOptions().getUserAgent()));
+    System.out.println(String.format("User Agent: %s", options.getUserAgent()));
     System.out.println(String.format("Project ID: %s", options.getProjectId()));
     System.out.println(String.format("Cluster Name: %s", options.getCluster()));
     System.out.println(String.format("Zone: %s", options.getZone()));
@@ -60,7 +60,7 @@ public class CheckConfig {
     System.out.println(String.format("Table admin host: %s", options.getTableAdminHost()));
     System.out.println(String.format("Data host: %s", options.getDataHost()));
 
-    Credentials credentials = options.getChannelOptions().getCredential();
+    Credentials credentials = options.getCredential();
     try {
       System.out.println("Attempting credential refresh...");
       credentials.refresh();
