@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,9 @@
  */
 package com.google.cloud.bigtable.config;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.handler.ssl.SslContext;
-
 import java.net.InetAddress;
 
-import javax.net.ssl.SSLException;
-
+import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.api.client.util.Strings;
 import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.TransportOptions;
@@ -32,20 +28,12 @@ import com.google.common.base.Preconditions;
  */
 public class BigtableOptions {
 
-  public static final TransportOptions.SslContextFactory SSL_CONTEXT_FACTORY =
-      new TransportOptions.SslContextFactory() {
-        @SuppressWarnings("deprecation")
-        @Override
-        public SslContext create() {
-          try {
-            // We create multiple channels via refreshing and pooling channel implementation.
-            // Each one needs its own SslContext.
-            return SslContext.newClientContext();
-          } catch (SSLException e) {
-            throw new IllegalStateException("Could not create an ssl context.", e);
-          }
-        }
-      };
+  public static final String BIGTABLE_TABLE_ADMIN_HOST_DEFAULT =
+      "bigtabletableadmin.googleapis.com";
+  public static final String BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT =
+      "bigtableclusteradmin.googleapis.com";
+  public static final String BIGTABLE_HOST_DEFAULT = "bigtable.googleapis.com";
+  public static final int DEFAULT_BIGTABLE_PORT = 443;
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
@@ -60,7 +48,6 @@ public class BigtableOptions {
     private InetAddress tableAdminHost;
     private InetAddress clusterAdminHost;
     private int port;
-    private EventLoopGroup customEventLoopGroup;
     private ChannelOptions channelOptions;
 
     public Builder setTableAdminHost(InetAddress tableAdminHost) {
@@ -98,11 +85,6 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setCustomEventLoopGroup(EventLoopGroup eventLoopGroup) {
-      this.customEventLoopGroup = eventLoopGroup;
-      return this;
-    }
-
     public Builder setChannelOptions(ChannelOptions channelOptions) {
       this.channelOptions = channelOptions;
       return this;
@@ -117,7 +99,6 @@ public class BigtableOptions {
           projectId,
           zone,
           cluster,
-          customEventLoopGroup,
           channelOptions);
     }
   }
@@ -129,8 +110,19 @@ public class BigtableOptions {
   private final String projectId;
   private final String zone;
   private final String cluster;
-  private final EventLoopGroup customEventLoopGroup;
   private final ChannelOptions channelOptions;
+
+  @VisibleForTesting
+  BigtableOptions() {
+      clusterAdminHost = null;
+      tableAdminHost = null;
+      dataHost = null;
+      port = 0;
+      projectId = null;
+      zone = null;
+      cluster = null;
+      channelOptions = null;
+  }
 
   private BigtableOptions(
       InetAddress clusterAdminHost,
@@ -140,7 +132,6 @@ public class BigtableOptions {
       String projectId,
       String zone,
       String cluster,
-      EventLoopGroup customEventLoopGroup,
       ChannelOptions channelOptions) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
@@ -156,7 +147,6 @@ public class BigtableOptions {
     this.projectId = projectId;
     this.zone = zone;
     this.cluster = cluster;
-    this.customEventLoopGroup = customEventLoopGroup;
     this.channelOptions = channelOptions;
 
     LOG.debug("Connection Configuration: project: %s, cluster: %s, data host %s, "
@@ -195,27 +185,6 @@ public class BigtableOptions {
 
   public InetAddress getClusterAdminHost() {
     return clusterAdminHost;
-  }
-
-  public TransportOptions getDataTransportOptions() {
-    return createTransportOptions(this.dataHost);
-  }
-
-  public TransportOptions getTableAdminTransportOptions() {
-    return createTransportOptions(this.tableAdminHost);
-  }
-
-  public TransportOptions getClusterAdminTransportOptions() {
-    return createTransportOptions(this.clusterAdminHost);
-  }
-
-  private TransportOptions createTransportOptions(InetAddress host) {
-    return new TransportOptions(
-        TransportOptions.BigtableTransports.HTTP2_NETTY_TLS,
-        host,
-        port,
-        SSL_CONTEXT_FACTORY,
-        customEventLoopGroup);
   }
 
   public int getPort() {

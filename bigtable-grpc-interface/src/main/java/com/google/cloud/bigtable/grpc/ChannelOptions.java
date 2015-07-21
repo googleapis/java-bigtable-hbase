@@ -15,11 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-
 import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
@@ -38,7 +33,6 @@ public class ChannelOptions {
     private String userAgent;
     private String callStatusReportPath;
     private String callTimingReportPath;
-    private ScheduledExecutorService scheduledExecutorService = null;
     private RetryOptions retryOptions = null;
     private long timeoutMs = 0;
     private int channelCount = 1;
@@ -84,14 +78,6 @@ public class ChannelOptions {
     }
 
     /**
-     * The ScheduledExecutorService to use to perform rpc retries.
-     */
-    public Builder setScheduledExecutorService(ScheduledExecutorService scheduledExecutorService) {
-      this.scheduledExecutorService = scheduledExecutorService;
-      return this;
-    }
-
-    /**
      * The number of channels to create.
      */
     public Builder setChannelCount(int channelCount) {
@@ -123,7 +109,6 @@ public class ChannelOptions {
           callTimingReportPath,
           callStatusReportPath,
           retryOptions,
-          scheduledExecutorService,
           timeoutMs,
           channelCount);
     }
@@ -135,10 +120,8 @@ public class ChannelOptions {
   private final String callTimingReportPath;
   private final String callStatusReportPath;
   private final RetryOptions unaryCallRetryOptions;
-  private final ScheduledExecutorService scheduledExecutorService;
   private final long timeoutMs;
   private final int channelCount;
-  private final List<Closeable> clientCloseHandlers = new ArrayList<>();
 
   /**
    * Construct a ChannelOptions object
@@ -152,7 +135,6 @@ public class ChannelOptions {
    * @param callStatusReportPath A client-local file to which a report of call statuses
    * will be appended
    * @param unaryCallRetryOptions Options for how to handle retriable failed UnaryCalls.
-   * @param scheduledExecutorService ScheduledExecutorService on which to retry RPCs.
    */
   public ChannelOptions(Credentials credential,
       String authority,
@@ -160,11 +142,8 @@ public class ChannelOptions {
       String callTimingReportPath,
       String callStatusReportPath,
       RetryOptions unaryCallRetryOptions,
-      ScheduledExecutorService scheduledExecutorService,
       long timeoutMs,
       int channelCount) {
-    Preconditions.checkArgument(credential == null || scheduledExecutorService != null,
-      "scheduledExecutorService has to be set if credentials are supplied");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(userAgent),
         "UserAgent must not be empty or null");
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
@@ -176,7 +155,6 @@ public class ChannelOptions {
     this.userAgent = userAgent;
     this.callTimingReportPath = callTimingReportPath;
     this.callStatusReportPath = callStatusReportPath;
-    this.scheduledExecutorService = scheduledExecutorService;
     this.unaryCallRetryOptions = unaryCallRetryOptions;
     this.timeoutMs = timeoutMs;
     this.channelCount = channelCount;
@@ -226,13 +204,6 @@ public class ChannelOptions {
   public RetryOptions getUnaryCallRetryOptions() { return unaryCallRetryOptions; }
 
   /**
-   * The ScheduledExecutorService to use for RPC retries.
-   */
-  public ScheduledExecutorService getScheduledExecutorService() {
-    return this.scheduledExecutorService;
-  }
-
-  /**
    * The timeout for a channel.
    */
   public long getTimeoutMs() {
@@ -244,19 +215,5 @@ public class ChannelOptions {
    */
   public int getChannelCount() {
     return channelCount;
-  }
-
-  /**
-   * The list of {@link }ClientCloseHandler}s to invoke when a connection closes.
-   */
-  public List<Closeable> getClientCloseHandlers() {
-    return clientCloseHandlers;
-  }
-
-  /**
-   * Add a {@link }ClientCloseHandler} to be closed when the connection closes.
-   */
-  public void addClientCloseHandler(Closeable clientCloseHandler){
-    this.clientCloseHandlers.add(clientCloseHandler);
   }
 }

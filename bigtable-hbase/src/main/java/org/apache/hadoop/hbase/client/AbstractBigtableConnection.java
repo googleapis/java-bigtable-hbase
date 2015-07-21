@@ -16,14 +16,24 @@
 // Because MasterKeepAliveConnection is default scope, we have to use this package.  :-/
 package org.apache.hadoop.hbase.client;
 
-import io.netty.handler.ssl.SslContext;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
+import com.google.cloud.bigtable.hbase.BigtableTable;
+import com.google.common.base.MoreObjects;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.util.Threads;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,39 +41,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.util.Threads;
-
-import com.google.api.client.http.HttpTransport;
-import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc;
-import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc.BigtableTableServiceServiceDescriptor;
-import com.google.bigtable.v1.BigtableServiceGrpc;
-import com.google.bigtable.v1.BigtableServiceGrpc.BigtableServiceServiceDescriptor;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.CredentialFactory;
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableClient;
-import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
-import com.google.cloud.bigtable.grpc.BigtableGrpcClientOptions;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient;
-import com.google.cloud.bigtable.grpc.ChannelOptions;
-import com.google.cloud.bigtable.grpc.RetryOptions;
-import com.google.cloud.bigtable.grpc.TransportOptions;
-import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
-import com.google.cloud.bigtable.hbase.BigtableTable;
-import com.google.common.base.MoreObjects;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public abstract class AbstractBigtableConnection implements Connection, Closeable {
   public static final String MAX_INFLIGHT_RPCS_KEY =
@@ -83,75 +64,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
 
   static {
-    // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
-    ExecutorService connectionStartupExecutor =
-        Executors.newCachedThreadPool(
-            new ThreadFactoryBuilder()
-                .setNameFormat("AbstractBigtableConnection-startup-%s")
-                .setDaemon(true)
-                .build());
-    connectionStartupExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        // The first invocation of BigtableOptions.SSL_CONTEXT_FACTORY.create() is expensive.
-        // Create a throw away object in order to speed up the creation of the first
-        // BigtableConnection which uses SslContexts under the covers.
-        @SuppressWarnings("unused")
-        SslContext warmup = BigtableOptions.SSL_CONTEXT_FACTORY.create();
-      }
-    });
-    connectionStartupExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        // The first invocation of BigtableServiceGrpc.CONFIG is expensive.
-        // Reference it so that it gets constructed asynchronously.
-        @SuppressWarnings("unused")
-        BigtableServiceServiceDescriptor warmup = BigtableServiceGrpc.CONFIG;
-      }
-    });
-    connectionStartupExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        // The first invocation of BigtableTableServiceGrpcs.CONFIG is expensive.
-        // Reference it so that it gets constructed asynchronously.
-        @SuppressWarnings("unused")
-        BigtableTableServiceServiceDescriptor warmup = BigtableTableServiceGrpc.CONFIG;
-      }
-    });
-    connectionStartupExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        // The first invocation of CredentialFactory.getHttpTransport() is expensive.
-        // Reference it so that it gets constructed asynchronously.
-        try {
-          @SuppressWarnings("unused")
-          HttpTransport warmup = CredentialFactory.getHttpTransport();
-        } catch (IOException | GeneralSecurityException e) {
-          new Logger(AbstractBigtableConnection.class).warn(
-            "Could not asynchronously initialze httpTransport", e);
-        }
-      }
-    });
-    for (final String host : Arrays.asList(BigtableOptionsFactory.BIGTABLE_HOST_DEFAULT,
-      BigtableOptionsFactory.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT,
-      BigtableOptionsFactory.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT)) {
-      connectionStartupExecutor.execute(new Runnable() {
-        @Override
-        public void run() {
-          // The first invocation of BigtableTableServiceGrpcs.CONFIG is expensive.
-          // Reference it so that it gets constructed asynchronously.
-          try {
-            @SuppressWarnings("unused")
-            InetAddress warmup = InetAddress.getByName(host);
-          } catch (UnknownHostException e) {
-            new Logger(AbstractBigtableConnection.class).warn(
-              "Could not asynchronously initialze host: " + host, e);
-          }
-        }
-      });
-    }
-    connectionStartupExecutor.shutdown();
-
     Runnable shutDownRunnable = new Runnable() {
       @Override
       public void run() {
@@ -185,8 +97,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private volatile boolean closed;
   private volatile boolean aborted;
   private volatile ExecutorService batchPool = null;
-  private BigtableClient client;
-  private BigtableTableAdminClient bigtableTableAdminClient;
+
+  private BigtableSession session;
 
   private volatile boolean cleanupPool = false;
   private final BigtableOptions options;
@@ -219,56 +131,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       throw ioe;
     }
 
-    TransportOptions dataTransportOptions = options.getDataTransportOptions();
-    ChannelOptions channelOptions = options.getChannelOptions();
-    TransportOptions tableAdminTransportOptions = options.getTableAdminTransportOptions();
-
-    LOG.info("Opening connection for project %s on data host %s, "
-        + "table admin host %s, using transport %s.",
-        options.getProjectId(),
-        dataTransportOptions.getHost(),
-        tableAdminTransportOptions.getHost(),
-        dataTransportOptions.getTransport());
-
-    this.client = getBigtableClient(
-        dataTransportOptions,
-        channelOptions,
-        batchPool);
-    this.bigtableTableAdminClient = getTableAdminClient(
-        tableAdminTransportOptions,
-        channelOptions,
-        batchPool);
+    this.session = new BigtableSession(options, batchPool);
     this.tableConfig = new TableConfiguration(conf);
-  }
-
-  private BigtableTableAdminClient getTableAdminClient(
-      TransportOptions tableAdminTransportOptions,
-      ChannelOptions channelOptions,
-      ExecutorService executorService) {
-
-    try {
-      return BigtableTableAdminGrpcClient.createClient(
-          tableAdminTransportOptions, channelOptions, executorService);
-    } catch (RuntimeException re) {
-      LOG.error("Error constructing table admin client.", re);
-      throw re;
-    }
-  }
-
-  protected BigtableClient getBigtableClient(
-      TransportOptions dataTransportOptions,
-      ChannelOptions channelOptions,
-      ExecutorService executorService) {
-    try {
-      RetryOptions retryOptions = channelOptions.getUnaryCallRetryOptions();
-      BigtableGrpcClientOptions clientOptions =
-          BigtableGrpcClientOptions.fromRetryOptions(retryOptions);
-      return BigtableGrpcClient.createClient(dataTransportOptions, channelOptions, clientOptions,
-        executorService);
-    } catch (RuntimeException re) {
-      LOG.error("Error constructing data client.", re);
-      throw re;
-    }
   }
 
   @Override
@@ -283,7 +147,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new BigtableTable(this, tableName, options, client, pool);
+    return new BigtableTable(this, tableName, options, session.getDataClient(), pool);
   }
 
   @Override
@@ -307,7 +171,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         params.getTableName(),
         maxInflightRpcs,
         params.getWriteBufferSize(),
-        client,
+        session.getDataClient(),
         options,
         params.getPool(),
         params.getListener()){
@@ -351,7 +215,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       }
     }
 
-    RegionLocator newLocator = new BigtableRegionLocator(tableName, options, client);
+    RegionLocator newLocator =
+        new BigtableRegionLocator(tableName, options, session.getDataClient());
 
     if (locatorCache.add(newLocator)) {
       return newLocator;
@@ -392,15 +257,11 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     if (this.closed) {
       return;
     }
-    ChannelOptions channelOptions = this.options.getChannelOptions();
-    for (Closeable clientCloseHandler : channelOptions.getClientCloseHandlers()) {
-      try {
-        clientCloseHandler.close();
-      } catch (IOException e) {
-        throw new RuntimeException("Error when shutting down clients", e);
-      }
+    try {
+      this.session.close();
+    } catch (Exception e) {
+      throw new RuntimeException("Error when shutting down clients", e);
     }
-    this.closed = true;
     // If the clients are shutdown, there shouldn't be any more activity on the
     // batch pool (assuming we created it ourselves). If exceptions were raised
     // shutting down the clients, it's not entirely safe to shutdown the pool
@@ -473,9 +334,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   public abstract Admin getAdmin() throws IOException;
 
   /* Methods needed to construct a Bigtable Admin implementation: */
-
   protected BigtableTableAdminClient getBigtableTableAdminClient() {
-    return bigtableTableAdminClient;
+    return session.getTableAdminClient();
   }
 
   protected BigtableOptions getOptions() {

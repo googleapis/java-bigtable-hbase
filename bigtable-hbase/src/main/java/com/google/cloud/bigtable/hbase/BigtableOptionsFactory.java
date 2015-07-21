@@ -15,24 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-
-import org.apache.hadoop.conf.Configuration;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_HOST_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.DEFAULT_BIGTABLE_PORT;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
@@ -41,7 +27,16 @@ import com.google.cloud.bigtable.grpc.ChannelOptions;
 import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+import org.apache.hadoop.conf.Configuration;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 
 /**
  * Static methods to convert an instance of {@link Configuration}
@@ -50,26 +45,13 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class BigtableOptionsFactory {
   protected static final Logger LOG = new Logger(BigtableOptionsFactory.class);
 
-  // TODO(sduskis): all default options should be moved to their appropriate *Options classes
-  // This class is specific to HBase's configuration approach.  The defaults ought to be used in
-  // the context of a stand alone java client, eventually.
-
-  public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
-  public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
-  public static final int RETRY_THREAD_COUNT = 4;
-
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
-  public static final int DEFAULT_BIGTABLE_PORT = 443;
   public static final String BIGTABLE_CLUSTER_ADMIN_HOST_KEY =
       "google.bigtable.cluster.admin.endpoint.host";
-  public static final String BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT =
-      "bigtableclusteradmin.googleapis.com";
   public static final String BIGTABLE_TABLE_ADMIN_HOST_KEY =
       "google.bigtable.admin.endpoint.host";
-  public static final String BIGTABLE_TABLE_ADMIN_HOST_DEFAULT =
-      "bigtabletableadmin.googleapis.com";
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
-  public static final String BIGTABLE_HOST_DEFAULT = "bigtable.googleapis.com";
+
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
   public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
   public static final String ZONE_KEY = "google.bigtable.zone.name";
@@ -150,70 +132,7 @@ public class BigtableOptionsFactory {
 
   public static BigtableOptions fromConfiguration(final Configuration configuration)
       throws IOException {
-    // Creating the channel options is slow.  Specifically, the credential creation is slow.
-    // There are some slow operations in configureBigtableOptions as well, specifically
-    // the InetAddress.getByName.  The slowest operation by far is the credential creation,
-    // so do it in parallel.
-    //
-    // The retryExecutor is available for use.  While it's a bit weird to use retryExecutor, but
-    // since it's already built and not used elsewhere, might as well use it here.
-    final ScheduledExecutorService retryExecutor =
-        Executors.newScheduledThreadPool(
-            RETRY_THREAD_COUNT,
-            new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat(RETRY_THREADPOOL_NAME + "-%d")
-                .build());
 
-    Future<ChannelOptions> channelOptionFuture =
-        retryExecutor.submit(new Callable<ChannelOptions>() {
-          @Override
-          public ChannelOptions call() throws Exception {
-            return createChannelOptions(configuration, retryExecutor);
-          }
-        });
-
-
-    BigtableOptions.Builder bigtableOptionsBuilder = createBigtableOptions(configuration);
-
-    final EventLoopGroup elg =
-        new NioEventLoopGroup(0, new ThreadFactoryBuilder().setDaemon(true)
-            .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d").build());
-    bigtableOptionsBuilder.setCustomEventLoopGroup(elg);
-
-    ChannelOptions channelOptions = null;
-    try {
-      channelOptions = channelOptionFuture.get();
-    } catch (InterruptedException e) {
-      throw new IOException("Could not initialize credentials", e);
-    } catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof RuntimeException) {
-        throw (RuntimeException) cause;
-      }
-      throw new IOException("Could not initialize credentials", e);
-    }
-    bigtableOptionsBuilder.setChannelOptions(channelOptions);
-
-    channelOptions.addClientCloseHandler(new Closeable() {
-      @Override
-      public void close() throws IOException {
-        elg.shutdownGracefully();
-      }
-    });
-
-    channelOptions.addClientCloseHandler(new Closeable() {
-      @Override
-      public void close() throws IOException {
-        retryExecutor.shutdownNow();
-      }
-    });
-
-    return bigtableOptionsBuilder.build();
-  }
-
-  private static BigtableOptions.Builder createBigtableOptions(final Configuration configuration)
-      throws UnknownHostException {
     BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
@@ -238,7 +157,9 @@ public class BigtableOptionsFactory {
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
     bigtableOptionsBuilder.setPort(port);
-    return bigtableOptionsBuilder;
+    bigtableOptionsBuilder.setChannelOptions(createChannelOptions(configuration));
+
+    return bigtableOptionsBuilder.build();
   }
 
   private static String getValue(final Configuration configuration, String key, String type) {
@@ -266,8 +187,11 @@ public class BigtableOptionsFactory {
     }
   }
 
-  private static ChannelOptions createChannelOptions(Configuration configuration,
-      final ScheduledExecutorService retryExecutor) throws IOException {
+  private static ChannelOptions createChannelOptions(Configuration configuration)
+      throws IOException {
+    // TODO: This belongs in BigtableSessions.  There needs to be some configuration taken out of
+    // Configuration, moved to ChannelOptions.  The retrieval of Credentials should be in
+    // BigtableSessions.
     ChannelOptions.Builder channelOptionsBuilder = new ChannelOptions.Builder();
     try {
       if (configuration.getBoolean(
@@ -305,8 +229,6 @@ public class BigtableOptionsFactory {
     } catch (GeneralSecurityException gse) {
       throw new IOException("Failed to acquire credential.", gse);
     }
-
-    channelOptionsBuilder.setScheduledExecutorService(retryExecutor);
 
     // TODO(sduskis): I think that this call report directory mechanism doesn't work anymore as is.
     // We need to make sure that if we want this feature, that we have only a single interceptor

@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import io.grpc.Channel;
+
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc;
 import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
@@ -26,36 +28,10 @@ import com.google.bigtable.admin.table.v1.ListTablesResponse;
 import com.google.bigtable.admin.table.v1.RenameTableRequest;
 import com.google.bigtable.admin.table.v1.Table;
 
-import io.grpc.Channel;
-
-import java.util.concurrent.ExecutorService;
-
 /**
  * A gRPC client for accessing the Bigtable Table Admin API.
  */
 public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
-
-  /**
-   * Create a new BigtableTableAdminClient. Note, the caller needs to take responsibility of
-   * managing the life-cycle of the channel's dependencies found in {@link TransportOptions} and
-   * {@link ChannelOptions}. See
-   * {@link BigtableChannels#createChannel(TransportOptions, ChannelOptions, ExecutorService)} for
-   * how the channel is constructed and how it can be closed.
-   * {@link ChannelOptions#getClientCloseHandlers()} is one way to close the channel.
-   * @return A client ready to access Cloud Bigtable table admin services.
-   */
-  public static BigtableTableAdminClient createClient(
-      TransportOptions transportOptions,
-      ChannelOptions channelOptions,
-      ExecutorService executorService) {
-
-    Channel channel = BigtableChannels.createChannel(
-        transportOptions,
-        channelOptions,
-        executorService);
-
-    return new BigtableTableAdminGrpcClient(channel);
-  }
 
   private final BigtableTableServiceGrpc.BigtableTableServiceBlockingStub blockingStub;
 
