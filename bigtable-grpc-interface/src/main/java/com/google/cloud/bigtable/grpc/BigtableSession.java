@@ -28,7 +28,6 @@ import com.google.bigtable.v1.BigtableServiceGrpc.BigtableServiceServiceDescript
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -69,6 +68,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLException;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -94,6 +94,27 @@ public class BigtableSession implements AutoCloseable {
   private final Map<MethodDescriptor<?, ?>, Predicate<?>> methodsToRetryMap =
       createMethodRetryMap();
 
+  /**
+   * Creates a SslContext.
+   */
+  public interface SslContextFactory {
+    SslContext create();
+  }
+
+  public static final SslContextFactory SSL_CONTEXT_FACTORY = new SslContextFactory() {
+    @SuppressWarnings("deprecation")
+    @Override
+    public SslContext create() {
+      try {
+        // We create multiple channels via refreshing and pooling channel implementation.
+        // Each one needs its own SslContext.
+        return SslContext.newClientContext();
+      } catch (SSLException e) {
+        throw new IllegalStateException("Could not create an ssl context.", e);
+      }
+    }
+  };
+
   static {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
     ExecutorService connectionStartupExecutor =
@@ -110,7 +131,7 @@ public class BigtableSession implements AutoCloseable {
         // Create a throw away object in order to speed up the creation of the first
         // BigtableConnection which uses SslContexts under the covers.
         @SuppressWarnings("unused")
-        SslContext warmup = TransportOptions.SSL_CONTEXT_FACTORY.create();
+        SslContext warmup = SSL_CONTEXT_FACTORY.create();
       }
     });
     connectionStartupExecutor.execute(new Runnable() {
@@ -210,90 +231,80 @@ public class BigtableSession implements AutoCloseable {
     this.batchPool = batchPool;
     this.options = options;
     LOG.info("Opening connection for project %s on data host %s, "
-        + "table admin host %s, using transport %s.", options.getProjectId(),
-      options.getDataHost(), options.getTableAdminHost(),
-      TransportOptions.BigtableTransports.HTTP2_NETTY_TLS);
+        + "table admin host %s.", options.getProjectId(),
+      options.getDataHost(), options.getTableAdminHost());
     this.scheduledRetries = scheduledRetries;
   }
 
-  protected TransportOptions createTransportOptions(InetAddress host) {
-    return new TransportOptions(
-        TransportOptions.BigtableTransports.HTTP2_NETTY_TLS,
-        host,
-        options.getPort(),
-        TransportOptions.SSL_CONTEXT_FACTORY,
-        elg);
-  }
-
-  public synchronized BigtableClient getDataClient() {
+  public synchronized BigtableClient getDataClient() throws IOException {
     if (this.client == null) {
-      Channel channel = createChannel(
-        createTransportOptions(options.getDataHost()),
-        options.getChannelCount());
+      Channel channel = createChannel(options.getDataHost(), options.getChannelCount());
       this.client = new BigtableGrpcClient(channel, batchPool, options.getRetryOptions());
     }
-
     return client;
   }
 
-  public synchronized BigtableTableAdminClient getTableAdminClient() {
+  public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (this.tableAdminClient == null) {
-      Channel channel = createChannel(
-        createTransportOptions(options.getTableAdminHost()),
-        1);
+      Channel channel = createChannel(options.getTableAdminHost(), 1);
       this.tableAdminClient = new BigtableTableAdminGrpcClient(channel);
     }
     return tableAdminClient;
   }
 
-  public synchronized BigtableClusterAdminClient getClusterAdminClient() {
+  public synchronized BigtableClusterAdminClient getClusterAdminClient() throws IOException {
     if (this.clusterAdminClient == null) {
-      Channel channel = createChannel(
-        createTransportOptions(options.getClusterAdminHost()),
-        1);
+      Channel channel = createChannel(options.getClusterAdminHost(), 1);
       this.clusterAdminClient = new BigtableClusterAdminGrpcClient(channel);
     }
 
     return clusterAdminClient;
   }
 
+  private InetSocketAddress getSocketAddress(String hostName) throws IOException {
+    return new InetSocketAddress(getHost(hostName), options.getPort());
+  }
+
+  private InetAddress getHost(String hostName) throws IOException {
+    String overrideIp = options.getOverrideIp();
+    if (overrideIp == null) {
+      return InetAddress.getByName(hostName);
+    } else {
+      InetAddress override = InetAddress.getByName(overrideIp);
+      return InetAddress.getByAddress(hostName, override.getAddress());
+    }
+  }
+
   /**
    * <p>
-   * Create a new Channel, optionally adding OAuth2 support.
-   * </p>
-   * <p>
-   * To create a pool, createPool has to be true and channel count has to be greater than one.
+   * Create a new Channel, optionally adding ChannelInterceptors - auth headers, performance
+   * interceptors, and user agent.
    * </p>
    */
-  protected Channel createChannel(final TransportOptions transportOptions, int channelCount) {
-
-    Preconditions.checkArgument(
-      transportOptions.getTransport() == TransportOptions.BigtableTransports.HTTP2_NETTY_TLS,
-      "Bigtable requires the NETTY_TLS transport.");
-    long timeoutMs = options.getTimeoutMs();
-
+  protected Channel createChannel(String hostString, int channelCount) throws IOException {
+    InetSocketAddress host = getSocketAddress(hostString);
     Channel channels[] = new Channel[channelCount];
     for (int i = 0; i < channelCount; i++) {
-      ReconnectingChannel reconnectingChannel =
-          createReconnectingChannel(transportOptions, batchPool, timeoutMs);
+      ReconnectingChannel reconnectingChannel = createReconnectingChannel(host);
       clientCloseHandlers.add(reconnectingChannel);
       channels[i] = reconnectingChannel;
     }
-    Channel channel = new ChannelPool(channels);
-    return wrapChannel(channel);
+    return wrapChannel(new ChannelPool(channels));
   }
 
-  protected ReconnectingChannel createReconnectingChannel(
-      final TransportOptions transportOptions, final ExecutorService executor, long timeoutMs) {
-    return new ReconnectingChannel(timeoutMs, new ReconnectingChannel.Factory() {
+  protected ReconnectingChannel createReconnectingChannel(final InetSocketAddress host)
+      throws IOException {
+    return new ReconnectingChannel(options.getTimeoutMs(), new ReconnectingChannel.Factory() {
+      @SuppressWarnings("deprecation")
       @Override
-      public Channel createChannel() {
+      public Channel createChannel() throws IOException {
         return NettyChannelBuilder
-            .forAddress(
-              new InetSocketAddress(transportOptions.getHost(), transportOptions.getPort()))
-            .sslContext(transportOptions.createSslContext())
-            .eventLoopGroup(transportOptions.getEventLoopGroup()).executor(executor)
-            .negotiationType(NegotiationType.TLS).streamWindowSize(1 << 20) // 1 MB
+            .forAddress(host)
+            .sslContext(SslContext.newClientContext())
+            .eventLoopGroup(elg)
+            .executor(batchPool)
+            .negotiationType(NegotiationType.TLS)
+            .streamWindowSize(1 << 20) // 1 MB -- TODO(sduskis): make this configurable
             .build();
       }
 

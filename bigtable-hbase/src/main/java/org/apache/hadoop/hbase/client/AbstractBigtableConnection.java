@@ -33,7 +33,6 @@ import org.apache.hadoop.hbase.util.Threads;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -271,14 +270,12 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   @Override
   public String toString() {
-    InetAddress dataHost = options.getDataHost();
-    InetAddress tableAdminHost = options.getTableAdminHost();
     return MoreObjects.toStringHelper(AbstractBigtableConnection.class)
       .add("zone", options.getZone())
       .add("project", options.getProjectId())
       .add("cluster", options.getCluster())
-      .add("dataHost", dataHost)
-      .add("tableAdminHost", tableAdminHost)
+      .add("dataHost", options.getDataHost())
+      .add("tableAdminHost", options.getTableAdminHost())
       .toString();
   }
 
@@ -334,7 +331,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   public abstract Admin getAdmin() throws IOException;
 
   /* Methods needed to construct a Bigtable Admin implementation: */
-  protected BigtableTableAdminClient getBigtableTableAdminClient() {
+  protected BigtableTableAdminClient getBigtableTableAdminClient() throws IOException {
     return session.getTableAdminClient();
   }
 

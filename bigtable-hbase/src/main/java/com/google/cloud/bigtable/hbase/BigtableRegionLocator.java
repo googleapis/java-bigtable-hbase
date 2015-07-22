@@ -51,8 +51,7 @@ public class BigtableRegionLocator implements RegionLocator {
     this.tableName = tableName;
     this.client = client;
     this.metadataSetter = TableMetadataSetter.from(tableName, options);
-    ServerName serverName =
-        ServerName.valueOf(options.getDataHost().getHostName(), options.getPort(), 0);
+    ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
     this.adapter = new SampledRowKeysAdapter(tableName, serverName);
   }
 

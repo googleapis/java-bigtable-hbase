@@ -44,7 +44,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 
@@ -70,11 +69,10 @@ public class TestBigtableTable {
   public void setup() throws UnknownHostException {
     MockitoAnnotations.initMocks(this);
 
-    InetAddress localhost = InetAddress.getByName("localhost");
     BigtableOptions options = new BigtableOptions.Builder()
-        .setClusterAdminHost(localhost)
-        .setTableAdminHost(localhost)
-        .setDataHost(localhost)
+        .setClusterAdminHost("localhost")
+        .setTableAdminHost("localhost")
+        .setDataHost("localhost")
         .setPort(0)
         .setProjectId(TEST_PROJECT)
         .setCluster(TEST_CLUSTER)

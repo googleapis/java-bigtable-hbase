@@ -30,8 +30,6 @@ import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -139,20 +137,20 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setCluster(getValue(configuration, CLUSTER_KEY, "Cluster"));
 
     String overrideIp = configuration.get(IP_OVERRIDE_KEY);
-    InetAddress overrideIpAddress = null;
     if (!Strings.isNullOrEmpty(overrideIp)) {
       LOG.debug("Using override IP address %s", overrideIp);
-      overrideIpAddress = InetAddress.getByName(overrideIp);
+      bigtableOptionsBuilder.setOverrideIp(overrideIp);
     }
 
-    bigtableOptionsBuilder.setDataHost(getHost(configuration, overrideIpAddress,
-      BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT, "API Data"));
+    bigtableOptionsBuilder.setDataHost(
+        getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT, "API Data"));
 
-    bigtableOptionsBuilder.setTableAdminHost(getHost(configuration, overrideIpAddress,
-      BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT, "Table Admin"));
+    bigtableOptionsBuilder.setTableAdminHost(getHost(
+      configuration, BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT, 
+      "Table Admin"));
 
-    bigtableOptionsBuilder.setClusterAdminHost(getHost(configuration, overrideIpAddress,
-      BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT, "Cluster Admin"));
+    bigtableOptionsBuilder.setClusterAdminHost(getHost(configuration,
+        BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT, "Cluster Admin"));
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
     bigtableOptionsBuilder.setPort(port);
@@ -170,20 +168,11 @@ public class BigtableOptionsFactory {
     return value;
   }
 
-  private static InetAddress getHost(Configuration configuration, InetAddress overrideIpAddress,
-      String key, String defaultVal, String type) throws UnknownHostException {
+  private static String getHost(Configuration configuration, String key,
+      String defaultVal, String type) {
     String hostName = configuration.get(key, defaultVal);
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(hostName),
-        String.format("%s endpoint host must be supplied via %s", type, key));
-
-    if (overrideIpAddress == null) {
-      LOG.debug("%s endpoint host %s", type, hostName);
-      return InetAddress.getByName(hostName);
-    } else {
-      LOG.debug("%s endpoint host %s. Using override IP address.", type, hostName);
-      return InetAddress.getByAddress(hostName, overrideIpAddress.getAddress());
-    }
+    LOG.debug("%s endpoint host %s.", type, hostName);
+    return hostName;
   }
 
   private static void
