@@ -62,7 +62,7 @@ public class ReconnectingChannel extends Channel implements Closeable {
    * Creates a fresh CloseableChannel.
    */
   public interface Factory {
-    Channel createChannel();
+    Channel createChannel() throws IOException;
     Closeable createClosable(Channel channel);
   }
 
@@ -87,6 +87,8 @@ public class ReconnectingChannel extends Channel implements Closeable {
         checkRefresh(readLock);
         callDelegate = delegate.newCall(methodDescriptor);
         callDelegate.start(responseListener, headers);
+      } catch (IOException e) {
+        throw new IllegalStateException("Channel cannot create a new call", e);
       } finally {
         readLock.unlock();
       }
@@ -134,7 +136,7 @@ public class ReconnectingChannel extends Channel implements Closeable {
 
   public ReconnectingChannel(
       long maxRefreshTime,
-      Factory connectionFactory) {
+      Factory connectionFactory) throws IOException {
     Preconditions.checkArgument(maxRefreshTime >= 0L, "maxRefreshTime cannot be less than 0.");
     this.maxRefreshTime = maxRefreshTime;
     this.delegate = connectionFactory.createChannel();
@@ -148,7 +150,7 @@ public class ReconnectingChannel extends Channel implements Closeable {
     return new DelayingCall<>(methodDescriptor);
   }
 
-  private void checkRefresh(ReadLock readLock) {
+  private void checkRefresh(ReadLock readLock) throws IOException {
     if (!requiresRefresh()) {
       return;
     }
@@ -170,9 +172,10 @@ public class ReconnectingChannel extends Channel implements Closeable {
       // acquired the write lock. 
       if (requiresRefresh()) {
         // Startup should be non-blocking and async.
-        asyncClose(delegate);
+        Channel oldDelegate = delegate;
         delegate = factory.createChannel();
         nextRefresh = calculateNewRefreshTime();
+        asyncClose(oldDelegate);
       }
     } finally {
       writeLock.unlock();

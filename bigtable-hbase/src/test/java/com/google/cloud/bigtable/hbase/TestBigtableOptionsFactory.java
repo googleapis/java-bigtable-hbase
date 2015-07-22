@@ -94,7 +94,7 @@ public class TestBigtableOptionsFactory {
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals(TEST_HOST, options.getDataHost().getHostName());
+    Assert.assertEquals(TEST_HOST, options.getDataHost());
   }
 
   @Test
@@ -103,7 +103,7 @@ public class TestBigtableOptionsFactory {
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    Assert.assertEquals(TEST_HOST, options.getDataHost().getHostName());
+    Assert.assertEquals(TEST_HOST, options.getDataHost());
     Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
     Assert.assertEquals(TEST_CLUSTER_NAME, options.getCluster());
     Assert.assertEquals(TEST_ZONE_NAME, options.getZone());

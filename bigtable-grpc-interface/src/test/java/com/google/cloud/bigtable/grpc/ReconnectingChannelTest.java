@@ -56,7 +56,7 @@ public class ReconnectingChannelTest {
   private Call<?, ?> mockCall;
 
   @Before
-  public void setup() {
+  public void setup() throws IOException {
     MockitoAnnotations.initMocks(this);
     when(mockFactory.createChannel()).thenReturn(mockChannel);
     when(mockFactory.createClosable(any(Channel.class))).thenReturn(mockCloseable);
