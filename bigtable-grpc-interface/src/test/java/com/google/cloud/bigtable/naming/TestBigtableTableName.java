@@ -13,27 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters;
+package com.google.cloud.bigtable.naming;
 
-import org.apache.hadoop.hbase.TableName;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import com.google.cloud.bigtable.naming.BigtableClusterName;
+import com.google.cloud.bigtable.naming.BigtableTableName;
+
 @RunWith(JUnit4.class)
-public class TestTableMetadataSetter {
+public class TestBigtableTableName {
 
   @Test
   public void testGoodHBaseName() {
-    ClusterMetadataSetter clusterMetadataSetter =
-        new ClusterMetadataSetter("some-project", "some-zone", "some-cluster");
+    BigtableClusterName bigtableClusterName =
+        new BigtableClusterName("some-project", "some-zone", "some-cluster");
 
     String bigtableTbleName =
-        TableMetadataSetter.getName("some-project", "some-zone", "some-cluster",
-          TableName.valueOf("some-table"));
+        BigtableTableName.getName("some-project", "some-zone", "some-cluster", "some-table");
 
-    String hbaseName = clusterMetadataSetter.toHBaseTableName(bigtableTbleName);
+    String hbaseName = bigtableClusterName.toSimpleTableName(bigtableTbleName);
 
     Assert.assertEquals("some-table", hbaseName);
   }

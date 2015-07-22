@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 import com.google.bigtable.admin.table.v1.ColumnFamily;
 import com.google.bigtable.admin.table.v1.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.naming.BigtableClusterName;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -28,11 +29,11 @@ import java.util.Map.Entry;
 
 public class TableAdapter {
 
-  private final ClusterMetadataSetter clusterMetadataSetter;
+  private final BigtableClusterName bigtableClusterName;
   private final ColumnDescriptorAdapter columnDescriptorAdapter;
 
   public TableAdapter(BigtableOptions options, ColumnDescriptorAdapter columnDescriptorAdapter) {
-    this.clusterMetadataSetter = ClusterMetadataSetter.from(options);
+    this.bigtableClusterName = BigtableClusterName.from(options);
     this.columnDescriptorAdapter = columnDescriptorAdapter;
   }
 
@@ -48,7 +49,7 @@ public class TableAdapter {
   }
 
   public HTableDescriptor adapt(Table table) {
-    String tableNameStr = clusterMetadataSetter.toHBaseTableName(table.getName());
+    String tableNameStr = bigtableClusterName.toSimpleTableName(table.getName());
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableNameStr));
     for (Entry<String, ColumnFamily> entry : table.getColumnFamilies().entrySet()) {
       tableDescriptor.addFamily(columnDescriptorAdapter.adapt(entry.getKey(), entry.getValue()));

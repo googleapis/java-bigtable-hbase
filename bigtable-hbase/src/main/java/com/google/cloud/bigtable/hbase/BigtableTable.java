@@ -71,10 +71,10 @@ import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
-import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
+import com.google.cloud.bigtable.naming.BigtableTableName;
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -105,7 +105,7 @@ public class BigtableTable implements Table {
       new BigtableResultScannerAdapter(rowAdapter);
   protected final BatchExecutor batchExecutor;
   private final ListeningExecutorService executorService;
-  private final TableMetadataSetter metadataSetter;
+  private final BigtableTableName bigtableTableName;
 
   private final AbstractBigtableConnection bigtableConnection;
 
@@ -129,14 +129,14 @@ public class BigtableTable implements Table {
         new UnsupportedOperationAdapter<Append>("append"));
     rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
     this.executorService = MoreExecutors.listeningDecorator(executorService);
-    this.metadataSetter = TableMetadataSetter.from(tableName, options);
+    this.bigtableTableName = BigtableTableName.from(tableName.getNameAsString(), options);
     this.filterAdapter = FilterAdapter.buildAdapter();
     this.scanAdapter = new ScanAdapter(this.filterAdapter);
     this.getAdapter = new GetAdapter(new ScanAdapter(this.filterAdapter));
     this.batchExecutor = new BatchExecutor(
         client,
         options,
-        this.metadataSetter,
+        this.bigtableTableName,
         this.executorService,
         getAdapter,
         putAdapter,
@@ -219,7 +219,7 @@ public class BigtableTable implements Table {
     LOG.trace("get(Get)");
     ReadHooks readHooks = new DefaultReadHooks();
     ReadRowsRequest.Builder readRowsRequest = getAdapter.adapt(get, readHooks);
-    metadataSetter.setMetadata(readRowsRequest);
+    readRowsRequest.setTableName(bigtableTableName.getFullName());
 
     try {
       ReadRowsRequest finalRequest = readHooks.applyPreSendHook(readRowsRequest.build());
@@ -252,7 +252,7 @@ public class BigtableTable implements Table {
     LOG.trace("getScanner(Scan)");
     ReadHooks readHooks = new DefaultReadHooks();
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, readHooks);
-    metadataSetter.setMetadata(request);
+    request.setTableName(bigtableTableName.getFullName());
 
     try {
       ReadRowsRequest finalRequest = readHooks.applyPreSendHook(request.build());
@@ -286,7 +286,7 @@ public class BigtableTable implements Table {
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
     MutateRowRequest.Builder rowMutationBuilder = putAdapter.adapt(put);
-    metadataSetter.setMetadata(rowMutationBuilder);
+    rowMutationBuilder.setTableName(bigtableTableName.getFullName());
 
     try {
       client.mutateRow(rowMutationBuilder.build());
@@ -347,7 +347,7 @@ public class BigtableTable implements Table {
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
     MutateRowRequest.Builder requestBuilder = deleteAdapter.adapt(delete);
-    metadataSetter.setMetadata(requestBuilder);
+    requestBuilder.setTableName(bigtableTableName.getFullName());
 
     try {
       client.mutateRow(requestBuilder.build());
@@ -443,7 +443,7 @@ public class BigtableTable implements Table {
   public void mutateRow(RowMutations rm) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
     MutateRowRequest.Builder requestBuilder = rowMutationsAdapter.adapt(rm);
-    metadataSetter.setMetadata(requestBuilder);
+    requestBuilder.setTableName(bigtableTableName.getFullName());
     try {
       client.mutateRow(requestBuilder.build());
     } catch (Throwable throwable) {
@@ -462,7 +462,7 @@ public class BigtableTable implements Table {
     LOG.trace("append(Append)");
 
     ReadModifyWriteRowRequest.Builder appendRowRequest = appendAdapter.adapt(append);
-    metadataSetter.setMetadata(appendRowRequest);
+    appendRowRequest.setTableName(bigtableTableName.getFullName());
     try {
       com.google.bigtable.v1.Row response =
           client.readModifyWriteRow(appendRowRequest.build());
@@ -490,7 +490,7 @@ public class BigtableTable implements Table {
     LOG.trace("increment(Increment)");
     ReadModifyWriteRowRequest.Builder incrementRowRequest =
         incrementAdapter.adapt(increment);
-    metadataSetter.setMetadata(incrementRowRequest);
+    incrementRowRequest.setTableName(bigtableTableName.getFullName());
 
     try {
       com.google.bigtable.v1.Row response = client.readModifyWriteRow(incrementRowRequest.build());
@@ -633,7 +633,7 @@ public class BigtableTable implements Table {
     CheckAndMutateRowRequest.Builder requestBuilder =
         CheckAndMutateRowRequest.newBuilder();
 
-    metadataSetter.setMetadata(requestBuilder);
+    requestBuilder.setTableName(bigtableTableName.getFullName());
 
     requestBuilder.setRowKey(ByteString.copyFrom(row));
     Scan scan = new Scan().addColumn(family, qualifier);

@@ -15,13 +15,10 @@
  */
 package com.google.cloud.bigtable.config;
 
-import java.net.InetAddress;
-
 import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.grpc.RetryOptions;
-import com.google.cloud.bigtable.grpc.TransportOptions;
 import com.google.common.base.Preconditions;
 
 /**
@@ -45,9 +42,10 @@ public class BigtableOptions {
     private String projectId;
     private String zone;
     private String cluster;
-    private InetAddress dataHost;
-    private InetAddress tableAdminHost;
-    private InetAddress clusterAdminHost;
+    private String dataHost;
+    private String tableAdminHost;
+    private String clusterAdminHost;
+    private String overrideIp;
     private int port;
     private Credentials credential;
     private String authority;
@@ -58,18 +56,27 @@ public class BigtableOptions {
     private long timeoutMs = 0;
     private int channelCount = 1;
 
-    public Builder setTableAdminHost(InetAddress tableAdminHost) {
+    public Builder setTableAdminHost(String tableAdminHost) {
       this.tableAdminHost = tableAdminHost;
       return this;
     }
 
-    public Builder setClusterAdminHost(InetAddress clusterAdminHost) {
+    public Builder setClusterAdminHost(String clusterAdminHost) {
       this.clusterAdminHost = clusterAdminHost;
       return this;
     }
 
-    public Builder setDataHost(InetAddress dataHost) {
+    public Builder setDataHost(String dataHost) {
       this.dataHost = dataHost;
+      return this;
+    }
+
+    /**
+     * Override IP the for all *Hosts.  This is used for Cloud Bigtable to point to a developer's
+     * Cloud Bigtable server.
+     */
+    public Builder setOverrideIp(String overrideIp) {
+      this.overrideIp = overrideIp;
       return this;
     }
 
@@ -138,6 +145,7 @@ public class BigtableOptions {
           clusterAdminHost,
           tableAdminHost,
           dataHost,
+          overrideIp,
           port,
           projectId,
           zone,
@@ -153,9 +161,10 @@ public class BigtableOptions {
     }
   }
 
-  private final InetAddress clusterAdminHost;
-  private final InetAddress tableAdminHost;
-  private final InetAddress dataHost;
+  private final String clusterAdminHost;
+  private final String tableAdminHost;
+  private final String dataHost;
+  private final String overrideIp;
   private final int port;
   private final String projectId;
   private final String zone;
@@ -174,6 +183,7 @@ public class BigtableOptions {
       clusterAdminHost = null;
       tableAdminHost = null;
       dataHost = null;
+      overrideIp = null;
       port = 0;
       projectId = null;
       zone = null;
@@ -189,9 +199,10 @@ public class BigtableOptions {
   }
 
   private BigtableOptions(
-      InetAddress clusterAdminHost,
-      InetAddress tableAdminHost,
-      InetAddress dataHost,
+      String clusterAdminHost,
+      String tableAdminHost,
+      String dataHost,
+      String overrideIp,
       int port,
       String projectId,
       String zone,
@@ -219,6 +230,7 @@ public class BigtableOptions {
     this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
     this.clusterAdminHost = Preconditions.checkNotNull(clusterAdminHost);
     this.dataHost = Preconditions.checkNotNull(dataHost);
+    this.overrideIp = overrideIp;
     this.port = port;
     this.projectId = projectId;
     this.zone = zone;
@@ -238,8 +250,7 @@ public class BigtableOptions {
         cluster,
         dataHost,
         tableAdminHost,
-        clusterAdminHost,
-        TransportOptions.BigtableTransports.HTTP2_NETTY_TLS);
+        clusterAdminHost);
   }
 
   public String getProjectId() {
@@ -254,16 +265,24 @@ public class BigtableOptions {
     return cluster;
   }
 
-  public InetAddress getDataHost() {
+  public String getDataHost() {
     return dataHost;
   }
 
-  public InetAddress getTableAdminHost() {
+  public String getTableAdminHost() {
     return tableAdminHost;
   }
 
-  public InetAddress getClusterAdminHost() {
+  public String getClusterAdminHost() {
     return clusterAdminHost;
+  }
+
+  /**
+   * Returns an override IP for all *Hosts.  This is used for Cloud Bigtable to point to a 
+   * developer's Cloud Bigtable server.
+   */
+  public String getOverrideIp() {
+    return overrideIp;
   }
 
   public int getPort() {

@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 import org.apache.hadoop.hbase.TableName;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.naming.BigtableTableName;
 import com.google.common.base.Preconditions;
 
 public class ColumnFamilyFormatter {
@@ -25,22 +26,22 @@ public class ColumnFamilyFormatter {
   final static String COLUMN_FAMILIES_SEPARARATOR = "columnFamilies";
 
   public static ColumnFamilyFormatter from(TableName tableName, BigtableOptions options) {
-    return new ColumnFamilyFormatter(TableMetadataSetter.from(tableName, options));
+    return new ColumnFamilyFormatter(BigtableTableName.from(tableName.getNameAsString(), options));
   }
 
-  private final TableMetadataSetter tableMetadataSetter;
+  private final BigtableTableName bigtableTableName;
 
-  public ColumnFamilyFormatter(TableMetadataSetter tableMetadataSetter) {
-    this.tableMetadataSetter = tableMetadataSetter;
+  public ColumnFamilyFormatter(BigtableTableName bigtableTableName) {
+    this.bigtableTableName = bigtableTableName;
   }
 
   public String formatForBigtable(String hbaseColumnFamily) {
-    return String.format("%s/%s/%s", tableMetadataSetter.getFormattedV1TableName(),
+    return String.format("%s/%s/%s", bigtableTableName.getFullName(),
       COLUMN_FAMILIES_SEPARARATOR, hbaseColumnFamily);
   }
 
   public String formatForHBase(String bigtableColumnFamily) {
-    String tableName = tableMetadataSetter.getFormattedV1TableName();
+    String tableName = bigtableTableName.getFullName();
     String familyPrefix = String.format("%s/%s", tableName, COLUMN_FAMILIES_SEPARARATOR);
     Preconditions.checkState(bigtableColumnFamily.startsWith(familyPrefix),
       "Column family '%s' needs to start with '%s'", bigtableColumnFamily, tableName);

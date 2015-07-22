@@ -31,7 +31,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
-import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
+import com.google.cloud.bigtable.naming.BigtableTableName;
 import com.google.common.collect.ImmutableList;
 
 public class BigtableRegionLocator implements RegionLocator {
@@ -43,16 +43,15 @@ public class BigtableRegionLocator implements RegionLocator {
   private final TableName tableName;
   private final BigtableClient client;
   private final SampledRowKeysAdapter adapter;
-  private final TableMetadataSetter metadataSetter;
+  private final BigtableTableName bigtableTableName;
   private List<HRegionLocation> regions;
   private long regionsFetchTimeMillis;
 
   public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableClient client) {
     this.tableName = tableName;
     this.client = client;
-    this.metadataSetter = TableMetadataSetter.from(tableName, options);
-    ServerName serverName =
-        ServerName.valueOf(options.getDataHost().getHostName(), options.getPort(), 0);
+    this.bigtableTableName = BigtableTableName.from(tableName.getNameAsString(), options);
+    ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
     this.adapter = new SampledRowKeysAdapter(tableName, serverName);
   }
 
@@ -67,7 +66,7 @@ public class BigtableRegionLocator implements RegionLocator {
     }
 
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    metadataSetter.setMetadata(request);
+    request.setTableName(bigtableTableName.getFullName());
     LOG.debug("Sampling rowkeys for table %s", request.getTableName());
 
     try {

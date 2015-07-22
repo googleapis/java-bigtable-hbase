@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters;
+package com.google.cloud.bigtable.naming;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -24,11 +24,13 @@ import org.junit.runners.JUnit4;
 
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
+import com.google.cloud.bigtable.naming.BigtableClusterName;
+import com.google.cloud.bigtable.naming.BigtableTableName;
 
 @RunWith(JUnit4.class)
-public class TestClusterMetadataSetter {
+public class TestBigtableClusterName {
 
-  public static ClusterMetadataSetter clusterMetadataSetter = new ClusterMetadataSetter(
+  public static BigtableClusterName bigtableClusterName = new BigtableClusterName(
       "some-project", "some-zone", "some-cluster");
   private String clusterId = "projects/some-project/zones/some-zone/clusters/some-cluster";
 
@@ -37,52 +39,52 @@ public class TestClusterMetadataSetter {
 
   @Test
   public void testFormat() {
-    Assert.assertEquals(clusterId, clusterMetadataSetter.getFormattedV1ClusterName());
+    Assert.assertEquals(clusterId, bigtableClusterName.getFullName());
   }
 
   @Test
   public void testListTablesRequest() {
     ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-    clusterMetadataSetter.setMetadata(builder);
+    builder.setName(bigtableClusterName.getFullName());
     Assert.assertEquals(clusterId, builder.getName());
   }
 
   @Test
   public void testCreateTablesRequest() {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    clusterMetadataSetter.setMetadata(builder);
+    builder.setName(bigtableClusterName.getFullName());
     Assert.assertEquals(clusterId, builder.getName());
   }
 
   @Test
   public void testGoodTableQualifier() {
-    clusterMetadataSetter.toHBaseTableName(clusterId + "/" + TableMetadataSetter.TABLE_SEPARATOR
+    bigtableClusterName.toSimpleTableName(clusterId + "/" + BigtableTableName.TABLE_SEPARATOR
         + "/foo");
   }
 
   @Test
   public void testNullQualifier() {
     expectedException.expect(NullPointerException.class);
-    clusterMetadataSetter.toHBaseTableName(null);
+    bigtableClusterName.toSimpleTableName(null);
   }
 
   @Test
   public void testBadQualifier() {
     expectedException.expect(IllegalStateException.class);
-    clusterMetadataSetter.toHBaseTableName(clusterId.replace("some-cluster", "another-cluster")
-        + "/" + TableMetadataSetter.TABLE_SEPARATOR + "/foo");
+    bigtableClusterName.toSimpleTableName(clusterId.replace("some-cluster", "another-cluster")
+        + "/" + BigtableTableName.TABLE_SEPARATOR + "/foo");
   }
 
   @Test
   public void testBlankTableName() {
     expectedException.expect(IllegalStateException.class);
-    clusterMetadataSetter.toHBaseTableName(clusterId + "/" + TableMetadataSetter.TABLE_SEPARATOR
+    bigtableClusterName.toSimpleTableName(clusterId + "/" + BigtableTableName.TABLE_SEPARATOR
         + "/");
   }
 
   @Test
   public void testNoTableName() {
     expectedException.expect(IllegalStateException.class);
-    clusterMetadataSetter.toHBaseTableName(clusterId + "/" + TableMetadataSetter.TABLE_SEPARATOR);
+    bigtableClusterName.toSimpleTableName(clusterId + "/" + BigtableTableName.TABLE_SEPARATOR);
   }
 }
