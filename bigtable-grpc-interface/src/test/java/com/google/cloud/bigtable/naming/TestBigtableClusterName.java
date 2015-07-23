@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,33 +31,33 @@ public class TestBigtableClusterName {
 
   public static BigtableClusterName bigtableClusterName = new BigtableClusterName(
       "some-project", "some-zone", "some-cluster");
-  private String clusterId = "projects/some-project/zones/some-zone/clusters/some-cluster";
+  private String clusterName = "projects/some-project/zones/some-zone/clusters/some-cluster";
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testFormat() {
-    Assert.assertEquals(clusterId, bigtableClusterName.getClusterName());
+    Assert.assertEquals(clusterName, bigtableClusterName.toString());
   }
 
   @Test
   public void testListTablesRequest() {
     ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-    builder.setName(bigtableClusterName.getClusterName());
-    Assert.assertEquals(clusterId, builder.getName());
+    builder.setName(bigtableClusterName.toString());
+    Assert.assertEquals(clusterName, builder.getName());
   }
 
   @Test
   public void testCreateTablesRequest() {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    builder.setName(bigtableClusterName.getClusterName());
-    Assert.assertEquals(clusterId, builder.getName());
+    builder.setName(bigtableClusterName.toString());
+    Assert.assertEquals(clusterName, builder.getName());
   }
 
   @Test
   public void testGoodTableQualifier() {
-    bigtableClusterName.toTableId(clusterId + "/" + BigtableClusterName.TABLE_SEPARATOR
+    bigtableClusterName.toTableId(clusterName + "/" + BigtableClusterName.TABLE_SEPARATOR
         + "/foo");
   }
 
@@ -70,20 +70,20 @@ public class TestBigtableClusterName {
   @Test
   public void testBadQualifier() {
     expectedException.expect(IllegalStateException.class);
-    bigtableClusterName.toTableId(clusterId.replace("some-cluster", "another-cluster")
+    bigtableClusterName.toTableId(clusterName.replace("some-cluster", "another-cluster")
         + "/" + BigtableClusterName.TABLE_SEPARATOR + "/foo");
   }
 
   @Test
   public void testBlankTableName() {
     expectedException.expect(IllegalStateException.class);
-    bigtableClusterName.toTableId(clusterId + "/" + BigtableClusterName.TABLE_SEPARATOR
+    bigtableClusterName.toTableId(clusterName + "/" + BigtableClusterName.TABLE_SEPARATOR
         + "/");
   }
 
   @Test
   public void testNoTableName() {
     expectedException.expect(IllegalStateException.class);
-    bigtableClusterName.toTableId(clusterId + "/" + BigtableClusterName.TABLE_SEPARATOR);
+    bigtableClusterName.toTableId(clusterName + "/" + BigtableClusterName.TABLE_SEPARATOR);
   }
 }

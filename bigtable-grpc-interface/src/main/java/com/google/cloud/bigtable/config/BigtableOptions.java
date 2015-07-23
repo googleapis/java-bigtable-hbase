@@ -219,9 +219,9 @@ public class BigtableOptions {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(zoneId), "Zone must not be empty or null.");
+        !Strings.isNullOrEmpty(zoneId), "ZoneId must not be empty or null.");
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(clusterId), "Cluster must not be empty or null.");
+        !Strings.isNullOrEmpty(clusterId), "ClusterId must not be empty or null.");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(userAgent),
         "UserAgent must not be empty or null");
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
@@ -245,9 +245,10 @@ public class BigtableOptions {
     this.timeoutMs = timeoutMs;
     this.channelCount = channelCount;
 
-    LOG.debug("Connection Configuration: projectId: %s, clusterId: %s, data host %s, "
+    LOG.debug("Connection Configuration: projectId: %s, zoneId: %s, clusterId: %s, data host %s, "
         + "table admin host %s, cluster admin host %s using transport %s.",
         projectId,
+        zoneId,
         clusterId,
         dataHost,
         tableAdminHost,

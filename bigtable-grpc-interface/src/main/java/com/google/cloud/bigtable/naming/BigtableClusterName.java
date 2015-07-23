@@ -33,23 +33,24 @@ public class BigtableClusterName {
   }
 
   /**
-   * Get the cluster name in the
+   * Get the cluster name.
    */
-  public String getClusterName() {
+  @Override
+  public String toString() {
     return clusterName;
   }
 
   /**
    * Transforms a tableName within this cluster of the form
-   *   projects/(projectId)/zones/(zoneId)/clusters/(clusterId)/tables/(tableId) to (tableId).
+   * projects/(projectId)/zones/(zoneId)/clusters/(clusterId)/tables/(tableId) to (tableId).
    */
   public String toTableId(String tableName) {
-    Preconditions.checkNotNull(tableName, "table name cannot be null");
+    Preconditions.checkNotNull(tableName, "Table name cannot be null");
     String tablesPrefix = clusterName + "/" + TABLE_SEPARATOR + "/";
     Preconditions.checkState(tableName.startsWith(tablesPrefix),
         "'%s' does not start with '%s'", tableName, tablesPrefix);
-    String tableId = tableName.substring(tablesPrefix.length());
-    Preconditions.checkState(!tableId.isEmpty(), "TableName is blank");
+    String tableId = tableName.substring(tablesPrefix.length()).trim();
+    Preconditions.checkState(!tableId.isEmpty(), "Table id is blank");
     return tableId;
   }
 

@@ -49,8 +49,8 @@ public class TableAdapter {
   }
 
   public HTableDescriptor adapt(Table table) {
-    String tableNameStr = bigtableClusterName.toTableId(table.getName());
-    HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableNameStr));
+    String tableId = bigtableClusterName.toTableId(table.getName());
+    HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableId));
     for (Entry<String, ColumnFamily> entry : table.getColumnFamilies().entrySet()) {
       tableDescriptor.addFamily(columnDescriptorAdapter.adapt(entry.getKey(), entry.getValue()));
     }

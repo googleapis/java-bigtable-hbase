@@ -30,8 +30,8 @@ public class TestBigtableTableName {
     BigtableClusterName bigtableClusterName =
         new BigtableClusterName("some-project", "some-zone", "some-cluster");
     String bigtableTableName = bigtableClusterName.toTableNameStr("some-table");
-    String hbaseName = bigtableClusterName.toTableId(bigtableTableName);
+    String tableId = bigtableClusterName.toTableId(bigtableTableName);
 
-    Assert.assertEquals("some-table", hbaseName);
+    Assert.assertEquals("some-table", tableId);
   }
 }

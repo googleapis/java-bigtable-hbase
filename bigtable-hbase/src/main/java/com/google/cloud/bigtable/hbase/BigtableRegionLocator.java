@@ -66,7 +66,7 @@ public class BigtableRegionLocator implements RegionLocator {
     }
 
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    request.setTableName(bigtableTableName.getTableName());
+    request.setTableName(bigtableTableName.toString());
     LOG.debug("Sampling rowkeys for table %s", request.getTableName());
 
     try {

@@ -21,13 +21,13 @@ package com.google.cloud.bigtable.naming;
  * projects/(projectId)/zones/(zoneId)/clusters/(clusterId)/tables/(tableId).
  */
 public class BigtableTableName {
-  private final String name;
+  private final String tableName;
 
   BigtableTableName(String tableName) {
-    this.name = tableName;
+    this.tableName = tableName;
   }
 
-  public String getTableName() {
-    return name;
+  public String toString() {
+    return tableName;
   }
 }
