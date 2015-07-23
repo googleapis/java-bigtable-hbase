@@ -20,7 +20,7 @@ limitations under the License.
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-client</artifactId>
-        <version>0.2.0</version>
+        <version>0.1.10-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-hbase-integration-tests</artifactId>
@@ -34,6 +34,7 @@ limitations under the License.
         <google.bigtable.auth.service.account.enable>true</google.bigtable.auth.service.account.enable>
         <hbase.version>1.0.1</hbase.version>
         <google.bigtable.project.under.test>bigtable-hbase-1.0</google.bigtable.project.under.test>
+        <google.bigtable.version.under.test>${project.version}</google.bigtable.version.under.test>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_0.BigtableConnection</google.bigtable.connection.impl>
         <protobuff-java.version>2.5.0</protobuff-java.version>
     </properties>
@@ -45,7 +46,7 @@ limitations under the License.
                 <dependency>
                     <groupId>${project.groupId}</groupId>
                     <artifactId>${google.bigtable.project.under.test}</artifactId>
-                    <version>${project.version}</version>
+                    <version>${google.bigtable.version.under.test}</version>
                 </dependency>
             </dependencies>
             <build>
@@ -96,7 +97,7 @@ limitations under the License.
                 <dependency>
                     <groupId>${project.groupId}</groupId>
                     <artifactId>${google.bigtable.project.under.test}</artifactId>
-                    <version>${project.version}</version>
+                    <version>${google.bigtable.version.under.test}</version>
                     <classifier>shaded</classifier>
                 </dependency>
             </dependencies>
