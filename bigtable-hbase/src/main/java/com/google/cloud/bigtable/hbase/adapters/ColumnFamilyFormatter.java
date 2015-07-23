@@ -26,7 +26,8 @@ public class ColumnFamilyFormatter {
   final static String COLUMN_FAMILIES_SEPARARATOR = "columnFamilies";
 
   public static ColumnFamilyFormatter from(TableName tableName, BigtableOptions options) {
-    return new ColumnFamilyFormatter(BigtableTableName.from(tableName.getNameAsString(), options));
+    return new ColumnFamilyFormatter(options.getClusterName().toTableName(
+      tableName.getNameAsString()));
   }
 
   private final BigtableTableName bigtableTableName;
@@ -36,12 +37,12 @@ public class ColumnFamilyFormatter {
   }
 
   public String formatForBigtable(String hbaseColumnFamily) {
-    return String.format("%s/%s/%s", bigtableTableName.getFullName(),
+    return String.format("%s/%s/%s", bigtableTableName.getTableName(),
       COLUMN_FAMILIES_SEPARARATOR, hbaseColumnFamily);
   }
 
   public String formatForHBase(String bigtableColumnFamily) {
-    String tableName = bigtableTableName.getFullName();
+    String tableName = bigtableTableName.getTableName();
     String familyPrefix = String.format("%s/%s", tableName, COLUMN_FAMILIES_SEPARARATOR);
     Preconditions.checkState(bigtableColumnFamily.startsWith(familyPrefix),
       "Column family '%s' needs to start with '%s'", bigtableColumnFamily, tableName);

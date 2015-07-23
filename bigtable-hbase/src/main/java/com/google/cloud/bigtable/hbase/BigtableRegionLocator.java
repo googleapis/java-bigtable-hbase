@@ -50,7 +50,7 @@ public class BigtableRegionLocator implements RegionLocator {
   public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableClient client) {
     this.tableName = tableName;
     this.client = client;
-    this.bigtableTableName = BigtableTableName.from(tableName.getNameAsString(), options);
+    this.bigtableTableName = options.getClusterName().toTableName(tableName.getNameAsString());
     ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
     this.adapter = new SampledRowKeysAdapter(tableName, serverName);
   }
@@ -66,7 +66,7 @@ public class BigtableRegionLocator implements RegionLocator {
     }
 
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
-    request.setTableName(bigtableTableName.getFullName());
+    request.setTableName(bigtableTableName.getTableName());
     LOG.debug("Sampling rowkeys for table %s", request.getTableName());
 
     try {

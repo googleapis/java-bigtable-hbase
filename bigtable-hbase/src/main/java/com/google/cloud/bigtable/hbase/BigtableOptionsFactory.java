@@ -133,8 +133,8 @@ public class BigtableOptionsFactory {
     BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
-    bigtableOptionsBuilder.setZone(getValue(configuration, ZONE_KEY, "Zone"));
-    bigtableOptionsBuilder.setCluster(getValue(configuration, CLUSTER_KEY, "Cluster"));
+    bigtableOptionsBuilder.setZoneId(getValue(configuration, ZONE_KEY, "Zone"));
+    bigtableOptionsBuilder.setClusterId(getValue(configuration, CLUSTER_KEY, "Cluster"));
 
     String overrideIp = configuration.get(IP_OVERRIDE_KEY);
     if (!Strings.isNullOrEmpty(overrideIp)) {
@@ -146,7 +146,7 @@ public class BigtableOptionsFactory {
         getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT, "API Data"));
 
     bigtableOptionsBuilder.setTableAdminHost(getHost(
-      configuration, BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT, 
+      configuration, BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT,
       "Table Admin"));
 
     bigtableOptionsBuilder.setClusterAdminHost(getHost(configuration,

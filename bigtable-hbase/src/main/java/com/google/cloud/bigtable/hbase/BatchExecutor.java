@@ -207,7 +207,7 @@ public class BatchExecutor {
   ListenableFuture<Empty> issueDeleteRequest(Delete delete) {
     LOG.trace("issueDeleteRequest(Delete)");
     MutateRowRequest.Builder requestBuilder = deleteAdapter.adapt(delete);
-    requestBuilder.setTableName(bigtableTableName.getFullName());
+    requestBuilder.setTableName(bigtableTableName.getTableName());
     return client.mutateRowAsync(requestBuilder.build());
   }
 
@@ -219,7 +219,7 @@ public class BatchExecutor {
     LOG.trace("issueGetRequest(Get)");
     ReadHooks readHooks = new DefaultReadHooks();
     ReadRowsRequest.Builder builder = getAdapter.adapt(get, readHooks);
-    builder.setTableName(bigtableTableName.getFullName());
+    builder.setTableName(bigtableTableName.getTableName());
     ReadRowsRequest request = readHooks.applyPreSendHook(builder.build());
 
     return Futures.transform(client.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
@@ -232,7 +232,7 @@ public class BatchExecutor {
   ListenableFuture<com.google.bigtable.v1.Row> issueAppendRequest(Append append) {
     LOG.trace("issueAppendRequest(Append)");
     ReadModifyWriteRowRequest.Builder builder = appendAdapter.adapt(append);
-    builder.setTableName(bigtableTableName.getFullName());
+    builder.setTableName(bigtableTableName.getTableName());
     ReadModifyWriteRowRequest request = builder.build();
 
     return client.readModifyWriteRowAsync(request);
@@ -245,7 +245,7 @@ public class BatchExecutor {
   ListenableFuture<com.google.bigtable.v1.Row> issueIncrementRequest(Increment increment) {
     LOG.trace("issueIncrementRequest(Increment)");
     ReadModifyWriteRowRequest.Builder builder = incrementAdapter.adapt(increment);
-    builder.setTableName(bigtableTableName.getFullName());
+    builder.setTableName(bigtableTableName.getTableName());
     ReadModifyWriteRowRequest request = builder.build();
 
     return client.readModifyWriteRowAsync(request);
@@ -257,7 +257,7 @@ public class BatchExecutor {
   ListenableFuture<Empty> issuePutRequest(Put put) {
     LOG.trace("issuePutRequest(Put)");
     MutateRowRequest.Builder requestBuilder = putAdapter.adapt(put);
-    requestBuilder.setTableName(bigtableTableName.getFullName());
+    requestBuilder.setTableName(bigtableTableName.getTableName());
 
     return client.mutateRowAsync(requestBuilder.build());
   }

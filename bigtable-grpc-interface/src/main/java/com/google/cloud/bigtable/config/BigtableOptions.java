@@ -19,6 +19,7 @@ import com.google.api.client.repackaged.com.google.common.annotations.VisibleFor
 import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.grpc.RetryOptions;
+import com.google.cloud.bigtable.naming.BigtableClusterName;
 import com.google.common.base.Preconditions;
 
 /**
@@ -40,8 +41,8 @@ public class BigtableOptions {
    */
   public static class Builder {
     private String projectId;
-    private String zone;
-    private String cluster;
+    private String zoneId;
+    private String clusterId;
     private String dataHost;
     private String tableAdminHost;
     private String clusterAdminHost;
@@ -90,13 +91,13 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setZone(String zone) {
-      this.zone = zone;
+    public Builder setZoneId(String zoneId) {
+      this.zoneId = zoneId;
       return this;
     }
 
-    public Builder setCluster(String cluster) {
-      this.cluster = cluster;
+    public Builder setClusterId(String clusterId) {
+      this.clusterId = clusterId;
       return this;
     }
 
@@ -148,8 +149,8 @@ public class BigtableOptions {
           overrideIp,
           port,
           projectId,
-          zone,
-          cluster,
+          zoneId,
+          clusterId,
           credential,
           authority,
           userAgent,
@@ -167,8 +168,8 @@ public class BigtableOptions {
   private final String overrideIp;
   private final int port;
   private final String projectId;
-  private final String zone;
-  private final String cluster;
+  private final String zoneId;
+  private final String clusterId;
   private final Credentials credential;
   private final String authority;
   private final String userAgent;
@@ -186,8 +187,8 @@ public class BigtableOptions {
       overrideIp = null;
       port = 0;
       projectId = null;
-      zone = null;
-      cluster = null;
+      zoneId = null;
+      clusterId = null;
       credential = null;
       authority = null;
       userAgent = null;
@@ -205,8 +206,8 @@ public class BigtableOptions {
       String overrideIp,
       int port,
       String projectId,
-      String zone,
-      String cluster,
+      String zoneId,
+      String clusterId,
       Credentials credential,
       String authority,
       String userAgent,
@@ -218,9 +219,9 @@ public class BigtableOptions {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(zone), "Zone must not be empty or null.");
+        !Strings.isNullOrEmpty(zoneId), "Zone must not be empty or null.");
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(cluster), "Cluster must not be empty or null.");
+        !Strings.isNullOrEmpty(clusterId), "Cluster must not be empty or null.");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(userAgent),
         "UserAgent must not be empty or null");
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
@@ -233,8 +234,8 @@ public class BigtableOptions {
     this.overrideIp = overrideIp;
     this.port = port;
     this.projectId = projectId;
-    this.zone = zone;
-    this.cluster = cluster;
+    this.zoneId = zoneId;
+    this.clusterId = clusterId;
     this.credential = credential;
     this.authority = authority;
     this.userAgent = userAgent;
@@ -244,10 +245,10 @@ public class BigtableOptions {
     this.timeoutMs = timeoutMs;
     this.channelCount = channelCount;
 
-    LOG.debug("Connection Configuration: project: %s, cluster: %s, data host %s, "
+    LOG.debug("Connection Configuration: projectId: %s, clusterId: %s, data host %s, "
         + "table admin host %s, cluster admin host %s using transport %s.",
         projectId,
-        cluster,
+        clusterId,
         dataHost,
         tableAdminHost,
         clusterAdminHost);
@@ -257,12 +258,12 @@ public class BigtableOptions {
     return projectId;
   }
 
-  public String getZone() {
-    return zone;
+  public String getZoneId() {
+    return zoneId;
   }
 
-  public String getCluster() {
-    return cluster;
+  public String getClusterId() {
+    return clusterId;
   }
 
   public String getDataHost() {
@@ -278,7 +279,7 @@ public class BigtableOptions {
   }
 
   /**
-   * Returns an override IP for all *Hosts.  This is used for Cloud Bigtable to point to a 
+   * Returns an override IP for all *Hosts.  This is used for Cloud Bigtable to point to a
    * developer's Cloud Bigtable server.
    */
   public String getOverrideIp() {
@@ -344,5 +345,9 @@ public class BigtableOptions {
    */
   public int getChannelCount() {
     return channelCount;
+  }
+
+  public BigtableClusterName getClusterName() {
+    return new BigtableClusterName(getProjectId(), getZoneId(), getClusterId());
   }
 }

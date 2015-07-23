@@ -21,7 +21,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.cloud.bigtable.naming.BigtableClusterName;
-import com.google.cloud.bigtable.naming.BigtableTableName;
 
 @RunWith(JUnit4.class)
 public class TestBigtableTableName {
@@ -30,11 +29,8 @@ public class TestBigtableTableName {
   public void testGoodHBaseName() {
     BigtableClusterName bigtableClusterName =
         new BigtableClusterName("some-project", "some-zone", "some-cluster");
-
-    String bigtableTbleName =
-        BigtableTableName.getName("some-project", "some-zone", "some-cluster", "some-table");
-
-    String hbaseName = bigtableClusterName.toSimpleTableName(bigtableTbleName);
+    String bigtableTableName = bigtableClusterName.toTableNameStr("some-table");
+    String hbaseName = bigtableClusterName.toTableId(bigtableTableName);
 
     Assert.assertEquals("some-table", hbaseName);
   }

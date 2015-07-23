@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,40 +15,49 @@
  */
 package com.google.cloud.bigtable.naming;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.common.base.Preconditions;
 
 /**
- * Utility class that will set given project and cluster name within service messages.
+ * This class encapsulates a Bigtable cluster name.  A clusterName is of the form
+ * projects/(projectId)/zones/(zoneId)/clusters/(clusterId).  It also has convenience methods
+ * to create a tableName and a tableId.  TableName is (clusterName)/tables/(tableId).
  */
 public class BigtableClusterName {
   public static final String BIGTABLE_V1_CLUSTER_FMT = "projects/%s/zones/%s/clusters/%s";
+  public static final String TABLE_SEPARATOR = "tables";
 
-  public static BigtableClusterName from(BigtableOptions options) {
-    return new BigtableClusterName(
-        options.getProjectId(), options.getZone(), options.getCluster());
-  }
-
-  private final String formattedV1ClusterName;
+  private final String clusterName;
 
   public BigtableClusterName(String projectId, String zone, String clusterName) {
-    this.formattedV1ClusterName =
-        String.format(BIGTABLE_V1_CLUSTER_FMT, projectId, zone, clusterName);
+    this.clusterName = String.format(BIGTABLE_V1_CLUSTER_FMT, projectId, zone, clusterName);
   }
 
-  public String getFullName() {
-    return formattedV1ClusterName;
+  /**
+   * Get the cluster name in the
+   */
+  public String getClusterName() {
+    return clusterName;
   }
 
-  public String toSimpleTableName(String fullyQualifiedBigtableName) {
-    Preconditions.checkNotNull(fullyQualifiedBigtableName, "table name cannot be null");
-    String tablesPrefix =
-        String.format("%s/%s/", formattedV1ClusterName, BigtableTableName.TABLE_SEPARATOR);
-    Preconditions.checkState(fullyQualifiedBigtableName.startsWith(tablesPrefix),
-        "'%s' does not start with '%s'", fullyQualifiedBigtableName, tablesPrefix);
-    String tableName = fullyQualifiedBigtableName.substring(tablesPrefix.length());
-    Preconditions.checkState(tableName.length() > 0, "TableName is blank");
-    return tableName;
+  /**
+   * Transforms a tableName within this cluster of the form
+   *   projects/(projectId)/zones/(zoneId)/clusters/(clusterId)/tables/(tableId) to (tableId).
+   */
+  public String toTableId(String tableName) {
+    Preconditions.checkNotNull(tableName, "table name cannot be null");
+    String tablesPrefix = clusterName + "/" + TABLE_SEPARATOR + "/";
+    Preconditions.checkState(tableName.startsWith(tablesPrefix),
+        "'%s' does not start with '%s'", tableName, tablesPrefix);
+    String tableId = tableName.substring(tablesPrefix.length());
+    Preconditions.checkState(!tableId.isEmpty(), "TableName is blank");
+    return tableId;
   }
 
+  public String toTableNameStr(String tableId) {
+    return clusterName +  "/" + TABLE_SEPARATOR + "/" + tableId;
+  }
+
+  public BigtableTableName toTableName(String tableId) {
+    return new BigtableTableName(toTableNameStr(tableId));
+  }
 }

@@ -33,7 +33,7 @@ public class TableAdapter {
   private final ColumnDescriptorAdapter columnDescriptorAdapter;
 
   public TableAdapter(BigtableOptions options, ColumnDescriptorAdapter columnDescriptorAdapter) {
-    this.bigtableClusterName = BigtableClusterName.from(options);
+    this.bigtableClusterName = options.getClusterName();
     this.columnDescriptorAdapter = columnDescriptorAdapter;
   }
 
@@ -49,7 +49,7 @@ public class TableAdapter {
   }
 
   public HTableDescriptor adapt(Table table) {
-    String tableNameStr = bigtableClusterName.toSimpleTableName(table.getName());
+    String tableNameStr = bigtableClusterName.toTableId(table.getName());
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableNameStr));
     for (Entry<String, ColumnFamily> entry : table.getColumnFamilies().entrySet()) {
       tableDescriptor.addFamily(columnDescriptorAdapter.adapt(entry.getKey(), entry.getValue()));

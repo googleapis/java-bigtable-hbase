@@ -25,7 +25,6 @@ import org.junit.runners.JUnit4;
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
 import com.google.cloud.bigtable.naming.BigtableClusterName;
-import com.google.cloud.bigtable.naming.BigtableTableName;
 
 @RunWith(JUnit4.class)
 public class TestBigtableClusterName {
@@ -39,52 +38,52 @@ public class TestBigtableClusterName {
 
   @Test
   public void testFormat() {
-    Assert.assertEquals(clusterId, bigtableClusterName.getFullName());
+    Assert.assertEquals(clusterId, bigtableClusterName.getClusterName());
   }
 
   @Test
   public void testListTablesRequest() {
     ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-    builder.setName(bigtableClusterName.getFullName());
+    builder.setName(bigtableClusterName.getClusterName());
     Assert.assertEquals(clusterId, builder.getName());
   }
 
   @Test
   public void testCreateTablesRequest() {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    builder.setName(bigtableClusterName.getFullName());
+    builder.setName(bigtableClusterName.getClusterName());
     Assert.assertEquals(clusterId, builder.getName());
   }
 
   @Test
   public void testGoodTableQualifier() {
-    bigtableClusterName.toSimpleTableName(clusterId + "/" + BigtableTableName.TABLE_SEPARATOR
+    bigtableClusterName.toTableId(clusterId + "/" + BigtableClusterName.TABLE_SEPARATOR
         + "/foo");
   }
 
   @Test
   public void testNullQualifier() {
     expectedException.expect(NullPointerException.class);
-    bigtableClusterName.toSimpleTableName(null);
+    bigtableClusterName.toTableId(null);
   }
 
   @Test
   public void testBadQualifier() {
     expectedException.expect(IllegalStateException.class);
-    bigtableClusterName.toSimpleTableName(clusterId.replace("some-cluster", "another-cluster")
-        + "/" + BigtableTableName.TABLE_SEPARATOR + "/foo");
+    bigtableClusterName.toTableId(clusterId.replace("some-cluster", "another-cluster")
+        + "/" + BigtableClusterName.TABLE_SEPARATOR + "/foo");
   }
 
   @Test
   public void testBlankTableName() {
     expectedException.expect(IllegalStateException.class);
-    bigtableClusterName.toSimpleTableName(clusterId + "/" + BigtableTableName.TABLE_SEPARATOR
+    bigtableClusterName.toTableId(clusterId + "/" + BigtableClusterName.TABLE_SEPARATOR
         + "/");
   }
 
   @Test
   public void testNoTableName() {
     expectedException.expect(IllegalStateException.class);
-    bigtableClusterName.toSimpleTableName(clusterId + "/" + BigtableTableName.TABLE_SEPARATOR);
+    bigtableClusterName.toTableId(clusterId + "/" + BigtableClusterName.TABLE_SEPARATOR);
   }
 }

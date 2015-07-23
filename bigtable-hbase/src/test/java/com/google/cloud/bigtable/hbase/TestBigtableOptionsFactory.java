@@ -105,8 +105,8 @@ public class TestBigtableOptionsFactory {
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
     Assert.assertEquals(TEST_HOST, options.getDataHost());
     Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
-    Assert.assertEquals(TEST_CLUSTER_NAME, options.getCluster());
-    Assert.assertEquals(TEST_ZONE_NAME, options.getZone());
+    Assert.assertEquals(TEST_CLUSTER_NAME, options.getClusterId());
+    Assert.assertEquals(TEST_ZONE_NAME, options.getZoneId());
   }
 
   @Test

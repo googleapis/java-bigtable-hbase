@@ -95,7 +95,7 @@ public class TestClusterAPI {
     }
 
     List<Zone> zoneList = getZones(client, projectId);
-    String zoneName = getZoneName(originalOptions.getZone(), zoneList);
+    String zoneName = getZoneName(originalOptions.getZoneId(), zoneList);
     String clusterName = zoneName + "/clusters/" + TEST_CLUSTER_ID;
 
     Cluster cluster = createACluster(client, zoneName, TEST_CLUSTER_ID);

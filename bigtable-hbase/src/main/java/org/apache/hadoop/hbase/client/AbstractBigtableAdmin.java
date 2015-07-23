@@ -15,7 +15,6 @@
  */
 package org.apache.hadoop.hbase.client;
 
-
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
@@ -73,7 +72,6 @@ import com.google.cloud.bigtable.hbase.adapters.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
 import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
 import com.google.cloud.bigtable.naming.BigtableClusterName;
-import com.google.cloud.bigtable.naming.BigtableTableName;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
@@ -110,7 +108,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     this.connection = connection;
     this.bigtableTableAdminClient = bigtableTableAdminClient;
     this.disabledTables = disabledTables;
-    this.bigtableClusterName = BigtableClusterName.from(options);
+    this.bigtableClusterName = options.getClusterName();
     this.tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
   }
 
@@ -217,7 +215,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private ListTablesResponse requestTableList() throws IOException {
     try {
       ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-      builder.setName(bigtableClusterName.getFullName());
+      builder.setName(bigtableClusterName.getClusterName());
       return bigtableTableAdminClient.listTables(builder.build());
     } catch (Throwable throwable) {
       throw new IOException("Failed to listTables", throwable);
@@ -234,7 +232,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       String bigtableFullTableName = tablesList.get(i).getName();
 
       // Strip out the Bigtable info.
-      String name = bigtableClusterName.toSimpleTableName(bigtableFullTableName);
+      String name = bigtableClusterName.toTableId(bigtableFullTableName);
 
       result[i] = TableName.valueOf(name);
     }
@@ -248,9 +246,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       return null;
     }
 
-    String bigtableTableName =
-        BigtableTableName.getName(options.getProjectId(), options.getZone(),
-          options.getCluster(), tableName.getNameAsString());
+    String bigtableTableName = options.getClusterName().toTableNameStr(tableName.getNameAsString());
     GetTableRequest request = GetTableRequest.newBuilder().setName(bigtableTableName).build();
 
     try {
@@ -296,7 +292,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    builder.setName(bigtableClusterName.getFullName());
+    builder.setName(bigtableClusterName.getClusterName());
     builder.setTableId(desc.getTableName().getQualifierAsString());
     builder.setTable(tableAdapter.adapt(desc));
     if (splitKeys != null) {
@@ -324,7 +320,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void deleteTable(TableName tableName) throws IOException {
     Builder deleteBuilder = DeleteTableRequest.newBuilder();
-    deleteBuilder.setName(BigtableTableName.from(tableName.getNameAsString(), options).getFullName());
+    deleteBuilder.setName(options.getClusterName().toTableNameStr(tableName.getNameAsString()));
     try {
       bigtableTableAdminClient.deleteTable(deleteBuilder.build());
     } catch (Throwable throwable) {
@@ -470,9 +466,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
-    BigtableTableName bigtableTableName =
-        BigtableTableName.from(tableName.getNameAsString(), options);
-
     ColumnFamily.Builder columnFamily =
         columnDescriptorAdapter.adapt(column);
 
@@ -481,7 +474,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
             .setColumnFamilyId(column.getNameAsString())
             .setColumnFamily(columnFamily);
 
-    createColumnFamilyBuilder.setName(bigtableTableName.getFullName());
+    createColumnFamilyBuilder.setName(options.getClusterName().toTableNameStr(
+      tableName.getNameAsString()));
 
     try {
       bigtableTableAdminClient.createColumnFamily(createColumnFamilyBuilder.build());
@@ -564,9 +558,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(getClass())
-        .add("zone", options.getZone())
+        .add("zone", options.getZoneId())
         .add("project", options.getProjectId())
-        .add("cluster", options.getCluster())
+        .add("cluster", options.getClusterId())
         .add("adminHost", options.getTableAdminHost())
         .toString();
   }
