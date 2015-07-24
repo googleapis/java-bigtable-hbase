@@ -21,9 +21,9 @@ import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.grpc.ResultScanner;
-import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
@@ -78,7 +78,7 @@ public class TestBigtableTable {
         .setClusterId(TEST_CLUSTER)
         .setZoneId(TEST_ZONE)
         .setRetryOptions(new RetryOptions.Builder().setEnableRetries(false).build())
-        .setCredential(null)
+        .setCredentialOptions(null)
         .setUserAgent("testAgent")
         .build();
 

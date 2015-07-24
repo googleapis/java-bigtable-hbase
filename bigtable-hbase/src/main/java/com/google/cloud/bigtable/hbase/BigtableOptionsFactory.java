@@ -15,25 +15,26 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.api.client.util.Strings.isNullOrEmpty;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.DEFAULT_BIGTABLE_PORT;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.CredentialFactory;
+import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.RetryOptions;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 
 import org.apache.hadoop.conf.Configuration;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
 
 /**
  * Static methods to convert an instance of {@link Configuration}
@@ -53,7 +54,6 @@ public class BigtableOptionsFactory {
   public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
   public static final String ZONE_KEY = "google.bigtable.zone.name";
   public static final String CALL_REPORT_DIRECTORY_KEY = "google.bigtable.call.report.directory";
-  public static final String SERVICE_ACCOUNT_JSON_ENV_VARIABLE = "GOOGLE_APPLICATION_CREDENTIALS";
 
   /**
    * If set, bypass DNS host lookup and use the given IP address.
@@ -89,6 +89,12 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY =
       "google.bigtable.auth.service.account.keyfile";
+
+  /**
+   * Key to set to a location where a json security credentials file can be found.
+   */
+  public static final String BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY =
+      "google.bigtable.auth.json.keyfile";
 
   /**
    * Key to set to a boolean flag indicating whether or not grpc retries should be enabled.
@@ -137,7 +143,7 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setClusterId(getValue(configuration, CLUSTER_KEY, "Cluster"));
 
     String overrideIp = configuration.get(IP_OVERRIDE_KEY);
-    if (!Strings.isNullOrEmpty(overrideIp)) {
+    if (!isNullOrEmpty(overrideIp)) {
       LOG.debug("Using override IP address %s", overrideIp);
       bigtableOptionsBuilder.setOverrideIp(overrideIp);
     }
@@ -162,7 +168,7 @@ public class BigtableOptionsFactory {
   private static String getValue(final Configuration configuration, String key, String type) {
     String value = configuration.get(key);
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(value),
+        !isNullOrEmpty(value),
         String.format("%s must be supplied via %s", type, key));
     LOG.debug("%s %s", type, value);
     return value;
@@ -178,45 +184,7 @@ public class BigtableOptionsFactory {
   private static void
       setChannelOptions(BigtableOptions.Builder builder, Configuration configuration)
           throws IOException {
-    // TODO: This belongs in BigtableSessions.  There needs to be some configuration taken out of
-    // Configuration, moved to ChannelOptions.  The retrieval of Credentials should be in
-    // BigtableSessions.
-    try {
-      if (configuration.getBoolean(
-          BIGTABE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
-        LOG.debug("Using service accounts");
-
-        String serviceAccountJson = System.getenv().get(SERVICE_ACCOUNT_JSON_ENV_VARIABLE);
-        String serviceAccountEmail = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
-        if (!Strings.isNullOrEmpty(serviceAccountJson)) {
-          LOG.debug("Using JSON file: %s", serviceAccountJson);
-          builder.setCredential(CredentialFactory.getApplicationDefaultCredential());
-        } else if (!Strings.isNullOrEmpty(serviceAccountEmail)) {
-          LOG.debug("Service account %s specified.", serviceAccountEmail);
-          String keyfileLocation =
-              configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
-          Preconditions.checkState(
-              !Strings.isNullOrEmpty(keyfileLocation),
-              "Key file location must be specified when setting service account email");
-          LOG.debug("Using p12 keyfile: %s", keyfileLocation);
-          builder.setCredential(
-              CredentialFactory.getCredentialFromPrivateKeyServiceAccount(
-                  serviceAccountEmail, keyfileLocation));
-        } else {
-          builder.setCredential(CredentialFactory
-              .getCredentialFromMetadataServiceAccount());
-        }
-      } else if (configuration.getBoolean(
-          BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT)) {
-        builder.setCredential(null); // Intended for testing purposes only.
-        LOG.info("Enabling the use of null credentials. This should not be used in production.");
-      } else {
-        throw new IllegalStateException(
-            "Either service account or null credentials must be enabled");
-      }
-    } catch (GeneralSecurityException gse) {
-      throw new IOException("Failed to acquire credential.", gse);
-    }
+    setCredentialOptions(builder, configuration);
 
     // TODO(sduskis): I think that this call report directory mechanism doesn't work anymore as is.
     // We need to make sure that if we want this feature, that we have only a single interceptor
@@ -224,7 +192,7 @@ public class BigtableOptionsFactory {
     // are at least 2: 1 for admin and 1 for data.
 
     // Set up aggregate performance and call error rate logging:
-    if (!Strings.isNullOrEmpty(configuration.get(CALL_REPORT_DIRECTORY_KEY))) {
+    if (!isNullOrEmpty(configuration.get(CALL_REPORT_DIRECTORY_KEY))) {
       String reportDirectory = configuration.get(CALL_REPORT_DIRECTORY_KEY);
       Path reportDirectoryPath = FileSystems.getDefault().getPath(reportDirectory);
       if (Files.exists(reportDirectoryPath)) {
@@ -259,6 +227,42 @@ public class BigtableOptionsFactory {
     builder.setTimeoutMs(channelTimeout);
 
     builder.setUserAgent(BigtableConstants.USER_AGENT);
+  }
+
+  private static void setCredentialOptions(BigtableOptions.Builder builder,
+      Configuration configuration) throws FileNotFoundException {
+    if (configuration.getBoolean(
+        BIGTABE_USE_SERVICE_ACCOUNTS_KEY, BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT)) {
+      LOG.debug("Using service accounts");
+
+      if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY) != null) {
+        String keyfileLocation =
+            configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY);
+        LOG.debug("Using json keyfile: %s", keyfileLocation);
+        builder.setCredentialOptions(CredentialOptions.jsonCredentials(new FileInputStream(
+            keyfileLocation)));
+      } else if (configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY) != null) {
+        String serviceAccount = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
+        LOG.debug("Service account %s specified.", serviceAccount);
+        String keyfileLocation =
+            configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
+        Preconditions.checkState(!isNullOrEmpty(keyfileLocation),
+          "Key file location must be specified when setting service account email");
+        LOG.debug("Using p12 keyfile: %s", keyfileLocation);
+        builder.setCredentialOptions(CredentialOptions.p12Credential(serviceAccount,
+          keyfileLocation));
+      } else {
+        LOG.debug("Using default credentials.");
+        builder.setCredentialOptions(CredentialOptions.defaultCredentials());
+      }
+    } else if (configuration.getBoolean(
+        BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT)) {
+      builder.setCredentialOptions(CredentialOptions.nullCredential());
+      LOG.info("Enabling the use of null credentials. This should not be used in production.");
+    } else {
+      throw new IllegalStateException(
+          "Either service account or null credentials must be enabled");
+    }
   }
 
   private static RetryOptions createRetryOptions(Configuration configuration) {

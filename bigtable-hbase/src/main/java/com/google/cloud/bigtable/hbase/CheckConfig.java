@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.base.Strings;
 
@@ -31,6 +32,7 @@ import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 /**
  * A simple utility class for checking and displaying common Bigtable-HBase configuration values.
@@ -38,7 +40,7 @@ import java.io.IOException;
  * Expected usage: hbase com.google.cloud.bigtable.hbase.CheckConfig
  */
 public class CheckConfig {
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, GeneralSecurityException {
     Logger logger = new Logger(CheckConfig.class);
     GenericOptionsParser optionsParser =
         new GenericOptionsParser(HBaseConfiguration.create(), args);
@@ -60,7 +62,7 @@ public class CheckConfig {
     System.out.println(String.format("Table admin host: %s", options.getTableAdminHost()));
     System.out.println(String.format("Data host: %s", options.getDataHost()));
 
-    Credentials credentials = options.getCredential();
+    Credentials credentials = CredentialFactory.getCredentials(options.getCredentialOptions());
     try {
       System.out.println("Attempting credential refresh...");
       credentials.refresh();

@@ -22,6 +22,7 @@ import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.protobuf.ByteString;
 
 import org.apache.commons.logging.Log;

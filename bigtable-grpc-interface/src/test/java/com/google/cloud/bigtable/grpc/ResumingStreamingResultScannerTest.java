@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.protobuf.ByteString;
 
 import org.junit.Before;
