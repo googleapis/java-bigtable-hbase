@@ -45,11 +45,11 @@ import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ReadOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
-import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
+import com.google.cloud.bigtable.naming.BigtableTableName;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -164,7 +164,7 @@ public class BatchExecutor {
 
   protected final BigtableClient client;
   protected final BigtableOptions options;
-  protected final TableMetadataSetter tableMetadataSetter;
+  protected final BigtableTableName bigtableTableName;
   protected final ListeningExecutorService service;
   protected final ReadOperationAdapter<Get> getAdapter;
   protected final OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
@@ -178,7 +178,7 @@ public class BatchExecutor {
   public BatchExecutor(
       BigtableClient client,
       BigtableOptions options,
-      TableMetadataSetter tableMetadataSetter,
+      BigtableTableName bigtableTableName,
       ListeningExecutorService service,
       ReadOperationAdapter<Get> getAdapter,
       OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
@@ -189,7 +189,7 @@ public class BatchExecutor {
       ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter) {
     this.client = client;
     this.options = options;
-    this.tableMetadataSetter = tableMetadataSetter;
+    this.bigtableTableName = bigtableTableName;
     this.service = service;
     this.getAdapter = getAdapter;
     this.putAdapter = putAdapter;
@@ -207,7 +207,7 @@ public class BatchExecutor {
   ListenableFuture<Empty> issueDeleteRequest(Delete delete) {
     LOG.trace("issueDeleteRequest(Delete)");
     MutateRowRequest.Builder requestBuilder = deleteAdapter.adapt(delete);
-    tableMetadataSetter.setMetadata(requestBuilder);
+    requestBuilder.setTableName(bigtableTableName.toString());
     return client.mutateRowAsync(requestBuilder.build());
   }
 
@@ -219,7 +219,7 @@ public class BatchExecutor {
     LOG.trace("issueGetRequest(Get)");
     ReadHooks readHooks = new DefaultReadHooks();
     ReadRowsRequest.Builder builder = getAdapter.adapt(get, readHooks);
-    tableMetadataSetter.setMetadata(builder);
+    builder.setTableName(bigtableTableName.toString());
     ReadRowsRequest request = readHooks.applyPreSendHook(builder.build());
 
     return Futures.transform(client.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
@@ -232,7 +232,7 @@ public class BatchExecutor {
   ListenableFuture<com.google.bigtable.v1.Row> issueAppendRequest(Append append) {
     LOG.trace("issueAppendRequest(Append)");
     ReadModifyWriteRowRequest.Builder builder = appendAdapter.adapt(append);
-    tableMetadataSetter.setMetadata(builder);
+    builder.setTableName(bigtableTableName.toString());
     ReadModifyWriteRowRequest request = builder.build();
 
     return client.readModifyWriteRowAsync(request);
@@ -245,7 +245,7 @@ public class BatchExecutor {
   ListenableFuture<com.google.bigtable.v1.Row> issueIncrementRequest(Increment increment) {
     LOG.trace("issueIncrementRequest(Increment)");
     ReadModifyWriteRowRequest.Builder builder = incrementAdapter.adapt(increment);
-    tableMetadataSetter.setMetadata(builder);
+    builder.setTableName(bigtableTableName.toString());
     ReadModifyWriteRowRequest request = builder.build();
 
     return client.readModifyWriteRowAsync(request);
@@ -257,7 +257,7 @@ public class BatchExecutor {
   ListenableFuture<Empty> issuePutRequest(Put put) {
     LOG.trace("issuePutRequest(Put)");
     MutateRowRequest.Builder requestBuilder = putAdapter.adapt(put);
-    tableMetadataSetter.setMetadata(requestBuilder);
+    requestBuilder.setTableName(bigtableTableName.toString());
 
     return client.mutateRowAsync(requestBuilder.build());
   }

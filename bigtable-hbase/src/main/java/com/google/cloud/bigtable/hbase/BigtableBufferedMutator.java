@@ -48,7 +48,6 @@ import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
-import com.google.cloud.bigtable.hbase.adapters.TableMetadataSetter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.common.annotations.VisibleForTesting;
@@ -232,7 +231,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     batchExecutor = new BatchExecutor(
         client,
         options,
-        TableMetadataSetter.from(tableName, options),
+        options.getClusterName().toTableName(tableName.getNameAsString()),
         listeningExecutorService,
         getAdapter,
         putAdapter,

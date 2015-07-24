@@ -271,9 +271,9 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(AbstractBigtableConnection.class)
-      .add("zone", options.getZone())
+      .add("zone", options.getZoneId())
       .add("project", options.getProjectId())
-      .add("cluster", options.getCluster())
+      .add("cluster", options.getClusterId())
       .add("dataHost", options.getDataHost())
       .add("tableAdminHost", options.getTableAdminHost())
       .toString();
