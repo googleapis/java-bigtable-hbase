@@ -246,7 +246,7 @@ public class BigtableOptions {
     this.channelCount = channelCount;
 
     LOG.debug("Connection Configuration: projectId: %s, zoneId: %s, clusterId: %s, data host %s, "
-        + "table admin host %s, cluster admin host %s using transport %s.",
+        + "table admin host %s, cluster admin host %s.",
         projectId,
         zoneId,
         clusterId,
