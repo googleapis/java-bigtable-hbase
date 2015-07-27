@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
+import com.google.auth.Credentials;
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc;
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc.BigtableTableServiceServiceDescriptor;
 import com.google.bigtable.v1.BigtableServiceGrpc;
@@ -28,6 +29,7 @@ import com.google.bigtable.v1.BigtableServiceGrpc.BigtableServiceServiceDescript
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -62,8 +64,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -209,6 +214,7 @@ public class BigtableSession implements AutoCloseable {
             .setDaemon(true)
             .setNameFormat(RETRY_THREADPOOL_NAME + "-%d")
             .build());
+
   }
 
   private BigtableClient client;
@@ -220,20 +226,47 @@ public class BigtableSession implements AutoCloseable {
   private final EventLoopGroup elg;
   private final ScheduledExecutorService scheduledRetries;
   private final List<Closeable> clientCloseHandlers = new ArrayList<>();
+  private final Future<ClientInterceptor> credentialInterceptorFuture;
 
   public BigtableSession(BigtableOptions options, ExecutorService batchPool) {
-    this(options, batchPool, createDefaultEventLoopGroup(), createDefaultRetryExecutor());
+    this(options, batchPool, null, null);
   }
 
-  public BigtableSession(BigtableOptions options, ExecutorService batchPool, EventLoopGroup elg,
-      ScheduledExecutorService scheduledRetries) {
-    this.elg = elg;
+  public BigtableSession(final BigtableOptions options, final ExecutorService batchPool,
+      @Nullable EventLoopGroup elg, @Nullable ScheduledExecutorService scheduledRetries) {
+    credentialInterceptorFuture = batchPool.submit(new Callable<ClientInterceptor>() {
+      @Override
+      public ClientInterceptor call() throws Exception {
+        final Credentials credentials = CredentialFactory.getCredentials(options
+            .getCredentialOptions());
+        if (credentials != null) {
+          ClientAuthInterceptor interceptor = new ClientAuthInterceptor(credentials, batchPool);
+          batchPool.execute(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                credentials.refresh();
+              } catch (IOException e) {
+                LOG.error("Could not initialize the credentials", e);
+              }
+            }
+          });
+          return interceptor;
+        } else {
+          return null;
+        }
+      }
+    });
+    this.elg = (elg == null) ? createDefaultEventLoopGroup() : elg;
     this.batchPool = batchPool;
     this.options = options;
-    LOG.info("Opening connection for project %s on data host %s, "
-        + "table admin host %s.", options.getProjectId(),
-      options.getDataHost(), options.getTableAdminHost());
-    this.scheduledRetries = scheduledRetries;
+    LOG.info("Opening connection for projectId %s, zoneId %s, clusterId %s, " +
+        "on data host %s, table admin host %s.",
+        options.getProjectId(), options.getZoneId(), options.getClusterId(),
+        options.getDataHost(), options.getTableAdminHost());
+
+    this.scheduledRetries =
+        (scheduledRetries == null) ? createDefaultRetryExecutor() : scheduledRetries;
   }
 
   public synchronized BigtableClient getDataClient() throws IOException {
@@ -355,8 +388,13 @@ public class BigtableSession implements AutoCloseable {
 
   private Channel wrapChannel(Channel channel) {
     List<ClientInterceptor> interceptors = new ArrayList<>();
-    if (options.getCredential() != null) {
-      interceptors.add(new ClientAuthInterceptor(options.getCredential(), batchPool));
+    try {
+      ClientInterceptor clientAuthInterceptor = credentialInterceptorFuture.get();
+      if (clientAuthInterceptor != null) {
+        interceptors.add(clientAuthInterceptor);
+      }
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IllegalStateException("Could not initialize credentials.");
     }
 
     if (options.getAuthority() != null) {

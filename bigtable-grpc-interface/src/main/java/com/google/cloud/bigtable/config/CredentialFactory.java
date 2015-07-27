@@ -15,7 +15,13 @@
  */
 package com.google.cloud.bigtable.config;
 
-import com.google.api.client.googleapis.compute.ComputeCredential;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
+import java.util.List;
+
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.util.SecurityUtils;
@@ -23,13 +29,10 @@ import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.bigtable.config.CredentialOptions.JsonCredentialsOptions;
+import com.google.cloud.bigtable.config.CredentialOptions.P12CredentialOptions;
+import com.google.cloud.bigtable.config.CredentialOptions.UserSuppliedCredentialOptions;
 import com.google.common.collect.ImmutableList;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.security.PrivateKey;
-import java.util.List;
 
 /**
  * Simple factory for creating OAuth Credential objects for use with Bigtable.
@@ -87,20 +90,38 @@ public class CredentialFactory {
   }
 
   /**
+   * Look up a Credentials object based on a configuration of credentials described in a
+   * {@link CredentialOptions}.
+   */
+  public static Credentials getCredentials(CredentialOptions options) throws IOException,
+      GeneralSecurityException {
+    switch (options.getCredentialType()) {
+    case DefaultCredentials:
+      return getApplicationDefaultCredential();
+    case P12:
+      P12CredentialOptions p12Options = (P12CredentialOptions) options;
+      return getCredentialFromPrivateKeyServiceAccount(p12Options.getServiceAccount(),
+        p12Options.getKeyFile());
+    case SuppliedCredentials:
+      return ((UserSuppliedCredentialOptions) options).getCredential();
+    case SuppliedJson:
+      return getInputStreamCredential(((JsonCredentialsOptions) options).getInputStream());
+    case None:
+      return null;
+    default:
+      throw new IllegalStateException("Cannot process Credential type: "
+          + options.getCredentialType());
+    }
+  }
+
+  /**
    * Initializes OAuth2 credential using preconfigured ServiceAccount settings on the local
    * GCE VM. See: <a href="https://developers.google.com/compute/docs/authentication"
    * >Authenticating from Google Compute Engine</a>.
    */
   public static Credentials getCredentialFromMetadataServiceAccount()
       throws IOException, GeneralSecurityException {
-    Credentials cred = new ComputeEngineCredentials(getHttpTransport());
-    try {
-      cred.refresh();
-    } catch (IOException e) {
-      throw new IOException("Error getting access token from metadata server at: " +
-          ComputeCredential.TOKEN_SERVER_ENCODED_URL, e);
-    }
-    return cred;
+    return new ComputeEngineCredentials(getHttpTransport());
   }
 
   /**
@@ -136,7 +157,7 @@ public class CredentialFactory {
         SecurityUtils.loadPrivateKeyFromKeyStore(SecurityUtils.getPkcs12KeyStore(),
           new FileInputStream(privateKeyFile), "notasecret", "privatekey", "notasecret");
     return new ServiceAccountCredentials(clientId, serviceAccountEmail, privateKey, privateKeyId,
-        scopes);
+        scopes, getHttpTransport());
   }
 
   /**
@@ -147,7 +168,18 @@ public class CredentialFactory {
    * <a href="https://developers.google.com/accounts/docs/application-default-credentials" >
    * Application Default Credentials</a>.
    */
-  public static Credentials getApplicationDefaultCredential() throws IOException {
-    return GoogleCredentials.getApplicationDefault().createScoped(CLOUD_BIGTABLE_ALL_SCOPES);
+  public static Credentials getApplicationDefaultCredential() throws IOException,
+      GeneralSecurityException {
+    return GoogleCredentials.getApplicationDefault(getHttpTransport()).createScoped(
+      CLOUD_BIGTABLE_ALL_SCOPES);
+  }
+
+  /**
+   * Initializes OAuth2 application default credentials based on an inputStream.
+   */
+  public static Credentials getInputStreamCredential(InputStream inputStream) throws IOException,
+      GeneralSecurityException {
+    return GoogleCredentials.fromStream(inputStream, getHttpTransport()).createScoped(
+      CLOUD_BIGTABLE_ALL_SCOPES);
   }
 }

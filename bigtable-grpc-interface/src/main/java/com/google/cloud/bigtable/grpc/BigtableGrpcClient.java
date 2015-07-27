@@ -26,6 +26,7 @@ import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.StreamingBigtableResultScanner.RowMerger;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;

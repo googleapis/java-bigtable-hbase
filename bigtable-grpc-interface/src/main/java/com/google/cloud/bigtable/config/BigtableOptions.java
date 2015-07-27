@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.config;
 import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
-import com.google.cloud.bigtable.grpc.RetryOptions;
 import com.google.cloud.bigtable.naming.BigtableClusterName;
 import com.google.common.base.Preconditions;
 
@@ -48,7 +47,7 @@ public class BigtableOptions {
     private String clusterAdminHost;
     private String overrideIp;
     private int port;
-    private Credentials credential;
+    private CredentialOptions credentialOptions;
     private String authority;
     private String userAgent;
     private String callStatusReportPath;
@@ -101,8 +100,8 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setCredential(Credentials credential) {
-      this.credential = credential;
+    public Builder setCredentialOptions(CredentialOptions credentialOptions) {
+      this.credentialOptions = credentialOptions;
       return this;
     }
 
@@ -151,7 +150,7 @@ public class BigtableOptions {
           projectId,
           zoneId,
           clusterId,
-          credential,
+          credentialOptions,
           authority,
           userAgent,
           callTimingReportPath,
@@ -170,7 +169,7 @@ public class BigtableOptions {
   private final String projectId;
   private final String zoneId;
   private final String clusterId;
-  private final Credentials credential;
+  private final CredentialOptions credentialOptions;
   private final String authority;
   private final String userAgent;
   private final String callTimingReportPath;
@@ -189,7 +188,7 @@ public class BigtableOptions {
       projectId = null;
       zoneId = null;
       clusterId = null;
-      credential = null;
+      credentialOptions = null;
       authority = null;
       userAgent = null;
       callTimingReportPath = null;
@@ -208,7 +207,7 @@ public class BigtableOptions {
       String projectId,
       String zoneId,
       String clusterId,
-      Credentials credential,
+      CredentialOptions credentialOptions,
       String authority,
       String userAgent,
       String callTimingReportPath,
@@ -236,7 +235,7 @@ public class BigtableOptions {
     this.projectId = projectId;
     this.zoneId = zoneId;
     this.clusterId = clusterId;
-    this.credential = credential;
+    this.credentialOptions = credentialOptions;
     this.authority = authority;
     this.userAgent = userAgent;
     this.callTimingReportPath = callTimingReportPath;
@@ -295,8 +294,8 @@ public class BigtableOptions {
    * Get the credential this object was constructed with. May be null.
    * @return Null to indicate no credentials, otherwise, the Credentials object.
    */
-  public Credentials getCredential() {
-    return credential;
+  public CredentialOptions getCredentialOptions() {
+    return credentialOptions;
   }
 
   /**
