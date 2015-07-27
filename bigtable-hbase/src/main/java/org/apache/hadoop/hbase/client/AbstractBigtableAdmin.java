@@ -285,8 +285,20 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTable(HTableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions)
       throws IOException {
-    LOG.warn("Creating table, but ignoring parameters startKey, endKey and numRegions");
-    createTable(desc, null);
+    if (numRegions < 3) {
+      throw new IllegalArgumentException("Must create at least three regions");
+    } else if (Bytes.compareTo(startKey, endKey) >= 0) {
+      throw new IllegalArgumentException("Start key must be smaller than end key");
+    }
+    if (numRegions == 3) {
+      createTable(desc, new byte[][]{startKey, endKey});
+      return;
+    }
+    byte[][] splitKeys = Bytes.split(startKey, endKey, numRegions - 3);
+    if (splitKeys == null || splitKeys.length != numRegions - 1) {
+      throw new IllegalArgumentException("Unable to split key range into enough regions");
+    }
+    createTable(desc, splitKeys);
   }
 
   @Override
