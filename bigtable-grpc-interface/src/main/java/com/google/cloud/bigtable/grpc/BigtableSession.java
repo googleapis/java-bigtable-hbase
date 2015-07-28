@@ -102,8 +102,8 @@ public class BigtableSession implements AutoCloseable {
   public static final long CHANNEL_TERMINATE_WAIT_MS = 5000;
   private static final Map<MethodDescriptor<?, ?>, Predicate<?>> methodsToRetryMap =
       createMethodRetryMap();
-  private static final SslContextBuilder sslBuilder = createSslBuilder();
   private static final Logger LOG = new Logger(BigtableSession.class);
+  private static final SslContextBuilder sslBuilder = createSslBuilder();
 
   static {
     performWarmup();
