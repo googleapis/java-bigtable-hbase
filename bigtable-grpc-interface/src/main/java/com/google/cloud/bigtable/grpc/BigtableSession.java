@@ -19,6 +19,7 @@ package com.google.cloud.bigtable.grpc;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.auth.Credentials;
+import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc;
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc.BigtableTableServiceServiceDescriptor;
 import com.google.bigtable.v1.BigtableServiceGrpc;
@@ -238,22 +239,28 @@ public class BigtableSession implements AutoCloseable {
       public ClientInterceptor call() throws Exception {
         final Credentials credentials = CredentialFactory.getCredentials(options
             .getCredentialOptions());
+        ClientInterceptor interceptor = null;
         if (credentials != null) {
-          ClientAuthInterceptor interceptor = new ClientAuthInterceptor(credentials, batchPool);
-          batchPool.execute(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                credentials.refresh();
-              } catch (IOException e) {
-                LOG.error("Could not initialize the credentials", e);
+          if (credentials instanceof OAuth2Credentials) {
+            RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
+                new RefreshingOAuth2CredentialsInterceptor(batchPool, (OAuth2Credentials) credentials);
+            oauth2Interceptor.asyncRefresh();
+            interceptor = oauth2Interceptor;
+          } else {
+            interceptor = new ClientAuthInterceptor(credentials, batchPool);
+            batchPool.execute(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  credentials.refresh();
+                } catch (IOException e) {
+                  LOG.error("Could not initialize the credentials", e);
+                }
               }
-            }
-          });
-          return interceptor;
-        } else {
-          return null;
+            });
+          }
         }
+        return interceptor;
       }
     });
     this.elg = (elg == null) ? createDefaultEventLoopGroup() : elg;
