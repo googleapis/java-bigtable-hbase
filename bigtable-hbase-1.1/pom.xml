@@ -84,7 +84,7 @@ limitations under the License.
                         </goals>
                         <configuration>
                             <shadeTestJar>true</shadeTestJar>
-                          <!--
+                            <!--
                                 KEEP shadedArtifactAttached=false.  DO NOTE CHANGE shadedArtifactAttached to true!
 
                                 Dependencies get messed up if shadedArtifactAttached=true.  The relocations
@@ -121,17 +121,8 @@ limitations under the License.
                                     <include>com.google.protobuf:*</include>
                                     <include>com.twitter:hpack</include>
                                     <include>com.fasterxml.jackson.core:*</include>
-                                    <include>io.netty:netty-codec-http2</include>
-                                    <include>io.netty:netty-codec-http</include>
-                                    <include>io.netty:netty-codec</include>
-                                    <include>io.netty:netty-handler</include>
-                                    <include>io.netty:netty-buffer</include>
-                                    <include>io.netty:netty-common</include>
-                                    <include>io.netty:netty-transport</include>
-                                    <include>io.netty:netty-resolver</include>
-                                    <include>io.grpc:grpc-core</include>
-                                    <include>io.grpc:grpc-stub</include>
-                                    <include>io.grpc:grpc-protobuf</include>
+                                    <include>io.netty:*</include>
+                                    <include>io.grpc:*</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
