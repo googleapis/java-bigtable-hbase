@@ -271,8 +271,10 @@ public class BigtableSession implements AutoCloseable {
 
   public synchronized BigtableClient getDataClient() throws IOException {
     if (this.client == null) {
-      Channel channel = createChannel(options.getDataHost(), options.getChannelCount());
-      this.client = new BigtableGrpcClient(channel, batchPool, options.getRetryOptions());
+      Channel writeChannel = createChannel(options.getDataHost(), options.getChannelCount());
+      Channel readChannel = createChannel(options.getDataHost(), 1);
+      RetryOptions retryOptions = options.getRetryOptions();
+      this.client = new BigtableGrpcClient(readChannel, writeChannel, batchPool, retryOptions);
     }
     return client;
   }
