@@ -45,11 +45,13 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.auth.ClientAuthInterceptor;
 import io.grpc.stub.MetadataUtils;
+import io.grpc.transport.netty.GrpcSslContexts;
 import io.grpc.transport.netty.NegotiationType;
 import io.grpc.transport.netty.NettyChannelBuilder;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -95,32 +97,31 @@ public class BigtableSession implements AutoCloseable {
   /** Number of threads to use to initiate retry calls */
   public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
   public static final int RETRY_THREAD_COUNT = 4;
-
-  private final Map<MethodDescriptor<?, ?>, Predicate<?>> methodsToRetryMap =
+  public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
+  /** Number of milliseconds to wait for a termination before trying again. */
+  public static final long CHANNEL_TERMINATE_WAIT_MS = 5000;
+  private static final Map<MethodDescriptor<?, ?>, Predicate<?>> methodsToRetryMap =
       createMethodRetryMap();
-
-  /**
-   * Creates a SslContext.
-   */
-  public interface SslContextFactory {
-    SslContext create();
-  }
-
-  public static final SslContextFactory SSL_CONTEXT_FACTORY = new SslContextFactory() {
-    @SuppressWarnings("deprecation")
-    @Override
-    public SslContext create() {
-      try {
-        // We create multiple channels via refreshing and pooling channel implementation.
-        // Each one needs its own SslContext.
-        return SslContext.newClientContext();
-      } catch (SSLException e) {
-        throw new IllegalStateException("Could not create an ssl context.", e);
-      }
-    }
-  };
+  private static final SslContextBuilder sslBuilder = createSslBuilder();
+  private static final Logger LOG = new Logger(BigtableSession.class);
 
   static {
+    performWarmup();
+  }
+
+  private static SslContextBuilder createSslBuilder() {
+    SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
+    if (System.getProperty("java.version").startsWith("1.7.")) {
+      // The grpc cyphers only work in JDK 1.8+.  Use the default system cyphers for JDK 1.7.
+      sslBuilder.ciphers(null);
+      LOG.info("Java 7 detected.  Consider Using JDK 1.8+ which has more secure SSL cyphers. "
+          + "If you upgrade, you'll have to change your version of ALPN as per "
+          + "http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions");
+    }
+    return sslBuilder;
+  }
+
+  private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
     ExecutorService connectionStartupExecutor =
         Executors.newCachedThreadPool(
@@ -135,8 +136,14 @@ public class BigtableSession implements AutoCloseable {
         // The first invocation of BigtableOptions.SSL_CONTEXT_FACTORY.create() is expensive.
         // Create a throw away object in order to speed up the creation of the first
         // BigtableConnection which uses SslContexts under the covers.
-        @SuppressWarnings("unused")
-        SslContext warmup = SSL_CONTEXT_FACTORY.create();
+        try {
+          // We create multiple channels via refreshing and pooling channel implementation.
+          // Each one needs its own SslContext.
+          @SuppressWarnings("unused")
+          SslContext warmup = sslBuilder.build();
+        } catch (SSLException e) {
+          throw new IllegalStateException("Could not create an ssl context.", e);
+        }
       }
     });
     connectionStartupExecutor.execute(new Runnable() {
@@ -192,13 +199,6 @@ public class BigtableSession implements AutoCloseable {
     connectionStartupExecutor.shutdown();
   }
 
-  private final static Logger LOG = new Logger(BigtableSession.class);
-
-  public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
-
-  /** Number of milliseconds to wait for a termination before trying again. */
-  public static final long CHANNEL_TERMINATE_WAIT_MS = 5000;
-
   protected static EventLoopGroup createDefaultEventLoopGroup() {
     return new NioEventLoopGroup(0,
         new ThreadFactoryBuilder()
@@ -214,7 +214,6 @@ public class BigtableSession implements AutoCloseable {
             .setDaemon(true)
             .setNameFormat(RETRY_THREADPOOL_NAME + "-%d")
             .build());
-
   }
 
   private BigtableClient client;
@@ -296,8 +295,21 @@ public class BigtableSession implements AutoCloseable {
     return clusterAdminClient;
   }
 
-  private InetSocketAddress getSocketAddress(String hostName) throws IOException {
-    return new InetSocketAddress(getHost(hostName), options.getPort());
+  /**
+   * <p>
+   * Create a new Channel, optionally adding ChannelInterceptors - auth headers, performance
+   * interceptors, and user agent.
+   * </p>
+   */
+  protected Channel createChannel(String hostString, int channelCount) throws IOException {
+    InetSocketAddress host = new InetSocketAddress(getHost(hostString), options.getPort());
+    Channel channels[] = new Channel[channelCount];
+    for (int i = 0; i < channelCount; i++) {
+      ReconnectingChannel reconnectingChannel = createReconnectingChannel(host);
+      clientCloseHandlers.add(reconnectingChannel);
+      channels[i] = reconnectingChannel;
+    }
+    return wrapChannel(new ChannelPool(channels));
   }
 
   private InetAddress getHost(String hostName) throws IOException {
@@ -310,32 +322,14 @@ public class BigtableSession implements AutoCloseable {
     }
   }
 
-  /**
-   * <p>
-   * Create a new Channel, optionally adding ChannelInterceptors - auth headers, performance
-   * interceptors, and user agent.
-   * </p>
-   */
-  protected Channel createChannel(String hostString, int channelCount) throws IOException {
-    InetSocketAddress host = getSocketAddress(hostString);
-    Channel channels[] = new Channel[channelCount];
-    for (int i = 0; i < channelCount; i++) {
-      ReconnectingChannel reconnectingChannel = createReconnectingChannel(host);
-      clientCloseHandlers.add(reconnectingChannel);
-      channels[i] = reconnectingChannel;
-    }
-    return wrapChannel(new ChannelPool(channels));
-  }
-
   protected ReconnectingChannel createReconnectingChannel(final InetSocketAddress host)
       throws IOException {
     return new ReconnectingChannel(options.getTimeoutMs(), new ReconnectingChannel.Factory() {
-      @SuppressWarnings("deprecation")
       @Override
       public Channel createChannel() throws IOException {
         return NettyChannelBuilder
             .forAddress(host)
-            .sslContext(SslContext.newClientContext())
+            .sslContext(sslBuilder.build())
             .eventLoopGroup(elg)
             .executor(batchPool)
             .negotiationType(NegotiationType.TLS)
@@ -368,18 +362,20 @@ public class BigtableSession implements AutoCloseable {
   @Override
   public void close() throws Exception {
     elg.shutdownGracefully();
-    batchPool.shutdown();
     scheduledRetries.shutdown();
-    for (Closeable clientCloseHandler : clientCloseHandlers) {
-      try {
-        clientCloseHandler.close();
-      } catch (IOException e) {
-        throw new RuntimeException("Error when shutting down clients", e);
-      }
+    for (final Closeable clientCloseHandler : clientCloseHandlers) {
+      batchPool.submit(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          clientCloseHandler.close();
+          return null;
+        }
+      });
     }
+    batchPool.shutdown();
     awaiteTerminated(batchPool);
-    awaiteTerminated(elg);
     awaiteTerminated(scheduledRetries);
+    // Don't wait for elg to shut down.
   }
 
   private static void awaiteTerminated(ExecutorService executorService) {
@@ -449,7 +445,7 @@ public class BigtableSession implements AutoCloseable {
    * specify which method calls should be retried and which should not.
    */
   @VisibleForTesting
-  protected Map<MethodDescriptor<?, ?>, Predicate<?>> createMethodRetryMap() {
+  protected static Map<MethodDescriptor<?, ?>, Predicate<?>> createMethodRetryMap() {
     Predicate<MutateRowRequest> retryMutationsWithTimestamps = new Predicate<MutateRowRequest>() {
       @Override
       public boolean apply(@Nullable MutateRowRequest mutateRowRequest) {
