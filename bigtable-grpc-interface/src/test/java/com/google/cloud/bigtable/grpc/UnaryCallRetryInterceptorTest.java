@@ -22,13 +22,15 @@ import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.protobuf.Empty;
 
-import io.grpc.Call;
-import io.grpc.Channel;
-import io.grpc.MethodDescriptor;
-
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,45 +39,63 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import io.grpc.Call;
+import io.grpc.Channel;
+import io.grpc.MethodDescriptor;
+
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 @RunWith(JUnit4.class)
 public class UnaryCallRetryInterceptorTest {
 
-  // Setting this high has helped find race conditions:
-  private static final int DEFAULT_RETRY_MILLIS = 100;
-  private static final double DEFAULT_RETRY_BACKOFF_MULTIPLIER = 2;
-  private static final int DEFAULT_RETRY_MAX_ELAPSED_TIME_MILLIS = 60 * 1000; // 60 seconds
-
   @Mock
   private Channel channelStub;
   @Mock
   private Call<MutateRowRequest, Empty> callStub;
 
-  private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
-
-  private final ImmutableSet<MethodDescriptor<?, ?>> retriableMethods =
-      new ImmutableSet.Builder<MethodDescriptor<?, ?>>()
-          .add(BigtableServiceGrpc.CONFIG.mutateRow)
-          .build();
+  private ScheduledExecutorService executorService;
 
   private UnaryCallRetryInterceptor retryInterceptor;
 
   @Before
   public void setup() {
+    executorService = Executors.newScheduledThreadPool(1);
     MockitoAnnotations.initMocks(this);
 
+    ImmutableSet<MethodDescriptor<?, ?>> retriableMethods =
+        new ImmutableSet.Builder<MethodDescriptor<?, ?>>()
+            .add(BigtableServiceGrpc.CONFIG.mutateRow)
+            .build();
+
+    Function<MethodDescriptor<?, ?>, Predicate<?>> alwaysTrue =
+        new Function<MethodDescriptor<?, ?>, Predicate<?>>() {
+          @Override
+          public Predicate<Object> apply(MethodDescriptor<?, ?> methodDescriptor) {
+            return Predicates.alwaysTrue();
+          }
+        };
+
+    Map<MethodDescriptor<?, ?>, Predicate<?>> retriableMethodsMap =
+        Maps.asMap(retriableMethods, alwaysTrue);
+
+    RetryOptions retryOptions = new RetryOptions.Builder().build();
     retryInterceptor =
         new UnaryCallRetryInterceptor(
             channelStub,
             executorService,
-            retriableMethods,
-            DEFAULT_RETRY_MILLIS,
-            DEFAULT_RETRY_BACKOFF_MULTIPLIER,
-            DEFAULT_RETRY_MAX_ELAPSED_TIME_MILLIS);
+            retriableMethodsMap,
+            retryOptions.getInitialBackoffMillis(),
+            retryOptions.getBackoffMultiplier(),
+            retryOptions.getMaxElaspedBackoffMillis());
 
     when(channelStub.newCall(eq(BigtableServiceGrpc.CONFIG.mutateRow))).thenReturn(callStub);
+  }
+
+  @After
+  public void shutdown() {
+    executorService.shutdown();
   }
 
   @Test

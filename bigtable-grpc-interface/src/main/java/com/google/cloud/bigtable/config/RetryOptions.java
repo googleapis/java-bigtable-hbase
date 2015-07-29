@@ -17,17 +17,29 @@ package com.google.cloud.bigtable.config;
 
 import java.util.concurrent.TimeUnit;
 
-import com.google.cloud.bigtable.grpc.BigtableGrpcClient;
-
 /**
  * Options for retrying requests, including back off configuration.
  */
 public class RetryOptions {
 
-  public static int DEFAULT_STREAMING_BUFFER_SIZE = BigtableGrpcClient.SCANNER_BUFFER_SIZE;
-  // We can timeout when reading large cells with a low value here. With a 10MB
-  // cell limit, 60 seconds allows our connection to drop to ~170kbyte/s. A 10 second
-  // timeout requires 1Mbyte/s
+  public static int DEFAULT_STREAMING_BUFFER_SIZE = 32;
+
+  /**
+   * Flag indicating whether or not grpc retries should be enabled.
+   * The default is to enable retries on failed idempotent operations.
+   */
+  public static boolean ENABLE_GRPC_RETRIES_DEFAULT = true;
+
+  /**
+   * Flag indicating whether or not to retry grpc call on deadline exceeded.
+   * This flag is used only when grpc retries is enabled.
+   */
+  public static boolean ENABLE_GRPC_RETRY_DEADLINE_EXCEEDED_DEFAULT = true;
+
+  /** We can timeout when reading large cells with a low value here. With a 10MB
+   * cell limit, 60 seconds allows our connection to drop to ~170kbyte/s. A 10 second
+   * timeout requires 1Mbyte/s
+   */
   public static int DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS =
       (int) TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
 
@@ -42,15 +54,15 @@ public class RetryOptions {
   /**
    * Maximum amount of time to retry before failing the operation (default value: 60 seconds).
    */
-  public static final int DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS = 60 * 1000;
-
+  public static final int DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS =
+      (int) TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
 
   /**
    * A Builder for ChannelOptions objects.
    */
   public static class Builder {
-    private boolean enableRetries = false;
-    private boolean retryOnDeadlineExceeded = true;
+    private boolean enableRetries = ENABLE_GRPC_RETRIES_DEFAULT;
+    private boolean retryOnDeadlineExceeded = ENABLE_GRPC_RETRY_DEADLINE_EXCEEDED_DEFAULT;
     private int initialBackoffMillis = DEFAULT_INITIAL_BACKOFF_MILLIS;
     private double backoffMultiplier = DEFAULT_BACKOFF_MULTIPLIER;
     private int maxElaspedBackoffMillis = DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;

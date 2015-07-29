@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.api.client.util.Strings.isNullOrEmpty;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_HOST_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.DEFAULT_BIGTABLE_PORT;
 
@@ -101,16 +101,12 @@ public class BigtableOptionsFactory {
    * The default is to enable retries on failed idempotent operations.
    */
   public static final String ENABLE_GRPC_RETRIES_KEY = "google.bigtable.grpc.retry.enable";
-  public static final boolean ENABLE_GRPC_RETRIES_DEFAULT = true;
-
   /**
    * Key to set to a boolean flag indicating whether or not to retry grpc call on deadline exceeded.
    * This flag is used only when grpc retries is enabled.
    */
   public static final String ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY =
       "google.bigtable.grpc.retry.deadlineexceeded.enable";
-  public static final boolean ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_DEFAULT = true;
-
   /**
    * Key to set to a boolean flag indicating the maximum amount of time to wait for retries, given
    * a backoff policy on errors.
@@ -118,20 +114,15 @@ public class BigtableOptionsFactory {
    */
   public static final String MAX_ELAPSED_BACKOFF_MILLIS_KEY =
       "google.bigtable.grpc.retry.max.elapsed.backoff.ms";
-  public static final int MAX_ELAPSED_BACKOFF_MS_DEFAULT = 3 * 60 * 1000; // 3 minutes
-
   /**
    * The number of grpc channels to open for asynchronous processing such as puts.
    */
-  public static final String BIGTABLE_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
-  public static final int BIGTABLE_CHANNEL_COUNT_DEFAULT = 4;
-
+  public static final String BIGTABLE_DATA_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
   /**
    * The maximum length of time to keep a Bigtable grpc channel open.
    */
   public static final String BIGTABLE_CHANNEL_TIMEOUT_MS_KEY =
       "google.bigtable.grpc.channel.timeout.ms";
-  public static final long BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT = 30 * 60 * 1000;
 
   public static BigtableOptions fromConfiguration(final Configuration configuration)
       throws IOException {
@@ -149,7 +140,7 @@ public class BigtableOptionsFactory {
     }
 
     bigtableOptionsBuilder.setDataHost(
-        getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_HOST_DEFAULT, "API Data"));
+        getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));
 
     bigtableOptionsBuilder.setTableAdminHost(getHost(
       configuration, BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT,
@@ -213,12 +204,12 @@ public class BigtableOptionsFactory {
 
     builder.setRetryOptions(createRetryOptions(configuration));
 
-    int channelCount =
-        configuration.getInt(BIGTABLE_CHANNEL_COUNT_KEY, BIGTABLE_CHANNEL_COUNT_DEFAULT);
-    builder.setChannelCount(channelCount);
+    int channelCount = configuration.getInt(
+        BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
+    builder.setDataChannelCount(channelCount);
 
-    long channelTimeout =
-        configuration.getLong(BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
+    int channelTimeout = configuration.getInt(
+        BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BigtableOptions.BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
 
     // Connection refresh takes a couple of seconds. 1 minute is the bare minimum that this should
     // be allowed to be set at.
@@ -268,17 +259,19 @@ public class BigtableOptionsFactory {
   private static RetryOptions createRetryOptions(Configuration configuration) {
     RetryOptions.Builder retryOptionsBuilder = new RetryOptions.Builder();
     boolean enableRetries = configuration.getBoolean(
-        ENABLE_GRPC_RETRIES_KEY, ENABLE_GRPC_RETRIES_DEFAULT);
+        ENABLE_GRPC_RETRIES_KEY, RetryOptions.ENABLE_GRPC_RETRIES_DEFAULT);
     LOG.debug("gRPC retries enabled: %s", enableRetries);
     retryOptionsBuilder.setEnableRetries(enableRetries);
 
     boolean retryOnDeadlineExceeded = configuration.getBoolean(
-        ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY, ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_DEFAULT);
+        ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY,
+        RetryOptions.ENABLE_GRPC_RETRY_DEADLINE_EXCEEDED_DEFAULT);
     LOG.debug("gRPC retry on deadline exceeded enabled: %s", retryOnDeadlineExceeded);
     retryOptionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
 
     int maxElapsedBackoffMillis = configuration.getInt(
-        MAX_ELAPSED_BACKOFF_MILLIS_KEY, MAX_ELAPSED_BACKOFF_MS_DEFAULT);
+        MAX_ELAPSED_BACKOFF_MILLIS_KEY,
+        RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS);
     LOG.debug("gRPC retry maxElapsedBackoffMillis: %d", maxElapsedBackoffMillis);
     retryOptionsBuilder.setMaxElapsedBackoffMillis(maxElapsedBackoffMillis);
 
