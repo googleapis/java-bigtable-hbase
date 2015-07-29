@@ -17,9 +17,10 @@ package com.google.cloud.bigtable.config;
 
 import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.api.client.util.Strings;
-import com.google.auth.Credentials;
 import com.google.cloud.bigtable.naming.BigtableClusterName;
 import com.google.common.base.Preconditions;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
@@ -30,8 +31,12 @@ public class BigtableOptions {
       "bigtabletableadmin.googleapis.com";
   public static final String BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT =
       "bigtableclusteradmin.googleapis.com";
-  public static final String BIGTABLE_HOST_DEFAULT = "bigtable.googleapis.com";
+  public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
   public static final int DEFAULT_BIGTABLE_PORT = 443;
+
+  public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = 4;
+  public static final int BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT =
+      (int) TimeUnit.MILLISECONDS.convert(30, TimeUnit.MINUTES);
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
@@ -39,22 +44,33 @@ public class BigtableOptions {
    * A mutable builder for BigtableConnectionOptions.
    */
   public static class Builder {
+     // Configuration that a user is required to set.
     private String projectId;
     private String zoneId;
     private String clusterId;
-    private String dataHost;
-    private String tableAdminHost;
-    private String clusterAdminHost;
-    private String overrideIp;
-    private int port;
-    private CredentialOptions credentialOptions;
-    private String authority;
     private String userAgent;
+
+    // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
+    private String dataHost = BIGTABLE_DATA_HOST_DEFAULT;
+    private String tableAdminHost = BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
+    private String clusterAdminHost = BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT;
+    private int port = DEFAULT_BIGTABLE_PORT;
+    private String overrideIp;
+
+    // The default credentials get credential from well known locations, such as the GCE
+    // metdata service or gcloud configuration in other environments. A user can also override
+    // the default behavior with P12 or JSon configuration.
+    private CredentialOptions credentialOptions = CredentialOptions.defaultCredentials();
+
+    // Performance tuning options.
+    private RetryOptions retryOptions = new RetryOptions.Builder().build();
+    private int timeoutMs = BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT;
+    private int dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
+
+    // Debugging information about the types of calls that were made and their success rates.
     private String callStatusReportPath;
     private String callTimingReportPath;
-    private RetryOptions retryOptions = null;
-    private long timeoutMs = 0;
-    private int channelCount = 1;
+
 
     public Builder setTableAdminHost(String tableAdminHost) {
       this.tableAdminHost = tableAdminHost;
@@ -105,11 +121,6 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setAuthority(String authority) {
-      this.authority = authority;
-      return this;
-    }
-
     public Builder setUserAgent(String userAgent) {
       this.userAgent = userAgent;
       return this;
@@ -125,8 +136,8 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setChannelCount(int channelCount) {
-      this.channelCount  = channelCount;
+    public Builder setDataChannelCount(int dataChannelCount) {
+      this.dataChannelCount = dataChannelCount;
       return this;
     }
 
@@ -135,7 +146,7 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setTimeoutMs(long timeoutMs) {
+    public Builder setTimeoutMs(int timeoutMs) {
       this.timeoutMs = timeoutMs;
       return this;
     }
@@ -151,13 +162,12 @@ public class BigtableOptions {
           zoneId,
           clusterId,
           credentialOptions,
-          authority,
           userAgent,
           callTimingReportPath,
           callStatusReportPath,
           retryOptions,
           timeoutMs,
-          channelCount);
+          dataChannelCount);
     }
   }
 
@@ -170,12 +180,11 @@ public class BigtableOptions {
   private final String zoneId;
   private final String clusterId;
   private final CredentialOptions credentialOptions;
-  private final String authority;
   private final String userAgent;
   private final String callTimingReportPath;
   private final String callStatusReportPath;
   private final RetryOptions retryOptions;
-  private final long timeoutMs;
+  private final int timeoutMs;
   private final int channelCount;
 
   @VisibleForTesting
@@ -189,7 +198,6 @@ public class BigtableOptions {
       zoneId = null;
       clusterId = null;
       credentialOptions = null;
-      authority = null;
       userAgent = null;
       callTimingReportPath = null;
       callStatusReportPath = null;
@@ -208,12 +216,11 @@ public class BigtableOptions {
       String zoneId,
       String clusterId,
       CredentialOptions credentialOptions,
-      String authority,
       String userAgent,
       String callTimingReportPath,
       String callStatusReportPath,
       RetryOptions retryOptions,
-      long timeoutMs,
+      int timeoutMs,
       int channelCount) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
@@ -236,7 +243,6 @@ public class BigtableOptions {
     this.zoneId = zoneId;
     this.clusterId = clusterId;
     this.credentialOptions = credentialOptions;
-    this.authority = authority;
     this.userAgent = userAgent;
     this.callTimingReportPath = callTimingReportPath;
     this.callStatusReportPath = callStatusReportPath;
@@ -296,14 +302,6 @@ public class BigtableOptions {
    */
   public CredentialOptions getCredentialOptions() {
     return credentialOptions;
-  }
-
-  /**
-   * Gets the authority to be passed in the HTTP/2 headers when creating new streams
-   * for the channel.
-   */
-  public String getAuthority() {
-    return authority;
   }
 
   /**

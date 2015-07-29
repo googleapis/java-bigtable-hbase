@@ -41,10 +41,8 @@ import io.grpc.Channel;
 import io.grpc.ChannelImpl;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
-import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.auth.ClientAuthInterceptor;
-import io.grpc.stub.MetadataUtils;
 import io.grpc.transport.netty.GrpcSslContexts;
 import io.grpc.transport.netty.NegotiationType;
 import io.grpc.transport.netty.NettyChannelBuilder;
@@ -178,7 +176,7 @@ public class BigtableSession implements AutoCloseable {
         }
       }
     });
-    for (final String host : Arrays.asList(BigtableOptions.BIGTABLE_HOST_DEFAULT,
+    for (final String host : Arrays.asList(BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT,
       BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT,
       BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT)) {
       connectionStartupExecutor.execute(new Runnable() {
@@ -393,12 +391,6 @@ public class BigtableSession implements AutoCloseable {
       }
     } catch (InterruptedException | ExecutionException e) {
       throw new IllegalStateException("Could not initialize credentials.");
-    }
-
-    if (options.getAuthority() != null) {
-      Metadata.Headers headers = new Metadata.Headers();
-      headers.setAuthority(options.getAuthority());
-      interceptors.add(MetadataUtils.newAttachHeadersInterceptor(headers));
     }
 
     CallCompletionStatusInterceptor preRetryCallStatusInterceptor = null;

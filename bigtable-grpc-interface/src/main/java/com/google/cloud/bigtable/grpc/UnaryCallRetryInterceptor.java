@@ -16,10 +16,7 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.util.ExponentialBackOff;
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.Maps;
 
 import io.grpc.Call;
 import io.grpc.Channel;
@@ -27,7 +24,6 @@ import io.grpc.MethodDescriptor;
 import io.grpc.MethodType;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -41,27 +37,6 @@ public class UnaryCallRetryInterceptor extends Channel {
   private final int initialBackoffMillis;
   private final double backoffMultiplier;
   private final int maxElapsedBackoffMillis;
-
-  public UnaryCallRetryInterceptor(
-      Channel delegate,
-      ScheduledExecutorService executorService,
-      Set<MethodDescriptor<?, ?>> retriableMethods,
-      int initialBackoffMillis,
-      double backoffMultiplier,
-      int maxElapsedBackoffMillis) {
-    this(
-        delegate,
-        executorService,
-        Maps.asMap(retriableMethods, new Function<MethodDescriptor<?, ?>, Predicate<?>>() {
-          @Override
-          public Predicate<Object> apply(MethodDescriptor<?, ?> methodDescriptor) {
-            return Predicates.alwaysTrue();
-          }
-        }),
-        initialBackoffMillis,
-        backoffMultiplier,
-        maxElapsedBackoffMillis);
-  }
 
   public UnaryCallRetryInterceptor(
       Channel delegate,

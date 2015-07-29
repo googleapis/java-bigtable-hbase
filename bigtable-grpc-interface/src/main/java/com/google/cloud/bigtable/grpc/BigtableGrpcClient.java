@@ -133,12 +133,6 @@ public class BigtableGrpcClient implements BigtableClient {
     }
   }
 
-  /**
-   * The number of rows to read in before blocking.
-   * TODO: Wire this into a settable option.
-   */
-  public static final int SCANNER_BUFFER_SIZE = 32;
-
   // We usually have many asynchronous writes.
   private final Channel writeChannel;
 
