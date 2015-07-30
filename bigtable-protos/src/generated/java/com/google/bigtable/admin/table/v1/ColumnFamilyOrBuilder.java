@@ -11,7 +11,7 @@ public interface ColumnFamilyOrBuilder extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * A unique identifier of the form &lt;table_name&gt;/families/[-_.a-zA-Z0-9]+
+   * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
    * The last segment is the same as the "name" field in
    * google.bigtable.v1.Family.
    * </pre>
@@ -21,7 +21,7 @@ public interface ColumnFamilyOrBuilder extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * A unique identifier of the form &lt;table_name&gt;/families/[-_.a-zA-Z0-9]+
+   * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
    * The last segment is the same as the "name" field in
    * google.bigtable.v1.Family.
    * </pre>

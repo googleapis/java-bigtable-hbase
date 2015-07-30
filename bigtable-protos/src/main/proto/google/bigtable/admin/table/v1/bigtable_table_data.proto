@@ -51,7 +51,7 @@ message Table {
 
 // A set of columns within a table which share a common configuration.
 message ColumnFamily {
-  // A unique identifier of the form <table_name>/families/[-_.a-zA-Z0-9]+
+  // A unique identifier of the form <table_name>/columnFamilies/[-_.a-zA-Z0-9]+
   // The last segment is the same as the "name" field in
   // google.bigtable.v1.Family.
   string name = 1;
