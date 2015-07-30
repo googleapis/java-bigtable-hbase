@@ -43,13 +43,11 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.MethodDescriptor;
 import io.grpc.auth.ClientAuthInterceptor;
-import io.grpc.transport.netty.GrpcSslContexts;
 import io.grpc.transport.netty.NegotiationType;
 import io.grpc.transport.netty.NettyChannelBuilder;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -101,22 +99,29 @@ public class BigtableSession implements AutoCloseable {
   private static final Map<MethodDescriptor<?, ?>, Predicate<?>> methodsToRetryMap =
       createMethodRetryMap();
   private static final Logger LOG = new Logger(BigtableSession.class);
-  private static final SslContextBuilder sslBuilder = createSslBuilder();
+//  private static final SslContextBuilder sslBuilder = createGrpcSslBuilder();
 
   static {
     performWarmup();
   }
 
-  private static SslContextBuilder createSslBuilder() {
-    SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
-    if (System.getProperty("java.version").startsWith("1.7.")) {
-      // The grpc cyphers only work in JDK 1.8+.  Use the default system cyphers for JDK 1.7.
-      sslBuilder.ciphers(null);
-      LOG.info("Java 7 detected.  Consider Using JDK 1.8+ which has more secure SSL cyphers. "
-          + "If you upgrade, you'll have to change your version of ALPN as per "
-          + "http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions");
-    }
-    return sslBuilder;
+  // TODO: This, or at least some variant of this, is recommended by the gRPC team. A client project
+  // broke with this option, so we need to debug that issue before enabling this approach.
+//  private static SslContextBuilder createGrpcSslBuilder() {
+//    SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
+//    if (System.getProperty("java.version").startsWith("1.7.")) {
+//      // The grpc cyphers only work in JDK 1.8+.  Use the default system cyphers for JDK 1.7.
+//      sslBuilder.ciphers(null);
+//      LOG.info("Java 7 detected.  Consider Using JDK 1.8+ which has more secure SSL cyphers. "
+//          + "If you upgrade, you'll have to change your version of ALPN as per "
+//          + "http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions");
+//    }
+//    return sslBuilder;
+//  }
+
+  private static SslContext createSslContext() throws SSLException {
+    // return sslBuilder.build();
+    return SslContext.newClientContext();
   }
 
   private static void performWarmup() {
@@ -138,7 +143,7 @@ public class BigtableSession implements AutoCloseable {
           // We create multiple channels via refreshing and pooling channel implementation.
           // Each one needs its own SslContext.
           @SuppressWarnings("unused")
-          SslContext warmup = sslBuilder.build();
+          SslContext warmup = createSslContext();
         } catch (SSLException e) {
           throw new IllegalStateException("Could not create an ssl context.", e);
         }
@@ -327,7 +332,7 @@ public class BigtableSession implements AutoCloseable {
       public Channel createChannel() throws IOException {
         return NettyChannelBuilder
             .forAddress(host)
-            .sslContext(sslBuilder.build())
+            .sslContext(createSslContext())
             .eventLoopGroup(elg)
             .executor(batchPool)
             .negotiationType(NegotiationType.TLS)
@@ -371,8 +376,8 @@ public class BigtableSession implements AutoCloseable {
       });
     }
     batchPool.shutdown();
-    awaiteTerminated(batchPool);
     awaiteTerminated(scheduledRetries);
+    awaiteTerminated(batchPool);
     // Don't wait for elg to shut down.
   }
 
