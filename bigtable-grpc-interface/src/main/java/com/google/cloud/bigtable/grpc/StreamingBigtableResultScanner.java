@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.grpc;
 import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.ReadRowsResponse.Chunk;
-import com.google.bigtable.v1.ReadRowsResponse.Chunk.ChunkCase;
 import com.google.bigtable.v1.Row;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -71,15 +70,19 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
 
       for (Chunk chunk : partialRow.getChunksList()) {
         Preconditions.checkState(!committed, "Encountered chunk after row commit.");
-        if (chunk.getChunkCase() == ChunkCase.ROW_CONTENTS) {
-          merge(familyMap, chunk.getRowContents());
-        } else if (chunk.getChunkCase() == ChunkCase.RESET_ROW) {
-          familyMap.clear();
-        } else if (chunk.getChunkCase() == ChunkCase.COMMIT_ROW) {
-          committed = true;
-        } else {
-          throw new IllegalStateException(
-              String.format("Unknown ChunkCase encountered %s", chunk.getChunkCase()));
+        switch (chunk.getChunkCase()) {
+          case ROW_CONTENTS:
+            merge(familyMap, chunk.getRowContents());
+            break;
+          case RESET_ROW:
+            familyMap.clear();
+            break;
+          case COMMIT_ROW:
+            committed = true;
+            break;
+          default:
+            throw new IllegalStateException(String.format("Unknown ChunkCase encountered %s",
+              chunk.getChunkCase()));
         }
       }
     }
@@ -107,23 +110,14 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
     }
 
     // Merge newRowContents into the map of family builders, creating one if necessary.
-    private void merge(
-        Map<String, Family.Builder> familyBuilderMap,
-        Family newRowContents) {
-      Family.Builder familyBuilder =
-          getOrCreateFamilyBuilder(familyBuilderMap, newRowContents);
-      familyBuilder.addAllColumns(newRowContents.getColumnsList());
-    }
-
-    private Family.Builder getOrCreateFamilyBuilder(
-        Map<String, Family.Builder> familyBuilderMap, Family rowContents) {
-      Family.Builder familyBuilder = familyBuilderMap.get(rowContents.getName());
+    private void merge(Map<String, Family.Builder> familyBuilderMap, Family newRowContents) {
+      String familyName = newRowContents.getName();
+      Family.Builder familyBuilder = familyBuilderMap.get(familyName);
       if (familyBuilder == null) {
-        familyBuilder = Family.newBuilder();
-        familyBuilder.setName(rowContents.getName());
-        familyBuilderMap.put(familyBuilder.getName(), familyBuilder);
+        familyBuilder = Family.newBuilder().setName(familyName);
+        familyBuilderMap.put(familyName, familyBuilder);
       }
-      return familyBuilder;
+      familyBuilder.addAllColumns(newRowContents.getColumnsList());
     }
   }
 
