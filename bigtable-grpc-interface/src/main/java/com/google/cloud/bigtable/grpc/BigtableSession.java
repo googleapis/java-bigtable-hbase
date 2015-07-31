@@ -61,6 +61,7 @@ import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -102,6 +103,13 @@ public class BigtableSession implements AutoCloseable {
   private static final Logger LOG = new Logger(BigtableSession.class);
 //  private static final SslContextBuilder sslBuilder = createGrpcSslBuilder();
 
+  private static ExecutorService connectionStartupExecutor =
+      Executors.newCachedThreadPool(
+          new ThreadFactoryBuilder()
+              .setNameFormat("BigtableSession-startup-%s")
+              .setDaemon(true)
+              .build());
+
   static {
     performWarmup();
   }
@@ -127,12 +135,6 @@ public class BigtableSession implements AutoCloseable {
 
   private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
-    ExecutorService connectionStartupExecutor =
-        Executors.newCachedThreadPool(
-            new ThreadFactoryBuilder()
-                .setNameFormat("BigtableSession-startup-%s")
-                .setDaemon(true)
-                .build());
 
     connectionStartupExecutor.execute(new Runnable() {
       @Override
@@ -220,7 +222,7 @@ public class BigtableSession implements AutoCloseable {
             .build());
   }
 
-  private BigtableClient client;
+  private BigtableClient dataClient;
   private BigtableTableAdminClient tableAdminClient;
   private BigtableClusterAdminClient clusterAdminClient;
 
@@ -228,42 +230,24 @@ public class BigtableSession implements AutoCloseable {
   private final ExecutorService batchPool;
   private final EventLoopGroup elg;
   private final ScheduledExecutorService scheduledRetries;
-  private final List<Closeable> clientCloseHandlers = new ArrayList<>();
-  private final Future<ClientInterceptor> credentialInterceptorFuture;
+  private final List<Closeable> clientCloseHandlers = Collections
+      .synchronizedList(new ArrayList<Closeable>());
+  private final ClientInterceptor clientAuthInterceptor;
 
-  public BigtableSession(BigtableOptions options, ExecutorService batchPool) {
+  public BigtableSession(BigtableOptions options, ExecutorService batchPool) throws IOException {
     this(options, batchPool, null, null);
   }
 
   public BigtableSession(final BigtableOptions options, final ExecutorService batchPool,
-      @Nullable EventLoopGroup elg, @Nullable ScheduledExecutorService scheduledRetries) {
-    credentialInterceptorFuture = batchPool.submit(new Callable<ClientInterceptor>() {
-      @Override
-      public ClientInterceptor call() throws Exception {
-        final Credentials credentials = CredentialFactory.getCredentials(options
-            .getCredentialOptions());
-        ClientInterceptor interceptor = null;
-        if (credentials != null) {
-          if (credentials instanceof OAuth2Credentials) {
-            RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
-                new RefreshingOAuth2CredentialsInterceptor(batchPool, (OAuth2Credentials) credentials);
-            oauth2Interceptor.asyncRefresh();
-            interceptor = oauth2Interceptor;
-          } else {
-            interceptor = new ClientAuthInterceptor(credentials, batchPool);
-            batchPool.execute(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  credentials.refresh();
-                } catch (IOException e) {
-                  LOG.error("Could not initialize the credentials", e);
-                }
-              }
-            });
-          }
+      @Nullable EventLoopGroup elg, @Nullable ScheduledExecutorService scheduledRetries)
+      throws IOException {
+    Future<Credentials> future = batchPool.submit(new Callable<Credentials>() {
+      public Credentials call() throws IOException {
+        try {
+          return CredentialFactory.getCredentials(options.getCredentialOptions());
+        } catch (GeneralSecurityException e) {
+          throw new IOException("Could not load auth credentials", e);
         }
-        return interceptor;
       }
     });
     this.elg = (elg == null) ? createDefaultEventLoopGroup() : elg;
@@ -276,23 +260,83 @@ public class BigtableSession implements AutoCloseable {
 
     this.scheduledRetries =
         (scheduledRetries == null) ? createDefaultRetryExecutor() : scheduledRetries;
+
+    final Credentials credentials = get(future, "Cloud not initialize credentials");
+    Future<Void> clientAuthInterceptorFuture = null;
+    if (credentials != null) {
+      if (credentials instanceof OAuth2Credentials) {
+        final RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
+            new RefreshingOAuth2CredentialsInterceptor(batchPool, (OAuth2Credentials) credentials);
+        clientAuthInterceptorFuture = batchPool.submit(new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            oauth2Interceptor.syncRefresh();
+            return null;
+          }
+        });
+        clientAuthInterceptor = oauth2Interceptor;
+      } else {
+        clientAuthInterceptor = new ClientAuthInterceptor(credentials, batchPool);
+        clientAuthInterceptorFuture = batchPool.submit(new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            credentials.refresh();
+            return null;
+          }
+        });
+      }
+    } else {
+      clientAuthInterceptor = null;
+    }
+
+    Future<BigtableClient> dataClientFuture =
+        batchPool.submit(new Callable<BigtableClient>() {
+          @Override
+          public BigtableClient call() throws Exception {
+            Channel readChannel = createChannel(options.getDataHost(), 1);
+            Channel writeChannel = createChannel(options.getDataHost(), options.getChannelCount());
+            RetryOptions retryOptions = options.getRetryOptions();
+            return new BigtableGrpcClient(readChannel, writeChannel, batchPool, retryOptions);
+          }
+        });
+
+    Future<BigtableTableAdminClient> tableAdminFuture =
+        batchPool.submit(new Callable<BigtableTableAdminClient>() {
+          @Override
+          public BigtableTableAdminClient call() throws Exception {
+            Channel channel = createChannel(options.getTableAdminHost(), 1);
+            return new BigtableTableAdminGrpcClient(channel);
+          }
+        });
+
+    if (clientAuthInterceptorFuture != null) {
+      get(clientAuthInterceptorFuture, "Cloud not initialize credentials");
+    }
+
+    this.dataClient = get(dataClientFuture, "Could not initialize the data API client");
+    this.tableAdminClient = get(tableAdminFuture, "Could not initialize the table Admin client");
+    awaiteTerminated(connectionStartupExecutor);
   }
 
-  public synchronized BigtableClient getDataClient() throws IOException {
-    if (this.client == null) {
-      Channel writeChannel = createChannel(options.getDataHost(), options.getChannelCount());
-      Channel readChannel = createChannel(options.getDataHost(), 1);
-      RetryOptions retryOptions = options.getRetryOptions();
-      this.client = new BigtableGrpcClient(readChannel, writeChannel, batchPool, retryOptions);
+  private static <T> T get(Future<T> future, String errorMessage) throws IOException {
+    try {
+      return future.get();
+    } catch (InterruptedException e) {
+      throw new IOException(errorMessage, e);
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof IOException) {
+        throw (IOException) e.getCause();
+      } else {
+        throw new IOException(errorMessage, e);
+      }
     }
-    return client;
   }
 
-  public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
-    if (this.tableAdminClient == null) {
-      Channel channel = createChannel(options.getTableAdminHost(), 1);
-      this.tableAdminClient = new BigtableTableAdminGrpcClient(channel);
-    }
+  public BigtableClient getDataClient() throws IOException {
+    return dataClient;
+  }
+
+  public BigtableTableAdminClient getTableAdminClient() throws IOException {
     return tableAdminClient;
   }
 
@@ -312,10 +356,21 @@ public class BigtableSession implements AutoCloseable {
    * </p>
    */
   protected Channel createChannel(String hostString, int channelCount) throws IOException {
-    InetSocketAddress host = new InetSocketAddress(getHost(hostString), options.getPort());
-    Channel channels[] = new Channel[channelCount];
+    final InetSocketAddress host = new InetSocketAddress(getHost(hostString), options.getPort());
+    Callable<ReconnectingChannel> channelCreationCallable = new Callable<ReconnectingChannel>() {
+      @Override
+      public ReconnectingChannel call() throws Exception {
+        return createReconnectingChannel(host);
+      }
+    };
+    final Future<ReconnectingChannel> channelFutures[] = new Future[channelCount];
     for (int i = 0; i < channelCount; i++) {
-      ReconnectingChannel reconnectingChannel = createReconnectingChannel(host);
+      channelFutures[i] = batchPool.submit(channelCreationCallable);
+    }
+    final Channel channels[] = new Channel[channelCount];
+    for (int i = 0; i < channelCount; i++) {
+      ReconnectingChannel reconnectingChannel =
+          get(channelFutures[i], "Could not create a channel");
       clientCloseHandlers.add(reconnectingChannel);
       channels[i] = reconnectingChannel;
     }
@@ -350,7 +405,6 @@ public class BigtableSession implements AutoCloseable {
       @Override
       public Closeable createClosable(final Channel channel) {
         return new Closeable() {
-
           @Override
           public void close() throws IOException {
             ChannelImpl channelImpl = (ChannelImpl) channel;
@@ -396,13 +450,8 @@ public class BigtableSession implements AutoCloseable {
 
   private Channel wrapChannel(Channel channel) {
     List<ClientInterceptor> interceptors = new ArrayList<>();
-    try {
-      ClientInterceptor clientAuthInterceptor = credentialInterceptorFuture.get();
-      if (clientAuthInterceptor != null) {
-        interceptors.add(clientAuthInterceptor);
-      }
-    } catch (InterruptedException | ExecutionException e) {
-      throw new IllegalStateException("Could not initialize credentials.");
+    if (clientAuthInterceptor != null) {
+      interceptors.add(clientAuthInterceptor);
     }
 
     CallCompletionStatusInterceptor preRetryCallStatusInterceptor = null;
