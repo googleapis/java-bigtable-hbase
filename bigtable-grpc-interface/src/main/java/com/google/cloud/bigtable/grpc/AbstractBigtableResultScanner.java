@@ -26,7 +26,7 @@ import java.util.ArrayList;
  */
 public abstract class AbstractBigtableResultScanner implements ResultScanner<Row> {
   @Override
-  public Row[] next(int count) throws IOException {
+  public final Row[] next(int count) throws IOException {
     ArrayList<Row> resultList = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
       Row row = next();
