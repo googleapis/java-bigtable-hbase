@@ -148,7 +148,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
   }
 
-  private void syncRefresh() throws IOException {
+  public void syncRefresh() throws IOException {
     synchronized (isRefreshing) {
       if (!isRefreshing.get()) {
         doRefresh();
