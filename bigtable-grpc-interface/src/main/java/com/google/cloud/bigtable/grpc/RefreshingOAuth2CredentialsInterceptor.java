@@ -68,13 +68,12 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
     public HeaderCacheElement(AccessToken token) {
       this.exception = null;
-
       this.header = "Bearer " + token.getTokenValue();
       long tokenExpiresTime = token.getExpirationTime().getTime();
       this.staleTimeMs = tokenExpiresTime - TOKEN_STALENESS_MS;
       // Block until refresh at this point.
       this.expiresTimeMs = tokenExpiresTime - TOKEN_EXPIRES_MS;
-
+      Preconditions.checkState(staleTimeMs < expiresTimeMs);
     }
 
     public HeaderCacheElement(IOException exception) {
@@ -86,12 +85,12 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
     public CacheState getCacheState() {
       long now = System.currentTimeMillis();
-      if (now > expiresTimeMs) {
-        return CacheState.Expired;
-      } else if (now > staleTimeMs) {
+      if (now < staleTimeMs){
+        return CacheState.Good;
+      } else if (now < expiresTimeMs) {
         return CacheState.Stale;
       } else {
-        return CacheState.Good;
+        return CacheState.Expired;
       }
     }
   }
@@ -109,7 +108,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
   private static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY =
       Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
-
 
   private final AtomicReference<HeaderCacheElement> headerCache = new AtomicReference<>();
   private final AtomicBoolean isRefreshing = new AtomicBoolean(false);
@@ -164,18 +162,24 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     }
   }
 
-
   /**
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
   private String getHeader() throws IOException {
     HeaderCacheElement headerCache = getCachedHeader();
     CacheState state = (headerCache == null) ? CacheState.Expired : headerCache.getCacheState();
-    if (state == CacheState.Expired) {
-      syncRefresh();
-      headerCache = getCachedHeader();
-    } else if (state == CacheState.Stale) {
-      asyncRefresh();
+    switch (state) {
+      case Good:
+        break;
+      case Stale:
+        asyncRefresh();
+        break;
+      case Expired:
+        syncRefresh();
+        headerCache = getCachedHeader();
+        break;
+      default:
+        throw new IllegalStateException("Could not process state: " + state);
     }
     return headerCache.header;
   }
