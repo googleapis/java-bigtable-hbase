@@ -40,7 +40,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  */
 public class ReconnectingChannel extends Channel implements Closeable {
 
-  protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
+  protected static final Logger log = Logger.getLogger(ReconnectingChannel.class.getName());
   public static final long CHANNEL_TERMINATE_WAIT_MS = 5000;
 
   // This executor is used to shutdown & await termination of
