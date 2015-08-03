@@ -335,10 +335,9 @@ public class BigtableSession implements AutoCloseable {
   }
 
   private BigtableClient initializeDataClient() throws IOException {
-    Channel readChannel = createChannel(options.getDataHost(), 1);
-    Channel writeChannel = createChannel(options.getDataHost(), options.getChannelCount());
+    Channel channel = createChannel(options.getDataHost(), options.getChannelCount());
     RetryOptions retryOptions = options.getRetryOptions();
-    return new BigtableGrpcClient(readChannel, writeChannel, batchPool, retryOptions);
+    return new BigtableGrpcClient(channel, batchPool, retryOptions);
   }
 
   private BigtableTableAdminClient initializeAdminClient() throws IOException {
