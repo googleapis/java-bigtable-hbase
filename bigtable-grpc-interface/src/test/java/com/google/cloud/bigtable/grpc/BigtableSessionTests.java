@@ -24,8 +24,6 @@ import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.SetCell;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.BigtableOptionsTestFactory;
 import com.google.common.base.Predicate;
 
 import org.junit.Test;
@@ -39,12 +37,10 @@ import java.util.Map;
 @RunWith(JUnit4.class)
 public class BigtableSessionTests {
 
-  @SuppressWarnings({ "unchecked", "resource" })
+  @SuppressWarnings({ "unchecked" })
   @Test
   public void createMethodRetryMap() throws Exception {
-    BigtableOptions options = BigtableOptionsTestFactory.build();
-    BigtableSession bs = new BigtableSession(options, null, null, null);
-    Map<MethodDescriptor<?, ?>, Predicate<?>> map = bs.createMethodRetryMap();
+    Map<MethodDescriptor<?, ?>, Predicate<?>> map = BigtableSession.createMethodRetryMap();
     for (MethodDescriptor<?, ?> method: BigtableServiceGrpc.CONFIG.methods()) {
       if (method == BigtableServiceGrpc.CONFIG.mutateRow) {
         assertMutateRowPredicate((Predicate<MutateRowRequest>) map.get(method));

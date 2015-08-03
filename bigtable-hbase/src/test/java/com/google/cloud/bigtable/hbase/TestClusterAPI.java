@@ -81,7 +81,7 @@ public class TestClusterAPI {
     }
 
     BigtableOptions originalOptions = BigtableOptionsFactory.fromConfiguration(configuration);
-    BigtableSession originalSession = new BigtableSession(originalOptions, Executors.newFixedThreadPool(10));
+    BigtableSession originalSession = new BigtableSession(originalOptions);
     BigtableClusterAdminClient client = originalSession.getClusterAdminClient();
 
     String projectId = originalOptions.getProjectId();
@@ -123,6 +123,7 @@ public class TestClusterAPI {
       countTables(admin, 1);
     } finally {
       dropCluster(client, clusterName);
+      originalSession.close();
     }
   }
 
