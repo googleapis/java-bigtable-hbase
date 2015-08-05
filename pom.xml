@@ -28,7 +28,7 @@ limitations under the License.
 
         There are a handful of modules in this project.  The bigtable-hbase-x.x projects are intendned to be the projects which users interact with.  The x.x versions in the bigtable-hbase-x.x projects represent the hbase major and minor versions which the project supports.  For example, bigtable-hbase-1.0 will integrate with all hbase 1.0.x releases and bigtable-hbase-1.1 will integrate with all hbase 1.1.* releases.
 
-        The bigtable-protos, bigtable-grpc-interface and bigtable-hbase modules are meant to be used as components of bigtable-hbase-x.x.  Those submodules may be usedful outside of the bigtable-hbase-x.x projects, but have not been thoroughly tested in other scenarios.
+        The bigtable-protos, bigtable-client-core and bigtable-hbase modules are meant to be used as components of bigtable-hbase-x.x.  Those submodules may be usedful outside of the bigtable-hbase-x.x projects, but have not been thoroughly tested in other scenarios.
     </description>
 
     <licenses>
@@ -40,7 +40,7 @@ limitations under the License.
 
     <modules>
         <module>bigtable-protos</module>
-        <module>bigtable-grpc-interface</module>
+        <module>bigtable-client-core</module>
         <module>bigtable-hbase</module>
         <module>bigtable-hbase-1.0</module>
         <module>bigtable-hbase-1.1</module>
