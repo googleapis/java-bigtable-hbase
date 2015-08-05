@@ -55,9 +55,10 @@ import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.cloud.bigtable.client.BigtableDataClient;
+import com.google.cloud.bigtable.client.BigtableTableName;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
@@ -74,7 +75,6 @@ import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
-import com.google.cloud.bigtable.naming.BigtableTableName;
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -90,7 +90,7 @@ public class BigtableTable implements Table {
 
   protected final TableName tableName;
   protected final BigtableOptions options;
-  protected final BigtableClient client;
+  protected final BigtableDataClient client;
   protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> rowAdapter = new RowAdapter();
   protected final PutAdapter putAdapter;
   protected final AppendAdapter appendAdapter = new AppendAdapter();
@@ -115,7 +115,7 @@ public class BigtableTable implements Table {
   public BigtableTable(AbstractBigtableConnection bigtableConnection,
       TableName tableName,
       BigtableOptions options,
-      BigtableClient client,
+      BigtableDataClient client,
       ExecutorService executorService) {
     this.bigtableConnection = bigtableConnection;
     this.tableName = tableName;
@@ -223,7 +223,7 @@ public class BigtableTable implements Table {
 
     try {
       ReadRowsRequest finalRequest = readHooks.applyPreSendHook(readRowsRequest.build());
-      com.google.cloud.bigtable.grpc.ResultScanner<com.google.bigtable.v1.Row> scanner =
+      com.google.cloud.bigtable.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
           client.readRows(finalRequest);
       Result response = rowAdapter.adaptResponse(scanner.next());
       scanner.close();
@@ -256,7 +256,7 @@ public class BigtableTable implements Table {
 
     try {
       ReadRowsRequest finalRequest = readHooks.applyPreSendHook(request.build());
-      com.google.cloud.bigtable.grpc.ResultScanner<com.google.bigtable.v1.Row> scanner =
+      com.google.cloud.bigtable.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
           client.readRows(finalRequest);
       return bigtableResultScannerAdapter.adapt(scanner);
     } catch (Throwable throwable) {

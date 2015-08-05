@@ -36,9 +36,9 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 
+import com.google.cloud.bigtable.client.BigtableDataClient;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
@@ -201,7 +201,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       TableName tableName,
       int maxInflightRpcs,
       long maxHeapSize,
-      BigtableClient client,
+      BigtableDataClient client,
       BigtableOptions options,
       ExecutorService executorService,
       BufferedMutator.ExceptionListener listener) {

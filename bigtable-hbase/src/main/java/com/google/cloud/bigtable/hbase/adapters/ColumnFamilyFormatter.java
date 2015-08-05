@@ -17,8 +17,8 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import org.apache.hadoop.hbase.TableName;
 
+import com.google.cloud.bigtable.client.BigtableTableName;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.naming.BigtableTableName;
 import com.google.common.base.Preconditions;
 
 public class ColumnFamilyFormatter {

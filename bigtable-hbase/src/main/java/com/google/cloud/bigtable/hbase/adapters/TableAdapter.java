@@ -17,8 +17,8 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.admin.table.v1.ColumnFamily;
 import com.google.bigtable.admin.table.v1.Table;
+import com.google.cloud.bigtable.client.BigtableClusterName;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.naming.BigtableClusterName;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;

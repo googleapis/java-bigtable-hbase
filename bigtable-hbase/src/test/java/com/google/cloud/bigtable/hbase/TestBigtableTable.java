@@ -20,10 +20,10 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
+import com.google.cloud.bigtable.client.BigtableDataClient;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.BigtableClient;
-import com.google.cloud.bigtable.grpc.ResultScanner;
+import com.google.cloud.bigtable.scanner.ResultScanner;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
@@ -61,7 +61,7 @@ public class TestBigtableTable {
   @Mock
   public AbstractBigtableConnection mockConnection;
   @Mock
-  public BigtableClient mockClient;
+  public BigtableDataClient mockClient;
 
   public BigtableTable table;
 
