@@ -169,6 +169,8 @@ public class IntegrationTests {
           throw new RuntimeException("Error shutting down test cluster after the integration tests", e);
         }
       }
+
+      Assert.assertTrue(connection.isClosed());
     }
   };
   

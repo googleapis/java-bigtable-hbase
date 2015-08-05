@@ -266,6 +266,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     // shutting down the clients, it's not entirely safe to shutdown the pool
     // (via a finally block).
     shutdownBatchPool();
+    this.closed = true;
   }
 
   @Override
