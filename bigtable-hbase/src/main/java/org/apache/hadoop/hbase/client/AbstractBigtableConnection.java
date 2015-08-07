@@ -343,4 +343,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   protected Set<TableName> getDisabledTables() {
     return disabledTables;
   }
+
+  public BigtableSession getSession() {
+    return session;
+  }
 }
