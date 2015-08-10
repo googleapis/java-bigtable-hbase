@@ -60,7 +60,22 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     Expired
   }
 
+  private static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY =
+      Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
+
   private static class HeaderCacheElement {
+    /**
+     * This specifies how far in advance of a header expiration do we consider the token stale.
+     * The Stale state indicates that the interceptor needs to do an asynchronous refresh.
+     */
+    private static final int TOKEN_STALENESS_MS = 75 * 1000;
+
+    /**
+     * After the toke is "expired," the interceptor blocks gRPC calls. The Expired state indicates
+     * that the interceptor needs to do a synchronous refresh.
+     */
+    private static final int TOKEN_EXPIRES_MS = 45 * 1000;
+
     final IOException exception;
     final String header;
     final long staleTimeMs;
@@ -94,21 +109,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       }
     }
   }
-
-  /**
-   * This specifies how far in advance of a header expiration do we consider the token stale.
-   */
-  private static final int TOKEN_STALENESS_MS = 60 * 1000;
-
-  /**
-   * Wait until last second before an AccessToken is expired to block gRPC calls.
-   */
-  private static final int TOKEN_EXPIRES_MS = 1 * 1000;
-
-
-  private static final Metadata.Key<String> AUTHORIZATION_HEADER_KEY =
-      Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
-
   private final AtomicReference<HeaderCacheElement> headerCache = new AtomicReference<>();
   private final AtomicBoolean isRefreshing = new AtomicBoolean(false);
   private final ExecutorService executor;
@@ -123,7 +123,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   @Override
   public <ReqT, RespT> Call<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
                                                        Channel next) {
-    // TODO(ejona86): If the call fails for Auth reasons, this does not properly propagate info that
+    // TODO(sduskis): If the call fails for Auth reasons, this does not properly propagate info that
     // would be in WWW-Authenticate, because it does not yet have access to the header.
     return new CheckedForwardingCall<ReqT, RespT>(next.newCall(method)) {
       @Override
