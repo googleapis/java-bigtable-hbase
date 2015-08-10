@@ -130,6 +130,9 @@ public class BigtableSession implements AutoCloseable {
 //    return sslBuilder;
 //  }
 
+  // The deprecation is caused by SslContext.newClientContext(). We won't need the @SuppressWarnings
+  // once we get GrpcSslContexts to work properly.
+  @SuppressWarnings("deprecation")
   private static SslContext createSslContext() throws SSLException {
     // return sslBuilder.build();
     return SslContext.newClientContext();
@@ -238,6 +241,7 @@ public class BigtableSession implements AutoCloseable {
 
   private final BigtableOptions options;
   private final ExecutorService batchPool;
+  private final boolean terminateBatchPool;
   private final EventLoopGroup elg;
   private final ScheduledExecutorService scheduledRetries;
   private final List<Closeable> clientCloseHandlers = Collections
@@ -255,7 +259,13 @@ public class BigtableSession implements AutoCloseable {
   public BigtableSession(BigtableOptions options, @Nullable ExecutorService batchPool,
       @Nullable EventLoopGroup elg, @Nullable ScheduledExecutorService scheduledRetries)
       throws IOException {
-    this.batchPool = (batchPool == null) ? createDefaultBatchPool() : batchPool;
+    if (batchPool == null) {
+      this.terminateBatchPool = true;
+      this.batchPool = createDefaultBatchPool();
+    } else {
+      this.terminateBatchPool = false;
+      this.batchPool = batchPool;
+    }
     this.options = options;
     Future<Credentials> credentialsFuture = this.batchPool.submit(new Callable<Credentials>() {
       public Credentials call() throws IOException {
@@ -382,23 +392,11 @@ public class BigtableSession implements AutoCloseable {
    * interceptors, and user agent.
    * </p>
    */
-  @SuppressWarnings("unchecked")
   protected Channel createChannel(String hostString, int channelCount) throws IOException {
     final InetSocketAddress host = new InetSocketAddress(getHost(hostString), options.getPort());
-    Callable<ReconnectingChannel> channelCreationCallable = new Callable<ReconnectingChannel>() {
-      @Override
-      public ReconnectingChannel call() throws Exception {
-        return createReconnectingChannel(host);
-      }
-    };
-    final Future<ReconnectingChannel> channelFutures[] = new Future[channelCount];
-    for (int i = 0; i < channelCount; i++) {
-      channelFutures[i] = batchPool.submit(channelCreationCallable);
-    }
     final Channel channels[] = new Channel[channelCount];
     for (int i = 0; i < channelCount; i++) {
-      ReconnectingChannel reconnectingChannel =
-          get(channelFutures[i], "Could not create a channel");
+      ReconnectingChannel reconnectingChannel = createReconnectingChannel(host);
       clientCloseHandlers.add(reconnectingChannel);
       channels[i] = reconnectingChannel;
     }
@@ -464,9 +462,11 @@ public class BigtableSession implements AutoCloseable {
         }
       });
     }
-    batchPool.shutdown();
     awaiteTerminated(scheduledRetries);
-    awaiteTerminated(batchPool);
+    if (terminateBatchPool) {
+      batchPool.shutdown();
+      awaiteTerminated(batchPool);
+    }
     // Don't wait for elg to shut down.
   }
 
