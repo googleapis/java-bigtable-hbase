@@ -89,13 +89,17 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   public static class ReadRowsStreamObserver
       implements StreamObserver<ReadRowsResponse> {
     private final StreamingBigtableResultScanner scanner;
+    private final Call<ReadRowsRequest, ReadRowsResponse> call;
 
-    public ReadRowsStreamObserver(StreamingBigtableResultScanner scanner) {
+    public ReadRowsStreamObserver(StreamingBigtableResultScanner scanner,
+        Call<ReadRowsRequest, ReadRowsResponse> call) {
       this.scanner = scanner;
+      this.call = call;
     }
 
     @Override
     public void onValue(ReadRowsResponse readTableResponse) {
+      call.request(1);
       scanner.addResult(readTableResponse);
     }
 
@@ -117,6 +121,11 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   public static class CollectingStreamObserver<T> implements StreamObserver<T> {
     private final SettableFuture<List<T>> responseCompleteFuture = SettableFuture.create();
     private final List<T> buffer = new ArrayList<>();
+    private final Call<?, T> call;
+
+    public CollectingStreamObserver(Call<?, T> call) {
+      this.call = call;
+    }
 
     public ListenableFuture<List<T>> getResponseCompleteFuture() {
       return responseCompleteFuture;
@@ -125,6 +134,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     @Override
     public void onValue(T value) {
       buffer.add(value);
+      call.request(1);
     }
 
     @Override
@@ -207,10 +217,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<ImmutableList<SampleRowKeysResponse>> sampleRowKeysAsync(
       SampleRowKeysRequest request) {
+    Call<SampleRowKeysRequest, SampleRowKeysResponse> call =
+        channel.newCall(BigtableServiceGrpc.CONFIG.sampleRowKeys);
     CollectingStreamObserver<SampleRowKeysResponse> responseBuffer =
-        new CollectingStreamObserver<>();
+        new CollectingStreamObserver<>(call);
     Calls.asyncServerStreamingCall(
-        channel.newCall(BigtableServiceGrpc.CONFIG.sampleRowKeys),
+        call,
         request,
         responseBuffer);
     return Futures.transform(
@@ -268,7 +280,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     Calls.asyncServerStreamingCall(
         readRowsCall,
         request,
-        new ReadRowsStreamObserver(resultScanner));
+        new ReadRowsStreamObserver(resultScanner, readRowsCall));
 
     return resultScanner;
   }
@@ -279,7 +291,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         channel.newCall(BigtableServiceGrpc.CONFIG.readRows);
 
     CollectingStreamObserver<ReadRowsResponse> responseCollector =
-        new CollectingStreamObserver<>();
+        new CollectingStreamObserver<>(readRowsCall);
 
     Calls.asyncServerStreamingCall(
         readRowsCall,
