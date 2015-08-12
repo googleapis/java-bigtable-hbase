@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
@@ -74,6 +73,7 @@ public class TestClusterAPI {
     if (!"true".equals(shouldTest)) {
       return;
     }
+    int clusterSize = Integer.parseInt(System.getProperty("bigtable.test.cluster.size", "3"));
 
     Configuration configuration = new Configuration();
     for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
@@ -98,7 +98,7 @@ public class TestClusterAPI {
     String zoneName = getZoneName(originalOptions.getZoneId(), zoneList);
     String clusterName = zoneName + "/clusters/" + TEST_CLUSTER_ID;
 
-    Cluster cluster = createACluster(client, zoneName, TEST_CLUSTER_ID);
+    Cluster cluster = createACluster(client, zoneName, TEST_CLUSTER_ID, clusterSize);
     waitForOperation(client, cluster.getCurrentOperation().getName(), MAX_WAIT_SECONDS);
 
     configuration.set(BigtableOptionsFactory.ZONE_KEY,
@@ -193,10 +193,10 @@ public class TestClusterAPI {
   }
 
   private Cluster createACluster(BigtableClusterAdminClient client, String zoneName,
-      String clusterId) {
+      String clusterId, int clusterSize) {
     Cluster cluster = Cluster.newBuilder()
         .setDisplayName(clusterId)
-        .setServeNodes(3)
+        .setServeNodes(clusterSize)
         .build();
     CreateClusterRequest request = CreateClusterRequest.newBuilder()
         .setName(zoneName)
