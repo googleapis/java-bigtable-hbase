@@ -741,6 +741,10 @@ public  final class ValueRange extends
     }
   };
 
+  public static com.google.protobuf.Parser<ValueRange> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<ValueRange> getParserForType() {
     return PARSER;

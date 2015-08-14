@@ -16,6 +16,7 @@ syntax = "proto3";
 
 package google.bigtable.admin.cluster.v1;
 
+import "google/api/annotations.proto";
 import "google/longrunning/operations.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -79,12 +80,6 @@ message Cluster {
   // The number of serve nodes allocated to this cluster.
   int32 serve_nodes = 5;
 
-  // The maximum HDD storage usage allowed in this cluster, in bytes.
-  int64 hdd_bytes = 6;
-
-  // The maximum SSD storage usage allowed in this cluster, in bytes.
-  int64 ssd_bytes = 7;
-
   // What storage type to use for tables in this cluster. Only configurable at
   // cluster creation time. If unspecified, STORAGE_SSD will be used.
   StorageType default_storage_type = 8;
@@ -96,8 +91,4 @@ enum StorageType {
 
   // Data will be stored in SSD, providing low and consistent latencies.
   STORAGE_SSD = 1;
-
-  // Data will be stored in HDD, providing high and less predictable
-  // latencies.
-  STORAGE_HDD = 2;
 }

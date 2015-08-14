@@ -88,7 +88,7 @@ public interface ReadRowsRequestOrBuilder extends
    * "allow_row_interleaving" to true allows multiple rows to be interleaved in
    * the response stream, which increases throughput but breaks this guarantee,
    * and may force the client to use more memory to buffer partially-received
-   * rows.
+   * rows. Cannot be set to true when specifying "num_rows_limit".
    * </pre>
    */
   boolean getAllowRowInterleaving();
@@ -99,9 +99,7 @@ public interface ReadRowsRequestOrBuilder extends
    * <pre>
    * The read will terminate after committing to N rows' worth of results. The
    * default (zero) is to return all results.
-   * Note that if "allow_row_interleaving" is set to true, partial results may
-   * be returned for more than N rows. However, only N "commit_row" chunks will
-   * be sent.
+   * Note that "allow_row_interleaving" cannot be set to true when this is set.
    * </pre>
    */
   long getNumRowsLimit();

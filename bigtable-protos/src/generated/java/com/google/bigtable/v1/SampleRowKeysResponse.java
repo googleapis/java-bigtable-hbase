@@ -488,6 +488,10 @@ public  final class SampleRowKeysResponse extends
     }
   };
 
+  public static com.google.protobuf.Parser<SampleRowKeysResponse> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<SampleRowKeysResponse> getParserForType() {
     return PARSER;

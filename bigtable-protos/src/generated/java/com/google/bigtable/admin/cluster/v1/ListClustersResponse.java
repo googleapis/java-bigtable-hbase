@@ -1167,6 +1167,10 @@ public  final class ListClustersResponse extends
     }
   };
 
+  public static com.google.protobuf.Parser<ListClustersResponse> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<ListClustersResponse> getParserForType() {
     return PARSER;

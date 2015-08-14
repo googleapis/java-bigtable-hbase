@@ -1215,6 +1215,10 @@ public  final class UpdateClusterMetadata extends
     }
   };
 
+  public static com.google.protobuf.Parser<UpdateClusterMetadata> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<UpdateClusterMetadata> getParserForType() {
     return PARSER;

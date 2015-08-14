@@ -449,6 +449,10 @@ public  final class TimestampRange extends
     }
   };
 
+  public static com.google.protobuf.Parser<TimestampRange> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<TimestampRange> getParserForType() {
     return PARSER;

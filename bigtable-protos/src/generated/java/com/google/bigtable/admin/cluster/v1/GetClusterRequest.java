@@ -471,6 +471,10 @@ public  final class GetClusterRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<GetClusterRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<GetClusterRequest> getParserForType() {
     return PARSER;

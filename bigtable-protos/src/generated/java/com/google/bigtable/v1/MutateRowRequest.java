@@ -1016,6 +1016,10 @@ public  final class MutateRowRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<MutateRowRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<MutateRowRequest> getParserForType() {
     return PARSER;

@@ -94,10 +94,11 @@ public interface ColumnFamilyOrBuilder extends
    *
    * <pre>
    * Garbage collection rule specified as a protobuf.
-   * Supercedes `gc_expression`.
-   * Garbage collection executes opportunistically in the background, and so
-   * it's possible for reads to return a cell even if it matches the active GC
-   * expression for its family.
+   * Supersedes `gc_expression`.
+   * Must serialize to at most 500 bytes.
+   * NOTE: Garbage collection executes opportunistically in the background, and
+   * so it's possible for reads to return a cell even if it matches the active
+   * GC expression for its family.
    * </pre>
    */
   boolean hasGcRule();
@@ -106,10 +107,11 @@ public interface ColumnFamilyOrBuilder extends
    *
    * <pre>
    * Garbage collection rule specified as a protobuf.
-   * Supercedes `gc_expression`.
-   * Garbage collection executes opportunistically in the background, and so
-   * it's possible for reads to return a cell even if it matches the active GC
-   * expression for its family.
+   * Supersedes `gc_expression`.
+   * Must serialize to at most 500 bytes.
+   * NOTE: Garbage collection executes opportunistically in the background, and
+   * so it's possible for reads to return a cell even if it matches the active
+   * GC expression for its family.
    * </pre>
    */
   com.google.bigtable.admin.table.v1.GcRule getGcRule();
@@ -118,10 +120,11 @@ public interface ColumnFamilyOrBuilder extends
    *
    * <pre>
    * Garbage collection rule specified as a protobuf.
-   * Supercedes `gc_expression`.
-   * Garbage collection executes opportunistically in the background, and so
-   * it's possible for reads to return a cell even if it matches the active GC
-   * expression for its family.
+   * Supersedes `gc_expression`.
+   * Must serialize to at most 500 bytes.
+   * NOTE: Garbage collection executes opportunistically in the background, and
+   * so it's possible for reads to return a cell even if it matches the active
+   * GC expression for its family.
    * </pre>
    */
   com.google.bigtable.admin.table.v1.GcRuleOrBuilder getGcRuleOrBuilder();

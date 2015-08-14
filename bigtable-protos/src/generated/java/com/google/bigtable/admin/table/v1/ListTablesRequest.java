@@ -456,6 +456,10 @@ public  final class ListTablesRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<ListTablesRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<ListTablesRequest> getParserForType() {
     return PARSER;

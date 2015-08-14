@@ -754,6 +754,10 @@ public  final class ListTablesResponse extends
     }
   };
 
+  public static com.google.protobuf.Parser<ListTablesResponse> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<ListTablesResponse> getParserForType() {
     return PARSER;

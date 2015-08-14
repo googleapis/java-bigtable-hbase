@@ -897,6 +897,10 @@ public  final class GcRule extends
       }
     };
 
+    public static com.google.protobuf.Parser<Intersection> parser() {
+      return PARSER;
+    }
+
     @java.lang.Override
     public com.google.protobuf.Parser<Intersection> getParserForType() {
       return PARSER;
@@ -1692,6 +1696,10 @@ public  final class GcRule extends
       }
     };
 
+    public static com.google.protobuf.Parser<Union> parser() {
+      return PARSER;
+    }
+
     @java.lang.Override
     public com.google.protobuf.Parser<Union> getParserForType() {
       return PARSER;
@@ -1759,6 +1767,8 @@ public  final class GcRule extends
    *
    * <pre>
    * Delete cells in a column older than the given age.
+   * Values must be at least one millisecond, and will be truncated to
+   * microsecond granularity.
    * </pre>
    */
   public com.google.protobuf.Duration getMaxAge() {
@@ -1772,6 +1782,8 @@ public  final class GcRule extends
    *
    * <pre>
    * Delete cells in a column older than the given age.
+   * Values must be at least one millisecond, and will be truncated to
+   * microsecond granularity.
    * </pre>
    */
   public com.google.protobuf.DurationOrBuilder getMaxAgeOrBuilder() {
@@ -2177,6 +2189,8 @@ public  final class GcRule extends
      *
      * <pre>
      * Delete cells in a column older than the given age.
+     * Values must be at least one millisecond, and will be truncated to
+     * microsecond granularity.
      * </pre>
      */
     public com.google.protobuf.Duration getMaxAge() {
@@ -2197,6 +2211,8 @@ public  final class GcRule extends
      *
      * <pre>
      * Delete cells in a column older than the given age.
+     * Values must be at least one millisecond, and will be truncated to
+     * microsecond granularity.
      * </pre>
      */
     public Builder setMaxAge(com.google.protobuf.Duration value) {
@@ -2217,6 +2233,8 @@ public  final class GcRule extends
      *
      * <pre>
      * Delete cells in a column older than the given age.
+     * Values must be at least one millisecond, and will be truncated to
+     * microsecond granularity.
      * </pre>
      */
     public Builder setMaxAge(
@@ -2235,6 +2253,8 @@ public  final class GcRule extends
      *
      * <pre>
      * Delete cells in a column older than the given age.
+     * Values must be at least one millisecond, and will be truncated to
+     * microsecond granularity.
      * </pre>
      */
     public Builder mergeMaxAge(com.google.protobuf.Duration value) {
@@ -2261,6 +2281,8 @@ public  final class GcRule extends
      *
      * <pre>
      * Delete cells in a column older than the given age.
+     * Values must be at least one millisecond, and will be truncated to
+     * microsecond granularity.
      * </pre>
      */
     public Builder clearMaxAge() {
@@ -2284,6 +2306,8 @@ public  final class GcRule extends
      *
      * <pre>
      * Delete cells in a column older than the given age.
+     * Values must be at least one millisecond, and will be truncated to
+     * microsecond granularity.
      * </pre>
      */
     public com.google.protobuf.Duration.Builder getMaxAgeBuilder() {
@@ -2294,6 +2318,8 @@ public  final class GcRule extends
      *
      * <pre>
      * Delete cells in a column older than the given age.
+     * Values must be at least one millisecond, and will be truncated to
+     * microsecond granularity.
      * </pre>
      */
     public com.google.protobuf.DurationOrBuilder getMaxAgeOrBuilder() {
@@ -2311,6 +2337,8 @@ public  final class GcRule extends
      *
      * <pre>
      * Delete cells in a column older than the given age.
+     * Values must be at least one millisecond, and will be truncated to
+     * microsecond granularity.
      * </pre>
      */
     private com.google.protobuf.SingleFieldBuilder<
@@ -2697,6 +2725,10 @@ public  final class GcRule extends
       }
     }
   };
+
+  public static com.google.protobuf.Parser<GcRule> parser() {
+    return PARSER;
+  }
 
   @java.lang.Override
   public com.google.protobuf.Parser<GcRule> getParserForType() {

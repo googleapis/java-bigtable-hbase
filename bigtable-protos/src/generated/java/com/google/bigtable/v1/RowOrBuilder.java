@@ -13,7 +13,7 @@ public interface RowOrBuilder extends
    * <pre>
    * The unique key which identifies this row within its table. This is the same
    * key that's used to identify the row in, for example, a MutateRowRequest.
-   * May contain any non-empty byte string up to 16KiB in length.
+   * May contain any non-empty byte string up to 4KiB in length.
    * </pre>
    */
   com.google.protobuf.ByteString getKey();

@@ -838,6 +838,10 @@ public  final class CreateColumnFamilyRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<CreateColumnFamilyRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<CreateColumnFamilyRequest> getParserForType() {
     return PARSER;

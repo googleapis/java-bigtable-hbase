@@ -21,6 +21,7 @@ public  final class Cell extends
   private Cell() {
     timestampMicros_ = 0L;
     value_ = com.google.protobuf.ByteString.EMPTY;
+    labels_ = com.google.protobuf.LazyStringArrayList.EMPTY;
   }
 
   @java.lang.Override
@@ -57,6 +58,15 @@ public  final class Cell extends
             value_ = input.readBytes();
             break;
           }
+          case 26: {
+            com.google.protobuf.ByteString bs = input.readBytes();
+            if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+              labels_ = new com.google.protobuf.LazyStringArrayList();
+              mutable_bitField0_ |= 0x00000004;
+            }
+            labels_.add(bs);
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -66,6 +76,9 @@ public  final class Cell extends
           new com.google.protobuf.InvalidProtocolBufferException(
               e.getMessage()).setUnfinishedMessage(this));
     } finally {
+      if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+        labels_ = labels_.getUnmodifiableView();
+      }
       makeExtensionsImmutable();
     }
   }
@@ -81,6 +94,7 @@ public  final class Cell extends
             com.google.bigtable.v1.Cell.class, com.google.bigtable.v1.Cell.Builder.class);
   }
 
+  private int bitField0_;
   public static final int TIMESTAMP_MICROS_FIELD_NUMBER = 1;
   private long timestampMicros_;
   /**
@@ -114,6 +128,51 @@ public  final class Cell extends
     return value_;
   }
 
+  public static final int LABELS_FIELD_NUMBER = 3;
+  private com.google.protobuf.LazyStringList labels_;
+  /**
+   * <code>repeated string labels = 3;</code>
+   *
+   * <pre>
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * </pre>
+   */
+  public com.google.protobuf.ProtocolStringList
+      getLabelsList() {
+    return labels_;
+  }
+  /**
+   * <code>repeated string labels = 3;</code>
+   *
+   * <pre>
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * </pre>
+   */
+  public int getLabelsCount() {
+    return labels_.size();
+  }
+  /**
+   * <code>repeated string labels = 3;</code>
+   *
+   * <pre>
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * </pre>
+   */
+  public java.lang.String getLabels(int index) {
+    return labels_.get(index);
+  }
+  /**
+   * <code>repeated string labels = 3;</code>
+   *
+   * <pre>
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * </pre>
+   */
+  public com.google.protobuf.ByteString
+      getLabelsBytes(int index) {
+    return labels_.getByteString(index);
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -132,6 +191,9 @@ public  final class Cell extends
     if (!value_.isEmpty()) {
       output.writeBytes(2, value_);
     }
+    for (int i = 0; i < labels_.size(); i++) {
+      output.writeBytes(3, labels_.getByteString(i));
+    }
   }
 
   private int memoizedSerializedSize = -1;
@@ -147,6 +209,15 @@ public  final class Cell extends
     if (!value_.isEmpty()) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(2, value_);
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < labels_.size(); i++) {
+        dataSize += com.google.protobuf.CodedOutputStream
+          .computeBytesSizeNoTag(labels_.getByteString(i));
+      }
+      size += dataSize;
+      size += 1 * getLabelsList().size();
     }
     memoizedSerializedSize = size;
     return size;
@@ -267,6 +338,8 @@ public  final class Cell extends
 
       value_ = com.google.protobuf.ByteString.EMPTY;
 
+      labels_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      bitField0_ = (bitField0_ & ~0x00000004);
       return this;
     }
 
@@ -289,8 +362,16 @@ public  final class Cell extends
 
     public com.google.bigtable.v1.Cell buildPartial() {
       com.google.bigtable.v1.Cell result = new com.google.bigtable.v1.Cell(this);
+      int from_bitField0_ = bitField0_;
+      int to_bitField0_ = 0;
       result.timestampMicros_ = timestampMicros_;
       result.value_ = value_;
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        labels_ = labels_.getUnmodifiableView();
+        bitField0_ = (bitField0_ & ~0x00000004);
+      }
+      result.labels_ = labels_;
+      result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
     }
@@ -311,6 +392,16 @@ public  final class Cell extends
       }
       if (other.getValue() != com.google.protobuf.ByteString.EMPTY) {
         setValue(other.getValue());
+      }
+      if (!other.labels_.isEmpty()) {
+        if (labels_.isEmpty()) {
+          labels_ = other.labels_;
+          bitField0_ = (bitField0_ & ~0x00000004);
+        } else {
+          ensureLabelsIsMutable();
+          labels_.addAll(other.labels_);
+        }
+        onChanged();
       }
       onChanged();
       return this;
@@ -337,6 +428,7 @@ public  final class Cell extends
       }
       return this;
     }
+    private int bitField0_;
 
     private long timestampMicros_ ;
     /**
@@ -437,6 +529,135 @@ public  final class Cell extends
       onChanged();
       return this;
     }
+
+    private com.google.protobuf.LazyStringList labels_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    private void ensureLabelsIsMutable() {
+      if (!((bitField0_ & 0x00000004) == 0x00000004)) {
+        labels_ = new com.google.protobuf.LazyStringArrayList(labels_);
+        bitField0_ |= 0x00000004;
+       }
+    }
+    /**
+     * <code>repeated string labels = 3;</code>
+     *
+     * <pre>
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * </pre>
+     */
+    public com.google.protobuf.ProtocolStringList
+        getLabelsList() {
+      return labels_.getUnmodifiableView();
+    }
+    /**
+     * <code>repeated string labels = 3;</code>
+     *
+     * <pre>
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * </pre>
+     */
+    public int getLabelsCount() {
+      return labels_.size();
+    }
+    /**
+     * <code>repeated string labels = 3;</code>
+     *
+     * <pre>
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * </pre>
+     */
+    public java.lang.String getLabels(int index) {
+      return labels_.get(index);
+    }
+    /**
+     * <code>repeated string labels = 3;</code>
+     *
+     * <pre>
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * </pre>
+     */
+    public com.google.protobuf.ByteString
+        getLabelsBytes(int index) {
+      return labels_.getByteString(index);
+    }
+    /**
+     * <code>repeated string labels = 3;</code>
+     *
+     * <pre>
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * </pre>
+     */
+    public Builder setLabels(
+        int index, java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureLabelsIsMutable();
+      labels_.set(index, value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string labels = 3;</code>
+     *
+     * <pre>
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * </pre>
+     */
+    public Builder addLabels(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureLabelsIsMutable();
+      labels_.add(value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string labels = 3;</code>
+     *
+     * <pre>
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * </pre>
+     */
+    public Builder addAllLabels(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureLabelsIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, labels_);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string labels = 3;</code>
+     *
+     * <pre>
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * </pre>
+     */
+    public Builder clearLabels() {
+      labels_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      bitField0_ = (bitField0_ & ~0x00000004);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string labels = 3;</code>
+     *
+     * <pre>
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * </pre>
+     */
+    public Builder addLabelsBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureLabelsIsMutable();
+      labels_.add(value);
+      onChanged();
+      return this;
+    }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return this;
@@ -479,6 +700,10 @@ public  final class Cell extends
       }
     }
   };
+
+  public static com.google.protobuf.Parser<Cell> parser() {
+    return PARSER;
+  }
 
   @java.lang.Override
   public com.google.protobuf.Parser<Cell> getParserForType() {

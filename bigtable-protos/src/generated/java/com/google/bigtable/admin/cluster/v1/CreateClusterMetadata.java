@@ -971,6 +971,10 @@ public  final class CreateClusterMetadata extends
     }
   };
 
+  public static com.google.protobuf.Parser<CreateClusterMetadata> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<CreateClusterMetadata> getParserForType() {
     return PARSER;

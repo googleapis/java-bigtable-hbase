@@ -932,6 +932,10 @@ public  final class Family extends
     }
   };
 
+  public static com.google.protobuf.Parser<Family> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<Family> getParserForType() {
     return PARSER;

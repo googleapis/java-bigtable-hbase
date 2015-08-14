@@ -456,6 +456,10 @@ public  final class DeleteColumnFamilyRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<DeleteColumnFamilyRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<DeleteColumnFamilyRequest> getParserForType() {
     return PARSER;

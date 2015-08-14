@@ -831,6 +831,10 @@ public  final class Column extends
     }
   };
 
+  public static com.google.protobuf.Parser<Column> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<Column> getParserForType() {
     return PARSER;

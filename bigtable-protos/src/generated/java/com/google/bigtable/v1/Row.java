@@ -97,7 +97,7 @@ public  final class Row extends
    * <pre>
    * The unique key which identifies this row within its table. This is the same
    * key that's used to identify the row in, for example, a MutateRowRequest.
-   * May contain any non-empty byte string up to 16KiB in length.
+   * May contain any non-empty byte string up to 4KiB in length.
    * </pre>
    */
   public com.google.protobuf.ByteString getKey() {
@@ -436,7 +436,7 @@ public  final class Row extends
      * <pre>
      * The unique key which identifies this row within its table. This is the same
      * key that's used to identify the row in, for example, a MutateRowRequest.
-     * May contain any non-empty byte string up to 16KiB in length.
+     * May contain any non-empty byte string up to 4KiB in length.
      * </pre>
      */
     public com.google.protobuf.ByteString getKey() {
@@ -448,7 +448,7 @@ public  final class Row extends
      * <pre>
      * The unique key which identifies this row within its table. This is the same
      * key that's used to identify the row in, for example, a MutateRowRequest.
-     * May contain any non-empty byte string up to 16KiB in length.
+     * May contain any non-empty byte string up to 4KiB in length.
      * </pre>
      */
     public Builder setKey(com.google.protobuf.ByteString value) {
@@ -466,7 +466,7 @@ public  final class Row extends
      * <pre>
      * The unique key which identifies this row within its table. This is the same
      * key that's used to identify the row in, for example, a MutateRowRequest.
-     * May contain any non-empty byte string up to 16KiB in length.
+     * May contain any non-empty byte string up to 4KiB in length.
      * </pre>
      */
     public Builder clearKey() {
@@ -847,6 +847,10 @@ public  final class Row extends
       }
     }
   };
+
+  public static com.google.protobuf.Parser<Row> parser() {
+    return PARSER;
+  }
 
   @java.lang.Override
   public com.google.protobuf.Parser<Row> getParserForType() {

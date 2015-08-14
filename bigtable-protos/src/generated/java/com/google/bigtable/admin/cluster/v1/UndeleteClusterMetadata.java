@@ -751,6 +751,10 @@ public  final class UndeleteClusterMetadata extends
     }
   };
 
+  public static com.google.protobuf.Parser<UndeleteClusterMetadata> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<UndeleteClusterMetadata> getParserForType() {
     return PARSER;

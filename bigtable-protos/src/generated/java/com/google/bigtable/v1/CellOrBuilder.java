@@ -31,4 +31,39 @@ public interface CellOrBuilder extends
    * </pre>
    */
   com.google.protobuf.ByteString getValue();
+
+  /**
+   * <code>repeated string labels = 3;</code>
+   *
+   * <pre>
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * </pre>
+   */
+  com.google.protobuf.ProtocolStringList
+      getLabelsList();
+  /**
+   * <code>repeated string labels = 3;</code>
+   *
+   * <pre>
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * </pre>
+   */
+  int getLabelsCount();
+  /**
+   * <code>repeated string labels = 3;</code>
+   *
+   * <pre>
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * </pre>
+   */
+  java.lang.String getLabels(int index);
+  /**
+   * <code>repeated string labels = 3;</code>
+   *
+   * <pre>
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * </pre>
+   */
+  com.google.protobuf.ByteString
+      getLabelsBytes(int index);
 }

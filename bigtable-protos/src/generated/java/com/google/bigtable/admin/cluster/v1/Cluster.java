@@ -22,8 +22,6 @@ public  final class Cluster extends
     name_ = "";
     displayName_ = "";
     serveNodes_ = 0;
-    hddBytes_ = 0L;
-    ssdBytes_ = 0L;
     defaultStorageType_ = 0;
   }
 
@@ -92,16 +90,6 @@ public  final class Cluster extends
           case 40: {
 
             serveNodes_ = input.readInt32();
-            break;
-          }
-          case 48: {
-
-            hddBytes_ = input.readInt64();
-            break;
-          }
-          case 56: {
-
-            ssdBytes_ = input.readInt64();
             break;
           }
           case 64: {
@@ -324,32 +312,6 @@ public  final class Cluster extends
     return serveNodes_;
   }
 
-  public static final int HDD_BYTES_FIELD_NUMBER = 6;
-  private long hddBytes_;
-  /**
-   * <code>optional int64 hdd_bytes = 6;</code>
-   *
-   * <pre>
-   * The maximum HDD storage usage allowed in this cluster, in bytes.
-   * </pre>
-   */
-  public long getHddBytes() {
-    return hddBytes_;
-  }
-
-  public static final int SSD_BYTES_FIELD_NUMBER = 7;
-  private long ssdBytes_;
-  /**
-   * <code>optional int64 ssd_bytes = 7;</code>
-   *
-   * <pre>
-   * The maximum SSD storage usage allowed in this cluster, in bytes.
-   * </pre>
-   */
-  public long getSsdBytes() {
-    return ssdBytes_;
-  }
-
   public static final int DEFAULT_STORAGE_TYPE_FIELD_NUMBER = 8;
   private int defaultStorageType_;
   /**
@@ -403,12 +365,6 @@ public  final class Cluster extends
     if (serveNodes_ != 0) {
       output.writeInt32(5, serveNodes_);
     }
-    if (hddBytes_ != 0L) {
-      output.writeInt64(6, hddBytes_);
-    }
-    if (ssdBytes_ != 0L) {
-      output.writeInt64(7, ssdBytes_);
-    }
     if (defaultStorageType_ != com.google.bigtable.admin.cluster.v1.StorageType.STORAGE_UNSPECIFIED.getNumber()) {
       output.writeEnum(8, defaultStorageType_);
     }
@@ -439,14 +395,6 @@ public  final class Cluster extends
     if (serveNodes_ != 0) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(5, serveNodes_);
-    }
-    if (hddBytes_ != 0L) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(6, hddBytes_);
-    }
-    if (ssdBytes_ != 0L) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(7, ssdBytes_);
     }
     if (defaultStorageType_ != com.google.bigtable.admin.cluster.v1.StorageType.STORAGE_UNSPECIFIED.getNumber()) {
       size += com.google.protobuf.CodedOutputStream
@@ -585,10 +533,6 @@ public  final class Cluster extends
 
       serveNodes_ = 0;
 
-      hddBytes_ = 0L;
-
-      ssdBytes_ = 0L;
-
       defaultStorageType_ = 0;
 
       return this;
@@ -626,8 +570,6 @@ public  final class Cluster extends
       }
       result.displayName_ = displayName_;
       result.serveNodes_ = serveNodes_;
-      result.hddBytes_ = hddBytes_;
-      result.ssdBytes_ = ssdBytes_;
       result.defaultStorageType_ = defaultStorageType_;
       onBuilt();
       return result;
@@ -660,12 +602,6 @@ public  final class Cluster extends
       }
       if (other.getServeNodes() != 0) {
         setServeNodes(other.getServeNodes());
-      }
-      if (other.getHddBytes() != 0L) {
-        setHddBytes(other.getHddBytes());
-      }
-      if (other.getSsdBytes() != 0L) {
-        setSsdBytes(other.getSsdBytes());
       }
       if (other.defaultStorageType_ != 0) {
         setDefaultStorageTypeValue(other.getDefaultStorageTypeValue());
@@ -1285,82 +1221,6 @@ public  final class Cluster extends
       return this;
     }
 
-    private long hddBytes_ ;
-    /**
-     * <code>optional int64 hdd_bytes = 6;</code>
-     *
-     * <pre>
-     * The maximum HDD storage usage allowed in this cluster, in bytes.
-     * </pre>
-     */
-    public long getHddBytes() {
-      return hddBytes_;
-    }
-    /**
-     * <code>optional int64 hdd_bytes = 6;</code>
-     *
-     * <pre>
-     * The maximum HDD storage usage allowed in this cluster, in bytes.
-     * </pre>
-     */
-    public Builder setHddBytes(long value) {
-      
-      hddBytes_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional int64 hdd_bytes = 6;</code>
-     *
-     * <pre>
-     * The maximum HDD storage usage allowed in this cluster, in bytes.
-     * </pre>
-     */
-    public Builder clearHddBytes() {
-      
-      hddBytes_ = 0L;
-      onChanged();
-      return this;
-    }
-
-    private long ssdBytes_ ;
-    /**
-     * <code>optional int64 ssd_bytes = 7;</code>
-     *
-     * <pre>
-     * The maximum SSD storage usage allowed in this cluster, in bytes.
-     * </pre>
-     */
-    public long getSsdBytes() {
-      return ssdBytes_;
-    }
-    /**
-     * <code>optional int64 ssd_bytes = 7;</code>
-     *
-     * <pre>
-     * The maximum SSD storage usage allowed in this cluster, in bytes.
-     * </pre>
-     */
-    public Builder setSsdBytes(long value) {
-      
-      ssdBytes_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional int64 ssd_bytes = 7;</code>
-     *
-     * <pre>
-     * The maximum SSD storage usage allowed in this cluster, in bytes.
-     * </pre>
-     */
-    public Builder clearSsdBytes() {
-      
-      ssdBytes_ = 0L;
-      onChanged();
-      return this;
-    }
-
     private int defaultStorageType_ = 0;
     /**
      * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
@@ -1471,6 +1331,10 @@ public  final class Cluster extends
       }
     }
   };
+
+  public static com.google.protobuf.Parser<Cluster> parser() {
+    return PARSER;
+  }
 
   @java.lang.Override
   public com.google.protobuf.Parser<Cluster> getParserForType() {

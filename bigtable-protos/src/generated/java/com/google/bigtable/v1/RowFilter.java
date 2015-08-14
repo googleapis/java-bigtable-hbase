@@ -196,6 +196,27 @@ public  final class RowFilter extends
             filterCase_ = 15;
             break;
           }
+          case 128: {
+            filterCase_ = 16;
+            filter_ = input.readBool();
+            break;
+          }
+          case 136: {
+            filterCase_ = 17;
+            filter_ = input.readBool();
+            break;
+          }
+          case 144: {
+            filterCase_ = 18;
+            filter_ = input.readBool();
+            break;
+          }
+          case 154: {
+            com.google.protobuf.ByteString bs = input.readBytes();
+            filterCase_ = 19;
+            filter_ = bs;
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -1059,6 +1080,10 @@ public  final class RowFilter extends
         }
       }
     };
+
+    public static com.google.protobuf.Parser<Chain> parser() {
+      return PARSER;
+    }
 
     @java.lang.Override
     public com.google.protobuf.Parser<Chain> getParserForType() {
@@ -2473,6 +2498,10 @@ public  final class RowFilter extends
       }
     };
 
+    public static com.google.protobuf.Parser<Interleave> parser() {
+      return PARSER;
+    }
+
     @java.lang.Override
     public com.google.protobuf.Parser<Interleave> getParserForType() {
       return PARSER;
@@ -3599,6 +3628,10 @@ public  final class RowFilter extends
       }
     };
 
+    public static com.google.protobuf.Parser<Condition> parser() {
+      return PARSER;
+    }
+
     @java.lang.Override
     public com.google.protobuf.Parser<Condition> getParserForType() {
       return PARSER;
@@ -3617,6 +3650,9 @@ public  final class RowFilter extends
     CHAIN(1),
     INTERLEAVE(2),
     CONDITION(3),
+    SINK(16),
+    PASS_ALL_FILTER(17),
+    BLOCK_ALL_FILTER(18),
     ROW_KEY_REGEX_FILTER(4),
     ROW_SAMPLE_FILTER(14),
     FAMILY_NAME_REGEX_FILTER(5),
@@ -3629,6 +3665,7 @@ public  final class RowFilter extends
     CELLS_PER_ROW_LIMIT_FILTER(11),
     CELLS_PER_COLUMN_LIMIT_FILTER(12),
     STRIP_VALUE_TRANSFORMER(13),
+    APPLY_LABEL_TRANSFORMER(19),
     FILTER_NOT_SET(0);
     private int value = 0;
     private FilterCase(int value) {
@@ -3639,6 +3676,9 @@ public  final class RowFilter extends
         case 1: return CHAIN;
         case 2: return INTERLEAVE;
         case 3: return CONDITION;
+        case 16: return SINK;
+        case 17: return PASS_ALL_FILTER;
+        case 18: return BLOCK_ALL_FILTER;
         case 4: return ROW_KEY_REGEX_FILTER;
         case 14: return ROW_SAMPLE_FILTER;
         case 5: return FAMILY_NAME_REGEX_FILTER;
@@ -3651,6 +3691,7 @@ public  final class RowFilter extends
         case 11: return CELLS_PER_ROW_LIMIT_FILTER;
         case 12: return CELLS_PER_COLUMN_LIMIT_FILTER;
         case 13: return STRIP_VALUE_TRANSFORMER;
+        case 19: return APPLY_LABEL_TRANSFORMER;
         case 0: return FILTER_NOT_SET;
         default: throw new java.lang.IllegalArgumentException(
           "Value is undefined for this oneof enum.");
@@ -3755,6 +3796,106 @@ public  final class RowFilter extends
        return (com.google.bigtable.v1.RowFilter.Condition) filter_;
     }
     return com.google.bigtable.v1.RowFilter.Condition.getDefaultInstance();
+  }
+
+  public static final int SINK_FIELD_NUMBER = 16;
+  /**
+   * <code>optional bool sink = 16;</code>
+   *
+   * <pre>
+   * ADVANCED USE ONLY.
+   * Hook for introspection into the RowFilter. Outputs all cells directly to
+   * the output of the read rather than to any parent filter. Consider the
+   * following example:
+   * Chain(
+   *   FamilyRegex("A"),
+   *   Interleave(
+   *     All(),
+   *     Chain(Label("foo"), Sink())
+   *   ),
+   *   QualifierRegex("B")
+   * )
+   *                         A,A,1,w
+   *                         A,B,2,x
+   *                         B,B,4,z
+   *                            |
+   *                     FamilyRegex("A")
+   *                            |
+   *                         A,A,1,w
+   *                         A,B,2,x
+   *                            |
+   *               +------------+-------------+
+   *               |                          |
+   *             All()                    Label(foo)
+   *               |                          |
+   *            A,A,1,w              A,A,1,w,labels:[foo]
+   *            A,B,2,x              A,B,2,x,labels:[foo]
+   *               |                          |
+   *               |                        Sink() --------------+
+   *               |                          |                  |
+   *               +------------+      x------+          A,A,1,w,labels:[foo]
+   *                            |                        A,B,2,x,labels:[foo]
+   *                         A,A,1,w                             |
+   *                         A,B,2,x                             |
+   *                            |                                |
+   *                    QualifierRegex("B")                      |
+   *                            |                                |
+   *                         A,B,2,x                             |
+   *                            |                                |
+   *                            +--------------------------------+
+   *                            |
+   *                         A,A,1,w,labels:[foo]
+   *                         A,B,2,x,labels:[foo]  // could be switched
+   *                         A,B,2,x               // could be switched
+   * Despite being excluded by the qualifier filter, a copy of every cell
+   * that reaches the sink is present in the final result.
+   * As with an [Interleave][google.bigtable.v1.RowFilter.Interleave],
+   * duplicate cells are possible, and appear in an unspecified mutual order.
+   * In this case we have a duplicate with column "A:B" and timestamp 2,
+   * because one copy passed through the all filter while the other was
+   * passed through the label and sink. Note that one copy has label "foo",
+   * while the other does not.
+   * Cannot be used within the `predicate_filter`, `true_filter`, or
+   * `false_filter` of a [Condition][google.bigtable.v1.RowFilter.Condition].
+   * </pre>
+   */
+  public boolean getSink() {
+    if (filterCase_ == 16) {
+      return (java.lang.Boolean) filter_;
+    }
+    return false;
+  }
+
+  public static final int PASS_ALL_FILTER_FIELD_NUMBER = 17;
+  /**
+   * <code>optional bool pass_all_filter = 17;</code>
+   *
+   * <pre>
+   * Matches all cells, regardless of input. Functionally equivalent to
+   * leaving `filter` unset, but included for completeness.
+   * </pre>
+   */
+  public boolean getPassAllFilter() {
+    if (filterCase_ == 17) {
+      return (java.lang.Boolean) filter_;
+    }
+    return false;
+  }
+
+  public static final int BLOCK_ALL_FILTER_FIELD_NUMBER = 18;
+  /**
+   * <code>optional bool block_all_filter = 18;</code>
+   *
+   * <pre>
+   * Does not match any cells, regardless of input. Useful for temporarily
+   * disabling just part of a filter.
+   * </pre>
+   */
+  public boolean getBlockAllFilter() {
+    if (filterCase_ == 18) {
+      return (java.lang.Boolean) filter_;
+    }
+    return false;
   }
 
   public static final int ROW_KEY_REGEX_FILTER_FIELD_NUMBER = 4;
@@ -4041,6 +4182,77 @@ public  final class RowFilter extends
     return false;
   }
 
+  public static final int APPLY_LABEL_TRANSFORMER_FIELD_NUMBER = 19;
+  /**
+   * <code>optional string apply_label_transformer = 19;</code>
+   *
+   * <pre>
+   * Applies the given label to all cells in the output row. This allows
+   * the client to determine which results were produced from which part of
+   * the filter.
+   * Values must be at most 15 characters in length, and match the RE2
+   * pattern [a-z0-9&#92;&#92;-]+
+   * Due to a technical limitation, it is not currently possible to apply
+   * multiple labels to a cell. As a result, a Chain may have no more than
+   * one sub-filter which contains a apply_label_transformer. It is okay for
+   * an Interleave to contain multiple apply_label_transformers, as they will
+   * be applied to separate copies of the input. This may be relaxed in the
+   * future.
+   * </pre>
+   */
+  public java.lang.String getApplyLabelTransformer() {
+    java.lang.Object ref = "";
+    if (filterCase_ == 19) {
+      ref = filter_;
+    }
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      if (bs.isValidUtf8() && (filterCase_ == 19)) {
+        filter_ = s;
+      }
+      return s;
+    }
+  }
+  /**
+   * <code>optional string apply_label_transformer = 19;</code>
+   *
+   * <pre>
+   * Applies the given label to all cells in the output row. This allows
+   * the client to determine which results were produced from which part of
+   * the filter.
+   * Values must be at most 15 characters in length, and match the RE2
+   * pattern [a-z0-9&#92;&#92;-]+
+   * Due to a technical limitation, it is not currently possible to apply
+   * multiple labels to a cell. As a result, a Chain may have no more than
+   * one sub-filter which contains a apply_label_transformer. It is okay for
+   * an Interleave to contain multiple apply_label_transformers, as they will
+   * be applied to separate copies of the input. This may be relaxed in the
+   * future.
+   * </pre>
+   */
+  public com.google.protobuf.ByteString
+      getApplyLabelTransformerBytes() {
+    java.lang.Object ref = "";
+    if (filterCase_ == 19) {
+      ref = filter_;
+    }
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      if (filterCase_ == 19) {
+        filter_ = b;
+      }
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -4105,6 +4317,21 @@ public  final class RowFilter extends
     }
     if (filterCase_ == 15) {
       output.writeMessage(15, (com.google.bigtable.v1.ValueRange) filter_);
+    }
+    if (filterCase_ == 16) {
+      output.writeBool(
+          16, (boolean)((java.lang.Boolean) filter_));
+    }
+    if (filterCase_ == 17) {
+      output.writeBool(
+          17, (boolean)((java.lang.Boolean) filter_));
+    }
+    if (filterCase_ == 18) {
+      output.writeBool(
+          18, (boolean)((java.lang.Boolean) filter_));
+    }
+    if (filterCase_ == 19) {
+      output.writeBytes(19, getApplyLabelTransformerBytes());
     }
   }
 
@@ -4181,6 +4408,25 @@ public  final class RowFilter extends
     if (filterCase_ == 15) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(15, (com.google.bigtable.v1.ValueRange) filter_);
+    }
+    if (filterCase_ == 16) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(
+            16, (boolean)((java.lang.Boolean) filter_));
+    }
+    if (filterCase_ == 17) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(
+            17, (boolean)((java.lang.Boolean) filter_));
+    }
+    if (filterCase_ == 18) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(
+            18, (boolean)((java.lang.Boolean) filter_));
+    }
+    if (filterCase_ == 19) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBytesSize(19, getApplyLabelTransformerBytes());
     }
     memoizedSerializedSize = size;
     return size;
@@ -4369,6 +4615,15 @@ public  final class RowFilter extends
           result.filter_ = conditionBuilder_.build();
         }
       }
+      if (filterCase_ == 16) {
+        result.filter_ = filter_;
+      }
+      if (filterCase_ == 17) {
+        result.filter_ = filter_;
+      }
+      if (filterCase_ == 18) {
+        result.filter_ = filter_;
+      }
       if (filterCase_ == 4) {
         result.filter_ = filter_;
       }
@@ -4417,6 +4672,9 @@ public  final class RowFilter extends
       if (filterCase_ == 13) {
         result.filter_ = filter_;
       }
+      if (filterCase_ == 19) {
+        result.filter_ = filter_;
+      }
       result.filterCase_ = filterCase_;
       onBuilt();
       return result;
@@ -4444,6 +4702,18 @@ public  final class RowFilter extends
         }
         case CONDITION: {
           mergeCondition(other.getCondition());
+          break;
+        }
+        case SINK: {
+          setSink(other.getSink());
+          break;
+        }
+        case PASS_ALL_FILTER: {
+          setPassAllFilter(other.getPassAllFilter());
+          break;
+        }
+        case BLOCK_ALL_FILTER: {
+          setBlockAllFilter(other.getBlockAllFilter());
           break;
         }
         case ROW_KEY_REGEX_FILTER: {
@@ -4494,6 +4764,12 @@ public  final class RowFilter extends
         }
         case STRIP_VALUE_TRANSFORMER: {
           setStripValueTransformer(other.getStripValueTransformer());
+          break;
+        }
+        case APPLY_LABEL_TRANSFORMER: {
+          filterCase_ = 19;
+          filter_ = other.filter_;
+          onChanged();
           break;
         }
         case FILTER_NOT_SET: {
@@ -5049,6 +5325,297 @@ public  final class RowFilter extends
       filterCase_ = 3;
       onChanged();;
       return conditionBuilder_;
+    }
+
+    /**
+     * <code>optional bool sink = 16;</code>
+     *
+     * <pre>
+     * ADVANCED USE ONLY.
+     * Hook for introspection into the RowFilter. Outputs all cells directly to
+     * the output of the read rather than to any parent filter. Consider the
+     * following example:
+     * Chain(
+     *   FamilyRegex("A"),
+     *   Interleave(
+     *     All(),
+     *     Chain(Label("foo"), Sink())
+     *   ),
+     *   QualifierRegex("B")
+     * )
+     *                         A,A,1,w
+     *                         A,B,2,x
+     *                         B,B,4,z
+     *                            |
+     *                     FamilyRegex("A")
+     *                            |
+     *                         A,A,1,w
+     *                         A,B,2,x
+     *                            |
+     *               +------------+-------------+
+     *               |                          |
+     *             All()                    Label(foo)
+     *               |                          |
+     *            A,A,1,w              A,A,1,w,labels:[foo]
+     *            A,B,2,x              A,B,2,x,labels:[foo]
+     *               |                          |
+     *               |                        Sink() --------------+
+     *               |                          |                  |
+     *               +------------+      x------+          A,A,1,w,labels:[foo]
+     *                            |                        A,B,2,x,labels:[foo]
+     *                         A,A,1,w                             |
+     *                         A,B,2,x                             |
+     *                            |                                |
+     *                    QualifierRegex("B")                      |
+     *                            |                                |
+     *                         A,B,2,x                             |
+     *                            |                                |
+     *                            +--------------------------------+
+     *                            |
+     *                         A,A,1,w,labels:[foo]
+     *                         A,B,2,x,labels:[foo]  // could be switched
+     *                         A,B,2,x               // could be switched
+     * Despite being excluded by the qualifier filter, a copy of every cell
+     * that reaches the sink is present in the final result.
+     * As with an [Interleave][google.bigtable.v1.RowFilter.Interleave],
+     * duplicate cells are possible, and appear in an unspecified mutual order.
+     * In this case we have a duplicate with column "A:B" and timestamp 2,
+     * because one copy passed through the all filter while the other was
+     * passed through the label and sink. Note that one copy has label "foo",
+     * while the other does not.
+     * Cannot be used within the `predicate_filter`, `true_filter`, or
+     * `false_filter` of a [Condition][google.bigtable.v1.RowFilter.Condition].
+     * </pre>
+     */
+    public boolean getSink() {
+      if (filterCase_ == 16) {
+        return (java.lang.Boolean) filter_;
+      }
+      return false;
+    }
+    /**
+     * <code>optional bool sink = 16;</code>
+     *
+     * <pre>
+     * ADVANCED USE ONLY.
+     * Hook for introspection into the RowFilter. Outputs all cells directly to
+     * the output of the read rather than to any parent filter. Consider the
+     * following example:
+     * Chain(
+     *   FamilyRegex("A"),
+     *   Interleave(
+     *     All(),
+     *     Chain(Label("foo"), Sink())
+     *   ),
+     *   QualifierRegex("B")
+     * )
+     *                         A,A,1,w
+     *                         A,B,2,x
+     *                         B,B,4,z
+     *                            |
+     *                     FamilyRegex("A")
+     *                            |
+     *                         A,A,1,w
+     *                         A,B,2,x
+     *                            |
+     *               +------------+-------------+
+     *               |                          |
+     *             All()                    Label(foo)
+     *               |                          |
+     *            A,A,1,w              A,A,1,w,labels:[foo]
+     *            A,B,2,x              A,B,2,x,labels:[foo]
+     *               |                          |
+     *               |                        Sink() --------------+
+     *               |                          |                  |
+     *               +------------+      x------+          A,A,1,w,labels:[foo]
+     *                            |                        A,B,2,x,labels:[foo]
+     *                         A,A,1,w                             |
+     *                         A,B,2,x                             |
+     *                            |                                |
+     *                    QualifierRegex("B")                      |
+     *                            |                                |
+     *                         A,B,2,x                             |
+     *                            |                                |
+     *                            +--------------------------------+
+     *                            |
+     *                         A,A,1,w,labels:[foo]
+     *                         A,B,2,x,labels:[foo]  // could be switched
+     *                         A,B,2,x               // could be switched
+     * Despite being excluded by the qualifier filter, a copy of every cell
+     * that reaches the sink is present in the final result.
+     * As with an [Interleave][google.bigtable.v1.RowFilter.Interleave],
+     * duplicate cells are possible, and appear in an unspecified mutual order.
+     * In this case we have a duplicate with column "A:B" and timestamp 2,
+     * because one copy passed through the all filter while the other was
+     * passed through the label and sink. Note that one copy has label "foo",
+     * while the other does not.
+     * Cannot be used within the `predicate_filter`, `true_filter`, or
+     * `false_filter` of a [Condition][google.bigtable.v1.RowFilter.Condition].
+     * </pre>
+     */
+    public Builder setSink(boolean value) {
+      filterCase_ = 16;
+      filter_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional bool sink = 16;</code>
+     *
+     * <pre>
+     * ADVANCED USE ONLY.
+     * Hook for introspection into the RowFilter. Outputs all cells directly to
+     * the output of the read rather than to any parent filter. Consider the
+     * following example:
+     * Chain(
+     *   FamilyRegex("A"),
+     *   Interleave(
+     *     All(),
+     *     Chain(Label("foo"), Sink())
+     *   ),
+     *   QualifierRegex("B")
+     * )
+     *                         A,A,1,w
+     *                         A,B,2,x
+     *                         B,B,4,z
+     *                            |
+     *                     FamilyRegex("A")
+     *                            |
+     *                         A,A,1,w
+     *                         A,B,2,x
+     *                            |
+     *               +------------+-------------+
+     *               |                          |
+     *             All()                    Label(foo)
+     *               |                          |
+     *            A,A,1,w              A,A,1,w,labels:[foo]
+     *            A,B,2,x              A,B,2,x,labels:[foo]
+     *               |                          |
+     *               |                        Sink() --------------+
+     *               |                          |                  |
+     *               +------------+      x------+          A,A,1,w,labels:[foo]
+     *                            |                        A,B,2,x,labels:[foo]
+     *                         A,A,1,w                             |
+     *                         A,B,2,x                             |
+     *                            |                                |
+     *                    QualifierRegex("B")                      |
+     *                            |                                |
+     *                         A,B,2,x                             |
+     *                            |                                |
+     *                            +--------------------------------+
+     *                            |
+     *                         A,A,1,w,labels:[foo]
+     *                         A,B,2,x,labels:[foo]  // could be switched
+     *                         A,B,2,x               // could be switched
+     * Despite being excluded by the qualifier filter, a copy of every cell
+     * that reaches the sink is present in the final result.
+     * As with an [Interleave][google.bigtable.v1.RowFilter.Interleave],
+     * duplicate cells are possible, and appear in an unspecified mutual order.
+     * In this case we have a duplicate with column "A:B" and timestamp 2,
+     * because one copy passed through the all filter while the other was
+     * passed through the label and sink. Note that one copy has label "foo",
+     * while the other does not.
+     * Cannot be used within the `predicate_filter`, `true_filter`, or
+     * `false_filter` of a [Condition][google.bigtable.v1.RowFilter.Condition].
+     * </pre>
+     */
+    public Builder clearSink() {
+      if (filterCase_ == 16) {
+        filterCase_ = 0;
+        filter_ = null;
+        onChanged();
+      }
+      return this;
+    }
+
+    /**
+     * <code>optional bool pass_all_filter = 17;</code>
+     *
+     * <pre>
+     * Matches all cells, regardless of input. Functionally equivalent to
+     * leaving `filter` unset, but included for completeness.
+     * </pre>
+     */
+    public boolean getPassAllFilter() {
+      if (filterCase_ == 17) {
+        return (java.lang.Boolean) filter_;
+      }
+      return false;
+    }
+    /**
+     * <code>optional bool pass_all_filter = 17;</code>
+     *
+     * <pre>
+     * Matches all cells, regardless of input. Functionally equivalent to
+     * leaving `filter` unset, but included for completeness.
+     * </pre>
+     */
+    public Builder setPassAllFilter(boolean value) {
+      filterCase_ = 17;
+      filter_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional bool pass_all_filter = 17;</code>
+     *
+     * <pre>
+     * Matches all cells, regardless of input. Functionally equivalent to
+     * leaving `filter` unset, but included for completeness.
+     * </pre>
+     */
+    public Builder clearPassAllFilter() {
+      if (filterCase_ == 17) {
+        filterCase_ = 0;
+        filter_ = null;
+        onChanged();
+      }
+      return this;
+    }
+
+    /**
+     * <code>optional bool block_all_filter = 18;</code>
+     *
+     * <pre>
+     * Does not match any cells, regardless of input. Useful for temporarily
+     * disabling just part of a filter.
+     * </pre>
+     */
+    public boolean getBlockAllFilter() {
+      if (filterCase_ == 18) {
+        return (java.lang.Boolean) filter_;
+      }
+      return false;
+    }
+    /**
+     * <code>optional bool block_all_filter = 18;</code>
+     *
+     * <pre>
+     * Does not match any cells, regardless of input. Useful for temporarily
+     * disabling just part of a filter.
+     * </pre>
+     */
+    public Builder setBlockAllFilter(boolean value) {
+      filterCase_ = 18;
+      filter_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional bool block_all_filter = 18;</code>
+     *
+     * <pre>
+     * Does not match any cells, regardless of input. Useful for temporarily
+     * disabling just part of a filter.
+     * </pre>
+     */
+    public Builder clearBlockAllFilter() {
+      if (filterCase_ == 18) {
+        filterCase_ = 0;
+        filter_ = null;
+        onChanged();
+      }
+      return this;
     }
 
     /**
@@ -6064,6 +6631,157 @@ public  final class RowFilter extends
       }
       return this;
     }
+
+    /**
+     * <code>optional string apply_label_transformer = 19;</code>
+     *
+     * <pre>
+     * Applies the given label to all cells in the output row. This allows
+     * the client to determine which results were produced from which part of
+     * the filter.
+     * Values must be at most 15 characters in length, and match the RE2
+     * pattern [a-z0-9&#92;&#92;-]+
+     * Due to a technical limitation, it is not currently possible to apply
+     * multiple labels to a cell. As a result, a Chain may have no more than
+     * one sub-filter which contains a apply_label_transformer. It is okay for
+     * an Interleave to contain multiple apply_label_transformers, as they will
+     * be applied to separate copies of the input. This may be relaxed in the
+     * future.
+     * </pre>
+     */
+    public java.lang.String getApplyLabelTransformer() {
+      java.lang.Object ref = "";
+      if (filterCase_ == 19) {
+        ref = filter_;
+      }
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (filterCase_ == 19) {
+          if (bs.isValidUtf8()) {
+            filter_ = s;
+          }
+        }
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>optional string apply_label_transformer = 19;</code>
+     *
+     * <pre>
+     * Applies the given label to all cells in the output row. This allows
+     * the client to determine which results were produced from which part of
+     * the filter.
+     * Values must be at most 15 characters in length, and match the RE2
+     * pattern [a-z0-9&#92;&#92;-]+
+     * Due to a technical limitation, it is not currently possible to apply
+     * multiple labels to a cell. As a result, a Chain may have no more than
+     * one sub-filter which contains a apply_label_transformer. It is okay for
+     * an Interleave to contain multiple apply_label_transformers, as they will
+     * be applied to separate copies of the input. This may be relaxed in the
+     * future.
+     * </pre>
+     */
+    public com.google.protobuf.ByteString
+        getApplyLabelTransformerBytes() {
+      java.lang.Object ref = "";
+      if (filterCase_ == 19) {
+        ref = filter_;
+      }
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        if (filterCase_ == 19) {
+          filter_ = b;
+        }
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>optional string apply_label_transformer = 19;</code>
+     *
+     * <pre>
+     * Applies the given label to all cells in the output row. This allows
+     * the client to determine which results were produced from which part of
+     * the filter.
+     * Values must be at most 15 characters in length, and match the RE2
+     * pattern [a-z0-9&#92;&#92;-]+
+     * Due to a technical limitation, it is not currently possible to apply
+     * multiple labels to a cell. As a result, a Chain may have no more than
+     * one sub-filter which contains a apply_label_transformer. It is okay for
+     * an Interleave to contain multiple apply_label_transformers, as they will
+     * be applied to separate copies of the input. This may be relaxed in the
+     * future.
+     * </pre>
+     */
+    public Builder setApplyLabelTransformer(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  filterCase_ = 19;
+      filter_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string apply_label_transformer = 19;</code>
+     *
+     * <pre>
+     * Applies the given label to all cells in the output row. This allows
+     * the client to determine which results were produced from which part of
+     * the filter.
+     * Values must be at most 15 characters in length, and match the RE2
+     * pattern [a-z0-9&#92;&#92;-]+
+     * Due to a technical limitation, it is not currently possible to apply
+     * multiple labels to a cell. As a result, a Chain may have no more than
+     * one sub-filter which contains a apply_label_transformer. It is okay for
+     * an Interleave to contain multiple apply_label_transformers, as they will
+     * be applied to separate copies of the input. This may be relaxed in the
+     * future.
+     * </pre>
+     */
+    public Builder clearApplyLabelTransformer() {
+      if (filterCase_ == 19) {
+        filterCase_ = 0;
+        filter_ = null;
+        onChanged();
+      }
+      return this;
+    }
+    /**
+     * <code>optional string apply_label_transformer = 19;</code>
+     *
+     * <pre>
+     * Applies the given label to all cells in the output row. This allows
+     * the client to determine which results were produced from which part of
+     * the filter.
+     * Values must be at most 15 characters in length, and match the RE2
+     * pattern [a-z0-9&#92;&#92;-]+
+     * Due to a technical limitation, it is not currently possible to apply
+     * multiple labels to a cell. As a result, a Chain may have no more than
+     * one sub-filter which contains a apply_label_transformer. It is okay for
+     * an Interleave to contain multiple apply_label_transformers, as they will
+     * be applied to separate copies of the input. This may be relaxed in the
+     * future.
+     * </pre>
+     */
+    public Builder setApplyLabelTransformerBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  filterCase_ = 19;
+      filter_ = value;
+      onChanged();
+      return this;
+    }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return this;
@@ -6106,6 +6824,10 @@ public  final class RowFilter extends
       }
     }
   };
+
+  public static com.google.protobuf.Parser<RowFilter> parser() {
+    return PARSER;
+  }
 
   @java.lang.Override
   public com.google.protobuf.Parser<RowFilter> getParserForType() {
