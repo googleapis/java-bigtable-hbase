@@ -38,6 +38,8 @@ import com.google.api.client.util.Preconditions;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
@@ -47,9 +49,7 @@ import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableClient;
 import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
-import com.google.cloud.bigtable.naming.BigtableTableName;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -162,7 +162,7 @@ public class BatchExecutor {
     }
   }
 
-  protected final BigtableClient client;
+  protected final BigtableDataClient client;
   protected final BigtableOptions options;
   protected final BigtableTableName bigtableTableName;
   protected final ListeningExecutorService service;
@@ -176,7 +176,7 @@ public class BatchExecutor {
   protected final RowResultConverter rowResultConverter;
 
   public BatchExecutor(
-      BigtableClient client,
+      BigtableDataClient client,
       BigtableOptions options,
       BigtableTableName bigtableTableName,
       ListeningExecutorService service,

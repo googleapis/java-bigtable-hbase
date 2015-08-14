@@ -29,9 +29,9 @@ import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableClient;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
-import com.google.cloud.bigtable.naming.BigtableTableName;
 import com.google.common.collect.ImmutableList;
 
 public class BigtableRegionLocator implements RegionLocator {
@@ -41,13 +41,13 @@ public class BigtableRegionLocator implements RegionLocator {
   protected static final Logger LOG = new Logger(BigtableRegionLocator.class);
 
   private final TableName tableName;
-  private final BigtableClient client;
+  private final BigtableDataClient client;
   private final SampledRowKeysAdapter adapter;
   private final BigtableTableName bigtableTableName;
   private List<HRegionLocation> regions;
   private long regionsFetchTimeMillis;
 
-  public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableClient client) {
+  public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableDataClient client) {
     this.tableName = tableName;
     this.client = client;
     this.bigtableTableName = options.getClusterName().toTableName(tableName.getNameAsString());
