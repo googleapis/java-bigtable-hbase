@@ -1845,6 +1845,10 @@ public  final class CheckAndMutateRowRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<CheckAndMutateRowRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<CheckAndMutateRowRequest> getParserForType() {
     return PARSER;

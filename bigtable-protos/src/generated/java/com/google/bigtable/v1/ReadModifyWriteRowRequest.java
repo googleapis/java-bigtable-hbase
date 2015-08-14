@@ -1023,6 +1023,10 @@ public  final class ReadModifyWriteRowRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<ReadModifyWriteRowRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<ReadModifyWriteRowRequest> getParserForType() {
     return PARSER;

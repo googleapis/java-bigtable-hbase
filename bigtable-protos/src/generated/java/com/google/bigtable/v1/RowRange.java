@@ -455,6 +455,10 @@ public  final class RowRange extends
     }
   };
 
+  public static com.google.protobuf.Parser<RowRange> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<RowRange> getParserForType() {
     return PARSER;

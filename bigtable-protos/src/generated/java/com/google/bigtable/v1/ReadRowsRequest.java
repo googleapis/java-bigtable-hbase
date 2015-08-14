@@ -284,7 +284,7 @@ public  final class ReadRowsRequest extends
    * "allow_row_interleaving" to true allows multiple rows to be interleaved in
    * the response stream, which increases throughput but breaks this guarantee,
    * and may force the client to use more memory to buffer partially-received
-   * rows.
+   * rows. Cannot be set to true when specifying "num_rows_limit".
    * </pre>
    */
   public boolean getAllowRowInterleaving() {
@@ -299,9 +299,7 @@ public  final class ReadRowsRequest extends
    * <pre>
    * The read will terminate after committing to N rows' worth of results. The
    * default (zero) is to return all results.
-   * Note that if "allow_row_interleaving" is set to true, partial results may
-   * be returned for more than N rows. However, only N "commit_row" chunks will
-   * be sent.
+   * Note that "allow_row_interleaving" cannot be set to true when this is set.
    * </pre>
    */
   public long getNumRowsLimit() {
@@ -1093,7 +1091,7 @@ public  final class ReadRowsRequest extends
      * "allow_row_interleaving" to true allows multiple rows to be interleaved in
      * the response stream, which increases throughput but breaks this guarantee,
      * and may force the client to use more memory to buffer partially-received
-     * rows.
+     * rows. Cannot be set to true when specifying "num_rows_limit".
      * </pre>
      */
     public boolean getAllowRowInterleaving() {
@@ -1108,7 +1106,7 @@ public  final class ReadRowsRequest extends
      * "allow_row_interleaving" to true allows multiple rows to be interleaved in
      * the response stream, which increases throughput but breaks this guarantee,
      * and may force the client to use more memory to buffer partially-received
-     * rows.
+     * rows. Cannot be set to true when specifying "num_rows_limit".
      * </pre>
      */
     public Builder setAllowRowInterleaving(boolean value) {
@@ -1126,7 +1124,7 @@ public  final class ReadRowsRequest extends
      * "allow_row_interleaving" to true allows multiple rows to be interleaved in
      * the response stream, which increases throughput but breaks this guarantee,
      * and may force the client to use more memory to buffer partially-received
-     * rows.
+     * rows. Cannot be set to true when specifying "num_rows_limit".
      * </pre>
      */
     public Builder clearAllowRowInterleaving() {
@@ -1143,9 +1141,7 @@ public  final class ReadRowsRequest extends
      * <pre>
      * The read will terminate after committing to N rows' worth of results. The
      * default (zero) is to return all results.
-     * Note that if "allow_row_interleaving" is set to true, partial results may
-     * be returned for more than N rows. However, only N "commit_row" chunks will
-     * be sent.
+     * Note that "allow_row_interleaving" cannot be set to true when this is set.
      * </pre>
      */
     public long getNumRowsLimit() {
@@ -1157,9 +1153,7 @@ public  final class ReadRowsRequest extends
      * <pre>
      * The read will terminate after committing to N rows' worth of results. The
      * default (zero) is to return all results.
-     * Note that if "allow_row_interleaving" is set to true, partial results may
-     * be returned for more than N rows. However, only N "commit_row" chunks will
-     * be sent.
+     * Note that "allow_row_interleaving" cannot be set to true when this is set.
      * </pre>
      */
     public Builder setNumRowsLimit(long value) {
@@ -1174,9 +1168,7 @@ public  final class ReadRowsRequest extends
      * <pre>
      * The read will terminate after committing to N rows' worth of results. The
      * default (zero) is to return all results.
-     * Note that if "allow_row_interleaving" is set to true, partial results may
-     * be returned for more than N rows. However, only N "commit_row" chunks will
-     * be sent.
+     * Note that "allow_row_interleaving" cannot be set to true when this is set.
      * </pre>
      */
     public Builder clearNumRowsLimit() {
@@ -1227,6 +1219,10 @@ public  final class ReadRowsRequest extends
       }
     }
   };
+
+  public static com.google.protobuf.Parser<ReadRowsRequest> parser() {
+    return PARSER;
+  }
 
   @java.lang.Override
   public com.google.protobuf.Parser<ReadRowsRequest> getParserForType() {

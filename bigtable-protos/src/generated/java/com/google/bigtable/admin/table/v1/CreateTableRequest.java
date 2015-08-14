@@ -1240,6 +1240,10 @@ public  final class CreateTableRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<CreateTableRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<CreateTableRequest> getParserForType() {
     return PARSER;

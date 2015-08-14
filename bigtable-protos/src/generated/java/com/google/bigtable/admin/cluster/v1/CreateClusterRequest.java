@@ -884,6 +884,10 @@ public  final class CreateClusterRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<CreateClusterRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<CreateClusterRequest> getParserForType() {
     return PARSER;

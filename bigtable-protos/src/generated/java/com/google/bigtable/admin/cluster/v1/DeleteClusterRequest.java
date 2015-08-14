@@ -471,6 +471,10 @@ public  final class DeleteClusterRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<DeleteClusterRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<DeleteClusterRequest> getParserForType() {
     return PARSER;

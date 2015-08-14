@@ -882,6 +882,10 @@ public  final class Zone extends
     }
   };
 
+  public static com.google.protobuf.Parser<Zone> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<Zone> getParserForType() {
     return PARSER;

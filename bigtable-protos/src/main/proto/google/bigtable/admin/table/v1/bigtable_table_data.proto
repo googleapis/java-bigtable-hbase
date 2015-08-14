@@ -84,10 +84,12 @@ message ColumnFamily {
   string gc_expression = 2;
 
   // Garbage collection rule specified as a protobuf.
-  // Supercedes `gc_expression`.
-  // Garbage collection executes opportunistically in the background, and so
-  // it's possible for reads to return a cell even if it matches the active GC
-  // expression for its family.
+  // Supersedes `gc_expression`.
+  // Must serialize to at most 500 bytes.
+  //
+  // NOTE: Garbage collection executes opportunistically in the background, and
+  // so it's possible for reads to return a cell even if it matches the active
+  // GC expression for its family.
   GcRule gc_rule = 3;
 }
 
@@ -110,6 +112,8 @@ message GcRule {
     int32 max_num_versions = 1;
 
     // Delete cells in a column older than the given age.
+    // Values must be at least one millisecond, and will be truncated to
+    // microsecond granularity.
     google.protobuf.Duration max_age = 2;
 
     // Delete cells that would be deleted by every nested rule.

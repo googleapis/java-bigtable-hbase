@@ -787,6 +787,10 @@ public  final class ReadModifyWriteRule extends
     }
   };
 
+  public static com.google.protobuf.Parser<ReadModifyWriteRule> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<ReadModifyWriteRule> getParserForType() {
     return PARSER;

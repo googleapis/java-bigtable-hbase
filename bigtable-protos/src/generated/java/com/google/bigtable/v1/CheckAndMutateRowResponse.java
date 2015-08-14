@@ -383,6 +383,10 @@ public  final class CheckAndMutateRowResponse extends
     }
   };
 
+  public static com.google.protobuf.Parser<CheckAndMutateRowResponse> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<CheckAndMutateRowResponse> getParserForType() {
     return PARSER;

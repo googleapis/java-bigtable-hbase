@@ -618,6 +618,10 @@ public  final class RenameTableRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<RenameTableRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<RenameTableRequest> getParserForType() {
     return PARSER;

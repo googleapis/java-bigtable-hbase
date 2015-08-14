@@ -456,6 +456,10 @@ public  final class DeleteTableRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<DeleteTableRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<DeleteTableRequest> getParserForType() {
     return PARSER;

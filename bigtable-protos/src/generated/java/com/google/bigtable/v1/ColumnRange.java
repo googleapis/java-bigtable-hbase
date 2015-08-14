@@ -902,6 +902,10 @@ public  final class ColumnRange extends
     }
   };
 
+  public static com.google.protobuf.Parser<ColumnRange> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<ColumnRange> getParserForType() {
     return PARSER;

@@ -21,6 +21,8 @@ public interface GcRuleOrBuilder extends
    *
    * <pre>
    * Delete cells in a column older than the given age.
+   * Values must be at least one millisecond, and will be truncated to
+   * microsecond granularity.
    * </pre>
    */
   com.google.protobuf.Duration getMaxAge();
@@ -29,6 +31,8 @@ public interface GcRuleOrBuilder extends
    *
    * <pre>
    * Delete cells in a column older than the given age.
+   * Values must be at least one millisecond, and will be truncated to
+   * microsecond granularity.
    * </pre>
    */
   com.google.protobuf.DurationOrBuilder getMaxAgeOrBuilder();

@@ -113,66 +113,69 @@ public final class BigtableDataProto {
       "Family\"C\n\006Family\022\014\n\004name\030\001 \001(\t\022+\n\007column" +
       "s\030\002 \003(\0132\032.google.bigtable.v1.Column\"D\n\006C" +
       "olumn\022\021\n\tqualifier\030\001 \001(\014\022\'\n\005cells\030\002 \003(\0132" +
-      "\030.google.bigtable.v1.Cell\"/\n\004Cell\022\030\n\020tim" +
-      "estamp_micros\030\001 \001(\003\022\r\n\005value\030\002 \001(\014\".\n\010Ro" +
-      "wRange\022\021\n\tstart_key\030\002 \001(\014\022\017\n\007end_key\030\003 \001" +
-      "(\014\"\326\001\n\013ColumnRange\022\023\n\013family_name\030\001 \001(\t\022",
-      "#\n\031start_qualifier_inclusive\030\002 \001(\014H\000\022#\n\031" +
-      "start_qualifier_exclusive\030\003 \001(\014H\000\022!\n\027end" +
-      "_qualifier_inclusive\030\004 \001(\014H\001\022!\n\027end_qual" +
-      "ifier_exclusive\030\005 \001(\014H\001B\021\n\017start_qualifi" +
-      "erB\017\n\rend_qualifier\"N\n\016TimestampRange\022\036\n" +
-      "\026start_timestamp_micros\030\001 \001(\003\022\034\n\024end_tim" +
-      "estamp_micros\030\002 \001(\003\"\250\001\n\nValueRange\022\037\n\025st" +
-      "art_value_inclusive\030\001 \001(\014H\000\022\037\n\025start_val" +
-      "ue_exclusive\030\002 \001(\014H\000\022\035\n\023end_value_inclus" +
-      "ive\030\003 \001(\014H\001\022\035\n\023end_value_exclusive\030\004 \001(\014",
-      "H\001B\r\n\013start_valueB\013\n\tend_value\"\365\007\n\tRowFi" +
-      "lter\0224\n\005chain\030\001 \001(\0132#.google.bigtable.v1" +
-      ".RowFilter.ChainH\000\022>\n\ninterleave\030\002 \001(\0132(" +
-      ".google.bigtable.v1.RowFilter.Interleave" +
-      "H\000\022<\n\tcondition\030\003 \001(\0132\'.google.bigtable." +
-      "v1.RowFilter.ConditionH\000\022\036\n\024row_key_rege" +
-      "x_filter\030\004 \001(\014H\000\022\033\n\021row_sample_filter\030\016 " +
-      "\001(\001H\000\022\"\n\030family_name_regex_filter\030\005 \001(\tH" +
-      "\000\022\'\n\035column_qualifier_regex_filter\030\006 \001(\014" +
-      "H\000\022>\n\023column_range_filter\030\007 \001(\0132\037.google",
-      ".bigtable.v1.ColumnRangeH\000\022D\n\026timestamp_" +
-      "range_filter\030\010 \001(\0132\".google.bigtable.v1." +
-      "TimestampRangeH\000\022\034\n\022value_regex_filter\030\t" +
-      " \001(\014H\000\022<\n\022value_range_filter\030\017 \001(\0132\036.goo" +
-      "gle.bigtable.v1.ValueRangeH\000\022%\n\033cells_pe" +
-      "r_row_offset_filter\030\n \001(\005H\000\022$\n\032cells_per" +
-      "_row_limit_filter\030\013 \001(\005H\000\022\'\n\035cells_per_c" +
-      "olumn_limit_filter\030\014 \001(\005H\000\022!\n\027strip_valu" +
-      "e_transformer\030\r \001(\010H\000\0327\n\005Chain\022.\n\007filter" +
-      "s\030\001 \003(\0132\035.google.bigtable.v1.RowFilter\032<",
-      "\n\nInterleave\022.\n\007filters\030\001 \003(\0132\035.google.b" +
-      "igtable.v1.RowFilter\032\255\001\n\tCondition\0227\n\020pr" +
-      "edicate_filter\030\001 \001(\0132\035.google.bigtable.v" +
-      "1.RowFilter\0222\n\013true_filter\030\002 \001(\0132\035.googl" +
-      "e.bigtable.v1.RowFilter\0223\n\014false_filter\030" +
-      "\003 \001(\0132\035.google.bigtable.v1.RowFilterB\010\n\006" +
-      "filter\"\311\004\n\010Mutation\0228\n\010set_cell\030\001 \001(\0132$." +
-      "google.bigtable.v1.Mutation.SetCellH\000\022K\n" +
-      "\022delete_from_column\030\002 \001(\0132-.google.bigta" +
-      "ble.v1.Mutation.DeleteFromColumnH\000\022K\n\022de",
-      "lete_from_family\030\003 \001(\0132-.google.bigtable" +
-      ".v1.Mutation.DeleteFromFamilyH\000\022E\n\017delet" +
-      "e_from_row\030\004 \001(\0132*.google.bigtable.v1.Mu" +
-      "tation.DeleteFromRowH\000\032a\n\007SetCell\022\023\n\013fam" +
-      "ily_name\030\001 \001(\t\022\030\n\020column_qualifier\030\002 \001(\014" +
-      "\022\030\n\020timestamp_micros\030\003 \001(\003\022\r\n\005value\030\004 \001(" +
-      "\014\032y\n\020DeleteFromColumn\022\023\n\013family_name\030\001 \001" +
-      "(\t\022\030\n\020column_qualifier\030\002 \001(\014\0226\n\ntime_ran" +
-      "ge\030\003 \001(\0132\".google.bigtable.v1.TimestampR" +
-      "ange\032\'\n\020DeleteFromFamily\022\023\n\013family_name\030",
-      "\001 \001(\t\032\017\n\rDeleteFromRowB\n\n\010mutation\"\200\001\n\023R" +
-      "eadModifyWriteRule\022\023\n\013family_name\030\001 \001(\t\022" +
-      "\030\n\020column_qualifier\030\002 \001(\014\022\026\n\014append_valu" +
-      "e\030\003 \001(\014H\000\022\032\n\020increment_amount\030\004 \001(\003H\000B\006\n" +
-      "\004ruleB-\n\026com.google.bigtable.v1B\021Bigtabl" +
-      "eDataProtoP\001b\006proto3"
+      "\030.google.bigtable.v1.Cell\"?\n\004Cell\022\030\n\020tim" +
+      "estamp_micros\030\001 \001(\003\022\r\n\005value\030\002 \001(\014\022\016\n\006la" +
+      "bels\030\003 \003(\t\".\n\010RowRange\022\021\n\tstart_key\030\002 \001(" +
+      "\014\022\017\n\007end_key\030\003 \001(\014\"\326\001\n\013ColumnRange\022\023\n\013fa",
+      "mily_name\030\001 \001(\t\022#\n\031start_qualifier_inclu" +
+      "sive\030\002 \001(\014H\000\022#\n\031start_qualifier_exclusiv" +
+      "e\030\003 \001(\014H\000\022!\n\027end_qualifier_inclusive\030\004 \001" +
+      "(\014H\001\022!\n\027end_qualifier_exclusive\030\005 \001(\014H\001B" +
+      "\021\n\017start_qualifierB\017\n\rend_qualifier\"N\n\016T" +
+      "imestampRange\022\036\n\026start_timestamp_micros\030" +
+      "\001 \001(\003\022\034\n\024end_timestamp_micros\030\002 \001(\003\"\250\001\n\n" +
+      "ValueRange\022\037\n\025start_value_inclusive\030\001 \001(" +
+      "\014H\000\022\037\n\025start_value_exclusive\030\002 \001(\014H\000\022\035\n\023" +
+      "end_value_inclusive\030\003 \001(\014H\001\022\035\n\023end_value",
+      "_exclusive\030\004 \001(\014H\001B\r\n\013start_valueB\013\n\tend" +
+      "_value\"\337\010\n\tRowFilter\0224\n\005chain\030\001 \001(\0132#.go" +
+      "ogle.bigtable.v1.RowFilter.ChainH\000\022>\n\nin" +
+      "terleave\030\002 \001(\0132(.google.bigtable.v1.RowF" +
+      "ilter.InterleaveH\000\022<\n\tcondition\030\003 \001(\0132\'." +
+      "google.bigtable.v1.RowFilter.ConditionH\000" +
+      "\022\016\n\004sink\030\020 \001(\010H\000\022\031\n\017pass_all_filter\030\021 \001(" +
+      "\010H\000\022\032\n\020block_all_filter\030\022 \001(\010H\000\022\036\n\024row_k" +
+      "ey_regex_filter\030\004 \001(\014H\000\022\033\n\021row_sample_fi" +
+      "lter\030\016 \001(\001H\000\022\"\n\030family_name_regex_filter",
+      "\030\005 \001(\tH\000\022\'\n\035column_qualifier_regex_filte" +
+      "r\030\006 \001(\014H\000\022>\n\023column_range_filter\030\007 \001(\0132\037" +
+      ".google.bigtable.v1.ColumnRangeH\000\022D\n\026tim" +
+      "estamp_range_filter\030\010 \001(\0132\".google.bigta" +
+      "ble.v1.TimestampRangeH\000\022\034\n\022value_regex_f" +
+      "ilter\030\t \001(\014H\000\022<\n\022value_range_filter\030\017 \001(" +
+      "\0132\036.google.bigtable.v1.ValueRangeH\000\022%\n\033c" +
+      "ells_per_row_offset_filter\030\n \001(\005H\000\022$\n\032ce" +
+      "lls_per_row_limit_filter\030\013 \001(\005H\000\022\'\n\035cell" +
+      "s_per_column_limit_filter\030\014 \001(\005H\000\022!\n\027str",
+      "ip_value_transformer\030\r \001(\010H\000\022!\n\027apply_la" +
+      "bel_transformer\030\023 \001(\tH\000\0327\n\005Chain\022.\n\007filt" +
+      "ers\030\001 \003(\0132\035.google.bigtable.v1.RowFilter" +
+      "\032<\n\nInterleave\022.\n\007filters\030\001 \003(\0132\035.google" +
+      ".bigtable.v1.RowFilter\032\255\001\n\tCondition\0227\n\020" +
+      "predicate_filter\030\001 \001(\0132\035.google.bigtable" +
+      ".v1.RowFilter\0222\n\013true_filter\030\002 \001(\0132\035.goo" +
+      "gle.bigtable.v1.RowFilter\0223\n\014false_filte" +
+      "r\030\003 \001(\0132\035.google.bigtable.v1.RowFilterB\010" +
+      "\n\006filter\"\311\004\n\010Mutation\0228\n\010set_cell\030\001 \001(\0132",
+      "$.google.bigtable.v1.Mutation.SetCellH\000\022" +
+      "K\n\022delete_from_column\030\002 \001(\0132-.google.big" +
+      "table.v1.Mutation.DeleteFromColumnH\000\022K\n\022" +
+      "delete_from_family\030\003 \001(\0132-.google.bigtab" +
+      "le.v1.Mutation.DeleteFromFamilyH\000\022E\n\017del" +
+      "ete_from_row\030\004 \001(\0132*.google.bigtable.v1." +
+      "Mutation.DeleteFromRowH\000\032a\n\007SetCell\022\023\n\013f" +
+      "amily_name\030\001 \001(\t\022\030\n\020column_qualifier\030\002 \001" +
+      "(\014\022\030\n\020timestamp_micros\030\003 \001(\003\022\r\n\005value\030\004 " +
+      "\001(\014\032y\n\020DeleteFromColumn\022\023\n\013family_name\030\001",
+      " \001(\t\022\030\n\020column_qualifier\030\002 \001(\014\0226\n\ntime_r" +
+      "ange\030\003 \001(\0132\".google.bigtable.v1.Timestam" +
+      "pRange\032\'\n\020DeleteFromFamily\022\023\n\013family_nam" +
+      "e\030\001 \001(\t\032\017\n\rDeleteFromRowB\n\n\010mutation\"\200\001\n" +
+      "\023ReadModifyWriteRule\022\023\n\013family_name\030\001 \001(" +
+      "\t\022\030\n\020column_qualifier\030\002 \001(\014\022\026\n\014append_va" +
+      "lue\030\003 \001(\014H\000\022\032\n\020increment_amount\030\004 \001(\003H\000B" +
+      "\006\n\004ruleB-\n\026com.google.bigtable.v1B\021Bigta" +
+      "bleDataProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -209,7 +212,7 @@ public final class BigtableDataProto {
     internal_static_google_bigtable_v1_Cell_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_v1_Cell_descriptor,
-        new java.lang.String[] { "TimestampMicros", "Value", });
+        new java.lang.String[] { "TimestampMicros", "Value", "Labels", });
     internal_static_google_bigtable_v1_RowRange_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_google_bigtable_v1_RowRange_fieldAccessorTable = new
@@ -239,7 +242,7 @@ public final class BigtableDataProto {
     internal_static_google_bigtable_v1_RowFilter_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_v1_RowFilter_descriptor,
-        new java.lang.String[] { "Chain", "Interleave", "Condition", "RowKeyRegexFilter", "RowSampleFilter", "FamilyNameRegexFilter", "ColumnQualifierRegexFilter", "ColumnRangeFilter", "TimestampRangeFilter", "ValueRegexFilter", "ValueRangeFilter", "CellsPerRowOffsetFilter", "CellsPerRowLimitFilter", "CellsPerColumnLimitFilter", "StripValueTransformer", "Filter", });
+        new java.lang.String[] { "Chain", "Interleave", "Condition", "Sink", "PassAllFilter", "BlockAllFilter", "RowKeyRegexFilter", "RowSampleFilter", "FamilyNameRegexFilter", "ColumnQualifierRegexFilter", "ColumnRangeFilter", "TimestampRangeFilter", "ValueRegexFilter", "ValueRangeFilter", "CellsPerRowOffsetFilter", "CellsPerRowLimitFilter", "CellsPerColumnLimitFilter", "StripValueTransformer", "ApplyLabelTransformer", "Filter", });
     internal_static_google_bigtable_v1_RowFilter_Chain_descriptor =
       internal_static_google_bigtable_v1_RowFilter_descriptor.getNestedTypes().get(0);
     internal_static_google_bigtable_v1_RowFilter_Chain_fieldAccessorTable = new

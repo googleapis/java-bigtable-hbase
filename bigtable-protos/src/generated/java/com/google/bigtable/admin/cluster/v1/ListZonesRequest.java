@@ -478,6 +478,10 @@ public  final class ListZonesRequest extends
     }
   };
 
+  public static com.google.protobuf.Parser<ListZonesRequest> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<ListZonesRequest> getParserForType() {
     return PARSER;

@@ -237,10 +237,11 @@ public  final class ColumnFamily extends
    *
    * <pre>
    * Garbage collection rule specified as a protobuf.
-   * Supercedes `gc_expression`.
-   * Garbage collection executes opportunistically in the background, and so
-   * it's possible for reads to return a cell even if it matches the active GC
-   * expression for its family.
+   * Supersedes `gc_expression`.
+   * Must serialize to at most 500 bytes.
+   * NOTE: Garbage collection executes opportunistically in the background, and
+   * so it's possible for reads to return a cell even if it matches the active
+   * GC expression for its family.
    * </pre>
    */
   public boolean hasGcRule() {
@@ -251,10 +252,11 @@ public  final class ColumnFamily extends
    *
    * <pre>
    * Garbage collection rule specified as a protobuf.
-   * Supercedes `gc_expression`.
-   * Garbage collection executes opportunistically in the background, and so
-   * it's possible for reads to return a cell even if it matches the active GC
-   * expression for its family.
+   * Supersedes `gc_expression`.
+   * Must serialize to at most 500 bytes.
+   * NOTE: Garbage collection executes opportunistically in the background, and
+   * so it's possible for reads to return a cell even if it matches the active
+   * GC expression for its family.
    * </pre>
    */
   public com.google.bigtable.admin.table.v1.GcRule getGcRule() {
@@ -265,10 +267,11 @@ public  final class ColumnFamily extends
    *
    * <pre>
    * Garbage collection rule specified as a protobuf.
-   * Supercedes `gc_expression`.
-   * Garbage collection executes opportunistically in the background, and so
-   * it's possible for reads to return a cell even if it matches the active GC
-   * expression for its family.
+   * Supersedes `gc_expression`.
+   * Must serialize to at most 500 bytes.
+   * NOTE: Garbage collection executes opportunistically in the background, and
+   * so it's possible for reads to return a cell even if it matches the active
+   * GC expression for its family.
    * </pre>
    */
   public com.google.bigtable.admin.table.v1.GcRuleOrBuilder getGcRuleOrBuilder() {
@@ -825,10 +828,11 @@ public  final class ColumnFamily extends
      *
      * <pre>
      * Garbage collection rule specified as a protobuf.
-     * Supercedes `gc_expression`.
-     * Garbage collection executes opportunistically in the background, and so
-     * it's possible for reads to return a cell even if it matches the active GC
-     * expression for its family.
+     * Supersedes `gc_expression`.
+     * Must serialize to at most 500 bytes.
+     * NOTE: Garbage collection executes opportunistically in the background, and
+     * so it's possible for reads to return a cell even if it matches the active
+     * GC expression for its family.
      * </pre>
      */
     public boolean hasGcRule() {
@@ -839,10 +843,11 @@ public  final class ColumnFamily extends
      *
      * <pre>
      * Garbage collection rule specified as a protobuf.
-     * Supercedes `gc_expression`.
-     * Garbage collection executes opportunistically in the background, and so
-     * it's possible for reads to return a cell even if it matches the active GC
-     * expression for its family.
+     * Supersedes `gc_expression`.
+     * Must serialize to at most 500 bytes.
+     * NOTE: Garbage collection executes opportunistically in the background, and
+     * so it's possible for reads to return a cell even if it matches the active
+     * GC expression for its family.
      * </pre>
      */
     public com.google.bigtable.admin.table.v1.GcRule getGcRule() {
@@ -857,10 +862,11 @@ public  final class ColumnFamily extends
      *
      * <pre>
      * Garbage collection rule specified as a protobuf.
-     * Supercedes `gc_expression`.
-     * Garbage collection executes opportunistically in the background, and so
-     * it's possible for reads to return a cell even if it matches the active GC
-     * expression for its family.
+     * Supersedes `gc_expression`.
+     * Must serialize to at most 500 bytes.
+     * NOTE: Garbage collection executes opportunistically in the background, and
+     * so it's possible for reads to return a cell even if it matches the active
+     * GC expression for its family.
      * </pre>
      */
     public Builder setGcRule(com.google.bigtable.admin.table.v1.GcRule value) {
@@ -881,10 +887,11 @@ public  final class ColumnFamily extends
      *
      * <pre>
      * Garbage collection rule specified as a protobuf.
-     * Supercedes `gc_expression`.
-     * Garbage collection executes opportunistically in the background, and so
-     * it's possible for reads to return a cell even if it matches the active GC
-     * expression for its family.
+     * Supersedes `gc_expression`.
+     * Must serialize to at most 500 bytes.
+     * NOTE: Garbage collection executes opportunistically in the background, and
+     * so it's possible for reads to return a cell even if it matches the active
+     * GC expression for its family.
      * </pre>
      */
     public Builder setGcRule(
@@ -903,10 +910,11 @@ public  final class ColumnFamily extends
      *
      * <pre>
      * Garbage collection rule specified as a protobuf.
-     * Supercedes `gc_expression`.
-     * Garbage collection executes opportunistically in the background, and so
-     * it's possible for reads to return a cell even if it matches the active GC
-     * expression for its family.
+     * Supersedes `gc_expression`.
+     * Must serialize to at most 500 bytes.
+     * NOTE: Garbage collection executes opportunistically in the background, and
+     * so it's possible for reads to return a cell even if it matches the active
+     * GC expression for its family.
      * </pre>
      */
     public Builder mergeGcRule(com.google.bigtable.admin.table.v1.GcRule value) {
@@ -929,10 +937,11 @@ public  final class ColumnFamily extends
      *
      * <pre>
      * Garbage collection rule specified as a protobuf.
-     * Supercedes `gc_expression`.
-     * Garbage collection executes opportunistically in the background, and so
-     * it's possible for reads to return a cell even if it matches the active GC
-     * expression for its family.
+     * Supersedes `gc_expression`.
+     * Must serialize to at most 500 bytes.
+     * NOTE: Garbage collection executes opportunistically in the background, and
+     * so it's possible for reads to return a cell even if it matches the active
+     * GC expression for its family.
      * </pre>
      */
     public Builder clearGcRule() {
@@ -951,10 +960,11 @@ public  final class ColumnFamily extends
      *
      * <pre>
      * Garbage collection rule specified as a protobuf.
-     * Supercedes `gc_expression`.
-     * Garbage collection executes opportunistically in the background, and so
-     * it's possible for reads to return a cell even if it matches the active GC
-     * expression for its family.
+     * Supersedes `gc_expression`.
+     * Must serialize to at most 500 bytes.
+     * NOTE: Garbage collection executes opportunistically in the background, and
+     * so it's possible for reads to return a cell even if it matches the active
+     * GC expression for its family.
      * </pre>
      */
     public com.google.bigtable.admin.table.v1.GcRule.Builder getGcRuleBuilder() {
@@ -967,10 +977,11 @@ public  final class ColumnFamily extends
      *
      * <pre>
      * Garbage collection rule specified as a protobuf.
-     * Supercedes `gc_expression`.
-     * Garbage collection executes opportunistically in the background, and so
-     * it's possible for reads to return a cell even if it matches the active GC
-     * expression for its family.
+     * Supersedes `gc_expression`.
+     * Must serialize to at most 500 bytes.
+     * NOTE: Garbage collection executes opportunistically in the background, and
+     * so it's possible for reads to return a cell even if it matches the active
+     * GC expression for its family.
      * </pre>
      */
     public com.google.bigtable.admin.table.v1.GcRuleOrBuilder getGcRuleOrBuilder() {
@@ -986,10 +997,11 @@ public  final class ColumnFamily extends
      *
      * <pre>
      * Garbage collection rule specified as a protobuf.
-     * Supercedes `gc_expression`.
-     * Garbage collection executes opportunistically in the background, and so
-     * it's possible for reads to return a cell even if it matches the active GC
-     * expression for its family.
+     * Supersedes `gc_expression`.
+     * Must serialize to at most 500 bytes.
+     * NOTE: Garbage collection executes opportunistically in the background, and
+     * so it's possible for reads to return a cell even if it matches the active
+     * GC expression for its family.
      * </pre>
      */
     private com.google.protobuf.SingleFieldBuilder<
@@ -1047,6 +1059,10 @@ public  final class ColumnFamily extends
       }
     }
   };
+
+  public static com.google.protobuf.Parser<ColumnFamily> parser() {
+    return PARSER;
+  }
 
   @java.lang.Override
   public com.google.protobuf.Parser<ColumnFamily> getParserForType() {

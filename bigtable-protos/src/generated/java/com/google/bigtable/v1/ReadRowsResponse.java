@@ -913,6 +913,10 @@ public  final class ReadRowsResponse extends
       }
     };
 
+    public static com.google.protobuf.Parser<Chunk> parser() {
+      return PARSER;
+    }
+
     @java.lang.Override
     public com.google.protobuf.Parser<Chunk> getParserForType() {
       return PARSER;
@@ -1659,6 +1663,10 @@ public  final class ReadRowsResponse extends
       }
     }
   };
+
+  public static com.google.protobuf.Parser<ReadRowsResponse> parser() {
+    return PARSER;
+  }
 
   @java.lang.Override
   public com.google.protobuf.Parser<ReadRowsResponse> getParserForType() {

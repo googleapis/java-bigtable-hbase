@@ -126,24 +126,6 @@ public interface ClusterOrBuilder extends
   int getServeNodes();
 
   /**
-   * <code>optional int64 hdd_bytes = 6;</code>
-   *
-   * <pre>
-   * The maximum HDD storage usage allowed in this cluster, in bytes.
-   * </pre>
-   */
-  long getHddBytes();
-
-  /**
-   * <code>optional int64 ssd_bytes = 7;</code>
-   *
-   * <pre>
-   * The maximum SSD storage usage allowed in this cluster, in bytes.
-   * </pre>
-   */
-  long getSsdBytes();
-
-  /**
    * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
    *
    * <pre>

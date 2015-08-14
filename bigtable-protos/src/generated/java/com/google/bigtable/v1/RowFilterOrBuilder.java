@@ -65,6 +65,88 @@ public interface RowFilterOrBuilder extends
   com.google.bigtable.v1.RowFilter.ConditionOrBuilder getConditionOrBuilder();
 
   /**
+   * <code>optional bool sink = 16;</code>
+   *
+   * <pre>
+   * ADVANCED USE ONLY.
+   * Hook for introspection into the RowFilter. Outputs all cells directly to
+   * the output of the read rather than to any parent filter. Consider the
+   * following example:
+   * Chain(
+   *   FamilyRegex("A"),
+   *   Interleave(
+   *     All(),
+   *     Chain(Label("foo"), Sink())
+   *   ),
+   *   QualifierRegex("B")
+   * )
+   *                         A,A,1,w
+   *                         A,B,2,x
+   *                         B,B,4,z
+   *                            |
+   *                     FamilyRegex("A")
+   *                            |
+   *                         A,A,1,w
+   *                         A,B,2,x
+   *                            |
+   *               +------------+-------------+
+   *               |                          |
+   *             All()                    Label(foo)
+   *               |                          |
+   *            A,A,1,w              A,A,1,w,labels:[foo]
+   *            A,B,2,x              A,B,2,x,labels:[foo]
+   *               |                          |
+   *               |                        Sink() --------------+
+   *               |                          |                  |
+   *               +------------+      x------+          A,A,1,w,labels:[foo]
+   *                            |                        A,B,2,x,labels:[foo]
+   *                         A,A,1,w                             |
+   *                         A,B,2,x                             |
+   *                            |                                |
+   *                    QualifierRegex("B")                      |
+   *                            |                                |
+   *                         A,B,2,x                             |
+   *                            |                                |
+   *                            +--------------------------------+
+   *                            |
+   *                         A,A,1,w,labels:[foo]
+   *                         A,B,2,x,labels:[foo]  // could be switched
+   *                         A,B,2,x               // could be switched
+   * Despite being excluded by the qualifier filter, a copy of every cell
+   * that reaches the sink is present in the final result.
+   * As with an [Interleave][google.bigtable.v1.RowFilter.Interleave],
+   * duplicate cells are possible, and appear in an unspecified mutual order.
+   * In this case we have a duplicate with column "A:B" and timestamp 2,
+   * because one copy passed through the all filter while the other was
+   * passed through the label and sink. Note that one copy has label "foo",
+   * while the other does not.
+   * Cannot be used within the `predicate_filter`, `true_filter`, or
+   * `false_filter` of a [Condition][google.bigtable.v1.RowFilter.Condition].
+   * </pre>
+   */
+  boolean getSink();
+
+  /**
+   * <code>optional bool pass_all_filter = 17;</code>
+   *
+   * <pre>
+   * Matches all cells, regardless of input. Functionally equivalent to
+   * leaving `filter` unset, but included for completeness.
+   * </pre>
+   */
+  boolean getPassAllFilter();
+
+  /**
+   * <code>optional bool block_all_filter = 18;</code>
+   *
+   * <pre>
+   * Does not match any cells, regardless of input. Useful for temporarily
+   * disabling just part of a filter.
+   * </pre>
+   */
+  boolean getBlockAllFilter();
+
+  /**
    * <code>optional bytes row_key_regex_filter = 4;</code>
    *
    * <pre>
@@ -233,4 +315,42 @@ public interface RowFilterOrBuilder extends
    * </pre>
    */
   boolean getStripValueTransformer();
+
+  /**
+   * <code>optional string apply_label_transformer = 19;</code>
+   *
+   * <pre>
+   * Applies the given label to all cells in the output row. This allows
+   * the client to determine which results were produced from which part of
+   * the filter.
+   * Values must be at most 15 characters in length, and match the RE2
+   * pattern [a-z0-9&#92;&#92;-]+
+   * Due to a technical limitation, it is not currently possible to apply
+   * multiple labels to a cell. As a result, a Chain may have no more than
+   * one sub-filter which contains a apply_label_transformer. It is okay for
+   * an Interleave to contain multiple apply_label_transformers, as they will
+   * be applied to separate copies of the input. This may be relaxed in the
+   * future.
+   * </pre>
+   */
+  java.lang.String getApplyLabelTransformer();
+  /**
+   * <code>optional string apply_label_transformer = 19;</code>
+   *
+   * <pre>
+   * Applies the given label to all cells in the output row. This allows
+   * the client to determine which results were produced from which part of
+   * the filter.
+   * Values must be at most 15 characters in length, and match the RE2
+   * pattern [a-z0-9&#92;&#92;-]+
+   * Due to a technical limitation, it is not currently possible to apply
+   * multiple labels to a cell. As a result, a Chain may have no more than
+   * one sub-filter which contains a apply_label_transformer. It is okay for
+   * an Interleave to contain multiple apply_label_transformers, as they will
+   * be applied to separate copies of the input. This may be relaxed in the
+   * future.
+   * </pre>
+   */
+  com.google.protobuf.ByteString
+      getApplyLabelTransformerBytes();
 }

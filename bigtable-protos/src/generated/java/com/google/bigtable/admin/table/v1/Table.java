@@ -1074,6 +1074,10 @@ public  final class Table extends
     }
   };
 
+  public static com.google.protobuf.Parser<Table> parser() {
+    return PARSER;
+  }
+
   @java.lang.Override
   public com.google.protobuf.Parser<Table> getParserForType() {
     return PARSER;

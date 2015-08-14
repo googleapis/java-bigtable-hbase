@@ -881,6 +881,10 @@ public  final class Mutation extends
       }
     };
 
+    public static com.google.protobuf.Parser<SetCell> parser() {
+      return PARSER;
+    }
+
     @java.lang.Override
     public com.google.protobuf.Parser<SetCell> getParserForType() {
       return PARSER;
@@ -1718,6 +1722,10 @@ public  final class Mutation extends
       }
     };
 
+    public static com.google.protobuf.Parser<DeleteFromColumn> parser() {
+      return PARSER;
+    }
+
     @java.lang.Override
     public com.google.protobuf.Parser<DeleteFromColumn> getParserForType() {
       return PARSER;
@@ -2221,6 +2229,10 @@ public  final class Mutation extends
       }
     };
 
+    public static com.google.protobuf.Parser<DeleteFromFamily> parser() {
+      return PARSER;
+    }
+
     @java.lang.Override
     public com.google.protobuf.Parser<DeleteFromFamily> getParserForType() {
       return PARSER;
@@ -2540,6 +2552,10 @@ public  final class Mutation extends
         }
       }
     };
+
+    public static com.google.protobuf.Parser<DeleteFromRow> parser() {
+      return PARSER;
+    }
 
     @java.lang.Override
     public com.google.protobuf.Parser<DeleteFromRow> getParserForType() {
@@ -3681,6 +3697,10 @@ public  final class Mutation extends
       }
     }
   };
+
+  public static com.google.protobuf.Parser<Mutation> parser() {
+    return PARSER;
+  }
 
   @java.lang.Override
   public com.google.protobuf.Parser<Mutation> getParserForType() {
