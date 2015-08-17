@@ -33,24 +33,40 @@ Cloud Bigtable has been used by Google for 10+ years for its largest application
 
 
 ## Project setup, installation, and configuration
-**TODO**
 
-How do I, as a developer, start working on the project?
+There are a few things you need to do to get a working Bigtable project before you can execute code against it:
+1. [Creating a bigtable cluster](https://cloud.google.com/bigtable/docs/creating-cluster)
+1. It's recommended to [instal the Cloud SDK for Cloud Bigtable](https://cloud.google.com/bigtable/docs/installing-cloud-sdk)
 
-1. What dependencies does it have (where are they expressed) and how do I install them?
-1. Can I see the project working before I change anything?
+You can create a (maven project)[https://cloud.google.com/bigtable/docs/using-maven] with the following dependency:
+
+        <dependency>
+          <groupId>com.google.cloud.bigtable</groupId>
+          <artifactId>bigtable-hbase-1.0</artifactId>
+          <version>0.2.0</version>
+        </dependency>
+
+### How do I, as a developer, start working on the project?
+
+You'll need Java, Maven, Google Cloud project with a Bigtable Cluster (see above for details) and the cloud SDK (see above).
+
+You can run *mvn clean install* to create a local version of all of the Cloud Bigtable client binaries. 
 
 Additionally see our [example project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples)
 
 ## Testing
 
-How do I run the project's automated tests?
+You can run the unit tests via *mvn clean install*.  There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the cloud SDK configuration.
 
-* Unit Tests
-mvn package
+You can run the following command for Java 7:
 
-* Integration Tests
-**TODO**
+`mvn clean integration-test -PbigtableIntegrationTest -Dgoogle.bigtable.project.id=[your cloud project id] -Dgoogle.bigtable.zone.name=[the zone your cluster is in] -Dgoogle.bigtable.cluster.name=[your cluster id] -Dgoogle.bigtable.auth.service -Dgoogle.bigtable.auth.service.account.enable=true -Dbigtable.test.cluster.api=true -Dbigtable.test.cluster.size=1`
+
+If you are using Java 8, add the following option:
+
+`-Dalpn.version=8.1.3.v20150130`
+
+There is a possiblity that the versions of ALPN supplied above does not work with your JDK.  If so, you can see more alternatives (on the ALPN version table)[http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions].
 
 ## Deploying
 **TODO**
