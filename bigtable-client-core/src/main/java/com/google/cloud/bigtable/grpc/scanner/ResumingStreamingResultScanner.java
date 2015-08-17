@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.ExponentialBackOff.Builder;
@@ -60,6 +62,8 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   private ResultScanner<Row> currentDelegate;
   private ByteString lastRowKey = null;
   private Sleeper sleeper = Sleeper.DEFAULT;
+  // The number of rows read so far.
+  private long rowCount = 0;
 
   public ResumingStreamingResultScanner(
       RetryOptions retryOptions,
@@ -86,6 +90,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
         Row result = currentDelegate.next();
         if (result != null) {
           lastRowKey = result.getKey();
+          rowCount++;
         }
         // We've had at least one successful RPC, reset the backoff
         currentBackoff.reset();
@@ -145,6 +150,19 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     if (lastRowKey != null) {
       newRequest.getRowRangeBuilder().setStartKey(nextRowKey(lastRowKey));
     }
+
+    // If the row limit is set, update it.
+    long numRowsLimit = newRequest.getNumRowsLimit();
+    if (numRowsLimit > 0) {
+      // Updates the {@code numRowsLimit} by removing the number of rows already read.
+      numRowsLimit -= rowCount;
+
+      checkArgument(numRowsLimit > 0, "The remaining number of rows must be greater than 0.");
+
+      // Sets the updated {@code numRowsLimit} in {@code newRequest}.
+      newRequest.setNumRowsLimit(numRowsLimit);
+    }
+
     currentDelegate = scannerFactory.createScanner(newRequest.build());
   }
 

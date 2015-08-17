@@ -36,7 +36,9 @@ import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
 import com.google.protobuf.ByteString;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
@@ -53,6 +55,8 @@ import java.io.IOException;
 @RunWith(JUnit4.class)
 public class ResumingStreamingResultScannerTest {
 
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
   @Mock
   ResultScanner<Row> mockScanner;
   @Mock
@@ -117,6 +121,18 @@ public class ResumingStreamingResultScannerTest {
     doErrorsResume(Status.ABORTED);
   }
 
+  @Test
+  public void testAbortedErrorsResumeWithRowLimit() throws IOException {
+    doErrorsResume(
+        new IOExceptionWithStatus("Test", new StatusRuntimeException(Status.ABORTED)), 10);
+  }
+
+  @Test
+  public void testAbortedErrorsResumeWithTooManyRowsReturned() throws IOException {
+    doErrorsResume(
+        new IOExceptionWithStatus("Test", new StatusRuntimeException(Status.ABORTED)), 1);
+  }
+
   private void doErrorsResume(Status status) throws IOException {
     doErrorsResume(new IOExceptionWithStatus("Test", new StatusRuntimeException(status)));
   }
@@ -127,22 +143,35 @@ public class ResumingStreamingResultScannerTest {
   }
 
   private void doErrorsResume(IOException expectedIOException) throws IOException {
+    doErrorsResume(expectedIOException, 0);
+  }
+
+  private void doErrorsResume(IOException expectedIOException, long numRowsLimit)
+      throws IOException {
     Row row1 = buildRow("row1");
     Row row2 = buildRow("row2");
     Row row3 = buildRow("row3");
     Row row4 = buildRow("row4");
 
-    ReadRowsRequest.Builder expectedResumeRequest = readRowsRequest.toBuilder();
+    ReadRowsRequest.Builder originalRequest = readRowsRequest.toBuilder();
+    if (numRowsLimit != 0) {
+      originalRequest.setNumRowsLimit(numRowsLimit);
+    }
+
+    ReadRowsRequest.Builder expectedResumeRequest = originalRequest.build().toBuilder();
     expectedResumeRequest.getRowRangeBuilder()
         .setStartKey(ResumingStreamingResultScanner.nextRowKey(ByteString.copyFromUtf8("row2")));
+    if (numRowsLimit > 2) {
+      expectedResumeRequest.setNumRowsLimit(numRowsLimit - 2);
+    }
 
-    when(mockScannerFactory.createScanner(eq(readRowsRequest)))
+    when(mockScannerFactory.createScanner(eq(originalRequest.build())))
         .thenReturn(mockScanner);
     when(mockScannerFactory.createScanner(eq(expectedResumeRequest.build())))
         .thenReturn(mockScannerPostResume);
 
-    ResumingStreamingResultScanner scanner =
-        new ResumingStreamingResultScanner(retryOptions, readRowsRequest, mockScannerFactory);
+    ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(
+        retryOptions, originalRequest.build(), mockScannerFactory);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -160,12 +189,18 @@ public class ResumingStreamingResultScannerTest {
 
     assertRowKey("row1", scanner.next());
     assertRowKey("row2", scanner.next());
+    // {@code numRowsLimit} with 1 or 2 give over the row limit error on rescan.
+    if (numRowsLimit == 1 || numRowsLimit == 2) {
+      thrown.expect(IllegalArgumentException.class);
+    }
     assertRowKey("row3", scanner.next());
     assertRowKey("row4", scanner.next());
 
-    verify(mockScannerFactory, times(1)).createScanner(eq(readRowsRequest));
+    verify(mockScannerFactory, times(1)).createScanner(eq(originalRequest.build()));
     verify(mockScanner, times(1)).close();
-    verify(mockScannerFactory, times(1)).createScanner(eq(expectedResumeRequest.build()));
+    if (numRowsLimit != 1 && numRowsLimit != 2) {
+      verify(mockScannerFactory, times(1)).createScanner(eq(expectedResumeRequest.build()));
+    }
   }
 
   @Test
