@@ -97,7 +97,6 @@ limitations under the License.
                     <groupId>${project.groupId}</groupId>
                     <artifactId>${google.bigtable.project.under.test}</artifactId>
                     <version>${project.version}</version>
-                    <classifier>shaded</classifier>
                 </dependency>
             </dependencies>
             <build>
