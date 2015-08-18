@@ -57,6 +57,7 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.SubstringComparator;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
+import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -65,6 +66,7 @@ import org.junit.experimental.categories.Category;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public class TestFilters extends AbstractTest {
@@ -993,6 +995,123 @@ public class TestFilters extends AbstractTest {
     Assert.assertArrayEquals(rowGoodIPv6, results[2].getRow());
 
     table.close();
+  }
+
+  @Test
+  @Category(KnownGap.class)
+  public void testWhileMatchFilter_simple() throws IOException {
+    String rowKeyPrefix = "wmf-simple-";
+    byte[] qualA = dataHelper.randomData("qualA");
+    Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
+
+    ByteArrayComparable rowValue2Comparable = new BinaryComparator(Bytes.toBytes("12"));
+    ValueFilter valueFilter =
+        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable);
+    WhileMatchFilter simpleWhileMatch = new WhileMatchFilter(valueFilter);
+    Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
+    scan.setFilter(simpleWhileMatch);
+
+    int[] expected = {0, 1, 10, 11};
+    assertWhileMatchFilterResult(qualA, table, scan, expected);
+  }
+
+  @Test
+  @Category(KnownGap.class)
+  public void testWhileMatchFilter_twoInterleaves() throws IOException {
+    String rowKeyPrefix = "wmf-interleaves-";
+    byte[] qualA = dataHelper.randomData("qualA");
+    Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
+
+    ByteArrayComparable rowValue2Comparable1 = new BinaryComparator(Bytes.toBytes("12"));
+    ValueFilter valueFilter1 =
+        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable1);
+    WhileMatchFilter simpleWhileMatch1 = new WhileMatchFilter(valueFilter1);
+    ByteArrayComparable rowValue2Comparable2 = new BinaryComparator(Bytes.toBytes("15"));
+    ValueFilter valueFilter2 =
+        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable2);
+    WhileMatchFilter simpleWhileMatch2 = new WhileMatchFilter(valueFilter2);
+    FilterList filterList = new FilterList(
+      Operator.MUST_PASS_ONE,
+      simpleWhileMatch1,
+      simpleWhileMatch2);
+    Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
+    scan.setFilter(filterList);
+
+    int[] expected = {0, 1, 10, 11, 12, 13, 14};
+    assertWhileMatchFilterResult(qualA, table, scan, expected);
+  }
+
+  @Test
+  @Category(KnownGap.class)
+  public void testWhileMatchFilter_twoChained() throws IOException {
+    String rowKeyPrefix = "wmf-chained-";
+    byte[] qualA = dataHelper.randomData("qualA");
+    Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
+
+    ByteArrayComparable rowValue2Comparable1 = new BinaryComparator(Bytes.toBytes("12"));
+    ValueFilter valueFilter1 =
+        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable1);
+    WhileMatchFilter simpleWhileMatch1 = new WhileMatchFilter(valueFilter1);
+    ByteArrayComparable rowValue2Comparable2 = new BinaryComparator(Bytes.toBytes("15"));
+    ValueFilter valueFilter2 =
+        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable2);
+    WhileMatchFilter simpleWhileMatch2 = new WhileMatchFilter(valueFilter2);
+    FilterList filterList = new FilterList(
+      Operator.MUST_PASS_ALL,
+      simpleWhileMatch1,
+      simpleWhileMatch2);
+    Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
+    scan.setFilter(filterList);
+
+    int[] expected = {0, 1, 10, 11};
+    assertWhileMatchFilterResult(qualA, table, scan, expected);
+  }
+
+  @Test
+  @Category(KnownGap.class)
+  public void testWhileMatchFilter_twoNested() throws IOException {
+    String rowKeyPrefix = "wmf-nested-";
+    byte[] qualA = dataHelper.randomData("qualA");
+    Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
+
+    ByteArrayComparable rowValue2Comparable1 = new BinaryComparator(Bytes.toBytes("12"));
+    ValueFilter valueFilter1 =
+        new ValueFilter(CompareFilter.CompareOp.NOT_EQUAL, rowValue2Comparable1);
+    WhileMatchFilter simpleWhileMatch1 = new WhileMatchFilter(valueFilter1);
+    WhileMatchFilter simpleWhileMatch2 = new WhileMatchFilter(simpleWhileMatch1);
+    Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
+    scan.setFilter(simpleWhileMatch2);
+
+    int[] expected = {0, 1, 10, 11};
+    assertWhileMatchFilterResult(qualA, table, scan, expected);
+  }
+
+  private Table addDataForWhileMatchFilterTest(String rowKeyPrefix, byte[] qualA)
+      throws IOException {
+    Table table = getConnection().getTable(TABLE_NAME);
+    for (int i = 0; i < 100; i++) {
+      String indexStr = String.valueOf(i);
+      byte[] rowKey = Bytes.toBytes(rowKeyPrefix + indexStr);
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qualA, Bytes.toBytes(indexStr));
+      table.put(put);
+    }
+    return table;
+  }
+
+  private void assertWhileMatchFilterResult(byte[] qualA, Table table, Scan scan, int[] expected)
+      throws IOException {
+    int[] actual = new int[expected.length];
+    int i = 0;
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      Iterator<Result> iterator = scanner.iterator();
+      while (iterator.hasNext()) {
+        for (Cell cell : iterator.next().getColumnCells(COLUMN_FAMILY, qualA)) {
+          int cellIntValue = Integer.parseInt(Bytes.toString(CellUtil.cloneValue(cell)));
+          actual[i++] = cellIntValue;
+        }
+      }
+    }
+    Assert.assertArrayEquals(expected, actual);
   }
 
   @Test
