@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
@@ -25,9 +26,12 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 /**
  * Context for the currently executing filter adapter.
  */
+@NotThreadSafe
 public class FilterAdapterContext {
 
   public interface ContextCloseable extends AutoCloseable {
@@ -38,6 +42,7 @@ public class FilterAdapterContext {
   private final Scan scan;
   private Deque<FilterList> filterListStack;
   private ReadHooks readHooks;
+  private int counter;
 
   public FilterAdapterContext(Scan scan, ReadHooks readHooks) {
     this.scan = scan;
@@ -74,5 +79,20 @@ public class FilterAdapterContext {
 
   public ReadHooks getReadHooks() {
     return readHooks;
+  }
+
+  /**
+   * Returns the next unique ID as a {@link String} in this adapter context.
+   */
+  public String getNextUniqueId() {
+    return String.valueOf(++counter);
+  }
+
+  /**
+   * Returns the current unique ID as a {@link String} in this adapter context.
+   */
+  @VisibleForTesting
+  String getCurrentUniqueId() {
+    return String.valueOf(counter);
   }
 }
