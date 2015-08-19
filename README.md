@@ -36,9 +36,9 @@ Cloud Bigtable has been used by Google for 10+ years for its largest application
 
 There are a few things you need to do to get a working Bigtable project before you can execute code against it:
 1. [Creating a bigtable cluster](https://cloud.google.com/bigtable/docs/creating-cluster)
-1. It's recommended to [instal the Cloud SDK for Cloud Bigtable](https://cloud.google.com/bigtable/docs/installing-cloud-sdk)
+1. It's recommended to [install the Cloud SDK for Cloud Bigtable](https://cloud.google.com/bigtable/docs/installing-cloud-sdk)
 
-You can create a (maven project)[https://cloud.google.com/bigtable/docs/using-maven] with the following dependency:
+You can create a [maven project](https://cloud.google.com/bigtable/docs/using-maven) with the following dependency:
 
         <dependency>
           <groupId>com.google.cloud.bigtable</groupId>
@@ -66,7 +66,7 @@ If you are using Java 8, add the following option:
 
 `-Dalpn.version=8.1.3.v20150130`
 
-There is a possiblity that the versions of ALPN supplied above does not work with your JDK.  If so, you can see more alternatives (on the ALPN version table)[http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions].
+There is a possiblity that the versions of ALPN supplied above does not work with your JDK.  If so, you can see more alternatives [on the ALPN version table](http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions).
 
 ## Deploying
 **TODO**
