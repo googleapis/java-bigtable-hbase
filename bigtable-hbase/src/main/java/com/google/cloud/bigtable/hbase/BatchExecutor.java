@@ -181,12 +181,12 @@ public class BatchExecutor {
       BigtableTableName bigtableTableName,
       ListeningExecutorService service,
       ReadOperationAdapter<Get> getAdapter,
-      OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
       OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
-      RowMutationsAdapter rowMutationsAdapter,
       AppendAdapter appendAdapter,
       IncrementAdapter incrementAdapter,
-      ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter) {
+      ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter,
+      OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
+      RowMutationsAdapter rowMutationsAdapter) {
     this.client = client;
     this.options = options;
     this.bigtableTableName = bigtableTableName;

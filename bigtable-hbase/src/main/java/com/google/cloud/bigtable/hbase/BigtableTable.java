@@ -67,7 +67,6 @@ import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ReadOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
@@ -88,21 +87,23 @@ import com.google.protobuf.ServiceException;
 public class BigtableTable implements Table {
   protected static final Logger LOG = new Logger(BigtableTable.class);
 
+  public static final ResponseAdapter<com.google.bigtable.v1.Row, Result> ROW_ADAPTER = new RowAdapter();
+  public static final AppendAdapter APPEND_ADAPTER = new AppendAdapter();
+  public static final IncrementAdapter INCREMENT_ADAPTER = new IncrementAdapter();
+  public static final DeleteAdapter DELETE_ADAPTER = new DeleteAdapter();
+  public static final FilterAdapter FILTER_ADAPTER = FilterAdapter.buildAdapter();
+  public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(FILTER_ADAPTER);
+  public static final BigtableResultScannerAdapter BIGTABLE_RESULT_SCAN_ADAPTER =
+      new BigtableResultScannerAdapter(ROW_ADAPTER);
+  public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
+
   protected final TableName tableName;
   protected final BigtableOptions options;
   protected final BigtableDataClient client;
-  protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> rowAdapter = new RowAdapter();
+
   protected final PutAdapter putAdapter;
-  protected final AppendAdapter appendAdapter = new AppendAdapter();
-  protected final IncrementAdapter incrementAdapter = new IncrementAdapter();
-  protected final DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected final MutationAdapter mutationAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
-  protected final ReadOperationAdapter<Scan> scanAdapter;
-  protected final ReadOperationAdapter<Get> getAdapter;
-  protected final FilterAdapter filterAdapter;
-  protected final BigtableResultScannerAdapter bigtableResultScannerAdapter =
-      new BigtableResultScannerAdapter(rowAdapter);
   protected final BatchExecutor batchExecutor;
   private final ListeningExecutorService executorService;
   private final BigtableTableName bigtableTableName;
@@ -123,28 +124,25 @@ public class BigtableTable implements Table {
     this.client = client;
     putAdapter = new PutAdapter(getConfiguration());
     mutationAdapter = new MutationAdapter(
-        deleteAdapter,
+        DELETE_ADAPTER,
         putAdapter,
         new UnsupportedOperationAdapter<Increment>("increment"),
         new UnsupportedOperationAdapter<Append>("append"));
     rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
     this.executorService = MoreExecutors.listeningDecorator(executorService);
     this.bigtableTableName = options.getClusterName().toTableName(tableName.getNameAsString());
-    this.filterAdapter = FilterAdapter.buildAdapter();
-    this.scanAdapter = new ScanAdapter(this.filterAdapter);
-    this.getAdapter = new GetAdapter(new ScanAdapter(this.filterAdapter));
     this.batchExecutor = new BatchExecutor(
         client,
         options,
         this.bigtableTableName,
         this.executorService,
-        getAdapter,
+        GET_ADAPTER,
+        DELETE_ADAPTER,
+        APPEND_ADAPTER,
+        INCREMENT_ADAPTER,
+        ROW_ADAPTER,
         putAdapter,
-        deleteAdapter,
-        rowMutationsAdapter,
-        appendAdapter,
-        incrementAdapter,
-        rowAdapter);
+        rowMutationsAdapter);
   }
 
   @Override
@@ -218,14 +216,14 @@ public class BigtableTable implements Table {
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
     ReadHooks readHooks = new DefaultReadHooks();
-    ReadRowsRequest.Builder readRowsRequest = getAdapter.adapt(get, readHooks);
+    ReadRowsRequest.Builder readRowsRequest = GET_ADAPTER.adapt(get, readHooks);
     readRowsRequest.setTableName(bigtableTableName.toString());
 
     try {
       ReadRowsRequest finalRequest = readHooks.applyPreSendHook(readRowsRequest.build());
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
           client.readRows(finalRequest);
-      Result response = rowAdapter.adaptResponse(scanner.next());
+      Result response = ROW_ADAPTER.adaptResponse(scanner.next());
       scanner.close();
 
       return response;
@@ -251,14 +249,14 @@ public class BigtableTable implements Table {
   public ResultScanner getScanner(Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
     ReadHooks readHooks = new DefaultReadHooks();
-    ReadRowsRequest.Builder request = scanAdapter.adapt(scan, readHooks);
+    ReadRowsRequest.Builder request = SCAN_ADAPTER.adapt(scan, readHooks);
     request.setTableName(bigtableTableName.toString());
 
     try {
       ReadRowsRequest finalRequest = readHooks.applyPreSendHook(request.build());
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
           client.readRows(finalRequest);
-      return bigtableResultScannerAdapter.adapt(scanner);
+      return BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner);
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       throw new IOException(
@@ -346,7 +344,7 @@ public class BigtableTable implements Table {
   @Override
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
-    MutateRowRequest.Builder requestBuilder = deleteAdapter.adapt(delete);
+    MutateRowRequest.Builder requestBuilder = DELETE_ADAPTER.adapt(delete);
     requestBuilder.setTableName(bigtableTableName.toString());
 
     try {
@@ -387,7 +385,7 @@ public class BigtableTable implements Table {
             compareOp,
             value,
             delete.getRow(),
-            deleteAdapter.adapt(delete).getMutationsList());
+            DELETE_ADAPTER.adapt(delete).getMutationsList());
 
     try {
       CheckAndMutateRowResponse response =
@@ -461,7 +459,7 @@ public class BigtableTable implements Table {
   public Result append(Append append) throws IOException {
     LOG.trace("append(Append)");
 
-    ReadModifyWriteRowRequest.Builder appendRowRequest = appendAdapter.adapt(append);
+    ReadModifyWriteRowRequest.Builder appendRowRequest = APPEND_ADAPTER.adapt(append);
     appendRowRequest.setTableName(bigtableTableName.toString());
     try {
       com.google.bigtable.v1.Row response =
@@ -469,7 +467,7 @@ public class BigtableTable implements Table {
       // The bigtable API will always return the mutated results. In order to maintain
       // compatibility, simply return null when results were not requested.
       if (append.isReturnResults()) {
-        return rowAdapter.adaptResponse(response);
+        return ROW_ADAPTER.adaptResponse(response);
       } else {
         return null;
       }
@@ -489,12 +487,12 @@ public class BigtableTable implements Table {
   public Result increment(Increment increment) throws IOException {
     LOG.trace("increment(Increment)");
     ReadModifyWriteRowRequest.Builder incrementRowRequest =
-        incrementAdapter.adapt(increment);
+        INCREMENT_ADAPTER.adapt(increment);
     incrementRowRequest.setTableName(bigtableTableName.toString());
 
     try {
       com.google.bigtable.v1.Row response = client.readModifyWriteRow(incrementRowRequest.build());
-      return rowAdapter.adaptResponse(response);
+      return ROW_ADAPTER.adaptResponse(response);
     } catch (Throwable e) {
       LOG.error("Encountered RuntimeException when executing increment.", e);
       throw new IOException(
@@ -669,9 +667,7 @@ public class BigtableTable implements Table {
             "We built a bad Filter for conditional mutation.");
       }
     };
-    requestBuilder.setPredicateFilter(
-        new ScanAdapter(filterAdapter)
-            .buildFilter(scan, throwIfUsed));
+    requestBuilder.setPredicateFilter(SCAN_ADAPTER.buildFilter(scan, throwIfUsed));
     return requestBuilder;
   }
 
