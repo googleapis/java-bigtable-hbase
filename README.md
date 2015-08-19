@@ -35,6 +35,7 @@ Cloud Bigtable has been used by Google for 10+ years for its largest application
 ## Project setup, installation, and configuration
 
 There are a few things you need to do to get a working Bigtable project before you can execute code against it:
+
 1. [Creating a bigtable cluster](https://cloud.google.com/bigtable/docs/creating-cluster)
 1. It's recommended to [install the Cloud SDK for Cloud Bigtable](https://cloud.google.com/bigtable/docs/installing-cloud-sdk)
 
