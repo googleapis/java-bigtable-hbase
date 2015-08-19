@@ -31,7 +31,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 

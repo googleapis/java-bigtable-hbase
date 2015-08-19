@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.config;
 
-import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.api.client.util.Strings;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.common.base.Preconditions;
