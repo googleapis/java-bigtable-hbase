@@ -22,9 +22,12 @@ import com.google.common.base.Preconditions;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -43,6 +46,7 @@ public class FilterAdapterContext {
   private Deque<FilterList> filterListStack;
   private ReadHooks readHooks;
   private int counter;
+  private final List<WhileMatchFilter> whileMatchFilters = new ArrayList<>();
 
   public FilterAdapterContext(Scan scan, ReadHooks readHooks) {
     this.scan = scan;
@@ -94,5 +98,19 @@ public class FilterAdapterContext {
   @VisibleForTesting
   String getCurrentUniqueId() {
     return String.valueOf(counter);
+  }
+
+  /*
+   * Adds a {@link WhileMatchFilter}, {@code filter} in the context.
+   */
+  public void addWhileMatchFilter(WhileMatchFilter filter) {
+    whileMatchFilters.add(filter);
+  }
+
+  /*
+   * Returns the number of {@link WhileMatchFilter}s in the context.
+   */
+  public int getNumberOfWhileMatchFilters() {
+    return whileMatchFilters.size();
   }
 }

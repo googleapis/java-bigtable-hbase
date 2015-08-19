@@ -80,6 +80,18 @@ public class TestWhileMatchFilterAdapter {
     assertEquals(expectedFilter, rowFilter);
   }
 
+  @Test
+  public void twoFiltersNotSupported() throws IOException {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("More than one WhileMatchFilter is not supported.");
+
+    ValueFilter valueFilter =
+        new ValueFilter(CompareFilter.CompareOp.LESS, new BinaryComparator(Bytes.toBytes("12")));
+    WhileMatchFilter filter = new WhileMatchFilter(valueFilter);
+    instance.adapt(emptyScanContext, filter);
+    instance.adapt(emptyScanContext, filter);
+  }
+
   private static RowFilter buildExpectedRowFilter(
       RowFilter wrappedFilter, String whileMatchFileterId) {
     RowFilter sink = RowFilter.newBuilder().setSink(true).build();

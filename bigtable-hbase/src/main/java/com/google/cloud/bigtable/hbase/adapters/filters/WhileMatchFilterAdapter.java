@@ -75,6 +75,11 @@ public class WhileMatchFilterAdapter implements TypedFilterAdapter<WhileMatchFil
    */
   @Override
   public RowFilter adapt(FilterAdapterContext context, WhileMatchFilter filter) throws IOException {
+    // We need to eventually support more than one {@link WhileMatchFilter}s soon. Checking the size
+    // of a list of {@link WhileMatchFilter}s makes more sense than verifying a single boolean flag.
+    checkArgument(
+        context.getNumberOfWhileMatchFilters() == 0,
+        "More than one WhileMatchFilter is not supported.");
     checkNotNull(filter.getFilter(), "The wrapped filter for a WhileMatchFilter cannot be null.");
     Optional<RowFilter> wrappedFilter = subFilterAdapter.adaptFilter(context, filter.getFilter());
     checkArgument(
@@ -115,6 +120,8 @@ public class WhileMatchFilterAdapter implements TypedFilterAdapter<WhileMatchFil
             .setInterleave(
                 Interleave.newBuilder().addAllFilters(ImmutableList.of(inLabelAndSink, outChain)))
             .build();
+
+    context.addWhileMatchFilter(filter);
 
     return rowFilter;
   }
