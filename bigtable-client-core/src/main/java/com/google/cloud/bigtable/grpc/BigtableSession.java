@@ -50,11 +50,13 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.MethodDescriptor;
 import io.grpc.auth.ClientAuthInterceptor;
+import io.grpc.transport.netty.GrpcSslContexts;
 import io.grpc.transport.netty.NegotiationType;
 import io.grpc.transport.netty.NettyChannelBuilder;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -109,7 +111,7 @@ public class BigtableSession implements AutoCloseable {
   private static final Map<MethodDescriptor<?, ?>, Predicate<?>> methodsToRetryMap =
       createMethodRetryMap();
   private static final Logger LOG = new Logger(BigtableSession.class);
-//  private static final SslContextBuilder sslBuilder = createGrpcSslBuilder();
+  private static final SslContextBuilder sslBuilder = createGrpcSslBuilder();
 
   private static ExecutorService connectionStartupExecutor =
       Executors.newCachedThreadPool(
@@ -122,26 +124,14 @@ public class BigtableSession implements AutoCloseable {
     performWarmup();
   }
 
-  // TODO: This, or at least some variant of this, is recommended by the gRPC team. A client project
-  // broke with this option, so we need to debug that issue before enabling this approach.
-//  private static SslContextBuilder createGrpcSslBuilder() {
-//    SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
-//    if (System.getProperty("java.version").startsWith("1.7.")) {
-//      // The grpc cyphers only work in JDK 1.8+.  Use the default system cyphers for JDK 1.7.
-//      sslBuilder.ciphers(null);
-//      LOG.info("Java 7 detected.  Consider Using JDK 1.8+ which has more secure SSL cyphers. "
-//          + "If you upgrade, you'll have to change your version of ALPN as per "
-//          + "http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions");
-//    }
-//    return sslBuilder;
-//  }
+  private static SslContextBuilder createGrpcSslBuilder() {
+    SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
+    sslBuilder.ciphers(null);
+    return sslBuilder;
+  }
 
-  // The deprecation is caused by SslContext.newClientContext(). We won't need the @SuppressWarnings
-  // once we get GrpcSslContexts to work properly.
-  @SuppressWarnings("deprecation")
   private static SslContext createSslContext() throws SSLException {
-    // return sslBuilder.build();
-    return SslContext.newClientContext();
+     return sslBuilder.build();
   }
 
   private static void performWarmup() {
@@ -150,7 +140,7 @@ public class BigtableSession implements AutoCloseable {
     connectionStartupExecutor.execute(new Runnable() {
       @Override
       public void run() {
-        // The first invocation of BigtableOptions.SSL_CONTEXT_FACTORY.create() is expensive.
+        // The first invocation of createSslContext() is expensive.
         // Create a throw away object in order to speed up the creation of the first
         // BigtableConnection which uses SslContexts under the covers.
         try {
