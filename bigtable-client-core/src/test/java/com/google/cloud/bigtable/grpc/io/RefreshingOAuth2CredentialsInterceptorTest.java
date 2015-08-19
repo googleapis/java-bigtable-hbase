@@ -11,6 +11,7 @@ package com.google.cloud.bigtable.grpc.io;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -144,19 +145,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Assert.assertEquals(CacheState.Expired,
       RefreshingOAuth2CredentialsInterceptor.getCacheState(underTest.headerCache.get()));
 
-    Future<Void> future = executorService.submit(syncRefreshCallable);
-    
-    // let the Thread running syncRefreshCallable() have a turn so that it can initiate the call
-    // to refreshAccessToken().
-    Thread.yield();
-    synchronized(lock) {
-      lock.notifyAll();
-    }
-
-    // Try to get the access token, which should be calculated at this point.  There's
-    // a possibility that some hanging occurs in the test code.  If the operation times out
-    // so timeout after 1 second, this will throw a TimeoutException.
-    future.get(1, TimeUnit.SECONDS);
+    syncCall(lock, syncRefreshCallable);
 
     // Check to make sure that the AccessToken was retrieved.
     Assert.assertEquals(CacheState.Stale,
@@ -172,10 +161,31 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     underTest.asyncRefresh();
     underTest.asyncRefresh();
 
+    syncCall(lock, syncRefreshCallable);
+    Assert.assertFalse(underTest.isRefreshing.get());
+  }
+
+  private void syncCall(final Object lock, Callable<Void> syncRefreshCallable)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    Future<Void> future;
     future = executorService.submit(syncRefreshCallable);
-    // Let the asyncRefreshes do their thing.
-    Thread.yield();
+    unlock(lock, future);
     
+    // Wait for no more than a second to make sure that the call to underTest.syncRefresh()
+    // completes properly.  If a second passes without syncRefresh() completing, future.get(..)
+    // will throw a TimeoutException.
+    future.get(1, TimeUnit.SECONDS);
+  }
+
+  private void unlock(final Object lock, Future<Void> future) throws InterruptedException,
+      ExecutionException {
+    // let the Thread running syncRefreshCallable() have a turn so that it can initiate the call
+    // to refreshAccessToken().
+    try {
+      future.get(100, TimeUnit.MILLISECONDS);
+    } catch (TimeoutException ignored) {
+    }
+
     // There should be a single thread kicked off by the underTest.asyncRefresh() calls about
     // actually doing a refresh at this point; the other ones will have see that a refresh is in
     // progress and finish the invocation of the Thread without performing a refres().. Make sure
@@ -183,14 +193,8 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Assert.assertTrue(underTest.isRefreshing.get());
 
     synchronized(lock) {
-      // Release the lock so that all of the async refreshing can complete.
       lock.notifyAll();
     }
-    // Wait for no more than a second to make sure that the call to underTest.syncRefresh()
-    // completes properly.  If a second passes without syncRefresh() completing, future.get(..)
-    // will throw a TimeoutException.
-    future.get(1, TimeUnit.SECONDS);
-    Assert.assertFalse(underTest.isRefreshing.get());
   }
 
   private void initialize(long expiration) throws IOException {
