@@ -310,7 +310,7 @@ public class BigtableSession implements AutoCloseable {
         });
 
     if (credentialRefreshingFuture != null) {
-      get(credentialRefreshingFuture, "Cloud not initialize credentials");
+      get(credentialRefreshingFuture, "Could not initialize credentials");
     }
 
     this.dataClient = get(dataClientFuture, "Could not initialize the data API client");
@@ -320,7 +320,7 @@ public class BigtableSession implements AutoCloseable {
 
   private Future<Void> initializeCredentials(Future<Credentials> credentialsFuture)
       throws IOException {
-    final Credentials credentials = get(credentialsFuture, "Cloud not initialize credentials");
+    final Credentials credentials = get(credentialsFuture, "Could not initialize credentials");
     Future<Void> credentialRefreshFuture = null;
     if (credentials != null) {
       if (credentials instanceof OAuth2Credentials) {
