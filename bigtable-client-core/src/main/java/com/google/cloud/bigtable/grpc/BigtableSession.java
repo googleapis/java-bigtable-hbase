@@ -17,7 +17,7 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc;
