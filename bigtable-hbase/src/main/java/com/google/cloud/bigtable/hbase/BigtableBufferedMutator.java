@@ -39,17 +39,10 @@ import org.apache.hadoop.hbase.client.Row;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
-import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
-import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
-import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
 import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -212,15 +205,12 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
     this.host = options.getDataHost().toString();
 
-    DeleteAdapter deleteAdapter = new DeleteAdapter();
     PutAdapter putAdapter = new PutAdapter(configuration);
-    ScanAdapter scanAdapter = new ScanAdapter(FilterAdapter.buildAdapter());
-    GetAdapter getAdapter = new GetAdapter(scanAdapter);
 
     RowMutationsAdapter rowMutationsAdapter =
         new RowMutationsAdapter(
             new MutationAdapter(
-                deleteAdapter,
+                BigtableTable.DELETE_ADAPTER,
                 putAdapter,
                 new UnsupportedOperationAdapter<Increment>("increment"),
                 new UnsupportedOperationAdapter<Append>("append")));
@@ -233,13 +223,13 @@ public class BigtableBufferedMutator implements BufferedMutator {
         options,
         options.getClusterName().toTableName(tableName.getNameAsString()),
         listeningExecutorService,
-        getAdapter,
+        BigtableTable.GET_ADAPTER,
+        BigtableTable.DELETE_ADAPTER,
+        BigtableTable.APPEND_ADAPTER,
+        BigtableTable.INCREMENT_ADAPTER,
+        BigtableTable.ROW_ADAPTER,
         putAdapter,
-        deleteAdapter,
-        rowMutationsAdapter,
-        new AppendAdapter(),
-        new IncrementAdapter(),
-        new RowAdapter());
+        rowMutationsAdapter);
   }
 
   @VisibleForTesting

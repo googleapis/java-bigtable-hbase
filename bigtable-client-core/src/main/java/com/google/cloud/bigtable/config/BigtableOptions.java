@@ -186,6 +186,7 @@ public class BigtableOptions {
   private final RetryOptions retryOptions;
   private final int timeoutMs;
   private final int channelCount;
+  private final BigtableClusterName clusterName;
 
   @VisibleForTesting
   BigtableOptions() {
@@ -204,6 +205,7 @@ public class BigtableOptions {
       retryOptions = null;
       timeoutMs = 0;
       channelCount = 1;
+      clusterName = null;
   }
 
   private BigtableOptions(
@@ -249,6 +251,7 @@ public class BigtableOptions {
     this.retryOptions = retryOptions;
     this.timeoutMs = timeoutMs;
     this.channelCount = channelCount;
+    this.clusterName = new BigtableClusterName(getProjectId(), getZoneId(), getClusterId());
 
     LOG.debug("Connection Configuration: projectId: %s, zoneId: %s, clusterId: %s, data host %s, "
         + "table admin host %s, cluster admin host %s.",
@@ -346,6 +349,6 @@ public class BigtableOptions {
   }
 
   public BigtableClusterName getClusterName() {
-    return new BigtableClusterName(getProjectId(), getZoneId(), getClusterId());
+    return clusterName;
   }
 }
