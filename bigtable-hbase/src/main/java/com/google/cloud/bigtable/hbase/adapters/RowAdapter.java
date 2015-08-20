@@ -48,6 +48,12 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
         byte[] columnQualifier = column.getQualifier().toByteArray();
 
         for (Cell cell : column.getCellsList()) {
+          // Cells with labels are for internal use, do not return them.
+          // TODO(kevinsi4508): Filter out targeted {@link WhileMatchFilter} labels.
+          if (cell.getLabelsCount() > 0) {
+            continue;
+          }
+
           long hbaseTimestamp =
               BigtableConstants.HBASE_TIMEUNIT.convert(
                   cell.getTimestampMicros(), BigtableConstants.BIGTABLE_TIMEUNIT);
