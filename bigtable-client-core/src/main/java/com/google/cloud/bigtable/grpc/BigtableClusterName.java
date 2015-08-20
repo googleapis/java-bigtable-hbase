@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.client.util.Strings;
 import com.google.common.base.Preconditions;
 
 /**
@@ -28,8 +29,11 @@ public class BigtableClusterName {
 
   private final String clusterName;
 
-  public BigtableClusterName(String projectId, String zone, String clusterName) {
-    this.clusterName = String.format(BIGTABLE_V1_CLUSTER_FMT, projectId, zone, clusterName);
+  public BigtableClusterName(String projectId, String zoneId, String clusterId) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId), "projectId must be supplied");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(zoneId), "zoneId must be supplied");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(clusterId), "clusterId must be supplied");
+    this.clusterName = String.format(BIGTABLE_V1_CLUSTER_FMT, projectId, zoneId, clusterId);
   }
 
   /**

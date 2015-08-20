@@ -86,4 +86,22 @@ public class TestBigtableClusterName {
     expectedException.expect(IllegalStateException.class);
     bigtableClusterName.toTableId(clusterName + "/" + BigtableClusterName.TABLE_SEPARATOR);
   }
+
+  @Test
+  public void testNoZoneName() {
+    expectedException.expect(IllegalArgumentException.class);
+    new BigtableClusterName("projectId", "", "cluster");
+  }
+
+  @Test
+  public void testNoProjectName() {
+    expectedException.expect(IllegalArgumentException.class);
+    new BigtableClusterName("", "zone", "cluster");
+  }
+
+  @Test
+  public void testNoCluserName() {
+    expectedException.expect(IllegalArgumentException.class);
+    new BigtableClusterName("project", "zone", "");
+  }
 }
