@@ -61,6 +61,7 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
+import com.google.cloud.bigtable.hbase.adapters.BigtableWhileMatchResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
@@ -95,6 +96,9 @@ public class BigtableTable implements Table {
   public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(FILTER_ADAPTER);
   public static final BigtableResultScannerAdapter BIGTABLE_RESULT_SCAN_ADAPTER =
       new BigtableResultScannerAdapter(ROW_ADAPTER);
+  public static final BigtableWhileMatchResultScannerAdapter
+      BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER =
+      new BigtableWhileMatchResultScannerAdapter(ROW_ADAPTER);
   public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
 
   protected final TableName tableName;
@@ -256,6 +260,9 @@ public class BigtableTable implements Table {
       ReadRowsRequest finalRequest = readHooks.applyPreSendHook(request.build());
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
           client.readRows(finalRequest);
+      // TODO(kevinsi4508): Check {@code scan} to see if {@link WhileMatchFilter} is used. If yes,
+      // use BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER instead of
+      // BIGTABLE_RESULT_SCAN_ADAPTER.
       return BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner);
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
