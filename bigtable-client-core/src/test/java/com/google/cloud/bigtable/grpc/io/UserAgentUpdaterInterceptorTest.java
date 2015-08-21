@@ -31,7 +31,8 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import io.grpc.Call;
+import io.grpc.CallOptions;
+import io.grpc.ClientCall;
 import io.grpc.Channel;
 import io.grpc.Metadata;
 
@@ -43,9 +44,9 @@ public class UserAgentUpdaterInterceptorTest {
   @Mock
   private Channel channelStub;
   @Mock
-  private Call<MutateRowRequest, Empty> callStub;
+  private ClientCall<MutateRowRequest, Empty> callStub;
   @Mock
-  private Call.Listener<Empty> responseListenerStub;
+  private ClientCall.Listener<Empty> responseListenerStub;
 
   private UserAgentInterceptor interceptor;
 
@@ -57,11 +58,13 @@ public class UserAgentUpdaterInterceptorTest {
 
   @Test
   public void interceptCall_addHeader() {
-    when(channelStub.newCall(BigtableServiceGrpc.CONFIG.mutateRow)).thenReturn(callStub);
+    when(channelStub.newCall(BigtableServiceGrpc.METHOD_MUTATE_ROW, CallOptions.DEFAULT))
+        .thenReturn(callStub);
 
-    Call<MutateRowRequest, Empty> wrappedCall =
-        interceptor.interceptCall(BigtableServiceGrpc.CONFIG.mutateRow, channelStub);
-    Metadata.Headers headers = new Metadata.Headers();
+    ClientCall<MutateRowRequest, Empty> wrappedCall =
+        interceptor.interceptCall(BigtableServiceGrpc.METHOD_MUTATE_ROW, CallOptions.DEFAULT,
+          channelStub);
+   Metadata.Headers headers = new Metadata.Headers();
     wrappedCall.start(responseListenerStub, headers);
 
     Metadata.Key<String> key =
@@ -71,10 +74,12 @@ public class UserAgentUpdaterInterceptorTest {
 
   @Test
   public void interceptCall_appendHeader() {
-    when(channelStub.newCall(BigtableServiceGrpc.CONFIG.mutateRow)).thenReturn(callStub);
+    when(channelStub.newCall(BigtableServiceGrpc.METHOD_MUTATE_ROW, CallOptions.DEFAULT))
+        .thenReturn(callStub);
 
-    Call<MutateRowRequest, Empty> wrappedCall =
-        interceptor.interceptCall(BigtableServiceGrpc.CONFIG.mutateRow, channelStub);
+    ClientCall<MutateRowRequest, Empty> wrappedCall =
+        interceptor.interceptCall(BigtableServiceGrpc.METHOD_MUTATE_ROW, CallOptions.DEFAULT,
+          channelStub);
     Metadata.Headers headers = new Metadata.Headers();
     Metadata.Key<String> key =
         Metadata.Key.of(HttpHeaders.USER_AGENT, Metadata.ASCII_STRING_MARSHALLER);

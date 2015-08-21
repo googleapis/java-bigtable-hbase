@@ -33,6 +33,7 @@ import org.junit.runners.JUnit4;
 
 import io.grpc.MethodDescriptor;
 
+import java.lang.reflect.Field;
 import java.util.Map;
 
 @RunWith(JUnit4.class)
@@ -42,13 +43,17 @@ public class BigtableSessionTests {
   @Test
   public void createMethodRetryMap() throws Exception {
     Map<MethodDescriptor<?, ?>, Predicate<?>> map = BigtableSession.createMethodRetryMap();
-    for (MethodDescriptor<?, ?> method: BigtableServiceGrpc.CONFIG.methods()) {
-      if (method == BigtableServiceGrpc.CONFIG.mutateRow) {
-        assertMutateRowPredicate((Predicate<MutateRowRequest>) map.get(method));
-      } else if (method == BigtableServiceGrpc.CONFIG.checkAndMutateRow) {
-        assertCheckAndMutateRowPredicate((Predicate<CheckAndMutateRowRequest>) map.get(method));
-      } else {
-        assertNull(map.get(method));
+    Field[] fields = BigtableServiceGrpc.class.getDeclaredFields();
+    for (Field field : fields) {
+      if (field.getType() == MethodDescriptor.class) {
+        MethodDescriptor<?, ?> method = (MethodDescriptor<?, ?>)field.get(null);
+        if (method == BigtableServiceGrpc.METHOD_MUTATE_ROW) {
+          assertMutateRowPredicate((Predicate<MutateRowRequest>) map.get(method));
+        } else if (method == BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW) {
+          assertCheckAndMutateRowPredicate((Predicate<CheckAndMutateRowRequest>) map.get(method));
+        } else {
+          assertNull(map.get(method));
+        }
       }
     }
   }
