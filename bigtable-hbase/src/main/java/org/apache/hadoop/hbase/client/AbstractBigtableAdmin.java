@@ -251,9 +251,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
     try {
       return tableAdapter.adapt(bigtableTableAdminClient.getTable(request));
+    } catch (StatusRuntimeException e) {
+      if (e.getStatus().getCode() == Status.NOT_FOUND.getCode()) {
+        throw new TableNotFoundException(tableName);
+      }
+      throw new IOException("Failed to getTableDescriptor() on " + tableName, e);
     } catch (UncheckedExecutionException e) {
       if (e.getCause() != null && e.getCause() instanceof StatusRuntimeException) {
-        @SuppressWarnings("deprecation")
         Status status = ((StatusRuntimeException) e.getCause()).getStatus();
         if (status.getCode() == Status.NOT_FOUND.getCode()) {
           throw new TableNotFoundException(tableName);

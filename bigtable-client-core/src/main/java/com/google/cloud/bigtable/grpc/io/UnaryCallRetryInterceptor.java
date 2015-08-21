@@ -18,10 +18,11 @@ package com.google.cloud.bigtable.grpc.io;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.common.base.Predicate;
 
-import io.grpc.Call;
+import io.grpc.CallOptions;
+import io.grpc.ClientCall;
 import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
-import io.grpc.MethodType;
+import io.grpc.MethodDescriptor.MethodType;
 
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -54,21 +55,23 @@ public class UnaryCallRetryInterceptor extends Channel {
   }
 
   @Override
-  public <ReqT, RespT> Call<ReqT, RespT> newCall(MethodDescriptor<ReqT, RespT> methodDescriptor) {
+  public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
     if (methodCanBeRetried(methodDescriptor)) {
       ExponentialBackOff.Builder backOffBuilder = new ExponentialBackOff.Builder();
       backOffBuilder.setInitialIntervalMillis(initialBackoffMillis);
       backOffBuilder.setMultiplier(backoffMultiplier);
       backOffBuilder.setMaxElapsedTimeMillis(maxElapsedBackoffMillis);
-      Predicate<ReqT> isPayloadRetriablePredicate = getUncheckedPredicate(methodDescriptor);
+      Predicate<RequestT> isPayloadRetriablePredicate = getUncheckedPredicate(methodDescriptor);
       return new RetryingCall<>(
           delegate,
           methodDescriptor,
+          callOptions,
           isPayloadRetriablePredicate,
           executorService,
           backOffBuilder.build());
     }
-    return delegate.newCall(methodDescriptor);
+    return delegate.newCall(methodDescriptor, callOptions);
   }
 
   @SuppressWarnings("unchecked")

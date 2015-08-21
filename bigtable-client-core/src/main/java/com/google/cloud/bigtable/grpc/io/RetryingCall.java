@@ -22,8 +22,9 @@ import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 
-import io.grpc.Call;
+import io.grpc.CallOptions;
 import io.grpc.Channel;
+import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -37,28 +38,31 @@ import java.util.concurrent.TimeUnit;
  * @param <RequestT> The type of the request message
  * @param <ResponseT> The type of the response message
  */
-class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
+class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> {
 
   private final Channel channel;
   private final MethodDescriptor<RequestT, ResponseT> method;
+  private final CallOptions callOptions;
   private final BackOff backOff;
   private final Predicate<RequestT> payloadIsRetriablePredicate;
   private final ScheduledExecutorService scheduledExecutorService;
 
   private Listener<ResponseT> listener;
   private Metadata.Headers headers;
-  private RequestT payload;
+  private RequestT message;
   private boolean payloadIsRetriable = true;
-  private SettableFuture<Void> cancelled = SettableFuture.create();
+  private final SettableFuture<Void> cancelled = SettableFuture.create();
 
   public RetryingCall(
       Channel channel,
       MethodDescriptor<RequestT, ResponseT> method,
+      CallOptions callOptions,
       Predicate<RequestT> payloadIsRetriablePredicate,
       ScheduledExecutorService scheduledExecutorService,
       BackOff backOff) {
     this.channel = channel;
     this.method = method;
+    this.callOptions = callOptions;
     this.payloadIsRetriablePredicate = payloadIsRetriablePredicate;
     this.scheduledExecutorService = scheduledExecutorService;
     this.backOff = backOff;
@@ -88,12 +92,11 @@ class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
   }
 
   @Override
-  public void sendPayload(RequestT payload) {
-    Preconditions.checkState(
-        this.payload == null,
-        "sendPayload should not be invoked more than once for unary calls.");
-    this.payload = payload;
-    this.payloadIsRetriable = payloadIsRetriablePredicate.apply(payload);
+  public void sendMessage(RequestT message) {
+    Preconditions.checkState(this.message == null,
+      "sendPayload should not be invoked more than once for unary calls.");
+    this.message = message;
+    this.payloadIsRetriable = payloadIsRetriablePredicate.apply(message);
   }
 
   @Override
@@ -104,12 +107,12 @@ class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
   private void runCall() {
     if (payloadIsRetriable) {
       retryCall(
-          payload,
+          message,
           headers,
-          new RetryListener<>(this, payload, headers, payloadIsRetriable, listener));
+          new RetryListener<>(this, message, headers, payloadIsRetriable, listener));
     } else {
       retryCall(
-          payload,
+          message,
           headers,
           listener);
     }
@@ -117,10 +120,10 @@ class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
 
   // retryCall can be invoked from any thread.
   private void retryCall(
-      RequestT payload,
+      RequestT message,
       Metadata.Headers requestHeaders,
       Listener<ResponseT> listener) {
-    final Call<RequestT, ResponseT> delegate = channel.newCall(method);
+    final ClientCall<RequestT, ResponseT> delegate = channel.newCall(method, callOptions);
     delegate.start(listener, requestHeaders);
     delegate.request(1);
     cancelled.addListener(new Runnable() {
@@ -130,7 +133,7 @@ class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
       }
     }, MoreExecutors.directExecutor());
 
-    delegate.sendPayload(payload);
+    delegate.sendMessage(message);
     delegate.halfClose();
   }
 

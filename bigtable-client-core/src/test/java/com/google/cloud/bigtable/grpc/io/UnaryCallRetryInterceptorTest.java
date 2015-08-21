@@ -41,7 +41,8 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import io.grpc.Call;
+import io.grpc.CallOptions;
+import io.grpc.ClientCall;
 import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 
@@ -55,7 +56,7 @@ public class UnaryCallRetryInterceptorTest {
   @Mock
   private Channel channelStub;
   @Mock
-  private Call<MutateRowRequest, Empty> callStub;
+  private ClientCall<MutateRowRequest, Empty> callStub;
 
   private ScheduledExecutorService executorService;
 
@@ -68,7 +69,7 @@ public class UnaryCallRetryInterceptorTest {
 
     ImmutableSet<MethodDescriptor<?, ?>> retriableMethods =
         new ImmutableSet.Builder<MethodDescriptor<?, ?>>()
-            .add(BigtableServiceGrpc.CONFIG.mutateRow)
+            .add(BigtableServiceGrpc.METHOD_MUTATE_ROW)
             .build();
 
     Function<MethodDescriptor<?, ?>, Predicate<?>> alwaysTrue =
@@ -92,7 +93,8 @@ public class UnaryCallRetryInterceptorTest {
             retryOptions.getBackoffMultiplier(),
             retryOptions.getMaxElaspedBackoffMillis());
 
-    when(channelStub.newCall(eq(BigtableServiceGrpc.CONFIG.mutateRow))).thenReturn(callStub);
+    when(channelStub.newCall(eq(BigtableServiceGrpc.METHOD_MUTATE_ROW), eq(CallOptions.DEFAULT)))
+        .thenReturn(callStub);
   }
 
   @After
@@ -102,8 +104,8 @@ public class UnaryCallRetryInterceptorTest {
 
   @Test
   public void retriableMethodsAreWrappedInRetryingCall() {
-    Call<MutateRowRequest, Empty> mutateRowCall =
-        retryInterceptor.newCall(BigtableServiceGrpc.CONFIG.mutateRow);
+    ClientCall<MutateRowRequest, Empty> mutateRowCall =
+        retryInterceptor.newCall(BigtableServiceGrpc.METHOD_MUTATE_ROW, CallOptions.DEFAULT);
 
     Assert.assertTrue("mutateRowCall should be a RetryingCall",
         mutateRowCall instanceof RetryingCall);
@@ -111,8 +113,9 @@ public class UnaryCallRetryInterceptorTest {
 
   @Test
   public void nonRetriableMethodsAreNotWrappedInRetryingCall() {
-    Call<ReadModifyWriteRowRequest, Row> readModifyWriteRowCall =
-        retryInterceptor.newCall(BigtableServiceGrpc.CONFIG.readModifyWriteRow);
+    ClientCall<ReadModifyWriteRowRequest, Row> readModifyWriteRowCall =
+        retryInterceptor.newCall(BigtableServiceGrpc.METHOD_READ_MODIFY_WRITE_ROW,
+          CallOptions.DEFAULT);
 
     Assert.assertFalse("readModifyWriteRowCall should not be a RetryingCall",
         readModifyWriteRowCall instanceof RetryingCall);
