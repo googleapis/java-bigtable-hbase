@@ -62,6 +62,7 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
+import com.google.cloud.bigtable.hbase.adapters.BigtableWhileMatchResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
@@ -97,6 +98,9 @@ public class BigtableTable implements Table {
   public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(FILTER_ADAPTER);
   public static final BigtableResultScannerAdapter BIGTABLE_RESULT_SCAN_ADAPTER =
       new BigtableResultScannerAdapter(ROW_ADAPTER);
+  public static final BigtableWhileMatchResultScannerAdapter
+      BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER =
+      new BigtableWhileMatchResultScannerAdapter(ROW_ADAPTER);
   public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
@@ -258,6 +262,9 @@ public class BigtableTable implements Table {
   public ResultScanner getScanner(Scan scan) throws IOException {
     try {
       LOG.trace("getScanner(Scan)");
+      // TODO(kevinsi4508): Check {@code scan} to see if {@link WhileMatchFilter} is used. If yes,
+      // use BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER instead of
+      // BIGTABLE_RESULT_SCAN_ADAPTER.
       return BIGTABLE_RESULT_SCAN_ADAPTER.adapt(createBigtableScanner(SCAN_ADAPTER, scan));
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
