@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 import com.google.protobuf.GeneratedMessage;
 
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 
 /**
  * An adapter for transforming a response from the Bigtable server to a HBase result.
@@ -28,7 +29,18 @@ public interface ResponseAdapter<T extends GeneratedMessage, U extends Result> {
 
   /**
    * Transform an Bigtable server response to an HBase Result instance.
+   * 
    * @param response The Bigtable response to transform.
    */
   public U adaptResponse(T response);
+
+  /**
+   * Transform an Bigtable server response to an HBase Result instance in current {@code context}.
+   * The implementation takes care of more complex logic such as handling {@link WhileMatchFilter}
+   * where rescan is needed.
+   *
+   * @param context the current response context
+   * @param response The Bigtable response to transform.
+   */
+  public U adaptResponse(ResponseAdapterContext context, T response);
 }
