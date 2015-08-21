@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -68,6 +69,7 @@ import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapterContext;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
@@ -256,7 +258,9 @@ public class BigtableTable implements Table {
       ReadRowsRequest finalRequest = readHooks.applyPreSendHook(request.build());
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
           client.readRows(finalRequest);
-      return BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner);
+      // TODO(kevinsi4508): Set WhileMatchFilter labels in {@link ResponseAdapterContext}.
+      return BIGTABLE_RESULT_SCAN_ADAPTER.adapt(
+          new ResponseAdapterContext(new HashSet<String>()), scanner);
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       throw new IOException(

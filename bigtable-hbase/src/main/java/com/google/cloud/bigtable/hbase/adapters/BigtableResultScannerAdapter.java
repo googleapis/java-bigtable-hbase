@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.client.util.Throwables;
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapterContext.Action;
 import com.google.bigtable.v1.Row;
 
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
@@ -36,16 +37,32 @@ public class BigtableResultScannerAdapter {
   }
 
   public ResultScanner adapt(
+      final ResponseAdapterContext context,
       final com.google.cloud.bigtable.grpc.scanner.ResultScanner<Row> bigtableResultScanner) {
     return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {
+        return next(false);
+      }
+
+      private Result next(boolean rescan) throws IOException {
         Row row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
           return null;
         }
-        return rowAdapter.adaptResponse(row);
+
+        Result result =  rowAdapter.adaptResponse(context, row);
+        if (context.getAction() == Action.RESCAN && !rescan) {          
+          // TODO(kevinsi4508): Issue a rescan.
+          return next(true);
+        }
+
+        if (context.getAction() == Action.SKIP) {
+          return next();
+        }
+
+        return result;
       }
 
       @Override
