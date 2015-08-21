@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,6 +55,16 @@ import java.util.concurrent.ExecutorService;
  * A gRPC client to access the v1 Bigtable service.
  */
 public class BigtableDataGrpcClient implements BigtableDataClient {
+
+  private static class ImmutableListFunction<T> implements Function<List<T>, ImmutableList<T>> {
+    @Override
+    public ImmutableList<T> apply(List<T> list) {
+      return ImmutableList.copyOf(list);
+    }
+  };
+
+  private static final ImmutableListFunction<SampleRowKeysResponse> IMMUTABLE_LIST_FUNCTION =
+      new ImmutableListFunction<>();
 
   /**
    * A StreamObserver for unary async operations. It assumes that the operation is complete
@@ -153,6 +163,14 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final ExecutorService executorService;
   private final RetryOptions retryOptions;
 
+  private final BigtableResultScannerFactory streamingScannerFactory =
+      new BigtableResultScannerFactory() {
+        @Override
+        public ResultScanner<Row> createScanner(ReadRowsRequest request) {
+          return streamRows(request);
+        }
+      };
+
   public BigtableDataGrpcClient(
       Channel channel,
       ExecutorService executorService,
@@ -227,38 +245,21 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         responseBuffer);
     return Futures.transform(
         responseBuffer.getResponseCompleteFuture(),
-        new Function<List<SampleRowKeysResponse>, ImmutableList<SampleRowKeysResponse>>() {
-          @Override
-          public ImmutableList<SampleRowKeysResponse> apply(
-              List<SampleRowKeysResponse> sampleRowKeysResponses) {
-            return ImmutableList.copyOf(sampleRowKeysResponses);
-          }
-        });
+        IMMUTABLE_LIST_FUNCTION);
   }
 
   @Override
   public ResultScanner<Row> readRows(ReadRowsRequest request) {
-    return readRows(request, retryOptions.enableRetries());
-  }
-
-  /**
-   * Begin reading rows, optionally with a resumable scanner.
-   */
-  private ResultScanner<Row> readRows(ReadRowsRequest request, boolean resumable) {
     // Delegate all resumable operations to the scanner. It will request a non-resumable
     // scanner during operation.
-    if (resumable) {
-      return new ResumingStreamingResultScanner(
-        retryOptions,
-          request,
-          new BigtableResultScannerFactory() {
-            @Override
-            public ResultScanner<Row> createScanner(ReadRowsRequest request) {
-              return readRows(request, false);
-            }
-          });
+    if (retryOptions.enableRetries()) {
+      return new ResumingStreamingResultScanner(retryOptions, request, streamingScannerFactory);
+    } else {
+      return streamRows(request);
     }
+  }
 
+  private ResultScanner<Row> streamRows(ReadRowsRequest request) {
     final Call<ReadRowsRequest , ReadRowsResponse> readRowsCall =
         channel.newCall(BigtableServiceGrpc.CONFIG.readRows);
 
