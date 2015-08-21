@@ -16,13 +16,14 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * A scanner of Bigtable rows.
  * @param <T> The type of Rows this scanner will iterate over. Expected Bigtable Row objects.
  */
-public interface ResultScanner<T> {
+public interface ResultScanner<T> extends Closeable {
   /**
    * Read the next row and block until a row is available. Will return null on end-of-stream.
    */
@@ -34,9 +35,4 @@ public interface ResultScanner<T> {
    * @param count The number of rows to read.
    */
   T[] next(int count) throws IOException;
-
-  /**
-   * Close the scanner and release any resources allocated for it.
-   */
-  void close() throws IOException;
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Operation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -67,6 +68,7 @@ import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
+import com.google.cloud.bigtable.hbase.adapters.ReadOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
@@ -96,6 +98,22 @@ public class BigtableTable implements Table {
   public static final BigtableResultScannerAdapter BIGTABLE_RESULT_SCAN_ADAPTER =
       new BigtableResultScannerAdapter(ROW_ADAPTER);
   public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
+
+  // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
+  // them (which they shouldn't since we built the filter), throw an exception.
+  private static final ReadHooks UNSUPPORTED_READ_HOOKS = new ReadHooks() {
+    @Override
+    public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
+      throw new IllegalStateException(
+          "We built a bad Filter for conditional mutation.");
+    }
+
+    @Override
+    public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
+      throw new UnsupportedOperationException(
+          "We built a bad Filter for conditional mutation.");
+    }
+  };
 
   protected final TableName tableName;
   protected final BigtableOptions options;
@@ -213,20 +231,17 @@ public class BigtableTable implements Table {
   }
 
   @Override
+  public Result[] get(List<Get> gets) throws IOException {
+    LOG.trace("get(List<>)");
+    return (Result[]) batchExecutor.batch(gets);
+  }
+
+  @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
-    ReadHooks readHooks = new DefaultReadHooks();
-    ReadRowsRequest.Builder readRowsRequest = GET_ADAPTER.adapt(get, readHooks);
-    readRowsRequest.setTableName(bigtableTableName.toString());
-
-    try {
-      ReadRowsRequest finalRequest = readHooks.applyPreSendHook(readRowsRequest.build());
-      com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
-          client.readRows(finalRequest);
-      Result response = ROW_ADAPTER.adaptResponse(scanner.next());
-      scanner.close();
-
-      return response;
+    try (com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
+        createBigtableScanner(GET_ADAPTER, get)) {
+      return ROW_ADAPTER.adaptResponse(scanner.next());
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing get.", throwable);
       throw new IOException(
@@ -234,29 +249,16 @@ public class BigtableTable implements Table {
               "get",
               options.getProjectId(),
               tableName.getQualifierAsString(),
-              readRowsRequest.getRowKey().toByteArray()),
+              get.getRow()),
           throwable);
     }
   }
 
   @Override
-  public Result[] get(List<Get> gets) throws IOException {
-    LOG.trace("get(List<>)");
-    return (Result[]) batchExecutor.batch(gets);
-  }
-
-  @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
-    LOG.trace("getScanner(Scan)");
-    ReadHooks readHooks = new DefaultReadHooks();
-    ReadRowsRequest.Builder request = SCAN_ADAPTER.adapt(scan, readHooks);
-    request.setTableName(bigtableTableName.toString());
-
     try {
-      ReadRowsRequest finalRequest = readHooks.applyPreSendHook(request.build());
-      com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
-          client.readRows(finalRequest);
-      return BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner);
+      LOG.trace("getScanner(Scan)");
+      return BIGTABLE_RESULT_SCAN_ADAPTER.adapt(createBigtableScanner(SCAN_ADAPTER, scan));
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       throw new IOException(
@@ -266,6 +268,16 @@ public class BigtableTable implements Table {
               tableName.getQualifierAsString()),
           throwable);
     }
+  }
+
+  private <T extends Operation>
+      com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row>
+      createBigtableScanner(ReadOperationAdapter<T> adapter, T operation) {
+    ReadHooks readHooks = new DefaultReadHooks();
+    ReadRowsRequest.Builder request = adapter.adapt(operation, readHooks)
+         .setTableName(bigtableTableName.toString());
+    ReadRowsRequest finalRequest = readHooks.applyPreSendHook(request.build());
+    return client.readRows(finalRequest);
   }
 
   @Override
@@ -624,7 +636,7 @@ public class BigtableTable implements Table {
       List<com.google.bigtable.v1.Mutation> mutations) throws IOException {
 
     if (!Arrays.equals(actionRow, row)) {
-      // The following odd exception message is for compat with HBase.
+      // The following odd exception message is for compatibility with HBase.
       throw new DoNotRetryIOException("Action's getRow must match the passed row");
     }
 
@@ -652,22 +664,7 @@ public class BigtableTable implements Table {
       scan.setFilter(valueFilter);
       requestBuilder.addAllTrueMutations(mutations);
     }
-    // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
-    // them (which they shouldn't since we built the filter), throw an exception.
-    ReadHooks throwIfUsed = new ReadHooks() {
-      @Override
-      public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
-        throw new IllegalStateException(
-            "We built a bad Filter for conditional mutation.");
-      }
-
-      @Override
-      public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
-        throw new UnsupportedOperationException(
-            "We built a bad Filter for conditional mutation.");
-      }
-    };
-    requestBuilder.setPredicateFilter(SCAN_ADAPTER.buildFilter(scan, throwIfUsed));
+    requestBuilder.setPredicateFilter(SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS));
     return requestBuilder;
   }
 
