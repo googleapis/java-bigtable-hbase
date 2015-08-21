@@ -84,9 +84,14 @@ public interface BigtableDataClient {
       SampleRowKeysRequest request);
 
   /**
-   * Perform a scan over rows.
+   * Perform a scan over rows with resumable defaults to {@code false}.
    */
   ResultScanner<Row> readRows(ReadRowsRequest request);
+
+  /**
+   * Perform a scan over rows with resumable option.
+   */
+  ResultScanner<Row> readRows(ReadRowsRequest request, boolean resumable);
 
   /**
    * Read multiple Rows into an in-memory list, returning a Future that will complete when the

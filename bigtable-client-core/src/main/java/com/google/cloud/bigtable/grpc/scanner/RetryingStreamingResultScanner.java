@@ -20,13 +20,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.ExponentialBackOff.Builder;
-import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
-import com.google.protobuf.ByteString;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,41 +33,27 @@ import io.grpc.Status;
 
 import java.io.IOException;
 
-
 /**
- * A ResultScanner that attempts to resume the readRows call when it
+ * A ResultScanner that attempts to retry the readRows call when it
  * encounters gRPC INTERNAL errors.
  */
-public class ResumingStreamingResultScanner extends AbstractBigtableResultScanner {
+public class RetryingStreamingResultScanner extends ResumingBigtableResultScanner {
 
-  protected static final Log LOG = LogFactory.getLog(ResumingStreamingResultScanner.class);
-
-  private static final ByteString NEXT_ROW_SUFFIX = ByteString.copyFrom(new byte[]{0x00});
-  private final BigtableResultScannerFactory scannerFactory;
-
-  /**
-   * Construct a ByteString containing the next possible row key.
-   */
-  static ByteString nextRowKey(ByteString previous) {
-    return previous.concat(NEXT_ROW_SUFFIX);
-  }
+  private static final Log LOG = LogFactory.getLog(RetryingStreamingResultScanner.class);
 
   private final Builder backOffBuilder;
   private final ReadRowsRequest originalRequest;
   private final boolean retryOnDeadlineExceeded;
 
   private BackOff currentBackoff;
-  private ResultScanner<Row> currentDelegate;
-  private ByteString lastRowKey = null;
   private Sleeper sleeper = Sleeper.DEFAULT;
-  // The number of rows read so far.
-  private long rowCount = 0;
 
-  public ResumingStreamingResultScanner(
+  public RetryingStreamingResultScanner(
       RetryOptions retryOptions,
       ReadRowsRequest originalRequest,
       BigtableResultScannerFactory scannerFactory) {
-    Preconditions.checkArgument(
+    super(originalRequest, scannerFactory);
+    checkArgument(
         !originalRequest.getAllowRowInterleaving(),
         "Row interleaving is not supported when using resumable streams");
     retryOnDeadlineExceeded = retryOptions.retryOnDeadlineExceeded();
@@ -78,20 +62,15 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
         .setMaxElapsedTimeMillis(retryOptions.getMaxElaspedBackoffMillis())
         .setMultiplier(retryOptions.getBackoffMultiplier());
     this.originalRequest = originalRequest;
-    this.scannerFactory = scannerFactory;
     this.currentBackoff = backOffBuilder.build();
-    this.currentDelegate = scannerFactory.createScanner(originalRequest);
   }
 
   @Override
   public Row next() throws IOException {
     while (true) {
       try {
-        Row result = currentDelegate.next();
-        if (result != null) {
-          lastRowKey = result.getKey();
-          rowCount++;
-        }
+        Row result = super.next();
+
         // We've had at least one successful RPC, reset the backoff
         currentBackoff.reset();
 
@@ -131,39 +110,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     }
 
     sleep(nextBackOff);
-    reissueRequest();
-  }
-
-  @Override
-  public void close() throws IOException {
-    currentDelegate.close();
-  }
-
-  private void reissueRequest() {
-    try {
-      currentDelegate.close();
-    } catch (IOException ioe) {
-      LOG.warn("Error closing scanner before reissuing request: ", ioe);
-    }
-
-    ReadRowsRequest.Builder newRequest = originalRequest.toBuilder();
-    if (lastRowKey != null) {
-      newRequest.getRowRangeBuilder().setStartKey(nextRowKey(lastRowKey));
-    }
-
-    // If the row limit is set, update it.
-    long numRowsLimit = newRequest.getNumRowsLimit();
-    if (numRowsLimit > 0) {
-      // Updates the {@code numRowsLimit} by removing the number of rows already read.
-      numRowsLimit -= rowCount;
-
-      checkArgument(numRowsLimit > 0, "The remaining number of rows must be greater than 0.");
-
-      // Sets the updated {@code numRowsLimit} in {@code newRequest}.
-      newRequest.setNumRowsLimit(numRowsLimit);
-    }
-
-    currentDelegate = scannerFactory.createScanner(newRequest.build());
+    resume(originalRequest.toBuilder(), true);
   }
 
   private void sleep(long millis) throws IOException {

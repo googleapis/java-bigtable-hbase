@@ -29,7 +29,8 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
-import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.ResumingBigtableResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.RetryingStreamingResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner.RowMerger;
 import com.google.common.base.Function;
@@ -152,6 +153,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private final ExecutorService executorService;
   private final RetryOptions retryOptions;
+  private final BigtableResultScannerFactory streamingScannerFactory;
 
   public BigtableDataGrpcClient(
       Channel channel,
@@ -160,6 +162,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     this.channel = channel;
     this.executorService = executorService;
     this.retryOptions = retryOptions;
+    streamingScannerFactory = new BigtableResultScannerFactory() {
+      @Override
+      public ResultScanner<Row> createScanner(ReadRowsRequest request) {
+        return createStreamingScanner(request);
+      }
+    };
   }
 
   protected static <T, V> ListenableFuture<V> listenableAsyncCall(
@@ -238,31 +246,41 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ResultScanner<Row> readRows(ReadRowsRequest request) {
-    return readRows(request, retryOptions.enableRetries());
+    return readRows(request, retryOptions.enableRetries(), false);
+  }
+
+  @Override
+  public ResultScanner<Row> readRows(ReadRowsRequest request, boolean resumable) {
+    return readRows(request, retryOptions.enableRetries(), resumable);
   }
 
   /**
-   * Begin reading rows, optionally with a resumable scanner.
+   * Begin reading rows, optionally with a retriable or resumable scanner.
    */
-  private ResultScanner<Row> readRows(ReadRowsRequest request, boolean resumable) {
-    // Delegate all resumable operations to the scanner. It will request a non-resumable
-    // scanner during operation.
-    if (resumable) {
-      return new ResumingStreamingResultScanner(
-        retryOptions,
-          request,
-          new BigtableResultScannerFactory() {
-            @Override
-            public ResultScanner<Row> createScanner(ReadRowsRequest request) {
-              return readRows(request, false);
-            }
-          });
+  private ResultScanner<Row> readRows(
+      ReadRowsRequest request, boolean retriable, boolean resumable) {
+    // Delegate all retriable operations to the scanner. It will request a non-retriable. scanner
+    // during operation. A reriable scanner is resumable.
+    if (retriable) {
+      return new RetryingStreamingResultScanner(retryOptions, request, streamingScannerFactory);
     }
 
-    final Call<ReadRowsRequest , ReadRowsResponse> readRowsCall =
+    // A resumable scanner needed for rescan.
+    if (resumable) {
+      return new ResumingBigtableResultScanner(request, streamingScannerFactory);
+    }
+
+    return createStreamingScanner(request);
+  }
+
+  /**
+   * Returns a non-resumable streaming scanner.
+   */
+  private ResultScanner<Row> createStreamingScanner(ReadRowsRequest request) {
+    final Call<ReadRowsRequest, ReadRowsResponse> readRowsCall =
         channel.newCall(BigtableServiceGrpc.CONFIG.readRows);
 
-    // If the scanner is close()d before we're done streaming, we want to cancel the RPC:
+    // If the scanner is closed before we're done streaming, we want to cancel the RPC:
     CancellationToken cancellationToken = new CancellationToken();
     cancellationToken.addListener(new Runnable() {
       @Override
