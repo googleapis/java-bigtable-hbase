@@ -117,6 +117,8 @@ public class BigtableSession implements AutoCloseable {
               .setDaemon(true)
               .build());
 
+  private static List<String> performantCiphers;
+
   static {
     performWarmup();
   }
@@ -127,8 +129,18 @@ public class BigtableSession implements AutoCloseable {
     return sslBuilder;
   }
 
-  private static SslContext createSslContext() throws SSLException {
-     return sslBuilder.build();
+  private synchronized static SslContext createSslContext() throws SSLException {
+    if (performantCiphers == null) {
+      List<String> defaultCiphers =
+          GrpcSslContexts.forClient().ciphers(null).build().cipherSuites();
+      List<String> performantCiphers = new ArrayList<>();
+      for (String cipher : defaultCiphers) {
+        if (!cipher.contains("GCM")) {
+          performantCiphers.add(cipher);
+        }
+      }
+    }
+    return GrpcSslContexts.forClient().ciphers(performantCiphers).build();
   }
 
   private static void performWarmup() {
@@ -324,7 +336,7 @@ public class BigtableSession implements AutoCloseable {
   private BigtableDataClient initializeDataClient() throws IOException {
     Channel channel = createChannel(options.getDataHost(), options.getChannelCount());
     RetryOptions retryOptions = options.getRetryOptions();
-    return new BigtableDataGrpcClient(channel, batchPool, retryOptions);
+    return new BigtableDataGrpcClient(channel, retryOptions);
   }
 
   private BigtableTableAdminClient initializeAdminClient() throws IOException {
@@ -369,7 +381,7 @@ public class BigtableSession implements AutoCloseable {
    * interceptors, and user agent.
    * </p>
    */
-  protected Channel createChannel(String hostString, int channelCount) throws IOException {
+  public Channel createChannel(String hostString, int channelCount) throws IOException {
     final InetSocketAddress host = new InetSocketAddress(getHost(hostString), options.getPort());
     final Channel channels[] = new Channel[channelCount];
     for (int i = 0; i < channelCount; i++) {
