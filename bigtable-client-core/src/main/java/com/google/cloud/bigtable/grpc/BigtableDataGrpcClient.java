@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.client.util.BackOff;
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
@@ -30,23 +33,31 @@ import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
 import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner.RowMerger;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Empty;
 import com.google.protobuf.ServiceException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ClientCalls;
 import io.grpc.stub.StreamObserver;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -62,7 +73,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     public ImmutableList<T> apply(List<T> list) {
       return ImmutableList.copyOf(list);
     }
-  };
+  }
 
   private static final ImmutableListFunction<SampleRowKeysResponse> IMMUTABLE_LIST_FUNCTION =
       new ImmutableListFunction<>();
@@ -291,6 +302,65 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(final ReadRowsRequest request) {
+    if (retryOptions.enableRetries()) {
+      return Futures.withFallback(
+          doReadRowsAsync(request), new ReadRowsFallback(request));
+    }
+    return doReadRowsAsync(request);
+  }
+
+  private class ReadRowsFallback implements FutureFallback<List<Row>> {
+    protected final Log LOG = LogFactory.getLog(ReadRowsFallback.class);
+    
+    private final ReadRowsRequest request;
+    private final BackOff currentBackoff;
+    private final Sleeper sleeper = Sleeper.DEFAULT;
+
+    private ReadRowsFallback(ReadRowsRequest request) {
+      this.request = request;
+      ExponentialBackOff.Builder backOffBuilder =
+          new ExponentialBackOff.Builder()
+              .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
+              .setMaxElapsedTimeMillis(retryOptions.getMaxElaspedBackoffMillis())
+              .setMultiplier(retryOptions.getBackoffMultiplier());
+      this.currentBackoff = backOffBuilder.build();
+    }
+
+    @Override
+    public ListenableFuture<List<Row>> create(Throwable t) throws Exception {
+      if (t instanceof StatusRuntimeException) {
+        StatusRuntimeException statusException = (StatusRuntimeException) t;
+        Status.Code code = statusException.getStatus().getCode();
+        if (retryOptions.isRetryableRead(code)){
+          return backOffAndRetry(t);
+        }
+      }
+      return Futures.immediateFailedFuture(t);
+    }
+
+    private ListenableFuture<List<Row>> backOffAndRetry(Throwable cause) throws IOException,
+        ScanRetriesExhaustedException {
+      long nextBackOff = currentBackoff.nextBackOffMillis();
+      if (nextBackOff == BackOff.STOP) {
+        LOG.warn("RetriesExhausted: ", cause);
+        throw new ScanRetriesExhaustedException("Exhausted streaming retries.", cause);
+      }
+
+      sleep(nextBackOff);
+      return BigtableDataGrpcClient.this.doReadRowsAsync(request);
+    }
+
+    private void sleep(long millis) throws IOException {
+      try {
+        sleeper.sleep(millis);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while sleeping for resume", e);
+      }
+    }
+  }
+
+  private ListenableFuture<List<Row>> doReadRowsAsync(final ReadRowsRequest request) {
     final ClientCall<ReadRowsRequest , ReadRowsResponse> readRowsCall =
         channel.newCall(BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
 
