@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
+import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -88,6 +89,8 @@ public class FilterAdapter {
         QualifierFilter.class, new QualifierFilterAdapter());
     adapter.addFilterAdapter(
         PageFilter.class, new PageFilterAdapter());
+    adapter.addFilterAdapter(
+      WhileMatchFilter.class, new WhileMatchFilterAdapter(adapter));
 
     // Passing the FilterAdapter in to the FilterListAdapter is a bit
     // unfortunate, but makes adapting the FilterList's subfilters simpler.
