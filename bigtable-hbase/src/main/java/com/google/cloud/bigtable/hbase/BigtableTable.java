@@ -46,10 +46,14 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.ValueFilter;
+import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
@@ -262,10 +266,12 @@ public class BigtableTable implements Table {
   public ResultScanner getScanner(Scan scan) throws IOException {
     try {
       LOG.trace("getScanner(Scan)");
-      // TODO(kevinsi4508): Check {@code scan} to see if {@link WhileMatchFilter} is used. If yes,
-      // use BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER instead of
-      // BIGTABLE_RESULT_SCAN_ADAPTER.
-      return BIGTABLE_RESULT_SCAN_ADAPTER.adapt(createBigtableScanner(SCAN_ADAPTER, scan));
+      com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
+          createBigtableScanner(SCAN_ADAPTER, scan);
+      if (hasWhileMatchFilter(scan.getFilter())) {
+        return BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner);
+      }
+      return BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner);
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       throw new IOException(
@@ -275,6 +281,24 @@ public class BigtableTable implements Table {
               tableName.getQualifierAsString()),
           throwable);
     }
+  }
+
+  @VisibleForTesting
+  static boolean hasWhileMatchFilter(Filter filter) {
+    if (filter instanceof WhileMatchFilter) {
+      return true;
+    }
+ 
+    if (filter instanceof FilterList) {
+      FilterList list = (FilterList) filter;
+      for (Filter subFilter : list.getFilters()) {
+        if (hasWhileMatchFilter(subFilter)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private <T extends Operation>

@@ -998,7 +998,6 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testWhileMatchFilter_simple() throws IOException {
     String rowKeyPrefix = "wmf-simple-";
     byte[] qualA = dataHelper.randomData("qualA");
@@ -1012,6 +1011,25 @@ public class TestFilters extends AbstractTest {
     scan.setFilter(simpleWhileMatch);
 
     int[] expected = {0, 1, 10, 11};
+    assertWhileMatchFilterResult(qualA, table, scan, expected);
+  }
+
+  @Test
+  public void testWhileMatchFilter_singleChained() throws IOException {    
+    String rowKeyPrefix = "wmf-sc-";
+    byte[] qualA = dataHelper.randomData("qualA");
+    Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
+
+    ByteArrayComparable valueComparable = new BinaryComparator(String.valueOf(2).getBytes());
+    SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
+        COLUMN_FAMILY, qualA, CompareFilter.CompareOp.NOT_EQUAL, valueComparable);
+    WhileMatchFilter simpleWhileMatch = new WhileMatchFilter(valueFilter);
+    ColumnPrefixFilter prefixFilter = new ColumnPrefixFilter(Bytes.toBytes("qua"));
+    FilterList filterList = new FilterList(Operator.MUST_PASS_ALL, simpleWhileMatch, prefixFilter);
+    Scan scan = new Scan();
+    scan.setFilter(filterList);
+
+    int[] expected = {0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
     assertWhileMatchFilterResult(qualA, table, scan, expected);
   }
 
