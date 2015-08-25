@@ -24,7 +24,10 @@ import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -129,11 +132,65 @@ public class WhileMatchFilterAdapter implements TypedFilterAdapter<WhileMatchFil
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, WhileMatchFilter filter) {
+    // checks if wrapped filter is supported.
     List<FilterSupportStatus> unsupportedStatuses = new ArrayList<>();
     subFilterAdapter.collectUnsupportedStatuses(context, filter.getFilter(), unsupportedStatuses);
-    if (unsupportedStatuses.isEmpty()) {
-      return FilterSupportStatus.SUPPORTED;
+    if (!unsupportedStatuses.isEmpty()) {
+      return FilterSupportStatus.newCompositeNotSupported(unsupportedStatuses);
     }
-    return FilterSupportStatus.newCompositeNotSupported(unsupportedStatuses);
+
+    // Checks if this filter is in an interleave.
+    if (inInterleave(context.getScan().getFilter(), filter)) {
+      return FilterSupportStatus.newNotSupported(
+          "A WhileMatchFilter cannot be in a FilterList with MUST_PASS_ONE operation.");
+    }
+
+    return FilterSupportStatus.SUPPORTED;
+  }
+
+  private boolean inInterleave(Filter filter, WhileMatchFilter whileMatchFilter) {
+    if (filter == whileMatchFilter) {
+      return false;
+    }
+
+    if (filter instanceof FilterList) {
+      FilterList list = (FilterList) filter;
+      // Found an interleave, check to see if {@code whileMatchFilter} is in there.
+      if (list.getOperator() == Operator.MUST_PASS_ONE) {
+        for (Filter subFilter : list.getFilters()) {
+          if (hasFilter(subFilter, whileMatchFilter)) {
+            return true;
+          }
+        }
+      } else {
+        for (Filter subFilter : list.getFilters()) {
+          if (inInterleave(subFilter, whileMatchFilter)) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Return {@code true} iff {@code whileMatchFilter} is in {@code filter}.
+   */
+  private boolean hasFilter(Filter filter, WhileMatchFilter whileMatchFilter) {
+    if (filter == whileMatchFilter) {
+      return true;
+    }
+ 
+    if (filter instanceof FilterList) {
+      FilterList list = (FilterList) filter;
+      for (Filter subFilter : list.getFilters()) {
+        if (hasFilter(subFilter, whileMatchFilter)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

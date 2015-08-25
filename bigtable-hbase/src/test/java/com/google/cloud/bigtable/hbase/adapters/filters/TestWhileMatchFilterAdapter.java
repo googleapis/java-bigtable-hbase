@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.hbase.adapters.filters.WhileMatchFilterA
 import static com.google.cloud.bigtable.hbase.adapters.filters.WhileMatchFilterAdapter.OUT_LABEL_SUFFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
@@ -31,9 +32,13 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.FilterBase;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.PageFilter;
+import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.Rule;
@@ -140,8 +145,11 @@ public class TestWhileMatchFilterAdapter {
   @Test
   public void wrappedFilterSupported() {
     WhileMatchFilter filter = new WhileMatchFilter(new PageFilter(30));
+    Scan scan = new Scan();
+    scan.setFilter(filter);
+    FilterAdapterContext context = new FilterAdapterContext(scan, new DefaultReadHooks());
     assertEquals(
-        FilterSupportStatus.SUPPORTED, instance.isFilterSupported(emptyScanContext, filter));
+        FilterSupportStatus.SUPPORTED, instance.isFilterSupported(context, filter));
   }
 
   @Test
@@ -153,6 +161,62 @@ public class TestWhileMatchFilterAdapter {
       }
     };
     WhileMatchFilter filter = new WhileMatchFilter(notSupported);
-    assertFalse(instance.isFilterSupported(emptyScanContext, filter).isSupported());
+    Scan scan = new Scan();
+    scan.setFilter(filter);
+    FilterAdapterContext context = new FilterAdapterContext(scan, new DefaultReadHooks());
+    assertFalse(instance.isFilterSupported(context, filter).isSupported());
+  }
+
+  @Test
+  public void notSupported_inInterleave() {
+    QualifierFilter qualifierFilter =
+        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("x")));
+    WhileMatchFilter whileMatchFilter = new WhileMatchFilter(qualifierFilter);
+    FilterList list = new FilterList(Operator.MUST_PASS_ONE, whileMatchFilter);
+    Scan scan = new Scan();
+    scan.setFilter(list);
+    FilterAdapterContext context = new FilterAdapterContext(scan, new DefaultReadHooks());
+    assertFalse(instance.isFilterSupported(context, whileMatchFilter).isSupported());
+  }
+
+  @Test
+  public void notSupported_inInterleave_inChain() {
+    QualifierFilter qualifierFilter =
+        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("x")));
+    WhileMatchFilter whileMatchFilter = new WhileMatchFilter(qualifierFilter);
+    FilterList interleaveList = new FilterList(Operator.MUST_PASS_ONE, whileMatchFilter);
+    FilterList chainList = new FilterList(Operator.MUST_PASS_ALL, interleaveList);
+    Scan scan = new Scan();
+    scan.setFilter(chainList);
+    FilterAdapterContext context = new FilterAdapterContext(scan, new DefaultReadHooks());
+    assertFalse(instance.isFilterSupported(context, whileMatchFilter).isSupported());
+  }
+
+  @Test
+  public void notSupported_inChain_inInterleave() {
+    QualifierFilter qualifierFilter =
+        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("x")));
+    WhileMatchFilter whileMatchFilter = new WhileMatchFilter(qualifierFilter);
+    FilterList chainList = new FilterList(Operator.MUST_PASS_ALL, whileMatchFilter);
+    FilterList interleaveList = new FilterList(Operator.MUST_PASS_ONE, chainList);
+    Scan scan = new Scan();
+    scan.setFilter(interleaveList);
+    FilterAdapterContext context = new FilterAdapterContext(scan, new DefaultReadHooks());
+    assertFalse(instance.isFilterSupported(context, whileMatchFilter).isSupported());
+  }
+
+  @Test
+  public void supported_inChain() {
+    QualifierFilter qualifierFilterY =
+        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("y")));
+    FilterList interleaveList = new FilterList(Operator.MUST_PASS_ONE, qualifierFilterY);
+    QualifierFilter qualifierFilterX =
+        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("x")));
+    WhileMatchFilter whileMatchFilter = new WhileMatchFilter(qualifierFilterX);
+    FilterList chainList = new FilterList(Operator.MUST_PASS_ALL, whileMatchFilter, interleaveList);
+    Scan scan = new Scan();
+    scan.setFilter(chainList);
+    FilterAdapterContext context = new FilterAdapterContext(scan, new DefaultReadHooks());
+    assertTrue(instance.isFilterSupported(context, whileMatchFilter).isSupported());
   }
 }
