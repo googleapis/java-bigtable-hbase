@@ -317,4 +317,53 @@ public class TestBatch extends AbstractTest {
 
     table.close();
   }
+  
+  @Test
+  public void testBatchGets() throws Exception {
+    // Initialize data
+    Table table = getConnection().getTable(TABLE_NAME);
+    byte[] rowKey1 = dataHelper.randomData("testrow-");
+    byte[] qual1 = dataHelper.randomData("qual-");
+    byte[] value1 = dataHelper.randomData("value-");
+    byte[] rowKey2 = dataHelper.randomData("testrow-");
+    byte[] qual2 = dataHelper.randomData("qual-");
+    byte[] value2 = dataHelper.randomData("value-");
+    byte[] emptyRowKey = dataHelper.randomData("testrow-");
+
+    Put put1 = new Put(rowKey1).addColumn(COLUMN_FAMILY, qual1, value1);
+    Put put2 = new Put(rowKey2).addColumn(COLUMN_FAMILY, qual2, value2);
+    List<Row> batch = new ArrayList<Row>(2);
+    batch.add(put1);
+    batch.add(put2);
+    Object[] results = new Object[batch.size()];
+    table.batch(batch, results);
+    Assert.assertTrue("Should be a Result", results[0] instanceof Result);
+    Assert.assertTrue("Should be a Result", results[1] instanceof Result);
+    Assert.assertTrue("Should be empty", ((Result) results[0]).isEmpty());
+    Assert.assertTrue("Should be empty", ((Result) results[1]).isEmpty());
+    Assert.assertEquals("Batch should not have been cleared", 2, batch.size());
+
+    // Check values
+    Get get1 = new Get(rowKey1);
+    Get get2 = new Get(rowKey2);
+    Get get3 = new Get(emptyRowKey);
+    batch.clear();
+    batch.add(get1);
+    batch.add(get2);
+    batch.add(get3);
+    results = new Object[batch.size()];
+    table.batch(batch, results);
+    Assert.assertTrue("Should be Result", results[0] instanceof Result);
+    Assert.assertTrue("Should be Result", results[1] instanceof Result);
+    Assert.assertTrue("Should be Result", results[2] instanceof Result);
+    Assert.assertEquals("Should be one value", 1, ((Result) results[0]).size());
+    Assert.assertEquals("Should be one value", 1, ((Result) results[1]).size());
+    Assert.assertEquals("Should be empty", 0, ((Result) results[2]).size());
+    Assert.assertArrayEquals("Should be value1", value1,
+      CellUtil.cloneValue(((Result) results[0]).getColumnLatestCell(COLUMN_FAMILY, qual1)));
+    Assert.assertArrayEquals("Should be value2", value2,
+      CellUtil.cloneValue(((Result) results[1]).getColumnLatestCell(COLUMN_FAMILY, qual2)));
+
+    table.close();
+  }
 }

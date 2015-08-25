@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.config;
 
+import io.grpc.Status;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -213,4 +215,13 @@ public class RetryOptions {
     return readPartialRowTimeoutMillis;
   }
 
+  /*
+   * Determines if the read should be retried based on the input status {@code code}.
+   */
+  public boolean isRetryableRead(Status.Code code) {
+    return code == Status.INTERNAL.getCode()
+        || code == Status.UNAVAILABLE.getCode()
+        || code == Status.ABORTED.getCode()
+        || (retryOnDeadlineExceeded && code == Status.DEADLINE_EXCEEDED.getCode());
+  }
 }
