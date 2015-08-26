@@ -19,7 +19,7 @@ limitations under the License.
         <version>0.2.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.google.cloud.bigtable.dataflow</groupId>
+    <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-dataflow</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
