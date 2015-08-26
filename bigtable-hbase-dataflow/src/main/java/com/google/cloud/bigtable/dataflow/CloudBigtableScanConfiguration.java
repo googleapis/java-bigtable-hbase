@@ -22,6 +22,7 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.util.Base64;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -31,7 +32,7 @@ import java.io.Serializable;
  * This class encapsulates the metadata required to create a connection to a Bigtable cluster,
  * and a specific table therein along with a filter on the table in the form of a {@link Scan}.
  * NOTE: {@link Scan} isn't Serializable, so this class uses HBase's {@link ProtobufUtil} as part
- * of the {@Externalizable} implementation.
+ * of the {@link Externalizable} implementation.
  */
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
 
