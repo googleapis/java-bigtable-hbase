@@ -34,9 +34,8 @@ import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 /**
- * A {@link Coder} that serializes {@link Mutation} objects used by the CBT {@link Sink}. See
- * {@link CloudBigtableIO#initializeForWrite(Pipeline)}.  Uses {@link ProtobufUtil} to convert
- * the Mutations into Protobuf objects which can be serialized.
+ * A {@link Coder} that serializes {@link Mutation} objects used by the Cloud Bigtable {@link Sink}.
+ * See {@link CloudBigtableIO#initializeForWrite(Pipeline)}.
  */
 public class HBaseMutationCoder extends AtomicCoder<Mutation> implements Serializable {
 

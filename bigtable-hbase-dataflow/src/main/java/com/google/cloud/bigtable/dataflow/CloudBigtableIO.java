@@ -77,14 +77,14 @@ import com.google.cloud.dataflow.sdk.values.PDone;
  * as Google Analytics and Gmail.
  * </p>
  * <p>
- * To use {@link CloudBigtableIO}, users must use gcloud to get credential for Bigtable:
+ * To use {@link CloudBigtableIO}, users must use gcloud to get a credential for Cloud Bigtable:
  *
  * <pre>
  * $ gcloud auth login
  * </pre>
  * <p>
- * To read a {@link PCollection} from a Table, with an optional Scan, use
- * {@link CloudBigtableIO#read(CloudBigtableScanConfiguration)}. For example:
+ * To read a {@link PCollection} from a table, with an optional
+ * {@link Scan}, use {@link CloudBigtableIO#read(CloudBigtableScanConfiguration)}. For example:
  * </p>
  *
  * <pre>
@@ -102,7 +102,7 @@ import com.google.cloud.dataflow.sdk.values.PDone;
  * }
  * </pre>
  * <p>
- * To write a {@link PCollection} to a Bigtable, use
+ * To write a {@link PCollection} to a table, use
  * {@link CloudBigtableIO#writeToTable(CloudBigtableTableConfiguration)}, specifying the table to
  * write to:
  * </p>
@@ -128,20 +128,20 @@ import com.google.cloud.dataflow.sdk.values.PDone;
 public class CloudBigtableIO {
 
   /**
-   * A {@link BoundedSource} for a Bigtable {@link Table}, which is potentially filtered by a
+   * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
    * {@link Scan}.
    */
   static class Source extends BoundedSource<Result> {
     private static final long serialVersionUID = -5580115943635114126L;
 
     /**
-     * Configuration for a Cloud Bigtable connection, a table and an optional scan.
+     * Configuration for a Cloud Bigtable connection, a table, and an optional scan.
      */
     private final CloudBigtableScanConfiguration configuration;
 
     /**
-     * A {@link BoundedSource} for a Bigtable {@link Table} with a start/stop key range, along with
-     * a potential filter via a {@link Scan}.
+     * A {@link BoundedSource} for a Cloud Bigtable {@link Table} with a start/stop key range, along
+     * with a potential filter via a {@link Scan}.
      */
     public class SourceWithKeys extends BoundedSource<Result> {
       private static final long serialVersionUID = 2561066007121040429L;
@@ -157,10 +157,10 @@ public class CloudBigtableIO {
       private final byte[] stopKey;
 
       /**
-       * An estimate of the size of the source. NOTE: This value is a guestimate. It could be be
+       * An estimate of the size of the source. NOTE: This value is a guesstimate. It could be be
        * significantly off, especially if there is a Scan selected in the configuration. It will
        * also be off if the start and stop keys are calculated via
-       * {@link Source#splitIntoBundles(long, PipelineOptions)}.
+       * {@link CloudBigtableIO.Source#splitIntoBundles(long, PipelineOptions)}.
        */
       private final long estimatedSize;
 
@@ -176,10 +176,12 @@ public class CloudBigtableIO {
       }
 
       /**
-       * An estimate of the size of the source. NOTE: This value is a guestimate. It could be be
-       * significantly off, especially if there is a Scan selected in the configuration. It will
-       * also be off if the start and stop keys are calculated via
+       * Gets an estimate of the size of the source. NOTE: This value is a guesstimate. It could be
+       * significantly off, especially if there is a {@link Scan} selected in the configuration. It
+       * will also be off if the start and stop keys are calculated via
        * {@link Source#splitIntoBundles(long, PipelineOptions)}.
+       * @param options The pipeline options.
+       * @return The estimated size of the source, in bytes.
        */
       @Override
       public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
@@ -187,7 +189,10 @@ public class CloudBigtableIO {
       }
 
       /**
-       *NOTE: HBase supports reverse scans, but Cloud Bigtable does not.
+       * Checks whether the pipeline produces sorted keys. NOTE: HBase supports reverse scans, but
+       * Cloud Bigtable does not.
+       * @param options The pipeline options.
+       * @return Whether the pipeline produces sorted keys.
        */
       @Override
       public boolean producesSortedKeys(PipelineOptions options) throws Exception {
@@ -195,20 +200,25 @@ public class CloudBigtableIO {
       }
 
       /**
-       * Encodes Results - see {@link HBaseResultCoder} for more details.
+       * Creates a coder for HBase {@link Result} objects. See {@link HBaseResultCoder} for more
+       * info.
+       * @return A coder for {@link Result} objects.
        */
       @Override
       public Coder<Result> getDefaultOutputCoder() {
         return new HBaseResultCoder();
       }
 
+      // TODO: Add a method on the server side that will be a more precise split based on server-
+      // side statistics
       /**
        * <p>Splits the bundle based on the assumption that the data is distributed evenly between
-       * {@link #startKey} and {@link #stopKey}.  That assumption may not likely to be correct for
-       * any specific start/stop key combination.</p>
-       *
-       * <p>TODO: Add a method on the server side that will be a more precise split based on server
-       * side statistics</p>
+       * {@link #startKey} and {@link #stopKey}. That assumption may not be correct for any specific
+       * start/stop key combination.</p>
+       * <p>This method is called internally by Cloud Dataflow. Do not call it directly.</p>
+       * @param desiredBundleSizeBytes The desired size for each bundle, in bytes.
+       * @param options The pipeline options.
+       * @return A list of sources split into groups.
        */
       @Override
       public List<SourceWithKeys> splitIntoBundles(long desiredBundleSizeBytes,
@@ -238,21 +248,36 @@ public class CloudBigtableIO {
         return new CloudBigtableIO.Source.Reader(this, configuration, scan);
       }
 
+      /**
+       * Gets the start key for the range to be scanned.
+       * @return The start key.
+       */
       public byte[] getStartKey() {
         return startKey;
       }
 
+      /**
+       * Gets the stop key for the range to be scanned.
+       * @return The stop key.
+       */
       public byte[] getStopKey() {
         return stopKey;
       }
 
+      /**
+       * Gets an estimate of the size of the source. NOTE: This value is a guesstimate. It could be
+       * significantly off, especially if there is a {@link Scan} selected in the configuration. It
+       * will also be off if the start and stop keys are calculated via
+       * {@link Source#splitIntoBundles(long, PipelineOptions)}.
+       * @return The estimated size of the source, in bytes.
+       */
       public long getEstimatedSize() {
         return estimatedSize;
       }
     }
 
     /**
-     * Reads rows for a specific {@link Table}, usually filtered by a Scan.
+     * Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}.
      */
     private static class Reader extends BoundedReader<Result> {
       private final BoundedSource<Result> source;
@@ -302,7 +327,7 @@ public class CloudBigtableIO {
 
       /**
        * Creates a {@link Connection}, {@link Table} and {@link ResultScanner}.
-       */
+        */
       @Override
       public boolean start() throws IOException {
         connection = new BigtableConnection(config.toHBaseConfig());
@@ -317,30 +342,35 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Creates a Coder for HBase {@link Result} objects. See {@link HBaseResultCoder} for more info.
+     * Creates a coder for HBase {@link Result} objects. See {@link HBaseResultCoder} for more info.
+     * @return A coder for {@link Result} objects.
      */
     @Override
     public Coder<Result> getDefaultOutputCoder() {
       return new HBaseResultCoder();
     }
 
+    // TODO: Add a method on the server side that will be a more precise split based on server-side
+    // statistics
     /**
      * <p>
-     * Splits the table based on keys that belong to "regions" a.k.a. tablets via the HBase
-     * {@link RegionLocator} interface which calls
+     * Splits the table based on keys that belong to tablets, known as "regions" in the HBase API.
+     * The current implementation uses the HBase {@link RegionLocator} interface, which calls
      * {@link BigtableService#sampleRowKeys(com.google.bigtable.v1.SampleRowKeysRequest, io.grpc.stub.StreamObserver)
-     * under the covers}. A {@link SourceWithKeys} may correspond to a single region or a portion of
+     * under the covers. A {@link SourceWithKeys} may correspond to a single region or a portion of
      * a region.
      * </p>
      * <p>
-     * Splits that are smaller than a single region calculate the split based on the assumption that
-     * the data is distributed evenly between the region's startKey and stopKey. That
-     * assumption may not likely to be correct for any specific start/stop key combination.
+     * If a split is smaller than a single region, the split is calculated based on the assumption
+     * that the data is distributed evenly between the region's startKey and stopKey. That
+     * assumption may not be correct for any specific start/stop key combination.
      * </p>
      * <p>
-     * TODO: Add a method on the server side that will be a more precise split based on server side
-     * statistics
+     * This method is called internally by Cloud Dataflow. Do not call it directly.
      * </p>
+     * @param desiredBundleSizeBytes The desired size for each bundle, in bytes.
+     * @param options The pipeline options.
+     * @return A list of sources split into groups.
      */
     @Override
     public List<SourceWithKeys> splitIntoBundles(
@@ -425,10 +455,12 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Gets an estimated size based on data returned from {@link Exception#getSampleRowKeys}. If The
+     * Gets an estimated size based on data returned from {@link Exception#getSampleRowKeys}. The
      * estimate will be high if a Scan is set on the {@link CloudBigtableScanConfiguration}; in such
      * cases, the estimate will not take the Scan into account, and will return a larger estimate
      * than what the {@link Reader} will actually read.
+     * @param options The pipeline options.
+     * @return The estimated size of the data, in bytes.
      */
     @Override
     public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
@@ -456,13 +488,21 @@ public class CloudBigtableIO {
       return totalEstimatedSizeBytes;
     }
 
+    /**
+     * Checks whether the pipeline produces sorted keys. NOTE: HBase supports reverse scans, but
+     * Cloud Bigtable does not.
+     * @param options The pipeline options.
+     * @return Whether the pipeline produces sorted keys.
+     */
     @Override
     public boolean producesSortedKeys(PipelineOptions options) throws Exception {
       return true;
     }
 
     /**
-     * Creates a reader that will scan the entire table based on the scan in the configuration.
+     * Creates a reader that will scan the entire table based on the {@link Scan} in the
+     * configuration.
+     * @return A reader for the table.
      */
     @Override
     public BoundedSource.BoundedReader<Result> createReader(PipelineOptions options)
@@ -500,11 +540,11 @@ public class CloudBigtableIO {
   ///////////////////// Write Class /////////////////////////////////
 
   /**
-   * Initialize the coders for the Cloud Bigtable Write PTransform. Sets up {@link Coders}
+   * Initialize the coders for the Cloud Bigtable Write {@link PTransform}. Sets up {@link Coder}s
    * required to serialize HBase {@link Put}, {@link Delete}, and {@link Mutation} objects.  See
    * {@link HBaseMutationCoder} for additional implementation details.
    *
-   * @return the original Pipeline - done for chaining convenience.
+   * @return The original {@link Pipeline} for chaining convenience.
    */
   @SuppressWarnings({"rawtypes", "unchecked"})
   public static Pipeline initializeForWrite(Pipeline p) {
@@ -586,14 +626,18 @@ public class CloudBigtableIO {
   /**
    * <p>
    * A {@link DoFn} that can write either a bounded or unbounded {@link PCollection} of {@link KV}
-   * of (String tableName, List of{@link Mutation}s) to the specified table.
+   * of (String tableName, List of {@link Mutation}s) to the specified table.
    * </p>
-   * <p>NOTE: This will write Puts and Deletes, not Appends and Increments.  The limitation exists
-   * because the batch can fail half way, and Appends/Increments might be re-run causing the
-   * Mutation to be executed twice, which is never the user's intent.  Re-running a Delete will not
-   * cause any differences.  Re-running a Put isn't normally a problem, but might cause problems
-   * in some cases when the number of versions in the ColumnFamily is greater than one.  In a case
-   * where multiple versions could be a problem, it's  best to add a timestamp on the Put.</p>
+   * <p>
+   * NOTE: This {@link DoFn} will write {@link Put}s and {@link Delete}s, not {@link
+   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s. 
+   * This limitation exists because if the batch fails partway through, Appends/Increments might be
+   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent. 
+   * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
+   * but might cause problems in some cases when the number of versions supported by the column
+   * family is greater than one.  In a case where multiple versions could be a problem, it's best to
+   * add a timestamp to the {@link Put}.
+   * </p>
    */
   static class CloudBigtableMultiTableWriteFn extends
       DoFn<KV<String, Iterable<Mutation>>, Void> {
@@ -607,7 +651,8 @@ public class CloudBigtableIO {
 
     /**
      * Create a {@link Connection} from the provided {@link CloudBigtableConfiguration} that will
-     * live for the lifetime of the DoFn.
+     * live for the lifetime of the {@link DoFn}.
+     * @param context The context for the {@link DoFn}.
      */
     @Override
     public void startBundle(Context context) throws Exception {
@@ -615,7 +660,9 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Use the connection to create a new {@link Table} to write the {@link Mutation}s to.
+     * Use the connection to create a new {@link Table} to write the {@link Mutation}s to. NOTE:
+     * This method does not create a new table in Cloud Bigtable. The table must already exist.
+     * @param context The context for the {@link DoFn}.
      */
     @Override
     public void processElement(ProcessContext context) throws Exception {
@@ -637,8 +684,8 @@ public class CloudBigtableIO {
   }
 
   /**
-   * <p> A {@link PTransform} wrapper around a {@link DoFn} that will write {@link Mutation}s to
-   * Cloud Bigtable</p>
+   * A {@link PTransform} wrapper around a {@link DoFn} that will write {@link Mutation}s to Cloud
+   * Bigtable.
    */
   static class CloudBigtableWriteTransform<T> extends PTransform<PCollection<T>, PDone> {
     private static final long serialVersionUID = -2888060194257930027L;
@@ -662,14 +709,17 @@ public class CloudBigtableIO {
    * of {@link Mutation}s to a table specified via a {@link CloudBigtableTableConfiguration}.
    * </p>
    * <p>
-   * NOTE: This will write Puts and Deletes, not Appends and Increments. The limitation exists
-   * because the batch can fail half way, and Appends/Increments might be re-run causing the
-   * Mutation to be executed twice, which is never the user's intent. Re-running a Delete will not
-   * cause any differences. Re-running a Put isn't normally a problem, but might cause problems in
-   * some cases when the number of versions in the ColumnFamily is greater than one. In a case where
-   * multiple versions could be a problem, it's best to add a timestamp on the Put.
+   * NOTE: This {@link PTransform} will write {@link Put}s and {@link Delete}s, not {@link
+   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s. 
+   * This limitation exists because if the batch fails partway through, Appends/Increments might be
+   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent. 
+   * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
+   * but might cause problems in some cases when the number of versions supported by the column
+   * family is greater than one.  In a case where multiple versions could be a problem, it's best to
+   * add a timestamp to the {@link Put}.
    * </p>
-   */  public static PTransform<PCollection<Mutation>, PDone> writeToTable(
+   */
+  public static PTransform<PCollection<Mutation>, PDone> writeToTable(
       CloudBigtableTableConfiguration config) {
     validate(config, config.getTableId());
     return new CloudBigtableWriteTransform<>(new CloudBigtableSingleTableWriteFn(config));
@@ -681,12 +731,14 @@ public class CloudBigtableIO {
    * of {@link KV} of (String tableName, List of {@link Mutation}s) to the specified table.
    * </p>
    * <p>
-   * NOTE: This will write Puts and Deletes, not Appends and Increments. The limitation exists
-   * because the batch can fail half way, and Appends/Increments might be re-run causing the
-   * Mutation to be executed twice, which is never the user's intent. Re-running a Delete will not
-   * cause any differences. Re-running a Put isn't normally a problem, but might cause problems in
-   * some cases when the number of versions in the ColumnFamily is greater than one. In a case where
-   * multiple versions could be a problem, it's best to add a timestamp on the Put.
+   * NOTE: This {@link PTransform} will write {@link Put}s and {@link Delete}s, not {@link
+   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s. 
+   * This limitation exists because if the batch fails partway through, Appends/Increments might be
+   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent. 
+   * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
+   * but might cause problems in some cases when the number of versions supported by the column
+   * family is greater than one.  In a case where multiple versions could be a problem, it's best to
+   * add a timestamp to the {@link Put}.
    * </p>
    */
    public static PTransform<PCollection<KV<String, Iterable<Mutation>>>, PDone>
@@ -696,8 +748,8 @@ public class CloudBigtableIO {
   }
 
   /**
-   * Creates a {@link BoundedSource} for a Bigtable {@link Table}, which is potentially filtered by a
-   * {@link Scan}.
+   * Creates a {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially
+   * filtered by a {@link Scan}.
    */
   public static com.google.cloud.dataflow.sdk.io.BoundedSource<Result> read(
       CloudBigtableScanConfiguration config) {

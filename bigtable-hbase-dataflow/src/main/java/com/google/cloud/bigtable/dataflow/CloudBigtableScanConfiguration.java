@@ -22,26 +22,36 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.util.Base64;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 /**
- * This class encapsulates the metadata required to create a connection to a Bigtable cluster,
- * and a specific table therein along with a filter on the table in the form of a {@link Scan}.
- * NOTE: {@link Scan} isn't Serializable, so this class uses HBase's {@link ProtobufUtil} as part
- * of the {@link Externalizable} implementation.
+ * This class defines information that a Cloud Bigtable client needs to connect to a user's Cloud
+ * Bigtable cluster; a table to connect to in the cluster; and a filter on the table in the form of
+ * a {@link Scan}.
  */
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
 
   private static final long serialVersionUID = 2435897354284600685L;
 
+  /**
+   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration}.
+   * @param options The {@link CloudBigtableOptions} object.
+   * @return The new {@link CloudBigtableScanConfiguration}.
+   */
   public static CloudBigtableScanConfiguration fromCBTOptions(CloudBigtableOptions options) {
     return fromCBTOptions(options, new Scan());
   }
 
+  /**
+   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration},
+   * with the addition of a {@link Scan} that filters the table.
+   * @param options The {@link CloudBigtableOptions} object.
+   * @param scan The {@link Scan} to add to the configuration.
+   * @return The new {@link CloudBigtableScanConfiguration}.
+   */
   public static CloudBigtableScanConfiguration fromCBTOptions(CloudBigtableOptions options,
       Scan scan) {
     return new CloudBigtableScanConfiguration(
@@ -58,11 +68,20 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public static class Builder extends CloudBigtableTableConfiguration.Builder<Builder> {
     protected Scan scan = new Scan();
 
+    /**
+     * Specifies the {@link Scan} that will be used to filter the table.
+     * @param scan The {@link Scan} to add to the configuration.
+     * @return The original {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
     public Builder withScan(Scan scan) {
       this.scan = scan;
       return this;
     }
 
+    /**
+     * Builds the {@link CloudBigtableScanConfiguration}.
+     * @return The new {@link CloudBigtableScanConfiguration}.
+     */
     public CloudBigtableScanConfiguration build() {
       return new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, scan);
     }
@@ -99,12 +118,24 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   private SerializableScan serializableScan;
 
+  /**
+   * Creates a {@link CloudBigtableScanConfiguration} using the specified information.
+   * @param projectId The project ID for the cluster.
+   * @param zone The zone where the cluster is located.
+   * @param cluster The cluster ID for the cluster.
+   * @param table The table to connect to in the cluster.
+   * @param scan The {@link Scan} that will be used to filter the table.
+   */
   public CloudBigtableScanConfiguration(String projectId, String zone, String cluster,
       String table, Scan scan) {
     super(projectId, zone, cluster, table);
     this.serializableScan = new SerializableScan(scan);
   }
 
+  /**
+   * Gets the {@link Scan} used to filter the table.
+   * @return The {@link Scan}.
+   */
   public Scan getScan() {
     return serializableScan.scan;
   }
