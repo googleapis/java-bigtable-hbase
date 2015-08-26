@@ -999,7 +999,7 @@ public class TestFilters extends AbstractTest {
 
   @Test
   public void testWhileMatchFilter_simple() throws IOException {
-    String rowKeyPrefix = "wmf-simple-";
+    String rowKeyPrefix = dataHelper.randomString("wmf-simple-");
     byte[] qualA = dataHelper.randomData("qualA");
     Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
 
@@ -1016,7 +1016,7 @@ public class TestFilters extends AbstractTest {
 
   @Test
   public void testWhileMatchFilter_singleChained() throws IOException {    
-    String rowKeyPrefix = "wmf-sc-";
+    String rowKeyPrefix = dataHelper.randomString("wmf-sc-");
     byte[] qualA = dataHelper.randomData("qualA");
     Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
 
@@ -1036,7 +1036,7 @@ public class TestFilters extends AbstractTest {
   @Test
   @Category(KnownGap.class)
   public void testWhileMatchFilter_twoInterleaves() throws IOException {
-    String rowKeyPrefix = "wmf-interleaves-";
+    String rowKeyPrefix = dataHelper.randomString("wmf-interleaves-");
     byte[] qualA = dataHelper.randomData("qualA");
     Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
 
@@ -1062,7 +1062,7 @@ public class TestFilters extends AbstractTest {
   @Test
   @Category(KnownGap.class)
   public void testWhileMatchFilter_twoChained() throws IOException {
-    String rowKeyPrefix = "wmf-chained-";
+    String rowKeyPrefix = dataHelper.randomString("wmf-chained-");
     byte[] qualA = dataHelper.randomData("qualA");
     Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
 
@@ -1088,7 +1088,7 @@ public class TestFilters extends AbstractTest {
   @Test
   @Category(KnownGap.class)
   public void testWhileMatchFilter_twoNested() throws IOException {
-    String rowKeyPrefix = "wmf-nested-";
+    String rowKeyPrefix = dataHelper.randomString("wmf-nested-");
     byte[] qualA = dataHelper.randomData("qualA");
     Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
 

@@ -24,7 +24,11 @@ import org.apache.hadoop.hbase.util.Bytes;
 public class DataGenerationHelper {
 
   public byte[] randomData(String prefix) {
-    return Bytes.toBytes(prefix + RandomStringUtils.randomAlphanumeric(8));
+    return Bytes.toBytes(randomString(prefix));
+  }
+
+  public String randomString(String prefix) {
+    return prefix + RandomStringUtils.randomAlphanumeric(8);
   }
 
   public byte[][] randomData(String prefix, int count) {
