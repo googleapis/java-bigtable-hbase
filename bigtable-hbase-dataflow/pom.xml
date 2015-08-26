@@ -109,6 +109,42 @@ limitations under the License.
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <windowtitle>Google Cloud Dataflow + Cloud Bigtable Connector ${project.version} API</windowtitle>
+                            <doctitle>Google Cloud Dataflow + Cloud Bigtable Connector ${project.version} API</doctitle>
+                            <overview>../overview.html</overview>
+                            <bottom><![CDATA[<br>]]></bottom>
+
+                            <offlineLinks>
+                                <offlineLink>
+                                    <url>https://cloud.google.com/dataflow/java-sdk/JavaDoc/</url>
+                                    <location>${basedir}/javadoc/dataflow-docs</location>
+                                </offlineLink>
+                                <offlineLink>
+                                    <url>http://hbase.apache.org/apidocs/</url>
+                                    <location>${basedir}/javadoc/hbase-docs</location>
+                                </offlineLink>
+                            </offlineLinks>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+               </plugins>
+           </build>
+        </profile>
     </profiles>
     <build>
         <plugins>
@@ -135,36 +171,6 @@ limitations under the License.
                                 <exclude>**/*IntegrationTest.java</exclude>
                             </excludes>
                         </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <windowtitle>Google Cloud Dataflow + Cloud Bigtable Connector ${project.version} API</windowtitle>
-                    <doctitle>Google Cloud Dataflow + Cloud Bigtable Connector ${project.version} API</doctitle>
-                    <overview>../overview.html</overview>
-                    <bottom><![CDATA[<br>]]></bottom>
-
-                    <offlineLinks>
-                        <offlineLink>
-                            <url>https://cloud.google.com/dataflow/java-sdk/JavaDoc/</url>
-                            <location>${basedir}/javadoc/dataflow-docs</location>
-                        </offlineLink>
-                        <offlineLink>
-                            <url>http://hbase.apache.org/apidocs/</url>
-                            <location>${basedir}/javadoc/hbase-docs</location>
-                        </offlineLink>
-                    </offlineLinks>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <phase>package</phase>
                     </execution>
                 </executions>
             </plugin>
