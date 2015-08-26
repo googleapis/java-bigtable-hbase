@@ -141,12 +141,18 @@ public class BigtableSession implements AutoCloseable {
         // Create a throw away object in order to speed up the creation of the first
         // BigtableConnection which uses SslContexts under the covers.
         try {
+          Class.forName("org.eclipse.jetty.alpn.ALPN");
+        } catch (ClassNotFoundException e1) {
+          LOG.warn(
+            "Could not asynchronously create the ssl context, since ALPN is not installed.");
+          return;
+        }
+        try {
           // We create multiple channels via refreshing and pooling channel implementation.
           // Each one needs its own SslContext.
-          @SuppressWarnings("unused")
-          SslContext warmup = createSslContext();
+          createSslContext();
         } catch (SSLException e) {
-          throw new IllegalStateException("Could not create an ssl context.", e);
+          LOG.warn("Could not asynchronously create the ssl context", e);
         }
       }
     });
@@ -156,11 +162,9 @@ public class BigtableSession implements AutoCloseable {
         // The first invocation of CredentialFactory.getHttpTransport() is expensive.
         // Reference it so that it gets constructed asynchronously.
         try {
-          @SuppressWarnings("unused")
-          HttpTransport warmup = CredentialFactory.getHttpTransport();
+          CredentialFactory.getHttpTransport();
         } catch (IOException | GeneralSecurityException e) {
-          new Logger(BigtableSession.class).warn(
-            "Could not asynchronously initialze httpTransport", e);
+          LOG.warn("Could not asynchronously initialze httpTransport", e);
         }
       }
     });
@@ -173,11 +177,9 @@ public class BigtableSession implements AutoCloseable {
           // The first invocation of InetAddress retrieval is expensive.
           // Reference it so that it gets constructed asynchronously.
           try {
-            @SuppressWarnings("unused")
-            InetAddress warmup = InetAddress.getByName(host);
+            InetAddress.getByName(host);
           } catch (UnknownHostException e) {
-            new Logger(BigtableSession.class).warn(
-              "Could not asynchronously initialze host: " + host, e);
+            LOG.warn("Could not asynchronously initialze host: " + host, e);
           }
         }
       });
