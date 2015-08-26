@@ -80,8 +80,7 @@ public interface BigtableDataClient {
    * Sample row keys from a table, returning a Future that will complete when the sampling has
    * completed.
    */
-  ListenableFuture<ImmutableList<SampleRowKeysResponse>> sampleRowKeysAsync(
-      SampleRowKeysRequest request);
+  ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(SampleRowKeysRequest request);
 
   /**
    * Perform a scan over rows.
