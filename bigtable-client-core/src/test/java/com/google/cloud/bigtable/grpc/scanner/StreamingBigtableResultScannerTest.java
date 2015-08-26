@@ -15,21 +15,26 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.api.client.util.Strings;
-import com.google.bigtable.v1.Cell;
-import com.google.bigtable.v1.Column;
-import com.google.bigtable.v1.Family;
-import com.google.bigtable.v1.ReadRowsResponse;
-import com.google.bigtable.v1.ReadRowsResponse.Chunk;
-import com.google.bigtable.v1.Row;
-import com.google.cloud.bigtable.grpc.io.CancellationToken;
-import com.google.cloud.bigtable.grpc.scanner.ScanTimeoutException;
-import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
+import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.createContentChunk;
+import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.createReadRowsResponse;
+import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.extractRowsWithKeys;
+import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.generateReadRowsResponses;
+import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.randomBytes;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -40,23 +45,14 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import com.google.bigtable.v1.Column;
+import com.google.bigtable.v1.Family;
+import com.google.bigtable.v1.ReadRowsResponse;
+import com.google.bigtable.v1.ReadRowsResponse.Chunk;
+import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.grpc.io.CancellationToken;
+import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
 public class StreamingBigtableResultScannerTest {
@@ -97,66 +93,6 @@ public class StreamingBigtableResultScannerTest {
     }
   }
 
-  static Chunk createContentChunk(
-      String familyName, String columnQualifier, byte[] value, long timestamp) {
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(familyName), "Family name may not be null or empty");
-
-    Family.Builder familyBuilder = Family.newBuilder()
-        .setName(familyName);
-
-    if (columnQualifier != null) {
-      Column.Builder columnBuilder = Column.newBuilder();
-      columnBuilder.setQualifier(ByteString.copyFromUtf8(columnQualifier));
-      familyBuilder.addColumns(columnBuilder);
-
-      if (value != null) {
-        Cell.Builder cellBuilder = Cell.newBuilder();
-        cellBuilder.setTimestampMicros(timestamp);
-        cellBuilder.setValue(ByteString.copyFrom(value));
-        columnBuilder.addCells(cellBuilder);
-      }
-    }
-
-    return Chunk.newBuilder().setRowContents(familyBuilder).build();
-  }
-
-  static ReadRowsResponse createReadRowsResponse(String rowKey, Chunk ... chunks) {
-    return ReadRowsResponse.newBuilder()
-        .setRowKey(ByteString.copyFromUtf8(rowKey))
-        .addAllChunks(Arrays.asList(chunks))
-        .build();
-  }
-
-  static byte[] randomBytes(int length) {
-    Random rnd = new Random();
-    byte[] result = new byte[length];
-    rnd.nextBytes(result);
-    return result;
-  }
-
-  static List<ReadRowsResponse> generateReadRowsResponses(
-      String rowKeyFormat, int count) {
-
-    List<ReadRowsResponse> results = new ArrayList<>(count);
-    for (int i = 0; i < count; i++) {
-      String rowKey = String.format(rowKeyFormat, i);
-      Chunk contentChunk = createContentChunk("Family1", null, null, 0L);
-      Chunk rowCompleteChunk = Chunk.newBuilder().setCommitRow(true).build();
-
-      ReadRowsResponse response =
-          ReadRowsResponse.newBuilder()
-              .addChunks(contentChunk)
-              .addChunks(rowCompleteChunk)
-              .setRowKey(ByteString.copyFromUtf8(rowKey))
-              .build();
-
-      results.add(response);
-    }
-
-    return results;
-  }
-
   static void addResponsesToScanner(
       StreamingBigtableResultScanner scanner,
       Iterator<ReadRowsResponse> responses) {
@@ -176,15 +112,6 @@ public class StreamingBigtableResultScannerTest {
 
   static void assertScannerEmpty(StreamingBigtableResultScanner scanner) throws IOException {
     Assert.assertNull(scanner.next());
-  }
-
-  static Iterable<Row> extractRowsWithKeys(Iterable<ReadRowsResponse> responses) {
-    return Iterables.transform(responses, new Function<ReadRowsResponse, Row>() {
-      @Override
-      public Row apply(ReadRowsResponse readRowsResponse) {
-        return Row.newBuilder().setKey(readRowsResponse.getRowKey()).build();
-      }
-    });
   }
 
   @Rule
@@ -408,20 +335,21 @@ public class StreamingBigtableResultScannerTest {
   @Test
   public void endOfStreamMidRowThrows() throws IOException {
     CancellationToken cancellationToken = new CancellationToken();
-    StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
-
-    String rowKey = "row-1";
-    Chunk contentChunk = createContentChunk("Family1", "c1", randomBytes(10), 100L);
-    ReadRowsResponse response = createReadRowsResponse(rowKey, contentChunk);
-
-    scanner.addResult(response);
-    scanner.complete();
-
-    expectedException.expectMessage("End of stream marker encountered while merging a row.");
-    expectedException.expect(IllegalStateException.class);
-    @SuppressWarnings("unused")
-    Row resultRow = scanner.next();
+    try (StreamingBigtableResultScanner scanner =
+        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken)) {
+  
+      String rowKey = "row-1";
+      Chunk contentChunk = createContentChunk("Family1", "c1", randomBytes(10), 100L);
+      ReadRowsResponse response = createReadRowsResponse(rowKey, contentChunk);
+  
+      scanner.addResult(response);
+      scanner.complete();
+  
+      expectedException.expectMessage("End of stream marker encountered while merging a row.");
+      expectedException.expect(IllegalStateException.class);
+      @SuppressWarnings("unused")
+      Row resultRow = scanner.next();
+    }
   }
 
   @Test
@@ -434,59 +362,60 @@ public class StreamingBigtableResultScannerTest {
     final CountDownLatch addProcessDone = new CountDownLatch(1);
 
     CancellationToken cancellationToken = new CancellationToken();
-    final StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(queueDepth, defaultTimeout, cancellationToken);
-
-    final List<ReadRowsResponse> responses =
-        generateReadRowsResponses("rowKey-%s", queueDepth * 2);
     final ExecutorService executorService = Executors.newFixedThreadPool(1);
+    try (final StreamingBigtableResultScanner scanner =
+        new StreamingBigtableResultScanner(queueDepth, defaultTimeout, cancellationToken)) {
 
-    executorService.submit(new Runnable() {
-      @Override
-      public void run() {
-        for (int i = 0; i < queueDepth; i++) {
-          scanner.addResult(responses.get(i));
+      final List<ReadRowsResponse> responses =
+          generateReadRowsResponses("rowKey-%s", queueDepth * 2);
+  
+      executorService.submit(new Runnable() {
+        @Override
+        public void run() {
+          for (int i = 0; i < queueDepth; i++) {
+            scanner.addResult(responses.get(i));
+          }
+          // The next addResult will block so start a reader in a second and record the time before
+          // the write and after the write. We'll expect a time greater than 500ms of blocking.
+          timeBeforeBlock.set(System.currentTimeMillis());
+          scanner.addResult(responses.get(queueDepth));
+          timeAfterBlock.set(System.currentTimeMillis());
+          scanner.complete();
+          addProcessDone.countDown();
         }
-        // The next addResult will block so start a reader in a second and record the time before
-        // the write and after the write. We'll expect a time greater than 500ms of blocking.
-        timeBeforeBlock.set(System.currentTimeMillis());
-        scanner.addResult(responses.get(queueDepth));
-        timeAfterBlock.set(System.currentTimeMillis());
-        scanner.complete();
-        addProcessDone.countDown();
-      }
-    });
-
-    // Make sure it's blocked.
-    Assert.assertFalse(addProcessDone.await(500, TimeUnit.MILLISECONDS));
-
-    // Other tests validate the contents of the queue, we just care that we blocked.
-    scanner.next();
-    // We buffer queueDepth messages in the queue, one slot is needed for scanner.complete()
-    scanner.next();
-
-    Assert.assertTrue(
-        "Expected add process to complete within 500 ms",
-        addProcessDone.await(500, TimeUnit.MILLISECONDS));
-
+      });
+  
+      // Make sure it's blocked.
+      Assert.assertFalse(addProcessDone.await(500, TimeUnit.MILLISECONDS));
+  
+      // Other tests validate the contents of the queue, we just care that we blocked.
+      scanner.next();
+      // We buffer queueDepth messages in the queue, one slot is needed for scanner.complete()
+      scanner.next();
+  
+      Assert.assertTrue(
+          "Expected add process to complete within 500 ms",
+          addProcessDone.await(500, TimeUnit.MILLISECONDS));
+    }
     executorService.shutdownNow();
   }
 
   @Test
   public void readTimeoutOnPartialRows() throws IOException, InterruptedException {
     CancellationToken cancellationToken = new CancellationToken();
-    final StreamingBigtableResultScanner scanner =
+    try (final StreamingBigtableResultScanner scanner =
         new StreamingBigtableResultScanner(
-            10, 10 /* timeout millis */, cancellationToken);
-
-    ByteString rowKey = ByteString.copyFromUtf8("rowKey");
-    // Add a single response that does not complete the row or stream:
-    scanner.addResult(ReadRowsResponse.newBuilder().setRowKey(rowKey).build());
-
-    expectedException.expect(ScanTimeoutException.class);
-    expectedException.expectMessage("Timeout while merging responses.");
-
-    scanner.next();
+            10, 10 /* timeout millis */, cancellationToken)) {
+  
+      ByteString rowKey = ByteString.copyFromUtf8("rowKey");
+      // Add a single response that does not complete the row or stream:
+      scanner.addResult(ReadRowsResponse.newBuilder().setRowKey(rowKey).build());
+  
+      expectedException.expect(ScanTimeoutException.class);
+      expectedException.expectMessage("Timeout while merging responses.");
+  
+      scanner.next();
+    }
   }
 
   @Test
@@ -501,22 +430,25 @@ public class StreamingBigtableResultScannerTest {
       @Override
       public void run() {
         CancellationToken cancellationToken = new CancellationToken();
-        StreamingBigtableResultScanner scanner =
-            new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
-        try {
-          barrier.await();
-        } catch (InterruptedException | BrokenBarrierException e) {
-          thrownException.set(e);
-          return;
-        }
-        try {
-          scanner.next();
+        try (StreamingBigtableResultScanner scanner =
+            new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken)) {
+          try {
+            barrier.await();
+          } catch (InterruptedException | BrokenBarrierException e) {
+            thrownException.set(e);
+            return;
+          }
+          try {
+            scanner.next();
+          } catch (IOException e) {
+            thrownException.set(e);
+            if (Thread.currentThread().isInterrupted()) {
+              interruptedSet.set(true);
+            }
+          }
         } catch (IOException e) {
           thrownException.set(e);
-          if (Thread.currentThread().isInterrupted()) {
-            interruptedSet.set(true);
-          }
-        }
+        } 
       }
     });
 
