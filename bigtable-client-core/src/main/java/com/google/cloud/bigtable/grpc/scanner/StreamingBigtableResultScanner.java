@@ -15,18 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.ReadRowsResponse;
-import com.google.bigtable.v1.ReadRowsResponse.Chunk;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.google.protobuf.ByteString;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -35,92 +30,6 @@ import java.util.concurrent.TimeUnit;
  * A {@link ResultScanner} implementation against the v1 bigtable API.
  */
 public class StreamingBigtableResultScanner extends AbstractBigtableResultScanner {
-
-  /**
-   * <p>Builds a complete Row from partial ReadRowsResponse objects. This class
-   * does not currently handle multiple interleaved rows. It is assumed that it is
-   * handling results for a request with allow_row_interleaving = false.
-   * </p>
-   * <p>Each RowMerger object is valid only for building a single Row. Expected usage
-   * is along the lines of:
-   * </p>
-   * <pre>
-   * RowMerger rm = new RowMerger();
-   * while (!rm.isRowCommited()) {
-   *   rm.addPartialRow(...);
-   * }
-   * Row r = rm.buildRow();
-   * </pre>
-   */
-  public static class RowMerger {
-    private final Map<String, Family.Builder> familyMap = new HashMap<>();
-    private boolean committed = false;
-    private ByteString currentRowKey;
-
-    /**
-     * Add a partial row response to this builder.
-     */
-    public void addPartialRow(ReadRowsResponse partialRow) {
-      Preconditions.checkState(
-          currentRowKey == null || currentRowKey.equals(partialRow.getRowKey()),
-          "Interleaved ReadRowResponse messages are not supported.");
-
-      if (currentRowKey == null) {
-        currentRowKey = partialRow.getRowKey();
-      }
-
-      for (Chunk chunk : partialRow.getChunksList()) {
-        Preconditions.checkState(!committed, "Encountered chunk after row commit.");
-        switch (chunk.getChunkCase()) {
-          case ROW_CONTENTS:
-            merge(familyMap, chunk.getRowContents());
-            break;
-          case RESET_ROW:
-            familyMap.clear();
-            break;
-          case COMMIT_ROW:
-            committed = true;
-            break;
-          default:
-            throw new IllegalStateException(String.format("Unknown ChunkCase encountered %s",
-              chunk.getChunkCase()));
-        }
-      }
-    }
-
-    /**
-     * Indicate whether a Chunk of type COMMIT_ROW been encountered.
-     */
-    public boolean isRowCommitted() {
-      return committed;
-    }
-
-    /**
-     * Construct a row from previously seen partial rows. This method may only be invoked
-     * when isRowCommitted returns true indicating a COMMIT_ROW chunk has been encountered.
-     */
-    public Row buildRow() {
-      Preconditions.checkState(committed,
-          "Cannot build a Row object if we have not yet encountered a COMMIT_ROW chunk.");
-      Row.Builder currentRowBuilder = Row.newBuilder();
-      currentRowBuilder.setKey(currentRowKey);
-      for (Family.Builder builder : familyMap.values()) {
-        currentRowBuilder.addFamilies(builder.build());
-      }
-      return currentRowBuilder.build();
-    }
-
-    // Merge newRowContents into the map of family builders, creating one if necessary.
-    private void merge(Map<String, Family.Builder> familyBuilderMap, Family newRowContents) {
-      String familyName = newRowContents.getName();
-      Family.Builder familyBuilder = familyBuilderMap.get(familyName);
-      if (familyBuilder == null) {
-        familyBuilder = Family.newBuilder().setName(familyName);
-        familyBuilderMap.put(familyName, familyBuilder);
-      }
-      familyBuilder.addAllColumns(newRowContents.getColumnsList());
-    }
-  }
 
   /**
    * Helper to read a queue of ResultQueueEntries and use the RowMergers to reconstruct
