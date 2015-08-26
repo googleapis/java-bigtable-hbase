@@ -16,7 +16,6 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
@@ -117,8 +116,6 @@ public class BigtableSession implements AutoCloseable {
               .setDaemon(true)
               .build());
 
-  private static List<String> performantCiphers;
-
   static {
     performWarmup();
   }
@@ -129,18 +126,8 @@ public class BigtableSession implements AutoCloseable {
     return sslBuilder;
   }
 
-  private synchronized static SslContext createSslContext() throws SSLException {
-    if (performantCiphers == null) {
-      List<String> defaultCiphers =
-          GrpcSslContexts.forClient().ciphers(null).build().cipherSuites();
-      List<String> performantCiphers = new ArrayList<>();
-      for (String cipher : defaultCiphers) {
-        if (!cipher.contains("GCM")) {
-          performantCiphers.add(cipher);
-        }
-      }
-    }
-    return GrpcSslContexts.forClient().ciphers(performantCiphers).build();
+  private static SslContext createSslContext() throws SSLException {
+    return sslBuilder.build();
   }
 
   private static void performWarmup() {
@@ -381,7 +368,7 @@ public class BigtableSession implements AutoCloseable {
    * interceptors, and user agent.
    * </p>
    */
-  public Channel createChannel(String hostString, int channelCount) throws IOException {
+  protected Channel createChannel(String hostString, int channelCount) throws IOException {
     final InetSocketAddress host = new InetSocketAddress(getHost(hostString), options.getPort());
     final Channel channels[] = new Channel[channelCount];
     for (int i = 0; i < channelCount; i++) {
