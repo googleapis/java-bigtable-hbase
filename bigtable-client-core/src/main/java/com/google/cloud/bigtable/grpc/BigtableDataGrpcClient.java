@@ -33,9 +33,9 @@ import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
 import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
-import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner.RowMerger;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureFallback;
@@ -227,11 +227,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
                 List<Row> result = new ArrayList<>();
                 Iterator<ReadRowsResponse> responseIterator = responses.iterator();
                 while (responseIterator.hasNext()) {
-                  RowMerger currentRowMerger = new RowMerger();
-                  while (responseIterator.hasNext() && !currentRowMerger.isRowCommitted()) {
-                    currentRowMerger.addPartialRow(responseIterator.next());
-                  }
-                  result.add(currentRowMerger.buildRow());
+                  result.add(RowMerger.readNextRow(responseIterator));
                 }
                 return result;
               }
