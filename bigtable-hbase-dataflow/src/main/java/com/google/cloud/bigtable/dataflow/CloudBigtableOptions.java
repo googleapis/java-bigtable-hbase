@@ -19,8 +19,8 @@ import com.google.cloud.dataflow.sdk.options.Description;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 
 /**
- * CloudBigtableOptions is an extension of {@link PipelineOptions} the information that {@link
- * CloudBigtableConfiguration} needs to configure a connection to Cloud Bigtable.
+ * CloudBigtableOptions is an extension of {@link PipelineOptions} containing the information
+ * required for a connection to Cloud Bigtable.
  */
 @Description("Options used to configure CloudBigtable.  " +
    "see https://cloud.google.com/bigtable/ for more information.  " +

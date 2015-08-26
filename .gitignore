@@ -10,4 +10,4 @@ release.properties
 .settings
 .gradle
 dependency-reduced-pom.xml
-
+.DS_Store

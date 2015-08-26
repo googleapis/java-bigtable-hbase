@@ -30,8 +30,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 
 /**
- * A {@link Coder} that serializes {@link Result} objects used by the CBT {@link Source}. The
- * serialization is implemented via the HBase {@link ProtobufUtil} class.
+ * A {@link Coder} that serializes {@link Result} objects used by the Cloud Bigtable {@link Source}.
  */
 public class HBaseResultCoder extends AtomicCoder<Result> implements Serializable{
 
