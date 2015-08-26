@@ -29,14 +29,14 @@ import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.io.CancellationToken;
+import com.google.cloud.bigtable.grpc.scanner.AbstractBigtableResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
-import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
@@ -61,7 +61,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 /**
  * A gRPC client to access the v1 Bigtable service.
@@ -106,48 +105,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   /**
-   * A StreamObserver that sends results to a StreamingBigtableResultScanner.
-   */
-  public static class ReadRowsStreamObserver
-      implements StreamObserver<ReadRowsResponse> {
-    private final StreamingBigtableResultScanner scanner;
-    private final ClientCall<ReadRowsRequest, ReadRowsResponse> call;
-
-    public ReadRowsStreamObserver(StreamingBigtableResultScanner scanner,
-        ClientCall<ReadRowsRequest, ReadRowsResponse> call) {
-      this.scanner = scanner;
-      this.call = call;
-    }
-
-    @Override
-    public void onValue(ReadRowsResponse readTableResponse) {
-      call.request(1);
-      scanner.addResult(readTableResponse);
-    }
-
-    @Override
-    public void onError(Throwable throwable) {
-      scanner.setError(throwable);
-    }
-
-    @Override
-    public void onCompleted() {
-      scanner.complete();
-    }
-  }
-
-  /**
    * CollectingStreamObserver buffers all stream messages in an internal
    * List and signals the result of {@link #getResponseCompleteFuture()} when complete.
    */
   public static class CollectingStreamObserver<T> implements StreamObserver<T> {
     private final SettableFuture<List<T>> responseCompleteFuture = SettableFuture.create();
     private final List<T> buffer = new ArrayList<>();
-    private final ClientCall<?, T> call;
-
-    public CollectingStreamObserver(ClientCall<?, T> call) {
-      this.call = call;
-    }
 
     public ListenableFuture<List<T>> getResponseCompleteFuture() {
       return responseCompleteFuture;
@@ -156,7 +119,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     @Override
     public void onValue(T value) {
       buffer.add(value);
-      call.request(1);
     }
 
     @Override
@@ -172,7 +134,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private final Channel channel;
 
-  private final ExecutorService executorService;
   private final RetryOptions retryOptions;
 
   private final BigtableResultScannerFactory streamingScannerFactory =
@@ -185,12 +146,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final ReadAsync<SampleRowKeysRequest, SampleRowKeysResponse> sampleRowKeysAsync;
   private final ReadAsync<ReadRowsRequest, Row> readRowsAsync;
 
-  public BigtableDataGrpcClient(
-      Channel channel,
-      ExecutorService executorService,
-      RetryOptions retryOptions) {
+  public BigtableDataGrpcClient(Channel channel, RetryOptions retryOptions) {
     this.channel = channel;
-    this.executorService = executorService;
     this.retryOptions = retryOptions;
 
     sampleRowKeysAsync = new ReadAsync<SampleRowKeysRequest, SampleRowKeysResponse>() {
@@ -200,7 +157,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
             BigtableDataGrpcClient.this.channel.newCall(
                 BigtableServiceGrpc.METHOD_SAMPLE_ROW_KEYS, CallOptions.DEFAULT);
         CollectingStreamObserver<SampleRowKeysResponse> responseBuffer =
-            new CollectingStreamObserver<>(call);
+            new CollectingStreamObserver<>();
         ClientCalls.asyncServerStreamingCall(call, request, responseBuffer);
         return Futures.transform(
             responseBuffer.getResponseCompleteFuture(), IMMUTABLE_LIST_FUNCTION);
@@ -215,7 +172,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
                 BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
 
         CollectingStreamObserver<ReadRowsResponse> responseCollector =
-            new CollectingStreamObserver<>(readRowsCall);
+            new CollectingStreamObserver<>();
 
         ClientCalls.asyncServerStreamingCall(readRowsCall, request, responseCollector);
 
@@ -308,30 +265,36 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   private ResultScanner<Row> streamRows(ReadRowsRequest request) {
-    final ClientCall<ReadRowsRequest , ReadRowsResponse> readRowsCall =
+    final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
         channel.newCall(BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
 
-    // If the scanner is close()d before we're done streaming, we want to cancel the RPC:
-    CancellationToken cancellationToken = new CancellationToken();
-    cancellationToken.addListener(new Runnable() {
+    final Iterator<ReadRowsResponse> results =
+        ClientCalls.blockingServerStreamingCall(readRowsCall, request);
+
+    final Iterator<ReadRowsResponse> iterator =
+        ClientCalls.blockingServerStreamingCall(readRowsCall, request);
+
+    return new AbstractBigtableResultScanner() {
       @Override
-      public void run() {
+      public void close() throws IOException {
         readRowsCall.cancel();
       }
-    }, executorService);
-
-    StreamingBigtableResultScanner resultScanner =
-        new StreamingBigtableResultScanner(
-          retryOptions.getStreamingBufferSize(),
-          retryOptions.getReadPartialRowTimeoutMillis(),
-          cancellationToken);
-
-    ClientCalls.asyncServerStreamingCall(
-        readRowsCall,
-        request,
-        new ReadRowsStreamObserver(resultScanner, readRowsCall));
-
-    return resultScanner;
+      @Override
+      public Row next() throws IOException {
+        if (!results.hasNext()) {
+          return null;
+        }
+        RowMerger rowMerger =
+            new RowMerger();
+        while (!rowMerger.isRowCommitted()) {
+          Preconditions.checkState(
+            results.hasNext(),
+            "End of stream marker encountered while merging a row.");
+          rowMerger.addPartialRow(results.next());
+        }
+        return iterator.hasNext() ? RowMerger.readNextRow(iterator) : null;
+      }
+    };
   }
 
   @Override

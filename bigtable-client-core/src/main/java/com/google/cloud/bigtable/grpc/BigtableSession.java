@@ -16,7 +16,6 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import com.google.api.client.http.HttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
@@ -128,7 +127,7 @@ public class BigtableSession implements AutoCloseable {
   }
 
   private static SslContext createSslContext() throws SSLException {
-     return sslBuilder.build();
+    return sslBuilder.build();
   }
 
   private static void performWarmup() {
@@ -324,7 +323,7 @@ public class BigtableSession implements AutoCloseable {
   private BigtableDataClient initializeDataClient() throws IOException {
     Channel channel = createChannel(options.getDataHost(), options.getChannelCount());
     RetryOptions retryOptions = options.getRetryOptions();
-    return new BigtableDataGrpcClient(channel, batchPool, retryOptions);
+    return new BigtableDataGrpcClient(channel, retryOptions);
   }
 
   private BigtableTableAdminClient initializeAdminClient() throws IOException {
