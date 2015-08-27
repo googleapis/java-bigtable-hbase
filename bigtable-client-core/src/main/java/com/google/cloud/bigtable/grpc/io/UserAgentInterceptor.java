@@ -17,11 +17,10 @@ package com.google.cloud.bigtable.grpc.io;
 
 import com.google.common.net.HttpHeaders;
 
-import io.grpc.CallOptions;
-import io.grpc.ClientCall;
+import io.grpc.Call;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.ForwardingCall.SimpleForwardingCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
@@ -40,9 +39,9 @@ public class UserAgentInterceptor implements ClientInterceptor {
   }
 
   @Override
-  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-      MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-    return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+  public <ReqT, RespT> Call<ReqT, RespT> interceptCall(
+      MethodDescriptor<ReqT, RespT> method, Channel next) {
+    return new SimpleForwardingCall<ReqT, RespT>(next.newCall(method)) {
       @Override
       public void start(Listener<RespT> responseListener, Metadata.Headers headers) {
         String userAgents = headers.get(USER_AGENT_KEY);

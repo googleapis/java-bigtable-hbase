@@ -42,19 +42,19 @@ import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.protobuf.Empty;
 import com.google.protobuf.ServiceException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import io.grpc.CallOptions;
 import io.grpc.Channel;
-import io.grpc.ClientCall;
+import io.grpc.Call;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
-import io.grpc.stub.ClientCalls;
+import io.grpc.stub.Calls;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
@@ -111,10 +111,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   public static class ReadRowsStreamObserver
       implements StreamObserver<ReadRowsResponse> {
     private final StreamingBigtableResultScanner scanner;
-    private final ClientCall<ReadRowsRequest, ReadRowsResponse> call;
+    private final Call<ReadRowsRequest, ReadRowsResponse> call;
 
     public ReadRowsStreamObserver(StreamingBigtableResultScanner scanner,
-        ClientCall<ReadRowsRequest, ReadRowsResponse> call) {
+        Call<ReadRowsRequest, ReadRowsResponse> call) {
       this.scanner = scanner;
       this.call = call;
     }
@@ -143,9 +143,9 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   public static class CollectingStreamObserver<T> implements StreamObserver<T> {
     private final SettableFuture<List<T>> responseCompleteFuture = SettableFuture.create();
     private final List<T> buffer = new ArrayList<>();
-    private final ClientCall<?, T> call;
+    private final Call<?, T> call;
 
-    public CollectingStreamObserver(ClientCall<?, T> call) {
+    public CollectingStreamObserver(Call<?, T> call) {
       this.call = call;
     }
 
@@ -196,12 +196,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     sampleRowKeysAsync = new ReadAsync<SampleRowKeysRequest, SampleRowKeysResponse>() {
       @Override
       public ListenableFuture<List<SampleRowKeysResponse>> readAsync(SampleRowKeysRequest request) {
-        ClientCall<SampleRowKeysRequest, SampleRowKeysResponse> call =
+        Call<SampleRowKeysRequest, SampleRowKeysResponse> call =
             BigtableDataGrpcClient.this.channel.newCall(
-                BigtableServiceGrpc.METHOD_SAMPLE_ROW_KEYS, CallOptions.DEFAULT);
+                BigtableServiceGrpc.CONFIG.sampleRowKeys);
         CollectingStreamObserver<SampleRowKeysResponse> responseBuffer =
             new CollectingStreamObserver<>(call);
-        ClientCalls.asyncServerStreamingCall(call, request, responseBuffer);
+        Calls.asyncServerStreamingCall(call, request, responseBuffer);
         return Futures.transform(
             responseBuffer.getResponseCompleteFuture(), IMMUTABLE_LIST_FUNCTION);
       }
@@ -210,14 +210,14 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     readRowsAsync = new ReadAsync<ReadRowsRequest, Row>() {
       @Override
       public ListenableFuture<List<Row>> readAsync(ReadRowsRequest request) {
-        final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
+        final Call<ReadRowsRequest, ReadRowsResponse> readRowsCall =
             BigtableDataGrpcClient.this.channel.newCall(
-                BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
+                BigtableServiceGrpc.CONFIG.readRows);
 
         CollectingStreamObserver<ReadRowsResponse> responseCollector =
             new CollectingStreamObserver<>(readRowsCall);
 
-        ClientCalls.asyncServerStreamingCall(readRowsCall, request, responseCollector);
+        Calls.asyncServerStreamingCall(readRowsCall, request, responseCollector);
 
         return Futures.transform(
             responseCollector.getResponseCompleteFuture(),
@@ -239,55 +239,55 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   protected static <T, V> ListenableFuture<V> listenableAsyncCall(
       Channel channel,
       MethodDescriptor<T, V> method, T request) {
-    ClientCall<T, V> call = channel.newCall(method, CallOptions.DEFAULT);
+    Call<T, V> call = channel.newCall(method);
     AsyncUnaryOperationObserver<V> observer = new AsyncUnaryOperationObserver<>();
-    ClientCalls.asyncUnaryCall(call, request, observer);
+    Calls.asyncUnaryCall(call, request, observer);
     return observer.getCompletionFuture();
   }
 
   @Override
   public Empty mutateRow(MutateRowRequest request) throws ServiceException {
-    return ClientCalls.blockingUnaryCall(
-      channel.newCall(BigtableServiceGrpc.METHOD_MUTATE_ROW, CallOptions.DEFAULT), request);
+    return Calls.blockingUnaryCall(
+      channel.newCall(BigtableServiceGrpc.CONFIG.mutateRow), request);
   }
 
   @Override
   public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request) {
     return listenableAsyncCall(
         channel,
-        BigtableServiceGrpc.METHOD_MUTATE_ROW, request);
+        BigtableServiceGrpc.CONFIG.mutateRow, request);
   }
 
   @Override
   public CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request)
       throws ServiceException {
-    return ClientCalls.blockingUnaryCall(
-      channel.newCall(BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW, CallOptions.DEFAULT),
+    return Calls.blockingUnaryCall(
+      channel.newCall(BigtableServiceGrpc.CONFIG.checkAndMutateRow),
       request);
   }
 
   @Override
   public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request) {
-    return listenableAsyncCall(channel, BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW, request);
+    return listenableAsyncCall(channel, BigtableServiceGrpc.CONFIG.checkAndMutateRow, request);
   }
 
   @Override
   public Row readModifyWriteRow(ReadModifyWriteRowRequest request) {
-    return ClientCalls.blockingUnaryCall(
-      channel.newCall(BigtableServiceGrpc.METHOD_READ_MODIFY_WRITE_ROW, CallOptions.DEFAULT),
+    return Calls.blockingUnaryCall(
+      channel.newCall(BigtableServiceGrpc.CONFIG.readModifyWriteRow),
       request);
   }
 
   @Override
   public ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRowRequest request) {
-    return listenableAsyncCall(channel, BigtableServiceGrpc.METHOD_READ_MODIFY_WRITE_ROW, request);
+    return listenableAsyncCall(channel, BigtableServiceGrpc.CONFIG.readModifyWriteRow, request);
   }
 
   @Override
   public ImmutableList<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request) {
-    return ImmutableList.copyOf(ClientCalls.blockingServerStreamingCall(
-      channel.newCall(BigtableServiceGrpc.METHOD_SAMPLE_ROW_KEYS, CallOptions.DEFAULT), request));
+    return ImmutableList.copyOf(Calls.blockingServerStreamingCall(
+      channel.newCall(BigtableServiceGrpc.CONFIG.sampleRowKeys), request));
   }
 
   @Override
@@ -308,8 +308,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   private ResultScanner<Row> streamRows(ReadRowsRequest request) {
-    final ClientCall<ReadRowsRequest , ReadRowsResponse> readRowsCall =
-        channel.newCall(BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
+    final Call<ReadRowsRequest , ReadRowsResponse> readRowsCall =
+        channel.newCall(BigtableServiceGrpc.CONFIG.readRows);
 
     // If the scanner is close()d before we're done streaming, we want to cancel the RPC:
     CancellationToken cancellationToken = new CancellationToken();
@@ -326,7 +326,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
           retryOptions.getReadPartialRowTimeoutMillis(),
           cancellationToken);
 
-    ClientCalls.asyncServerStreamingCall(
+    Calls.asyncServerStreamingCall(
         readRowsCall,
         request,
         new ReadRowsStreamObserver(resultScanner, readRowsCall));
@@ -366,6 +366,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         Status.Code code = statusException.getStatus().getCode();
         if (retryOptions.isRetryableRead(code)) {
           return backOffAndRetry(t);
+        }
+      } else if (t instanceof UncheckedExecutionException) {
+        if (t.getCause() instanceof StatusRuntimeException) {
+          return create(t.getCause());
         }
       }
       return Futures.immediateFailedFuture(t);

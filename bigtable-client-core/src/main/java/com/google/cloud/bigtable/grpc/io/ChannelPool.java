@@ -15,9 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import io.grpc.CallOptions;
+import io.grpc.Call;
 import io.grpc.Channel;
-import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,10 +37,10 @@ public class ChannelPool extends Channel {
   }
 
   @Override
-  public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
+  public <RequestT, ResponseT> Call<RequestT, ResponseT> newCall(
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     int currentRequestNum = requestCount.getAndIncrement();
     int index = Math.abs(currentRequestNum % channels.length);
-    return channels[index].newCall(methodDescriptor, callOptions);
+    return channels[index].newCall(methodDescriptor);
   }
 }

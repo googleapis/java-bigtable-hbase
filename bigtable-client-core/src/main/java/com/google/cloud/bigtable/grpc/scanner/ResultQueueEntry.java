@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import io.grpc.StatusRuntimeException;
 
@@ -63,6 +64,11 @@ class ResultQueueEntry<T> {
     if (throwable != null) {
       if (throwable instanceof StatusRuntimeException) {
         throw new IOExceptionWithStatus(EXCEPTION_MESSAGE, (StatusRuntimeException) throwable);
+      } else if (throwable instanceof UncheckedExecutionException) {
+        if (throwable.getCause() instanceof StatusRuntimeException) {
+          throw new IOExceptionWithStatus(EXCEPTION_MESSAGE,
+              (StatusRuntimeException) throwable.getCause());
+        }
       }
       throw new IOException(EXCEPTION_MESSAGE, throwable);
     }

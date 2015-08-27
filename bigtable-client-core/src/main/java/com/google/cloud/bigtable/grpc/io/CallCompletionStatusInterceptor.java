@@ -15,12 +15,11 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import io.grpc.ClientCall;
-import io.grpc.CallOptions;
+import io.grpc.Call;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
-import io.grpc.ForwardingClientCallListener;
+import io.grpc.ForwardingCall.SimpleForwardingCall;
+import io.grpc.ForwardingCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -41,7 +40,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class CallCompletionStatusInterceptor implements ClientInterceptor {
 
   /**
-   * The final status of a single ClientCall.
+   * The final status of a single Call.
    */
   public static class CallCompletionStatus {
     private final MethodDescriptor<?, ?> method;
@@ -108,28 +107,28 @@ public class CallCompletionStatusInterceptor implements ClientInterceptor {
   }
 
   /**
-   * A {@link ClientCall} that listens for onClose events and records the final {@link Status} for
+   * A {@link Call} that listens for onClose events and records the final {@link Status} for
    * the call.
    * @param <RequestT> The request message type
    * @param <ResponseT> The response message type
    */
   @VisibleForTesting
   class CompletionStatusGatheringCall<RequestT, ResponseT>
-      extends SimpleForwardingClientCall<RequestT, ResponseT> {
+      extends SimpleForwardingCall<RequestT, ResponseT> {
 
     private final MethodDescriptor<RequestT, ResponseT> method;
 
     public CompletionStatusGatheringCall(
-        MethodDescriptor<RequestT, ResponseT> method, ClientCall<RequestT, ResponseT> delegateCall) {
+        MethodDescriptor<RequestT, ResponseT> method, Call<RequestT, ResponseT> delegateCall) {
       super(delegateCall);
       this.method = method;
     }
 
     /**
-     * Wrap a Listener that will record the final ClientCall status in onClose.
+     * Wrap a Listener that will record the final Call status in onClose.
      */
-    ClientCall.Listener<ResponseT> createGatheringListener(Listener<ResponseT> responseListener) {
-      return new ForwardingClientCallListener.SimpleForwardingClientCallListener<ResponseT>(
+    Call.Listener<ResponseT> createGatheringListener(Listener<ResponseT> responseListener) {
+      return new ForwardingCallListener.SimpleForwardingCallListener<ResponseT>(
           responseListener) {
         @Override
         public void onClose(final Status status, Metadata.Trailers trailers) {
@@ -153,15 +152,15 @@ public class CallCompletionStatusInterceptor implements ClientInterceptor {
 
   @Override
   public <RequestT, ResponseT> CompletionStatusGatheringCall<RequestT, ResponseT> interceptCall(
-      MethodDescriptor<RequestT, ResponseT> method, CallOptions callOptions, Channel next) {
-    return wrapCall(method, next.newCall(method, callOptions));
+      MethodDescriptor<RequestT, ResponseT> method, Channel next) {
+    return wrapCall(method, next.newCall(method));
   }
 
   /**
    * Wrap an existing call in a new CompletionStatusGatheringCall.
    */
   private <ReqT, RespT> CompletionStatusGatheringCall<ReqT, RespT> wrapCall(
-      MethodDescriptor<ReqT, RespT> method, ClientCall<ReqT, RespT> call) {
+      MethodDescriptor<ReqT, RespT> method, Call<ReqT, RespT> call) {
     return new CompletionStatusGatheringCall<>(method, call);
   }
 

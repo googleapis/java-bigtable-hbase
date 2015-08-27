@@ -18,11 +18,10 @@ package com.google.cloud.bigtable.grpc.io;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.common.base.Predicate;
 
-import io.grpc.CallOptions;
-import io.grpc.ClientCall;
+import io.grpc.Call;
 import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
-import io.grpc.MethodDescriptor.MethodType;
+import io.grpc.MethodType;
 
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -55,8 +54,8 @@ public class UnaryCallRetryInterceptor extends Channel {
   }
 
   @Override
-  public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
+  public <RequestT, ResponseT> Call<RequestT, ResponseT> newCall(
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     if (methodCanBeRetried(methodDescriptor)) {
       ExponentialBackOff.Builder backOffBuilder = new ExponentialBackOff.Builder();
       backOffBuilder.setInitialIntervalMillis(initialBackoffMillis);
@@ -66,12 +65,11 @@ public class UnaryCallRetryInterceptor extends Channel {
       return new RetryingCall<>(
           delegate,
           methodDescriptor,
-          callOptions,
           isPayloadRetriablePredicate,
           executorService,
           backOffBuilder.build());
     }
-    return delegate.newCall(methodDescriptor, callOptions);
+    return delegate.newCall(methodDescriptor);
   }
 
   @SuppressWarnings("unchecked")

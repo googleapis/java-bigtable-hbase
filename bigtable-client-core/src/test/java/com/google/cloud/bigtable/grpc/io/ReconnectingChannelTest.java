@@ -19,8 +19,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
-import io.grpc.CallOptions;
-import io.grpc.ClientCall;
+import io.grpc.Call;
 import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 
@@ -56,14 +55,14 @@ public class ReconnectingChannelTest {
   private Closeable mockCloseable;
 
   @Mock
-  private ClientCall<?, ?> mockCall;
+  private Call<?, ?> mockCall;
 
   @Before
   public void setup() throws IOException {
     MockitoAnnotations.initMocks(this);
     when(mockFactory.createChannel()).thenReturn(mockChannel);
     when(mockFactory.createClosable(any(Channel.class))).thenReturn(mockCloseable);
-    when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(mockCall);
+    when(mockChannel.newCall(any(MethodDescriptor.class))).thenReturn(mockCall);
   }
 
   @Test
@@ -72,8 +71,8 @@ public class ReconnectingChannelTest {
 
     Mockito.verify(mockFactory, times(1)).createChannel();
 
-    underTest.newCall(null, null).start(null, null);
-    Mockito.verify(mockChannel, times(1)).newCall(any(MethodDescriptor.class), any(CallOptions.class));
+    underTest.newCall(null).start(null, null);
+    Mockito.verify(mockChannel, times(1)).newCall(any(MethodDescriptor.class));
 
     try {
       Thread.sleep(REFRESH_MS);
@@ -81,8 +80,8 @@ public class ReconnectingChannelTest {
       // Do nothing on interrupt.
     }
 
-    underTest.newCall(null, null).start(null, null);
-    Mockito.verify(mockChannel, times(2)).newCall(any(MethodDescriptor.class), any(CallOptions.class));
+    underTest.newCall(null).start(null, null);
+    Mockito.verify(mockChannel, times(2)).newCall(any(MethodDescriptor.class));
 
     try {
       Thread.sleep(REFRESH_MS);
@@ -97,7 +96,7 @@ public class ReconnectingChannelTest {
     Mockito.verify(mockCloseable, times(2)).close();
 
     try {
-      underTest.newCall(null, null).start(null, null);
+      underTest.newCall(null).start(null, null);
       Assert.fail("Expected IllegalStateException on a closed channel");
     } catch (IllegalStateException expected) {
       // expected

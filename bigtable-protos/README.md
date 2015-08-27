@@ -66,9 +66,14 @@ you may have to Google error messages to understand what to install next;
 there are plenty of answers on StackOverflow
 for protobuf installation requirements.  
 
-Run the following:
-```mvn -P generateProtos package
-mvn -P generateServices package```
+Gradle version 2.3+ also has to be on your path;
+you can get it from https://gradle.org/downloads/.
+
+Once that's done, the easiest way to generate the Java files
+is to run *gradle :generateProto*.
+That will generate the Java source files in target/generated-sources/main.
+Manually delete src/generated/java/com and move
+target/generated-sources/main/com to src/generated/java/.
 
 # Generating the Python protos
 
