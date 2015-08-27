@@ -128,7 +128,7 @@ limitations under the License.
                                     <location>${basedir}/javadoc/dataflow-docs</location>
                                 </offlineLink>
                                 <offlineLink>
-                                    <url>http://hbase.apache.org/apidocs/</url>
+                                    <url>https://hbase.apache.org/apidocs/</url>
                                     <location>${basedir}/javadoc/hbase-docs</location>
                                 </offlineLink>
                             </offlineLinks>
