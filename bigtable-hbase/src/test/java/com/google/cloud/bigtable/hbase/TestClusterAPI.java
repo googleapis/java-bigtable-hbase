@@ -53,6 +53,7 @@ import com.google.bigtable.admin.cluster.v1.Zone;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClusterAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 
@@ -137,6 +138,15 @@ public class TestClusterAPI {
     GetClusterRequest request = GetClusterRequest.newBuilder().setName(clusterName).build();
     try {
       return client.getCluster(request);
+    } catch (UncheckedExecutionException e) {
+      if (e.getCause() != null && e.getCause() instanceof StatusRuntimeException) {
+        Status status = ((StatusRuntimeException) e.getCause()).getStatus();
+        if (status.getCode() == Status.NOT_FOUND.getCode()) {
+          return null;
+        }
+      }
+      e.printStackTrace();
+      throw e;
     } catch (StatusRuntimeException e) {
       Status status = e.getStatus();
       if (status.getCode() == Status.NOT_FOUND.getCode()) {

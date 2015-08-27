@@ -15,11 +15,10 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import io.grpc.CallOptions;
 import io.grpc.Channel;
-import io.grpc.ClientCall;
+import io.grpc.Call;
 import io.grpc.ClientInterceptor;
-import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
+import io.grpc.ClientInterceptors.CheckedForwardingCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
@@ -138,11 +137,11 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
 
 
   @Override
-  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-      MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+  public <ReqT, RespT> Call<ReqT, RespT> interceptCall(
+      MethodDescriptor<ReqT, RespT> method, Channel next) {
     // TODO(sduskis): If the call fails for Auth reasons, this does not properly propagate info that
     // would be in WWW-Authenticate, because it does not yet have access to the header.
-    return new CheckedForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+    return new CheckedForwardingCall<ReqT, RespT>(next.newCall(method)) {
       @Override
       protected void checkedStart(Listener<RespT> responseListener, Metadata.Headers headers)
           throws Exception {

@@ -17,21 +17,21 @@ package com.google.cloud.bigtable.grpc.io;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import io.grpc.ClientCall;
+import io.grpc.Call;
 import io.grpc.Metadata;
 import io.grpc.Status;
 
 /**
- * A ClientCall.Listener that listens for lower-level ClientCall failures and if detected, attempts
+ * A Call.Listener that listens for lower-level ClientCall failures and if detected, attempts
  * to retry the call if the call supports retrying.
  */
-class RetryListener<RequestT, ResponseT> extends ClientCall.Listener<ResponseT> {
+class RetryListener<RequestT, ResponseT> extends Call.Listener<ResponseT> {
 
   private final RetryingCall<RequestT, ResponseT> retryingCall;
   private final RequestT payload;
   private final Metadata.Headers requestHeaders;
   private final boolean isRetriableCall;
-  private final ClientCall.Listener<ResponseT> delegate;
+  private final Call.Listener<ResponseT> delegate;
   private boolean stateSignalledToListener = false;
 
   public RetryListener(
@@ -39,7 +39,7 @@ class RetryListener<RequestT, ResponseT> extends ClientCall.Listener<ResponseT> 
       RequestT payload,
       Metadata.Headers requestHeaders,
       boolean isRetriableCall,
-      ClientCall.Listener<ResponseT> delegate) {
+      Call.Listener<ResponseT> delegate) {
     this.retryingCall = call;
     this.delegate = delegate;
     this.payload = payload;
@@ -48,9 +48,9 @@ class RetryListener<RequestT, ResponseT> extends ClientCall.Listener<ResponseT> 
   }
 
   @Override
-  public void onMessage(ResponseT message) {
+  public void onPayload(ResponseT payload) {
     stateSignalledToListener = true;
-    delegate.onMessage(message);
+    delegate.onPayload(payload);
   }
 
   @Override

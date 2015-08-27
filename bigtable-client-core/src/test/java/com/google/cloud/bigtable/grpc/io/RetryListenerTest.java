@@ -39,7 +39,7 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import io.grpc.ClientCall;
+import io.grpc.Call;
 import io.grpc.Metadata.Headers;
 import io.grpc.Metadata.Trailers;
 import io.grpc.Status;
@@ -52,7 +52,7 @@ public class RetryListenerTest {
   @Mock
   private RetryingCall<MutateRowRequest, Empty> mockRetryingCall;
   @Mock
-  private ClientCall.Listener<Empty> mockResponseListener;
+  private Call.Listener<Empty> mockResponseListener;
 
   private final MutateRowRequest request =
       MutateRowRequest.newBuilder()
@@ -77,14 +77,14 @@ public class RetryListenerTest {
             mockResponseListener);
 
     listener.onHeaders(new Headers.Headers());
-    listener.onMessage(response);
+    listener.onPayload(response);
     listener.onClose(Status.OK, new Trailers.Trailers());
 
     // Validate that the listener did not attempt to start a new call on the channel:
     verifyNoMoreInteractions(mockRetryingCall);
 
     // Verify that the mockResponseListener was informed of the payload and closed:
-    verify(mockResponseListener, times(1)).onMessage(eq(response));
+    verify(mockResponseListener, times(1)).onPayload(eq(response));
     verify(mockResponseListener, times(1)).onClose(eq(Status.OK), any(Trailers.Trailers.class));
   }
 
@@ -129,7 +129,7 @@ public class RetryListenerTest {
 
     Headers responseHeaders = new Headers.Headers();
     listener.onHeaders(responseHeaders);
-    listener.onMessage(response);
+    listener.onPayload(response);
     listener.onClose(Status.INTERNAL, new Trailers.Trailers());
 
     // Validate that the listener did not attempt to start a new call on the channel:
@@ -137,7 +137,7 @@ public class RetryListenerTest {
 
     // Verify that the mockResponseListener was informed of the payload and closed:
     verify(mockResponseListener, times(1)).onHeaders(eq(responseHeaders));
-    verify(mockResponseListener, times(1)).onMessage(eq(response));
+    verify(mockResponseListener, times(1)).onPayload(eq(response));
     verify(mockResponseListener, times(1)).onClose(
         eq(Status.INTERNAL), any(Trailers.Trailers.class));
   }
