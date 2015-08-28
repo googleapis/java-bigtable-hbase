@@ -37,6 +37,9 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multiset;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
@@ -426,18 +429,28 @@ public class BigtableSession implements AutoCloseable {
   }
 
   @Override
-  public void close() {
-    elg.shutdownGracefully();
-    scheduledRetries.shutdown();
+  public void close() throws IOException {
+    List<ListenableFuture<Void>> closingChannelsFutures = new ArrayList<>();
+    ListeningExecutorService listenableBatchPool = MoreExecutors.listeningDecorator(batchPool);
     for (final Closeable clientCloseHandler : clientCloseHandlers) {
-      batchPool.submit(new Callable<Void>() {
+      closingChannelsFutures.add(listenableBatchPool.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           clientCloseHandler.close();
           return null;
         }
-      });
+      }));
     }
+    try {
+      Futures.allAsList(closingChannelsFutures).get();
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+      throw new IOException("Interrupted while waiting for channels to be closed", e);
+    } catch (ExecutionException e) {
+      throw new IOException("Exception while waiting for channels to be closed", e);
+    }
+    elg.shutdownGracefully();
+    scheduledRetries.shutdown();
     awaiteTerminated(scheduledRetries);
     if (terminateBatchPool) {
       batchPool.shutdown();
