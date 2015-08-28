@@ -1001,7 +1001,7 @@ public class TestFilters extends AbstractTest {
   public void testWhileMatchFilter_simple() throws IOException {
     String rowKeyPrefix = dataHelper.randomString("wmf-simple-");
     byte[] qualA = dataHelper.randomData("qualA");
-    Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
+    Table table = addDataForTesting(rowKeyPrefix, qualA);
 
     ByteArrayComparable rowValue2Comparable = new BinaryComparator(Bytes.toBytes("12"));
     ValueFilter valueFilter =
@@ -1018,7 +1018,7 @@ public class TestFilters extends AbstractTest {
   public void testWhileMatchFilter_singleChained() throws IOException {    
     String rowKeyPrefix = dataHelper.randomString("wmf-sc-");
     byte[] qualA = dataHelper.randomData("qualA");
-    Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
+    Table table = addDataForTesting(rowKeyPrefix, qualA);
 
     ByteArrayComparable valueComparable = new BinaryComparator(String.valueOf(2).getBytes());
     SingleColumnValueFilter valueFilter = new SingleColumnValueFilter(
@@ -1038,7 +1038,7 @@ public class TestFilters extends AbstractTest {
   public void testWhileMatchFilter_twoInterleaves() throws IOException {
     String rowKeyPrefix = dataHelper.randomString("wmf-interleaves-");
     byte[] qualA = dataHelper.randomData("qualA");
-    Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
+    Table table = addDataForTesting(rowKeyPrefix, qualA);
 
     ByteArrayComparable rowValue2Comparable1 = new BinaryComparator(Bytes.toBytes("12"));
     ValueFilter valueFilter1 =
@@ -1064,7 +1064,7 @@ public class TestFilters extends AbstractTest {
   public void testWhileMatchFilter_twoChained() throws IOException {
     String rowKeyPrefix = dataHelper.randomString("wmf-chained-");
     byte[] qualA = dataHelper.randomData("qualA");
-    Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
+    Table table = addDataForTesting(rowKeyPrefix, qualA);
 
     ByteArrayComparable rowValue2Comparable1 = new BinaryComparator(Bytes.toBytes("12"));
     ValueFilter valueFilter1 =
@@ -1090,7 +1090,7 @@ public class TestFilters extends AbstractTest {
   public void testWhileMatchFilter_twoNested() throws IOException {
     String rowKeyPrefix = dataHelper.randomString("wmf-nested-");
     byte[] qualA = dataHelper.randomData("qualA");
-    Table table = addDataForWhileMatchFilterTest(rowKeyPrefix, qualA);
+    Table table = addDataForTesting(rowKeyPrefix, qualA);
 
     ByteArrayComparable rowValue2Comparable1 = new BinaryComparator(Bytes.toBytes("12"));
     ValueFilter valueFilter1 =
@@ -1102,18 +1102,6 @@ public class TestFilters extends AbstractTest {
 
     int[] expected = {0, 1, 10, 11};
     assertWhileMatchFilterResult(qualA, table, scan, expected);
-  }
-
-  private Table addDataForWhileMatchFilterTest(String rowKeyPrefix, byte[] qualA)
-      throws IOException {
-    Table table = getConnection().getTable(TABLE_NAME);
-    for (int i = 0; i < 100; i++) {
-      String indexStr = String.valueOf(i);
-      byte[] rowKey = Bytes.toBytes(rowKeyPrefix + indexStr);
-      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qualA, Bytes.toBytes(indexStr));
-      table.put(put);
-    }
-    return table;
   }
 
   private void assertWhileMatchFilterResult(byte[] qualA, Table table, Scan scan, int[] expected)
@@ -1548,11 +1536,47 @@ public class TestFilters extends AbstractTest {
     }
   }
 
+  @Test
+  public void testInterleaveNoDuplicateCells() throws IOException {
+    String rowKeyPrefix = dataHelper.randomString("interleave-no-dups-");
+    byte[] qualA = dataHelper.randomData("interleave-no-dups-qual");
+    Table table = addDataForTesting(rowKeyPrefix, qualA);
+
+    ColumnPrefixFilter prefixFilter =
+        new ColumnPrefixFilter(Bytes.toBytes("interleave-no-dups-qual"));
+    FilterList filterList = new FilterList(
+        Operator.MUST_PASS_ONE,
+        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA)),
+        prefixFilter);
+    Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
+    scan.setFilter(filterList);
+
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      for (Result result: scanner) {
+        Assert.assertEquals(1,  result.getColumnCells(COLUMN_FAMILY, qualA).size());
+      }
+    }
+  }
+
   private Result[] scanWithFilter(Table t, byte[] startRow, byte[] endRow, byte[] qual,
       Filter f) throws IOException {
     Scan scan = new Scan(startRow, endRow).setFilter(f).addColumn(COLUMN_FAMILY, qual);
     ResultScanner scanner = t.getScanner(scan);
     Result[] results = scanner.next(10);
     return results;
+  }
+
+  private Table addDataForTesting(String rowKeyPrefix, byte[] qualA)
+      throws IOException {
+    Table table = getConnection().getTable(TABLE_NAME);
+    List<Put> puts = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      String indexStr = String.valueOf(i);
+      byte[] rowKey = Bytes.toBytes(rowKeyPrefix + indexStr);
+      puts.add(new Put(rowKey).addColumn(COLUMN_FAMILY, qualA, Bytes.toBytes(indexStr)));
+    }
+    table.put(puts);
+
+    return table;
   }
 }

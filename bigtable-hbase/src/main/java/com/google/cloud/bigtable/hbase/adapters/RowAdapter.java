@@ -25,9 +25,8 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Adapt a bigtable.v1.Row to an hbase client Result.
@@ -38,7 +37,8 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
     if (response == null) {
       return new Result();
     }
-    List<org.apache.hadoop.hbase.Cell> hbaseCells = new ArrayList<>();
+
+    SortedSet<org.apache.hadoop.hbase.Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);
     byte[] rowKey = response.getKey().toByteArray();
 
     for (Family family : response.getFamiliesList()) {
@@ -54,9 +54,11 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
             continue;
           }
 
-          long hbaseTimestamp =
-              BigtableConstants.HBASE_TIMEUNIT.convert(
-                  cell.getTimestampMicros(), BigtableConstants.BIGTABLE_TIMEUNIT);
+          // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
+          // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
+          // HBase will treat them as duplicates.
+          long hbaseTimestamp = BigtableConstants.HBASE_TIMEUNIT.convert(
+              cell.getTimestampMicros(), BigtableConstants.BIGTABLE_TIMEUNIT);
           KeyValue keyValue = new KeyValue(
               rowKey,
               familyNameBytes,
@@ -69,8 +71,6 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
       }
     }
 
-    Collections.sort(hbaseCells, KeyValue.COMPARATOR);
-
-    return Result.create(hbaseCells);
+    return Result.create(hbaseCells.toArray(new org.apache.hadoop.hbase.Cell[hbaseCells.size()]));
   }
 }
