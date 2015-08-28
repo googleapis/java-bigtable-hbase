@@ -22,8 +22,9 @@ import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 
+import io.grpc.CallOptions;
 import io.grpc.Channel;
-import io.grpc.Call;
+import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -37,10 +38,11 @@ import java.util.concurrent.TimeUnit;
  * @param <RequestT> The type of the request message
  * @param <ResponseT> The type of the response message
  */
-class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
+class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> {
 
   private final Channel channel;
   private final MethodDescriptor<RequestT, ResponseT> method;
+  private final CallOptions callOptions;
   private final BackOff backOff;
   private final Predicate<RequestT> payloadIsRetriablePredicate;
   private final ScheduledExecutorService scheduledExecutorService;
@@ -54,11 +56,13 @@ class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
   public RetryingCall(
       Channel channel,
       MethodDescriptor<RequestT, ResponseT> method,
+      CallOptions callOptions,
       Predicate<RequestT> payloadIsRetriablePredicate,
       ScheduledExecutorService scheduledExecutorService,
       BackOff backOff) {
     this.channel = channel;
     this.method = method;
+    this.callOptions = callOptions;
     this.payloadIsRetriablePredicate = payloadIsRetriablePredicate;
     this.scheduledExecutorService = scheduledExecutorService;
     this.backOff = backOff;
@@ -88,7 +92,7 @@ class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
   }
 
   @Override
-  public void sendPayload(RequestT message) {
+  public void sendMessage(RequestT message) {
     Preconditions.checkState(this.message == null,
       "sendPayload should not be invoked more than once for unary calls.");
     this.message = message;
@@ -119,7 +123,7 @@ class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
       RequestT message,
       Metadata.Headers requestHeaders,
       Listener<ResponseT> listener) {
-    final Call<RequestT, ResponseT> delegate = channel.newCall(method);
+    final ClientCall<RequestT, ResponseT> delegate = channel.newCall(method, callOptions);
     delegate.start(listener, requestHeaders);
     delegate.request(1);
     cancelled.addListener(new Runnable() {
@@ -129,7 +133,7 @@ class RetryingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
       }
     }, MoreExecutors.directExecutor());
 
-    delegate.sendPayload(message);
+    delegate.sendMessage(message);
     delegate.halfClose();
   }
 

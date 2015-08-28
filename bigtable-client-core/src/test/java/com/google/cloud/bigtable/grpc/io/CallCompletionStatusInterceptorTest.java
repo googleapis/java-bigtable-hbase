@@ -24,9 +24,10 @@ import com.google.cloud.bigtable.grpc.io.CallCompletionStatusInterceptor.Complet
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Empty;
 
+import io.grpc.CallOptions;
 import io.grpc.Channel;
-import io.grpc.Call;
-import io.grpc.Call.Listener;
+import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
 import io.grpc.Status;
 
@@ -44,9 +45,9 @@ public class CallCompletionStatusInterceptorTest {
   @Mock
   private Channel channelStub;
   @Mock
-  private Call<MutateRowRequest, Empty> callStub;
+  private ClientCall<MutateRowRequest, Empty> callStub;
   @Mock
-  private Call.Listener<Empty> responseListenerStub;
+  private ClientCall.Listener<Empty> responseListenerStub;
 
   @Before
   public void setup() {
@@ -59,11 +60,11 @@ public class CallCompletionStatusInterceptorTest {
         new CallCompletionStatusInterceptor(MoreExecutors.newDirectExecutorService());
 
     when(
-      channelStub.newCall(BigtableServiceGrpc.CONFIG.mutateRow))
+      channelStub.newCall(BigtableServiceGrpc.METHOD_MUTATE_ROW, CallOptions.DEFAULT))
         .thenReturn(callStub);
 
     CompletionStatusGatheringCall<MutateRowRequest, Empty> wrappedCall =
-        interceptor.interceptCall(BigtableServiceGrpc.CONFIG.mutateRow, channelStub);
+        interceptor.interceptCall(BigtableServiceGrpc.METHOD_MUTATE_ROW, CallOptions.DEFAULT, channelStub);
 
     Listener<Empty> statusGatheringListener =
         wrappedCall.createGatheringListener(responseListenerStub);
@@ -72,7 +73,7 @@ public class CallCompletionStatusInterceptorTest {
 
     CallCompletionStatusInterceptor.CallCompletionStatus expectedStatusEntry =
         new CallCompletionStatusInterceptor.CallCompletionStatus(
-            BigtableServiceGrpc.CONFIG.mutateRow, Status.INTERNAL);
+            BigtableServiceGrpc.METHOD_MUTATE_ROW, Status.INTERNAL);
 
     Assert.assertEquals(1, interceptor.getCallCompletionStatuses().count(expectedStatusEntry));
   }

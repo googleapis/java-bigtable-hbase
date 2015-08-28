@@ -15,8 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import io.grpc.Call;
+import io.grpc.CallOptions;
 import io.grpc.Channel;
+import io.grpc.ClientCall;
 import io.grpc.Metadata.Headers;
 import io.grpc.MethodDescriptor;
 
@@ -66,17 +67,19 @@ public class ReconnectingChannel extends Channel implements Closeable {
     Closeable createClosable(Channel channel);
   }
 
-  private class DelayingCall<RequestT, ResponseT> extends Call<RequestT, ResponseT> {
+  private class DelayingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> {
 
     final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
-    Call<RequestT, ResponseT> callDelegate = null;
+    final CallOptions callOptions;
+    ClientCall<RequestT, ResponseT> callDelegate = null;
 
-    public DelayingCall(MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    public DelayingCall(MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
       this.methodDescriptor = methodDescriptor;
+      this.callOptions = callOptions;
     }
 
     @Override
-    public void start(Call.Listener<ResponseT> responseListener, Headers headers) {
+    public void start(ClientCall.Listener<ResponseT> responseListener, Headers headers) {
       Preconditions.checkState(callDelegate == null, "Already started");
       ReadLock readLock = delegateLock.readLock();
       readLock.lock();
@@ -85,7 +88,7 @@ public class ReconnectingChannel extends Channel implements Closeable {
           throw new IllegalStateException("Channel is closed");
         }
         checkRefresh(readLock);
-        callDelegate = delegate.newCall(methodDescriptor);
+        callDelegate = delegate.newCall(methodDescriptor, callOptions);
         callDelegate.start(responseListener, headers);
       } catch (IOException e) {
         throw new IllegalStateException("Channel cannot create a new call", e);
@@ -114,9 +117,9 @@ public class ReconnectingChannel extends Channel implements Closeable {
     }
 
     @Override
-    public void sendPayload(RequestT message) {
+    public void sendMessage(RequestT message) {
       Preconditions.checkState(callDelegate != null, "Not started");
-      callDelegate.sendPayload(message);
+      callDelegate.sendMessage(message);
     }
 
   }
@@ -145,9 +148,9 @@ public class ReconnectingChannel extends Channel implements Closeable {
   }
 
   @Override
-  public <RequestT, ResponseT> Call<RequestT, ResponseT> newCall(
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new DelayingCall<>(methodDescriptor);
+  public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
+    return new DelayingCall<>(methodDescriptor, callOptions);
   }
 
   private void checkRefresh(ReadLock readLock) throws IOException {
