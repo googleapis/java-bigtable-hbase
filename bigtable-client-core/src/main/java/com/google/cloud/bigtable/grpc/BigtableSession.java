@@ -49,9 +49,9 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.MethodDescriptor;
 import io.grpc.auth.ClientAuthInterceptor;
-import io.grpc.transport.netty.GrpcSslContexts;
-import io.grpc.transport.netty.NegotiationType;
-import io.grpc.transport.netty.NettyChannelBuilder;
+import io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.NegotiationType;
+import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
@@ -403,7 +403,7 @@ public class BigtableSession implements AutoCloseable {
             .eventLoopGroup(elg)
             .executor(batchPool)
             .negotiationType(NegotiationType.TLS)
-            .streamWindowSize(1 << 20) // 1 MB -- TODO(sduskis): make this configurable
+            .flowControlWindow(1 << 20) // 1 MB -- TODO(sduskis): make this configurable
             .build();
       }
 
@@ -416,7 +416,7 @@ public class BigtableSession implements AutoCloseable {
             channelImpl.shutdown();
             while (!channelImpl.isTerminated()) {
               try {
-                channelImpl.awaitTerminated(CHANNEL_TERMINATE_WAIT_MS, TimeUnit.MILLISECONDS);
+                channelImpl.awaitTermination(CHANNEL_TERMINATE_WAIT_MS, TimeUnit.MILLISECONDS);
               } catch (InterruptedException e) {
                 Thread.interrupted();
                 throw new IOException("Interrupted while sleeping for close", e);
@@ -553,8 +553,8 @@ public class BigtableSession implements AutoCloseable {
         };
 
     return ImmutableMap.<MethodDescriptor<?, ?>, Predicate<?>>builder()
-        .put(BigtableServiceGrpc.CONFIG.mutateRow, retryMutationsWithTimestamps)
-        .put(BigtableServiceGrpc.CONFIG.checkAndMutateRow, retryCheckAndMutateWithTimestamps)
+        .put(BigtableServiceGrpc.METHOD_MUTATE_ROW, retryMutationsWithTimestamps)
+        .put(BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW, retryCheckAndMutateWithTimestamps)
         .build();
   }
 
@@ -568,7 +568,7 @@ public class BigtableSession implements AutoCloseable {
       writer.println(String.format(
           "%s,%s,%s,%s",
           linePrefix,
-          entry.getElement().getMethod().getName(),
+          entry.getElement().getMethod().getFullMethodName(),
           entry.getElement().getCallStatus().getCode(),
           entry.getCount()));
     }

@@ -47,9 +47,9 @@ public class BigtableSessionTests {
     for (Field field : fields) {
       if (field.getType() == MethodDescriptor.class) {
         MethodDescriptor<?, ?> method = (MethodDescriptor<?, ?>)field.get(null);
-        if (method == BigtableServiceGrpc.CONFIG.mutateRow) {
+        if (method == BigtableServiceGrpc.METHOD_MUTATE_ROW) {
           assertMutateRowPredicate((Predicate<MutateRowRequest>) map.get(method));
-        } else if (method == BigtableServiceGrpc.CONFIG.checkAndMutateRow) {
+        } else if (method == BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW) {
           assertCheckAndMutateRowPredicate((Predicate<CheckAndMutateRowRequest>) map.get(method));
         } else {
           assertNull(map.get(method));
