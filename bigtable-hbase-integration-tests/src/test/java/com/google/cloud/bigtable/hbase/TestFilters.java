@@ -1542,12 +1542,14 @@ public class TestFilters extends AbstractTest {
     byte[] qualA = dataHelper.randomData("interleave-no-dups-qual");
     Table table = addDataForTesting(rowKeyPrefix, qualA);
 
-    ColumnPrefixFilter prefixFilter =
+    ColumnPrefixFilter prefixFilter1 =
+        new ColumnPrefixFilter(Bytes.toBytes("interleave-no-dups"));
+    ColumnPrefixFilter prefixFilter2 =
         new ColumnPrefixFilter(Bytes.toBytes("interleave-no-dups-qual"));
     FilterList filterList = new FilterList(
         Operator.MUST_PASS_ONE,
-        new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(qualA)),
-        prefixFilter);
+        prefixFilter1,
+        prefixFilter2);
     Scan scan = new Scan(Bytes.toBytes(rowKeyPrefix));
     scan.setFilter(filterList);
 
