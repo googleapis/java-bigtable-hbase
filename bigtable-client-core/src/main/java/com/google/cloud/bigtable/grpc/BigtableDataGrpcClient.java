@@ -29,19 +29,19 @@ import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.async.AsyncUnaryOperationObserver;
+import com.google.cloud.bigtable.grpc.async.ReadAsync;
+import com.google.cloud.bigtable.grpc.async.ReadAsyncFactory;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
-import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
 import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Empty;
 import com.google.protobuf.ServiceException;
 
@@ -58,8 +58,6 @@ import io.grpc.stub.ClientCalls;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
@@ -68,60 +66,19 @@ import java.util.concurrent.ExecutorService;
  */
 public class BigtableDataGrpcClient implements BigtableDataClient {
 
-  private static class ImmutableListFunction<T> implements Function<List<T>, List<T>> {
-    @Override
-    public List<T> apply(List<T> list) {
-      return ImmutableList.copyOf(list);
-    }
-  }
-
-  private static final ImmutableListFunction<SampleRowKeysResponse> IMMUTABLE_LIST_FUNCTION =
-      new ImmutableListFunction<>();
-
-  /**
-   * A StreamObserver for unary async operations. It assumes that the operation is complete
-   * as soon as a single response is received.
-   * @param <T> The response type.
-   */
-  static class AsyncUnaryOperationObserver<T> implements StreamObserver<T> {
-    private final SettableFuture<T> completionFuture = SettableFuture.create();
-
-    @Override
-    public void onValue(T t) {
-      completionFuture.set(t);
-    }
-
-    @Override
-    public void onError(Throwable throwable) {
-      completionFuture.setException(throwable);
-    }
-
-    @Override
-    public void onCompleted() {
-    }
-
-    public ListenableFuture<T> getCompletionFuture() {
-      return completionFuture;
-    }
-  }
-
   /**
    * A StreamObserver that sends results to a StreamingBigtableResultScanner.
    */
   public static class ReadRowsStreamObserver
       implements StreamObserver<ReadRowsResponse> {
     private final StreamingBigtableResultScanner scanner;
-    private final ClientCall<ReadRowsRequest, ReadRowsResponse> call;
 
-    public ReadRowsStreamObserver(StreamingBigtableResultScanner scanner,
-        ClientCall<ReadRowsRequest, ReadRowsResponse> call) {
+    public ReadRowsStreamObserver(StreamingBigtableResultScanner scanner) {
       this.scanner = scanner;
-      this.call = call;
     }
 
     @Override
     public void onValue(ReadRowsResponse readTableResponse) {
-      call.request(1);
       scanner.addResult(readTableResponse);
     }
 
@@ -133,40 +90,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     @Override
     public void onCompleted() {
       scanner.complete();
-    }
-  }
-
-  /**
-   * CollectingStreamObserver buffers all stream messages in an internal
-   * List and signals the result of {@link #getResponseCompleteFuture()} when complete.
-   */
-  public static class CollectingStreamObserver<T> implements StreamObserver<T> {
-    private final SettableFuture<List<T>> responseCompleteFuture = SettableFuture.create();
-    private final List<T> buffer = new ArrayList<>();
-    private final ClientCall<?, T> call;
-
-    public CollectingStreamObserver(ClientCall<?, T> call) {
-      this.call = call;
-    }
-
-    public ListenableFuture<List<T>> getResponseCompleteFuture() {
-      return responseCompleteFuture;
-    }
-
-    @Override
-    public void onValue(T value) {
-      buffer.add(value);
-      call.request(1);
-    }
-
-    @Override
-    public void onError(Throwable throwable) {
-      responseCompleteFuture.setException(throwable);
-    }
-
-    @Override
-    public void onCompleted() {
-      responseCompleteFuture.set(buffer);
     }
   }
 
@@ -193,47 +116,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     this.executorService = executorService;
     this.retryOptions = retryOptions;
 
-    sampleRowKeysAsync = new ReadAsync<SampleRowKeysRequest, SampleRowKeysResponse>() {
-      @Override
-      public ListenableFuture<List<SampleRowKeysResponse>> readAsync(SampleRowKeysRequest request) {
-        ClientCall<SampleRowKeysRequest, SampleRowKeysResponse> call =
-            BigtableDataGrpcClient.this.channel.newCall(
-                BigtableServiceGrpc.METHOD_SAMPLE_ROW_KEYS, CallOptions.DEFAULT);
-        CollectingStreamObserver<SampleRowKeysResponse> responseBuffer =
-            new CollectingStreamObserver<>(call);
-        ClientCalls.asyncServerStreamingCall(call, request, responseBuffer);
-        return Futures.transform(
-            responseBuffer.getResponseCompleteFuture(), IMMUTABLE_LIST_FUNCTION);
-      }
-    };
- 
-    readRowsAsync = new ReadAsync<ReadRowsRequest, Row>() {
-      @Override
-      public ListenableFuture<List<Row>> readAsync(ReadRowsRequest request) {
-        final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
-            BigtableDataGrpcClient.this.channel.newCall(
-                BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
-
-        CollectingStreamObserver<ReadRowsResponse> responseCollector =
-            new CollectingStreamObserver<>(readRowsCall);
-
-        ClientCalls.asyncServerStreamingCall(readRowsCall, request, responseCollector);
-
-        return Futures.transform(
-            responseCollector.getResponseCompleteFuture(),
-            new Function<List<ReadRowsResponse>, List<Row>>() {
-              @Override
-              public List<Row> apply(List<ReadRowsResponse> responses) {
-                List<Row> result = new ArrayList<>();
-                Iterator<ReadRowsResponse> responseIterator = responses.iterator();
-                while (responseIterator.hasNext()) {
-                  result.add(RowMerger.readNextRow(responseIterator));
-                }
-                return result;
-              }
-            });
-      }
-    };
+    this.sampleRowKeysAsync = ReadAsyncFactory.createSampleRowKeyAsyncReader(this.channel);
+    this.readRowsAsync = ReadAsyncFactory.createRowKeyAysncReader(this.channel);
   }
 
   protected static <T, V> ListenableFuture<V> listenableAsyncCall(
@@ -329,7 +213,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     ClientCalls.asyncServerStreamingCall(
         readRowsCall,
         request,
-        new ReadRowsStreamObserver(resultScanner, readRowsCall));
+        new ReadRowsStreamObserver(resultScanner));
 
     return resultScanner;
   }
@@ -343,18 +227,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     protected final Log LOG = LogFactory.getLog(ReadFallback.class);
 
     private final REQUEST request;
-    private final BackOff currentBackoff;
+    private BackOff currentBackoff;
     private final Sleeper sleeper = Sleeper.DEFAULT;
     private final ReadAsync<REQUEST, RESPONSE> callback;
 
     private ReadFallback(REQUEST request, ReadAsync<REQUEST, RESPONSE> callback) {
       this.request = request;
-      ExponentialBackOff.Builder backOffBuilder =
-          new ExponentialBackOff.Builder()
-              .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
-              .setMaxElapsedTimeMillis(retryOptions.getMaxElaspedBackoffMillis())
-              .setMultiplier(retryOptions.getBackoffMultiplier());
-      this.currentBackoff = backOffBuilder.build();
       this.callback = callback;
     }
 
@@ -371,8 +249,16 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       return Futures.immediateFailedFuture(t);
     }
 
-    private ListenableFuture<List<RESPONSE>> backOffAndRetry(Throwable cause)
-        throws IOException, ScanRetriesExhaustedException {
+    private ListenableFuture<List<RESPONSE>> backOffAndRetry(Throwable cause) throws IOException,
+        ScanRetriesExhaustedException {
+      if (this.currentBackoff == null) {
+        ExponentialBackOff.Builder backOffBuilder =
+            new ExponentialBackOff.Builder()
+                .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
+                .setMaxElapsedTimeMillis(retryOptions.getMaxElaspedBackoffMillis())
+                .setMultiplier(retryOptions.getBackoffMultiplier());
+        this.currentBackoff = backOffBuilder.build();
+      }
       long nextBackOff = currentBackoff.nextBackOffMillis();
       if (nextBackOff == BackOff.STOP) {
         LOG.warn("RetriesExhausted: ", cause);
@@ -400,9 +286,5 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       return Futures.withFallback(readAsync.readAsync(request), readFallback);
     }
     return readAsync.readAsync(request);
-  }
-
-  private static interface ReadAsync<REQUEST, RESPONSE> {
-    ListenableFuture<List<RESPONSE>> readAsync(REQUEST request);
   }
 }
