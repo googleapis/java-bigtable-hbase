@@ -19,6 +19,9 @@ import java.util.List;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+/**
+ * This interface represents an asynchronous read.
+ */
 public interface ReadAsync<REQUEST, RESPONSE> {
   ListenableFuture<List<RESPONSE>> readAsync(REQUEST request);
 }
