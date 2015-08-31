@@ -21,7 +21,6 @@ import com.google.bigtable.v1.Mutation.SetCell.Builder;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.protobuf.ByteString;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
@@ -34,10 +33,10 @@ import java.util.Map.Entry;
  * Adapt an HBase Put Operation into an Bigtable RowMutation
  */
 public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builder> {
-  private int maxKeyValueSize;
+  private final int maxKeyValueSize;
 
-  public PutAdapter(Configuration configuration) {
-    maxKeyValueSize = configuration.getInt("hbase.client.keyvalue.maxsize", -1);
+  public PutAdapter(int maxKeyValueSize) {
+    this.maxKeyValueSize = maxKeyValueSize;
   }
 
   @Override

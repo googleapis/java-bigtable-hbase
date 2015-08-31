@@ -40,6 +40,7 @@ import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
@@ -166,13 +167,16 @@ public class BatchExecutor {
   protected final BigtableOptions options;
   protected final BigtableTableName bigtableTableName;
   protected final ListeningExecutorService service;
-  protected final ReadOperationAdapter<Get> getAdapter;
-  protected final OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
-  protected final OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter;
+  protected final ReadOperationAdapter<Get> getAdapter = Adapters.GET_ADAPTER;
+  protected final OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter =
+      Adapters.DELETE_ADAPTER;
+  protected final AppendAdapter appendAdapter = Adapters.APPEND_ADAPTER;
+  protected final IncrementAdapter incrementAdapter = Adapters.INCREMENT_ADAPTER;
+  protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter =
+      Adapters.ROW_ADAPTER;
+
   protected final RowMutationsAdapter rowMutationsAdapter;
-  protected final AppendAdapter appendAdapter;
-  protected final IncrementAdapter incrementAdapter;
-  protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter;
+  protected final OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
   protected final RowResultConverter rowResultConverter;
 
   public BatchExecutor(
@@ -180,24 +184,14 @@ public class BatchExecutor {
       BigtableOptions options,
       BigtableTableName bigtableTableName,
       ListeningExecutorService service,
-      ReadOperationAdapter<Get> getAdapter,
-      OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
-      AppendAdapter appendAdapter,
-      IncrementAdapter incrementAdapter,
-      ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter,
       OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
       RowMutationsAdapter rowMutationsAdapter) {
     this.client = client;
     this.options = options;
     this.bigtableTableName = bigtableTableName;
     this.service = service;
-    this.getAdapter = getAdapter;
     this.putAdapter = putAdapter;
-    this.deleteAdapter = deleteAdapter;
     this.rowMutationsAdapter = rowMutationsAdapter;
-    this.appendAdapter = appendAdapter;
-    this.incrementAdapter = incrementAdapter;
-    this.rowToResultAdapter = rowToResultAdapter;
     rowResultConverter = new RowResultConverter(rowToResultAdapter);
   }
 

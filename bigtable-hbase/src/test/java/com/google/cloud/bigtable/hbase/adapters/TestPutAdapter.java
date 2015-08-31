@@ -21,7 +21,6 @@ import com.google.bigtable.v1.Mutation.MutationCase;
 import com.google.bigtable.v1.Mutation.SetCell;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(JUnit4.class)
 public class TestPutAdapter {
 
-  protected final PutAdapter adapter = new PutAdapter(new Configuration());
+  protected final PutAdapter adapter = new PutAdapter(-1);
   protected final DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   @Test
