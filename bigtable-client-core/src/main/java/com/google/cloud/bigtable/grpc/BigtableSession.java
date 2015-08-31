@@ -105,8 +105,6 @@ public class BigtableSession implements AutoCloseable {
   /** Number of threads to use to initiate retry calls */
   public static final int RETRY_THREAD_COUNT = 4;
   public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
-  /** Number of milliseconds to wait for a termination before trying again. */
-  public static final long CHANNEL_TERMINATE_WAIT_MS = 5000;
   private static final Map<MethodDescriptor<?, ?>, Predicate<?>> methodsToRetryMap =
       createMethodRetryMap();
   private static final Logger LOG = new Logger(BigtableSession.class);
@@ -414,13 +412,15 @@ public class BigtableSession implements AutoCloseable {
           public void close() throws IOException {
             ChannelImpl channelImpl = (ChannelImpl) channel;
             channelImpl.shutdown();
-            while (!channelImpl.isTerminated()) {
-              try {
-                channelImpl.awaitTermination(CHANNEL_TERMINATE_WAIT_MS, TimeUnit.MILLISECONDS);
-              } catch (InterruptedException e) {
-                Thread.interrupted();
-                throw new IOException("Interrupted while sleeping for close", e);
-              }
+            try {
+              channelImpl.awaitTermination(options.getTimeoutMs(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+              Thread.interrupted();
+              throw new IOException("Interrupted while sleeping for close", e);
+            }
+            if (!channelImpl.isTerminated()) {
+              throw new IOException("Could not close the channel after " + options.getTimeoutMs()
+                  + " ms.");
             }
           }
         };
