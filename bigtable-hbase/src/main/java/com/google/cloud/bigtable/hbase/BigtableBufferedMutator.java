@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.client.Row;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
@@ -205,15 +206,10 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
     this.host = options.getDataHost().toString();
 
-    PutAdapter putAdapter = new PutAdapter(configuration);
+    PutAdapter putAdapter = Adapters.createPutAdapter(configuration);
 
     RowMutationsAdapter rowMutationsAdapter =
-        new RowMutationsAdapter(
-            new MutationAdapter(
-                BigtableTable.DELETE_ADAPTER,
-                putAdapter,
-                new UnsupportedOperationAdapter<Increment>("increment"),
-                new UnsupportedOperationAdapter<Append>("append")));
+        new RowMutationsAdapter(Adapters.createMutationsAdapter(putAdapter));
 
     ListeningExecutorService listeningExecutorService =
         MoreExecutors.listeningDecorator(executorService);
@@ -223,11 +219,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
         options,
         options.getClusterName().toTableName(tableName.getNameAsString()),
         listeningExecutorService,
-        BigtableTable.GET_ADAPTER,
-        BigtableTable.DELETE_ADAPTER,
-        BigtableTable.APPEND_ADAPTER,
-        BigtableTable.INCREMENT_ADAPTER,
-        BigtableTable.ROW_ADAPTER,
         putAdapter,
         rowMutationsAdapter);
   }

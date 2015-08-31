@@ -15,6 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.hbase.adapters.Adapters.APPEND_ADAPTER;
+import static com.google.cloud.bigtable.hbase.adapters.Adapters.BIGTABLE_RESULT_SCAN_ADAPTER;
+import static com.google.cloud.bigtable.hbase.adapters.Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER;
+import static com.google.cloud.bigtable.hbase.adapters.Adapters.DELETE_ADAPTER;
+import static com.google.cloud.bigtable.hbase.adapters.Adapters.GET_ADAPTER;
+import static com.google.cloud.bigtable.hbase.adapters.Adapters.INCREMENT_ADAPTER;
+import static com.google.cloud.bigtable.hbase.adapters.Adapters.ROW_ADAPTER;
+import static com.google.cloud.bigtable.hbase.adapters.Adapters.SCAN_ADAPTER;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,9 +37,9 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
@@ -64,23 +73,13 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
-import com.google.cloud.bigtable.hbase.adapters.BigtableResultScannerAdapter;
-import com.google.cloud.bigtable.hbase.adapters.BigtableWhileMatchResultScannerAdapter;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
-import com.google.cloud.bigtable.hbase.adapters.GetAdapter;
-import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ReadOperationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ScanAdapter;
-import com.google.cloud.bigtable.hbase.adapters.UnsupportedOperationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
+import com.google.cloud.bigtable.hbase.adapters.ReadOperationAdapter;
+import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -94,18 +93,6 @@ import com.google.protobuf.ServiceException;
 public class BigtableTable implements Table {
   protected static final Logger LOG = new Logger(BigtableTable.class);
 
-  public static final ResponseAdapter<com.google.bigtable.v1.Row, Result> ROW_ADAPTER = new RowAdapter();
-  public static final AppendAdapter APPEND_ADAPTER = new AppendAdapter();
-  public static final IncrementAdapter INCREMENT_ADAPTER = new IncrementAdapter();
-  public static final DeleteAdapter DELETE_ADAPTER = new DeleteAdapter();
-  public static final FilterAdapter FILTER_ADAPTER = FilterAdapter.buildAdapter();
-  public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(FILTER_ADAPTER);
-  public static final BigtableResultScannerAdapter BIGTABLE_RESULT_SCAN_ADAPTER =
-      new BigtableResultScannerAdapter(ROW_ADAPTER);
-  public static final BigtableWhileMatchResultScannerAdapter
-      BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER =
-      new BigtableWhileMatchResultScannerAdapter(ROW_ADAPTER);
-  public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
   // them (which they shouldn't since we built the filter), throw an exception.
@@ -148,12 +135,8 @@ public class BigtableTable implements Table {
     this.tableName = tableName;
     this.options = options;
     this.client = client;
-    putAdapter = new PutAdapter(getConfiguration());
-    mutationAdapter = new MutationAdapter(
-        DELETE_ADAPTER,
-        putAdapter,
-        new UnsupportedOperationAdapter<Increment>("increment"),
-        new UnsupportedOperationAdapter<Append>("append"));
+    putAdapter = Adapters.createPutAdapter(getConfiguration());
+    mutationAdapter = Adapters.createMutationsAdapter(putAdapter);
     rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
     this.executorService = MoreExecutors.listeningDecorator(executorService);
     this.bigtableTableName = options.getClusterName().toTableName(tableName.getNameAsString());
@@ -162,14 +145,10 @@ public class BigtableTable implements Table {
         options,
         this.bigtableTableName,
         this.executorService,
-        GET_ADAPTER,
-        DELETE_ADAPTER,
-        APPEND_ADAPTER,
-        INCREMENT_ADAPTER,
-        ROW_ADAPTER,
         putAdapter,
         rowMutationsAdapter);
   }
+
 
   @Override
   public TableName getName() {
