@@ -34,6 +34,7 @@ import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncExecutor;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
@@ -86,6 +87,9 @@ public class TestBigtableTable {
   @Mock
   private ResultScanner<Row> mockResultScanner;
 
+  @Mock
+  private BigtableAsyncExecutor asyncExecutor;
+
   public BigtableTable table;
 
   @Before
@@ -112,7 +116,9 @@ public class TestBigtableTable {
         TableName.valueOf(TEST_TABLE),
         options,
         mockClient,
-        Executors.newCachedThreadPool());
+        Executors.newCachedThreadPool(),
+        asyncExecutor
+        );
   }
 
   @Test
@@ -188,7 +194,7 @@ public class TestBigtableTable {
         new QualifierFilter(CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes("x")));
     assertFalse(BigtableTable.hasWhileMatchFilter(filter));
   }
-  
+
   @Test
   public void hasWhileMatchFilter_yesAtTopLevel() {
     QualifierFilter filter =
@@ -196,7 +202,7 @@ public class TestBigtableTable {
     WhileMatchFilter whileMatchFilter = new WhileMatchFilter(filter);
     assertTrue(BigtableTable.hasWhileMatchFilter(whileMatchFilter));
   }
-  
+
   @Test
   public void hasWhileMatchFilter_noInNested() {
     QualifierFilter filter =
@@ -213,7 +219,7 @@ public class TestBigtableTable {
     FilterList filterList = new FilterList(whileMatchFilter);
     assertTrue(BigtableTable.hasWhileMatchFilter(filterList));
   }
-  
+
   @Test
   public void getScanner_withBigtableResultScannerAdapter() throws IOException {
     when(mockClient.readRows(isA(ReadRowsRequest.class))).thenReturn(mockResultScanner);
@@ -240,7 +246,7 @@ public class TestBigtableTable {
         result.getColumnCells("family_name".getBytes(), "q_name".getBytes());
     assertEquals(1, cells.size());
     assertEquals("value", new String(CellUtil.cloneValue(cells.get(0))));
-    
+
     verify(mockClient).readRows(isA(ReadRowsRequest.class));
     verify(mockResultScanner).next();
   }

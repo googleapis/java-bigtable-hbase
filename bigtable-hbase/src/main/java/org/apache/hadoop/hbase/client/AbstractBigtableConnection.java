@@ -20,6 +20,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncExecutor;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
@@ -39,6 +40,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -146,7 +148,12 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new BigtableTable(this, tableName, options, session.getDataClient(), pool);
+    int maxInflightRpcs = MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
+    long bufferSize = conf.getLong(
+      BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
+      BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT);
+    return new BigtableTable(this, tableName, options, session.getDataClient(), pool,
+      createAsyncExecutor(maxInflightRpcs, bufferSize, pool));
   }
 
   @Override
@@ -166,14 +173,12 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
 
-    BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(conf,
+    BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(
+        createAsyncExecutor(maxInflightRpcs, params.getWriteBufferSize(), params.getPool()),
+        params.getListener(),
+        conf,
         params.getTableName(),
-        maxInflightRpcs,
-        params.getWriteBufferSize(),
-        session.getDataClient(),
-        options,
-        params.getPool(),
-        params.getListener()){
+        options){
 
       @Override
       public void close() throws IOException {
@@ -186,6 +191,11 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     };
     ACTIVE_BUFFERED_MUTATORS.put(id, bigtableBufferedMutator);
     return bigtableBufferedMutator;
+  }
+
+  private BigtableAsyncExecutor createAsyncExecutor(int maxInflightRpcs, long bufferSize,
+      Executor executor) {
+    return new BigtableAsyncExecutor(maxInflightRpcs, bufferSize, session.getDataClient(), executor);
   }
 
   @Override
