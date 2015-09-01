@@ -16,13 +16,17 @@ import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-public final class ReadAsyncFactory {
+/**
+ * Utilities for creating and executing async methods.
+ */
+public final class BigtableAsyncUtilities {
 
   private static final Function<List<SampleRowKeysResponse>, List<SampleRowKeysResponse>> IMMUTABLE_LIST_TRANSFORMER =
       new Function<List<SampleRowKeysResponse>, List<SampleRowKeysResponse>>() {
@@ -70,6 +74,24 @@ public final class ReadAsyncFactory {
     };
   }
 
-  private ReadAsyncFactory(){
+  public static <RequestT, ResponseT> ListenableFuture<List<ResponseT>> doReadAsync(
+      RetryOptions retryOptions, final RequestT request, ReadAsync<RequestT, ResponseT> readAsync) {
+    if (retryOptions.enableRetries()) {
+      RetryingRpcFutureFallback<RequestT, ResponseT> readFallback =
+          new RetryingRpcFutureFallback<RequestT, ResponseT>(retryOptions, request, readAsync);
+      return Futures.withFallback(readAsync.readAsync(request), readFallback);
+    }
+    return readAsync.readAsync(request);
+  }
+
+  public static <T, V> ListenableFuture<V> listenableAsyncCall(Channel channel,
+      MethodDescriptor<T, V> method, T request) {
+    ClientCall<T, V> call = channel.newCall(method, CallOptions.DEFAULT);
+    AsyncUnaryOperationObserver<V> observer = new AsyncUnaryOperationObserver<>();
+    ClientCalls.asyncUnaryCall(call, request, observer);
+    return observer.getCompletionFuture();
+  }
+
+  private BigtableAsyncUtilities(){
   }
 }
