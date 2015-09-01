@@ -2,7 +2,6 @@ package com.google.cloud.bigtable.dataflow;
 
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source.SourceWithKeys;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase1_0.BigtableConnection;
