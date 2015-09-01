@@ -1507,6 +1507,77 @@ public class TestFilters extends AbstractTest {
     Assert.assertEquals(1, result.size());
   }
 
+
+  @Test
+  @Category(KnownGap.class)
+  public void testSingleValueFilterCompOps() throws IOException {
+    byte[] rowKey = dataHelper.randomData("testSingleValueFilterCompOps");
+    byte[] qual = dataHelper.randomData("tsvfco-qual");
+    byte[] qualAValue = dataHelper.randomData("qualA-value");
+    byte[] qualBValue = dataHelper.randomData("qualB-value");
+    byte[] qualCValue = dataHelper.randomData("qualC-value");
+    Table table = getConnection().getTable(TABLE_NAME);
+    Put put = new Put(rowKey);
+    put.addColumn(COLUMN_FAMILY, qual, qualAValue);
+    put.addColumn(COLUMN_FAMILY, qual, qualBValue);
+    put.addColumn(COLUMN_FAMILY, qual, qualCValue);
+    table.put(put);
+
+    Get get = new Get(rowKey).addFamily(COLUMN_FAMILY);
+
+    SingleColumnValueFilter equalsQualA =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qual, CompareOp.EQUAL, new BinaryComparator(
+            qualAValue));
+    get.setFilter(equalsQualA);
+    Result result = table.get(get);
+    Assert.assertEquals(1, result.size());
+
+    SingleColumnValueFilter greaterThanQualA =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qual, CompareOp.GREATER, new BinaryComparator(
+            qualAValue));
+    get.setFilter(greaterThanQualA);
+    result = table.get(get);
+    Assert.assertEquals(2, result.size());
+
+    SingleColumnValueFilter greaterThanEqualQualA =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qual, CompareOp.GREATER_OR_EQUAL,
+            new BinaryComparator(qualAValue));
+    get.setFilter(greaterThanEqualQualA);
+    result = table.get(get);
+    Assert.assertEquals(3, result.size());
+
+    SingleColumnValueFilter lessThanQualB =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qual, CompareOp.LESS, new BinaryComparator(
+          qualBValue));
+    get.setFilter(lessThanQualB);
+    result = table.get(get);
+    Assert.assertEquals(1, result.size());
+
+    SingleColumnValueFilter lessThanEqualQualB =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qual, CompareOp.LESS_OR_EQUAL,
+            new BinaryComparator(qualBValue));
+    get.setFilter(lessThanEqualQualB);
+    result = table.get(get);
+    Assert.assertEquals(2, result.size());
+
+    SingleColumnValueFilter notEqualQualB =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qual, CompareOp.NOT_EQUAL,
+            new BinaryComparator(qualBValue));
+    get.setFilter(notEqualQualB);
+    result = table.get(get);
+    Assert.assertEquals(2, result.size());
+    Assert.assertArrayEquals(qualAValue, result.getValue(COLUMN_FAMILY, qual));
+    Assert.assertArrayEquals(qualCValue, result.getValue(COLUMN_FAMILY, qual));
+
+    // \\C* is not supported by Java regex.
+    SingleColumnValueFilter regexQualFilter =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qual, CompareOp.EQUAL,
+          new RegexStringComparator("qualA.*"));
+    get.setFilter(regexQualFilter);
+    result = table.get(get);
+    Assert.assertEquals(1, result.size());
+  }
+
   @Test
   public void testPageFilters() throws IOException {
     byte[][] rowKeys = dataHelper.randomData("pageFilter-", 100);

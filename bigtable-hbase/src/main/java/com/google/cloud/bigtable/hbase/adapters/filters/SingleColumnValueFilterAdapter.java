@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.v1.RowFilter;
+import com.google.bigtable.v1.RowFilter.Builder;
 import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.bigtable.v1.RowFilter.Condition;
 import com.google.protobuf.ByteString;
@@ -67,11 +68,15 @@ public class SingleColumnValueFilterAdapter implements TypedFilterAdapter<Single
             .addFilters(RowFilter.newBuilder()
                 .setFamilyNameRegexFilter(
                     Bytes.toString(quoteRegularExpression(filter.getFamily()))))
-            .addFilters(RowFilter.newBuilder()
-                .setColumnQualifierRegexFilter(
-                    ByteString.copyFrom(quoteRegularExpression(filter.getQualifier()))))
+            .addFilters(createColumnQualifierFilter(filter))
             .addFilters(createVersionLimitFilter(filter)))
         .build();
+  }
+
+  private Builder createColumnQualifierFilter(SingleColumnValueFilter filter) throws IOException {
+    return RowFilter.newBuilder()
+        .setColumnQualifierRegexFilter(
+            ByteString.copyFrom(quoteRegularExpression(filter.getQualifier())));
   }
 
   /**

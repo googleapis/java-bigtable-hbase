@@ -413,7 +413,7 @@ public class BigtableSession implements AutoCloseable {
             ChannelImpl channelImpl = (ChannelImpl) channel;
             channelImpl.shutdown();
             try {
-              channelImpl.awaitTermination(options.getTimeoutMs(), TimeUnit.MILLISECONDS);
+              channelImpl.awaitTermination(10000, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
               Thread.interrupted();
               throw new IOException("Interrupted while sleeping for close", e);
