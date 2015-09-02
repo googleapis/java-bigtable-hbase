@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,6 +68,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class TestFilters extends AbstractTest {
   /**
@@ -1015,7 +1017,7 @@ public class TestFilters extends AbstractTest {
   }
 
   @Test
-  public void testWhileMatchFilter_singleChained() throws IOException {    
+  public void testWhileMatchFilter_singleChained() throws IOException {
     String rowKeyPrefix = dataHelper.randomString("wmf-sc-");
     byte[] qualA = dataHelper.randomData("qualA");
     Table table = addDataForTesting(rowKeyPrefix, qualA);
@@ -1031,6 +1033,77 @@ public class TestFilters extends AbstractTest {
 
     int[] expected = {0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
     assertWhileMatchFilterResult(qualA, table, scan, expected);
+  }
+
+  @Test
+  public void testSingleValueFilterAscii() throws IOException {
+    byte[] qual = dataHelper.randomData("testSingleValueFilterCompOps");
+    // Add {, }, and @ to make sure that they do not need to be encoded
+    byte[] rowKeyA = dataHelper.randomData("KeyA{");
+    byte[] rowKeyB = dataHelper.randomData("KeyB}");
+    byte[] rowKeyC = dataHelper.randomData("KeyC@");
+    byte[] valueA = dataHelper.randomData("ValueA{");
+    byte[] valueB = dataHelper.randomData("ValueB}");
+    byte[] valueC = dataHelper.randomData("ValueC@");
+    try (Table table = getConnection().getTable(TABLE_NAME)) {
+      table.put(Arrays.asList(
+        new Put(rowKeyA).addColumn(COLUMN_FAMILY, qual, valueA),
+        new Put(rowKeyB).addColumn(COLUMN_FAMILY, qual, valueB),
+        new Put(rowKeyC).addColumn(COLUMN_FAMILY, qual, valueC)));
+
+      // {A} == A
+      assertKeysReturnedForSCVF(table, qual, CompareOp.EQUAL, valueA, rowKeyA);
+      // Nothing should match this.
+      assertKeysReturnedForSCVF(table, qual, CompareOp.EQUAL, Bytes.toBytes("ValueA*"));
+      // {B, C} > A
+      assertKeysReturnedForSCVF(table, qual, CompareOp.GREATER, valueA, rowKeyB, rowKeyC);
+      // {A, B, C} >= A
+      assertKeysReturnedForSCVF(table, qual, CompareOp.GREATER_OR_EQUAL, valueA, rowKeyA, rowKeyB,
+        rowKeyC);
+      // {A} < B
+      assertKeysReturnedForSCVF(table, qual, CompareOp.LESS, valueB, rowKeyA);
+      // {A} <= A
+      assertKeysReturnedForSCVF(table, qual, CompareOp.LESS_OR_EQUAL, valueA, rowKeyA);
+      // {A, B} <= B
+      assertKeysReturnedForSCVF(table, qual, CompareOp.LESS_OR_EQUAL, valueB, rowKeyA, rowKeyB);
+      // {A, C} != B
+      assertKeysReturnedForSCVF(table, qual, CompareOp.NOT_EQUAL, valueB, rowKeyA, rowKeyC);
+
+      // Check to make sure that EQUALS doesn't actually do a regex filter.
+      assertKeysReturnedForSCVF(table, qual, CompareOp.EQUAL, Bytes.toBytes("ValueC.*"));
+
+      // Check to make sure that EQUALS with regex does work
+      SingleColumnValueFilter filter =
+          new SingleColumnValueFilter(COLUMN_FAMILY, qual, CompareOp.EQUAL,
+              new RegexStringComparator("ValueC.*"));
+      filter.setFilterIfMissing(true);
+      assertKeysReturnedForFilter(table, filter, rowKeyC);
+    }
+  }
+
+  private void assertKeysReturnedForSCVF(Table table, byte[] qualifier, CompareOp operator,
+      byte[] value, byte[]... expectedKeys) throws IOException {
+    SingleColumnValueFilter filter =
+        new SingleColumnValueFilter(COLUMN_FAMILY, qualifier, operator,
+            new BinaryComparator(value));
+    filter.setFilterIfMissing(true);
+    assertKeysReturnedForFilter(table, filter, expectedKeys);
+  }
+
+  private void assertKeysReturnedForFilter(Table table, Filter filter, byte[]... expectedKeys)
+      throws IOException {
+    Set<String> expected = new TreeSet<>();
+    for (byte[] expectedKey : expectedKeys) {
+      expected.add(Bytes.toString(expectedKey));
+    }
+    Set<String> found = new TreeSet<>();
+    Scan scan = new Scan().setFilter(filter);
+    try (ResultScanner result = table.getScanner(scan)) {
+      for (Result curr : result) {
+        found.add(Bytes.toString(curr.getRow()));
+      }
+    }
+    Assert.assertEquals(expected, found);
   }
 
   @Test

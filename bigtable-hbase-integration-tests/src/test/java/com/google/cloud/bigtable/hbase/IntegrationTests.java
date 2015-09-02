@@ -41,6 +41,7 @@ import org.junit.runners.Suite;
 
 import com.google.common.base.Preconditions;
 
+@SuppressWarnings("deprecation")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
     TestAppend.class,
@@ -54,6 +55,7 @@ import com.google.common.base.Preconditions;
     TestDelete.class,
     TestDurability.class,
     TestFilters.class,
+    TestSingleColumnValueFilter.class,
     TestGet.class,
     TestGetTable.class,
     TestScan.class,
