@@ -27,7 +27,10 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.RetryOptions;
 
 @RunWith(JUnit4.class)
 public class TestBigtableOptionsFactory {
@@ -137,4 +140,35 @@ public class TestBigtableOptionsFactory {
     BigtableOptionsFactory.fromConfiguration(configuration);
   }
 
+  @Test
+  public void testDefaultRetryOptions() throws IOException {
+    RetryOptions retryOptions =
+        BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();
+    assertEquals(
+      RetryOptions.ENABLE_GRPC_RETRIES_DEFAULT,
+      retryOptions.enableRetries());
+    assertEquals(
+        RetryOptions.ENABLE_GRPC_RETRY_DEADLINE_EXCEEDED_DEFAULT,
+        retryOptions.retryOnDeadlineExceeded());
+    assertEquals(
+        RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS,
+        retryOptions.getMaxElaspedBackoffMillis());
+    assertEquals(
+        RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS,
+        retryOptions.getReadPartialRowTimeoutMillis());
+  }
+
+  @Test
+  public void testSettingRetryOptions() throws IOException {
+    configuration.set(BigtableOptionsFactory.ENABLE_GRPC_RETRIES_KEY, "false");
+    configuration.set(BigtableOptionsFactory.ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY, "false");
+    configuration.set(BigtableOptionsFactory.MAX_ELAPSED_BACKOFF_MILLIS_KEY, "111");
+    configuration.set(BigtableOptionsFactory.READ_PARTIAL_ROW_TIMEOUT_MS, "123");
+    RetryOptions retryOptions =
+        BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();
+    assertEquals(false, retryOptions.enableRetries());
+    assertEquals(false, retryOptions.retryOnDeadlineExceeded());
+    assertEquals(111, retryOptions.getMaxElaspedBackoffMillis());
+    assertEquals(123, retryOptions.getReadPartialRowTimeoutMillis());
+  }
 }

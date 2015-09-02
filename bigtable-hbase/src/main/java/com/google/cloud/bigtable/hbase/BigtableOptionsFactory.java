@@ -108,12 +108,18 @@ public class BigtableOptionsFactory {
   public static final String ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY =
       "google.bigtable.grpc.retry.deadlineexceeded.enable";
   /**
-   * Key to set to a boolean flag indicating the maximum amount of time to wait for retries, given
-   * a backoff policy on errors.
+   * Key to set the maximum amount of time to wait for retries, given a backoff policy on errors.
    * This flag is used only when grpc retries is enabled.
    */
   public static final String MAX_ELAPSED_BACKOFF_MILLIS_KEY =
       "google.bigtable.grpc.retry.max.elapsed.backoff.ms";
+ 
+  /**
+   * Key to set the amount of time to wait when reading a partial row.
+   */
+  public static final String READ_PARTIAL_ROW_TIMEOUT_MS =
+      "google.bigtable.grpc.read.partial.row.timeout.ms";
+
   /**
    * The number of grpc channels to open for asynchronous processing such as puts.
    */
@@ -274,6 +280,11 @@ public class BigtableOptionsFactory {
         RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS);
     LOG.debug("gRPC retry maxElapsedBackoffMillis: %d", maxElapsedBackoffMillis);
     retryOptionsBuilder.setMaxElapsedBackoffMillis(maxElapsedBackoffMillis);
+
+    int readPartialRowTimeoutMillis = configuration.getInt(
+        READ_PARTIAL_ROW_TIMEOUT_MS, RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS);
+    LOG.debug("gRPC read partial row timeout (millis): %d", readPartialRowTimeoutMillis);
+    retryOptionsBuilder.setReadPartialRowTimeoutMillis(readPartialRowTimeoutMillis);
 
     return retryOptionsBuilder.build();
   }
