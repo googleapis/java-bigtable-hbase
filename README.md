@@ -61,7 +61,7 @@ You can run the unit tests via *mvn clean install*.  There is also a suite of in
 
 You can run the following command for Java 7:
 
-`mvn clean integration-test -PbigtableIntegrationTest -Dgoogle.bigtable.project.id=[your cloud project id] -Dgoogle.bigtable.zone.name=[the zone your cluster is in] -Dgoogle.bigtable.cluster.name=[your cluster id] -Dgoogle.bigtable.auth.service -Dgoogle.bigtable.auth.service.account.enable=true -Dbigtable.test.cluster.api=true -Dbigtable.test.cluster.size=1`
+`mvn clean integration-test -PbigtableIntegrationTest -Dgoogle.bigtable.project.id=[your cloud project id] -Dgoogle.bigtable.zone.name=[the zone your cluster is in] -Dgoogle.bigtable.cluster.name=[your cluster id] -Dgoogle.bigtable.auth.service -Dgoogle.bigtable.auth.service.account.enable=true`
 
 If you are using Java 8, add the following option:
 
