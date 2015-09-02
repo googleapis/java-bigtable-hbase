@@ -26,7 +26,6 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
@@ -65,27 +64,16 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
 
   private RowFilter adaptBinaryComparator(
       CompareOp compareOp, BinaryComparator comparator) throws IOException {
-    byte[] comparatorValue = comparator.getValue();
-    ByteArrayOutputStream baos =
-        new ByteArrayOutputStream(comparatorValue.length * 2);
-    ReaderExpressionHelper.writeQuotedRegularExpression(baos, comparatorValue);
-    ByteString quotedValue = ByteString.copyFrom(baos.toByteArray());
+    ByteString value = ByteString.copyFrom(comparator.getValue());
     switch (compareOp) {
       case LESS:
-        return RowFilter.newBuilder()
-            .setValueRangeFilter(
-                ValueRange.newBuilder()
-                    .setEndValueExclusive(quotedValue))
-            .build();
+        return createRowFilter(ValueRange.newBuilder().setEndValueExclusive(value));
       case LESS_OR_EQUAL:
-        return RowFilter.newBuilder()
-            .setValueRangeFilter(
-                ValueRange.newBuilder()
-                    .setEndValueInclusive(quotedValue))
-            .build();
+        return createRowFilter(ValueRange.newBuilder().setEndValueInclusive(value));
       case EQUAL:
+        byte[] quotedBytes = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
         return RowFilter.newBuilder()
-            .setValueRegexFilter(quotedValue)
+            .setValueRegexFilter(ByteString.copyFrom(quotedBytes))
             .build();
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
@@ -93,28 +81,14 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
             .setInterleave(
                 Interleave.newBuilder()
                     .addFilters(
-                        RowFilter.newBuilder()
-                            .setValueRangeFilter(
-                                ValueRange.newBuilder()
-                                    .setEndValueExclusive(quotedValue)))
+                        createRowFilter(ValueRange.newBuilder().setEndValueExclusive(value)))
                     .addFilters(
-                        RowFilter.newBuilder()
-                            .setValueRangeFilter(
-                                ValueRange.newBuilder()
-                                    .setStartValueExclusive(quotedValue))))
+                        createRowFilter(ValueRange.newBuilder().setStartValueExclusive(value))))
                 .build();
       case GREATER_OR_EQUAL:
-        return RowFilter.newBuilder()
-            .setValueRangeFilter(
-                ValueRange.newBuilder()
-                    .setStartValueInclusive(quotedValue))
-            .build();
+        return createRowFilter(ValueRange.newBuilder().setStartValueInclusive(value));
       case GREATER:
-        return RowFilter.newBuilder()
-            .setValueRangeFilter(
-                ValueRange.newBuilder()
-                    .setStartValueExclusive(quotedValue))
-            .build();
+        return createRowFilter(ValueRange.newBuilder().setStartValueExclusive(value));
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,
         // include an always-match filter.
@@ -123,6 +97,10 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
         throw new IllegalStateException(
             String.format("Cannot handle unknown compare op %s", compareOp));
     }
+  }
+
+  private static RowFilter createRowFilter(ValueRange.Builder valueRange) {
+    return RowFilter.newBuilder().setValueRangeFilter(valueRange).build();
   }
 
   private RowFilter adaptRegexStringComparator(
