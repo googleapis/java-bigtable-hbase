@@ -397,6 +397,7 @@ public class BigtableSession implements AutoCloseable {
       public Channel createChannel() throws IOException {
         return NettyChannelBuilder
             .forAddress(host)
+            .maxMessageSize(256 * 1024 * 1024) // 256 MB, server has 256 MB limit.
             .sslContext(createSslContext())
             .eventLoopGroup(elg)
             .executor(batchPool)
