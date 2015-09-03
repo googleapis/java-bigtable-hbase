@@ -238,7 +238,11 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       LOG.fatal(msg);
     }
     this.aborted = true;
-    close();
+    try {
+      close();
+    } catch(IOException e) {
+      throw new RuntimeException("Could not close the connection", e);
+    }
   }
 
   @Override
@@ -252,21 +256,16 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   }
 
   @Override
-  public void close() {
-    if (this.closed) {
-      return;
-    }
-    try {
+  public void close() throws IOException{
+    if (!this.closed) {
       this.session.close();
-    } catch (Exception e) {
-      throw new RuntimeException("Error when shutting down clients", e);
+      // If the clients are shutdown, there shouldn't be any more activity on the
+      // batch pool (assuming we created it ourselves). If exceptions were raised
+      // shutting down the clients, it's not entirely safe to shutdown the pool
+      // (via a finally block).
+      shutdownBatchPool();
+      this.closed = true;
     }
-    // If the clients are shutdown, there shouldn't be any more activity on the
-    // batch pool (assuming we created it ourselves). If exceptions were raised
-    // shutting down the clients, it's not entirely safe to shutdown the pool
-    // (via a finally block).
-    shutdownBatchPool();
-    this.closed = true;
   }
 
   @Override
