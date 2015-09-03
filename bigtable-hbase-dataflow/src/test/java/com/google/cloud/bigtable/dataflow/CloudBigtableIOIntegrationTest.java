@@ -61,7 +61,7 @@ public class CloudBigtableIOIntegrationTest {
   }
 
   @AfterClass
-  public static void shutdown() {
+  public static void shutdown() throws IOException {
     connection.close();
   }
 
