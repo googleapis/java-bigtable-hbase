@@ -15,13 +15,11 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.util.List;
-
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * This interface represents an asynchronous read.
+ * This interface represents an RPC that is retryable.
  */
-public interface ReadAsync<REQUEST, RESPONSE> {
-  ListenableFuture<List<RESPONSE>> readAsync(REQUEST request);
+public interface RetryableRpc<REQUEST, RESPONSE> {
+  ListenableFuture<RESPONSE> call(REQUEST request);
 }

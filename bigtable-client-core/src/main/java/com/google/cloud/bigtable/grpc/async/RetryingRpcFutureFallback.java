@@ -19,14 +19,12 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.client.util.Sleeper;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
 import com.google.common.annotations.VisibleForTesting;
@@ -35,10 +33,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * A FutureFallback that retries a ReadAsync request.
+ * A FutureFallback that retries a RetryableRpc request.
  */
-public class RetryingRpcFutureFallback<RequestT, ResponseT> implements
-    FutureFallback<List<ResponseT>> {
+public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFallback<ResponseT> {
 
   interface Sleeper {
     void sleep(long ms) throws InterruptedException;
@@ -60,18 +57,18 @@ public class RetryingRpcFutureFallback<RequestT, ResponseT> implements
   @VisibleForTesting
   Sleeper sleeper = THREAD_SLEEPER;
 
-  private final ReadAsync<RequestT, ResponseT> callback;
+  private final RetryableRpc<RequestT, ResponseT> retryableRpc;
   private final RetryOptions retryOptions;
 
   public RetryingRpcFutureFallback(RetryOptions retryOptions, RequestT request,
-      ReadAsync<RequestT, ResponseT> callback) {
+      RetryableRpc<RequestT, ResponseT> retryableRpc) {
     this.retryOptions = retryOptions;
     this.request = request;
-    this.callback = callback;
+    this.retryableRpc = retryableRpc;
   }
 
   @Override
-  public ListenableFuture<List<ResponseT>> create(Throwable t)
+  public ListenableFuture<ResponseT> create(Throwable t)
       throws Exception {
     if (t instanceof StatusRuntimeException) {
       StatusRuntimeException statusException = (StatusRuntimeException) t;
@@ -83,7 +80,7 @@ public class RetryingRpcFutureFallback<RequestT, ResponseT> implements
     return Futures.immediateFailedFuture(t);
   }
 
-  private ListenableFuture<List<ResponseT>> backOffAndRetry(Throwable cause) throws IOException,
+  private ListenableFuture<ResponseT> backOffAndRetry(Throwable cause) throws IOException,
       ScanRetriesExhaustedException {
     if (this.currentBackoff == null) {
       ExponentialBackOff.Builder backOffBuilder =
@@ -100,7 +97,7 @@ public class RetryingRpcFutureFallback<RequestT, ResponseT> implements
     }
 
     sleep(nextBackOff);
-    return callback.readAsync(request);
+    return retryableRpc.call(request);
   }
 
   private void sleep(long millis) throws IOException {

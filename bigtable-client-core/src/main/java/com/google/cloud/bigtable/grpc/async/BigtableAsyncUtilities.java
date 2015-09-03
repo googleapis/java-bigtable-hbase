@@ -49,24 +49,24 @@ public final class BigtableAsyncUtilities {
         }
       };
 
-  public static ReadAsync<SampleRowKeysRequest, SampleRowKeysResponse>
+  public static RetryableRpc<SampleRowKeysRequest, List<SampleRowKeysResponse>>
       createSampleRowKeyAsyncReader(final Channel channel) {
-    return createReadAsync(channel, BigtableServiceGrpc.METHOD_SAMPLE_ROW_KEYS,
+    return createStreamingAsync(channel, BigtableServiceGrpc.METHOD_SAMPLE_ROW_KEYS,
       IMMUTABLE_LIST_TRANSFORMER);
   }
 
-  public static ReadAsync<ReadRowsRequest, Row> createRowKeyAysncReader(final Channel channel) {
-    return createReadAsync(channel, BigtableServiceGrpc.METHOD_READ_ROWS, ROW_TRANSFORMER);
+  public static RetryableRpc<ReadRowsRequest, List<Row>> createRowKeyAysncReader(
+      final Channel channel) {
+    return createStreamingAsync(channel, BigtableServiceGrpc.METHOD_READ_ROWS, ROW_TRANSFORMER);
   }
 
-  private static <RequestT, ResponseT, OutputT> ReadAsync<RequestT, OutputT> createReadAsync(
-      final Channel channel, final MethodDescriptor<RequestT, ResponseT> method,
-      final Function<List<ResponseT>, List<OutputT>> function) {
-    return new ReadAsync<RequestT, OutputT>() {
+  private static <RequestT, ResponseT, OutputT> RetryableRpc<RequestT, List<OutputT>>
+      createStreamingAsync(final Channel channel, final MethodDescriptor<RequestT, ResponseT> method,
+          final Function<List<ResponseT>, List<OutputT>> function) {
+    return new RetryableRpc<RequestT, List<OutputT>>() {
       @Override
-      public ListenableFuture<List<OutputT>> readAsync(RequestT request) {
-        ClientCall<RequestT, ResponseT> readRowsCall =
-            channel.newCall(method, CallOptions.DEFAULT);
+      public ListenableFuture<List<OutputT>> call(RequestT request) {
+        ClientCall<RequestT, ResponseT> readRowsCall = channel.newCall(method, CallOptions.DEFAULT);
         CollectingStreamObserver<ResponseT> responseCollector = new CollectingStreamObserver<>();
         ClientCalls.asyncServerStreamingCall(readRowsCall, request, responseCollector);
         return Futures.transform(responseCollector.getResponseCompleteFuture(), function);
@@ -74,14 +74,15 @@ public final class BigtableAsyncUtilities {
     };
   }
 
-  public static <RequestT, ResponseT> ListenableFuture<List<ResponseT>> doReadAsync(
-      RetryOptions retryOptions, final RequestT request, ReadAsync<RequestT, ResponseT> readAsync) {
+  public static <RequestT, ResponseT> ListenableFuture<ResponseT> doReadAsync(
+      RetryOptions retryOptions, final RequestT request,
+      RetryableRpc<RequestT, ResponseT> readAsync) {
     if (retryOptions.enableRetries()) {
       RetryingRpcFutureFallback<RequestT, ResponseT> readFallback =
           new RetryingRpcFutureFallback<RequestT, ResponseT>(retryOptions, request, readAsync);
-      return Futures.withFallback(readAsync.readAsync(request), readFallback);
+      return Futures.withFallback(readAsync.call(request), readFallback);
     }
-    return readAsync.readAsync(request);
+    return readAsync.call(request);
   }
 
   public static <T, V> ListenableFuture<V> listenableAsyncCall(Channel channel,
