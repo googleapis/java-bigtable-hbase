@@ -36,7 +36,7 @@ import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
-import com.google.cloud.bigtable.grpc.async.ReadAsync;
+import com.google.cloud.bigtable.grpc.async.RetryableRpc;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
@@ -91,8 +91,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
           return streamRows(request);
         }
       };
-  private final ReadAsync<SampleRowKeysRequest, SampleRowKeysResponse> sampleRowKeysAsync;
-  private final ReadAsync<ReadRowsRequest, Row> readRowsAsync;
+  private final RetryableRpc<SampleRowKeysRequest, List<SampleRowKeysResponse>> sampleRowKeysAsync;
+  private final RetryableRpc<ReadRowsRequest, List<Row>> readRowsAsync;
 
   public BigtableDataGrpcClient(
       Channel channel,
