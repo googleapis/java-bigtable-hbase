@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -43,6 +44,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.GeneratedMessage;
 
 /**
@@ -52,11 +54,6 @@ import com.google.protobuf.GeneratedMessage;
 public class BigtableBufferedMutator implements BufferedMutator {
 
   protected static final Logger LOG = new Logger(BigtableBufferedMutator.class);
-
-  // Flush is not properly synchronized with respect to waiting. It will never exit
-  // improperly, but it might wait more than it has to. Setting this to a low value ensures
-  // that improper waiting is minimal.
-  static final long WAIT_MILLIS = 250;
 
   // In flush, wait up to this number of milliseconds without any operations completing.  If
   // this amount of time goes by without any updates, flush will log a warning.  Flush()
@@ -88,6 +85,11 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final ReentrantReadWriteLock mutationLock = new ReentrantReadWriteLock();
   private final BatchExecutor batchExecutor;
   private final ExceptionListener exceptionListener;
+  private final ExecutorService heapSizeExecutor = Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder()
+          .setNameFormat("heapSize-async-%s")
+          .setDaemon(true)
+          .build());
 
   @VisibleForTesting
   final AtomicBoolean hasExceptions = new AtomicBoolean(false);
@@ -106,7 +108,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       BigtableOptions options,
       ExecutorService executorService,
       BufferedMutator.ExceptionListener listener) {
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs);
+    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
     this.configuration = configuration;
     this.tableName = tableName;
     this.exceptionListener = listener;
@@ -143,7 +145,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.exceptionListener = exceptionListener;
     this.host = host;
     this.tableName = tableName;
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs);
+    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
   }
 
   @Override
@@ -154,7 +156,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       if (!closed) {
         closed = true;
         doFlush();
-        sizeManager.close();
+        heapSizeExecutor.shutdown();
       }
     } finally {
       lock.unlock();
