@@ -15,13 +15,21 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Tests {@link HeapSizeManager}.
@@ -31,6 +39,9 @@ public class TestHeapSizeManager {
 
   @Mock
   ExecutorService executorService;
+  
+  @Mock
+  ListenableFuture future;
   
   @Before
   public void setup(){
@@ -87,8 +98,31 @@ public class TestHeapSizeManager {
     underTest.operationComplete(id3);
     Assert.assertFalse(underTest.hasInflightRequests());
   }
-  
+
+  @SuppressWarnings("unchecked")
   @Test
   public void testCallback() throws InterruptedException {
+    final List<Runnable> runnables = new ArrayList<>();
+    Mockito.doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        Runnable runnable = (Runnable) invocation.getArguments()[0];
+        runnables.add(runnable);
+        return null;
+      }
+    }).when(future).addListener(Matchers.any(Runnable.class), Matchers.eq(executorService));
+
+    HeapSizeManager underTest = new HeapSizeManager(10l, 1000, executorService);
+    long id = underTest.registerOperationWithHeapSize(5l);
+    Assert.assertTrue(underTest.hasInflightRequests());
+
+    underTest.addCallback(future, id);
+    Assert.assertFalse(runnables.isEmpty());
+    Assert.assertTrue(underTest.hasInflightRequests());
+
+    for (Runnable runnable : runnables) {
+      runnable.run();
+    }
+    Assert.assertFalse(underTest.hasInflightRequests());
   }
 }
