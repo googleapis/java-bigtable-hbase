@@ -79,8 +79,10 @@ public class TestBigtableTable {
 
   @Mock
   private AbstractBigtableConnection mockConnection;
+
   @Mock
   private BigtableDataClient mockClient;
+
   @Mock
   private ResultScanner<Row> mockResultScanner;
 
