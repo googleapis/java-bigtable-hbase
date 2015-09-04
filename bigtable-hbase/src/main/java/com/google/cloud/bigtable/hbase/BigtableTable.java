@@ -15,21 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.adapters.Adapters.APPEND_ADAPTER;
-import static com.google.cloud.bigtable.hbase.adapters.Adapters.BIGTABLE_RESULT_SCAN_ADAPTER;
-import static com.google.cloud.bigtable.hbase.adapters.Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER;
-import static com.google.cloud.bigtable.hbase.adapters.Adapters.DELETE_ADAPTER;
-import static com.google.cloud.bigtable.hbase.adapters.Adapters.GET_ADAPTER;
-import static com.google.cloud.bigtable.hbase.adapters.Adapters.INCREMENT_ADAPTER;
-import static com.google.cloud.bigtable.hbase.adapters.Adapters.ROW_ADAPTER;
-import static com.google.cloud.bigtable.hbase.adapters.Adapters.SCAN_ADAPTER;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
@@ -44,7 +34,6 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Operation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -72,17 +61,11 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.ReadOperationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
@@ -111,39 +94,26 @@ public class BigtableTable implements Table {
 
   protected final TableName tableName;
   protected final BigtableOptions options;
+  protected final HBaseRequestAdapter hbaseAdapter;
+
   protected final BigtableDataClient client;
-
-  protected final PutAdapter putAdapter;
-  protected final MutationAdapter mutationAdapter;
-  protected final RowMutationsAdapter rowMutationsAdapter;
   protected final BatchExecutor batchExecutor;
-  protected final BigtableTableName bigtableTableName;
-
   protected final AbstractBigtableConnection bigtableConnection;
 
   /**
    * Constructed by BigtableConnection
    */
-  public BigtableTable(AbstractBigtableConnection bigtableConnection,
+  public BigtableTable(
+      AbstractBigtableConnection bigtableConnection,
       TableName tableName,
       BigtableOptions options,
-      BigtableDataClient client,
-      ExecutorService executorService) {
+      BatchExecutor batchExecutor) {
     this.bigtableConnection = bigtableConnection;
     this.tableName = tableName;
     this.options = options;
-    this.client = client;
-    putAdapter = Adapters.createPutAdapter(getConfiguration());
-    mutationAdapter = Adapters.createMutationsAdapter(putAdapter);
-    rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
-    this.bigtableTableName = options.getClusterName().toTableName(tableName.getNameAsString());
-    this.batchExecutor = new BatchExecutor(
-        client,
-        options,
-        this.bigtableTableName,
-        MoreExecutors.listeningDecorator(executorService),
-        putAdapter,
-        rowMutationsAdapter);
+    this.client = batchExecutor.getClient();
+    this.batchExecutor = batchExecutor;
+    this.hbaseAdapter = batchExecutor.getHbaseAdapter();
   }
 
   @Override
@@ -219,8 +189,8 @@ public class BigtableTable implements Table {
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
     try (com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
-        createBigtableScanner(GET_ADAPTER, get)) {
-      return ROW_ADAPTER.adaptResponse(scanner.next());
+        client.readRows(hbaseAdapter.adapt(get))) {
+      return Adapters.ROW_ADAPTER.adaptResponse(scanner.next());
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing get.", throwable);
       throw new IOException(
@@ -238,11 +208,11 @@ public class BigtableTable implements Table {
     try {
       LOG.trace("getScanner(Scan)");
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
-          createBigtableScanner(SCAN_ADAPTER, scan);
+          client.readRows(hbaseAdapter.adapt(scan));
       if (hasWhileMatchFilter(scan.getFilter())) {
-        return BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner);
+        return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner);
       }
-      return BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner);
+      return Adapters.BIGTABLE_RESULT_SCAN_ADAPTER.adapt(scanner);
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       throw new IOException(
@@ -272,16 +242,6 @@ public class BigtableTable implements Table {
     return false;
   }
 
-  private <T extends Operation>
-      com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row>
-      createBigtableScanner(ReadOperationAdapter<T> adapter, T operation) {
-    ReadHooks readHooks = new DefaultReadHooks();
-    ReadRowsRequest.Builder request = adapter.adapt(operation, readHooks)
-         .setTableName(bigtableTableName.toString());
-    ReadRowsRequest finalRequest = readHooks.applyPreSendHook(request.build());
-    return client.readRows(finalRequest);
-  }
-
   @Override
   public ResultScanner getScanner(byte[] family) throws IOException {
     LOG.trace("getScanner(byte[])");
@@ -297,11 +257,9 @@ public class BigtableTable implements Table {
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
-    MutateRowRequest.Builder rowMutationBuilder = putAdapter.adapt(put);
-    rowMutationBuilder.setTableName(bigtableTableName.toString());
-
+    MutateRowRequest request = hbaseAdapter.adapt(put);
     try {
-      client.mutateRow(rowMutationBuilder.build());
+      client.mutateRow(request);
     } catch (Throwable throwable) {
       LOG.error("Encountered ServiceException when executing put.", throwable);
       throw new IOException(
@@ -309,7 +267,7 @@ public class BigtableTable implements Table {
               "put",
               options.getProjectId(),
               tableName.getQualifierAsString(),
-              rowMutationBuilder.getRowKey().toByteArray()),
+              put.getRow()),
           throwable);
     }
   }
@@ -338,7 +296,7 @@ public class BigtableTable implements Table {
             compareOp,
             value,
             put.getRow(),
-            putAdapter.adapt(put).getMutationsList());
+            hbaseAdapter.adapt(put).getMutationsList());
 
     try {
       CheckAndMutateRowResponse response =
@@ -358,11 +316,9 @@ public class BigtableTable implements Table {
   @Override
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
-    MutateRowRequest.Builder requestBuilder = DELETE_ADAPTER.adapt(delete);
-    requestBuilder.setTableName(bigtableTableName.toString());
-
+    MutateRowRequest request = hbaseAdapter.adapt(delete);
     try {
-      client.mutateRow(requestBuilder.build());
+      client.mutateRow(request);
     } catch (Throwable throwable) {
       LOG.error("Encountered ServiceException when executing delete.", throwable);
       throw new IOException(
@@ -370,7 +326,7 @@ public class BigtableTable implements Table {
               "delete",
               options.getProjectId(),
               tableName.getQualifierAsString(),
-              requestBuilder.getRowKey().toByteArray()),
+              delete.getRow()),
           throwable);
     }
   }
@@ -399,7 +355,7 @@ public class BigtableTable implements Table {
             compareOp,
             value,
             delete.getRow(),
-            DELETE_ADAPTER.adapt(delete).getMutationsList());
+            hbaseAdapter.adapt(delete).getMutationsList());
 
     try {
       CheckAndMutateRowResponse response =
@@ -423,7 +379,7 @@ public class BigtableTable implements Table {
       throws IOException {
     List<Mutation> adaptedMutations = new ArrayList<>();
     for (org.apache.hadoop.hbase.client.Mutation mut : rm.getMutations()) {
-      adaptedMutations.addAll(mutationAdapter.adapt(mut).getMutationsList());
+      adaptedMutations.addAll(hbaseAdapter.adapt(mut).getMutationsList());
     }
 
     CheckAndMutateRowRequest.Builder requestBuilder =
@@ -454,10 +410,9 @@ public class BigtableTable implements Table {
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
-    MutateRowRequest.Builder requestBuilder = rowMutationsAdapter.adapt(rm);
-    requestBuilder.setTableName(bigtableTableName.toString());
+    MutateRowRequest request = hbaseAdapter.adapt(rm);
     try {
-      client.mutateRow(requestBuilder.build());
+      client.mutateRow(request);
     } catch (Throwable throwable) {
       throw new IOException(
           makeGenericExceptionMessage(
@@ -473,15 +428,13 @@ public class BigtableTable implements Table {
   public Result append(Append append) throws IOException {
     LOG.trace("append(Append)");
 
-    ReadModifyWriteRowRequest.Builder appendRowRequest = APPEND_ADAPTER.adapt(append);
-    appendRowRequest.setTableName(bigtableTableName.toString());
+    ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append);
     try {
-      com.google.bigtable.v1.Row response =
-          client.readModifyWriteRow(appendRowRequest.build());
+      com.google.bigtable.v1.Row response = client.readModifyWriteRow(request);
       // The bigtable API will always return the mutated results. In order to maintain
       // compatibility, simply return null when results were not requested.
       if (append.isReturnResults()) {
-        return ROW_ADAPTER.adaptResponse(response);
+        return Adapters.ROW_ADAPTER.adaptResponse(response);
       } else {
         return null;
       }
@@ -500,13 +453,10 @@ public class BigtableTable implements Table {
   @Override
   public Result increment(Increment increment) throws IOException {
     LOG.trace("increment(Increment)");
-    ReadModifyWriteRowRequest.Builder incrementRowRequest =
-        INCREMENT_ADAPTER.adapt(increment);
-    incrementRowRequest.setTableName(bigtableTableName.toString());
 
+    ReadModifyWriteRowRequest request = hbaseAdapter.adapt(increment);
     try {
-      com.google.bigtable.v1.Row response = client.readModifyWriteRow(incrementRowRequest.build());
-      return ROW_ADAPTER.adaptResponse(response);
+      return Adapters.ROW_ADAPTER.adaptResponse(client.readModifyWriteRow(request));
     } catch (Throwable e) {
       LOG.error("Encountered RuntimeException when executing increment.", e);
       throw new IOException(
@@ -645,7 +595,7 @@ public class BigtableTable implements Table {
     CheckAndMutateRowRequest.Builder requestBuilder =
         CheckAndMutateRowRequest.newBuilder();
 
-    requestBuilder.setTableName(bigtableTableName.toString());
+    requestBuilder.setTableName(hbaseAdapter.getBigtableTableName().toString());
 
     requestBuilder.setRowKey(ByteString.copyFrom(row));
     Scan scan = new Scan().addColumn(family, qualifier);
@@ -666,7 +616,8 @@ public class BigtableTable implements Table {
       scan.setFilter(valueFilter);
       requestBuilder.addAllTrueMutations(mutations);
     }
-    requestBuilder.setPredicateFilter(SCAN_ADAPTER.buildFilter(scan, UNSUPPORTED_READ_HOOKS));
+    requestBuilder.setPredicateFilter(Adapters.SCAN_ADAPTER.buildFilter(scan,
+      UNSUPPORTED_READ_HOOKS));
     return requestBuilder;
   }
 
