@@ -37,13 +37,12 @@ import com.google.api.client.util.Preconditions;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncExecutor;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
 import com.google.common.base.Function;
@@ -56,7 +55,7 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
 
 /**
- * Class to help BigtableTable with batch operations on an BigtableClient.
+ * Class to help BigtableTable with batch operations on a BigtableAsyncExecutor.
  */
 public class BatchExecutor {
 
@@ -154,27 +153,24 @@ public class BatchExecutor {
     }
   }
 
-  protected final BigtableDataClient client;
-  protected final BigtableOptions options;
+//  protected final BigtableDataClient client;
   protected final BigtableTableName bigtableTableName;
   protected final ListeningExecutorService service;
-
-  protected final RowMutationsAdapter rowMutationsAdapter;
   protected final OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
+  protected final RowMutationsAdapter rowMutationsAdapter;
+  protected final BigtableAsyncExecutor asyncExecutor;
 
   public BatchExecutor(
-      BigtableDataClient client,
-      BigtableOptions options,
       BigtableTableName bigtableTableName,
       ListeningExecutorService service,
       OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
-      RowMutationsAdapter rowMutationsAdapter) {
-    this.client = client;
-    this.options = options;
+      RowMutationsAdapter rowMutationsAdapter,
+      BigtableAsyncExecutor asyncExecutor) {
     this.bigtableTableName = bigtableTableName;
     this.service = service;
     this.putAdapter = putAdapter;
     this.rowMutationsAdapter = rowMutationsAdapter;
+    this.asyncExecutor = asyncExecutor;
   }
 
   /**
@@ -184,7 +180,7 @@ public class BatchExecutor {
     LOG.trace("issueDeleteRequest(Delete)");
     MutateRowRequest.Builder requestBuilder = Adapters.DELETE_ADAPTER.adapt(delete);
     requestBuilder.setTableName(bigtableTableName.toString());
-    return client.mutateRowAsync(requestBuilder.build());
+    return asyncExecutor.mutateRowAsync(requestBuilder.build());
   }
 
   /**
@@ -198,7 +194,7 @@ public class BatchExecutor {
     builder.setTableName(bigtableTableName.toString());
     ReadRowsRequest request = readHooks.applyPreSendHook(builder.build());
 
-    return Futures.transform(client.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
+    return Futures.transform(asyncExecutor.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
   }
 
   /**
@@ -211,7 +207,7 @@ public class BatchExecutor {
     builder.setTableName(bigtableTableName.toString());
     ReadModifyWriteRowRequest request = builder.build();
 
-    return client.readModifyWriteRowAsync(request);
+    return asyncExecutor.readModifyWriteRowAsync(request);
   }
 
   /**
@@ -224,7 +220,7 @@ public class BatchExecutor {
     builder.setTableName(bigtableTableName.toString());
     ReadModifyWriteRowRequest request = builder.build();
 
-    return client.readModifyWriteRowAsync(request);
+    return asyncExecutor.readModifyWriteRowAsync(request);
   }
 
   /**
@@ -235,7 +231,7 @@ public class BatchExecutor {
     MutateRowRequest.Builder requestBuilder = putAdapter.adapt(put);
     requestBuilder.setTableName(bigtableTableName.toString());
 
-    return client.mutateRowAsync(requestBuilder.build());
+    return asyncExecutor.mutateRowAsync(requestBuilder.build());
   }
 
   /**
@@ -245,7 +241,7 @@ public class BatchExecutor {
     MutateRowRequest.Builder requestBuilder = rowMutationsAdapter.adapt(mutations);
     requestBuilder.setTableName(bigtableTableName.toString());
 
-    return client.mutateRowAsync(requestBuilder.build());
+    return asyncExecutor.mutateRowAsync(requestBuilder.build());
   }
 
   /**
@@ -272,7 +268,7 @@ public class BatchExecutor {
     return resultFuture;
   }
 
-  ListenableFuture<? extends GeneratedMessage> issueRequest(Row row) {
+  private ListenableFuture<? extends GeneratedMessage> issueRequest(Row row) {
     if (row instanceof Put) {
       return issuePutRequest((Put) row);
     } else if (row instanceof Delete) {
@@ -310,7 +306,7 @@ public class BatchExecutor {
       Futures.successfulAsList(resultFutures).get();
       List<Throwable> problems = new ArrayList<Throwable>();
       List<Row> problemActions = new ArrayList<Row>();
-      for (int i = 0; i < resultFutures.size(); i++){
+      for (int i = 0; i < resultFutures.size(); i++) {
         try {
           resultFutures.get(i).get();
         } catch (ExecutionException e) {

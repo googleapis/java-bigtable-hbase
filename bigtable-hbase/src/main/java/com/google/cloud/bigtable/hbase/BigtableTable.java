@@ -73,6 +73,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncExecutor;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.MutationAdapter;
@@ -128,7 +129,8 @@ public class BigtableTable implements Table {
       TableName tableName,
       BigtableOptions options,
       BigtableDataClient client,
-      ExecutorService executorService) {
+      ExecutorService executorService,
+      BigtableAsyncExecutor asyncExecutor) {
     this.bigtableConnection = bigtableConnection;
     this.tableName = tableName;
     this.options = options;
@@ -138,12 +140,11 @@ public class BigtableTable implements Table {
     rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
     this.bigtableTableName = options.getClusterName().toTableName(tableName.getNameAsString());
     this.batchExecutor = new BatchExecutor(
-        client,
-        options,
         this.bigtableTableName,
         MoreExecutors.listeningDecorator(executorService),
         putAdapter,
-        rowMutationsAdapter);
+        rowMutationsAdapter,
+        asyncExecutor);
   }
 
   @Override
