@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -41,12 +40,8 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.AppendAdapter;
 import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.IncrementAdapter;
 import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ReadOperationAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -84,22 +79,18 @@ public class BatchExecutor {
         }
       };
 
-  private static final class RowResultConverter implements Function<GeneratedMessage, Object> {
-    private final ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter;
+  private static final Function<GeneratedMessage, Object> ROW_RESULT_CONVERTER =
+      new Function<GeneratedMessage, Object>() {
 
-    public RowResultConverter(ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter) {
-      this.rowToResultAdapter = rowToResultAdapter;
-    }
-
-    @Override
-    public Object apply(GeneratedMessage response) {
-      if (response instanceof com.google.bigtable.v1.Row) {
-        return rowToResultAdapter.adaptResponse((com.google.bigtable.v1.Row) response);
-      } else {
-        return new Result();
-      }
-    }
-  }
+        @Override
+        public Object apply(GeneratedMessage response) {
+          if (response instanceof com.google.bigtable.v1.Row) {
+            return Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v1.Row) response);
+          } else {
+            return new Result();
+          }
+        }
+      };
 
   /**
    * A callback for ListenableFutures issued as a result of an RPC
@@ -167,17 +158,9 @@ public class BatchExecutor {
   protected final BigtableOptions options;
   protected final BigtableTableName bigtableTableName;
   protected final ListeningExecutorService service;
-  protected final ReadOperationAdapter<Get> getAdapter = Adapters.GET_ADAPTER;
-  protected final OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter =
-      Adapters.DELETE_ADAPTER;
-  protected final AppendAdapter appendAdapter = Adapters.APPEND_ADAPTER;
-  protected final IncrementAdapter incrementAdapter = Adapters.INCREMENT_ADAPTER;
-  protected final ResponseAdapter<com.google.bigtable.v1.Row, Result> rowToResultAdapter =
-      Adapters.ROW_ADAPTER;
 
   protected final RowMutationsAdapter rowMutationsAdapter;
   protected final OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
-  protected final RowResultConverter rowResultConverter;
 
   public BatchExecutor(
       BigtableDataClient client,
@@ -192,15 +175,14 @@ public class BatchExecutor {
     this.service = service;
     this.putAdapter = putAdapter;
     this.rowMutationsAdapter = rowMutationsAdapter;
-    rowResultConverter = new RowResultConverter(rowToResultAdapter);
   }
 
   /**
    * Adapt and issue a single Delete request returning a ListenableFuture for the MutateRowResponse.
    */
-  ListenableFuture<Empty> issueDeleteRequest(Delete delete) {
+  private ListenableFuture<Empty> issueDeleteRequest(Delete delete) {
     LOG.trace("issueDeleteRequest(Delete)");
-    MutateRowRequest.Builder requestBuilder = deleteAdapter.adapt(delete);
+    MutateRowRequest.Builder requestBuilder = Adapters.DELETE_ADAPTER.adapt(delete);
     requestBuilder.setTableName(bigtableTableName.toString());
     return client.mutateRowAsync(requestBuilder.build());
   }
@@ -209,10 +191,10 @@ public class BatchExecutor {
    * Adapt and issue a single Get request returning a ListenableFuture
    * for the GetRowResponse.
    */
-  ListenableFuture<com.google.bigtable.v1.Row> issueGetRequest(Get get) {
+  private ListenableFuture<com.google.bigtable.v1.Row> issueGetRequest(Get get) {
     LOG.trace("issueGetRequest(Get)");
     ReadHooks readHooks = new DefaultReadHooks();
-    ReadRowsRequest.Builder builder = getAdapter.adapt(get, readHooks);
+    ReadRowsRequest.Builder builder = Adapters.GET_ADAPTER.adapt(get, readHooks);
     builder.setTableName(bigtableTableName.toString());
     ReadRowsRequest request = readHooks.applyPreSendHook(builder.build());
 
@@ -223,9 +205,9 @@ public class BatchExecutor {
    * Adapt and issue a single Append request returning a ListenableFuture
    * for the AppendRowResponse.
    */
-  ListenableFuture<com.google.bigtable.v1.Row> issueAppendRequest(Append append) {
+  private ListenableFuture<com.google.bigtable.v1.Row> issueAppendRequest(Append append) {
     LOG.trace("issueAppendRequest(Append)");
-    ReadModifyWriteRowRequest.Builder builder = appendAdapter.adapt(append);
+    ReadModifyWriteRowRequest.Builder builder = Adapters.APPEND_ADAPTER.adapt(append);
     builder.setTableName(bigtableTableName.toString());
     ReadModifyWriteRowRequest request = builder.build();
 
@@ -236,9 +218,9 @@ public class BatchExecutor {
    * Adapt and issue a single Increment request returning a ListenableFuture
    * for the IncrementRowResponse.
    */
-  ListenableFuture<com.google.bigtable.v1.Row> issueIncrementRequest(Increment increment) {
+  private ListenableFuture<com.google.bigtable.v1.Row> issueIncrementRequest(Increment increment) {
     LOG.trace("issueIncrementRequest(Increment)");
-    ReadModifyWriteRowRequest.Builder builder = incrementAdapter.adapt(increment);
+    ReadModifyWriteRowRequest.Builder builder = Adapters.INCREMENT_ADAPTER.adapt(increment);
     builder.setTableName(bigtableTableName.toString());
     ReadModifyWriteRowRequest request = builder.build();
 
@@ -248,7 +230,7 @@ public class BatchExecutor {
   /**
    * Adapt and issue a single Put request returning a ListenableFuture for the MutateRowResponse.
    */
-  ListenableFuture<Empty> issuePutRequest(Put put) {
+  private ListenableFuture<Empty> issuePutRequest(Put put) {
     LOG.trace("issuePutRequest(Put)");
     MutateRowRequest.Builder requestBuilder = putAdapter.adapt(put);
     requestBuilder.setTableName(bigtableTableName.toString());
@@ -259,8 +241,9 @@ public class BatchExecutor {
   /**
    * Adapt and issue a single Put request returning a ListenableFuture for the MutateRowResponse.
    */
-  ListenableFuture<Empty> issueRowMutationsRequest(RowMutations mutations) {
+  private ListenableFuture<Empty> issueRowMutationsRequest(RowMutations mutations) {
     MutateRowRequest.Builder requestBuilder = rowMutationsAdapter.adapt(mutations);
+    requestBuilder.setTableName(bigtableTableName.toString());
 
     return client.mutateRowAsync(requestBuilder.build());
   }
@@ -276,7 +259,7 @@ public class BatchExecutor {
    * @param <T> The type of the callback.
    * @return A ListenableFuture that will have the result when the RPC completes.
    */
-  <R extends Row,T> ListenableFuture<Object> issueRowRequest(
+  private <R extends Row,T> ListenableFuture<Object> issueRowRequest(
       final Row row, final Batch.Callback<T> callback, final Object[] results, final int index) {
     LOG.trace("issueRowRequest(Row, Batch.Callback, Object[], index");
     SettableFuture<Object> resultFuture = SettableFuture.create();
@@ -284,7 +267,7 @@ public class BatchExecutor {
     ListenableFuture<? extends GeneratedMessage> future = issueRequest(row);
     Futures.addCallback(future,
       new RpcResultFutureCallback<T, GeneratedMessage>(
-          row, callback, index, results, resultFuture, rowResultConverter),
+          row, callback, index, results, resultFuture, ROW_RESULT_CONVERTER),
       service);
     return resultFuture;
   }
@@ -320,25 +303,18 @@ public class BatchExecutor {
     }
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must have same dimensions as actions list.");
-    int index = 0;
-    List<ListenableFuture<Object>> resultFutures = new ArrayList<>(actions.size());
-    for (Row row : actions) {
-      resultFutures.add(issueRowRequest(row, null, results, index++));
-    }
+    List<ListenableFuture<Object>> resultFutures = issueRowRequests(actions, results);
     try {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.
       Futures.successfulAsList(resultFutures).get();
-      Iterator<? extends Row> actionIt = actions.iterator();
-      Iterator<ListenableFuture<Object>> resultIt = resultFutures.iterator();
       List<Throwable> problems = new ArrayList<Throwable>();
       List<Row> problemActions = new ArrayList<Row>();
-      while (actionIt.hasNext() && resultIt.hasNext()) {
+      for (int i = 0; i < resultFutures.size(); i++){
         try {
-          resultIt.next().get();
-          actionIt.next();
+          resultFutures.get(i).get();
         } catch (ExecutionException e) {
-          problemActions.add(actionIt.next());
+          problemActions.add(actions.get(i));
           problems.add(e.getCause());
         }
       }
@@ -350,6 +326,15 @@ public class BatchExecutor {
       LOG.error("Encountered exception in batch(List<>, Object[]).", e);
       throw new IOException("Batch error", e);
     }
+  }
+
+  private List<ListenableFuture<Object>> issueRowRequests(List<? extends Row> actions,
+      Object[] results) {
+    List<ListenableFuture<Object>> resultFutures = new ArrayList<>(actions.size());
+    for (int i = 0; i < actions.size(); i++) {
+      resultFutures.add(issueRowRequest(actions.get(i), null, results, i));
+    }
+    return resultFutures;
   }
 
   /**
@@ -376,11 +361,7 @@ public class BatchExecutor {
       Batch.Callback<R> callback) throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Batch.Callback)");
     Result[] results = new Result[actions.size()];
-    int index = 0;
-    List<ListenableFuture<Object>> resultFutures = new ArrayList<>(actions.size());
-    for (Row row : actions) {
-      resultFutures.add(issueRowRequest(row, callback, results, index++));
-    }
+    List<ListenableFuture<Object>> resultFutures = issueRowRequests(actions, results);
     try {
       Futures.allAsList(resultFutures).get();
     } catch (ExecutionException e) {
@@ -399,11 +380,7 @@ public class BatchExecutor {
     LOG.trace("batchCallback(List<>, Object[], Batch.Callback)");
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must be the same length as actions.");
-    int index = 0;
-    List<ListenableFuture<Object>> resultFutures = new ArrayList<>(actions.size());
-    for (Row row : actions) {
-      resultFutures.add(issueRowRequest(row, callback, results, index++));
-    }
+    List<ListenableFuture<Object>> resultFutures = issueRowRequests(actions, results);
     try {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.

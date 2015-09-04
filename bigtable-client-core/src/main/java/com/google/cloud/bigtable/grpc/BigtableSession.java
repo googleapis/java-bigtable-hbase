@@ -346,11 +346,11 @@ public class BigtableSession implements AutoCloseable {
     }
   }
 
-  public BigtableDataClient getDataClient() throws IOException {
+  public BigtableDataClient getDataClient() {
     return dataClient;
   }
 
-  public BigtableTableAdminClient getTableAdminClient() throws IOException {
+  public BigtableTableAdminClient getTableAdminClient() {
     return tableAdminClient;
   }
 

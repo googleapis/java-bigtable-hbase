@@ -82,7 +82,6 @@ import com.google.cloud.bigtable.hbase.adapters.ReadOperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
@@ -118,10 +117,9 @@ public class BigtableTable implements Table {
   protected final MutationAdapter mutationAdapter;
   protected final RowMutationsAdapter rowMutationsAdapter;
   protected final BatchExecutor batchExecutor;
-  private final ListeningExecutorService executorService;
-  private final BigtableTableName bigtableTableName;
+  protected final BigtableTableName bigtableTableName;
 
-  private final AbstractBigtableConnection bigtableConnection;
+  protected final AbstractBigtableConnection bigtableConnection;
 
   /**
    * Constructed by BigtableConnection
@@ -138,17 +136,15 @@ public class BigtableTable implements Table {
     putAdapter = Adapters.createPutAdapter(getConfiguration());
     mutationAdapter = Adapters.createMutationsAdapter(putAdapter);
     rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
-    this.executorService = MoreExecutors.listeningDecorator(executorService);
     this.bigtableTableName = options.getClusterName().toTableName(tableName.getNameAsString());
     this.batchExecutor = new BatchExecutor(
         client,
         options,
         this.bigtableTableName,
-        this.executorService,
+        MoreExecutors.listeningDecorator(executorService),
         putAdapter,
         rowMutationsAdapter);
   }
-
 
   @Override
   public TableName getName() {
@@ -158,10 +154,6 @@ public class BigtableTable implements Table {
   @Override
   public final Configuration getConfiguration() {
     return this.bigtableConnection.getConfiguration();
-  }
-
-  public ExecutorService getPool(){
-    return this.executorService;
   }
 
   @Override
