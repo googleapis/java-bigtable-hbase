@@ -17,11 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -34,19 +30,12 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
+import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.GeneratedMessage;
 
 /**
@@ -57,100 +46,10 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   protected static final Logger LOG = new Logger(BigtableBufferedMutator.class);
 
-  // Flush is not properly synchronized with respect to waiting. It will never exit
-  // improperly, but it might wait more than it has to. Setting this to a low value ensures
-  // that improper waiting is minimal.
-  private static final long WAIT_MILLIS = 250;
-
   // In flush, wait up to this number of milliseconds without any operations completing.  If
   // this amount of time goes by without any updates, flush will log a warning.  Flush()
   // will still wait to complete.
-  private static final long INTERVAL_NO_SUCCESS_WARNING = 300000;
-
-  protected final ExecutorService heapSizeExecutor = Executors.newCachedThreadPool(
-    new ThreadFactoryBuilder()
-        .setNameFormat("heapSize-async-%s")
-        .setDaemon(true)
-        .build());
-
-  /**
-   * This class ensures that operations meet heap size and max RPC counts.  A wait will occur
-   * if RPCs are requested after heap and RPC count thresholds are exceeded.
-   */
-  @VisibleForTesting
-  static class HeapSizeManager {
-    private final long maxHeapSize;
-    private final int maxInFlightRpcs;
-    private long currentWriteBufferSize = 0;
-    private long operationSequenceGenerator = 0;
-
-    @VisibleForTesting
-    final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
-    private long lastOperationChange = System.currentTimeMillis();
-
-    HeapSizeManager(long maxHeapSize, int maxInflightRpcs) {
-      this.maxHeapSize = maxHeapSize;
-      this.maxInFlightRpcs = maxInflightRpcs;
-    }
-
-    private long getMaxHeapSize() {
-      return maxHeapSize;
-    }
-
-    private synchronized void waitUntilAllOperationsAreDone() throws InterruptedException {
-      boolean performedWarning = false;
-      while(!pendingOperationsWithSize.isEmpty()) {
-        if (!performedWarning
-            && lastOperationChange + INTERVAL_NO_SUCCESS_WARNING < System.currentTimeMillis()) {
-          long lastUpdated = (System.currentTimeMillis() - lastOperationChange) / 1000;
-          LOG.warn("No operations completed within the last %d seconds."
-              + "There are still %d operations in progress.", lastUpdated,
-            pendingOperationsWithSize.size());
-          performedWarning = true;
-        }
-        wait(WAIT_MILLIS);
-      }
-      if (performedWarning) {
-        LOG.info("flush() completed");
-      }
-    }
-
-    private synchronized long registerOperationWithHeapSize(long heapSize)
-        throws InterruptedException {
-      long operationId = ++operationSequenceGenerator;
-      while (currentWriteBufferSize >= maxHeapSize
-          || pendingOperationsWithSize.size() >= maxInFlightRpcs) {
-        wait(WAIT_MILLIS);
-      }
-
-      lastOperationChange = System.currentTimeMillis();
-      pendingOperationsWithSize.put(operationId, heapSize);
-      currentWriteBufferSize += heapSize;
-      return operationId;
-    }
-
-    @VisibleForTesting
-    synchronized void operationComplete(long operationSequenceId) {
-      lastOperationChange = System.currentTimeMillis();
-      Long heapSize = pendingOperationsWithSize.remove(operationSequenceId);
-      if (heapSize != null) {
-        currentWriteBufferSize -= heapSize;
-        notifyAll();
-      } else {
-        LOG.warn("An operation completion was recieved multiple times. Your operations completed."
-            + " Please notify Google that this occurred.");
-      }
-    }
-
-    private synchronized boolean hasInflightRequests() {
-      return !pendingOperationsWithSize.isEmpty();
-    }
-
-    @VisibleForTesting
-    synchronized long getHeapSize() {
-      return currentWriteBufferSize;
-    }
-  }
+  static final long INTERVAL_NO_SUCCESS_WARNING = 300000;
 
   @VisibleForTesting
   static class MutationException {
@@ -165,9 +64,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private final Configuration configuration;
   private final TableName tableName;
+  private final HeapSizeManager sizeManager;
 
-  @VisibleForTesting
-  final HeapSizeManager sizeManager;
   private boolean closed = false;
 
   /**
@@ -181,58 +79,23 @@ public class BigtableBufferedMutator implements BufferedMutator {
   @VisibleForTesting
   final AtomicBoolean hasExceptions = new AtomicBoolean(false);
 
-  @VisibleForTesting
-  final List<MutationException> globalExceptions = new ArrayList<MutationException>();
+  private final List<MutationException> globalExceptions = new ArrayList<>();
 
   private final String host;
 
   public BigtableBufferedMutator(
       Configuration configuration,
       TableName tableName,
-      int maxInflightRpcs,
-      long maxHeapSize,
-      BigtableDataClient client,
-      BigtableOptions options,
-      ExecutorService executorService,
-      BufferedMutator.ExceptionListener listener) {
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs);
+      HeapSizeManager sizeManager,
+      String host,
+      BufferedMutator.ExceptionListener listener,
+      BatchExecutor batchExecutor) {
+    this.sizeManager = sizeManager;
     this.configuration = configuration;
     this.tableName = tableName;
     this.exceptionListener = listener;
-
-    this.host = options.getDataHost().toString();
-
-    PutAdapter putAdapter = Adapters.createPutAdapter(configuration);
-
-    RowMutationsAdapter rowMutationsAdapter =
-        new RowMutationsAdapter(Adapters.createMutationsAdapter(putAdapter));
-
-    ListeningExecutorService listeningExecutorService =
-        MoreExecutors.listeningDecorator(executorService);
-
-    batchExecutor = new BatchExecutor(
-        client,
-        options,
-        options.getClusterName().toTableName(tableName.getNameAsString()),
-        listeningExecutorService,
-        putAdapter,
-        rowMutationsAdapter);
-  }
-
-  @VisibleForTesting
-  public BigtableBufferedMutator(
-      BatchExecutor batchExecutor,
-      long maxHeapSize,
-      ExceptionListener exceptionListener,
-      String host,
-      int maxInflightRpcs,
-      TableName tableName) {
-    this.batchExecutor = batchExecutor;
-    this.configuration = null;
-    this.exceptionListener = exceptionListener;
     this.host = host;
-    this.tableName = tableName;
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs);
+    this.batchExecutor = batchExecutor;
   }
 
   @Override
@@ -243,7 +106,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
       if (!closed) {
         closed = true;
         doFlush();
-        heapSizeExecutor.shutdown();
       }
     } finally {
       lock.unlock();
@@ -343,8 +205,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
       return;
     }
 
-    AccountingFutureCallback callback = new AccountingFutureCallback(mutation, sequenceId);
-    Futures.addCallback(issueRequest(mutation), callback, heapSizeExecutor);
+    ListenableFuture<? extends GeneratedMessage> future = issueRequest(mutation);
+    Futures.addCallback(future, new ExceptionFutureCallback(mutation));
+    sizeManager.addCallback(future, sequenceId);
   }
 
   private ListenableFuture<? extends GeneratedMessage> issueRequest(final Mutation mutation) {
@@ -357,7 +220,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private void addGlobalException(Row mutation, Throwable t) {
+  void addGlobalException(Row mutation, Throwable t) {
     synchronized (globalExceptions) {
       globalExceptions.add(new MutationException(mutation, t));
       hasExceptions.set(true);
@@ -398,24 +261,20 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private class AccountingFutureCallback implements FutureCallback<GeneratedMessage> {
-    private final long operationSequenceId;
+  private class ExceptionFutureCallback implements FutureCallback<GeneratedMessage> {
     private final Row mutation;
 
-    public AccountingFutureCallback(Row mutation, long operationSequenceId) {
+    public ExceptionFutureCallback(Row mutation) {
       this.mutation = mutation;
-      this.operationSequenceId = operationSequenceId;
     }
 
     @Override
     public void onFailure(Throwable t) {
       addGlobalException(mutation, t);
-      sizeManager.operationComplete(operationSequenceId);
     }
 
     @Override
     public void onSuccess(GeneratedMessage ignored) {
-      sizeManager.operationComplete(operationSequenceId);
     }
   }
 
