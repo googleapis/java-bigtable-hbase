@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.hbase;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -32,19 +30,12 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
+import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.GeneratedMessage;
 
 /**
@@ -73,9 +64,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private final Configuration configuration;
   private final TableName tableName;
+  private final HeapSizeManager sizeManager;
 
-  @VisibleForTesting
-  final HeapSizeManager sizeManager;
   private boolean closed = false;
 
   /**
@@ -85,67 +75,27 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final ReentrantReadWriteLock mutationLock = new ReentrantReadWriteLock();
   private final BatchExecutor batchExecutor;
   private final ExceptionListener exceptionListener;
-  private final ExecutorService heapSizeExecutor = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder()
-          .setNameFormat("heapSize-async-%s")
-          .setDaemon(true)
-          .build());
 
   @VisibleForTesting
   final AtomicBoolean hasExceptions = new AtomicBoolean(false);
 
-  @VisibleForTesting
-  final List<MutationException> globalExceptions = new ArrayList<MutationException>();
+  private final List<MutationException> globalExceptions = new ArrayList<>();
 
   private final String host;
 
   public BigtableBufferedMutator(
       Configuration configuration,
       TableName tableName,
-      int maxInflightRpcs,
-      long maxHeapSize,
-      BigtableDataClient client,
-      BigtableOptions options,
-      ExecutorService executorService,
-      BufferedMutator.ExceptionListener listener) {
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
+      HeapSizeManager sizeManager,
+      String host,
+      BufferedMutator.ExceptionListener listener,
+      BatchExecutor batchExecutor) {
+    this.sizeManager = sizeManager;
     this.configuration = configuration;
     this.tableName = tableName;
     this.exceptionListener = listener;
-
-    this.host = options.getDataHost().toString();
-
-    PutAdapter putAdapter = Adapters.createPutAdapter(configuration);
-
-    RowMutationsAdapter rowMutationsAdapter =
-        new RowMutationsAdapter(Adapters.createMutationsAdapter(putAdapter));
-
-    ListeningExecutorService listeningExecutorService =
-        MoreExecutors.listeningDecorator(executorService);
-
-    batchExecutor = new BatchExecutor(
-        client,
-        options,
-        options.getClusterName().toTableName(tableName.getNameAsString()),
-        listeningExecutorService,
-        putAdapter,
-        rowMutationsAdapter);
-  }
-
-  @VisibleForTesting
-  public BigtableBufferedMutator(
-      BatchExecutor batchExecutor,
-      long maxHeapSize,
-      ExceptionListener exceptionListener,
-      String host,
-      int maxInflightRpcs,
-      TableName tableName) {
-    this.batchExecutor = batchExecutor;
-    this.configuration = null;
-    this.exceptionListener = exceptionListener;
     this.host = host;
-    this.tableName = tableName;
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
+    this.batchExecutor = batchExecutor;
   }
 
   @Override
@@ -156,7 +106,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
       if (!closed) {
         closed = true;
         doFlush();
-        heapSizeExecutor.shutdown();
       }
     } finally {
       lock.unlock();
@@ -271,7 +220,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private void addGlobalException(Row mutation, Throwable t) {
+  void addGlobalException(Row mutation, Throwable t) {
     synchronized (globalExceptions) {
       globalExceptions.add(new MutationException(mutation, t));
       hasExceptions.set(true);

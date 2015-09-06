@@ -20,11 +20,19 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
+import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
+import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.common.base.MoreObjects;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -40,6 +48,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -165,20 +174,42 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
+    final ExecutorService heapSizeExecutor = Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder()
+          .setNameFormat("heapSize-async-%s")
+          .setDaemon(true)
+          .build());
 
-    BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(conf,
-        params.getTableName(),
-        maxInflightRpcs,
-        params.getWriteBufferSize(),
+    PutAdapter putAdapter = Adapters.createPutAdapter(getConfiguration());
+
+    RowMutationsAdapter rowMutationsAdapter =
+        new RowMutationsAdapter(Adapters.createMutationsAdapter(putAdapter));
+
+    ListeningExecutorService listeningExecutorService =
+        MoreExecutors.listeningDecorator(params.getPool());
+
+    BatchExecutor batchExecutor = new BatchExecutor(
         session.getDataClient(),
         options,
-        params.getPool(),
-        params.getListener()){
+        options.getClusterName().toTableName(params.getTableName().getNameAsString()),
+        listeningExecutorService,
+        putAdapter,
+        rowMutationsAdapter);
+
+    options.getDataHost().toString();
+    BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(
+        conf,
+        params.getTableName(),
+        new HeapSizeManager(params.getWriteBufferSize(), maxInflightRpcs, heapSizeExecutor),
+        options.getDataHost().toString(),
+        params.getListener(),
+        batchExecutor){
 
       @Override
       public void close() throws IOException {
         try {
           super.close();
+          heapSizeExecutor.shutdown();
         } finally {
           ACTIVE_BUFFERED_MUTATORS.remove(id);
         }
