@@ -181,9 +181,9 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
           .build());
 
     BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(
-        createBatchExecutor(tableName, pool),
+        session.getDataClient(),
+        createAdapter(tableName),
         conf,
-        tableName,
         maxInflightRpcs,
         params.getWriteBufferSize(),
         options.getDataHost().toString(),
@@ -208,7 +208,11 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     return new BatchExecutor(
         session.getDataClient(), options,
         MoreExecutors.listeningDecorator(pool),
-        new HBaseRequestAdapter(options.getClusterName(), tableName, conf));
+        createAdapter(tableName));
+  }
+
+  private HBaseRequestAdapter createAdapter(TableName tableName) {
+    return new HBaseRequestAdapter(options.getClusterName(), tableName, conf);
   }
 
   @Override

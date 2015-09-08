@@ -24,13 +24,13 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
-import org.apache.hadoop.hbase.client.Row;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,6 +39,10 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -49,7 +53,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 public class TestBigtableBufferedMutator {
 
   @Mock
-  BatchExecutor executor;
+  BigtableDataClient client;
 
   private BigtableBufferedMutator underTest;
 
@@ -72,12 +76,16 @@ public class TestBigtableBufferedMutator {
   }
 
   private void setup(ExceptionListener listener) {
-    underTest = new BigtableBufferedMutator(executor,
-        AbstractBigtableConnection.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT,
-        listener,
-        null,
+    BigtableClusterName clusterName = new BigtableClusterName("project", "zone", "cluster");
+    Configuration configuration = new Configuration();
+    underTest = new BigtableBufferedMutator(
+        client,
+        new HBaseRequestAdapter(clusterName,  TableName.valueOf("TABLE"), configuration),
+        configuration,
         AbstractBigtableConnection.MAX_INFLIGHT_RPCS_DEFAULT,
-        TableName.valueOf("TABLE"),
+        AbstractBigtableConnection.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT,
+        null,
+        listener,
         heapSizeExecutorService);
   }
 
@@ -90,9 +98,12 @@ public class TestBigtableBufferedMutator {
   @SuppressWarnings("unchecked")
   @Test
   public void testMutation() throws IOException {
-    when(executor.issueRequest(any(Row.class))).thenReturn(mock(ListenableFuture.class));
-    underTest.mutate(new Put(new byte[1]));
-    verify(executor, times(1)).issueRequest(any(Row.class));
+    when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(
+      mock(ListenableFuture.class));
+    byte[] emptyBytes = new byte[1];
+    Put simplePut = new Put(emptyBytes).addColumn(emptyBytes, emptyBytes, emptyBytes);
+    underTest.mutate(simplePut);
+    verify(client, times(1)).mutateRowAsync(any(MutateRowRequest.class));
     Assert.assertTrue(underTest.hasInflightRequests());
     Long id = underTest.sizeManager.pendingOperationsWithSize.keySet().iterator().next();
     underTest.sizeManager.markOperationCompleted(id);
@@ -102,8 +113,10 @@ public class TestBigtableBufferedMutator {
 
   @Test
   public void testInvalidPut() throws Exception {
-    when(executor.issueRequest((Row) any())).thenThrow(new RuntimeException());
-    underTest.mutate(new Put(new byte[1]));
+    when(client.mutateRowAsync(any(MutateRowRequest.class))).thenThrow(new RuntimeException());
+    byte[] emptyBytes = new byte[1];
+    Put simplePut = new Put(emptyBytes).addColumn(emptyBytes, emptyBytes, emptyBytes);
+    underTest.mutate(simplePut);
     Assert.assertFalse(underTest.hasInflightRequests());
     Assert.assertEquals(0l, underTest.sizeManager.getHeapSize());
     Assert.assertFalse(underTest.globalExceptions.isEmpty());
