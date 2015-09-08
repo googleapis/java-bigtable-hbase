@@ -28,12 +28,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -170,7 +176,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   private final Configuration configuration;
-  private final TableName tableName;
 
   @VisibleForTesting
   final HeapSizeManager sizeManager;
@@ -181,7 +186,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * is closing, there will be no additional writes.
    */
   private final ReentrantReadWriteLock mutationLock = new ReentrantReadWriteLock();
-  private final BatchExecutor batchExecutor;
+  private final BigtableDataClient client;
+  private final HBaseRequestAdapter adapter;
   private final ExceptionListener exceptionListener;
 
   @VisibleForTesting
@@ -193,37 +199,20 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final String host;
 
   public BigtableBufferedMutator(
-      BatchExecutor batchExecutor,
+      BigtableDataClient client,
+      HBaseRequestAdapter adapter,
       Configuration configuration,
-      TableName tableName,
       int maxInflightRpcs,
       long maxHeapSize,
       String dataHost,
       BufferedMutator.ExceptionListener listener,
       ExecutorService heapSizeExecutor) {
+    this.client = client;
+    this.adapter = adapter;
     this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
     this.configuration = configuration;
-    this.tableName = tableName;
     this.exceptionListener = listener;
     this.host = dataHost;
-    this.batchExecutor = batchExecutor;
-  }
-
-  @VisibleForTesting
-  public BigtableBufferedMutator(
-      BatchExecutor batchExecutor,
-      long maxHeapSize,
-      ExceptionListener exceptionListener,
-      String host,
-      int maxInflightRpcs,
-      TableName tableName,
-      ExecutorService heapSizeExecutor) {
-    this.batchExecutor = batchExecutor;
-    this.configuration = null;
-    this.exceptionListener = exceptionListener;
-    this.host = host;
-    this.tableName = tableName;
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
   }
 
   @Override
@@ -269,7 +258,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   @Override
   public TableName getName() {
-    return tableName;
+    return this.adapter.getTableName();
   }
 
   @Override
@@ -340,7 +329,21 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private ListenableFuture<? extends GeneratedMessage> issueRequest(final Mutation mutation) {
     try {
-      return batchExecutor.issueRequest(mutation);
+      if (mutation == null) {
+        return Futures.immediateFailedFuture(new IllegalArgumentException(
+            "Cannot perform a mutation on a null object."));
+      }
+      if (mutation instanceof Put) {
+        return client.mutateRowAsync(adapter.adapt((Put) mutation));
+      } else if (mutation instanceof Delete) {
+        return client.mutateRowAsync(adapter.adapt((Delete) mutation));
+      } else if (mutation instanceof Increment) {
+        return client.readModifyWriteRowAsync(adapter.adapt((Increment) mutation));
+      } else if (mutation instanceof Append) {
+        return client.readModifyWriteRowAsync(adapter.adapt((Append) mutation));
+      } 
+      return Futures.immediateFailedFuture(new IllegalArgumentException(
+          "Encountered unknown mutation type: " + mutation.getClass()));
     } catch (RuntimeException e) {
       // issueRequest(mutation) could throw an Exception for validation issues. Remove the heapsize
       // and inflight rpc count.

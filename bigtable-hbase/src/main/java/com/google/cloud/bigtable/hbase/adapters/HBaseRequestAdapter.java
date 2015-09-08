@@ -105,4 +105,8 @@ public class HBaseRequestAdapter {
   public BigtableTableName getBigtableTableName() {
     return bigtableTableName;
   }
+  
+  public TableName getTableName() {
+    return tableName;
+  }
 }
