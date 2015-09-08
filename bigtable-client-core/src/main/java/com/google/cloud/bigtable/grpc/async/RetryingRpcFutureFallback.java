@@ -24,7 +24,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.google.api.client.util.BackOff;
-import com.google.api.client.util.ExponentialBackOff;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
 import com.google.common.annotations.VisibleForTesting;
@@ -37,6 +36,12 @@ import com.google.common.util.concurrent.ListenableFuture;
  */
 public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFallback<ResponseT> {
 
+  public static <RequestT, ResponseT> RetryingRpcFutureFallback<RequestT, ResponseT> create(
+      RetryOptions retryOptions, RequestT request, RetryableRpc<RequestT, ResponseT> retryableRpc) {
+    return new RetryingRpcFutureFallback<RequestT, ResponseT>(retryOptions, request, retryableRpc);
+  }
+
+  @VisibleForTesting
   interface Sleeper {
     void sleep(long ms) throws InterruptedException;
   }
@@ -60,7 +65,7 @@ public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFal
   private final RetryableRpc<RequestT, ResponseT> retryableRpc;
   private final RetryOptions retryOptions;
 
-  public RetryingRpcFutureFallback(RetryOptions retryOptions, RequestT request,
+  private RetryingRpcFutureFallback(RetryOptions retryOptions, RequestT request,
       RetryableRpc<RequestT, ResponseT> retryableRpc) {
     this.retryOptions = retryOptions;
     this.request = request;
@@ -83,12 +88,7 @@ public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFal
   private ListenableFuture<ResponseT> backOffAndRetry(Throwable cause) throws IOException,
       ScanRetriesExhaustedException {
     if (this.currentBackoff == null) {
-      ExponentialBackOff.Builder backOffBuilder =
-          new ExponentialBackOff.Builder()
-              .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
-              .setMaxElapsedTimeMillis(retryOptions.getMaxElaspedBackoffMillis())
-              .setMultiplier(retryOptions.getBackoffMultiplier());
-      this.currentBackoff = backOffBuilder.build();
+      this.currentBackoff = retryOptions.createBackoff();
     }
     long nextBackOff = currentBackoff.nextBackOffMillis();
     if (nextBackOff == BackOff.STOP) {

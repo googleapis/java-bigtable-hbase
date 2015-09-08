@@ -490,9 +490,7 @@ public class BigtableSession implements AutoCloseable {
           channel,
           scheduledRetries,
           methodsToRetryMap,
-          unaryCallRetryOptions.getInitialBackoffMillis(),
-          unaryCallRetryOptions.getBackoffMultiplier(),
-          unaryCallRetryOptions.getMaxElaspedBackoffMillis());
+          unaryCallRetryOptions);
     }
 
     if (!Strings.isNullOrEmpty(options.getCallStatusReportPath())) {

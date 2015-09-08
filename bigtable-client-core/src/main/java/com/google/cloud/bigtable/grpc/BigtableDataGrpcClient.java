@@ -156,12 +156,14 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(
       SampleRowKeysRequest request) {
-    return BigtableAsyncUtilities.doReadAsync(retryOptions, request, sampleRowKeysAsync);
+    return BigtableAsyncUtilities.doReadAsync(retryOptions, request, sampleRowKeysAsync,
+      executorService);
   }
 
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(final ReadRowsRequest request) {
-    return BigtableAsyncUtilities.doReadAsync(retryOptions, request, readRowsAsync);
+    return BigtableAsyncUtilities
+        .doReadAsync(retryOptions, request, readRowsAsync, executorService);
   }
 
   @Override

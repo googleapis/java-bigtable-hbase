@@ -19,6 +19,10 @@ import io.grpc.Status;
 
 import java.util.concurrent.TimeUnit;
 
+import com.google.api.client.util.BackOff;
+import com.google.api.client.util.ExponentialBackOff;
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * Options for retrying requests, including back off configuration.
  */
@@ -149,7 +153,7 @@ public class RetryOptions {
   private final int streamingBufferSize;
   private final int readPartialRowTimeoutMillis;
 
-  private RetryOptions(
+  public RetryOptions(
       boolean retriesEnabled,
       boolean retryOnDeadlineExceeded,
       int initialBackoffMillis,
@@ -223,5 +227,17 @@ public class RetryOptions {
         || code == Status.UNAVAILABLE.getCode()
         || code == Status.ABORTED.getCode()
         || (retryOnDeadlineExceeded && code == Status.DEADLINE_EXCEEDED.getCode());
+  }
+
+  public BackOff createBackoff() {
+    return createBackoffBuilder().build();
+  }
+
+  @VisibleForTesting
+  protected ExponentialBackOff.Builder createBackoffBuilder() {
+    return new ExponentialBackOff.Builder()
+        .setInitialIntervalMillis(getInitialBackoffMillis())
+        .setMaxElapsedTimeMillis(getMaxElaspedBackoffMillis())
+        .setMultiplier(getBackoffMultiplier());
   }
 }

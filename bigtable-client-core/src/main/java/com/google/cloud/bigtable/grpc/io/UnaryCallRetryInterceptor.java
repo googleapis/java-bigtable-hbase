@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import com.google.api.client.util.ExponentialBackOff;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Predicate;
 
 import io.grpc.CallOptions;
@@ -35,33 +35,23 @@ public class UnaryCallRetryInterceptor extends Channel {
   private final Channel delegate;
   private final ScheduledExecutorService executorService;
   private final Map<MethodDescriptor<?, ?>, Predicate<? extends Object>> retriableMethods;
-  private final int initialBackoffMillis;
-  private final double backoffMultiplier;
-  private final int maxElapsedBackoffMillis;
+  private RetryOptions retryOptions;
 
   public UnaryCallRetryInterceptor(
       Channel delegate,
       ScheduledExecutorService executorService,
       Map<MethodDescriptor<?, ?>, Predicate<?>> retriableMethods,
-      int initialBackoffMillis,
-      double backoffMultiplier,
-      int maxElapsedBackoffMillis) {
+      RetryOptions retryOptions) {
     this.delegate = delegate;
     this.executorService = executorService;
     this.retriableMethods = retriableMethods;
-    this.initialBackoffMillis = initialBackoffMillis;
-    this.backoffMultiplier = backoffMultiplier;
-    this.maxElapsedBackoffMillis = maxElapsedBackoffMillis;
+    this.retryOptions = retryOptions;
   }
 
   @Override
   public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
       MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
     if (methodCanBeRetried(methodDescriptor)) {
-      ExponentialBackOff.Builder backOffBuilder = new ExponentialBackOff.Builder();
-      backOffBuilder.setInitialIntervalMillis(initialBackoffMillis);
-      backOffBuilder.setMultiplier(backoffMultiplier);
-      backOffBuilder.setMaxElapsedTimeMillis(maxElapsedBackoffMillis);
       Predicate<RequestT> isPayloadRetriablePredicate = getUncheckedPredicate(methodDescriptor);
       return new RetryingCall<>(
           delegate,
@@ -69,7 +59,7 @@ public class UnaryCallRetryInterceptor extends Channel {
           callOptions,
           isPayloadRetriablePredicate,
           executorService,
-          backOffBuilder.build());
+          retryOptions.createBackoff());
     }
     return delegate.newCall(methodDescriptor, callOptions);
   }
