@@ -33,18 +33,11 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
-import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.GeneratedMessage;
 
 /**
@@ -200,37 +193,20 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final String host;
 
   public BigtableBufferedMutator(
+      BatchExecutor batchExecutor,
       Configuration configuration,
       TableName tableName,
       int maxInflightRpcs,
       long maxHeapSize,
-      BigtableDataClient client,
-      BigtableOptions options,
-      ExecutorService executorService,
+      String dataHost,
       BufferedMutator.ExceptionListener listener,
       ExecutorService heapSizeExecutor) {
     this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
     this.configuration = configuration;
     this.tableName = tableName;
     this.exceptionListener = listener;
-
-    this.host = options.getDataHost().toString();
-
-    PutAdapter putAdapter = Adapters.createPutAdapter(configuration);
-
-    RowMutationsAdapter rowMutationsAdapter =
-        new RowMutationsAdapter(Adapters.createMutationsAdapter(putAdapter));
-
-    ListeningExecutorService listeningExecutorService =
-        MoreExecutors.listeningDecorator(executorService);
-
-    batchExecutor = new BatchExecutor(
-        client,
-        options,
-        options.getClusterName().toTableName(tableName.getNameAsString()),
-        listeningExecutorService,
-        putAdapter,
-        rowMutationsAdapter);
+    this.host = dataHost;
+    this.batchExecutor = batchExecutor;
   }
 
   @VisibleForTesting

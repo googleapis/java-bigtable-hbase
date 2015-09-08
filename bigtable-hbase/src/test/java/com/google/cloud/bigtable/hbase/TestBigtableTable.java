@@ -35,6 +35,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
@@ -64,7 +65,6 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 /**
  * Unit tests for {@link BigtableTable}.
@@ -82,6 +82,9 @@ public class TestBigtableTable {
 
   @Mock
   private BigtableDataClient mockClient;
+
+  @Mock
+  private BatchExecutor batchExecutor;
 
   @Mock
   private ResultScanner<Row> mockResultScanner;
@@ -106,13 +109,13 @@ public class TestBigtableTable {
         .build();
 
     Configuration config = new Configuration();
+    TableName tableName = TableName.valueOf(TEST_TABLE);
+    HBaseRequestAdapter hbaseAdapter =
+        new HBaseRequestAdapter(options.getClusterName(), tableName, config);
+    Mockito.when(batchExecutor.getClient()).thenReturn(mockClient);
+    Mockito.when(batchExecutor.getHbaseAdapter()).thenReturn(hbaseAdapter);
     Mockito.when(mockConnection.getConfiguration()).thenReturn(config);
-    table = new BigtableTable(
-        mockConnection,
-        TableName.valueOf(TEST_TABLE),
-        options,
-        mockClient,
-        Executors.newCachedThreadPool());
+    table = new BigtableTable(mockConnection, tableName, options, batchExecutor);
   }
 
   @Test

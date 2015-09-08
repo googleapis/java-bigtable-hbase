@@ -20,12 +20,15 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -148,16 +151,19 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new BigtableTable(this, tableName, options, session.getDataClient(), pool);
+    return new BigtableTable(this, tableName, options, createBatchExecutor(tableName, pool));
   }
 
   @Override
   public BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
-    if (params.getTableName() == null) {
+    TableName tableName = params.getTableName();
+    if (tableName == null) {
       throw new IllegalArgumentException("TableName cannot be null.");
     }
-    if (params.getPool() == null) {
-      params.pool(getBatchPool());
+    ExecutorService pool = params.getPool();
+    if (pool == null) {
+      pool = getBatchPool();
+      params.pool(pool);
     }
     if (params.getWriteBufferSize() == BufferedMutatorParams.UNSET) {
       params.writeBufferSize(tableConfig.getWriteBufferSize());
@@ -174,13 +180,13 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
           .setDaemon(true)
           .build());
 
-    BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(conf,
-        params.getTableName(),
+    BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(
+        createBatchExecutor(tableName, pool),
+        conf,
+        tableName,
         maxInflightRpcs,
         params.getWriteBufferSize(),
-        session.getDataClient(),
-        options,
-        params.getPool(),
+        options.getDataHost().toString(),
         params.getListener(),
         heapSizeExecutor){
 
@@ -198,14 +204,19 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     return bigtableBufferedMutator;
   }
 
+  private BatchExecutor createBatchExecutor(TableName tableName, ExecutorService pool) {
+    return new BatchExecutor(
+        session.getDataClient(), options,
+        MoreExecutors.listeningDecorator(pool),
+        new HBaseRequestAdapter(options.getClusterName(), tableName, conf));
+  }
+
   @Override
   public BufferedMutator getBufferedMutator(TableName tableName) throws IOException {
     long maxMemory = conf.getLong(
         BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
         BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT);
-    return getBufferedMutator(
-        new BufferedMutatorParams(tableName)
-            .writeBufferSize(maxMemory));
+    return getBufferedMutator(new BufferedMutatorParams(tableName).writeBufferSize(maxMemory));
   }
 
   /** This should not be used.  The hbase shell needs this in hbsae 0.99.2.  Remove this once
