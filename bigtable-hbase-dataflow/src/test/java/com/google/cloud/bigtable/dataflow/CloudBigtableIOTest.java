@@ -79,9 +79,7 @@ public class CloudBigtableIOTest {
     checkRegistry(Delete.class);
     checkRegistry(Mutation.class);
 
-    CloudBigtableIO.CloudBigtableWriteTransform writeTransform =
-        (CloudBigtableIO.CloudBigtableWriteTransform) CloudBigtableIO.writeToTable(config);
-    writeTransform.validate(null);
+    CloudBigtableIO.writeToTable(config).validate(null);
   }
 
   @Test
