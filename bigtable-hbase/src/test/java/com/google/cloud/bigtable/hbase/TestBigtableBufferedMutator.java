@@ -16,19 +16,21 @@
 package com.google.cloud.bigtable.hbase;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.BufferedMutator;
-import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.junit.Assert;
@@ -38,6 +40,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
@@ -52,8 +56,19 @@ import com.google.common.util.concurrent.MoreExecutors;
 @RunWith(JUnit4.class)
 public class TestBigtableBufferedMutator {
 
+  private static final byte[] emptyBytes = new byte[1];
+  private static final Put SIMPLE_PUT = new Put(emptyBytes).addColumn(emptyBytes, emptyBytes, emptyBytes);
+
   @Mock
-  BigtableDataClient client;
+  private BigtableDataClient client;
+
+  @Mock 
+  private BufferedMutator.ExceptionListener listener;
+
+  @SuppressWarnings("rawtypes")
+  @Mock
+  private ListenableFuture future;
+  private List<Runnable> futureRunnables = new ArrayList<>();
 
   private BigtableBufferedMutator underTest;
 
@@ -62,22 +77,16 @@ public class TestBigtableBufferedMutator {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    setup();
-  }
-
-  private void setup() {
-    setup(new BufferedMutator.ExceptionListener() {
-      @Override
-      public void onException(RetriesExhaustedWithDetailsException exception,
-          BufferedMutator mutator) throws RetriesExhaustedWithDetailsException {
-        throw exception;
-      }
-    });
-  }
-
-  private void setup(ExceptionListener listener) {
     BigtableClusterName clusterName = new BigtableClusterName("project", "zone", "cluster");
     Configuration configuration = new Configuration();
+    futureRunnables.clear();
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        futureRunnables.add((Runnable)invocation.getArguments()[0]);
+        return null;
+      }
+    }).when(future).addListener(any(Runnable.class), same(heapSizeExecutorService));
     underTest = new BigtableBufferedMutator(
         client,
         new HBaseRequestAdapter(clusterName,  TableName.valueOf("TABLE"), configuration),
@@ -92,47 +101,34 @@ public class TestBigtableBufferedMutator {
   @Test
   public void testNoMutation() throws IOException {
     Assert.assertFalse(underTest.hasInflightRequests());
-    Assert.assertEquals(0l, underTest.sizeManager.getHeapSize());
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void testMutation() throws IOException {
-    when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(
-      mock(ListenableFuture.class));
-    byte[] emptyBytes = new byte[1];
-    Put simplePut = new Put(emptyBytes).addColumn(emptyBytes, emptyBytes, emptyBytes);
-    underTest.mutate(simplePut);
+    when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
+    underTest.mutate(SIMPLE_PUT);
     verify(client, times(1)).mutateRowAsync(any(MutateRowRequest.class));
     Assert.assertTrue(underTest.hasInflightRequests());
-    Long id = underTest.sizeManager.pendingOperationsWithSize.keySet().iterator().next();
-    underTest.sizeManager.markOperationCompleted(id);
+    completeCall();
     Assert.assertFalse(underTest.hasInflightRequests());
-    Assert.assertEquals(0l, underTest.sizeManager.getHeapSize());
   }
 
   @Test
   public void testInvalidPut() throws Exception {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenThrow(new RuntimeException());
-    byte[] emptyBytes = new byte[1];
-    Put simplePut = new Put(emptyBytes).addColumn(emptyBytes, emptyBytes, emptyBytes);
-    underTest.mutate(simplePut);
-    Assert.assertFalse(underTest.hasInflightRequests());
-    Assert.assertEquals(0l, underTest.sizeManager.getHeapSize());
-    Assert.assertFalse(underTest.globalExceptions.isEmpty());
+    underTest.mutate(SIMPLE_PUT);
+    verify(listener, times(0)).onException(any(RetriesExhaustedWithDetailsException.class),
+      same(underTest));
+    completeCall();
+    underTest.mutate(SIMPLE_PUT);
+    verify(listener, times(1)).onException(any(RetriesExhaustedWithDetailsException.class),
+      same(underTest));
   }
 
-  @Test
-  public void testException() {
-    underTest.hasExceptions.set(true);
-    underTest.globalExceptions.add(
-        new BigtableBufferedMutator.MutationException(null, new Exception()));
-    
-    try {
-      underTest.handleExceptions();
-      Assert.fail("expected RetriesExhaustedWithDetailsException");
-    } catch (RetriesExhaustedWithDetailsException expected) {
-      // Expected
+  private void completeCall() {
+    for (Runnable runnable : futureRunnables) {
+      runnable.run();
     }
   }
 }

@@ -77,8 +77,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     private long operationSequenceGenerator = 0;
     private final ExecutorService heapSizeExecutor;
 
-    @VisibleForTesting
-    final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
+    private final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
     private long lastOperationChange = System.currentTimeMillis();
 
     public HeapSizeManager(long maxHeapSize, int maxInflightRpcs, ExecutorService heapSizeExecutor) {
@@ -149,7 +148,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
     public <T> void addCallback(ListenableFuture<T> future, final long id) {
       FutureCallback<T> callback = new FutureCallback<T>() {
-
         @Override
         public void onSuccess(T result) {
           markOperationCompleted(id);
@@ -164,8 +162,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  @VisibleForTesting
-  static class MutationException {
+  private static class MutationException {
     private final Row mutation;
     private final Throwable throwable;
 
@@ -177,8 +174,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private final Configuration configuration;
 
-  @VisibleForTesting
-  final HeapSizeManager sizeManager;
+  private final HeapSizeManager sizeManager;
   private boolean closed = false;
 
   /**
@@ -190,11 +186,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final HBaseRequestAdapter adapter;
   private final ExceptionListener exceptionListener;
 
-  @VisibleForTesting
-  final AtomicBoolean hasExceptions = new AtomicBoolean(false);
-
-  @VisibleForTesting
-  final List<MutationException> globalExceptions = new ArrayList<MutationException>();
+  private final AtomicBoolean hasExceptions = new AtomicBoolean(false);
+  private final List<MutationException> globalExceptions = new ArrayList<MutationException>();
 
   private final String host;
 
@@ -362,8 +355,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * Create a {@link RetriesExhaustedWithDetailsException} if there were any async exceptions and
    * send it to the {@link org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener}.
    */
-  @VisibleForTesting
-  void handleExceptions() throws RetriesExhaustedWithDetailsException {
+  private void handleExceptions() throws RetriesExhaustedWithDetailsException {
     if (hasExceptions.get()) {
       ArrayList<MutationException> mutationExceptions = null;
       synchronized (globalExceptions) {
@@ -409,6 +401,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
+  @VisibleForTesting
   public boolean hasInflightRequests() {
     return sizeManager.hasInflightRequests();
   }
