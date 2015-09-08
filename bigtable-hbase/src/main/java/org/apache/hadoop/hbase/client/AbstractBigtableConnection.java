@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.common.base.MoreObjects;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -40,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -166,6 +168,12 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
 
+    final ExecutorService heapSizeExecutor = Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder()
+          .setNameFormat("heapSize-async-%s")
+          .setDaemon(true)
+          .build());
+
     BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(conf,
         params.getTableName(),
         maxInflightRpcs,
@@ -173,12 +181,14 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         session.getDataClient(),
         options,
         params.getPool(),
-        params.getListener()){
+        params.getListener(),
+        heapSizeExecutor){
 
       @Override
       public void close() throws IOException {
         try {
           super.close();
+          heapSizeExecutor.shutdownNow();
         } finally {
           ACTIVE_BUFFERED_MUTATORS.remove(id);
         }

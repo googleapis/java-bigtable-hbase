@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -46,7 +45,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.GeneratedMessage;
 
 /**
@@ -56,12 +54,6 @@ import com.google.protobuf.GeneratedMessage;
 public class BigtableBufferedMutator implements BufferedMutator {
 
   protected static final Logger LOG = new Logger(BigtableBufferedMutator.class);
-
-  protected final ExecutorService heapSizeExecutor = Executors.newCachedThreadPool(
-    new ThreadFactoryBuilder()
-        .setNameFormat("heapSize-async-%s")
-        .setDaemon(true)
-        .build());
 
   /**
    * This class ensures that operations meet heap size and max RPC counts.  A wait will occur
@@ -84,21 +76,23 @@ public class BigtableBufferedMutator implements BufferedMutator {
     private final int maxInFlightRpcs;
     private long currentWriteBufferSize = 0;
     private long operationSequenceGenerator = 0;
+    private final ExecutorService heapSizeExecutor;
 
     @VisibleForTesting
     final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
     private long lastOperationChange = System.currentTimeMillis();
 
-    HeapSizeManager(long maxHeapSize, int maxInflightRpcs) {
+    public HeapSizeManager(long maxHeapSize, int maxInflightRpcs, ExecutorService heapSizeExecutor) {
       this.maxHeapSize = maxHeapSize;
       this.maxInFlightRpcs = maxInflightRpcs;
+      this.heapSizeExecutor = heapSizeExecutor;
     }
 
     private long getMaxHeapSize() {
       return maxHeapSize;
     }
 
-    private synchronized void waitUntilAllOperationsAreDone() throws InterruptedException {
+    public  synchronized void waitUntilAllOperationsAreDone() throws InterruptedException {
       boolean performedWarning = false;
       while(!pendingOperationsWithSize.isEmpty()) {
         if (!performedWarning
@@ -116,11 +110,10 @@ public class BigtableBufferedMutator implements BufferedMutator {
       }
     }
 
-    private synchronized long registerOperationWithHeapSize(long heapSize)
+    public synchronized long registerOperationWithHeapSize(long heapSize)
         throws InterruptedException {
       long operationId = ++operationSequenceGenerator;
-      while (currentWriteBufferSize >= maxHeapSize
-          || pendingOperationsWithSize.size() >= maxInFlightRpcs) {
+      while (isFull()) {
         wait(WAIT_MILLIS);
       }
 
@@ -130,8 +123,12 @@ public class BigtableBufferedMutator implements BufferedMutator {
       return operationId;
     }
 
-    @VisibleForTesting
-    synchronized void operationComplete(long operationSequenceId) {
+    public boolean isFull() {
+      return currentWriteBufferSize >= maxHeapSize
+          || pendingOperationsWithSize.size() >= maxInFlightRpcs;
+    }
+
+    public synchronized void markOperationCompleted(long operationSequenceId) {
       lastOperationChange = System.currentTimeMillis();
       Long heapSize = pendingOperationsWithSize.remove(operationSequenceId);
       if (heapSize != null) {
@@ -143,13 +140,28 @@ public class BigtableBufferedMutator implements BufferedMutator {
       }
     }
 
-    private synchronized boolean hasInflightRequests() {
+    synchronized boolean hasInflightRequests() {
       return !pendingOperationsWithSize.isEmpty();
     }
 
-    @VisibleForTesting
     synchronized long getHeapSize() {
       return currentWriteBufferSize;
+    }
+
+    public <T> void addCallback(ListenableFuture<T> future, final long id) {
+      FutureCallback<T> callback = new FutureCallback<T>() {
+
+        @Override
+        public void onSuccess(T result) {
+          markOperationCompleted(id);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+          markOperationCompleted(id);
+        }
+      };
+      Futures.addCallback(future, callback, heapSizeExecutor);
     }
   }
 
@@ -195,8 +207,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
       BigtableDataClient client,
       BigtableOptions options,
       ExecutorService executorService,
-      BufferedMutator.ExceptionListener listener) {
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs);
+      BufferedMutator.ExceptionListener listener,
+      ExecutorService heapSizeExecutor) {
+    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
     this.configuration = configuration;
     this.tableName = tableName;
     this.exceptionListener = listener;
@@ -227,13 +240,14 @@ public class BigtableBufferedMutator implements BufferedMutator {
       ExceptionListener exceptionListener,
       String host,
       int maxInflightRpcs,
-      TableName tableName) {
+      TableName tableName,
+      ExecutorService heapSizeExecutor) {
     this.batchExecutor = batchExecutor;
     this.configuration = null;
     this.exceptionListener = exceptionListener;
     this.host = host;
     this.tableName = tableName;
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs);
+    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
   }
 
   @Override
@@ -242,9 +256,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
     lock.lock();
     try {
       if (!closed) {
-        closed = true;
         doFlush();
-        heapSizeExecutor.shutdown();
+        closed = true;
       }
     } finally {
       lock.unlock();
@@ -344,8 +357,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
       return;
     }
 
-    AccountingFutureCallback callback = new AccountingFutureCallback(mutation, sequenceId);
-    Futures.addCallback(issueRequest(mutation), callback, heapSizeExecutor);
+    ListenableFuture<? extends GeneratedMessage> future = issueRequest(mutation);
+    Futures.addCallback(future, new ExceptionCallback(mutation));
+    this.sizeManager.addCallback(future, sequenceId);
   }
 
   private ListenableFuture<? extends GeneratedMessage> issueRequest(final Mutation mutation) {
@@ -399,24 +413,20 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private class AccountingFutureCallback implements FutureCallback<GeneratedMessage> {
-    private final long operationSequenceId;
+  private class ExceptionCallback implements FutureCallback<GeneratedMessage> {
     private final Row mutation;
 
-    public AccountingFutureCallback(Row mutation, long operationSequenceId) {
+    public ExceptionCallback(Row mutation) {
       this.mutation = mutation;
-      this.operationSequenceId = operationSequenceId;
     }
 
     @Override
     public void onFailure(Throwable t) {
       addGlobalException(mutation, t);
-      sizeManager.operationComplete(operationSequenceId);
     }
 
     @Override
     public void onSuccess(GeneratedMessage ignored) {
-      sizeManager.operationComplete(operationSequenceId);
     }
   }
 

@@ -22,12 +22,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
-import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
@@ -40,6 +40,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * Tests for {@link BigtableBufferedMutator}
@@ -52,6 +53,7 @@ public class TestBigtableBufferedMutator {
 
   private BigtableBufferedMutator underTest;
 
+  private ExecutorService heapSizeExecutorService = MoreExecutors.newDirectExecutorService();
 
   @Before
   public void setUp() {
@@ -75,7 +77,8 @@ public class TestBigtableBufferedMutator {
         listener,
         null,
         AbstractBigtableConnection.MAX_INFLIGHT_RPCS_DEFAULT,
-        TableName.valueOf("TABLE"));
+        TableName.valueOf("TABLE"),
+        heapSizeExecutorService);
   }
 
   @Test
@@ -92,7 +95,7 @@ public class TestBigtableBufferedMutator {
     verify(executor, times(1)).issueRequest(any(Row.class));
     Assert.assertTrue(underTest.hasInflightRequests());
     Long id = underTest.sizeManager.pendingOperationsWithSize.keySet().iterator().next();
-    underTest.sizeManager.operationComplete(id);
+    underTest.sizeManager.markOperationCompleted(id);
     Assert.assertFalse(underTest.hasInflightRequests());
     Assert.assertEquals(0l, underTest.sizeManager.getHeapSize());
   }
@@ -100,15 +103,10 @@ public class TestBigtableBufferedMutator {
   @Test
   public void testInvalidPut() throws Exception {
     when(executor.issueRequest((Row) any())).thenThrow(new RuntimeException());
-    try {
-      underTest.mutate(new Increment(new byte[1]));
-    } catch (RuntimeException ignored) {
-      // The RuntimeException is expected behavior
-    }
-    // wait until the handling in the heapSizeExecutor kicks in.
-    Thread.sleep(1000);
+    underTest.mutate(new Put(new byte[1]));
     Assert.assertFalse(underTest.hasInflightRequests());
     Assert.assertEquals(0l, underTest.sizeManager.getHeapSize());
+    Assert.assertFalse(underTest.globalExceptions.isEmpty());
   }
 
   @Test
