@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase;
+package com.google.cloud.bigtable.grpc.async;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,7 +36,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.cloud.bigtable.hbase.BigtableBufferedMutator.HeapSizeManager;
+import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
 import com.google.common.util.concurrent.ListenableFuture;
 
 @RunWith(JUnit4.class)
