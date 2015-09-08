@@ -57,16 +57,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   protected static final Logger LOG = new Logger(BigtableBufferedMutator.class);
 
-  // Flush is not properly synchronized with respect to waiting. It will never exit
-  // improperly, but it might wait more than it has to. Setting this to a low value ensures
-  // that improper waiting is minimal.
-  private static final long WAIT_MILLIS = 250;
-
-  // In flush, wait up to this number of milliseconds without any operations completing.  If
-  // this amount of time goes by without any updates, flush will log a warning.  Flush()
-  // will still wait to complete.
-  private static final long INTERVAL_NO_SUCCESS_WARNING = 300000;
-
   protected final ExecutorService heapSizeExecutor = Executors.newCachedThreadPool(
     new ThreadFactoryBuilder()
         .setNameFormat("heapSize-async-%s")
@@ -79,6 +69,17 @@ public class BigtableBufferedMutator implements BufferedMutator {
    */
   @VisibleForTesting
   static class HeapSizeManager {
+    protected static final Logger LOG = new Logger(HeapSizeManager.class);
+
+    // Flush is not properly synchronized with respect to waiting. It will never exit
+    // improperly, but it might wait more than it has to. Setting this to a low value ensures
+    // that improper waiting is minimal.
+    private static final long WAIT_MILLIS = 250;
+
+    // In flush, wait up to this number of milliseconds without any operations completing.  If
+    // this amount of time goes by without any updates, flush will log a warning.  Flush()
+    // will still wait to complete.
+    private static final long INTERVAL_NO_SUCCESS_WARNING = 300000;
     private final long maxHeapSize;
     private final int maxInFlightRpcs;
     private long currentWriteBufferSize = 0;
