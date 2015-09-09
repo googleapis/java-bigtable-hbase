@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase;
+package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -27,11 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.BufferedMutator;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,11 +35,10 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.MutateRowRequest;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.async.AsyncMutator;
-import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -54,31 +46,23 @@ import com.google.common.util.concurrent.MoreExecutors;
  * Tests for {@link BigtableBufferedMutator}
  */
 @RunWith(JUnit4.class)
-public class TestBigtableBufferedMutator {
-
-  private static final byte[] emptyBytes = new byte[1];
-  private static final Put SIMPLE_PUT = new Put(emptyBytes).addColumn(emptyBytes, emptyBytes, emptyBytes);
+public class TestAsyncMutator {
 
   @Mock
   private BigtableDataClient client;
-
-  @Mock 
-  private BufferedMutator.ExceptionListener listener;
 
   @SuppressWarnings("rawtypes")
   @Mock
   private ListenableFuture future;
   private List<Runnable> futureRunnables = new ArrayList<>();
 
-  private BigtableBufferedMutator underTest;
+  private AsyncMutator underTest;
 
   private ExecutorService heapSizeExecutorService = MoreExecutors.newDirectExecutorService();
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    BigtableClusterName clusterName = new BigtableClusterName("project", "zone", "cluster");
-    Configuration configuration = new Configuration();
     futureRunnables.clear();
     doAnswer(new Answer<Void>() {
       @Override
@@ -87,14 +71,10 @@ public class TestBigtableBufferedMutator {
         return null;
       }
     }).when(future).addListener(any(Runnable.class), same(heapSizeExecutorService));
-    underTest = new BigtableBufferedMutator(
+    underTest = new AsyncMutator(
         client,
-        new HBaseRequestAdapter(clusterName,  TableName.valueOf("TABLE"), configuration),
-        configuration,
         AsyncMutator.MAX_INFLIGHT_RPCS_DEFAULT,
         AsyncMutator.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
-        null,
-        listener,
         heapSizeExecutorService);
   }
 
@@ -105,25 +85,43 @@ public class TestBigtableBufferedMutator {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testMutation() throws IOException {
+  public void testMutation() throws IOException, InterruptedException {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
-    underTest.mutate(SIMPLE_PUT);
-    verify(client, times(1)).mutateRowAsync(any(MutateRowRequest.class));
+    underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
+    Assert.assertTrue(underTest.hasInflightRequests());
+    completeCall();
+    Assert.assertFalse(underTest.hasInflightRequests());
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testCheckAndMutate() throws IOException, InterruptedException {
+    when(client.checkAndMutateRowAsync(any(CheckAndMutateRowRequest.class))).thenReturn(future);
+    underTest.checkAndMutateRowAsync(CheckAndMutateRowRequest.getDefaultInstance());
+    Assert.assertTrue(underTest.hasInflightRequests());
+    completeCall();
+    Assert.assertFalse(underTest.hasInflightRequests());
+  }
+  
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testReadWriteModify() throws IOException, InterruptedException {
+    when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(future);
+    underTest.readModifyWriteRowAsync(ReadModifyWriteRowRequest.getDefaultInstance());
     Assert.assertTrue(underTest.hasInflightRequests());
     completeCall();
     Assert.assertFalse(underTest.hasInflightRequests());
   }
 
   @Test
-  public void testInvalidPut() throws Exception {
-    when(client.mutateRowAsync(any(MutateRowRequest.class))).thenThrow(new RuntimeException());
-    underTest.mutate(SIMPLE_PUT);
-    verify(listener, times(0)).onException(any(RetriesExhaustedWithDetailsException.class),
-      same(underTest));
+  public void testInvalidMutation() throws Exception {
+    try {
+      when(client.mutateRowAsync(any(MutateRowRequest.class))).thenThrow(new RuntimeException());
+      underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
+    } catch(Exception ignored) {
+    }
     completeCall();
-    underTest.mutate(SIMPLE_PUT);
-    verify(listener, times(1)).onException(any(RetriesExhaustedWithDetailsException.class),
-      same(underTest));
+    Assert.assertFalse(underTest.hasInflightRequests());
   }
 
   private void completeCall() {

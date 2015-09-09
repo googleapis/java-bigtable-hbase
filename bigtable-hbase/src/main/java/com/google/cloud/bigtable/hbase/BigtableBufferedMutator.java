@@ -20,9 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -37,7 +34,7 @@ import org.apache.hadoop.hbase.client.Row;
 
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
+import com.google.cloud.bigtable.grpc.async.AsyncMutator;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
@@ -65,15 +62,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private final Configuration configuration;
 
-  private final HeapSizeManager sizeManager;
   private boolean closed = false;
 
-  /**
-   * Makes sure that mutations and flushes are safe to proceed.  Ensures that while the mutator
-   * is closing, there will be no additional writes.
-   */
-  private final ReentrantReadWriteLock mutationLock = new ReentrantReadWriteLock();
-  private final BigtableDataClient client;
   private final HBaseRequestAdapter adapter;
   private final ExceptionListener exceptionListener;
 
@@ -81,6 +71,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final List<MutationException> globalExceptions = new ArrayList<MutationException>();
 
   private final String host;
+
+  private final AsyncMutator asyncMutator;
 
   public BigtableBufferedMutator(
       BigtableDataClient client,
@@ -91,47 +83,22 @@ public class BigtableBufferedMutator implements BufferedMutator {
       String dataHost,
       BufferedMutator.ExceptionListener listener,
       ExecutorService heapSizeExecutor) {
-    this.client = client;
     this.adapter = adapter;
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
     this.configuration = configuration;
     this.exceptionListener = listener;
     this.host = dataHost;
+    this.asyncMutator = new AsyncMutator(client, maxInflightRpcs, maxHeapSize, heapSizeExecutor);
   }
 
   @Override
   public void close() throws IOException {
-    WriteLock lock = mutationLock.writeLock();
-    lock.lock();
-    try {
-      if (!closed) {
-        doFlush();
-        closed = true;
-      }
-    } finally {
-      lock.unlock();
-    }
+    flush();
+    closed = true;
   }
 
   @Override
   public void flush() throws IOException {
-    WriteLock lock = mutationLock.writeLock();
-    lock.lock();
-    try {
-      doFlush();
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  private void doFlush() throws IOException {
-    LOG.trace("Flushing");
-    try {
-      sizeManager.waitUntilAllOperationsAreDone();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-    LOG.trace("Done flushing");
+    asyncMutator.flush();
     handleExceptions();
   }
 
@@ -147,24 +114,17 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   @Override
   public long getWriteBufferSize() {
-    return this.sizeManager.getMaxHeapSize();
+    return this.asyncMutator.getMaxHeapSize();
   }
 
   @Override
   public void mutate(List<? extends Mutation> mutations) throws IOException {
-    // Ensure that close() or flush() aren't current being called.
-    ReadLock lock = mutationLock.readLock();
-    lock.lock();
-    try {
-      if (closed) {
-        throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
-      }
-      handleExceptions();
-      for (Mutation mutation : mutations) {
-        doMutation(mutation);
-      }
-    } finally {
-      lock.unlock();
+    if (closed) {
+      throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
+    }
+    handleExceptions();
+    for (Mutation mutation : mutations) {
+      doMutation(mutation);
     }
   }
 
@@ -175,40 +135,15 @@ public class BigtableBufferedMutator implements BufferedMutator {
    */
   @Override
   public void mutate(final Mutation mutation) throws IOException {
-    ReadLock lock = mutationLock.readLock();
-    lock.lock();
-    try {
-      if (closed) {
-        throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
-      }
-      handleExceptions();
-      doMutation(mutation);
-    } finally {
-      lock.unlock();
+    if (closed) {
+      throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
     }
+    handleExceptions();
+    doMutation(mutation);
   }
 
   private void doMutation(final Mutation mutation) throws RetriesExhaustedWithDetailsException {
-    Long sequenceId = null;
-    try {
-      // registerOperationWithHeapSize() waits until both the memory and rpc count maximum
-      // requirements are achieved.
-      sequenceId = sizeManager.registerOperationWithHeapSize(mutation.heapSize());
-    } catch (InterruptedException e) {
-      synchronized (globalExceptions) {
-        // Add the exception to the list of global exceptions and handle the
-        // RetriesExhaustedWithDetailsException.
-        addGlobalException(mutation, e);
-        handleExceptions();
-      }
-      // The handleExceptions() or may not throw an exception.  Don't continue processing.
-      Thread.currentThread().interrupt();
-      return;
-    }
-
-    ListenableFuture<? extends GeneratedMessage> future = issueRequest(mutation);
-    Futures.addCallback(future, new ExceptionCallback(mutation));
-    this.sizeManager.addCallback(future, sequenceId);
+    Futures.addCallback(issueRequest(mutation), new ExceptionCallback(mutation));
   }
 
   private ListenableFuture<? extends GeneratedMessage> issueRequest(final Mutation mutation) {
@@ -218,17 +153,17 @@ public class BigtableBufferedMutator implements BufferedMutator {
             "Cannot perform a mutation on a null object."));
       }
       if (mutation instanceof Put) {
-        return client.mutateRowAsync(adapter.adapt((Put) mutation));
+        return asyncMutator.mutateRowAsync(adapter.adapt((Put) mutation));
       } else if (mutation instanceof Delete) {
-        return client.mutateRowAsync(adapter.adapt((Delete) mutation));
+        return asyncMutator.mutateRowAsync(adapter.adapt((Delete) mutation));
       } else if (mutation instanceof Increment) {
-        return client.readModifyWriteRowAsync(adapter.adapt((Increment) mutation));
+        return asyncMutator.readModifyWriteRowAsync(adapter.adapt((Increment) mutation));
       } else if (mutation instanceof Append) {
-        return client.readModifyWriteRowAsync(adapter.adapt((Append) mutation));
-      } 
+        return asyncMutator.readModifyWriteRowAsync(adapter.adapt((Append) mutation));
+      }
       return Futures.immediateFailedFuture(new IllegalArgumentException(
           "Encountered unknown mutation type: " + mutation.getClass()));
-    } catch (RuntimeException e) {
+    } catch (Exception e) {
       // issueRequest(mutation) could throw an Exception for validation issues. Remove the heapsize
       // and inflight rpc count.
       return Futures.immediateFailedFuture(e);
@@ -294,6 +229,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   @VisibleForTesting
   public boolean hasInflightRequests() {
-    return sizeManager.hasInflightRequests();
+    return this.asyncMutator.hasInflightRequests();
   }
 }

@@ -20,6 +20,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
+import com.google.cloud.bigtable.grpc.async.AsyncMutator;
 import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -54,9 +55,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   public static final String MAX_INFLIGHT_RPCS_KEY =
       "google.bigtable.buffered.mutator.max.inflight.rpcs";
 
-  // Default rpc count per channel.
-  public static final int MAX_INFLIGHT_RPCS_DEFAULT = 50;
-
   /**
    * The maximum amount of memory to be used for asynchronous buffered mutator RPCs.
    */
@@ -84,14 +82,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     };
     Runtime.getRuntime().addShutdownHook(new Thread(shutDownRunnable));
   }
-
-  // Default to 32MB.
-  //
-  // HBase uses 2MB as the write buffer size.  Their limit is the size to reach before performing
-  // a batch async write RPC.  Our limit is a memory cap for async RPC after which we throttle.
-  // HBase does not throttle like we do.
-  public static final long BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT =
-      16 * TableConfiguration.WRITE_BUFFER_SIZE_DEFAULT;
 
   private final Logger LOG = new Logger(getClass());
 
@@ -169,7 +159,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       params.writeBufferSize(tableConfig.getWriteBufferSize());
     }
 
-    int defaultRpcCount = MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
+    int defaultRpcCount = AsyncMutator.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
     int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
@@ -217,9 +207,12 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   @Override
   public BufferedMutator getBufferedMutator(TableName tableName) throws IOException {
+    // HBase uses 2MB as the write buffer size.  Their limit is the size to reach before performing
+    // a batch async write RPC.  Our limit is a memory cap for async RPC after which we throttle.
+    // HBase does not throttle like we do.
     long maxMemory = conf.getLong(
         BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
-        BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_DEFAULT);
+        AsyncMutator.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT);
     return getBufferedMutator(new BufferedMutatorParams(tableName).writeBufferSize(maxMemory));
   }
 
