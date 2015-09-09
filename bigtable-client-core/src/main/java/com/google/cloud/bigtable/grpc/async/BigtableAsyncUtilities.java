@@ -24,6 +24,7 @@ import io.grpc.stub.ClientCalls;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.ReadRowsRequest;
@@ -89,15 +90,26 @@ public final class BigtableAsyncUtilities {
     };
   }
 
+  /**
+   * Performs the rpc with retries.
+   *
+   * @param retryOptions Configures how to perform backoffs when failures occur.
+   * @param request The request to send.
+   * @param rpc The rpc to perform
+   * @param executorService The ExecutorService on which to run if there is a need for a retry.
+   * @return the ListenableFuture that can be used to track the RPC.
+   */
   public static <RequestT, ResponseT> ListenableFuture<ResponseT> doReadAsync(
       RetryOptions retryOptions, final RequestT request,
-      RetryableRpc<RequestT, ResponseT> readAsync) {
+      RetryableRpc<RequestT, ResponseT> rpc, ExecutorService executorService) {
+    ListenableFuture<ResponseT> listenableFuture = rpc.call(request);
     if (retryOptions.enableRetries()) {
-      RetryingRpcFutureFallback<RequestT, ResponseT> readFallback =
-          new RetryingRpcFutureFallback<RequestT, ResponseT>(retryOptions, request, readAsync);
-      return Futures.withFallback(readAsync.call(request), readFallback);
+      return Futures.withFallback(
+          listenableFuture,
+          RetryingRpcFutureFallback.create(retryOptions, request, rpc),
+          executorService);
     }
-    return readAsync.call(request);
+    return listenableFuture;
   }
 
   public static <T, V> ListenableFuture<V> listenableAsyncCall(Channel channel,

@@ -85,13 +85,8 @@ public class UnaryCallRetryInterceptorTest {
 
     RetryOptions retryOptions = new RetryOptions.Builder().build();
     retryInterceptor =
-        new UnaryCallRetryInterceptor(
-            channelStub,
-            executorService,
-            retriableMethodsMap,
-            retryOptions.getInitialBackoffMillis(),
-            retryOptions.getBackoffMultiplier(),
-            retryOptions.getMaxElaspedBackoffMillis());
+        new UnaryCallRetryInterceptor(channelStub, executorService, retriableMethodsMap,
+            retryOptions);
 
     when(channelStub.newCall(eq(BigtableServiceGrpc.METHOD_MUTATE_ROW), eq(CallOptions.DEFAULT)))
         .thenReturn(callStub);
