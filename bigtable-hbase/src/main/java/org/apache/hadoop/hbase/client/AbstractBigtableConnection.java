@@ -18,9 +18,10 @@ package org.apache.hadoop.hbase.client;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
-import com.google.cloud.bigtable.grpc.async.AsyncMutator;
+import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -141,7 +142,14 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    return new BigtableTable(this, tableName, options, createBatchExecutor(tableName, pool));
+    BigtableDataClient client = session.getDataClient();
+    AsyncExecutor asyncExecutor =
+        new AsyncExecutor(client, AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT,
+            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT, pool);
+    HBaseRequestAdapter adapter = createAdapter(tableName);
+    BatchExecutor batchExecutor =
+        new BatchExecutor(asyncExecutor, options, MoreExecutors.listeningDecorator(pool), adapter);
+    return new BigtableTable(this, tableName, options, client, adapter, batchExecutor);
   }
 
   @Override
@@ -159,7 +167,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       params.writeBufferSize(tableConfig.getWriteBufferSize());
     }
 
-    int defaultRpcCount = AsyncMutator.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
+    int defaultRpcCount = AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
     int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
@@ -194,13 +202,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     return bigtableBufferedMutator;
   }
 
-  private BatchExecutor createBatchExecutor(TableName tableName, ExecutorService pool) {
-    return new BatchExecutor(
-        session.getDataClient(), options,
-        MoreExecutors.listeningDecorator(pool),
-        createAdapter(tableName));
-  }
-
   private HBaseRequestAdapter createAdapter(TableName tableName) {
     return new HBaseRequestAdapter(options.getClusterName(), tableName, conf);
   }
@@ -212,7 +213,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     // HBase does not throttle like we do.
     long maxMemory = conf.getLong(
         BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
-        AsyncMutator.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT);
+        AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT);
     return getBufferedMutator(new BufferedMutatorParams(tableName).writeBufferSize(maxMemory));
   }
 

@@ -107,13 +107,15 @@ public class BigtableTable implements Table {
       AbstractBigtableConnection bigtableConnection,
       TableName tableName,
       BigtableOptions options,
+      BigtableDataClient client,
+      HBaseRequestAdapter hbaseAdapter,
       BatchExecutor batchExecutor) {
     this.bigtableConnection = bigtableConnection;
     this.tableName = tableName;
     this.options = options;
-    this.client = batchExecutor.getClient();
+    this.client = client;
     this.batchExecutor = batchExecutor;
-    this.hbaseAdapter = batchExecutor.getHbaseAdapter();
+    this.hbaseAdapter = hbaseAdapter;
   }
 
   @Override

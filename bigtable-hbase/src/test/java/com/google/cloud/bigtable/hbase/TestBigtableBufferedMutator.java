@@ -45,7 +45,7 @@ import org.mockito.stubbing.Answer;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.async.AsyncMutator;
+import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -91,8 +91,8 @@ public class TestBigtableBufferedMutator {
         client,
         new HBaseRequestAdapter(clusterName,  TableName.valueOf("TABLE"), configuration),
         configuration,
-        AsyncMutator.MAX_INFLIGHT_RPCS_DEFAULT,
-        AsyncMutator.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
+        AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT,
+        AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
         null,
         listener,
         heapSizeExecutorService);

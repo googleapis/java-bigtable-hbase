@@ -34,7 +34,7 @@ import org.apache.hadoop.hbase.client.Row;
 
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.async.AsyncMutator;
+import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
@@ -72,7 +72,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private final String host;
 
-  private final AsyncMutator asyncMutator;
+  private final AsyncExecutor asyncExecutor;
 
   public BigtableBufferedMutator(
       BigtableDataClient client,
@@ -87,7 +87,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.configuration = configuration;
     this.exceptionListener = listener;
     this.host = dataHost;
-    this.asyncMutator = new AsyncMutator(client, maxInflightRpcs, maxHeapSize, heapSizeExecutor);
+    this.asyncExecutor = new AsyncExecutor(client, maxInflightRpcs, maxHeapSize, heapSizeExecutor);
   }
 
   @Override
@@ -98,7 +98,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   @Override
   public void flush() throws IOException {
-    asyncMutator.flush();
+    asyncExecutor.flush();
     handleExceptions();
   }
 
@@ -114,7 +114,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   @Override
   public long getWriteBufferSize() {
-    return this.asyncMutator.getMaxHeapSize();
+    return this.asyncExecutor.getMaxHeapSize();
   }
 
   @Override
@@ -153,13 +153,13 @@ public class BigtableBufferedMutator implements BufferedMutator {
             "Cannot perform a mutation on a null object."));
       }
       if (mutation instanceof Put) {
-        return asyncMutator.mutateRowAsync(adapter.adapt((Put) mutation));
+        return asyncExecutor.mutateRowAsync(adapter.adapt((Put) mutation));
       } else if (mutation instanceof Delete) {
-        return asyncMutator.mutateRowAsync(adapter.adapt((Delete) mutation));
+        return asyncExecutor.mutateRowAsync(adapter.adapt((Delete) mutation));
       } else if (mutation instanceof Increment) {
-        return asyncMutator.readModifyWriteRowAsync(adapter.adapt((Increment) mutation));
+        return asyncExecutor.readModifyWriteRowAsync(adapter.adapt((Increment) mutation));
       } else if (mutation instanceof Append) {
-        return asyncMutator.readModifyWriteRowAsync(adapter.adapt((Append) mutation));
+        return asyncExecutor.readModifyWriteRowAsync(adapter.adapt((Append) mutation));
       }
       return Futures.immediateFailedFuture(new IllegalArgumentException(
           "Encountered unknown mutation type: " + mutation.getClass()));
@@ -229,6 +229,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   @VisibleForTesting
   public boolean hasInflightRequests() {
-    return this.asyncMutator.hasInflightRequests();
+    return this.asyncExecutor.hasInflightRequests();
   }
 }

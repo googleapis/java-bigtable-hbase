@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -25,6 +26,7 @@ import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
+import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
@@ -38,7 +40,7 @@ import com.google.protobuf.GeneratedMessage;
  * many concurrent, in flight asynchronous RPCs and also makes sure that the memory used by the
  * requests doesn't exceed a threshold.
  */
-public class AsyncMutator {
+public class AsyncExecutor {
 
   // Default rpc count per channel.
   public static final int MAX_INFLIGHT_RPCS_DEFAULT = 50;
@@ -47,7 +49,7 @@ public class AsyncMutator {
   // Default to 32MB.
   public static final long ASYNC_MUTATOR_MAX_MEMORY_DEFAULT = 16 * 2097152;
 
-  protected static final Logger LOG = new Logger(AsyncMutator.class);
+  protected static final Logger LOG = new Logger(AsyncExecutor.class);
 
   protected interface AsyncCall<RequestT, ResponseT> {
     ListenableFuture<ResponseT> call(BigtableDataClient client, RequestT request);
@@ -79,6 +81,14 @@ public class AsyncMutator {
         }
       };
 
+  protected static AsyncCall<ReadRowsRequest, List<Row>> READ_ROWS_ASYNC =
+      new AsyncCall<ReadRowsRequest, List<Row>>() {
+        @Override
+        public ListenableFuture<List<Row>> call(BigtableDataClient client, ReadRowsRequest request) {
+          return client.readRowsAsync(request);
+        }
+      };
+
   /**
    * Makes sure that mutations and flushes are safe to proceed.  Ensures that while the mutator
    * is closing, there will be no additional writes.
@@ -87,7 +97,7 @@ public class AsyncMutator {
   private final BigtableDataClient client;
   private final HeapSizeManager sizeManager;
 
-  public AsyncMutator(
+  public AsyncExecutor(
       BigtableDataClient client,
       int maxInflightRpcs,
       long maxHeapSize,
@@ -111,6 +121,11 @@ public class AsyncMutator {
     return call(READ_MODIFY_WRITE_ASYNC, request);
   }
 
+  public ListenableFuture<List<com.google.bigtable.v1.Row>> readRowsAsync(ReadRowsRequest request)
+      throws InterruptedException {
+    return call(READ_ROWS_ASYNC, request);
+  }
+
   private <RequestT extends GeneratedMessage, ResponseT> ListenableFuture<ResponseT> call(
       AsyncCall<RequestT, ResponseT> rpc, RequestT request) throws InterruptedException {
     long id = register(request);
@@ -118,7 +133,6 @@ public class AsyncMutator {
     sizeManager.addCallback(future, id);
     return future;
   }
-
 
   /**
    * Wait until both the memory and rpc count maximum requirements are achieved.  Returns a unique
