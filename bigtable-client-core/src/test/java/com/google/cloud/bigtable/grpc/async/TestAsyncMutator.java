@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,10 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,12 +42,15 @@ import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.protobuf.ByteString;
 
 /**
  * Tests for {@link BigtableBufferedMutator}
  */
+@SuppressWarnings("unchecked")
 @RunWith(JUnit4.class)
 public class TestAsyncMutator {
 
@@ -71,11 +77,7 @@ public class TestAsyncMutator {
         return null;
       }
     }).when(future).addListener(any(Runnable.class), same(heapSizeExecutorService));
-    underTest = new AsyncMutator(
-        client,
-        AsyncMutator.MAX_INFLIGHT_RPCS_DEFAULT,
-        AsyncMutator.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
-        heapSizeExecutorService);
+    underTest = new AsyncMutator(client, 10, 1000, heapSizeExecutorService);
   }
 
   @Test
@@ -83,7 +85,6 @@ public class TestAsyncMutator {
     Assert.assertFalse(underTest.hasInflightRequests());
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testMutation() throws IOException, InterruptedException {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
@@ -93,7 +94,6 @@ public class TestAsyncMutator {
     Assert.assertFalse(underTest.hasInflightRequests());
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testCheckAndMutate() throws IOException, InterruptedException {
     when(client.checkAndMutateRowAsync(any(CheckAndMutateRowRequest.class))).thenReturn(future);
@@ -102,8 +102,7 @@ public class TestAsyncMutator {
     completeCall();
     Assert.assertFalse(underTest.hasInflightRequests());
   }
-  
-  @SuppressWarnings("unchecked")
+
   @Test
   public void testReadWriteModify() throws IOException, InterruptedException {
     when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(future);
@@ -124,8 +123,75 @@ public class TestAsyncMutator {
     Assert.assertFalse(underTest.hasInflightRequests());
   }
 
+  @Test
+  /**
+   * Tests to make sure that mutateRowAsync will perform a wait() if there is a bigger count of RPCs
+   * than the maximum of the HeapSizeManager.
+   */
+  public void testRegisterWaitsAfterCountLimit() throws Exception {
+    ExecutorService testExecutor = Executors.newCachedThreadPool();
+    try {
+      when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
+      // Fill up the Queue
+      for (int i = 0; i < 10; i++) {
+        underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
+      }
+      final AtomicBoolean eleventRpcInvoked = new AtomicBoolean(false);
+      testExecutor.submit(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
+          eleventRpcInvoked.set(true);
+          return null;
+        }
+      });
+      Thread.sleep(10);
+      Assert.assertFalse(eleventRpcInvoked.get());
+      completeCall();
+      Thread.sleep(10);
+      Assert.assertTrue(eleventRpcInvoked.get());
+    } finally {
+      testExecutor.shutdownNow();
+    }
+  }
+
+  @Test
+  /**
+   * Tests to make sure that mutateRowAsync will perform a wait() if there is a bigger accumulated
+   * serialized size of RPCs than the maximum of the HeapSizeManager.
+   */
+  public void testRegisterWaitsAfterSizeLimit() throws Exception {
+    ExecutorService testExecutor = Executors.newCachedThreadPool();
+    try {
+      when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
+      // Send a huge request to block further RPCs.
+      underTest.mutateRowAsync(MutateRowRequest.newBuilder()
+          .setRowKey(ByteString.copyFrom(new byte[1000])).build());
+      final AtomicBoolean newRpcInvoked = new AtomicBoolean(false);
+      testExecutor.submit(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
+          newRpcInvoked.set(true);
+          return null;
+        }
+      });
+      Thread.sleep(10);
+      Assert.assertFalse(newRpcInvoked.get());
+      completeCall();
+      Thread.sleep(10);
+      Assert.assertTrue(newRpcInvoked.get());
+    } finally {
+      testExecutor.shutdownNow();
+    }
+  }
+
   private void completeCall() {
-    for (Runnable runnable : futureRunnables) {
+    // futureRunnables can be updated asynchronously as the current batch of Runnables
+    // completes requests and releases locks.
+    List<Runnable> copy = Lists.newArrayList(futureRunnables);
+    futureRunnables.clear();
+    for (Runnable runnable : copy) {
       runnable.run();
     }
   }
