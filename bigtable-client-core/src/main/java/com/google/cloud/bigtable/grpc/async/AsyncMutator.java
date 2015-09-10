@@ -34,10 +34,11 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
 
 /**
- * Bigtable's {@link BufferedMutator} implementation.
+ * This class provides management of asynchronous Bigtable RPCs.  It ensures that there aren't too
+ * many concurrent, in flight asynchronous RPCs and also makes sure that the memory used by the
+ * requests doesn't exceed a threshold.
  */
 public class AsyncMutator {
-
 
   // Default rpc count per channel.
   public static final int MAX_INFLIGHT_RPCS_DEFAULT = 50;
