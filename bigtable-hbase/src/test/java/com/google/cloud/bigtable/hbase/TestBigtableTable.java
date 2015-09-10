@@ -112,10 +112,10 @@ public class TestBigtableTable {
     TableName tableName = TableName.valueOf(TEST_TABLE);
     HBaseRequestAdapter hbaseAdapter =
         new HBaseRequestAdapter(options.getClusterName(), tableName, config);
-    Mockito.when(batchExecutor.getClient()).thenReturn(mockClient);
-    Mockito.when(batchExecutor.getHbaseAdapter()).thenReturn(hbaseAdapter);
     Mockito.when(mockConnection.getConfiguration()).thenReturn(config);
-    table = new BigtableTable(mockConnection, tableName, options, batchExecutor);
+    table =
+        new BigtableTable(mockConnection, tableName, options, mockClient, hbaseAdapter,
+            batchExecutor);
   }
 
   @Test
