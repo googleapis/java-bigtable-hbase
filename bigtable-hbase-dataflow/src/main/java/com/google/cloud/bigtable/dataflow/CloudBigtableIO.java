@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
@@ -126,6 +127,22 @@ import com.google.cloud.dataflow.sdk.values.PDone;
  */
 
 public class CloudBigtableIO {
+  private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(CloudBigtableIO.class);
+  public static Exception logRetriesExhaustedWithDetailsException(String context, RetriesExhaustedWithDetailsException e) {
+      List<Throwable> causes = e.getCauses();
+      String failEventId = UUID.randomUUID().toString();
+      LOG.warn("{}: {} occured during finishing: {}", context,
+        failEventId, e.getMessage());
+      for(Throwable cause : causes) {
+        LOG.warn(failEventId + ": " + context
+          + " see cause: " + cause.getMessage(), cause);
+      }
+      if (causes.size() == 1) {
+        return (Exception) causes.get(0);
+      } else {
+        return e;
+      }
+  }
 
   /**
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
@@ -612,14 +629,12 @@ public class CloudBigtableIO {
       try {
         mutator.close();
       } catch (RetriesExhaustedWithDetailsException e) {
-        List<Throwable> causes = e.getCauses();
-        if (causes.size() == 1) {
-          throw (Exception) causes.get(0);
-        } else {
-          throw e;
-        }
+        throw logRetriesExhaustedWithDetailsException("finishBundle", e);
+      } finally {
+        try {
+        	conn.close();
+        } catch (IOException ignored) {}
       }
-      conn.close();
     }
   }
 
@@ -630,9 +645,9 @@ public class CloudBigtableIO {
    * </p>
    * <p>
    * NOTE: This {@link DoFn} will write {@link Put}s and {@link Delete}s, not {@link
-   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s. 
+   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
-   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent. 
+   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
    * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
    * family is greater than one.  In a case where multiple versions could be a problem, it's best to
@@ -710,9 +725,9 @@ public class CloudBigtableIO {
    * </p>
    * <p>
    * NOTE: This {@link PTransform} will write {@link Put}s and {@link Delete}s, not {@link
-   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s. 
+   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
-   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent. 
+   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
    * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
    * family is greater than one.  In a case where multiple versions could be a problem, it's best to
@@ -732,9 +747,9 @@ public class CloudBigtableIO {
    * </p>
    * <p>
    * NOTE: This {@link PTransform} will write {@link Put}s and {@link Delete}s, not {@link
-   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s. 
+   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
-   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent. 
+   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
    * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
    * family is greater than one.  In a case where multiple versions could be a problem, it's best to
