@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -62,6 +65,14 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private final Configuration configuration;
 
+  /**
+   * Makes sure that mutations and flushes are safe to proceed.  Ensures that while the mutator
+   * is closing, there will be no additional writes.
+   */
+  private final ReentrantReadWriteLock isClosedLock = new ReentrantReadWriteLock();
+  private final ReadLock closedReadLock = isClosedLock.readLock();
+  private final WriteLock closedWriteLock = isClosedLock.writeLock();
+
   private boolean closed = false;
 
   private final HBaseRequestAdapter adapter;
@@ -92,12 +103,21 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   @Override
   public void close() throws IOException {
-    flush();
-    closed = true;
+    closedWriteLock.lock();
+    try {
+      doFlush();
+      closed = true;
+    } finally {
+      closedWriteLock.unlock();
+    }
   }
 
   @Override
   public void flush() throws IOException {
+    doFlush();
+  }
+
+  private void doFlush() throws IOException, RetriesExhaustedWithDetailsException {
     asyncExecutor.flush();
     handleExceptions();
   }
@@ -119,12 +139,17 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   @Override
   public void mutate(List<? extends Mutation> mutations) throws IOException {
-    if (closed) {
-      throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
-    }
-    handleExceptions();
-    for (Mutation mutation : mutations) {
-      doMutation(mutation);
+    closedReadLock.lock();
+    try {
+      if (closed) {
+        throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
+      }
+      handleExceptions();
+      for (Mutation mutation : mutations) {
+        doMutation(mutation);
+      }
+    } finally {
+      closedReadLock.unlock();
     }
   }
 
@@ -135,11 +160,16 @@ public class BigtableBufferedMutator implements BufferedMutator {
    */
   @Override
   public void mutate(final Mutation mutation) throws IOException {
-    if (closed) {
-      throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
+    closedReadLock.lock();
+    try {
+      if (closed) {
+        throw new IllegalStateException("Cannot mutate when the BufferedMutator is closed.");
+      }
+      handleExceptions();
+      doMutation(mutation);
+    } finally {
+      closedReadLock.unlock();
     }
-    handleExceptions();
-    doMutation(mutation);
   }
 
   private void doMutation(final Mutation mutation) throws RetriesExhaustedWithDetailsException {
