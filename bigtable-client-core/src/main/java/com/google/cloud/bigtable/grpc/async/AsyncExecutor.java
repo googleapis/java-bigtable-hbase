@@ -18,9 +18,6 @@ package com.google.cloud.bigtable.grpc.async;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
@@ -89,11 +86,6 @@ public class AsyncExecutor {
         }
       };
 
-  /**
-   * Makes sure that mutations and flushes are safe to proceed.  Ensures that while the mutator
-   * is closing, there will be no additional writes.
-   */
-  private final ReentrantReadWriteLock mutationLock = new ReentrantReadWriteLock();
   private final BigtableDataClient client;
   private final HeapSizeManager sizeManager;
 
@@ -128,49 +120,27 @@ public class AsyncExecutor {
 
   private <RequestT extends GeneratedMessage, ResponseT> ListenableFuture<ResponseT> call(
       AsyncCall<RequestT, ResponseT> rpc, RequestT request) throws InterruptedException {
-    long id = register(request);
-    ListenableFuture<ResponseT> future = getFuture(rpc, request);
+    // Wait until both the memory and rpc count maximum requirements are achieved before getting a
+    // unique id used to track this request.
+    long id = sizeManager.registerOperationWithHeapSize(request.getSerializedSize());
+    ListenableFuture<ResponseT> future;
+    try {
+      future = rpc.call(client, request);
+    } catch (Exception e) {
+      future = Futures.immediateFailedFuture(e);
+    }
     sizeManager.addCallback(future, id);
     return future;
   }
 
-  /**
-   * Wait until both the memory and rpc count maximum requirements are achieved.  Returns a unique
-   * id used to track this request
-   */
-  private long register(GeneratedMessage request) throws InterruptedException {
-    ReadLock lock = mutationLock.readLock();
-    lock.lock();
-    try {
-      return sizeManager.registerOperationWithHeapSize(request.getSerializedSize());
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  private <ResponseT, RequestT extends GeneratedMessage> ListenableFuture<ResponseT> getFuture(
-      AsyncCall<RequestT, ResponseT> rpc, RequestT request) {
-    try {
-      return rpc.call(client, request);
-    } catch (Exception e) {
-      return Futures.immediateFailedFuture(e);
-    }
-  }
-
   public void flush() throws IOException {
-    WriteLock lock = mutationLock.writeLock();
-    lock.lock();
+    LOG.trace("Flushing");
     try {
-      LOG.trace("Flushing");
-      try {
-        sizeManager.waitUntilAllOperationsAreDone();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-      LOG.trace("Done flushing");
-    } finally {
-      lock.unlock();
+      sizeManager.waitUntilAllOperationsAreDone();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
     }
+    LOG.trace("Done flushing");
   }
 
   public boolean hasInflightRequests() {
