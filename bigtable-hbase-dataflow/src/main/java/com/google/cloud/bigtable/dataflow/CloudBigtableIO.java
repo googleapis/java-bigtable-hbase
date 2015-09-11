@@ -21,13 +21,19 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
+import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
@@ -42,14 +48,14 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.BigtableServiceGrpc.BigtableService;
+import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.hbase1_0.BigtableConnection;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.Coder;
@@ -133,6 +139,7 @@ public class CloudBigtableIO {
    */
   static class Source extends BoundedSource<Result> {
     private static final long serialVersionUID = -5580115943635114126L;
+    private static final Logger LOG = LoggerFactory.getLogger(Source.class);
 
     /**
      * Configuration for a Cloud Bigtable connection, a table, and an optional scan.
@@ -173,6 +180,7 @@ public class CloudBigtableIO {
         this.startKey = startKey;
         this.stopKey = stopKey;
         this.estimatedSize = size;
+        LOG.debug("Creating split: {}.", this);
       }
 
       /**
@@ -223,7 +231,11 @@ public class CloudBigtableIO {
       @Override
       public List<SourceWithKeys> splitIntoBundles(long desiredBundleSizeBytes,
           PipelineOptions options) throws Exception {
-        return split(estimatedSize, desiredBundleSizeBytes, startKey, stopKey);
+        List<SourceWithKeys> newSplits = split(estimatedSize, desiredBundleSizeBytes, startKey, stopKey);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Splitting split {} into {}", this, newSplits);
+        }
+        return newSplits;
       }
 
       /**
@@ -273,6 +285,12 @@ public class CloudBigtableIO {
        */
       public long getEstimatedSize() {
         return estimatedSize;
+      }
+
+      @Override
+      public String toString() {
+        return String.format("Split start: '%s', end: '%s', size: %d", Bytes.toString(startKey),
+          Bytes.toString(getStopKey()), getEstimatedSize());
       }
     }
 
@@ -418,6 +436,8 @@ public class CloudBigtableIO {
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
         splits.add(new SourceWithKeys(startKey, endKey, 0));
       }
+      LOG.info("Creating {} splits.", splits.size());
+      LOG.debug("Created splits {}.", splits);
       return splits;
     }
 
@@ -485,6 +505,8 @@ public class CloudBigtableIO {
         lastOffset = offset;
         startKey = currentEndKey;
       }
+      LOG.info("Estimated size in bytes: " + totalEstimatedSizeBytes);
+
       return totalEstimatedSizeBytes;
     }
 
@@ -579,6 +601,7 @@ public class CloudBigtableIO {
    */
   private static class CloudBigtableSingleTableWriteFn extends DoFn<Mutation, Void> {
     private static final long serialVersionUID = 2L;
+    private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableSingleTableWriteFn.class);
     private final CloudBigtableTableConfiguration config;
     private transient Connection conn;
     private transient BufferedMutator mutator;
@@ -593,7 +616,37 @@ public class CloudBigtableIO {
     @Override
     public void startBundle(Context context) throws Exception {
       conn = new BigtableConnection(config.toHBaseConfig());
-      mutator = conn.getBufferedMutator(TableName.valueOf(config.getTableId()));
+      TableName tableName = TableName.valueOf(config.getTableId());
+      ExceptionListener listener = createExceptionListener(context);
+      BufferedMutatorParams params = new BufferedMutatorParams(tableName)
+          .writeBufferSize(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT)
+          .listener(listener);
+      mutator = conn.getBufferedMutator(params);
+    }
+
+    protected ExceptionListener createExceptionListener(final Context context) {
+      return new ExceptionListener() {
+        @Override
+        public void onException(RetriesExhaustedWithDetailsException exception,
+            BufferedMutator mutator) throws RetriesExhaustedWithDetailsException {
+          logExceptions(context, exception);
+          throw exception;
+        }
+      };
+    }
+
+    protected void logExceptions(final Context context,
+        RetriesExhaustedWithDetailsException exception) {
+      List<Throwable> causes = exception.getCauses();
+      String failEventId = UUID.randomUUID().toString();
+      String message =
+          String.format("For context %s: eventId: %s occured during bulk writing.", context,
+            failEventId);
+      LOG.warn(message, exception);
+      for (int i = 0; i < causes.size(); i++) {
+        LOG.warn(String.format("context %s: eventId %s excepition %d", context, failEventId, i),
+          causes.get(i));
+      }
     }
 
     /**
@@ -630,9 +683,9 @@ public class CloudBigtableIO {
    * </p>
    * <p>
    * NOTE: This {@link DoFn} will write {@link Put}s and {@link Delete}s, not {@link
-   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s. 
+   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
-   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent. 
+   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
    * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
    * family is greater than one.  In a case where multiple versions could be a problem, it's best to
@@ -710,9 +763,9 @@ public class CloudBigtableIO {
    * </p>
    * <p>
    * NOTE: This {@link PTransform} will write {@link Put}s and {@link Delete}s, not {@link
-   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s. 
+   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
-   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent. 
+   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
    * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
    * family is greater than one.  In a case where multiple versions could be a problem, it's best to
@@ -732,9 +785,9 @@ public class CloudBigtableIO {
    * </p>
    * <p>
    * NOTE: This {@link PTransform} will write {@link Put}s and {@link Delete}s, not {@link
-   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s. 
+   * org.apache.hadoop.hbase.client.Append}s and {@link org.apache.hadoop.hbase.client.Increment}s.
    * This limitation exists because if the batch fails partway through, Appends/Increments might be
-   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent. 
+   * re-run, causing the {@link Mutation} to be executed twice, which is never the user's intent.
    * Re-running a Delete will not cause any differences.  Re-running a Put isn't normally a problem,
    * but might cause problems in some cases when the number of versions supported by the column
    * family is greater than one.  In a case where multiple versions could be a problem, it's best to
@@ -776,8 +829,9 @@ public class CloudBigtableIO {
         admin.listTableNames();
       }
     } catch (IOException e) {
-      new Logger(CloudBigtableIO.class).warn("Could not validate that the table exists: %s (%s)",
-        e.getClass().getName(), e.getMessage());
+      LoggerFactory.getLogger(CloudBigtableIO.class).error(
+        String.format("Could not validate that the table exists: %s (%s)", e.getClass().getName(),
+          e.getMessage()), e);
     }
   }
 }
