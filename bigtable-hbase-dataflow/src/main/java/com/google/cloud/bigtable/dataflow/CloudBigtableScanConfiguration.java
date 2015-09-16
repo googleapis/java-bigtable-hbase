@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * This class defines information that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -128,7 +130,21 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    */
   public CloudBigtableScanConfiguration(String projectId, String zone, String cluster,
       String table, Scan scan) {
-    super(projectId, zone, cluster, table);
+    this(projectId, zone, cluster, table, scan, Collections.<String, String> emptyMap());
+  }
+
+  /**
+   * Creates a {@link CloudBigtableScanConfiguration} using the specified information.
+   * @param projectId The project ID for the cluster.
+   * @param zone The zone where the cluster is located.
+   * @param cluster The cluster ID for the cluster.
+   * @param table The table to connect to in the cluster.
+   * @param scan The {@link Scan} that will be used to filter the table.
+   * @param additionalConfiguration More configuration for creating the BigtableConnection.
+   */
+  public CloudBigtableScanConfiguration(String projectId, String zone, String cluster,
+      String table, Scan scan, Map<String, String> additionalConfiguration) {
+    super(projectId, zone, cluster, table, additionalConfiguration);
     this.serializableScan = new SerializableScan(scan);
   }
 

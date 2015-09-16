@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.dataflow;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Collections;
+
 import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
@@ -37,7 +39,8 @@ public class CloudBigtableTableConfigurationTest {
   @Test
   public void testHBaseConfig(){
     CloudBigtableTableConfiguration underTest =
-        new CloudBigtableTableConfiguration(PROJECT, ZONE, CLUSTER, TABLE);
+        new CloudBigtableTableConfiguration(PROJECT, ZONE, CLUSTER, TABLE,
+            Collections.<String, String> emptyMap());
 
     Configuration config = underTest.toHBaseConfig();
 

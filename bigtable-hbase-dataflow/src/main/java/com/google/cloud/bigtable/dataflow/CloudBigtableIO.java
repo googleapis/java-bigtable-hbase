@@ -21,7 +21,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
