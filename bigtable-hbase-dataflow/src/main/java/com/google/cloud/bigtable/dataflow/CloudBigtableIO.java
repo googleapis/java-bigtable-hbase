@@ -598,7 +598,7 @@ public class CloudBigtableIO {
    * multiple versions could be a problem, it's best to add a timestamp on the Put.
    * </p>
    */
-  private static class CloudBigtableSingleTableWriteFn extends DoFn<Mutation, Void> {
+  public static class CloudBigtableSingleTableWriteFn extends DoFn<Mutation, Void> {
     private static final long serialVersionUID = 2L;
     private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableSingleTableWriteFn.class);
     private final CloudBigtableTableConfiguration config;
@@ -691,13 +691,13 @@ public class CloudBigtableIO {
    * add a timestamp to the {@link Put}.
    * </p>
    */
-  static class CloudBigtableMultiTableWriteFn extends
+  public static class CloudBigtableMultiTableWriteFn extends
       DoFn<KV<String, Iterable<Mutation>>, Void> {
     private static final long serialVersionUID = 2L;
     private final CloudBigtableConfiguration config;
     private transient Connection conn;
 
-    CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
+    public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       this.config = config;
     }
 
@@ -739,7 +739,7 @@ public class CloudBigtableIO {
    * A {@link PTransform} wrapper around a {@link DoFn} that will write {@link Mutation}s to Cloud
    * Bigtable.
    */
-  static class CloudBigtableWriteTransform<T> extends PTransform<PCollection<T>, PDone> {
+  public static class CloudBigtableWriteTransform<T> extends PTransform<PCollection<T>, PDone> {
     private static final long serialVersionUID = -2888060194257930027L;
 
     private final DoFn<T, Void> function;
