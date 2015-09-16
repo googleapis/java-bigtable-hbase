@@ -15,10 +15,15 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 
+import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
@@ -38,6 +43,7 @@ public class CloudBigtableConfiguration implements Serializable {
     protected String projectId;
     protected String zoneId;
     protected String clusterId;
+    protected Map<String, String> additionalConfiguration = new HashMap<>();
 
     /**
      * Specifies the project ID for the Cloud Bigtable cluster.
@@ -70,18 +76,27 @@ public class CloudBigtableConfiguration implements Serializable {
     }
 
     /**
+     * Add additional connection configuration.
+     * {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
+     * configuration options.
+     */
+    public T withConfiguration(String key, String value) {
+      Preconditions.checkArgument(value != null, "Value cannot be null");
+      this.additionalConfiguration.put(key, value);
+      return (T) this;
+    }
+
+    /**
      * Builds the {@link CloudBigtableConfiguration}.
      * @return The new {@link CloudBigtableConfiguration}.
      */
     public CloudBigtableConfiguration build() {
-      return new CloudBigtableConfiguration(projectId, zoneId, clusterId);
+      return new CloudBigtableConfiguration(projectId, zoneId, clusterId, additionalConfiguration);
     }
   }
 
   // Not final due to serialization of CloudBigtableScanConfiguration.
-  protected String projectId;
-  protected String zoneId;
-  protected String clusterId;
+  protected Map<String, String> configuration;
 
   // Used for serialization of CloudBigtableScanConfiguration.
   CloudBigtableConfiguration() {
@@ -93,11 +108,22 @@ public class CloudBigtableConfiguration implements Serializable {
    * @param projectId The project ID for the cluster.
    * @param zoneId The zone where the cluster is located.
    * @param clusterId The cluster ID for the cluster.
+   * @param additionalConfiguration A Map with additional connection configuration.
+   *          {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information
+   *          about configuration options.
    */
-  public CloudBigtableConfiguration(String projectId, String zoneId, String clusterId) {
-    this.projectId = projectId;
-    this.zoneId = zoneId;
-    this.clusterId = clusterId;
+  public CloudBigtableConfiguration(String projectId, String zoneId, String clusterId,
+      Map<String, String> additionalConfiguration) {
+    this.configuration = new HashMap<>(additionalConfiguration);
+    setValue(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
+    setValue(BigtableOptionsFactory.ZONE_KEY, zoneId);
+    setValue(BigtableOptionsFactory.CLUSTER_KEY, clusterId);
+  }
+
+  private void setValue(String key, String value) {
+    Preconditions.checkArgument(!configuration.containsKey(key),
+      String.format("%s was set twice", key));
+    configuration.put(key, value);
   }
 
   /**
@@ -105,7 +131,7 @@ public class CloudBigtableConfiguration implements Serializable {
    * @return The project ID for the cluster.
    */
   public String getProjectId() {
-    return projectId;
+    return configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY);
   }
 
   /**
@@ -113,7 +139,7 @@ public class CloudBigtableConfiguration implements Serializable {
    * @return The zone where the cluster is located.
    */
   public String getZoneId() {
-    return zoneId;
+    return configuration.get(BigtableOptionsFactory.ZONE_KEY);
   }
 
   /**
@@ -121,20 +147,15 @@ public class CloudBigtableConfiguration implements Serializable {
    * @return The cluster ID for the cluster.
    */
   public String getClusterId() {
-    return clusterId;
+    return configuration.get(BigtableOptionsFactory.CLUSTER_KEY);
   }
 
   /**
    * Converts the {@link CloudBigtableConfiguration} to a {@link BigtableOptions} object.
    * @return The {@link BigtableOptions} object.
    */
-  public BigtableOptions toBigtableOptions() {
-    return new BigtableOptions.Builder()
-      .setProjectId(getProjectId())
-      .setZoneId(getZoneId())
-      .setClusterId(getClusterId())
-      .setUserAgent("CloudBigtableDataflow")
-      .build();
+  public BigtableOptions toBigtableOptions() throws IOException {
+    return BigtableOptionsFactory.fromConfiguration(toHBaseConfig());
   }
 
   /**
@@ -143,9 +164,9 @@ public class CloudBigtableConfiguration implements Serializable {
    */
   public Configuration toHBaseConfig() {
     Configuration config = new Configuration();
-    config.set(BigtableOptionsFactory.PROJECT_ID_KEY, getProjectId());
-    config.set(BigtableOptionsFactory.ZONE_KEY, getZoneId());
-    config.set(BigtableOptionsFactory.CLUSTER_KEY, getClusterId());
+    for (Entry<String, String> entry : configuration.entrySet()) {
+      config.set(entry.getKey(), entry.getValue());
+    }
     return config;
   }
 }

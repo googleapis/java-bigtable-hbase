@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * This class defines information that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -34,7 +36,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
         options.getBigtableProjectId(),
         options.getBigtableZoneId(),
         options.getBigtableClusterId(),
-        options.getBigtableTableId());
+        options.getBigtableTableId(),
+        Collections.<String, String> emptyMap());
   }
 
   /**
@@ -60,7 +63,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      * @return The new {@link CloudBigtableTableConfiguration}.
      */
     public CloudBigtableTableConfiguration build() {
-      return new CloudBigtableTableConfiguration(projectId, zoneId, clusterId, tableId);
+      return new CloudBigtableTableConfiguration(projectId, zoneId, clusterId, tableId,
+          additionalConfiguration);
     }
   }
 
@@ -78,8 +82,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    * @param tableId The table to connect to in the cluster.
    */
   public CloudBigtableTableConfiguration(String projectId, String zoneId, String clusterId,
-      String tableId) {
-    super(projectId, zoneId, clusterId);
+      String tableId, Map<String, String> additionalConfiguration) {
+    super(projectId, zoneId, clusterId, additionalConfiguration);
     this.tableId = tableId;
   }
 
