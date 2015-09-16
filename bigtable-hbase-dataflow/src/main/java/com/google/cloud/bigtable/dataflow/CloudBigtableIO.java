@@ -649,7 +649,7 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Performs an asyc mutation via {@link BufferedMutator#mutate(Mutation))}.
+     * Performs an asyc mutation via {@link BufferedMutator#mutate(Mutation)}.
      */
     @Override
     public void processElement(ProcessContext context) throws Exception {
