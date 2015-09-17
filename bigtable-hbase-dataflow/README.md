@@ -4,7 +4,7 @@ This project is an early release of Cloud Bigtable + Cloud Dataflow integration.
 using the HBase classes for the integration.  There are plans foran additional integration based on
 a new Java oriented API for Cloud Bigtable.
 
-## Reading
+## Writing
 A [PTransform](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/transforms/PTransform)
 is a Dataflow construct that operates on distributed input - A [PCollection]https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/values/PCollection.  See the [Reading and Writing Data](https://cloud.google.com/dataflow/model/reading-and-writing-data) section in the Google Dataflow documentation
 
@@ -45,7 +45,7 @@ To run the example via maven, use the following command, with the values in the 
 
 `mvn exec:java -Dexec.mainClass="com.google.cloud.bigtable.dataflow.example.HelloWorldWrite" -Dexec.args="--runner=BlockingDataflowPipelineRunner --project=[some_project] --stagingLocation=gs://[some_bucket] --bigtableProject=[some_project] --bigtableClusterId=[cluster_name] --bigtableZone=[some_zone] --bigtableTable=[someTableName]" -Dexec.classpathScope="test"`
 
-## Writing
+## Reading
 
 A [Source](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/io/Source) is a Dataflow construct that can read data for use as part of a Pipeline.  The Bigtable Source is not fully optimized for use in Dataflow, but is (or at least should be) functional for your use.  It will be improved when issue #400 is resolved.
 
