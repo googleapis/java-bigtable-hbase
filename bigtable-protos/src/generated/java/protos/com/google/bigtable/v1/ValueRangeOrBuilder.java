@@ -42,4 +42,8 @@ public interface ValueRangeOrBuilder extends
    * </pre>
    */
   com.google.protobuf.ByteString getEndValueExclusive();
+
+  public com.google.bigtable.v1.ValueRange.StartValueCase getStartValueCase();
+
+  public com.google.bigtable.v1.ValueRange.EndValueCase getEndValueCase();
 }

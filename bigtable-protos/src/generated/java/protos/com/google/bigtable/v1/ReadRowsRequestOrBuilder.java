@@ -103,4 +103,6 @@ public interface ReadRowsRequestOrBuilder extends
    * </pre>
    */
   long getNumRowsLimit();
+
+  public com.google.bigtable.v1.ReadRowsRequest.TargetCase getTargetCase();
 }

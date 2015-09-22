@@ -15,7 +15,7 @@ public  final class Method extends
     // @@protoc_insertion_point(message_implements:google.protobuf.Method)
     MethodOrBuilder {
   // Use Method.newBuilder() to construct.
-  private Method(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Method(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Method() {
@@ -52,15 +52,15 @@ public  final class Method extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            requestTypeUrl_ = bs;
+            requestTypeUrl_ = s;
             break;
           }
           case 24: {
@@ -69,9 +69,9 @@ public  final class Method extends
             break;
           }
           case 34: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            responseTypeUrl_ = bs;
+            responseTypeUrl_ = s;
             break;
           }
           case 40: {
@@ -84,7 +84,7 @@ public  final class Method extends
               options_ = new java.util.ArrayList<com.google.protobuf.Option>();
               mutable_bitField0_ |= 0x00000020;
             }
-            options_.add(input.readMessage(com.google.protobuf.Option.PARSER, extensionRegistry));
+            options_.add(input.readMessage(com.google.protobuf.Option.parser(), extensionRegistry));
             break;
           }
         }
@@ -132,9 +132,7 @@ public  final class Method extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -176,9 +174,7 @@ public  final class Method extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        requestTypeUrl_ = s;
-      }
+      requestTypeUrl_ = s;
       return s;
     }
   }
@@ -233,9 +229,7 @@ public  final class Method extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        responseTypeUrl_ = s;
-      }
+      responseTypeUrl_ = s;
       return s;
     }
   }
@@ -341,16 +335,16 @@ public  final class Method extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     if (!getRequestTypeUrlBytes().isEmpty()) {
-      output.writeBytes(2, getRequestTypeUrlBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, requestTypeUrl_);
     }
     if (requestStreaming_ != false) {
       output.writeBool(3, requestStreaming_);
     }
     if (!getResponseTypeUrlBytes().isEmpty()) {
-      output.writeBytes(4, getResponseTypeUrlBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 4, responseTypeUrl_);
     }
     if (responseStreaming_ != false) {
       output.writeBool(5, responseStreaming_);
@@ -360,27 +354,23 @@ public  final class Method extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     if (!getRequestTypeUrlBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getRequestTypeUrlBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, requestTypeUrl_);
     }
     if (requestStreaming_ != false) {
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(3, requestStreaming_);
     }
     if (!getResponseTypeUrlBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getResponseTypeUrlBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(4, responseTypeUrl_);
     }
     if (responseStreaming_ != false) {
       size += com.google.protobuf.CodedOutputStream
@@ -390,7 +380,7 @@ public  final class Method extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(6, options_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -661,9 +651,7 @@ public  final class Method extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -731,7 +719,8 @@ public  final class Method extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -751,9 +740,7 @@ public  final class Method extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          requestTypeUrl_ = s;
-        }
+        requestTypeUrl_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -821,7 +808,8 @@ public  final class Method extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       requestTypeUrl_ = value;
       onChanged();
       return this;
@@ -879,9 +867,7 @@ public  final class Method extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          responseTypeUrl_ = s;
-        }
+        responseTypeUrl_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -949,7 +935,8 @@ public  final class Method extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       responseTypeUrl_ = value;
       onChanged();
       return this;
@@ -1328,8 +1315,8 @@ public  final class Method extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Method> PARSER =
-      new com.google.protobuf.AbstractParser<Method>() {
+  private static final com.google.protobuf.Parser<Method>
+      PARSER = new com.google.protobuf.AbstractParser<Method>() {
     public Method parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

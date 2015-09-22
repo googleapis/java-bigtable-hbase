@@ -16,7 +16,7 @@ public  final class SourceContext extends
     // @@protoc_insertion_point(message_implements:google.protobuf.SourceContext)
     SourceContextOrBuilder {
   // Use SourceContext.newBuilder() to construct.
-  private SourceContext(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private SourceContext(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private SourceContext() {
@@ -48,9 +48,9 @@ public  final class SourceContext extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            fileName_ = bs;
+            fileName_ = s;
             break;
           }
         }
@@ -95,9 +95,7 @@ public  final class SourceContext extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        fileName_ = s;
-      }
+      fileName_ = s;
       return s;
     }
   }
@@ -136,21 +134,19 @@ public  final class SourceContext extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getFileNameBytes().isEmpty()) {
-      output.writeBytes(1, getFileNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, fileName_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getFileNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getFileNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, fileName_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -351,9 +347,7 @@ public  final class SourceContext extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          fileName_ = s;
-        }
+        fileName_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -425,7 +419,8 @@ public  final class SourceContext extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       fileName_ = value;
       onChanged();
       return this;
@@ -454,8 +449,8 @@ public  final class SourceContext extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<SourceContext> PARSER =
-      new com.google.protobuf.AbstractParser<SourceContext>() {
+  private static final com.google.protobuf.Parser<SourceContext>
+      PARSER = new com.google.protobuf.AbstractParser<SourceContext>() {
     public SourceContext parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

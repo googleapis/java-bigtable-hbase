@@ -53,7 +53,7 @@ public  final class Timestamp extends
     // @@protoc_insertion_point(message_implements:google.protobuf.Timestamp)
     TimestampOrBuilder {
   // Use Timestamp.newBuilder() to construct.
-  private Timestamp(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Timestamp(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Timestamp() {
@@ -170,9 +170,8 @@ public  final class Timestamp extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -184,7 +183,7 @@ public  final class Timestamp extends
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(2, nanos_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -561,8 +560,8 @@ public  final class Timestamp extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Timestamp> PARSER =
-      new com.google.protobuf.AbstractParser<Timestamp>() {
+  private static final com.google.protobuf.Parser<Timestamp>
+      PARSER = new com.google.protobuf.AbstractParser<Timestamp>() {
     public Timestamp parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

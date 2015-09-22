@@ -132,7 +132,7 @@ public class CallCompletionStatusInterceptor implements ClientInterceptor {
       return new ForwardingClientCallListener.SimpleForwardingClientCallListener<ResponseT>(
           responseListener) {
         @Override
-        public void onClose(final Status status, Metadata.Trailers trailers) {
+        public void onClose(final Status status, Metadata trailers) {
           countUpdateExecutor.submit(new Runnable() {
             @Override
             public void run() {
@@ -145,7 +145,7 @@ public class CallCompletionStatusInterceptor implements ClientInterceptor {
     }
 
     @Override
-    public void start(Listener<ResponseT> responseListener, Metadata.Headers headers) {
+    public void start(Listener<ResponseT> responseListener, Metadata headers) {
       Listener<ResponseT> forwardingListener = createGatheringListener(responseListener);
       super.start(forwardingListener, headers);
     }

@@ -18,7 +18,7 @@ public  final class ColumnRange extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.ColumnRange)
     ColumnRangeOrBuilder {
   // Use ColumnRange.newBuilder() to construct.
-  private ColumnRange(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ColumnRange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ColumnRange() {
@@ -50,9 +50,9 @@ public  final class ColumnRange extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            familyName_ = bs;
+            familyName_ = s;
             break;
           }
           case 18: {
@@ -178,9 +178,7 @@ public  final class ColumnRange extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        familyName_ = s;
-      }
+      familyName_ = s;
       return s;
     }
   }
@@ -278,7 +276,7 @@ public  final class ColumnRange extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getFamilyNameBytes().isEmpty()) {
-      output.writeBytes(1, getFamilyNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, familyName_);
     }
     if (startQualifierCase_ == 2) {
       output.writeBytes(
@@ -298,15 +296,13 @@ public  final class ColumnRange extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getFamilyNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getFamilyNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, familyName_);
     }
     if (startQualifierCase_ == 2) {
       size += com.google.protobuf.CodedOutputStream
@@ -328,7 +324,7 @@ public  final class ColumnRange extends
         .computeBytesSize(
             5, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) endQualifier_));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -604,9 +600,7 @@ public  final class ColumnRange extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          familyName_ = s;
-        }
+        familyName_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -674,7 +668,8 @@ public  final class ColumnRange extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       familyName_ = value;
       onChanged();
       return this;
@@ -883,8 +878,8 @@ public  final class ColumnRange extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ColumnRange> PARSER =
-      new com.google.protobuf.AbstractParser<ColumnRange>() {
+  private static final com.google.protobuf.Parser<ColumnRange>
+      PARSER = new com.google.protobuf.AbstractParser<ColumnRange>() {
     public ColumnRange parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

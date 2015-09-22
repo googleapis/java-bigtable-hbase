@@ -42,7 +42,7 @@ public  final class RowFilter extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.RowFilter)
     RowFilterOrBuilder {
   // Use RowFilter.newBuilder() to construct.
-  private RowFilter(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private RowFilter(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private RowFilter() {
@@ -77,7 +77,8 @@ public  final class RowFilter extends
             if (filterCase_ == 1) {
               subBuilder = ((com.google.bigtable.v1.RowFilter.Chain) filter_).toBuilder();
             }
-            filter_ = input.readMessage(com.google.bigtable.v1.RowFilter.Chain.PARSER, extensionRegistry);
+            filter_ =
+                input.readMessage(com.google.bigtable.v1.RowFilter.Chain.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.bigtable.v1.RowFilter.Chain) filter_);
               filter_ = subBuilder.buildPartial();
@@ -90,7 +91,8 @@ public  final class RowFilter extends
             if (filterCase_ == 2) {
               subBuilder = ((com.google.bigtable.v1.RowFilter.Interleave) filter_).toBuilder();
             }
-            filter_ = input.readMessage(com.google.bigtable.v1.RowFilter.Interleave.PARSER, extensionRegistry);
+            filter_ =
+                input.readMessage(com.google.bigtable.v1.RowFilter.Interleave.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.bigtable.v1.RowFilter.Interleave) filter_);
               filter_ = subBuilder.buildPartial();
@@ -103,7 +105,8 @@ public  final class RowFilter extends
             if (filterCase_ == 3) {
               subBuilder = ((com.google.bigtable.v1.RowFilter.Condition) filter_).toBuilder();
             }
-            filter_ = input.readMessage(com.google.bigtable.v1.RowFilter.Condition.PARSER, extensionRegistry);
+            filter_ =
+                input.readMessage(com.google.bigtable.v1.RowFilter.Condition.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.bigtable.v1.RowFilter.Condition) filter_);
               filter_ = subBuilder.buildPartial();
@@ -117,9 +120,9 @@ public  final class RowFilter extends
             break;
           }
           case 42: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             filterCase_ = 5;
-            filter_ = bs;
+            filter_ = s;
             break;
           }
           case 50: {
@@ -132,7 +135,8 @@ public  final class RowFilter extends
             if (filterCase_ == 7) {
               subBuilder = ((com.google.bigtable.v1.ColumnRange) filter_).toBuilder();
             }
-            filter_ = input.readMessage(com.google.bigtable.v1.ColumnRange.PARSER, extensionRegistry);
+            filter_ =
+                input.readMessage(com.google.bigtable.v1.ColumnRange.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.bigtable.v1.ColumnRange) filter_);
               filter_ = subBuilder.buildPartial();
@@ -145,7 +149,8 @@ public  final class RowFilter extends
             if (filterCase_ == 8) {
               subBuilder = ((com.google.bigtable.v1.TimestampRange) filter_).toBuilder();
             }
-            filter_ = input.readMessage(com.google.bigtable.v1.TimestampRange.PARSER, extensionRegistry);
+            filter_ =
+                input.readMessage(com.google.bigtable.v1.TimestampRange.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.bigtable.v1.TimestampRange) filter_);
               filter_ = subBuilder.buildPartial();
@@ -188,7 +193,8 @@ public  final class RowFilter extends
             if (filterCase_ == 15) {
               subBuilder = ((com.google.bigtable.v1.ValueRange) filter_).toBuilder();
             }
-            filter_ = input.readMessage(com.google.bigtable.v1.ValueRange.PARSER, extensionRegistry);
+            filter_ =
+                input.readMessage(com.google.bigtable.v1.ValueRange.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.bigtable.v1.ValueRange) filter_);
               filter_ = subBuilder.buildPartial();
@@ -212,9 +218,9 @@ public  final class RowFilter extends
             break;
           }
           case 154: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             filterCase_ = 19;
-            filter_ = bs;
+            filter_ = s;
             break;
           }
         }
@@ -311,7 +317,7 @@ public  final class RowFilter extends
       // @@protoc_insertion_point(message_implements:google.bigtable.v1.RowFilter.Chain)
       ChainOrBuilder {
     // Use Chain.newBuilder() to construct.
-    private Chain(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private Chain(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private Chain() {
@@ -347,7 +353,7 @@ public  final class RowFilter extends
                 filters_ = new java.util.ArrayList<com.google.bigtable.v1.RowFilter>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              filters_.add(input.readMessage(com.google.bigtable.v1.RowFilter.PARSER, extensionRegistry));
+              filters_.add(input.readMessage(com.google.bigtable.v1.RowFilter.parser(), extensionRegistry));
               break;
             }
           }
@@ -459,9 +465,8 @@ public  final class RowFilter extends
       }
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -469,7 +474,7 @@ public  final class RowFilter extends
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, filters_.get(i));
       }
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -1062,8 +1067,8 @@ public  final class RowFilter extends
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<Chain> PARSER =
-        new com.google.protobuf.AbstractParser<Chain>() {
+    private static final com.google.protobuf.Parser<Chain>
+        PARSER = new com.google.protobuf.AbstractParser<Chain>() {
       public Chain parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1267,7 +1272,7 @@ public  final class RowFilter extends
       // @@protoc_insertion_point(message_implements:google.bigtable.v1.RowFilter.Interleave)
       InterleaveOrBuilder {
     // Use Interleave.newBuilder() to construct.
-    private Interleave(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private Interleave(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private Interleave() {
@@ -1303,7 +1308,7 @@ public  final class RowFilter extends
                 filters_ = new java.util.ArrayList<com.google.bigtable.v1.RowFilter>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              filters_.add(input.readMessage(com.google.bigtable.v1.RowFilter.PARSER, extensionRegistry));
+              filters_.add(input.readMessage(com.google.bigtable.v1.RowFilter.parser(), extensionRegistry));
               break;
             }
           }
@@ -1515,9 +1520,8 @@ public  final class RowFilter extends
       }
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -1525,7 +1529,7 @@ public  final class RowFilter extends
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, filters_.get(i));
       }
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -2479,8 +2483,8 @@ public  final class RowFilter extends
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<Interleave> PARSER =
-        new com.google.protobuf.AbstractParser<Interleave>() {
+    private static final com.google.protobuf.Parser<Interleave>
+        PARSER = new com.google.protobuf.AbstractParser<Interleave>() {
       public Interleave parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -2621,7 +2625,7 @@ public  final class RowFilter extends
       // @@protoc_insertion_point(message_implements:google.bigtable.v1.RowFilter.Condition)
       ConditionOrBuilder {
     // Use Condition.newBuilder() to construct.
-    private Condition(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private Condition(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private Condition() {
@@ -2656,7 +2660,7 @@ public  final class RowFilter extends
               if (predicateFilter_ != null) {
                 subBuilder = predicateFilter_.toBuilder();
               }
-              predicateFilter_ = input.readMessage(com.google.bigtable.v1.RowFilter.PARSER, extensionRegistry);
+              predicateFilter_ = input.readMessage(com.google.bigtable.v1.RowFilter.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(predicateFilter_);
                 predicateFilter_ = subBuilder.buildPartial();
@@ -2669,7 +2673,7 @@ public  final class RowFilter extends
               if (trueFilter_ != null) {
                 subBuilder = trueFilter_.toBuilder();
               }
-              trueFilter_ = input.readMessage(com.google.bigtable.v1.RowFilter.PARSER, extensionRegistry);
+              trueFilter_ = input.readMessage(com.google.bigtable.v1.RowFilter.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(trueFilter_);
                 trueFilter_ = subBuilder.buildPartial();
@@ -2682,7 +2686,7 @@ public  final class RowFilter extends
               if (falseFilter_ != null) {
                 subBuilder = falseFilter_.toBuilder();
               }
-              falseFilter_ = input.readMessage(com.google.bigtable.v1.RowFilter.PARSER, extensionRegistry);
+              falseFilter_ = input.readMessage(com.google.bigtable.v1.RowFilter.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(falseFilter_);
                 falseFilter_ = subBuilder.buildPartial();
@@ -2848,9 +2852,8 @@ public  final class RowFilter extends
       }
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -2866,7 +2869,7 @@ public  final class RowFilter extends
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(3, getFalseFilter());
       }
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -3609,8 +3612,8 @@ public  final class RowFilter extends
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<Condition> PARSER =
-        new com.google.protobuf.AbstractParser<Condition>() {
+    private static final com.google.protobuf.Parser<Condition>
+        PARSER = new com.google.protobuf.AbstractParser<Condition>() {
       public Condition parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -3959,7 +3962,7 @@ public  final class RowFilter extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8() && (filterCase_ == 5)) {
+      if (filterCase_ == 5) {
         filter_ = s;
       }
       return s;
@@ -4211,7 +4214,7 @@ public  final class RowFilter extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8() && (filterCase_ == 19)) {
+      if (filterCase_ == 19) {
         filter_ = s;
       }
       return s;
@@ -4279,7 +4282,7 @@ public  final class RowFilter extends
           4, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) filter_));
     }
     if (filterCase_ == 5) {
-      output.writeBytes(5, getFamilyNameRegexFilterBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 5, filter_);
     }
     if (filterCase_ == 6) {
       output.writeBytes(
@@ -4331,13 +4334,12 @@ public  final class RowFilter extends
           18, (boolean)((java.lang.Boolean) filter_));
     }
     if (filterCase_ == 19) {
-      output.writeBytes(19, getApplyLabelTransformerBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 19, filter_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -4359,8 +4361,7 @@ public  final class RowFilter extends
             4, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) filter_));
     }
     if (filterCase_ == 5) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(5, getFamilyNameRegexFilterBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(5, filter_);
     }
     if (filterCase_ == 6) {
       size += com.google.protobuf.CodedOutputStream
@@ -4425,10 +4426,9 @@ public  final class RowFilter extends
             18, (boolean)((java.lang.Boolean) filter_));
     }
     if (filterCase_ == 19) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(19, getApplyLabelTransformerBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(19, filter_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -5748,9 +5748,7 @@ public  final class RowFilter extends
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (filterCase_ == 5) {
-          if (bs.isValidUtf8()) {
-            filter_ = s;
-          }
+          filter_ = s;
         }
         return s;
       } else {
@@ -5846,7 +5844,8 @@ public  final class RowFilter extends
       if (value == null) {
     throw new NullPointerException();
   }
-  filterCase_ = 5;
+  checkByteStringIsUtf8(value);
+      filterCase_ = 5;
       filter_ = value;
       onChanged();
       return this;
@@ -6659,9 +6658,7 @@ public  final class RowFilter extends
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (filterCase_ == 19) {
-          if (bs.isValidUtf8()) {
-            filter_ = s;
-          }
+          filter_ = s;
         }
         return s;
       } else {
@@ -6777,7 +6774,8 @@ public  final class RowFilter extends
       if (value == null) {
     throw new NullPointerException();
   }
-  filterCase_ = 19;
+  checkByteStringIsUtf8(value);
+      filterCase_ = 19;
       filter_ = value;
       onChanged();
       return this;
@@ -6806,8 +6804,8 @@ public  final class RowFilter extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<RowFilter> PARSER =
-      new com.google.protobuf.AbstractParser<RowFilter>() {
+  private static final com.google.protobuf.Parser<RowFilter>
+      PARSER = new com.google.protobuf.AbstractParser<RowFilter>() {
     public RowFilter parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

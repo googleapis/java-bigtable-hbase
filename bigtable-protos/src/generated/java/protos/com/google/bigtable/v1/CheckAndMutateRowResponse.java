@@ -15,7 +15,7 @@ public  final class CheckAndMutateRowResponse extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.CheckAndMutateRowResponse)
     CheckAndMutateRowResponseOrBuilder {
   // Use CheckAndMutateRowResponse.newBuilder() to construct.
-  private CheckAndMutateRowResponse(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private CheckAndMutateRowResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private CheckAndMutateRowResponse() {
@@ -106,9 +106,8 @@ public  final class CheckAndMutateRowResponse extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -116,7 +115,7 @@ public  final class CheckAndMutateRowResponse extends
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(1, predicateMatched_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -364,8 +363,8 @@ public  final class CheckAndMutateRowResponse extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<CheckAndMutateRowResponse> PARSER =
-      new com.google.protobuf.AbstractParser<CheckAndMutateRowResponse>() {
+  private static final com.google.protobuf.Parser<CheckAndMutateRowResponse>
+      PARSER = new com.google.protobuf.AbstractParser<CheckAndMutateRowResponse>() {
     public CheckAndMutateRowResponse parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

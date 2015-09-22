@@ -48,7 +48,7 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
   private final ScheduledExecutorService scheduledExecutorService;
 
   private Listener<ResponseT> listener;
-  private Metadata.Headers headers;
+  private Metadata headers;
   private RequestT message;
   private boolean payloadIsRetriable = true;
   private final SettableFuture<Void> cancelled = SettableFuture.create();
@@ -69,7 +69,7 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
   }
 
   @Override
-  public void start(Listener<ResponseT> listener, Metadata.Headers headers) {
+  public void start(Listener<ResponseT> listener, Metadata headers) {
     Preconditions.checkState(
         this.listener == null,
         "start should not be invoked more than once for unary calls.");
@@ -121,7 +121,7 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
   // retryCall can be invoked from any thread.
   private void retryCall(
       RequestT message,
-      Metadata.Headers requestHeaders,
+      Metadata requestHeaders,
       Listener<ResponseT> listener) {
     final ClientCall<RequestT, ResponseT> delegate = channel.newCall(method, callOptions);
     delegate.start(listener, requestHeaders);
@@ -141,7 +141,7 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
   @VisibleForTesting
   boolean retryCallAfterBackoff(
       final RequestT payload,
-      final Metadata.Headers requestHeaders,
+      final Metadata requestHeaders,
       final Listener<ResponseT> listener) {
     long sleepTimeout = BackOff.STOP;
     try {
@@ -156,7 +156,8 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
           try {
             retryCall(payload, requestHeaders, listener);
           } catch (RuntimeException e) {
-            listener.onClose(Status.fromThrowable(e), new Metadata.Trailers());
+            Metadata trailers = new Metadata();
+            listener.onClose(Status.fromThrowable(e), trailers);
           }
         }
       }, sleepTimeout, TimeUnit.MILLISECONDS);

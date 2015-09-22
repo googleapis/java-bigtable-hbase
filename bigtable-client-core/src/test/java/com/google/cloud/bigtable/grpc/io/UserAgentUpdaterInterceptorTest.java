@@ -64,7 +64,7 @@ public class UserAgentUpdaterInterceptorTest {
     ClientCall<MutateRowRequest, Empty> wrappedCall =
         interceptor.interceptCall(BigtableServiceGrpc.METHOD_MUTATE_ROW, CallOptions.DEFAULT,
           channelStub);
-   Metadata.Headers headers = new Metadata.Headers();
+   Metadata headers = new Metadata();
     wrappedCall.start(responseListenerStub, headers);
 
     Metadata.Key<String> key =
@@ -80,7 +80,7 @@ public class UserAgentUpdaterInterceptorTest {
     ClientCall<MutateRowRequest, Empty> wrappedCall =
         interceptor.interceptCall(BigtableServiceGrpc.METHOD_MUTATE_ROW, CallOptions.DEFAULT,
           channelStub);
-    Metadata.Headers headers = new Metadata.Headers();
+    Metadata headers = new Metadata();
     Metadata.Key<String> key =
         Metadata.Key.of(HttpHeaders.USER_AGENT, Metadata.ASCII_STRING_MARSHALLER);
     headers.put(key, "dummy");

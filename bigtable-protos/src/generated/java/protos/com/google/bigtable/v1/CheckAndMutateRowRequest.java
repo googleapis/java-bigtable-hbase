@@ -15,7 +15,7 @@ public  final class CheckAndMutateRowRequest extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.CheckAndMutateRowRequest)
     CheckAndMutateRowRequestOrBuilder {
   // Use CheckAndMutateRowRequest.newBuilder() to construct.
-  private CheckAndMutateRowRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private CheckAndMutateRowRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private CheckAndMutateRowRequest() {
@@ -50,9 +50,9 @@ public  final class CheckAndMutateRowRequest extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            tableName_ = bs;
+            tableName_ = s;
             break;
           }
           case 18: {
@@ -65,7 +65,7 @@ public  final class CheckAndMutateRowRequest extends
               trueMutations_ = new java.util.ArrayList<com.google.bigtable.v1.Mutation>();
               mutable_bitField0_ |= 0x00000008;
             }
-            trueMutations_.add(input.readMessage(com.google.bigtable.v1.Mutation.PARSER, extensionRegistry));
+            trueMutations_.add(input.readMessage(com.google.bigtable.v1.Mutation.parser(), extensionRegistry));
             break;
           }
           case 42: {
@@ -73,7 +73,7 @@ public  final class CheckAndMutateRowRequest extends
               falseMutations_ = new java.util.ArrayList<com.google.bigtable.v1.Mutation>();
               mutable_bitField0_ |= 0x00000010;
             }
-            falseMutations_.add(input.readMessage(com.google.bigtable.v1.Mutation.PARSER, extensionRegistry));
+            falseMutations_.add(input.readMessage(com.google.bigtable.v1.Mutation.parser(), extensionRegistry));
             break;
           }
           case 50: {
@@ -81,7 +81,7 @@ public  final class CheckAndMutateRowRequest extends
             if (predicateFilter_ != null) {
               subBuilder = predicateFilter_.toBuilder();
             }
-            predicateFilter_ = input.readMessage(com.google.bigtable.v1.RowFilter.PARSER, extensionRegistry);
+            predicateFilter_ = input.readMessage(com.google.bigtable.v1.RowFilter.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(predicateFilter_);
               predicateFilter_ = subBuilder.buildPartial();
@@ -138,9 +138,7 @@ public  final class CheckAndMutateRowRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        tableName_ = s;
-      }
+      tableName_ = s;
       return s;
     }
   }
@@ -384,7 +382,7 @@ public  final class CheckAndMutateRowRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getTableNameBytes().isEmpty()) {
-      output.writeBytes(1, getTableNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, tableName_);
     }
     if (!rowKey_.isEmpty()) {
       output.writeBytes(2, rowKey_);
@@ -400,15 +398,13 @@ public  final class CheckAndMutateRowRequest extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getTableNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getTableNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, tableName_);
     }
     if (!rowKey_.isEmpty()) {
       size += com.google.protobuf.CodedOutputStream
@@ -426,7 +422,7 @@ public  final class CheckAndMutateRowRequest extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(6, getPredicateFilter());
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -734,9 +730,7 @@ public  final class CheckAndMutateRowRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          tableName_ = s;
-        }
+        tableName_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -808,7 +802,8 @@ public  final class CheckAndMutateRowRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       tableName_ = value;
       onChanged();
       return this;
@@ -1826,8 +1821,8 @@ public  final class CheckAndMutateRowRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<CheckAndMutateRowRequest> PARSER =
-      new com.google.protobuf.AbstractParser<CheckAndMutateRowRequest>() {
+  private static final com.google.protobuf.Parser<CheckAndMutateRowRequest>
+      PARSER = new com.google.protobuf.AbstractParser<CheckAndMutateRowRequest>() {
     public CheckAndMutateRowRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

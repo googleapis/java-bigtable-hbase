@@ -11,7 +11,7 @@ public  final class ListTablesResponse extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.table.v1.ListTablesResponse)
     ListTablesResponseOrBuilder {
   // Use ListTablesResponse.newBuilder() to construct.
-  private ListTablesResponse(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ListTablesResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ListTablesResponse() {
@@ -47,7 +47,7 @@ public  final class ListTablesResponse extends
               tables_ = new java.util.ArrayList<com.google.bigtable.admin.table.v1.Table>();
               mutable_bitField0_ |= 0x00000001;
             }
-            tables_.add(input.readMessage(com.google.bigtable.admin.table.v1.Table.PARSER, extensionRegistry));
+            tables_.add(input.readMessage(com.google.bigtable.admin.table.v1.Table.parser(), extensionRegistry));
             break;
           }
         }
@@ -154,9 +154,8 @@ public  final class ListTablesResponse extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -164,7 +163,7 @@ public  final class ListTablesResponse extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, tables_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -735,8 +734,8 @@ public  final class ListTablesResponse extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ListTablesResponse> PARSER =
-      new com.google.protobuf.AbstractParser<ListTablesResponse>() {
+  private static final com.google.protobuf.Parser<ListTablesResponse>
+      PARSER = new com.google.protobuf.AbstractParser<ListTablesResponse>() {
     public ListTablesResponse parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

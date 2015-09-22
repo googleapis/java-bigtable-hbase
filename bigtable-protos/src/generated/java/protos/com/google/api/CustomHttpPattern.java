@@ -15,7 +15,7 @@ public  final class CustomHttpPattern extends
     // @@protoc_insertion_point(message_implements:google.api.CustomHttpPattern)
     CustomHttpPatternOrBuilder {
   // Use CustomHttpPattern.newBuilder() to construct.
-  private CustomHttpPattern(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private CustomHttpPattern(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private CustomHttpPattern() {
@@ -48,15 +48,15 @@ public  final class CustomHttpPattern extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            kind_ = bs;
+            kind_ = s;
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            path_ = bs;
+            path_ = s;
             break;
           }
         }
@@ -100,9 +100,7 @@ public  final class CustomHttpPattern extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        kind_ = s;
-      }
+      kind_ = s;
       return s;
     }
   }
@@ -144,9 +142,7 @@ public  final class CustomHttpPattern extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        path_ = s;
-      }
+      path_ = s;
       return s;
     }
   }
@@ -184,28 +180,25 @@ public  final class CustomHttpPattern extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getKindBytes().isEmpty()) {
-      output.writeBytes(1, getKindBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, kind_);
     }
     if (!getPathBytes().isEmpty()) {
-      output.writeBytes(2, getPathBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, path_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getKindBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getKindBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, kind_);
     }
     if (!getPathBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getPathBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, path_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -411,9 +404,7 @@ public  final class CustomHttpPattern extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          kind_ = s;
-        }
+        kind_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -481,7 +472,8 @@ public  final class CustomHttpPattern extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       kind_ = value;
       onChanged();
       return this;
@@ -501,9 +493,7 @@ public  final class CustomHttpPattern extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          path_ = s;
-        }
+        path_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -571,7 +561,8 @@ public  final class CustomHttpPattern extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       path_ = value;
       onChanged();
       return this;
@@ -600,8 +591,8 @@ public  final class CustomHttpPattern extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<CustomHttpPattern> PARSER =
-      new com.google.protobuf.AbstractParser<CustomHttpPattern>() {
+  private static final com.google.protobuf.Parser<CustomHttpPattern>
+      PARSER = new com.google.protobuf.AbstractParser<CustomHttpPattern>() {
     public CustomHttpPattern parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

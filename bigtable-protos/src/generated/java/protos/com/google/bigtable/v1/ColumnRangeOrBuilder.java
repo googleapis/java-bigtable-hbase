@@ -60,4 +60,8 @@ public interface ColumnRangeOrBuilder extends
    * </pre>
    */
   com.google.protobuf.ByteString getEndQualifierExclusive();
+
+  public com.google.bigtable.v1.ColumnRange.StartQualifierCase getStartQualifierCase();
+
+  public com.google.bigtable.v1.ColumnRange.EndQualifierCase getEndQualifierCase();
 }

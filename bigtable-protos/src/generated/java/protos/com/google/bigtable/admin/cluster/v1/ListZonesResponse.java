@@ -15,7 +15,7 @@ public  final class ListZonesResponse extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.cluster.v1.ListZonesResponse)
     ListZonesResponseOrBuilder {
   // Use ListZonesResponse.newBuilder() to construct.
-  private ListZonesResponse(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ListZonesResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ListZonesResponse() {
@@ -51,7 +51,7 @@ public  final class ListZonesResponse extends
               zones_ = new java.util.ArrayList<com.google.bigtable.admin.cluster.v1.Zone>();
               mutable_bitField0_ |= 0x00000001;
             }
-            zones_.add(input.readMessage(com.google.bigtable.admin.cluster.v1.Zone.PARSER, extensionRegistry));
+            zones_.add(input.readMessage(com.google.bigtable.admin.cluster.v1.Zone.parser(), extensionRegistry));
             break;
           }
         }
@@ -153,9 +153,8 @@ public  final class ListZonesResponse extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -163,7 +162,7 @@ public  final class ListZonesResponse extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, zones_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -720,8 +719,8 @@ public  final class ListZonesResponse extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ListZonesResponse> PARSER =
-      new com.google.protobuf.AbstractParser<ListZonesResponse>() {
+  private static final com.google.protobuf.Parser<ListZonesResponse>
+      PARSER = new com.google.protobuf.AbstractParser<ListZonesResponse>() {
     public ListZonesResponse parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

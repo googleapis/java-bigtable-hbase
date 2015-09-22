@@ -15,7 +15,7 @@ public  final class Cell extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.Cell)
     CellOrBuilder {
   // Use Cell.newBuilder() to construct.
-  private Cell(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Cell(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Cell() {
@@ -59,12 +59,12 @@ public  final class Cell extends
             break;
           }
           case 26: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
               labels_ = new com.google.protobuf.LazyStringArrayList();
               mutable_bitField0_ |= 0x00000004;
             }
-            labels_.add(bs);
+            labels_.add(s);
             break;
           }
         }
@@ -192,13 +192,12 @@ public  final class Cell extends
       output.writeBytes(2, value_);
     }
     for (int i = 0; i < labels_.size(); i++) {
-      output.writeBytes(3, labels_.getByteString(i));
+      com.google.protobuf.GeneratedMessage.writeString(output, 3, labels_.getRaw(i));
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -213,13 +212,12 @@ public  final class Cell extends
     {
       int dataSize = 0;
       for (int i = 0; i < labels_.size(); i++) {
-        dataSize += com.google.protobuf.CodedOutputStream
-          .computeBytesSizeNoTag(labels_.getByteString(i));
+        dataSize += computeStringSizeNoTag(labels_.getRaw(i));
       }
       size += dataSize;
       size += 1 * getLabelsList().size();
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -653,7 +651,8 @@ public  final class Cell extends
       if (value == null) {
     throw new NullPointerException();
   }
-  ensureLabelsIsMutable();
+  checkByteStringIsUtf8(value);
+      ensureLabelsIsMutable();
       labels_.add(value);
       onChanged();
       return this;
@@ -682,8 +681,8 @@ public  final class Cell extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Cell> PARSER =
-      new com.google.protobuf.AbstractParser<Cell>() {
+  private static final com.google.protobuf.Parser<Cell>
+      PARSER = new com.google.protobuf.AbstractParser<Cell>() {
     public Cell parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

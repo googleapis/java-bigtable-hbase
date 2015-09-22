@@ -60,4 +60,6 @@ public interface ReadModifyWriteRuleOrBuilder extends
    * </pre>
    */
   long getIncrementAmount();
+
+  public com.google.bigtable.v1.ReadModifyWriteRule.RuleCase getRuleCase();
 }

@@ -53,7 +53,7 @@ public  final class Status extends
     // @@protoc_insertion_point(message_implements:google.rpc.Status)
     StatusOrBuilder {
   // Use Status.newBuilder() to construct.
-  private Status(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Status(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Status() {
@@ -92,9 +92,9 @@ public  final class Status extends
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            message_ = bs;
+            message_ = s;
             break;
           }
           case 26: {
@@ -102,7 +102,7 @@ public  final class Status extends
               details_ = new java.util.ArrayList<com.google.protobuf.Any>();
               mutable_bitField0_ |= 0x00000004;
             }
-            details_.add(input.readMessage(com.google.protobuf.Any.PARSER, extensionRegistry));
+            details_.add(input.readMessage(com.google.protobuf.Any.parser(), extensionRegistry));
             break;
           }
         }
@@ -165,9 +165,7 @@ public  final class Status extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        message_ = s;
-      }
+      message_ = s;
       return s;
     }
   }
@@ -270,16 +268,15 @@ public  final class Status extends
       output.writeInt32(1, code_);
     }
     if (!getMessageBytes().isEmpty()) {
-      output.writeBytes(2, getMessageBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, message_);
     }
     for (int i = 0; i < details_.size(); i++) {
       output.writeMessage(3, details_.get(i));
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -288,14 +285,13 @@ public  final class Status extends
         .computeInt32Size(1, code_);
     }
     if (!getMessageBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getMessageBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, message_);
     }
     for (int i = 0; i < details_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(3, details_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -624,9 +620,7 @@ public  final class Status extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          message_ = s;
-        }
+        message_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -702,7 +696,8 @@ public  final class Status extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       message_ = value;
       onChanged();
       return this;
@@ -1061,8 +1056,8 @@ public  final class Status extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Status> PARSER =
-      new com.google.protobuf.AbstractParser<Status>() {
+  private static final com.google.protobuf.Parser<Status>
+      PARSER = new com.google.protobuf.AbstractParser<Status>() {
     public Status parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

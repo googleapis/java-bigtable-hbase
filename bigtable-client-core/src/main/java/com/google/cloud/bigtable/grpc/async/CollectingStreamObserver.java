@@ -36,7 +36,7 @@ public class CollectingStreamObserver<T> implements StreamObserver<T> {
   }
 
   @Override
-  public void onValue(T value) {
+  public void onNext(T value) {
     buffer.add(value);
   }
 

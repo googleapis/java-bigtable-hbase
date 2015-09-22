@@ -15,7 +15,7 @@ public  final class ReadModifyWriteRowRequest extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.ReadModifyWriteRowRequest)
     ReadModifyWriteRowRequestOrBuilder {
   // Use ReadModifyWriteRowRequest.newBuilder() to construct.
-  private ReadModifyWriteRowRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ReadModifyWriteRowRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ReadModifyWriteRowRequest() {
@@ -49,9 +49,9 @@ public  final class ReadModifyWriteRowRequest extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            tableName_ = bs;
+            tableName_ = s;
             break;
           }
           case 18: {
@@ -64,7 +64,7 @@ public  final class ReadModifyWriteRowRequest extends
               rules_ = new java.util.ArrayList<com.google.bigtable.v1.ReadModifyWriteRule>();
               mutable_bitField0_ |= 0x00000004;
             }
-            rules_.add(input.readMessage(com.google.bigtable.v1.ReadModifyWriteRule.PARSER, extensionRegistry));
+            rules_.add(input.readMessage(com.google.bigtable.v1.ReadModifyWriteRule.parser(), extensionRegistry));
             break;
           }
         }
@@ -113,9 +113,7 @@ public  final class ReadModifyWriteRowRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        tableName_ = s;
-      }
+      tableName_ = s;
       return s;
     }
   }
@@ -232,7 +230,7 @@ public  final class ReadModifyWriteRowRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getTableNameBytes().isEmpty()) {
-      output.writeBytes(1, getTableNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, tableName_);
     }
     if (!rowKey_.isEmpty()) {
       output.writeBytes(2, rowKey_);
@@ -242,15 +240,13 @@ public  final class ReadModifyWriteRowRequest extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getTableNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getTableNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, tableName_);
     }
     if (!rowKey_.isEmpty()) {
       size += com.google.protobuf.CodedOutputStream
@@ -260,7 +256,7 @@ public  final class ReadModifyWriteRowRequest extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(3, rules_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -512,9 +508,7 @@ public  final class ReadModifyWriteRowRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          tableName_ = s;
-        }
+        tableName_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -586,7 +580,8 @@ public  final class ReadModifyWriteRowRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       tableName_ = value;
       onChanged();
       return this;
@@ -1004,8 +999,8 @@ public  final class ReadModifyWriteRowRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ReadModifyWriteRowRequest> PARSER =
-      new com.google.protobuf.AbstractParser<ReadModifyWriteRowRequest>() {
+  private static final com.google.protobuf.Parser<ReadModifyWriteRowRequest>
+      PARSER = new com.google.protobuf.AbstractParser<ReadModifyWriteRowRequest>() {
     public ReadModifyWriteRowRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

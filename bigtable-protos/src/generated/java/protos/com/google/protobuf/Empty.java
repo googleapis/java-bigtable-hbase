@@ -20,7 +20,7 @@ public  final class Empty extends
     // @@protoc_insertion_point(message_implements:google.protobuf.Empty)
     EmptyOrBuilder {
   // Use Empty.newBuilder() to construct.
-  private Empty(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Empty(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Empty() {
@@ -87,13 +87,12 @@ public  final class Empty extends
                       throws java.io.IOException {
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -299,8 +298,8 @@ public  final class Empty extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Empty> PARSER =
-      new com.google.protobuf.AbstractParser<Empty>() {
+  private static final com.google.protobuf.Parser<Empty>
+      PARSER = new com.google.protobuf.AbstractParser<Empty>() {
     public Empty parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

@@ -118,4 +118,6 @@ public interface OperationOrBuilder extends
    * </pre>
    */
   com.google.protobuf.AnyOrBuilder getResponseOrBuilder();
+
+  public com.google.longrunning.Operation.ResultCase getResultCase();
 }

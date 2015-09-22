@@ -15,7 +15,7 @@ public  final class EnumValue extends
     // @@protoc_insertion_point(message_implements:google.protobuf.EnumValue)
     EnumValueOrBuilder {
   // Use EnumValue.newBuilder() to construct.
-  private EnumValue(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private EnumValue(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private EnumValue() {
@@ -49,9 +49,9 @@ public  final class EnumValue extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 16: {
@@ -64,7 +64,7 @@ public  final class EnumValue extends
               options_ = new java.util.ArrayList<com.google.protobuf.Option>();
               mutable_bitField0_ |= 0x00000004;
             }
-            options_.add(input.readMessage(com.google.protobuf.Option.PARSER, extensionRegistry));
+            options_.add(input.readMessage(com.google.protobuf.Option.parser(), extensionRegistry));
             break;
           }
         }
@@ -112,9 +112,7 @@ public  final class EnumValue extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -220,7 +218,7 @@ public  final class EnumValue extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     if (number_ != 0) {
       output.writeInt32(2, number_);
@@ -230,15 +228,13 @@ public  final class EnumValue extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     if (number_ != 0) {
       size += com.google.protobuf.CodedOutputStream
@@ -248,7 +244,7 @@ public  final class EnumValue extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(3, options_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -499,9 +495,7 @@ public  final class EnumValue extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -569,7 +563,8 @@ public  final class EnumValue extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -948,8 +943,8 @@ public  final class EnumValue extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<EnumValue> PARSER =
-      new com.google.protobuf.AbstractParser<EnumValue>() {
+  private static final com.google.protobuf.Parser<EnumValue>
+      PARSER = new com.google.protobuf.AbstractParser<EnumValue>() {
     public EnumValue parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

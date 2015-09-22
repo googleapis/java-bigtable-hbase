@@ -109,7 +109,7 @@ public  final class FieldMask extends
     // @@protoc_insertion_point(message_implements:google.protobuf.FieldMask)
     FieldMaskOrBuilder {
   // Use FieldMask.newBuilder() to construct.
-  private FieldMask(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private FieldMask(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private FieldMask() {
@@ -141,12 +141,12 @@ public  final class FieldMask extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
               paths_ = new com.google.protobuf.LazyStringArrayList();
               mutable_bitField0_ |= 0x00000001;
             }
-            paths_.add(bs);
+            paths_.add(s);
             break;
           }
         }
@@ -234,26 +234,24 @@ public  final class FieldMask extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     for (int i = 0; i < paths_.size(); i++) {
-      output.writeBytes(1, paths_.getByteString(i));
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, paths_.getRaw(i));
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     {
       int dataSize = 0;
       for (int i = 0; i < paths_.size(); i++) {
-        dataSize += com.google.protobuf.CodedOutputStream
-          .computeBytesSizeNoTag(paths_.getByteString(i));
+        dataSize += computeStringSizeNoTag(paths_.getRaw(i));
       }
       size += dataSize;
       size += 1 * getPathsList().size();
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -667,7 +665,8 @@ public  final class FieldMask extends
       if (value == null) {
     throw new NullPointerException();
   }
-  ensurePathsIsMutable();
+  checkByteStringIsUtf8(value);
+      ensurePathsIsMutable();
       paths_.add(value);
       onChanged();
       return this;
@@ -696,8 +695,8 @@ public  final class FieldMask extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<FieldMask> PARSER =
-      new com.google.protobuf.AbstractParser<FieldMask>() {
+  private static final com.google.protobuf.Parser<FieldMask>
+      PARSER = new com.google.protobuf.AbstractParser<FieldMask>() {
     public FieldMask parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

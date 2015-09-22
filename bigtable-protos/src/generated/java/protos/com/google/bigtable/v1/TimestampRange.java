@@ -15,7 +15,7 @@ public  final class TimestampRange extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.TimestampRange)
     TimestampRangeOrBuilder {
   // Use TimestampRange.newBuilder() to construct.
-  private TimestampRange(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private TimestampRange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private TimestampRange() {
@@ -127,9 +127,8 @@ public  final class TimestampRange extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -141,7 +140,7 @@ public  final class TimestampRange extends
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(2, endTimestampMicros_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -430,8 +429,8 @@ public  final class TimestampRange extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<TimestampRange> PARSER =
-      new com.google.protobuf.AbstractParser<TimestampRange>() {
+  private static final com.google.protobuf.Parser<TimestampRange>
+      PARSER = new com.google.protobuf.AbstractParser<TimestampRange>() {
     public TimestampRange parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

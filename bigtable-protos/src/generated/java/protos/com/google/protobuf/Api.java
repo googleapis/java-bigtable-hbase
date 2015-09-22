@@ -15,7 +15,7 @@ public  final class Api extends
     // @@protoc_insertion_point(message_implements:google.protobuf.Api)
     ApiOrBuilder {
   // Use Api.newBuilder() to construct.
-  private Api(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Api(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Api() {
@@ -50,9 +50,9 @@ public  final class Api extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
@@ -60,7 +60,7 @@ public  final class Api extends
               methods_ = new java.util.ArrayList<com.google.protobuf.Method>();
               mutable_bitField0_ |= 0x00000002;
             }
-            methods_.add(input.readMessage(com.google.protobuf.Method.PARSER, extensionRegistry));
+            methods_.add(input.readMessage(com.google.protobuf.Method.parser(), extensionRegistry));
             break;
           }
           case 26: {
@@ -68,13 +68,13 @@ public  final class Api extends
               options_ = new java.util.ArrayList<com.google.protobuf.Option>();
               mutable_bitField0_ |= 0x00000004;
             }
-            options_.add(input.readMessage(com.google.protobuf.Option.PARSER, extensionRegistry));
+            options_.add(input.readMessage(com.google.protobuf.Option.parser(), extensionRegistry));
             break;
           }
           case 34: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            version_ = bs;
+            version_ = s;
             break;
           }
           case 42: {
@@ -82,7 +82,7 @@ public  final class Api extends
             if (sourceContext_ != null) {
               subBuilder = sourceContext_.toBuilder();
             }
-            sourceContext_ = input.readMessage(com.google.protobuf.SourceContext.PARSER, extensionRegistry);
+            sourceContext_ = input.readMessage(com.google.protobuf.SourceContext.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(sourceContext_);
               sourceContext_ = subBuilder.buildPartial();
@@ -139,9 +139,7 @@ public  final class Api extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -312,9 +310,7 @@ public  final class Api extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        version_ = s;
-      }
+      version_ = s;
       return s;
     }
   }
@@ -406,7 +402,7 @@ public  final class Api extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     for (int i = 0; i < methods_.size(); i++) {
       output.writeMessage(2, methods_.get(i));
@@ -415,22 +411,20 @@ public  final class Api extends
       output.writeMessage(3, options_.get(i));
     }
     if (!getVersionBytes().isEmpty()) {
-      output.writeBytes(4, getVersionBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 4, version_);
     }
     if (sourceContext_ != null) {
       output.writeMessage(5, getSourceContext());
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     for (int i = 0; i < methods_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
@@ -441,14 +435,13 @@ public  final class Api extends
         .computeMessageSize(3, options_.get(i));
     }
     if (!getVersionBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getVersionBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(4, version_);
     }
     if (sourceContext_ != null) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(5, getSourceContext());
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -757,9 +750,7 @@ public  final class Api extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -831,7 +822,8 @@ public  final class Api extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -1493,9 +1485,7 @@ public  final class Api extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          version_ = s;
-        }
+        version_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -1635,7 +1625,8 @@ public  final class Api extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       version_ = value;
       onChanged();
       return this;
@@ -1826,8 +1817,8 @@ public  final class Api extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Api> PARSER =
-      new com.google.protobuf.AbstractParser<Api>() {
+  private static final com.google.protobuf.Parser<Api>
+      PARSER = new com.google.protobuf.AbstractParser<Api>() {
     public Api parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

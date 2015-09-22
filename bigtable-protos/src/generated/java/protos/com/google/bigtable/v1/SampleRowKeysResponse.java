@@ -15,7 +15,7 @@ public  final class SampleRowKeysResponse extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.SampleRowKeysResponse)
     SampleRowKeysResponseOrBuilder {
   // Use SampleRowKeysResponse.newBuilder() to construct.
-  private SampleRowKeysResponse(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private SampleRowKeysResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private SampleRowKeysResponse() {
@@ -136,9 +136,8 @@ public  final class SampleRowKeysResponse extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -150,7 +149,7 @@ public  final class SampleRowKeysResponse extends
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(2, offsetBytes_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -469,8 +468,8 @@ public  final class SampleRowKeysResponse extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<SampleRowKeysResponse> PARSER =
-      new com.google.protobuf.AbstractParser<SampleRowKeysResponse>() {
+  private static final com.google.protobuf.Parser<SampleRowKeysResponse>
+      PARSER = new com.google.protobuf.AbstractParser<SampleRowKeysResponse>() {
     public SampleRowKeysResponse parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

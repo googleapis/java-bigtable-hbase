@@ -16,7 +16,7 @@ public  final class ReadModifyWriteRule extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.ReadModifyWriteRule)
     ReadModifyWriteRuleOrBuilder {
   // Use ReadModifyWriteRule.newBuilder() to construct.
-  private ReadModifyWriteRule(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ReadModifyWriteRule(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ReadModifyWriteRule() {
@@ -49,9 +49,9 @@ public  final class ReadModifyWriteRule extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            familyName_ = bs;
+            familyName_ = s;
             break;
           }
           case 18: {
@@ -142,9 +142,7 @@ public  final class ReadModifyWriteRule extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        familyName_ = s;
-      }
+      familyName_ = s;
       return s;
     }
   }
@@ -233,7 +231,7 @@ public  final class ReadModifyWriteRule extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getFamilyNameBytes().isEmpty()) {
-      output.writeBytes(1, getFamilyNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, familyName_);
     }
     if (!columnQualifier_.isEmpty()) {
       output.writeBytes(2, columnQualifier_);
@@ -248,15 +246,13 @@ public  final class ReadModifyWriteRule extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getFamilyNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getFamilyNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, familyName_);
     }
     if (!columnQualifier_.isEmpty()) {
       size += com.google.protobuf.CodedOutputStream
@@ -272,7 +268,7 @@ public  final class ReadModifyWriteRule extends
         .computeInt64Size(
             4, (long)((java.lang.Long) rule_));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -516,9 +512,7 @@ public  final class ReadModifyWriteRule extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          familyName_ = s;
-        }
+        familyName_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -590,7 +584,8 @@ public  final class ReadModifyWriteRule extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       familyName_ = value;
       onChanged();
       return this;
@@ -768,8 +763,8 @@ public  final class ReadModifyWriteRule extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ReadModifyWriteRule> PARSER =
-      new com.google.protobuf.AbstractParser<ReadModifyWriteRule>() {
+  private static final com.google.protobuf.Parser<ReadModifyWriteRule>
+      PARSER = new com.google.protobuf.AbstractParser<ReadModifyWriteRule>() {
     public ReadModifyWriteRule parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

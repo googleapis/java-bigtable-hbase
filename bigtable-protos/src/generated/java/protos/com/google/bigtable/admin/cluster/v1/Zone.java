@@ -16,7 +16,7 @@ public  final class Zone extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.cluster.v1.Zone)
     ZoneOrBuilder {
   // Use Zone.newBuilder() to construct.
-  private Zone(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Zone(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Zone() {
@@ -50,15 +50,15 @@ public  final class Zone extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            displayName_ = bs;
+            displayName_ = s;
             break;
           }
           case 24: {
@@ -191,8 +191,8 @@ public  final class Zone extends
         internalGetValueMap() {
       return internalValueMap;
     }
-    private static com.google.protobuf.Internal.EnumLiteMap<Status>
-        internalValueMap =
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        Status> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<Status>() {
             public Status findValueByNumber(int number) {
               return Status.valueOf(number);
@@ -255,9 +255,7 @@ public  final class Zone extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -300,9 +298,7 @@ public  final class Zone extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        displayName_ = s;
-      }
+      displayName_ = s;
       return s;
     }
   }
@@ -364,35 +360,32 @@ public  final class Zone extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     if (!getDisplayNameBytes().isEmpty()) {
-      output.writeBytes(2, getDisplayNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, displayName_);
     }
     if (status_ != com.google.bigtable.admin.cluster.v1.Zone.Status.UNKNOWN.getNumber()) {
       output.writeEnum(3, status_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     if (!getDisplayNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getDisplayNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, displayName_);
     }
     if (status_ != com.google.bigtable.admin.cluster.v1.Zone.Status.UNKNOWN.getNumber()) {
       size += com.google.protobuf.CodedOutputStream
         .computeEnumSize(3, status_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -606,9 +599,7 @@ public  final class Zone extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -680,7 +671,8 @@ public  final class Zone extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -700,9 +692,7 @@ public  final class Zone extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          displayName_ = s;
-        }
+        displayName_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -770,7 +760,8 @@ public  final class Zone extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       displayName_ = value;
       onChanged();
       return this;
@@ -863,8 +854,8 @@ public  final class Zone extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Zone> PARSER =
-      new com.google.protobuf.AbstractParser<Zone>() {
+  private static final com.google.protobuf.Parser<Zone>
+      PARSER = new com.google.protobuf.AbstractParser<Zone>() {
     public Zone parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

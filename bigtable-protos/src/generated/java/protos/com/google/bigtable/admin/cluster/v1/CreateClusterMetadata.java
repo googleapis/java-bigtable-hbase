@@ -16,7 +16,7 @@ public  final class CreateClusterMetadata extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.cluster.v1.CreateClusterMetadata)
     CreateClusterMetadataOrBuilder {
   // Use CreateClusterMetadata.newBuilder() to construct.
-  private CreateClusterMetadata(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private CreateClusterMetadata(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private CreateClusterMetadata() {
@@ -51,7 +51,7 @@ public  final class CreateClusterMetadata extends
             if (originalRequest_ != null) {
               subBuilder = originalRequest_.toBuilder();
             }
-            originalRequest_ = input.readMessage(com.google.bigtable.admin.cluster.v1.CreateClusterRequest.PARSER, extensionRegistry);
+            originalRequest_ = input.readMessage(com.google.bigtable.admin.cluster.v1.CreateClusterRequest.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(originalRequest_);
               originalRequest_ = subBuilder.buildPartial();
@@ -64,7 +64,7 @@ public  final class CreateClusterMetadata extends
             if (requestTime_ != null) {
               subBuilder = requestTime_.toBuilder();
             }
-            requestTime_ = input.readMessage(com.google.protobuf.Timestamp.PARSER, extensionRegistry);
+            requestTime_ = input.readMessage(com.google.protobuf.Timestamp.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(requestTime_);
               requestTime_ = subBuilder.buildPartial();
@@ -77,7 +77,7 @@ public  final class CreateClusterMetadata extends
             if (finishTime_ != null) {
               subBuilder = finishTime_.toBuilder();
             }
-            finishTime_ = input.readMessage(com.google.protobuf.Timestamp.PARSER, extensionRegistry);
+            finishTime_ = input.readMessage(com.google.protobuf.Timestamp.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(finishTime_);
               finishTime_ = subBuilder.buildPartial();
@@ -231,9 +231,8 @@ public  final class CreateClusterMetadata extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -249,7 +248,7 @@ public  final class CreateClusterMetadata extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(3, getFinishTime());
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -952,8 +951,8 @@ public  final class CreateClusterMetadata extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<CreateClusterMetadata> PARSER =
-      new com.google.protobuf.AbstractParser<CreateClusterMetadata>() {
+  private static final com.google.protobuf.Parser<CreateClusterMetadata>
+      PARSER = new com.google.protobuf.AbstractParser<CreateClusterMetadata>() {
     public CreateClusterMetadata parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

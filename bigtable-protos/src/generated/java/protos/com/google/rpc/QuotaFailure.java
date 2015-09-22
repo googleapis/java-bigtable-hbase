@@ -23,7 +23,7 @@ public  final class QuotaFailure extends
     // @@protoc_insertion_point(message_implements:google.rpc.QuotaFailure)
     QuotaFailureOrBuilder {
   // Use QuotaFailure.newBuilder() to construct.
-  private QuotaFailure(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private QuotaFailure(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private QuotaFailure() {
@@ -59,7 +59,7 @@ public  final class QuotaFailure extends
               violations_ = new java.util.ArrayList<com.google.rpc.QuotaFailure.Violation>();
               mutable_bitField0_ |= 0x00000001;
             }
-            violations_.add(input.readMessage(com.google.rpc.QuotaFailure.Violation.PARSER, extensionRegistry));
+            violations_.add(input.readMessage(com.google.rpc.QuotaFailure.Violation.parser(), extensionRegistry));
             break;
           }
         }
@@ -156,7 +156,7 @@ public  final class QuotaFailure extends
       // @@protoc_insertion_point(message_implements:google.rpc.QuotaFailure.Violation)
       ViolationOrBuilder {
     // Use Violation.newBuilder() to construct.
-    private Violation(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private Violation(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private Violation() {
@@ -189,15 +189,15 @@ public  final class QuotaFailure extends
               break;
             }
             case 10: {
-              com.google.protobuf.ByteString bs = input.readBytes();
+              String s = input.readStringRequireUtf8();
 
-              subject_ = bs;
+              subject_ = s;
               break;
             }
             case 18: {
-              com.google.protobuf.ByteString bs = input.readBytes();
+              String s = input.readStringRequireUtf8();
 
-              description_ = bs;
+              description_ = s;
               break;
             }
           }
@@ -243,9 +243,7 @@ public  final class QuotaFailure extends
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          subject_ = s;
-        }
+        subject_ = s;
         return s;
       }
     }
@@ -294,9 +292,7 @@ public  final class QuotaFailure extends
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          description_ = s;
-        }
+        description_ = s;
         return s;
       }
     }
@@ -339,28 +335,25 @@ public  final class QuotaFailure extends
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (!getSubjectBytes().isEmpty()) {
-        output.writeBytes(1, getSubjectBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, subject_);
       }
       if (!getDescriptionBytes().isEmpty()) {
-        output.writeBytes(2, getDescriptionBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, description_);
       }
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (!getSubjectBytes().isEmpty()) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getSubjectBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, subject_);
       }
       if (!getDescriptionBytes().isEmpty()) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getDescriptionBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, description_);
       }
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -569,9 +562,7 @@ public  final class QuotaFailure extends
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            subject_ = s;
-          }
+          subject_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
@@ -647,7 +638,8 @@ public  final class QuotaFailure extends
         if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+        
         subject_ = value;
         onChanged();
         return this;
@@ -672,9 +664,7 @@ public  final class QuotaFailure extends
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            description_ = s;
-          }
+          description_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
@@ -762,7 +752,8 @@ public  final class QuotaFailure extends
         if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+        
         description_ = value;
         onChanged();
         return this;
@@ -791,8 +782,8 @@ public  final class QuotaFailure extends
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<Violation> PARSER =
-        new com.google.protobuf.AbstractParser<Violation>() {
+    private static final com.google.protobuf.Parser<Violation>
+        PARSER = new com.google.protobuf.AbstractParser<Violation>() {
       public Violation parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -897,9 +888,8 @@ public  final class QuotaFailure extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -907,7 +897,7 @@ public  final class QuotaFailure extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, violations_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -1472,8 +1462,8 @@ public  final class QuotaFailure extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<QuotaFailure> PARSER =
-      new com.google.protobuf.AbstractParser<QuotaFailure>() {
+  private static final com.google.protobuf.Parser<QuotaFailure>
+      PARSER = new com.google.protobuf.AbstractParser<QuotaFailure>() {
     public QuotaFailure parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

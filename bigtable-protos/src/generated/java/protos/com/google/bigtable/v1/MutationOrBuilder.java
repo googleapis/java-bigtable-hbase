@@ -74,4 +74,6 @@ public interface MutationOrBuilder extends
    * </pre>
    */
   com.google.bigtable.v1.Mutation.DeleteFromRowOrBuilder getDeleteFromRowOrBuilder();
+
+  public com.google.bigtable.v1.Mutation.MutationCase getMutationCase();
 }

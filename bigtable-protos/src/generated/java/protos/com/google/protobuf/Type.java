@@ -15,7 +15,7 @@ public  final class Type extends
     // @@protoc_insertion_point(message_implements:google.protobuf.Type)
     TypeOrBuilder {
   // Use Type.newBuilder() to construct.
-  private Type(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Type(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Type() {
@@ -50,9 +50,9 @@ public  final class Type extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
@@ -60,16 +60,16 @@ public  final class Type extends
               fields_ = new java.util.ArrayList<com.google.protobuf.Field>();
               mutable_bitField0_ |= 0x00000002;
             }
-            fields_.add(input.readMessage(com.google.protobuf.Field.PARSER, extensionRegistry));
+            fields_.add(input.readMessage(com.google.protobuf.Field.parser(), extensionRegistry));
             break;
           }
           case 26: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
               oneofs_ = new com.google.protobuf.LazyStringArrayList();
               mutable_bitField0_ |= 0x00000004;
             }
-            oneofs_.add(bs);
+            oneofs_.add(s);
             break;
           }
           case 34: {
@@ -77,7 +77,7 @@ public  final class Type extends
               options_ = new java.util.ArrayList<com.google.protobuf.Option>();
               mutable_bitField0_ |= 0x00000008;
             }
-            options_.add(input.readMessage(com.google.protobuf.Option.PARSER, extensionRegistry));
+            options_.add(input.readMessage(com.google.protobuf.Option.parser(), extensionRegistry));
             break;
           }
           case 42: {
@@ -85,7 +85,7 @@ public  final class Type extends
             if (sourceContext_ != null) {
               subBuilder = sourceContext_.toBuilder();
             }
-            sourceContext_ = input.readMessage(com.google.protobuf.SourceContext.PARSER, extensionRegistry);
+            sourceContext_ = input.readMessage(com.google.protobuf.SourceContext.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(sourceContext_);
               sourceContext_ = subBuilder.buildPartial();
@@ -144,9 +144,7 @@ public  final class Type extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -376,13 +374,13 @@ public  final class Type extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     for (int i = 0; i < fields_.size(); i++) {
       output.writeMessage(2, fields_.get(i));
     }
     for (int i = 0; i < oneofs_.size(); i++) {
-      output.writeBytes(3, oneofs_.getByteString(i));
+      com.google.protobuf.GeneratedMessage.writeString(output, 3, oneofs_.getRaw(i));
     }
     for (int i = 0; i < options_.size(); i++) {
       output.writeMessage(4, options_.get(i));
@@ -392,15 +390,13 @@ public  final class Type extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     for (int i = 0; i < fields_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
@@ -409,8 +405,7 @@ public  final class Type extends
     {
       int dataSize = 0;
       for (int i = 0; i < oneofs_.size(); i++) {
-        dataSize += com.google.protobuf.CodedOutputStream
-          .computeBytesSizeNoTag(oneofs_.getByteString(i));
+        dataSize += computeStringSizeNoTag(oneofs_.getRaw(i));
       }
       size += dataSize;
       size += 1 * getOneofsList().size();
@@ -423,7 +418,7 @@ public  final class Type extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(5, getSourceContext());
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -741,9 +736,7 @@ public  final class Type extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -811,7 +804,8 @@ public  final class Type extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -1261,7 +1255,8 @@ public  final class Type extends
       if (value == null) {
     throw new NullPointerException();
   }
-  ensureOneofsIsMutable();
+  checkByteStringIsUtf8(value);
+      ensureOneofsIsMutable();
       oneofs_.add(value);
       onChanged();
       return this;
@@ -1755,8 +1750,8 @@ public  final class Type extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Type> PARSER =
-      new com.google.protobuf.AbstractParser<Type>() {
+  private static final com.google.protobuf.Parser<Type>
+      PARSER = new com.google.protobuf.AbstractParser<Type>() {
     public Type parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

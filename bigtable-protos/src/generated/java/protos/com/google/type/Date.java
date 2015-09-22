@@ -21,7 +21,7 @@ public  final class Date extends
     // @@protoc_insertion_point(message_implements:google.type.Date)
     DateOrBuilder {
   // Use Date.newBuilder() to construct.
-  private Date(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Date(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Date() {
@@ -157,9 +157,8 @@ public  final class Date extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -175,7 +174,7 @@ public  final class Date extends
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(3, day_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -558,8 +557,8 @@ public  final class Date extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Date> PARSER =
-      new com.google.protobuf.AbstractParser<Date>() {
+  private static final com.google.protobuf.Parser<Date>
+      PARSER = new com.google.protobuf.AbstractParser<Date>() {
     public Date parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

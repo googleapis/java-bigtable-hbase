@@ -64,7 +64,7 @@ public  final class HttpRule extends
     // @@protoc_insertion_point(message_implements:google.api.HttpRule)
     HttpRuleOrBuilder {
   // Use HttpRule.newBuilder() to construct.
-  private HttpRule(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private HttpRule(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private HttpRule() {
@@ -97,39 +97,39 @@ public  final class HttpRule extends
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             patternCase_ = 2;
-            pattern_ = bs;
+            pattern_ = s;
             break;
           }
           case 26: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             patternCase_ = 3;
-            pattern_ = bs;
+            pattern_ = s;
             break;
           }
           case 34: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             patternCase_ = 4;
-            pattern_ = bs;
+            pattern_ = s;
             break;
           }
           case 42: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             patternCase_ = 5;
-            pattern_ = bs;
+            pattern_ = s;
             break;
           }
           case 50: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             patternCase_ = 6;
-            pattern_ = bs;
+            pattern_ = s;
             break;
           }
           case 58: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            body_ = bs;
+            body_ = s;
             break;
           }
           case 66: {
@@ -137,7 +137,8 @@ public  final class HttpRule extends
             if (patternCase_ == 8) {
               subBuilder = ((com.google.api.CustomHttpPattern) pattern_).toBuilder();
             }
-            pattern_ = input.readMessage(com.google.api.CustomHttpPattern.PARSER, extensionRegistry);
+            pattern_ =
+                input.readMessage(com.google.api.CustomHttpPattern.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.api.CustomHttpPattern) pattern_);
               pattern_ = subBuilder.buildPartial();
@@ -150,7 +151,7 @@ public  final class HttpRule extends
               additionalBindings_ = new java.util.ArrayList<com.google.api.HttpRule>();
               mutable_bitField0_ |= 0x00000080;
             }
-            additionalBindings_.add(input.readMessage(com.google.api.HttpRule.PARSER, extensionRegistry));
+            additionalBindings_.add(input.readMessage(com.google.api.HttpRule.parser(), extensionRegistry));
             break;
           }
         }
@@ -239,7 +240,7 @@ public  final class HttpRule extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8() && (patternCase_ == 2)) {
+      if (patternCase_ == 2) {
         pattern_ = s;
       }
       return s;
@@ -290,7 +291,7 @@ public  final class HttpRule extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8() && (patternCase_ == 3)) {
+      if (patternCase_ == 3) {
         pattern_ = s;
       }
       return s;
@@ -341,7 +342,7 @@ public  final class HttpRule extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8() && (patternCase_ == 4)) {
+      if (patternCase_ == 4) {
         pattern_ = s;
       }
       return s;
@@ -392,7 +393,7 @@ public  final class HttpRule extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8() && (patternCase_ == 5)) {
+      if (patternCase_ == 5) {
         pattern_ = s;
       }
       return s;
@@ -443,7 +444,7 @@ public  final class HttpRule extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8() && (patternCase_ == 6)) {
+      if (patternCase_ == 6) {
         pattern_ = s;
       }
       return s;
@@ -522,9 +523,7 @@ public  final class HttpRule extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        body_ = s;
-      }
+      body_ = s;
       return s;
     }
   }
@@ -624,22 +623,22 @@ public  final class HttpRule extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (patternCase_ == 2) {
-      output.writeBytes(2, getGetBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, pattern_);
     }
     if (patternCase_ == 3) {
-      output.writeBytes(3, getPutBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 3, pattern_);
     }
     if (patternCase_ == 4) {
-      output.writeBytes(4, getPostBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 4, pattern_);
     }
     if (patternCase_ == 5) {
-      output.writeBytes(5, getDeleteBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 5, pattern_);
     }
     if (patternCase_ == 6) {
-      output.writeBytes(6, getPatchBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 6, pattern_);
     }
     if (!getBodyBytes().isEmpty()) {
-      output.writeBytes(7, getBodyBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 7, body_);
     }
     if (patternCase_ == 8) {
       output.writeMessage(8, (com.google.api.CustomHttpPattern) pattern_);
@@ -649,35 +648,28 @@ public  final class HttpRule extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (patternCase_ == 2) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getGetBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, pattern_);
     }
     if (patternCase_ == 3) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(3, getPutBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(3, pattern_);
     }
     if (patternCase_ == 4) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getPostBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(4, pattern_);
     }
     if (patternCase_ == 5) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(5, getDeleteBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(5, pattern_);
     }
     if (patternCase_ == 6) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(6, getPatchBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(6, pattern_);
     }
     if (!getBodyBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(7, getBodyBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(7, body_);
     }
     if (patternCase_ == 8) {
       size += com.google.protobuf.CodedOutputStream
@@ -687,7 +679,7 @@ public  final class HttpRule extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(11, additionalBindings_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -1063,9 +1055,7 @@ public  final class HttpRule extends
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (patternCase_ == 2) {
-          if (bs.isValidUtf8()) {
-            pattern_ = s;
-          }
+          pattern_ = s;
         }
         return s;
       } else {
@@ -1141,7 +1131,8 @@ public  final class HttpRule extends
       if (value == null) {
     throw new NullPointerException();
   }
-  patternCase_ = 2;
+  checkByteStringIsUtf8(value);
+      patternCase_ = 2;
       pattern_ = value;
       onChanged();
       return this;
@@ -1164,9 +1155,7 @@ public  final class HttpRule extends
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (patternCase_ == 3) {
-          if (bs.isValidUtf8()) {
-            pattern_ = s;
-          }
+          pattern_ = s;
         }
         return s;
       } else {
@@ -1242,7 +1231,8 @@ public  final class HttpRule extends
       if (value == null) {
     throw new NullPointerException();
   }
-  patternCase_ = 3;
+  checkByteStringIsUtf8(value);
+      patternCase_ = 3;
       pattern_ = value;
       onChanged();
       return this;
@@ -1265,9 +1255,7 @@ public  final class HttpRule extends
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (patternCase_ == 4) {
-          if (bs.isValidUtf8()) {
-            pattern_ = s;
-          }
+          pattern_ = s;
         }
         return s;
       } else {
@@ -1343,7 +1331,8 @@ public  final class HttpRule extends
       if (value == null) {
     throw new NullPointerException();
   }
-  patternCase_ = 4;
+  checkByteStringIsUtf8(value);
+      patternCase_ = 4;
       pattern_ = value;
       onChanged();
       return this;
@@ -1366,9 +1355,7 @@ public  final class HttpRule extends
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (patternCase_ == 5) {
-          if (bs.isValidUtf8()) {
-            pattern_ = s;
-          }
+          pattern_ = s;
         }
         return s;
       } else {
@@ -1444,7 +1431,8 @@ public  final class HttpRule extends
       if (value == null) {
     throw new NullPointerException();
   }
-  patternCase_ = 5;
+  checkByteStringIsUtf8(value);
+      patternCase_ = 5;
       pattern_ = value;
       onChanged();
       return this;
@@ -1467,9 +1455,7 @@ public  final class HttpRule extends
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (patternCase_ == 6) {
-          if (bs.isValidUtf8()) {
-            pattern_ = s;
-          }
+          pattern_ = s;
         }
         return s;
       } else {
@@ -1545,7 +1531,8 @@ public  final class HttpRule extends
       if (value == null) {
     throw new NullPointerException();
   }
-  patternCase_ = 6;
+  checkByteStringIsUtf8(value);
+      patternCase_ = 6;
       pattern_ = value;
       onChanged();
       return this;
@@ -1729,9 +1716,7 @@ public  final class HttpRule extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          body_ = s;
-        }
+        body_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -1807,7 +1792,8 @@ public  final class HttpRule extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       body_ = value;
       onChanged();
       return this;
@@ -2166,8 +2152,8 @@ public  final class HttpRule extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<HttpRule> PARSER =
-      new com.google.protobuf.AbstractParser<HttpRule>() {
+  private static final com.google.protobuf.Parser<HttpRule>
+      PARSER = new com.google.protobuf.AbstractParser<HttpRule>() {
     public HttpRule parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

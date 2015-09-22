@@ -74,4 +74,9 @@ public class UnaryCallRetryInterceptor extends Channel {
     return methodDescriptor.getType() == MethodType.UNARY
         && retriableMethods.containsKey(methodDescriptor);
   }
+
+  @Override
+  public String authority() {
+    return delegate.authority();
+  }
 }

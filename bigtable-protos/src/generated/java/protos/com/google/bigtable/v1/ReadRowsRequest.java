@@ -15,7 +15,7 @@ public  final class ReadRowsRequest extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.ReadRowsRequest)
     ReadRowsRequestOrBuilder {
   // Use ReadRowsRequest.newBuilder() to construct.
-  private ReadRowsRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ReadRowsRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ReadRowsRequest() {
@@ -49,9 +49,9 @@ public  final class ReadRowsRequest extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            tableName_ = bs;
+            tableName_ = s;
             break;
           }
           case 18: {
@@ -64,7 +64,8 @@ public  final class ReadRowsRequest extends
             if (targetCase_ == 3) {
               subBuilder = ((com.google.bigtable.v1.RowRange) target_).toBuilder();
             }
-            target_ = input.readMessage(com.google.bigtable.v1.RowRange.PARSER, extensionRegistry);
+            target_ =
+                input.readMessage(com.google.bigtable.v1.RowRange.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.bigtable.v1.RowRange) target_);
               target_ = subBuilder.buildPartial();
@@ -77,7 +78,7 @@ public  final class ReadRowsRequest extends
             if (filter_ != null) {
               subBuilder = filter_.toBuilder();
             }
-            filter_ = input.readMessage(com.google.bigtable.v1.RowFilter.PARSER, extensionRegistry);
+            filter_ = input.readMessage(com.google.bigtable.v1.RowFilter.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(filter_);
               filter_ = subBuilder.buildPartial();
@@ -167,9 +168,7 @@ public  final class ReadRowsRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        tableName_ = s;
-      }
+      tableName_ = s;
       return s;
     }
   }
@@ -319,7 +318,7 @@ public  final class ReadRowsRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getTableNameBytes().isEmpty()) {
-      output.writeBytes(1, getTableNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, tableName_);
     }
     if (targetCase_ == 2) {
       output.writeBytes(
@@ -339,15 +338,13 @@ public  final class ReadRowsRequest extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getTableNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getTableNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, tableName_);
     }
     if (targetCase_ == 2) {
       size += com.google.protobuf.CodedOutputStream
@@ -370,7 +367,7 @@ public  final class ReadRowsRequest extends
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(7, numRowsLimit_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -636,9 +633,7 @@ public  final class ReadRowsRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          tableName_ = s;
-        }
+        tableName_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -706,7 +701,8 @@ public  final class ReadRowsRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       tableName_ = value;
       onChanged();
       return this;
@@ -1201,8 +1197,8 @@ public  final class ReadRowsRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ReadRowsRequest> PARSER =
-      new com.google.protobuf.AbstractParser<ReadRowsRequest>() {
+  private static final com.google.protobuf.Parser<ReadRowsRequest>
+      PARSER = new com.google.protobuf.AbstractParser<ReadRowsRequest>() {
     public ReadRowsRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

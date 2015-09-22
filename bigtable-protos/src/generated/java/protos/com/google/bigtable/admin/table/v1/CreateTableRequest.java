@@ -11,7 +11,7 @@ public  final class CreateTableRequest extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.table.v1.CreateTableRequest)
     CreateTableRequestOrBuilder {
   // Use CreateTableRequest.newBuilder() to construct.
-  private CreateTableRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private CreateTableRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private CreateTableRequest() {
@@ -45,15 +45,15 @@ public  final class CreateTableRequest extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            tableId_ = bs;
+            tableId_ = s;
             break;
           }
           case 26: {
@@ -61,7 +61,7 @@ public  final class CreateTableRequest extends
             if (table_ != null) {
               subBuilder = table_.toBuilder();
             }
-            table_ = input.readMessage(com.google.bigtable.admin.table.v1.Table.PARSER, extensionRegistry);
+            table_ = input.readMessage(com.google.bigtable.admin.table.v1.Table.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(table_);
               table_ = subBuilder.buildPartial();
@@ -70,12 +70,12 @@ public  final class CreateTableRequest extends
             break;
           }
           case 34: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
               initialSplitKeys_ = new com.google.protobuf.LazyStringArrayList();
               mutable_bitField0_ |= 0x00000008;
             }
-            initialSplitKeys_.add(bs);
+            initialSplitKeys_.add(s);
             break;
           }
         }
@@ -123,9 +123,7 @@ public  final class CreateTableRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -168,9 +166,7 @@ public  final class CreateTableRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        tableId_ = s;
-      }
+      tableId_ = s;
       return s;
     }
   }
@@ -342,32 +338,29 @@ public  final class CreateTableRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     if (!getTableIdBytes().isEmpty()) {
-      output.writeBytes(2, getTableIdBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, tableId_);
     }
     if (table_ != null) {
       output.writeMessage(3, getTable());
     }
     for (int i = 0; i < initialSplitKeys_.size(); i++) {
-      output.writeBytes(4, initialSplitKeys_.getByteString(i));
+      com.google.protobuf.GeneratedMessage.writeString(output, 4, initialSplitKeys_.getRaw(i));
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     if (!getTableIdBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getTableIdBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, tableId_);
     }
     if (table_ != null) {
       size += com.google.protobuf.CodedOutputStream
@@ -376,13 +369,12 @@ public  final class CreateTableRequest extends
     {
       int dataSize = 0;
       for (int i = 0; i < initialSplitKeys_.size(); i++) {
-        dataSize += com.google.protobuf.CodedOutputStream
-          .computeBytesSizeNoTag(initialSplitKeys_.getByteString(i));
+        dataSize += computeStringSizeNoTag(initialSplitKeys_.getRaw(i));
       }
       size += dataSize;
       size += 1 * getInitialSplitKeysList().size();
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -619,9 +611,7 @@ public  final class CreateTableRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -689,7 +679,8 @@ public  final class CreateTableRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -710,9 +701,7 @@ public  final class CreateTableRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          tableId_ = s;
-        }
+        tableId_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -784,7 +773,8 @@ public  final class CreateTableRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       tableId_ = value;
       onChanged();
       return this;
@@ -1192,7 +1182,8 @@ public  final class CreateTableRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  ensureInitialSplitKeysIsMutable();
+  checkByteStringIsUtf8(value);
+      ensureInitialSplitKeysIsMutable();
       initialSplitKeys_.add(value);
       onChanged();
       return this;
@@ -1221,8 +1212,8 @@ public  final class CreateTableRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<CreateTableRequest> PARSER =
-      new com.google.protobuf.AbstractParser<CreateTableRequest>() {
+  private static final com.google.protobuf.Parser<CreateTableRequest>
+      PARSER = new com.google.protobuf.AbstractParser<CreateTableRequest>() {
     public CreateTableRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

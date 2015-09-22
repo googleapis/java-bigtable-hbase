@@ -16,7 +16,7 @@ public  final class Table extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.table.v1.Table)
     TableOrBuilder {
   // Use Table.newBuilder() to construct.
-  private Table(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Table(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Table() {
@@ -49,9 +49,9 @@ public  final class Table extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
@@ -59,7 +59,7 @@ public  final class Table extends
             if (currentOperation_ != null) {
               subBuilder = currentOperation_.toBuilder();
             }
-            currentOperation_ = input.readMessage(com.google.longrunning.Operation.PARSER, extensionRegistry);
+            currentOperation_ = input.readMessage(com.google.longrunning.Operation.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(currentOperation_);
               currentOperation_ = subBuilder.buildPartial();
@@ -157,8 +157,8 @@ public  final class Table extends
         internalGetValueMap() {
       return internalValueMap;
     }
-    private static com.google.protobuf.Internal.EnumLiteMap<TimestampGranularity>
-        internalValueMap =
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        TimestampGranularity> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<TimestampGranularity>() {
             public TimestampGranularity findValueByNumber(int number) {
               return TimestampGranularity.valueOf(number);
@@ -222,9 +222,7 @@ public  final class Table extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -364,7 +362,7 @@ public  final class Table extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     if (currentOperation_ != null) {
       output.writeMessage(2, getCurrentOperation());
@@ -383,15 +381,13 @@ public  final class Table extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     if (currentOperation_ != null) {
       size += com.google.protobuf.CodedOutputStream
@@ -411,7 +407,7 @@ public  final class Table extends
       size += com.google.protobuf.CodedOutputStream
         .computeEnumSize(4, granularity_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -663,9 +659,7 @@ public  final class Table extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -737,7 +731,8 @@ public  final class Table extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -957,6 +952,18 @@ public  final class Table extends
     getMutableColumnFamilies() {
       return internalGetMutableColumnFamilies().getMutableMap();
     }
+    /**
+     * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
+     *
+     * <pre>
+     * The column families configured for this table, mapped by column family id.
+     * </pre>
+     */
+    public Builder putAllColumnFamilies(
+        java.util.Map<java.lang.String, com.google.bigtable.admin.table.v1.ColumnFamily> values) {
+      getMutableColumnFamilies().putAll(values);
+      return this;
+    }
 
     private int granularity_ = 0;
     /**
@@ -1055,8 +1062,8 @@ public  final class Table extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Table> PARSER =
-      new com.google.protobuf.AbstractParser<Table>() {
+  private static final com.google.protobuf.Parser<Table>
+      PARSER = new com.google.protobuf.AbstractParser<Table>() {
     public Table parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

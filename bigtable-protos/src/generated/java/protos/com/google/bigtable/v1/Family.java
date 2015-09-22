@@ -15,7 +15,7 @@ public  final class Family extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.Family)
     FamilyOrBuilder {
   // Use Family.newBuilder() to construct.
-  private Family(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Family(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Family() {
@@ -48,9 +48,9 @@ public  final class Family extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
@@ -58,7 +58,7 @@ public  final class Family extends
               columns_ = new java.util.ArrayList<com.google.bigtable.v1.Column>();
               mutable_bitField0_ |= 0x00000002;
             }
-            columns_.add(input.readMessage(com.google.bigtable.v1.Column.PARSER, extensionRegistry));
+            columns_.add(input.readMessage(com.google.bigtable.v1.Column.parser(), extensionRegistry));
             break;
           }
         }
@@ -111,9 +111,7 @@ public  final class Family extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -211,28 +209,26 @@ public  final class Family extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     for (int i = 0; i < columns_.size(); i++) {
       output.writeMessage(2, columns_.get(i));
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     for (int i = 0; i < columns_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(2, columns_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -482,9 +478,7 @@ public  final class Family extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -572,7 +566,8 @@ public  final class Family extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -913,8 +908,8 @@ public  final class Family extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Family> PARSER =
-      new com.google.protobuf.AbstractParser<Family>() {
+  private static final com.google.protobuf.Parser<Family>
+      PARSER = new com.google.protobuf.AbstractParser<Family>() {
     public Family parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

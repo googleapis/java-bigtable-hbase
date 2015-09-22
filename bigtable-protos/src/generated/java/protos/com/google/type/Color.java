@@ -113,7 +113,7 @@ public  final class Color extends
     // @@protoc_insertion_point(message_implements:google.type.Color)
     ColorOrBuilder {
   // Use Color.newBuilder() to construct.
-  private Color(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Color(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Color() {
@@ -166,7 +166,7 @@ public  final class Color extends
             if (alpha_ != null) {
               subBuilder = alpha_.toBuilder();
             }
-            alpha_ = input.readMessage(com.google.protobuf.FloatValue.PARSER, extensionRegistry);
+            alpha_ = input.readMessage(com.google.protobuf.FloatValue.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(alpha_);
               alpha_ = subBuilder.buildPartial();
@@ -320,9 +320,8 @@ public  final class Color extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -342,7 +341,7 @@ public  final class Color extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(4, getAlpha());
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -1012,8 +1011,8 @@ public  final class Color extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Color> PARSER =
-      new com.google.protobuf.AbstractParser<Color>() {
+  private static final com.google.protobuf.Parser<Color>
+      PARSER = new com.google.protobuf.AbstractParser<Color>() {
     public Color parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

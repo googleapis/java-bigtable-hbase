@@ -15,7 +15,7 @@ public  final class RowRange extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.RowRange)
     RowRangeOrBuilder {
   // Use RowRange.newBuilder() to construct.
-  private RowRange(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private RowRange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private RowRange() {
@@ -127,9 +127,8 @@ public  final class RowRange extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -141,7 +140,7 @@ public  final class RowRange extends
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(3, endKey_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -436,8 +435,8 @@ public  final class RowRange extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<RowRange> PARSER =
-      new com.google.protobuf.AbstractParser<RowRange>() {
+  private static final com.google.protobuf.Parser<RowRange>
+      PARSER = new com.google.protobuf.AbstractParser<RowRange>() {
     public RowRange parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

@@ -40,7 +40,7 @@ public  final class Any extends
     // @@protoc_insertion_point(message_implements:google.protobuf.Any)
     AnyOrBuilder {
   // Use Any.newBuilder() to construct.
-  private Any(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Any(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Any() {
@@ -73,9 +73,9 @@ public  final class Any extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            typeUrl_ = bs;
+            typeUrl_ = s;
             break;
           }
           case 18: {
@@ -107,6 +107,46 @@ public  final class Any extends
             com.google.protobuf.Any.class, com.google.protobuf.Any.Builder.class);
   }
 
+  private static String getTypeUrl(
+      com.google.protobuf.Descriptors.Descriptor descriptor) {
+    return "type.googleapis.com/" + descriptor.getFullName();
+  }
+
+  public static <T extends com.google.protobuf.Message> Any pack(
+      T message) {
+    return Any.newBuilder()
+        .setTypeUrl(getTypeUrl(message.getDescriptorForType()))
+        .setValue(message.toByteString())
+        .build();
+  }
+
+  public <T extends com.google.protobuf.Message> boolean is(
+      java.lang.Class<T> clazz) {
+    T defaultInstance =
+        com.google.protobuf.Internal.getDefaultInstance(clazz);
+    return getTypeUrl().equals(
+        getTypeUrl(defaultInstance.getDescriptorForType()));
+  }
+
+  private volatile com.google.protobuf.Message cachedUnpackValue;
+
+  public <T extends com.google.protobuf.Message> T unpack(
+      java.lang.Class<T> clazz)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    if (!is(clazz)) {
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          "Type of the Any messsage does not match the given class.");
+    }
+    if (cachedUnpackValue != null) {
+      return (T) cachedUnpackValue;
+    }
+    T defaultInstance =
+        com.google.protobuf.Internal.getDefaultInstance(clazz);
+    T result = (T) defaultInstance.getParserForType()
+        .parseFrom(getValue());
+    cachedUnpackValue = result;
+    return result;
+  }
   public static final int TYPE_URL_FIELD_NUMBER = 1;
   private volatile java.lang.Object typeUrl_;
   /**
@@ -143,9 +183,7 @@ public  final class Any extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        typeUrl_ = s;
-      }
+      typeUrl_ = s;
       return s;
     }
   }
@@ -215,28 +253,26 @@ public  final class Any extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getTypeUrlBytes().isEmpty()) {
-      output.writeBytes(1, getTypeUrlBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, typeUrl_);
     }
     if (!value_.isEmpty()) {
       output.writeBytes(2, value_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getTypeUrlBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getTypeUrlBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, typeUrl_);
     }
     if (!value_.isEmpty()) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(2, value_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -519,9 +555,7 @@ public  final class Any extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          typeUrl_ = s;
-        }
+        typeUrl_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -665,7 +699,8 @@ public  final class Any extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       typeUrl_ = value;
       onChanged();
       return this;
@@ -735,8 +770,8 @@ public  final class Any extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Any> PARSER =
-      new com.google.protobuf.AbstractParser<Any>() {
+  private static final com.google.protobuf.Parser<Any>
+      PARSER = new com.google.protobuf.AbstractParser<Any>() {
     public Any parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

@@ -46,7 +46,7 @@ public  final class Duration extends
     // @@protoc_insertion_point(message_implements:google.protobuf.Duration)
     DurationOrBuilder {
   // Use Duration.newBuilder() to construct.
-  private Duration(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Duration(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Duration() {
@@ -164,9 +164,8 @@ public  final class Duration extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -178,7 +177,7 @@ public  final class Duration extends
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(2, nanos_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -551,8 +550,8 @@ public  final class Duration extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Duration> PARSER =
-      new com.google.protobuf.AbstractParser<Duration>() {
+  private static final com.google.protobuf.Parser<Duration>
+      PARSER = new com.google.protobuf.AbstractParser<Duration>() {
     public Duration parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

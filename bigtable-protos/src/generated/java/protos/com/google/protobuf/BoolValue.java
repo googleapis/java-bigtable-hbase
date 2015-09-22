@@ -15,7 +15,7 @@ public  final class BoolValue extends
     // @@protoc_insertion_point(message_implements:google.protobuf.BoolValue)
     BoolValueOrBuilder {
   // Use BoolValue.newBuilder() to construct.
-  private BoolValue(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private BoolValue(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private BoolValue() {
@@ -105,9 +105,8 @@ public  final class BoolValue extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -115,7 +114,7 @@ public  final class BoolValue extends
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(1, value_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -360,8 +359,8 @@ public  final class BoolValue extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<BoolValue> PARSER =
-      new com.google.protobuf.AbstractParser<BoolValue>() {
+  private static final com.google.protobuf.Parser<BoolValue>
+      PARSER = new com.google.protobuf.AbstractParser<BoolValue>() {
     public BoolValue parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

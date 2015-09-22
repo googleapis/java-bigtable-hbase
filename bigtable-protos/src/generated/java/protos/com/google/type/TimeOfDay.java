@@ -17,7 +17,7 @@ public  final class TimeOfDay extends
     // @@protoc_insertion_point(message_implements:google.type.TimeOfDay)
     TimeOfDayOrBuilder {
   // Use TimeOfDay.newBuilder() to construct.
-  private TimeOfDay(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private TimeOfDay(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private TimeOfDay() {
@@ -175,9 +175,8 @@ public  final class TimeOfDay extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -197,7 +196,7 @@ public  final class TimeOfDay extends
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(4, nanos_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -624,8 +623,8 @@ public  final class TimeOfDay extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<TimeOfDay> PARSER =
-      new com.google.protobuf.AbstractParser<TimeOfDay>() {
+  private static final com.google.protobuf.Parser<TimeOfDay>
+      PARSER = new com.google.protobuf.AbstractParser<TimeOfDay>() {
     public TimeOfDay parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

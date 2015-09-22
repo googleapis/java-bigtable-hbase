@@ -40,8 +40,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import io.grpc.ClientCall;
-import io.grpc.Metadata.Headers;
-import io.grpc.Metadata.Trailers;
+import io.grpc.Metadata;
 import io.grpc.Status;
 
 import java.util.Set;
@@ -72,25 +71,25 @@ public class RetryListenerTest {
         new RetryListener<>(
             mockRetryingCall,
             request,
-            new Headers.Headers(),
+            new Metadata(),
             true, // always retriable for testing
             mockResponseListener);
 
-    listener.onHeaders(new Headers.Headers());
+    listener.onHeaders(new Metadata());
     listener.onMessage(response);
-    listener.onClose(Status.OK, new Trailers.Trailers());
+    listener.onClose(Status.OK, new Metadata());
 
     // Validate that the listener did not attempt to start a new call on the channel:
     verifyNoMoreInteractions(mockRetryingCall);
 
     // Verify that the mockResponseListener was informed of the payload and closed:
     verify(mockResponseListener, times(1)).onMessage(eq(response));
-    verify(mockResponseListener, times(1)).onClose(eq(Status.OK), any(Trailers.Trailers.class));
+    verify(mockResponseListener, times(1)).onClose(eq(Status.OK), any(Metadata.class));
   }
 
   @Test
   public void internalErrorsAreRetried() {
-    Headers headers = new Headers.Headers();
+    Metadata headers = new Metadata();
     RetryListener<MutateRowRequest, Empty> listener =
         new RetryListener<>(
             mockRetryingCall,
@@ -106,7 +105,7 @@ public class RetryListenerTest {
                 eq(request), eq(headers), eq(listener)))
         .thenReturn(true);
 
-    listener.onClose(Status.INTERNAL, new Trailers.Trailers());
+    listener.onClose(Status.INTERNAL, new Metadata());
 
     // Validate that the listener is starting a new attempt
     verify(mockRetryingCall, times(1))
@@ -118,7 +117,7 @@ public class RetryListenerTest {
 
   @Test
   public void failuresAfterHeadersAreReceivedIsNotRetried() {
-    Headers requestHeaders = new Headers.Headers();
+    Metadata requestHeaders = new Metadata();
     RetryListener<MutateRowRequest, Empty> listener =
         new RetryListener<>(
             mockRetryingCall,
@@ -127,10 +126,10 @@ public class RetryListenerTest {
             true, // always retriable for testing
             mockResponseListener);
 
-    Headers responseHeaders = new Headers.Headers();
+    Metadata responseHeaders = new Metadata();
     listener.onHeaders(responseHeaders);
     listener.onMessage(response);
-    listener.onClose(Status.INTERNAL, new Trailers.Trailers());
+    listener.onClose(Status.INTERNAL, new Metadata());
 
     // Validate that the listener did not attempt to start a new call on the channel:
     verifyNoMoreInteractions(mockRetryingCall);
@@ -139,7 +138,7 @@ public class RetryListenerTest {
     verify(mockResponseListener, times(1)).onHeaders(eq(responseHeaders));
     verify(mockResponseListener, times(1)).onMessage(eq(response));
     verify(mockResponseListener, times(1)).onClose(
-        eq(Status.INTERNAL), any(Trailers.Trailers.class));
+        eq(Status.INTERNAL), any(Metadata.class));
   }
 
   @Test

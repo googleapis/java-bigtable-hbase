@@ -64,7 +64,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }
 
     @Override
-    public void onValue(ReadRowsResponse readTableResponse) {
+    public void onNext(ReadRowsResponse readTableResponse) {
       scanner.addResult(readTableResponse);
     }
 
