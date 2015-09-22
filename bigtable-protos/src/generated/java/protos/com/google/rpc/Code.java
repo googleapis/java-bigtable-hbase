@@ -492,8 +492,8 @@ public enum Code
       internalGetValueMap() {
     return internalValueMap;
   }
-  private static com.google.protobuf.Internal.EnumLiteMap<Code>
-      internalValueMap =
+  private static final com.google.protobuf.Internal.EnumLiteMap<
+      Code> internalValueMap =
         new com.google.protobuf.Internal.EnumLiteMap<Code>() {
           public Code findValueByNumber(int number) {
             return Code.valueOf(number);

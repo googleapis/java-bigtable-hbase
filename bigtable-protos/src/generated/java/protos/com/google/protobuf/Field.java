@@ -15,7 +15,7 @@ public  final class Field extends
     // @@protoc_insertion_point(message_implements:google.protobuf.Field)
     FieldOrBuilder {
   // Use Field.newBuilder() to construct.
-  private Field(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Field(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Field() {
@@ -71,15 +71,15 @@ public  final class Field extends
             break;
           }
           case 34: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 50: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            typeUrl_ = bs;
+            typeUrl_ = s;
             break;
           }
           case 56: {
@@ -97,7 +97,7 @@ public  final class Field extends
               options_ = new java.util.ArrayList<com.google.protobuf.Option>();
               mutable_bitField0_ |= 0x00000080;
             }
-            options_.add(input.readMessage(com.google.protobuf.Option.PARSER, extensionRegistry));
+            options_.add(input.readMessage(com.google.protobuf.Option.parser(), extensionRegistry));
             break;
           }
         }
@@ -465,8 +465,8 @@ public  final class Field extends
         internalGetValueMap() {
       return internalValueMap;
     }
-    private static com.google.protobuf.Internal.EnumLiteMap<Kind>
-        internalValueMap =
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        Kind> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<Kind>() {
             public Kind findValueByNumber(int number) {
               return Kind.valueOf(number);
@@ -612,8 +612,8 @@ public  final class Field extends
         internalGetValueMap() {
       return internalValueMap;
     }
-    private static com.google.protobuf.Internal.EnumLiteMap<Cardinality>
-        internalValueMap =
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        Cardinality> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<Cardinality>() {
             public Cardinality findValueByNumber(int number) {
               return Cardinality.valueOf(number);
@@ -737,9 +737,7 @@ public  final class Field extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -782,9 +780,7 @@ public  final class Field extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        typeUrl_ = s;
-      }
+      typeUrl_ = s;
       return s;
     }
   }
@@ -913,10 +909,10 @@ public  final class Field extends
       output.writeInt32(3, number_);
     }
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(4, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 4, name_);
     }
     if (!getTypeUrlBytes().isEmpty()) {
-      output.writeBytes(6, getTypeUrlBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 6, typeUrl_);
     }
     if (oneofIndex_ != 0) {
       output.writeInt32(7, oneofIndex_);
@@ -929,9 +925,8 @@ public  final class Field extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -948,12 +943,10 @@ public  final class Field extends
         .computeInt32Size(3, number_);
     }
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(4, name_);
     }
     if (!getTypeUrlBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(6, getTypeUrlBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(6, typeUrl_);
     }
     if (oneofIndex_ != 0) {
       size += com.google.protobuf.CodedOutputStream
@@ -967,7 +960,7 @@ public  final class Field extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(9, options_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -1415,9 +1408,7 @@ public  final class Field extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -1485,7 +1476,8 @@ public  final class Field extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -1506,9 +1498,7 @@ public  final class Field extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          typeUrl_ = s;
-        }
+        typeUrl_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -1580,7 +1570,8 @@ public  final class Field extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       typeUrl_ = value;
       onChanged();
       return this;
@@ -1997,8 +1988,8 @@ public  final class Field extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Field> PARSER =
-      new com.google.protobuf.AbstractParser<Field>() {
+  private static final com.google.protobuf.Parser<Field>
+      PARSER = new com.google.protobuf.AbstractParser<Field>() {
     public Field parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

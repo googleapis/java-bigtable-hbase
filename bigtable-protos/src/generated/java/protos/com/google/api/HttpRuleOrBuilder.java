@@ -184,4 +184,6 @@ public interface HttpRuleOrBuilder extends
    */
   com.google.api.HttpRuleOrBuilder getAdditionalBindingsOrBuilder(
       int index);
+
+  public com.google.api.HttpRule.PatternCase getPatternCase();
 }

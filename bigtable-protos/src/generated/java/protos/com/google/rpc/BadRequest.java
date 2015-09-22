@@ -16,7 +16,7 @@ public  final class BadRequest extends
     // @@protoc_insertion_point(message_implements:google.rpc.BadRequest)
     BadRequestOrBuilder {
   // Use BadRequest.newBuilder() to construct.
-  private BadRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private BadRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private BadRequest() {
@@ -52,7 +52,7 @@ public  final class BadRequest extends
               fieldViolations_ = new java.util.ArrayList<com.google.rpc.BadRequest.FieldViolation>();
               mutable_bitField0_ |= 0x00000001;
             }
-            fieldViolations_.add(input.readMessage(com.google.rpc.BadRequest.FieldViolation.PARSER, extensionRegistry));
+            fieldViolations_.add(input.readMessage(com.google.rpc.BadRequest.FieldViolation.parser(), extensionRegistry));
             break;
           }
         }
@@ -138,7 +138,7 @@ public  final class BadRequest extends
       // @@protoc_insertion_point(message_implements:google.rpc.BadRequest.FieldViolation)
       FieldViolationOrBuilder {
     // Use FieldViolation.newBuilder() to construct.
-    private FieldViolation(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private FieldViolation(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private FieldViolation() {
@@ -171,15 +171,15 @@ public  final class BadRequest extends
               break;
             }
             case 10: {
-              com.google.protobuf.ByteString bs = input.readBytes();
+              String s = input.readStringRequireUtf8();
 
-              field_ = bs;
+              field_ = s;
               break;
             }
             case 18: {
-              com.google.protobuf.ByteString bs = input.readBytes();
+              String s = input.readStringRequireUtf8();
 
-              description_ = bs;
+              description_ = s;
               break;
             }
           }
@@ -225,9 +225,7 @@ public  final class BadRequest extends
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          field_ = s;
-        }
+        field_ = s;
         return s;
       }
     }
@@ -271,9 +269,7 @@ public  final class BadRequest extends
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          description_ = s;
-        }
+        description_ = s;
         return s;
       }
     }
@@ -311,28 +307,25 @@ public  final class BadRequest extends
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (!getFieldBytes().isEmpty()) {
-        output.writeBytes(1, getFieldBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, field_);
       }
       if (!getDescriptionBytes().isEmpty()) {
-        output.writeBytes(2, getDescriptionBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, description_);
       }
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (!getFieldBytes().isEmpty()) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getFieldBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, field_);
       }
       if (!getDescriptionBytes().isEmpty()) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getDescriptionBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, description_);
       }
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -540,9 +533,7 @@ public  final class BadRequest extends
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            field_ = s;
-          }
+          field_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
@@ -618,7 +609,8 @@ public  final class BadRequest extends
         if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+        
         field_ = value;
         onChanged();
         return this;
@@ -638,9 +630,7 @@ public  final class BadRequest extends
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            description_ = s;
-          }
+          description_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
@@ -708,7 +698,8 @@ public  final class BadRequest extends
         if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+        
         description_ = value;
         onChanged();
         return this;
@@ -737,8 +728,8 @@ public  final class BadRequest extends
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<FieldViolation> PARSER =
-        new com.google.protobuf.AbstractParser<FieldViolation>() {
+    private static final com.google.protobuf.Parser<FieldViolation>
+        PARSER = new com.google.protobuf.AbstractParser<FieldViolation>() {
       public FieldViolation parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -843,9 +834,8 @@ public  final class BadRequest extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -853,7 +843,7 @@ public  final class BadRequest extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, fieldViolations_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -1411,8 +1401,8 @@ public  final class BadRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<BadRequest> PARSER =
-      new com.google.protobuf.AbstractParser<BadRequest>() {
+  private static final com.google.protobuf.Parser<BadRequest>
+      PARSER = new com.google.protobuf.AbstractParser<BadRequest>() {
     public BadRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

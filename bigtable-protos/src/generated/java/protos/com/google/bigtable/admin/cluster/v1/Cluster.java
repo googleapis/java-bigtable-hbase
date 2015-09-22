@@ -15,7 +15,7 @@ public  final class Cluster extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.cluster.v1.Cluster)
     ClusterOrBuilder {
   // Use Cluster.newBuilder() to construct.
-  private Cluster(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Cluster(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Cluster() {
@@ -50,9 +50,9 @@ public  final class Cluster extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
@@ -60,7 +60,7 @@ public  final class Cluster extends
             if (deleteTime_ != null) {
               subBuilder = deleteTime_.toBuilder();
             }
-            deleteTime_ = input.readMessage(com.google.protobuf.Timestamp.PARSER, extensionRegistry);
+            deleteTime_ = input.readMessage(com.google.protobuf.Timestamp.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(deleteTime_);
               deleteTime_ = subBuilder.buildPartial();
@@ -73,7 +73,7 @@ public  final class Cluster extends
             if (currentOperation_ != null) {
               subBuilder = currentOperation_.toBuilder();
             }
-            currentOperation_ = input.readMessage(com.google.longrunning.Operation.PARSER, extensionRegistry);
+            currentOperation_ = input.readMessage(com.google.longrunning.Operation.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(currentOperation_);
               currentOperation_ = subBuilder.buildPartial();
@@ -82,9 +82,9 @@ public  final class Cluster extends
             break;
           }
           case 34: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            displayName_ = bs;
+            displayName_ = s;
             break;
           }
           case 40: {
@@ -142,9 +142,7 @@ public  final class Cluster extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -271,9 +269,7 @@ public  final class Cluster extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        displayName_ = s;
-      }
+      displayName_ = s;
       return s;
     }
   }
@@ -351,7 +347,7 @@ public  final class Cluster extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     if (deleteTime_ != null) {
       output.writeMessage(2, getDeleteTime());
@@ -360,7 +356,7 @@ public  final class Cluster extends
       output.writeMessage(3, getCurrentOperation());
     }
     if (!getDisplayNameBytes().isEmpty()) {
-      output.writeBytes(4, getDisplayNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 4, displayName_);
     }
     if (serveNodes_ != 0) {
       output.writeInt32(5, serveNodes_);
@@ -370,15 +366,13 @@ public  final class Cluster extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     if (deleteTime_ != null) {
       size += com.google.protobuf.CodedOutputStream
@@ -389,8 +383,7 @@ public  final class Cluster extends
         .computeMessageSize(3, getCurrentOperation());
     }
     if (!getDisplayNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getDisplayNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(4, displayName_);
     }
     if (serveNodes_ != 0) {
       size += com.google.protobuf.CodedOutputStream
@@ -400,7 +393,7 @@ public  final class Cluster extends
       size += com.google.protobuf.CodedOutputStream
         .computeEnumSize(8, defaultStorageType_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -649,9 +642,7 @@ public  final class Cluster extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -731,7 +722,8 @@ public  final class Cluster extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -1103,9 +1095,7 @@ public  final class Cluster extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          displayName_ = s;
-        }
+        displayName_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -1177,7 +1167,8 @@ public  final class Cluster extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       displayName_ = value;
       onChanged();
       return this;
@@ -1313,8 +1304,8 @@ public  final class Cluster extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Cluster> PARSER =
-      new com.google.protobuf.AbstractParser<Cluster>() {
+  private static final com.google.protobuf.Parser<Cluster>
+      PARSER = new com.google.protobuf.AbstractParser<Cluster>() {
     public Cluster parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

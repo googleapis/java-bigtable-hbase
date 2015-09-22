@@ -18,7 +18,7 @@ public  final class Help extends
     // @@protoc_insertion_point(message_implements:google.rpc.Help)
     HelpOrBuilder {
   // Use Help.newBuilder() to construct.
-  private Help(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Help(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Help() {
@@ -54,7 +54,7 @@ public  final class Help extends
               links_ = new java.util.ArrayList<com.google.rpc.Help.Link>();
               mutable_bitField0_ |= 0x00000001;
             }
-            links_.add(input.readMessage(com.google.rpc.Help.Link.PARSER, extensionRegistry));
+            links_.add(input.readMessage(com.google.rpc.Help.Link.parser(), extensionRegistry));
             break;
           }
         }
@@ -136,7 +136,7 @@ public  final class Help extends
       // @@protoc_insertion_point(message_implements:google.rpc.Help.Link)
       LinkOrBuilder {
     // Use Link.newBuilder() to construct.
-    private Link(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private Link(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private Link() {
@@ -169,15 +169,15 @@ public  final class Help extends
               break;
             }
             case 10: {
-              com.google.protobuf.ByteString bs = input.readBytes();
+              String s = input.readStringRequireUtf8();
 
-              description_ = bs;
+              description_ = s;
               break;
             }
             case 18: {
-              com.google.protobuf.ByteString bs = input.readBytes();
+              String s = input.readStringRequireUtf8();
 
-              url_ = bs;
+              url_ = s;
               break;
             }
           }
@@ -221,9 +221,7 @@ public  final class Help extends
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          description_ = s;
-        }
+        description_ = s;
         return s;
       }
     }
@@ -265,9 +263,7 @@ public  final class Help extends
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          url_ = s;
-        }
+        url_ = s;
         return s;
       }
     }
@@ -305,28 +301,25 @@ public  final class Help extends
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (!getDescriptionBytes().isEmpty()) {
-        output.writeBytes(1, getDescriptionBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, description_);
       }
       if (!getUrlBytes().isEmpty()) {
-        output.writeBytes(2, getUrlBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, url_);
       }
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (!getDescriptionBytes().isEmpty()) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getDescriptionBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, description_);
       }
       if (!getUrlBytes().isEmpty()) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getUrlBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, url_);
       }
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -532,9 +525,7 @@ public  final class Help extends
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            description_ = s;
-          }
+          description_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
@@ -602,7 +593,8 @@ public  final class Help extends
         if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+        
         description_ = value;
         onChanged();
         return this;
@@ -622,9 +614,7 @@ public  final class Help extends
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            url_ = s;
-          }
+          url_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
@@ -692,7 +682,8 @@ public  final class Help extends
         if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+        
         url_ = value;
         onChanged();
         return this;
@@ -721,8 +712,8 @@ public  final class Help extends
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<Link> PARSER =
-        new com.google.protobuf.AbstractParser<Link>() {
+    private static final com.google.protobuf.Parser<Link>
+        PARSER = new com.google.protobuf.AbstractParser<Link>() {
       public Link parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -827,9 +818,8 @@ public  final class Help extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -837,7 +827,7 @@ public  final class Help extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, links_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -1397,8 +1387,8 @@ public  final class Help extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Help> PARSER =
-      new com.google.protobuf.AbstractParser<Help>() {
+  private static final com.google.protobuf.Parser<Help>
+      PARSER = new com.google.protobuf.AbstractParser<Help>() {
     public Help parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

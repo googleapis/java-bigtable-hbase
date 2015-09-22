@@ -11,7 +11,7 @@ public  final class RenameTableRequest extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.table.v1.RenameTableRequest)
     RenameTableRequestOrBuilder {
   // Use RenameTableRequest.newBuilder() to construct.
-  private RenameTableRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private RenameTableRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private RenameTableRequest() {
@@ -44,15 +44,15 @@ public  final class RenameTableRequest extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            newId_ = bs;
+            newId_ = s;
             break;
           }
         }
@@ -96,9 +96,7 @@ public  final class RenameTableRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -141,9 +139,7 @@ public  final class RenameTableRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        newId_ = s;
-      }
+      newId_ = s;
       return s;
     }
   }
@@ -182,28 +178,25 @@ public  final class RenameTableRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     if (!getNewIdBytes().isEmpty()) {
-      output.writeBytes(2, getNewIdBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, newId_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     if (!getNewIdBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getNewIdBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, newId_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -405,9 +398,7 @@ public  final class RenameTableRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -475,7 +466,8 @@ public  final class RenameTableRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -496,9 +488,7 @@ public  final class RenameTableRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          newId_ = s;
-        }
+        newId_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -570,7 +560,8 @@ public  final class RenameTableRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       newId_ = value;
       onChanged();
       return this;
@@ -599,8 +590,8 @@ public  final class RenameTableRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<RenameTableRequest> PARSER =
-      new com.google.protobuf.AbstractParser<RenameTableRequest>() {
+  private static final com.google.protobuf.Parser<RenameTableRequest>
+      PARSER = new com.google.protobuf.AbstractParser<RenameTableRequest>() {
     public RenameTableRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

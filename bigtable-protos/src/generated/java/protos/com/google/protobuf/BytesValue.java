@@ -15,7 +15,7 @@ public  final class BytesValue extends
     // @@protoc_insertion_point(message_implements:google.protobuf.BytesValue)
     BytesValueOrBuilder {
   // Use BytesValue.newBuilder() to construct.
-  private BytesValue(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private BytesValue(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private BytesValue() {
@@ -105,9 +105,8 @@ public  final class BytesValue extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -115,7 +114,7 @@ public  final class BytesValue extends
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(1, value_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -363,8 +362,8 @@ public  final class BytesValue extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<BytesValue> PARSER =
-      new com.google.protobuf.AbstractParser<BytesValue>() {
+  private static final com.google.protobuf.Parser<BytesValue>
+      PARSER = new com.google.protobuf.AbstractParser<BytesValue>() {
     public BytesValue parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

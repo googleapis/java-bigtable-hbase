@@ -25,7 +25,7 @@ public  final class RetryInfo extends
     // @@protoc_insertion_point(message_implements:google.rpc.RetryInfo)
     RetryInfoOrBuilder {
   // Use RetryInfo.newBuilder() to construct.
-  private RetryInfo(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private RetryInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private RetryInfo() {
@@ -60,7 +60,7 @@ public  final class RetryInfo extends
             if (retryDelay_ != null) {
               subBuilder = retryDelay_.toBuilder();
             }
-            retryDelay_ = input.readMessage(com.google.protobuf.Duration.PARSER, extensionRegistry);
+            retryDelay_ = input.readMessage(com.google.protobuf.Duration.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(retryDelay_);
               retryDelay_ = subBuilder.buildPartial();
@@ -142,9 +142,8 @@ public  final class RetryInfo extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -152,7 +151,7 @@ public  final class RetryInfo extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, getRetryDelay());
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -530,8 +529,8 @@ public  final class RetryInfo extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<RetryInfo> PARSER =
-      new com.google.protobuf.AbstractParser<RetryInfo>() {
+  private static final com.google.protobuf.Parser<RetryInfo>
+      PARSER = new com.google.protobuf.AbstractParser<RetryInfo>() {
     public RetryInfo parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

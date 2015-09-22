@@ -15,7 +15,7 @@ public  final class CreateClusterRequest extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.cluster.v1.CreateClusterRequest)
     CreateClusterRequestOrBuilder {
   // Use CreateClusterRequest.newBuilder() to construct.
-  private CreateClusterRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private CreateClusterRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private CreateClusterRequest() {
@@ -48,15 +48,15 @@ public  final class CreateClusterRequest extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            clusterId_ = bs;
+            clusterId_ = s;
             break;
           }
           case 26: {
@@ -64,7 +64,7 @@ public  final class CreateClusterRequest extends
             if (cluster_ != null) {
               subBuilder = cluster_.toBuilder();
             }
-            cluster_ = input.readMessage(com.google.bigtable.admin.cluster.v1.Cluster.PARSER, extensionRegistry);
+            cluster_ = input.readMessage(com.google.bigtable.admin.cluster.v1.Cluster.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(cluster_);
               cluster_ = subBuilder.buildPartial();
@@ -114,9 +114,7 @@ public  final class CreateClusterRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -161,9 +159,7 @@ public  final class CreateClusterRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        clusterId_ = s;
-      }
+      clusterId_ = s;
       return s;
     }
   }
@@ -242,35 +238,32 @@ public  final class CreateClusterRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     if (!getClusterIdBytes().isEmpty()) {
-      output.writeBytes(2, getClusterIdBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, clusterId_);
     }
     if (cluster_ != null) {
       output.writeMessage(3, getCluster());
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     if (!getClusterIdBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getClusterIdBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, clusterId_);
     }
     if (cluster_ != null) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(3, getCluster());
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -491,9 +484,7 @@ public  final class CreateClusterRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -565,7 +556,8 @@ public  final class CreateClusterRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -587,9 +579,7 @@ public  final class CreateClusterRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          clusterId_ = s;
-        }
+        clusterId_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -665,7 +655,8 @@ public  final class CreateClusterRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       clusterId_ = value;
       onChanged();
       return this;
@@ -865,8 +856,8 @@ public  final class CreateClusterRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<CreateClusterRequest> PARSER =
-      new com.google.protobuf.AbstractParser<CreateClusterRequest>() {
+  private static final com.google.protobuf.Parser<CreateClusterRequest>
+      PARSER = new com.google.protobuf.AbstractParser<CreateClusterRequest>() {
     public CreateClusterRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

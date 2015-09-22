@@ -827,7 +827,7 @@ public class CloudBigtableIO {
       } else {
         admin.listTableNames();
       }
-    } catch (IOException e) {
+    } catch (IOException | IllegalArgumentException | ExceptionInInitializerError e) {
       LoggerFactory.getLogger(CloudBigtableIO.class).error(
         String.format("Could not validate that the table exists: %s (%s)", e.getClass().getName(),
           e.getMessage()), e);

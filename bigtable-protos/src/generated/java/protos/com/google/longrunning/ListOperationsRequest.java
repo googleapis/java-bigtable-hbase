@@ -15,7 +15,7 @@ public  final class ListOperationsRequest extends
     // @@protoc_insertion_point(message_implements:google.longrunning.ListOperationsRequest)
     ListOperationsRequestOrBuilder {
   // Use ListOperationsRequest.newBuilder() to construct.
-  private ListOperationsRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ListOperationsRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ListOperationsRequest() {
@@ -50,9 +50,9 @@ public  final class ListOperationsRequest extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            filter_ = bs;
+            filter_ = s;
             break;
           }
           case 16: {
@@ -61,15 +61,15 @@ public  final class ListOperationsRequest extends
             break;
           }
           case 26: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            pageToken_ = bs;
+            pageToken_ = s;
             break;
           }
           case 34: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
         }
@@ -113,9 +113,7 @@ public  final class ListOperationsRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -157,9 +155,7 @@ public  final class ListOperationsRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        filter_ = s;
-      }
+      filter_ = s;
       return s;
     }
   }
@@ -214,9 +210,7 @@ public  final class ListOperationsRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        pageToken_ = s;
-      }
+      pageToken_ = s;
       return s;
     }
   }
@@ -254,42 +248,38 @@ public  final class ListOperationsRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getFilterBytes().isEmpty()) {
-      output.writeBytes(1, getFilterBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, filter_);
     }
     if (pageSize_ != 0) {
       output.writeInt32(2, pageSize_);
     }
     if (!getPageTokenBytes().isEmpty()) {
-      output.writeBytes(3, getPageTokenBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 3, pageToken_);
     }
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(4, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 4, name_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getFilterBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getFilterBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, filter_);
     }
     if (pageSize_ != 0) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(2, pageSize_);
     }
     if (!getPageTokenBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(3, getPageTokenBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(3, pageToken_);
     }
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(4, name_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -508,9 +498,7 @@ public  final class ListOperationsRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -578,7 +566,8 @@ public  final class ListOperationsRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -598,9 +587,7 @@ public  final class ListOperationsRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          filter_ = s;
-        }
+        filter_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -668,7 +655,8 @@ public  final class ListOperationsRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       filter_ = value;
       onChanged();
       return this;
@@ -726,9 +714,7 @@ public  final class ListOperationsRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          pageToken_ = s;
-        }
+        pageToken_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -796,7 +782,8 @@ public  final class ListOperationsRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       pageToken_ = value;
       onChanged();
       return this;
@@ -825,8 +812,8 @@ public  final class ListOperationsRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ListOperationsRequest> PARSER =
-      new com.google.protobuf.AbstractParser<ListOperationsRequest>() {
+  private static final com.google.protobuf.Parser<ListOperationsRequest>
+      PARSER = new com.google.protobuf.AbstractParser<ListOperationsRequest>() {
     public ListOperationsRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

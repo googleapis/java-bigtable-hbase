@@ -49,7 +49,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.FileDescriptorSet)
       FileDescriptorSetOrBuilder {
     // Use FileDescriptorSet.newBuilder() to construct.
-    private FileDescriptorSet(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private FileDescriptorSet(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private FileDescriptorSet() {
@@ -88,7 +88,7 @@ public final class DescriptorProtos {
                 file_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.FileDescriptorProto>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              file_.add(input.readMessage(com.google.protobuf.DescriptorProtos.FileDescriptorProto.PARSER, extensionRegistry));
+              file_.add(input.readMessage(com.google.protobuf.DescriptorProtos.FileDescriptorProto.parser(), extensionRegistry));
               break;
             }
           }
@@ -178,9 +178,8 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -189,7 +188,7 @@ public final class DescriptorProtos {
           .computeMessageSize(1, file_.get(i));
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -671,8 +670,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<FileDescriptorSet> PARSER =
-        new com.google.protobuf.AbstractParser<FileDescriptorSet>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<FileDescriptorSet>
+        PARSER = new com.google.protobuf.AbstractParser<FileDescriptorSet>() {
       public FileDescriptorSet parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1053,7 +1052,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.FileDescriptorProto)
       FileDescriptorProtoOrBuilder {
     // Use FileDescriptorProto.newBuilder() to construct.
-    private FileDescriptorProto(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private FileDescriptorProto(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private FileDescriptorProto() {
@@ -1122,7 +1121,7 @@ public final class DescriptorProtos {
                 messageType_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.DescriptorProto>();
                 mutable_bitField0_ |= 0x00000020;
               }
-              messageType_.add(input.readMessage(com.google.protobuf.DescriptorProtos.DescriptorProto.PARSER, extensionRegistry));
+              messageType_.add(input.readMessage(com.google.protobuf.DescriptorProtos.DescriptorProto.parser(), extensionRegistry));
               break;
             }
             case 42: {
@@ -1130,7 +1129,7 @@ public final class DescriptorProtos {
                 enumType_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.EnumDescriptorProto>();
                 mutable_bitField0_ |= 0x00000040;
               }
-              enumType_.add(input.readMessage(com.google.protobuf.DescriptorProtos.EnumDescriptorProto.PARSER, extensionRegistry));
+              enumType_.add(input.readMessage(com.google.protobuf.DescriptorProtos.EnumDescriptorProto.parser(), extensionRegistry));
               break;
             }
             case 50: {
@@ -1138,7 +1137,7 @@ public final class DescriptorProtos {
                 service_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.ServiceDescriptorProto>();
                 mutable_bitField0_ |= 0x00000080;
               }
-              service_.add(input.readMessage(com.google.protobuf.DescriptorProtos.ServiceDescriptorProto.PARSER, extensionRegistry));
+              service_.add(input.readMessage(com.google.protobuf.DescriptorProtos.ServiceDescriptorProto.parser(), extensionRegistry));
               break;
             }
             case 58: {
@@ -1146,7 +1145,7 @@ public final class DescriptorProtos {
                 extension_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.FieldDescriptorProto>();
                 mutable_bitField0_ |= 0x00000100;
               }
-              extension_.add(input.readMessage(com.google.protobuf.DescriptorProtos.FieldDescriptorProto.PARSER, extensionRegistry));
+              extension_.add(input.readMessage(com.google.protobuf.DescriptorProtos.FieldDescriptorProto.parser(), extensionRegistry));
               break;
             }
             case 66: {
@@ -1154,7 +1153,7 @@ public final class DescriptorProtos {
               if (((bitField0_ & 0x00000004) == 0x00000004)) {
                 subBuilder = options_.toBuilder();
               }
-              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.FileOptions.PARSER, extensionRegistry);
+              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.FileOptions.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(options_);
                 options_ = subBuilder.buildPartial();
@@ -1167,7 +1166,7 @@ public final class DescriptorProtos {
               if (((bitField0_ & 0x00000008) == 0x00000008)) {
                 subBuilder = sourceCodeInfo_.toBuilder();
               }
-              sourceCodeInfo_ = input.readMessage(com.google.protobuf.DescriptorProtos.SourceCodeInfo.PARSER, extensionRegistry);
+              sourceCodeInfo_ = input.readMessage(com.google.protobuf.DescriptorProtos.SourceCodeInfo.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(sourceCodeInfo_);
                 sourceCodeInfo_ = subBuilder.buildPartial();
@@ -1817,13 +1816,13 @@ public final class DescriptorProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getNameBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, getPackageBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, package_);
       }
       for (int i = 0; i < dependency_.size(); i++) {
-        output.writeBytes(3, dependency_.getByteString(i));
+        com.google.protobuf.GeneratedMessage.writeString(output, 3, dependency_.getRaw(i));
       }
       for (int i = 0; i < messageType_.size(); i++) {
         output.writeMessage(4, messageType_.get(i));
@@ -1850,30 +1849,26 @@ public final class DescriptorProtos {
         output.writeInt32(11, weakDependency_.get(i));
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeBytes(12, getSyntaxBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 12, syntax_);
       }
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getNameBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getPackageBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, package_);
       }
       {
         int dataSize = 0;
         for (int i = 0; i < dependency_.size(); i++) {
-          dataSize += com.google.protobuf.CodedOutputStream
-            .computeBytesSizeNoTag(dependency_.getByteString(i));
+          dataSize += computeStringSizeNoTag(dependency_.getRaw(i));
         }
         size += dataSize;
         size += 1 * getDependencyList().size();
@@ -1921,11 +1916,10 @@ public final class DescriptorProtos {
         size += 1 * getWeakDependencyList().size();
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(12, getSyntaxBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(12, syntax_);
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -4395,8 +4389,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<FileDescriptorProto> PARSER =
-        new com.google.protobuf.AbstractParser<FileDescriptorProto>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<FileDescriptorProto>
+        PARSER = new com.google.protobuf.AbstractParser<FileDescriptorProto>() {
       public FileDescriptorProto parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -4616,7 +4610,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.DescriptorProto)
       DescriptorProtoOrBuilder {
     // Use DescriptorProto.newBuilder() to construct.
-    private DescriptorProto(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private DescriptorProto(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private DescriptorProto() {
@@ -4667,7 +4661,7 @@ public final class DescriptorProtos {
                 field_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.FieldDescriptorProto>();
                 mutable_bitField0_ |= 0x00000002;
               }
-              field_.add(input.readMessage(com.google.protobuf.DescriptorProtos.FieldDescriptorProto.PARSER, extensionRegistry));
+              field_.add(input.readMessage(com.google.protobuf.DescriptorProtos.FieldDescriptorProto.parser(), extensionRegistry));
               break;
             }
             case 26: {
@@ -4675,7 +4669,7 @@ public final class DescriptorProtos {
                 nestedType_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.DescriptorProto>();
                 mutable_bitField0_ |= 0x00000008;
               }
-              nestedType_.add(input.readMessage(com.google.protobuf.DescriptorProtos.DescriptorProto.PARSER, extensionRegistry));
+              nestedType_.add(input.readMessage(com.google.protobuf.DescriptorProtos.DescriptorProto.parser(), extensionRegistry));
               break;
             }
             case 34: {
@@ -4683,7 +4677,7 @@ public final class DescriptorProtos {
                 enumType_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.EnumDescriptorProto>();
                 mutable_bitField0_ |= 0x00000010;
               }
-              enumType_.add(input.readMessage(com.google.protobuf.DescriptorProtos.EnumDescriptorProto.PARSER, extensionRegistry));
+              enumType_.add(input.readMessage(com.google.protobuf.DescriptorProtos.EnumDescriptorProto.parser(), extensionRegistry));
               break;
             }
             case 42: {
@@ -4691,7 +4685,7 @@ public final class DescriptorProtos {
                 extensionRange_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.DescriptorProto.ExtensionRange>();
                 mutable_bitField0_ |= 0x00000020;
               }
-              extensionRange_.add(input.readMessage(com.google.protobuf.DescriptorProtos.DescriptorProto.ExtensionRange.PARSER, extensionRegistry));
+              extensionRange_.add(input.readMessage(com.google.protobuf.DescriptorProtos.DescriptorProto.ExtensionRange.parser(), extensionRegistry));
               break;
             }
             case 50: {
@@ -4699,7 +4693,7 @@ public final class DescriptorProtos {
                 extension_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.FieldDescriptorProto>();
                 mutable_bitField0_ |= 0x00000004;
               }
-              extension_.add(input.readMessage(com.google.protobuf.DescriptorProtos.FieldDescriptorProto.PARSER, extensionRegistry));
+              extension_.add(input.readMessage(com.google.protobuf.DescriptorProtos.FieldDescriptorProto.parser(), extensionRegistry));
               break;
             }
             case 58: {
@@ -4707,7 +4701,7 @@ public final class DescriptorProtos {
               if (((bitField0_ & 0x00000002) == 0x00000002)) {
                 subBuilder = options_.toBuilder();
               }
-              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.MessageOptions.PARSER, extensionRegistry);
+              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.MessageOptions.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(options_);
                 options_ = subBuilder.buildPartial();
@@ -4720,7 +4714,7 @@ public final class DescriptorProtos {
                 oneofDecl_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.OneofDescriptorProto>();
                 mutable_bitField0_ |= 0x00000040;
               }
-              oneofDecl_.add(input.readMessage(com.google.protobuf.DescriptorProtos.OneofDescriptorProto.PARSER, extensionRegistry));
+              oneofDecl_.add(input.readMessage(com.google.protobuf.DescriptorProtos.OneofDescriptorProto.parser(), extensionRegistry));
               break;
             }
           }
@@ -4796,7 +4790,7 @@ public final class DescriptorProtos {
         // @@protoc_insertion_point(message_implements:google.protobuf.DescriptorProto.ExtensionRange)
         ExtensionRangeOrBuilder {
       // Use ExtensionRange.newBuilder() to construct.
-      private ExtensionRange(com.google.protobuf.GeneratedMessage.Builder builder) {
+      private ExtensionRange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
         super(builder);
       }
       private ExtensionRange() {
@@ -4918,9 +4912,8 @@ public final class DescriptorProtos {
         unknownFields.writeTo(output);
       }
 
-      private int memoizedSerializedSize = -1;
       public int getSerializedSize() {
-        int size = memoizedSerializedSize;
+        int size = memoizedSize;
         if (size != -1) return size;
 
         size = 0;
@@ -4933,7 +4926,7 @@ public final class DescriptorProtos {
             .computeInt32Size(2, end_);
         }
         size += unknownFields.getSerializedSize();
-        memoizedSerializedSize = size;
+        memoizedSize = size;
         return size;
       }
 
@@ -5207,8 +5200,8 @@ public final class DescriptorProtos {
         return DEFAULT_INSTANCE;
       }
 
-      public static final com.google.protobuf.Parser<ExtensionRange> PARSER =
-          new com.google.protobuf.AbstractParser<ExtensionRange>() {
+      @java.lang.Deprecated public static final com.google.protobuf.Parser<ExtensionRange>
+          PARSER = new com.google.protobuf.AbstractParser<ExtensionRange>() {
         public ExtensionRange parsePartialFrom(
             com.google.protobuf.CodedInputStream input,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -5558,7 +5551,7 @@ public final class DescriptorProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getNameBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
       }
       for (int i = 0; i < field_.size(); i++) {
         output.writeMessage(2, field_.get(i));
@@ -5584,15 +5577,13 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getNameBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
       }
       for (int i = 0; i < field_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
@@ -5623,7 +5614,7 @@ public final class DescriptorProtos {
           .computeMessageSize(8, oneofDecl_.get(i));
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -7759,8 +7750,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<DescriptorProto> PARSER =
-        new com.google.protobuf.AbstractParser<DescriptorProto>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<DescriptorProto>
+        PARSER = new com.google.protobuf.AbstractParser<DescriptorProto>() {
       public DescriptorProto parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -7997,7 +7988,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.FieldDescriptorProto)
       FieldDescriptorProtoOrBuilder {
     // Use FieldDescriptorProto.newBuilder() to construct.
-    private FieldDescriptorProto(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private FieldDescriptorProto(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private FieldDescriptorProto() {
@@ -8094,7 +8085,7 @@ public final class DescriptorProtos {
               if (((bitField0_ & 0x00000100) == 0x00000100)) {
                 subBuilder = options_.toBuilder();
               }
-              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.FieldOptions.PARSER, extensionRegistry);
+              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.FieldOptions.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(options_);
                 options_ = subBuilder.buildPartial();
@@ -8387,8 +8378,8 @@ public final class DescriptorProtos {
           internalGetValueMap() {
         return internalValueMap;
       }
-      private static com.google.protobuf.Internal.EnumLiteMap<Type>
-          internalValueMap =
+      private static final com.google.protobuf.Internal.EnumLiteMap<
+          Type> internalValueMap =
             new com.google.protobuf.Internal.EnumLiteMap<Type>() {
               public Type findValueByNumber(int number) {
                 return Type.valueOf(number);
@@ -8496,8 +8487,8 @@ public final class DescriptorProtos {
           internalGetValueMap() {
         return internalValueMap;
       }
-      private static com.google.protobuf.Internal.EnumLiteMap<Label>
-          internalValueMap =
+      private static final com.google.protobuf.Internal.EnumLiteMap<
+          Label> internalValueMap =
             new com.google.protobuf.Internal.EnumLiteMap<Label>() {
               public Label findValueByNumber(int number) {
                 return Label.valueOf(number);
@@ -8893,10 +8884,10 @@ public final class DescriptorProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getNameBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeBytes(2, getExtendeeBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, extendee_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeInt32(3, number_);
@@ -8908,10 +8899,10 @@ public final class DescriptorProtos {
         output.writeEnum(5, type_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeBytes(6, getTypeNameBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 6, typeName_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        output.writeBytes(7, getDefaultValueBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 7, defaultValue_);
       }
       if (((bitField0_ & 0x00000100) == 0x00000100)) {
         output.writeMessage(8, getOptions());
@@ -8922,19 +8913,16 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getNameBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getExtendeeBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, extendee_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
@@ -8949,12 +8937,10 @@ public final class DescriptorProtos {
           .computeEnumSize(5, type_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(6, getTypeNameBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(6, typeName_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(7, getDefaultValueBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(7, defaultValue_);
       }
       if (((bitField0_ & 0x00000100) == 0x00000100)) {
         size += com.google.protobuf.CodedOutputStream
@@ -8965,7 +8951,7 @@ public final class DescriptorProtos {
           .computeInt32Size(9, oneofIndex_);
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -9988,8 +9974,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<FieldDescriptorProto> PARSER =
-        new com.google.protobuf.AbstractParser<FieldDescriptorProto>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<FieldDescriptorProto>
+        PARSER = new com.google.protobuf.AbstractParser<FieldDescriptorProto>() {
       public FieldDescriptorProto parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -10052,7 +10038,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.OneofDescriptorProto)
       OneofDescriptorProtoOrBuilder {
     // Use OneofDescriptorProto.newBuilder() to construct.
-    private OneofDescriptorProto(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private OneofDescriptorProto(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private OneofDescriptorProto() {
@@ -10173,23 +10159,21 @@ public final class DescriptorProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getNameBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
       }
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getNameBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -10472,8 +10456,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<OneofDescriptorProto> PARSER =
-        new com.google.protobuf.AbstractParser<OneofDescriptorProto>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<OneofDescriptorProto>
+        PARSER = new com.google.protobuf.AbstractParser<OneofDescriptorProto>() {
       public OneofDescriptorProto parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -10573,7 +10557,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.EnumDescriptorProto)
       EnumDescriptorProtoOrBuilder {
     // Use EnumDescriptorProto.newBuilder() to construct.
-    private EnumDescriptorProto(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private EnumDescriptorProto(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private EnumDescriptorProto() {
@@ -10619,7 +10603,7 @@ public final class DescriptorProtos {
                 value_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.EnumValueDescriptorProto>();
                 mutable_bitField0_ |= 0x00000002;
               }
-              value_.add(input.readMessage(com.google.protobuf.DescriptorProtos.EnumValueDescriptorProto.PARSER, extensionRegistry));
+              value_.add(input.readMessage(com.google.protobuf.DescriptorProtos.EnumValueDescriptorProto.parser(), extensionRegistry));
               break;
             }
             case 26: {
@@ -10627,7 +10611,7 @@ public final class DescriptorProtos {
               if (((bitField0_ & 0x00000002) == 0x00000002)) {
                 subBuilder = options_.toBuilder();
               }
-              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.EnumOptions.PARSER, extensionRegistry);
+              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.EnumOptions.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(options_);
                 options_ = subBuilder.buildPartial();
@@ -10787,7 +10771,7 @@ public final class DescriptorProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getNameBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
       }
       for (int i = 0; i < value_.size(); i++) {
         output.writeMessage(2, value_.get(i));
@@ -10798,15 +10782,13 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getNameBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
       }
       for (int i = 0; i < value_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
@@ -10817,7 +10799,7 @@ public final class DescriptorProtos {
           .computeMessageSize(3, getOptions());
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -11528,8 +11510,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<EnumDescriptorProto> PARSER =
-        new com.google.protobuf.AbstractParser<EnumDescriptorProto>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<EnumDescriptorProto>
+        PARSER = new com.google.protobuf.AbstractParser<EnumDescriptorProto>() {
       public EnumDescriptorProto parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -11614,7 +11596,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.EnumValueDescriptorProto)
       EnumValueDescriptorProtoOrBuilder {
     // Use EnumValueDescriptorProto.newBuilder() to construct.
-    private EnumValueDescriptorProto(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private EnumValueDescriptorProto(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private EnumValueDescriptorProto() {
@@ -11665,7 +11647,7 @@ public final class DescriptorProtos {
               if (((bitField0_ & 0x00000004) == 0x00000004)) {
                 subBuilder = options_.toBuilder();
               }
-              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.EnumValueOptions.PARSER, extensionRegistry);
+              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.EnumValueOptions.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(options_);
                 options_ = subBuilder.buildPartial();
@@ -11796,7 +11778,7 @@ public final class DescriptorProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getNameBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeInt32(2, number_);
@@ -11807,15 +11789,13 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getNameBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
@@ -11826,7 +11806,7 @@ public final class DescriptorProtos {
           .computeMessageSize(3, getOptions());
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -12291,8 +12271,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<EnumValueDescriptorProto> PARSER =
-        new com.google.protobuf.AbstractParser<EnumValueDescriptorProto>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<EnumValueDescriptorProto>
+        PARSER = new com.google.protobuf.AbstractParser<EnumValueDescriptorProto>() {
       public EnumValueDescriptorProto parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -12392,7 +12372,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.ServiceDescriptorProto)
       ServiceDescriptorProtoOrBuilder {
     // Use ServiceDescriptorProto.newBuilder() to construct.
-    private ServiceDescriptorProto(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private ServiceDescriptorProto(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private ServiceDescriptorProto() {
@@ -12438,7 +12418,7 @@ public final class DescriptorProtos {
                 method_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.MethodDescriptorProto>();
                 mutable_bitField0_ |= 0x00000002;
               }
-              method_.add(input.readMessage(com.google.protobuf.DescriptorProtos.MethodDescriptorProto.PARSER, extensionRegistry));
+              method_.add(input.readMessage(com.google.protobuf.DescriptorProtos.MethodDescriptorProto.parser(), extensionRegistry));
               break;
             }
             case 26: {
@@ -12446,7 +12426,7 @@ public final class DescriptorProtos {
               if (((bitField0_ & 0x00000002) == 0x00000002)) {
                 subBuilder = options_.toBuilder();
               }
-              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.ServiceOptions.PARSER, extensionRegistry);
+              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.ServiceOptions.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(options_);
                 options_ = subBuilder.buildPartial();
@@ -12606,7 +12586,7 @@ public final class DescriptorProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getNameBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
       }
       for (int i = 0; i < method_.size(); i++) {
         output.writeMessage(2, method_.get(i));
@@ -12617,15 +12597,13 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getNameBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
       }
       for (int i = 0; i < method_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
@@ -12636,7 +12614,7 @@ public final class DescriptorProtos {
           .computeMessageSize(3, getOptions());
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -13347,8 +13325,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<ServiceDescriptorProto> PARSER =
-        new com.google.protobuf.AbstractParser<ServiceDescriptorProto>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<ServiceDescriptorProto>
+        PARSER = new com.google.protobuf.AbstractParser<ServiceDescriptorProto>() {
       public ServiceDescriptorProto parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -13501,7 +13479,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.MethodDescriptorProto)
       MethodDescriptorProtoOrBuilder {
     // Use MethodDescriptorProto.newBuilder() to construct.
-    private MethodDescriptorProto(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private MethodDescriptorProto(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private MethodDescriptorProto() {
@@ -13562,7 +13540,7 @@ public final class DescriptorProtos {
               if (((bitField0_ & 0x00000008) == 0x00000008)) {
                 subBuilder = options_.toBuilder();
               }
-              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.MethodOptions.PARSER, extensionRegistry);
+              options_ = input.readMessage(com.google.protobuf.DescriptorProtos.MethodOptions.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(options_);
                 options_ = subBuilder.buildPartial();
@@ -13833,13 +13811,13 @@ public final class DescriptorProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getNameBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, getInputTypeBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, inputType_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBytes(3, getOutputTypeBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 3, outputType_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         output.writeMessage(4, getOptions());
@@ -13853,23 +13831,19 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getNameBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getInputTypeBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, inputType_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(3, getOutputTypeBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(3, outputType_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
@@ -13884,7 +13858,7 @@ public final class DescriptorProtos {
           .computeBoolSize(6, serverStreaming_);
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -14626,8 +14600,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<MethodDescriptorProto> PARSER =
-        new com.google.protobuf.AbstractParser<MethodDescriptorProto>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<MethodDescriptorProto>
+        PARSER = new com.google.protobuf.AbstractParser<MethodDescriptorProto>() {
       public MethodDescriptorProto parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -15176,7 +15150,7 @@ public final class DescriptorProtos {
                 uninterpretedOption_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.UninterpretedOption>();
                 mutable_bitField0_ |= 0x00002000;
               }
-              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.PARSER, extensionRegistry));
+              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.parser(), extensionRegistry));
               break;
             }
           }
@@ -15285,8 +15259,8 @@ public final class DescriptorProtos {
           internalGetValueMap() {
         return internalValueMap;
       }
-      private static com.google.protobuf.Internal.EnumLiteMap<OptimizeMode>
-          internalValueMap =
+      private static final com.google.protobuf.Internal.EnumLiteMap<
+          OptimizeMode> internalValueMap =
             new com.google.protobuf.Internal.EnumLiteMap<OptimizeMode>() {
               public OptimizeMode findValueByNumber(int number) {
                 return OptimizeMode.valueOf(number);
@@ -15908,10 +15882,10 @@ public final class DescriptorProtos {
         .ExtendableMessage<com.google.protobuf.DescriptorProtos.FileOptions>.ExtensionWriter
           extensionWriter = newExtensionWriter();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getJavaPackageBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, javaPackage_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(8, getJavaOuterClassnameBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 8, javaOuterClassname_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeEnum(9, optimizeFor_);
@@ -15920,7 +15894,7 @@ public final class DescriptorProtos {
         output.writeBool(10, javaMultipleFiles_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        output.writeBytes(11, getGoPackageBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 11, goPackage_);
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         output.writeBool(16, ccGenericServices_);
@@ -15944,7 +15918,7 @@ public final class DescriptorProtos {
         output.writeBool(31, ccEnableArenas_);
       }
       if (((bitField0_ & 0x00001000) == 0x00001000)) {
-        output.writeBytes(36, getObjcClassPrefixBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 36, objcClassPrefix_);
       }
       for (int i = 0; i < uninterpretedOption_.size(); i++) {
         output.writeMessage(999, uninterpretedOption_.get(i));
@@ -15953,19 +15927,16 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getJavaPackageBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, javaPackage_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(8, getJavaOuterClassnameBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(8, javaOuterClassname_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
@@ -15976,8 +15947,7 @@ public final class DescriptorProtos {
           .computeBoolSize(10, javaMultipleFiles_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(11, getGoPackageBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(11, goPackage_);
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         size += com.google.protobuf.CodedOutputStream
@@ -16008,8 +15978,7 @@ public final class DescriptorProtos {
           .computeBoolSize(31, ccEnableArenas_);
       }
       if (((bitField0_ & 0x00001000) == 0x00001000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(36, getObjcClassPrefixBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(36, objcClassPrefix_);
       }
       for (int i = 0; i < uninterpretedOption_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
@@ -16017,7 +15986,7 @@ public final class DescriptorProtos {
       }
       size += extensionsSerializedSize();
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -17682,8 +17651,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<FileOptions> PARSER =
-        new com.google.protobuf.AbstractParser<FileOptions>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<FileOptions>
+        PARSER = new com.google.protobuf.AbstractParser<FileOptions>() {
       public FileOptions parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -17977,7 +17946,7 @@ public final class DescriptorProtos {
                 uninterpretedOption_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.UninterpretedOption>();
                 mutable_bitField0_ |= 0x00000010;
               }
-              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.PARSER, extensionRegistry));
+              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.parser(), extensionRegistry));
               break;
             }
           }
@@ -18272,9 +18241,8 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -18300,7 +18268,7 @@ public final class DescriptorProtos {
       }
       size += extensionsSerializedSize();
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -19228,8 +19196,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<MessageOptions> PARSER =
-        new com.google.protobuf.AbstractParser<MessageOptions>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<MessageOptions>
+        PARSER = new com.google.protobuf.AbstractParser<MessageOptions>() {
       public MessageOptions parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -19544,7 +19512,7 @@ public final class DescriptorProtos {
                 uninterpretedOption_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.UninterpretedOption>();
                 mutable_bitField0_ |= 0x00000020;
               }
-              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.PARSER, extensionRegistry));
+              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.parser(), extensionRegistry));
               break;
             }
           }
@@ -19633,8 +19601,8 @@ public final class DescriptorProtos {
           internalGetValueMap() {
         return internalValueMap;
       }
-      private static com.google.protobuf.Internal.EnumLiteMap<CType>
-          internalValueMap =
+      private static final com.google.protobuf.Internal.EnumLiteMap<
+          CType> internalValueMap =
             new com.google.protobuf.Internal.EnumLiteMap<CType>() {
               public CType findValueByNumber(int number) {
                 return CType.valueOf(number);
@@ -19959,9 +19927,8 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -19991,7 +19958,7 @@ public final class DescriptorProtos {
       }
       size += extensionsSerializedSize();
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -20964,8 +20931,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<FieldOptions> PARSER =
-        new com.google.protobuf.AbstractParser<FieldOptions>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<FieldOptions>
+        PARSER = new com.google.protobuf.AbstractParser<FieldOptions>() {
       public FieldOptions parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -21149,7 +21116,7 @@ public final class DescriptorProtos {
                 uninterpretedOption_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.UninterpretedOption>();
                 mutable_bitField0_ |= 0x00000004;
               }
-              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.PARSER, extensionRegistry));
+              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.parser(), extensionRegistry));
               break;
             }
           }
@@ -21328,9 +21295,8 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -21348,7 +21314,7 @@ public final class DescriptorProtos {
       }
       size += extensionsSerializedSize();
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -22034,8 +22000,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<EnumOptions> PARSER =
-        new com.google.protobuf.AbstractParser<EnumOptions>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<EnumOptions>
+        PARSER = new com.google.protobuf.AbstractParser<EnumOptions>() {
       public EnumOptions parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -22194,7 +22160,7 @@ public final class DescriptorProtos {
                 uninterpretedOption_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.UninterpretedOption>();
                 mutable_bitField0_ |= 0x00000002;
               }
-              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.PARSER, extensionRegistry));
+              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.parser(), extensionRegistry));
               break;
             }
           }
@@ -22345,9 +22311,8 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -22361,7 +22326,7 @@ public final class DescriptorProtos {
       }
       size += extensionsSerializedSize();
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -22986,8 +22951,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<EnumValueOptions> PARSER =
-        new com.google.protobuf.AbstractParser<EnumValueOptions>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<EnumValueOptions>
+        PARSER = new com.google.protobuf.AbstractParser<EnumValueOptions>() {
       public EnumValueOptions parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -23146,7 +23111,7 @@ public final class DescriptorProtos {
                 uninterpretedOption_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.UninterpretedOption>();
                 mutable_bitField0_ |= 0x00000002;
               }
-              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.PARSER, extensionRegistry));
+              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.parser(), extensionRegistry));
               break;
             }
           }
@@ -23297,9 +23262,8 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -23313,7 +23277,7 @@ public final class DescriptorProtos {
       }
       size += extensionsSerializedSize();
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -23938,8 +23902,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<ServiceOptions> PARSER =
-        new com.google.protobuf.AbstractParser<ServiceOptions>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<ServiceOptions>
+        PARSER = new com.google.protobuf.AbstractParser<ServiceOptions>() {
       public ServiceOptions parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -24098,7 +24062,7 @@ public final class DescriptorProtos {
                 uninterpretedOption_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.UninterpretedOption>();
                 mutable_bitField0_ |= 0x00000002;
               }
-              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.PARSER, extensionRegistry));
+              uninterpretedOption_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.parser(), extensionRegistry));
               break;
             }
           }
@@ -24249,9 +24213,8 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -24265,7 +24228,7 @@ public final class DescriptorProtos {
       }
       size += extensionsSerializedSize();
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -24890,8 +24853,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<MethodOptions> PARSER =
-        new com.google.protobuf.AbstractParser<MethodOptions>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<MethodOptions>
+        PARSER = new com.google.protobuf.AbstractParser<MethodOptions>() {
       public MethodOptions parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -25048,7 +25011,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.UninterpretedOption)
       UninterpretedOptionOrBuilder {
     // Use UninterpretedOption.newBuilder() to construct.
-    private UninterpretedOption(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private UninterpretedOption(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private UninterpretedOption() {
@@ -25093,7 +25056,7 @@ public final class DescriptorProtos {
                 name_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.UninterpretedOption.NamePart>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              name_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.NamePart.PARSER, extensionRegistry));
+              name_.add(input.readMessage(com.google.protobuf.DescriptorProtos.UninterpretedOption.NamePart.parser(), extensionRegistry));
               break;
             }
             case 26: {
@@ -25199,7 +25162,7 @@ public final class DescriptorProtos {
         // @@protoc_insertion_point(message_implements:google.protobuf.UninterpretedOption.NamePart)
         NamePartOrBuilder {
       // Use NamePart.newBuilder() to construct.
-      private NamePart(com.google.protobuf.GeneratedMessage.Builder builder) {
+      private NamePart(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
         super(builder);
       }
       private NamePart() {
@@ -25349,7 +25312,7 @@ public final class DescriptorProtos {
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          output.writeBytes(1, getNamePartBytes());
+          com.google.protobuf.GeneratedMessage.writeString(output, 1, namePart_);
         }
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
           output.writeBool(2, isExtension_);
@@ -25357,22 +25320,20 @@ public final class DescriptorProtos {
         unknownFields.writeTo(output);
       }
 
-      private int memoizedSerializedSize = -1;
       public int getSerializedSize() {
-        int size = memoizedSerializedSize;
+        int size = memoizedSize;
         if (size != -1) return size;
 
         size = 0;
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          size += com.google.protobuf.CodedOutputStream
-            .computeBytesSize(1, getNamePartBytes());
+          size += com.google.protobuf.GeneratedMessage.computeStringSize(1, namePart_);
         }
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
           size += com.google.protobuf.CodedOutputStream
             .computeBoolSize(2, isExtension_);
         }
         size += unknownFields.getSerializedSize();
-        memoizedSerializedSize = size;
+        memoizedSize = size;
         return size;
       }
 
@@ -25706,8 +25667,8 @@ public final class DescriptorProtos {
         return DEFAULT_INSTANCE;
       }
 
-      public static final com.google.protobuf.Parser<NamePart> PARSER =
-          new com.google.protobuf.AbstractParser<NamePart>() {
+      @java.lang.Deprecated public static final com.google.protobuf.Parser<NamePart>
+          PARSER = new com.google.protobuf.AbstractParser<NamePart>() {
         public NamePart parsePartialFrom(
             com.google.protobuf.CodedInputStream input,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -25957,7 +25918,7 @@ public final class DescriptorProtos {
         output.writeMessage(2, name_.get(i));
       }
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(3, getIdentifierValueBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 3, identifierValue_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeUInt64(4, positiveIntValue_);
@@ -25972,14 +25933,13 @@ public final class DescriptorProtos {
         output.writeBytes(7, stringValue_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeBytes(8, getAggregateValueBytes());
+        com.google.protobuf.GeneratedMessage.writeString(output, 8, aggregateValue_);
       }
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -25988,8 +25948,7 @@ public final class DescriptorProtos {
           .computeMessageSize(2, name_.get(i));
       }
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(3, getIdentifierValueBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(3, identifierValue_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
@@ -26008,11 +25967,10 @@ public final class DescriptorProtos {
           .computeBytesSize(7, stringValue_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(8, getAggregateValueBytes());
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(8, aggregateValue_);
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -26871,8 +26829,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<UninterpretedOption> PARSER =
-        new com.google.protobuf.AbstractParser<UninterpretedOption>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<UninterpretedOption>
+        PARSER = new com.google.protobuf.AbstractParser<UninterpretedOption>() {
       public UninterpretedOption parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -27166,7 +27124,7 @@ public final class DescriptorProtos {
       // @@protoc_insertion_point(message_implements:google.protobuf.SourceCodeInfo)
       SourceCodeInfoOrBuilder {
     // Use SourceCodeInfo.newBuilder() to construct.
-    private SourceCodeInfo(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private SourceCodeInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private SourceCodeInfo() {
@@ -27205,7 +27163,7 @@ public final class DescriptorProtos {
                 location_ = new java.util.ArrayList<com.google.protobuf.DescriptorProtos.SourceCodeInfo.Location>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              location_.add(input.readMessage(com.google.protobuf.DescriptorProtos.SourceCodeInfo.Location.PARSER, extensionRegistry));
+              location_.add(input.readMessage(com.google.protobuf.DescriptorProtos.SourceCodeInfo.Location.parser(), extensionRegistry));
               break;
             }
           }
@@ -27534,7 +27492,7 @@ public final class DescriptorProtos {
         // @@protoc_insertion_point(message_implements:google.protobuf.SourceCodeInfo.Location)
         LocationOrBuilder {
       // Use Location.newBuilder() to construct.
-      private Location(com.google.protobuf.GeneratedMessage.Builder builder) {
+      private Location(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
         super(builder);
       }
       private Location() {
@@ -28070,20 +28028,19 @@ public final class DescriptorProtos {
           output.writeInt32NoTag(span_.get(i));
         }
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          output.writeBytes(3, getLeadingCommentsBytes());
+          com.google.protobuf.GeneratedMessage.writeString(output, 3, leadingComments_);
         }
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
-          output.writeBytes(4, getTrailingCommentsBytes());
+          com.google.protobuf.GeneratedMessage.writeString(output, 4, trailingComments_);
         }
         for (int i = 0; i < leadingDetachedComments_.size(); i++) {
-          output.writeBytes(6, leadingDetachedComments_.getByteString(i));
+          com.google.protobuf.GeneratedMessage.writeString(output, 6, leadingDetachedComments_.getRaw(i));
         }
         unknownFields.writeTo(output);
       }
 
-      private int memoizedSerializedSize = -1;
       public int getSerializedSize() {
-        int size = memoizedSerializedSize;
+        int size = memoizedSize;
         if (size != -1) return size;
 
         size = 0;
@@ -28116,24 +28073,21 @@ public final class DescriptorProtos {
           spanMemoizedSerializedSize = dataSize;
         }
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          size += com.google.protobuf.CodedOutputStream
-            .computeBytesSize(3, getLeadingCommentsBytes());
+          size += com.google.protobuf.GeneratedMessage.computeStringSize(3, leadingComments_);
         }
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
-          size += com.google.protobuf.CodedOutputStream
-            .computeBytesSize(4, getTrailingCommentsBytes());
+          size += com.google.protobuf.GeneratedMessage.computeStringSize(4, trailingComments_);
         }
         {
           int dataSize = 0;
           for (int i = 0; i < leadingDetachedComments_.size(); i++) {
-            dataSize += com.google.protobuf.CodedOutputStream
-              .computeBytesSizeNoTag(leadingDetachedComments_.getByteString(i));
+            dataSize += computeStringSizeNoTag(leadingDetachedComments_.getRaw(i));
           }
           size += dataSize;
           size += 1 * getLeadingDetachedCommentsList().size();
         }
         size += unknownFields.getSerializedSize();
-        memoizedSerializedSize = size;
+        memoizedSize = size;
         return size;
       }
 
@@ -29233,8 +29187,8 @@ public final class DescriptorProtos {
         return DEFAULT_INSTANCE;
       }
 
-      public static final com.google.protobuf.Parser<Location> PARSER =
-          new com.google.protobuf.AbstractParser<Location>() {
+      @java.lang.Deprecated public static final com.google.protobuf.Parser<Location>
+          PARSER = new com.google.protobuf.AbstractParser<Location>() {
         public Location parsePartialFrom(
             com.google.protobuf.CodedInputStream input,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -29540,9 +29494,8 @@ public final class DescriptorProtos {
       unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -29551,7 +29504,7 @@ public final class DescriptorProtos {
           .computeMessageSize(1, location_.get(i));
       }
       size += unknownFields.getSerializedSize();
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -30820,8 +30773,8 @@ public final class DescriptorProtos {
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<SourceCodeInfo> PARSER =
-        new com.google.protobuf.AbstractParser<SourceCodeInfo>() {
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<SourceCodeInfo>
+        PARSER = new com.google.protobuf.AbstractParser<SourceCodeInfo>() {
       public SourceCodeInfo parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)

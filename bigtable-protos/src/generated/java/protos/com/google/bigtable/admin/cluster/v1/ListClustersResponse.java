@@ -15,7 +15,7 @@ public  final class ListClustersResponse extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.cluster.v1.ListClustersResponse)
     ListClustersResponseOrBuilder {
   // Use ListClustersResponse.newBuilder() to construct.
-  private ListClustersResponse(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ListClustersResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ListClustersResponse() {
@@ -52,7 +52,7 @@ public  final class ListClustersResponse extends
               clusters_ = new java.util.ArrayList<com.google.bigtable.admin.cluster.v1.Cluster>();
               mutable_bitField0_ |= 0x00000001;
             }
-            clusters_.add(input.readMessage(com.google.bigtable.admin.cluster.v1.Cluster.PARSER, extensionRegistry));
+            clusters_.add(input.readMessage(com.google.bigtable.admin.cluster.v1.Cluster.parser(), extensionRegistry));
             break;
           }
           case 18: {
@@ -60,7 +60,7 @@ public  final class ListClustersResponse extends
               failedZones_ = new java.util.ArrayList<com.google.bigtable.admin.cluster.v1.Zone>();
               mutable_bitField0_ |= 0x00000002;
             }
-            failedZones_.add(input.readMessage(com.google.bigtable.admin.cluster.v1.Zone.PARSER, extensionRegistry));
+            failedZones_.add(input.readMessage(com.google.bigtable.admin.cluster.v1.Zone.parser(), extensionRegistry));
             break;
           }
         }
@@ -223,9 +223,8 @@ public  final class ListClustersResponse extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -237,7 +236,7 @@ public  final class ListClustersResponse extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(2, failedZones_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -1148,8 +1147,8 @@ public  final class ListClustersResponse extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ListClustersResponse> PARSER =
-      new com.google.protobuf.AbstractParser<ListClustersResponse>() {
+  private static final com.google.protobuf.Parser<ListClustersResponse>
+      PARSER = new com.google.protobuf.AbstractParser<ListClustersResponse>() {
     public ListClustersResponse parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

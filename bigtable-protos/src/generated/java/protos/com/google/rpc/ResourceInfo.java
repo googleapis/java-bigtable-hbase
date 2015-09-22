@@ -15,7 +15,7 @@ public  final class ResourceInfo extends
     // @@protoc_insertion_point(message_implements:google.rpc.ResourceInfo)
     ResourceInfoOrBuilder {
   // Use ResourceInfo.newBuilder() to construct.
-  private ResourceInfo(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ResourceInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ResourceInfo() {
@@ -50,27 +50,27 @@ public  final class ResourceInfo extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            resourceType_ = bs;
+            resourceType_ = s;
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            resourceName_ = bs;
+            resourceName_ = s;
             break;
           }
           case 26: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            owner_ = bs;
+            owner_ = s;
             break;
           }
           case 34: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            description_ = bs;
+            description_ = s;
             break;
           }
         }
@@ -116,9 +116,7 @@ public  final class ResourceInfo extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        resourceType_ = s;
-      }
+      resourceType_ = s;
       return s;
     }
   }
@@ -164,9 +162,7 @@ public  final class ResourceInfo extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        resourceName_ = s;
-      }
+      resourceName_ = s;
       return s;
     }
   }
@@ -212,9 +208,7 @@ public  final class ResourceInfo extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        owner_ = s;
-      }
+      owner_ = s;
       return s;
     }
   }
@@ -260,9 +254,7 @@ public  final class ResourceInfo extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        description_ = s;
-      }
+      description_ = s;
       return s;
     }
   }
@@ -302,42 +294,37 @@ public  final class ResourceInfo extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getResourceTypeBytes().isEmpty()) {
-      output.writeBytes(1, getResourceTypeBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, resourceType_);
     }
     if (!getResourceNameBytes().isEmpty()) {
-      output.writeBytes(2, getResourceNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, resourceName_);
     }
     if (!getOwnerBytes().isEmpty()) {
-      output.writeBytes(3, getOwnerBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 3, owner_);
     }
     if (!getDescriptionBytes().isEmpty()) {
-      output.writeBytes(4, getDescriptionBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 4, description_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getResourceTypeBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getResourceTypeBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, resourceType_);
     }
     if (!getResourceNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getResourceNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, resourceName_);
     }
     if (!getOwnerBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(3, getOwnerBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(3, owner_);
     }
     if (!getDescriptionBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getDescriptionBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(4, description_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -559,9 +546,7 @@ public  final class ResourceInfo extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          resourceType_ = s;
-        }
+        resourceType_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -637,7 +622,8 @@ public  final class ResourceInfo extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       resourceType_ = value;
       onChanged();
       return this;
@@ -659,9 +645,7 @@ public  final class ResourceInfo extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          resourceName_ = s;
-        }
+        resourceName_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -737,7 +721,8 @@ public  final class ResourceInfo extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       resourceName_ = value;
       onChanged();
       return this;
@@ -759,9 +744,7 @@ public  final class ResourceInfo extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          owner_ = s;
-        }
+        owner_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -837,7 +820,8 @@ public  final class ResourceInfo extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       owner_ = value;
       onChanged();
       return this;
@@ -859,9 +843,7 @@ public  final class ResourceInfo extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          description_ = s;
-        }
+        description_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -937,7 +919,8 @@ public  final class ResourceInfo extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       description_ = value;
       onChanged();
       return this;
@@ -966,8 +949,8 @@ public  final class ResourceInfo extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ResourceInfo> PARSER =
-      new com.google.protobuf.AbstractParser<ResourceInfo>() {
+  private static final com.google.protobuf.Parser<ResourceInfo>
+      PARSER = new com.google.protobuf.AbstractParser<ResourceInfo>() {
     public ResourceInfo parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

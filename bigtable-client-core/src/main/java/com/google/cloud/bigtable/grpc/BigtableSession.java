@@ -44,11 +44,11 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import io.grpc.Channel;
-import io.grpc.ChannelImpl;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.MethodDescriptor;
 import io.grpc.auth.ClientAuthInterceptor;
+import io.grpc.internal.ManagedChannelImpl;
 import io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
@@ -410,7 +410,7 @@ public class BigtableSession implements AutoCloseable {
         return new Closeable() {
           @Override
           public void close() throws IOException {
-            ChannelImpl channelImpl = (ChannelImpl) channel;
+            ManagedChannelImpl channelImpl = (ManagedChannelImpl) channel;
             channelImpl.shutdown();
             int timeoutMs = 10000;
             try {

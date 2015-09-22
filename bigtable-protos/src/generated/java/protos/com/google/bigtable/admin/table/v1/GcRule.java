@@ -15,7 +15,7 @@ public  final class GcRule extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.table.v1.GcRule)
     GcRuleOrBuilder {
   // Use GcRule.newBuilder() to construct.
-  private GcRule(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private GcRule(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private GcRule() {
@@ -55,7 +55,8 @@ public  final class GcRule extends
             if (ruleCase_ == 2) {
               subBuilder = ((com.google.protobuf.Duration) rule_).toBuilder();
             }
-            rule_ = input.readMessage(com.google.protobuf.Duration.PARSER, extensionRegistry);
+            rule_ =
+                input.readMessage(com.google.protobuf.Duration.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.protobuf.Duration) rule_);
               rule_ = subBuilder.buildPartial();
@@ -68,7 +69,8 @@ public  final class GcRule extends
             if (ruleCase_ == 3) {
               subBuilder = ((com.google.bigtable.admin.table.v1.GcRule.Intersection) rule_).toBuilder();
             }
-            rule_ = input.readMessage(com.google.bigtable.admin.table.v1.GcRule.Intersection.PARSER, extensionRegistry);
+            rule_ =
+                input.readMessage(com.google.bigtable.admin.table.v1.GcRule.Intersection.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.bigtable.admin.table.v1.GcRule.Intersection) rule_);
               rule_ = subBuilder.buildPartial();
@@ -81,7 +83,8 @@ public  final class GcRule extends
             if (ruleCase_ == 4) {
               subBuilder = ((com.google.bigtable.admin.table.v1.GcRule.Union) rule_).toBuilder();
             }
-            rule_ = input.readMessage(com.google.bigtable.admin.table.v1.GcRule.Union.PARSER, extensionRegistry);
+            rule_ =
+                input.readMessage(com.google.bigtable.admin.table.v1.GcRule.Union.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom((com.google.bigtable.admin.table.v1.GcRule.Union) rule_);
               rule_ = subBuilder.buildPartial();
@@ -173,7 +176,7 @@ public  final class GcRule extends
       // @@protoc_insertion_point(message_implements:google.bigtable.admin.table.v1.GcRule.Intersection)
       IntersectionOrBuilder {
     // Use Intersection.newBuilder() to construct.
-    private Intersection(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private Intersection(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private Intersection() {
@@ -209,7 +212,7 @@ public  final class GcRule extends
                 rules_ = new java.util.ArrayList<com.google.bigtable.admin.table.v1.GcRule>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              rules_.add(input.readMessage(com.google.bigtable.admin.table.v1.GcRule.PARSER, extensionRegistry));
+              rules_.add(input.readMessage(com.google.bigtable.admin.table.v1.GcRule.parser(), extensionRegistry));
               break;
             }
           }
@@ -311,9 +314,8 @@ public  final class GcRule extends
       }
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -321,7 +323,7 @@ public  final class GcRule extends
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, rules_.get(i));
       }
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -878,8 +880,8 @@ public  final class GcRule extends
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<Intersection> PARSER =
-        new com.google.protobuf.AbstractParser<Intersection>() {
+    private static final com.google.protobuf.Parser<Intersection>
+        PARSER = new com.google.protobuf.AbstractParser<Intersection>() {
       public Intersection parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -972,7 +974,7 @@ public  final class GcRule extends
       // @@protoc_insertion_point(message_implements:google.bigtable.admin.table.v1.GcRule.Union)
       UnionOrBuilder {
     // Use Union.newBuilder() to construct.
-    private Union(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private Union(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private Union() {
@@ -1008,7 +1010,7 @@ public  final class GcRule extends
                 rules_ = new java.util.ArrayList<com.google.bigtable.admin.table.v1.GcRule>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              rules_.add(input.readMessage(com.google.bigtable.admin.table.v1.GcRule.PARSER, extensionRegistry));
+              rules_.add(input.readMessage(com.google.bigtable.admin.table.v1.GcRule.parser(), extensionRegistry));
               break;
             }
           }
@@ -1110,9 +1112,8 @@ public  final class GcRule extends
       }
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -1120,7 +1121,7 @@ public  final class GcRule extends
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, rules_.get(i));
       }
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -1677,8 +1678,8 @@ public  final class GcRule extends
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<Union> PARSER =
-        new com.google.protobuf.AbstractParser<Union>() {
+    private static final com.google.protobuf.Parser<Union>
+        PARSER = new com.google.protobuf.AbstractParser<Union>() {
       public Union parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1876,9 +1877,8 @@ public  final class GcRule extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -1899,7 +1899,7 @@ public  final class GcRule extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(4, (com.google.bigtable.admin.table.v1.GcRule.Union) rule_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -2707,8 +2707,8 @@ public  final class GcRule extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<GcRule> PARSER =
-      new com.google.protobuf.AbstractParser<GcRule>() {
+  private static final com.google.protobuf.Parser<GcRule>
+      PARSER = new com.google.protobuf.AbstractParser<GcRule>() {
     public GcRule parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

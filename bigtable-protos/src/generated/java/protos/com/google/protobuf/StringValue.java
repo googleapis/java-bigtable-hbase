@@ -15,7 +15,7 @@ public  final class StringValue extends
     // @@protoc_insertion_point(message_implements:google.protobuf.StringValue)
     StringValueOrBuilder {
   // Use StringValue.newBuilder() to construct.
-  private StringValue(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private StringValue(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private StringValue() {
@@ -47,9 +47,9 @@ public  final class StringValue extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            value_ = bs;
+            value_ = s;
             break;
           }
         }
@@ -93,9 +93,7 @@ public  final class StringValue extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        value_ = s;
-      }
+      value_ = s;
       return s;
     }
   }
@@ -133,21 +131,19 @@ public  final class StringValue extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getValueBytes().isEmpty()) {
-      output.writeBytes(1, getValueBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, value_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getValueBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getValueBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, value_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -346,9 +342,7 @@ public  final class StringValue extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          value_ = s;
-        }
+        value_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -416,7 +410,8 @@ public  final class StringValue extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       value_ = value;
       onChanged();
       return this;
@@ -445,8 +440,8 @@ public  final class StringValue extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<StringValue> PARSER =
-      new com.google.protobuf.AbstractParser<StringValue>() {
+  private static final com.google.protobuf.Parser<StringValue>
+      PARSER = new com.google.protobuf.AbstractParser<StringValue>() {
     public StringValue parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

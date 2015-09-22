@@ -16,7 +16,7 @@ public  final class UndeleteClusterMetadata extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.cluster.v1.UndeleteClusterMetadata)
     UndeleteClusterMetadataOrBuilder {
   // Use UndeleteClusterMetadata.newBuilder() to construct.
-  private UndeleteClusterMetadata(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private UndeleteClusterMetadata(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private UndeleteClusterMetadata() {
@@ -51,7 +51,7 @@ public  final class UndeleteClusterMetadata extends
             if (requestTime_ != null) {
               subBuilder = requestTime_.toBuilder();
             }
-            requestTime_ = input.readMessage(com.google.protobuf.Timestamp.PARSER, extensionRegistry);
+            requestTime_ = input.readMessage(com.google.protobuf.Timestamp.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(requestTime_);
               requestTime_ = subBuilder.buildPartial();
@@ -64,7 +64,7 @@ public  final class UndeleteClusterMetadata extends
             if (finishTime_ != null) {
               subBuilder = finishTime_.toBuilder();
             }
-            finishTime_ = input.readMessage(com.google.protobuf.Timestamp.PARSER, extensionRegistry);
+            finishTime_ = input.readMessage(com.google.protobuf.Timestamp.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(finishTime_);
               finishTime_ = subBuilder.buildPartial();
@@ -182,9 +182,8 @@ public  final class UndeleteClusterMetadata extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -196,7 +195,7 @@ public  final class UndeleteClusterMetadata extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(2, getFinishTime());
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -732,8 +731,8 @@ public  final class UndeleteClusterMetadata extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<UndeleteClusterMetadata> PARSER =
-      new com.google.protobuf.AbstractParser<UndeleteClusterMetadata>() {
+  private static final com.google.protobuf.Parser<UndeleteClusterMetadata>
+      PARSER = new com.google.protobuf.AbstractParser<UndeleteClusterMetadata>() {
     public UndeleteClusterMetadata parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

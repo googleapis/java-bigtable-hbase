@@ -144,7 +144,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     // would be in WWW-Authenticate, because it does not yet have access to the header.
     return new CheckedForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
       @Override
-      protected void checkedStart(Listener<RespT> responseListener, Metadata.Headers headers)
+      protected void checkedStart(Listener<RespT> responseListener, Metadata headers)
           throws Exception {
         headers.put(AUTHORIZATION_HEADER_KEY, getHeader());
         delegate().start(responseListener, headers);

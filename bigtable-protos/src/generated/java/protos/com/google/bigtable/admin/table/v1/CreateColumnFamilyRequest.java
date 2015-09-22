@@ -11,7 +11,7 @@ public  final class CreateColumnFamilyRequest extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.table.v1.CreateColumnFamilyRequest)
     CreateColumnFamilyRequestOrBuilder {
   // Use CreateColumnFamilyRequest.newBuilder() to construct.
-  private CreateColumnFamilyRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private CreateColumnFamilyRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private CreateColumnFamilyRequest() {
@@ -44,15 +44,15 @@ public  final class CreateColumnFamilyRequest extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            columnFamilyId_ = bs;
+            columnFamilyId_ = s;
             break;
           }
           case 26: {
@@ -60,7 +60,7 @@ public  final class CreateColumnFamilyRequest extends
             if (columnFamily_ != null) {
               subBuilder = columnFamily_.toBuilder();
             }
-            columnFamily_ = input.readMessage(com.google.bigtable.admin.table.v1.ColumnFamily.PARSER, extensionRegistry);
+            columnFamily_ = input.readMessage(com.google.bigtable.admin.table.v1.ColumnFamily.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(columnFamily_);
               columnFamily_ = subBuilder.buildPartial();
@@ -109,9 +109,7 @@ public  final class CreateColumnFamilyRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -154,9 +152,7 @@ public  final class CreateColumnFamilyRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        columnFamilyId_ = s;
-      }
+      columnFamilyId_ = s;
       return s;
     }
   }
@@ -228,35 +224,32 @@ public  final class CreateColumnFamilyRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     if (!getColumnFamilyIdBytes().isEmpty()) {
-      output.writeBytes(2, getColumnFamilyIdBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, columnFamilyId_);
     }
     if (columnFamily_ != null) {
       output.writeMessage(3, getColumnFamily());
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     if (!getColumnFamilyIdBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getColumnFamilyIdBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, columnFamilyId_);
     }
     if (columnFamily_ != null) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(3, getColumnFamily());
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -472,9 +465,7 @@ public  final class CreateColumnFamilyRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -542,7 +533,8 @@ public  final class CreateColumnFamilyRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -563,9 +555,7 @@ public  final class CreateColumnFamilyRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          columnFamilyId_ = s;
-        }
+        columnFamilyId_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -637,7 +627,8 @@ public  final class CreateColumnFamilyRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       columnFamilyId_ = value;
       onChanged();
       return this;
@@ -819,8 +810,8 @@ public  final class CreateColumnFamilyRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<CreateColumnFamilyRequest> PARSER =
-      new com.google.protobuf.AbstractParser<CreateColumnFamilyRequest>() {
+  private static final com.google.protobuf.Parser<CreateColumnFamilyRequest>
+      PARSER = new com.google.protobuf.AbstractParser<CreateColumnFamilyRequest>() {
     public CreateColumnFamilyRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

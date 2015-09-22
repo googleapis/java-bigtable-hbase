@@ -16,7 +16,7 @@ public  final class Row extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.Row)
     RowOrBuilder {
   // Use Row.newBuilder() to construct.
-  private Row(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Row(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Row() {
@@ -58,7 +58,7 @@ public  final class Row extends
               families_ = new java.util.ArrayList<com.google.bigtable.v1.Family>();
               mutable_bitField0_ |= 0x00000002;
             }
-            families_.add(input.readMessage(com.google.bigtable.v1.Family.PARSER, extensionRegistry));
+            families_.add(input.readMessage(com.google.bigtable.v1.Family.parser(), extensionRegistry));
             break;
           }
         }
@@ -184,9 +184,8 @@ public  final class Row extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -198,7 +197,7 @@ public  final class Row extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(2, families_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -829,8 +828,8 @@ public  final class Row extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Row> PARSER =
-      new com.google.protobuf.AbstractParser<Row>() {
+  private static final com.google.protobuf.Parser<Row>
+      PARSER = new com.google.protobuf.AbstractParser<Row>() {
     public Row parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

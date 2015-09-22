@@ -44,4 +44,9 @@ public class ChannelPool extends Channel {
     int index = Math.abs(currentRequestNum % channels.length);
     return channels[index].newCall(methodDescriptor, callOptions);
   }
+
+  @Override
+  public String authority() {
+    return channels[0].authority();
+  }
 }

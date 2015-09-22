@@ -69,7 +69,7 @@ public class CallCompletionStatusInterceptorTest {
     Listener<Empty> statusGatheringListener =
         wrappedCall.createGatheringListener(responseListenerStub);
 
-    statusGatheringListener.onClose(Status.INTERNAL, new Metadata.Trailers());
+    statusGatheringListener.onClose(Status.INTERNAL, new Metadata());
 
     CallCompletionStatusInterceptor.CallCompletionStatus expectedStatusEntry =
         new CallCompletionStatusInterceptor.CallCompletionStatus(

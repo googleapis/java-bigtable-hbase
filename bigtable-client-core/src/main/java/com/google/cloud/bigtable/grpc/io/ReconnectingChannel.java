@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.grpc.io;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
-import io.grpc.Metadata.Headers;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
 import java.io.Closeable;
@@ -79,7 +79,7 @@ public class ReconnectingChannel extends Channel implements Closeable {
     }
 
     @Override
-    public void start(ClientCall.Listener<ResponseT> responseListener, Headers headers) {
+    public void start(ClientCall.Listener<ResponseT> responseListener, Metadata headers) {
       Preconditions.checkState(callDelegate == null, "Already started");
       ReadLock readLock = delegateLock.readLock();
       readLock.lock();
@@ -244,5 +244,10 @@ public class ReconnectingChannel extends Channel implements Closeable {
     double randomizedPercentage = 1D - (.05D * Math.random());
     long randomizedEnd = (long) (this.maxRefreshTime * randomizedPercentage);
     return (randomizedEnd + System.currentTimeMillis());
+  }
+
+  @Override
+  public String authority() {
+    return delegate.authority();
   }
 }

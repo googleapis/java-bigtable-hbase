@@ -44,7 +44,7 @@ public class UserAgentInterceptor implements ClientInterceptor {
       MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
     return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
       @Override
-      public void start(Listener<RespT> responseListener, Metadata.Headers headers) {
+      public void start(Listener<RespT> responseListener, Metadata headers) {
         String userAgents = headers.get(USER_AGENT_KEY);
         if (userAgents == null) {
           userAgents = userAgent;

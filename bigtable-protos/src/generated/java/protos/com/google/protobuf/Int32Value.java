@@ -15,7 +15,7 @@ public  final class Int32Value extends
     // @@protoc_insertion_point(message_implements:google.protobuf.Int32Value)
     Int32ValueOrBuilder {
   // Use Int32Value.newBuilder() to construct.
-  private Int32Value(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Int32Value(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Int32Value() {
@@ -105,9 +105,8 @@ public  final class Int32Value extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -115,7 +114,7 @@ public  final class Int32Value extends
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(1, value_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -360,8 +359,8 @@ public  final class Int32Value extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Int32Value> PARSER =
-      new com.google.protobuf.AbstractParser<Int32Value>() {
+  private static final com.google.protobuf.Parser<Int32Value>
+      PARSER = new com.google.protobuf.AbstractParser<Int32Value>() {
     public Int32Value parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

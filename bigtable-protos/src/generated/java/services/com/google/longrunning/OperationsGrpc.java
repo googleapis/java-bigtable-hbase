@@ -7,6 +7,7 @@ import static io.grpc.stub.ClientCalls.asyncBidiStreamingCall;
 import static io.grpc.stub.ClientCalls.blockingUnaryCall;
 import static io.grpc.stub.ClientCalls.blockingServerStreamingCall;
 import static io.grpc.stub.ClientCalls.futureUnaryCall;
+import static io.grpc.MethodDescriptor.generateFullMethodName;
 import static io.grpc.stub.ServerCalls.asyncUnaryCall;
 import static io.grpc.stub.ServerCalls.asyncServerStreamingCall;
 import static io.grpc.stub.ServerCalls.asyncClientStreamingCall;
@@ -15,35 +16,47 @@ import static io.grpc.stub.ServerCalls.asyncBidiStreamingCall;
 @javax.annotation.Generated("by gRPC proto compiler")
 public class OperationsGrpc {
 
+  private OperationsGrpc() {}
+
+  public static final String SERVICE_NAME = "google.longrunning.Operations";
+
   // Static method descriptors that strictly reflect the proto.
+  @io.grpc.ExperimentalApi
   public static final io.grpc.MethodDescriptor<com.google.longrunning.GetOperationRequest,
       com.google.longrunning.Operation> METHOD_GET_OPERATION =
       io.grpc.MethodDescriptor.create(
           io.grpc.MethodDescriptor.MethodType.UNARY,
-          "google.longrunning.Operations", "GetOperation",
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.GetOperationRequest.parser()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.Operation.parser()));
+          generateFullMethodName(
+              "google.longrunning.Operations", "GetOperation"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.GetOperationRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.Operation.getDefaultInstance()));
+  @io.grpc.ExperimentalApi
   public static final io.grpc.MethodDescriptor<com.google.longrunning.ListOperationsRequest,
       com.google.longrunning.ListOperationsResponse> METHOD_LIST_OPERATIONS =
       io.grpc.MethodDescriptor.create(
           io.grpc.MethodDescriptor.MethodType.UNARY,
-          "google.longrunning.Operations", "ListOperations",
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.ListOperationsRequest.parser()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.ListOperationsResponse.parser()));
+          generateFullMethodName(
+              "google.longrunning.Operations", "ListOperations"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.ListOperationsRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.ListOperationsResponse.getDefaultInstance()));
+  @io.grpc.ExperimentalApi
   public static final io.grpc.MethodDescriptor<com.google.longrunning.CancelOperationRequest,
       com.google.protobuf.Empty> METHOD_CANCEL_OPERATION =
       io.grpc.MethodDescriptor.create(
           io.grpc.MethodDescriptor.MethodType.UNARY,
-          "google.longrunning.Operations", "CancelOperation",
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.CancelOperationRequest.parser()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.parser()));
+          generateFullMethodName(
+              "google.longrunning.Operations", "CancelOperation"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.CancelOperationRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
+  @io.grpc.ExperimentalApi
   public static final io.grpc.MethodDescriptor<com.google.longrunning.DeleteOperationRequest,
       com.google.protobuf.Empty> METHOD_DELETE_OPERATION =
       io.grpc.MethodDescriptor.create(
           io.grpc.MethodDescriptor.MethodType.UNARY,
-          "google.longrunning.Operations", "DeleteOperation",
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.DeleteOperationRequest.parser()),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.parser()));
+          generateFullMethodName(
+              "google.longrunning.Operations", "DeleteOperation"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.DeleteOperationRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
 
   public static OperationsStub newStub(io.grpc.Channel channel) {
     return new OperationsStub(channel);
@@ -121,28 +134,28 @@ public class OperationsGrpc {
     public void getOperation(com.google.longrunning.GetOperationRequest request,
         io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
       asyncUnaryCall(
-          channel.newCall(METHOD_GET_OPERATION, callOptions), request, responseObserver);
+          getChannel().newCall(METHOD_GET_OPERATION, getCallOptions()), request, responseObserver);
     }
 
     @java.lang.Override
     public void listOperations(com.google.longrunning.ListOperationsRequest request,
         io.grpc.stub.StreamObserver<com.google.longrunning.ListOperationsResponse> responseObserver) {
       asyncUnaryCall(
-          channel.newCall(METHOD_LIST_OPERATIONS, callOptions), request, responseObserver);
+          getChannel().newCall(METHOD_LIST_OPERATIONS, getCallOptions()), request, responseObserver);
     }
 
     @java.lang.Override
     public void cancelOperation(com.google.longrunning.CancelOperationRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
-          channel.newCall(METHOD_CANCEL_OPERATION, callOptions), request, responseObserver);
+          getChannel().newCall(METHOD_CANCEL_OPERATION, getCallOptions()), request, responseObserver);
     }
 
     @java.lang.Override
     public void deleteOperation(com.google.longrunning.DeleteOperationRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
-          channel.newCall(METHOD_DELETE_OPERATION, callOptions), request, responseObserver);
+          getChannel().newCall(METHOD_DELETE_OPERATION, getCallOptions()), request, responseObserver);
     }
   }
 
@@ -166,25 +179,25 @@ public class OperationsGrpc {
     @java.lang.Override
     public com.google.longrunning.Operation getOperation(com.google.longrunning.GetOperationRequest request) {
       return blockingUnaryCall(
-          channel.newCall(METHOD_GET_OPERATION, callOptions), request);
+          getChannel().newCall(METHOD_GET_OPERATION, getCallOptions()), request);
     }
 
     @java.lang.Override
     public com.google.longrunning.ListOperationsResponse listOperations(com.google.longrunning.ListOperationsRequest request) {
       return blockingUnaryCall(
-          channel.newCall(METHOD_LIST_OPERATIONS, callOptions), request);
+          getChannel().newCall(METHOD_LIST_OPERATIONS, getCallOptions()), request);
     }
 
     @java.lang.Override
     public com.google.protobuf.Empty cancelOperation(com.google.longrunning.CancelOperationRequest request) {
       return blockingUnaryCall(
-          channel.newCall(METHOD_CANCEL_OPERATION, callOptions), request);
+          getChannel().newCall(METHOD_CANCEL_OPERATION, getCallOptions()), request);
     }
 
     @java.lang.Override
     public com.google.protobuf.Empty deleteOperation(com.google.longrunning.DeleteOperationRequest request) {
       return blockingUnaryCall(
-          channel.newCall(METHOD_DELETE_OPERATION, callOptions), request);
+          getChannel().newCall(METHOD_DELETE_OPERATION, getCallOptions()), request);
     }
   }
 
@@ -209,85 +222,85 @@ public class OperationsGrpc {
     public com.google.common.util.concurrent.ListenableFuture<com.google.longrunning.Operation> getOperation(
         com.google.longrunning.GetOperationRequest request) {
       return futureUnaryCall(
-          channel.newCall(METHOD_GET_OPERATION, callOptions), request);
+          getChannel().newCall(METHOD_GET_OPERATION, getCallOptions()), request);
     }
 
     @java.lang.Override
     public com.google.common.util.concurrent.ListenableFuture<com.google.longrunning.ListOperationsResponse> listOperations(
         com.google.longrunning.ListOperationsRequest request) {
       return futureUnaryCall(
-          channel.newCall(METHOD_LIST_OPERATIONS, callOptions), request);
+          getChannel().newCall(METHOD_LIST_OPERATIONS, getCallOptions()), request);
     }
 
     @java.lang.Override
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> cancelOperation(
         com.google.longrunning.CancelOperationRequest request) {
       return futureUnaryCall(
-          channel.newCall(METHOD_CANCEL_OPERATION, callOptions), request);
+          getChannel().newCall(METHOD_CANCEL_OPERATION, getCallOptions()), request);
     }
 
     @java.lang.Override
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteOperation(
         com.google.longrunning.DeleteOperationRequest request) {
       return futureUnaryCall(
-          channel.newCall(METHOD_DELETE_OPERATION, callOptions), request);
+          getChannel().newCall(METHOD_DELETE_OPERATION, getCallOptions()), request);
     }
   }
 
   public static io.grpc.ServerServiceDefinition bindService(
       final Operations serviceImpl) {
-    return io.grpc.ServerServiceDefinition.builder("google.longrunning.Operations")
-      .addMethod(io.grpc.ServerMethodDefinition.create(
-          METHOD_GET_OPERATION,
-          asyncUnaryCall(
-            new io.grpc.stub.ServerCalls.UnaryMethod<
-                com.google.longrunning.GetOperationRequest,
-                com.google.longrunning.Operation>() {
-              @java.lang.Override
-              public void invoke(
-                  com.google.longrunning.GetOperationRequest request,
-                  io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
-                serviceImpl.getOperation(request, responseObserver);
-              }
-            })))
-      .addMethod(io.grpc.ServerMethodDefinition.create(
-          METHOD_LIST_OPERATIONS,
-          asyncUnaryCall(
-            new io.grpc.stub.ServerCalls.UnaryMethod<
-                com.google.longrunning.ListOperationsRequest,
-                com.google.longrunning.ListOperationsResponse>() {
-              @java.lang.Override
-              public void invoke(
-                  com.google.longrunning.ListOperationsRequest request,
-                  io.grpc.stub.StreamObserver<com.google.longrunning.ListOperationsResponse> responseObserver) {
-                serviceImpl.listOperations(request, responseObserver);
-              }
-            })))
-      .addMethod(io.grpc.ServerMethodDefinition.create(
-          METHOD_CANCEL_OPERATION,
-          asyncUnaryCall(
-            new io.grpc.stub.ServerCalls.UnaryMethod<
-                com.google.longrunning.CancelOperationRequest,
-                com.google.protobuf.Empty>() {
-              @java.lang.Override
-              public void invoke(
-                  com.google.longrunning.CancelOperationRequest request,
-                  io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-                serviceImpl.cancelOperation(request, responseObserver);
-              }
-            })))
-      .addMethod(io.grpc.ServerMethodDefinition.create(
-          METHOD_DELETE_OPERATION,
-          asyncUnaryCall(
-            new io.grpc.stub.ServerCalls.UnaryMethod<
-                com.google.longrunning.DeleteOperationRequest,
-                com.google.protobuf.Empty>() {
-              @java.lang.Override
-              public void invoke(
-                  com.google.longrunning.DeleteOperationRequest request,
-                  io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-                serviceImpl.deleteOperation(request, responseObserver);
-              }
-            }))).build();
+    return io.grpc.ServerServiceDefinition.builder(SERVICE_NAME)
+      .addMethod(
+        METHOD_GET_OPERATION,
+        asyncUnaryCall(
+          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.longrunning.GetOperationRequest,
+              com.google.longrunning.Operation>() {
+            @java.lang.Override
+            public void invoke(
+                com.google.longrunning.GetOperationRequest request,
+                io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
+              serviceImpl.getOperation(request, responseObserver);
+            }
+          }))
+      .addMethod(
+        METHOD_LIST_OPERATIONS,
+        asyncUnaryCall(
+          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.longrunning.ListOperationsRequest,
+              com.google.longrunning.ListOperationsResponse>() {
+            @java.lang.Override
+            public void invoke(
+                com.google.longrunning.ListOperationsRequest request,
+                io.grpc.stub.StreamObserver<com.google.longrunning.ListOperationsResponse> responseObserver) {
+              serviceImpl.listOperations(request, responseObserver);
+            }
+          }))
+      .addMethod(
+        METHOD_CANCEL_OPERATION,
+        asyncUnaryCall(
+          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.longrunning.CancelOperationRequest,
+              com.google.protobuf.Empty>() {
+            @java.lang.Override
+            public void invoke(
+                com.google.longrunning.CancelOperationRequest request,
+                io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+              serviceImpl.cancelOperation(request, responseObserver);
+            }
+          }))
+      .addMethod(
+        METHOD_DELETE_OPERATION,
+        asyncUnaryCall(
+          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.longrunning.DeleteOperationRequest,
+              com.google.protobuf.Empty>() {
+            @java.lang.Override
+            public void invoke(
+                com.google.longrunning.DeleteOperationRequest request,
+                io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+              serviceImpl.deleteOperation(request, responseObserver);
+            }
+          })).build();
   }
 }

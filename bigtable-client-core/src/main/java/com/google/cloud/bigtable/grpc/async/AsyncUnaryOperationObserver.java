@@ -29,7 +29,7 @@ public class AsyncUnaryOperationObserver<T> implements StreamObserver<T> {
   private final SettableFuture<T> completionFuture = SettableFuture.create();
 
   @Override
-  public void onValue(T t) {
+  public void onNext(T t) {
     completionFuture.set(t);
   }
 

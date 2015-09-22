@@ -15,7 +15,7 @@ public  final class ValueRange extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.ValueRange)
     ValueRangeOrBuilder {
   // Use ValueRange.newBuilder() to construct.
-  private ValueRange(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ValueRange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ValueRange() {
@@ -241,9 +241,8 @@ public  final class ValueRange extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -267,7 +266,7 @@ public  final class ValueRange extends
         .computeBytesSize(
             4, (com.google.protobuf.ByteString)((com.google.protobuf.ByteString) endValue_));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -722,8 +721,8 @@ public  final class ValueRange extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ValueRange> PARSER =
-      new com.google.protobuf.AbstractParser<ValueRange>() {
+  private static final com.google.protobuf.Parser<ValueRange>
+      PARSER = new com.google.protobuf.AbstractParser<ValueRange>() {
     public ValueRange parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

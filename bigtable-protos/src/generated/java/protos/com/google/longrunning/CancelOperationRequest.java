@@ -15,7 +15,7 @@ public  final class CancelOperationRequest extends
     // @@protoc_insertion_point(message_implements:google.longrunning.CancelOperationRequest)
     CancelOperationRequestOrBuilder {
   // Use CancelOperationRequest.newBuilder() to construct.
-  private CancelOperationRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private CancelOperationRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private CancelOperationRequest() {
@@ -47,9 +47,9 @@ public  final class CancelOperationRequest extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
         }
@@ -93,9 +93,7 @@ public  final class CancelOperationRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -133,21 +131,19 @@ public  final class CancelOperationRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -346,9 +342,7 @@ public  final class CancelOperationRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -416,7 +410,8 @@ public  final class CancelOperationRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -445,8 +440,8 @@ public  final class CancelOperationRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<CancelOperationRequest> PARSER =
-      new com.google.protobuf.AbstractParser<CancelOperationRequest>() {
+  private static final com.google.protobuf.Parser<CancelOperationRequest>
+      PARSER = new com.google.protobuf.AbstractParser<CancelOperationRequest>() {
     public CancelOperationRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

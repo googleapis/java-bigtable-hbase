@@ -70,4 +70,6 @@ public interface GcRuleOrBuilder extends
    * </pre>
    */
   com.google.bigtable.admin.table.v1.GcRule.UnionOrBuilder getUnionOrBuilder();
+
+  public com.google.bigtable.admin.table.v1.GcRule.RuleCase getRuleCase();
 }

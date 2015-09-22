@@ -29,7 +29,7 @@ class RetryListener<RequestT, ResponseT> extends ClientCall.Listener<ResponseT> 
 
   private final RetryingCall<RequestT, ResponseT> retryingCall;
   private final RequestT payload;
-  private final Metadata.Headers requestHeaders;
+  private final Metadata requestHeaders;
   private final boolean isRetriableCall;
   private final ClientCall.Listener<ResponseT> delegate;
   private boolean stateSignalledToListener = false;
@@ -37,7 +37,7 @@ class RetryListener<RequestT, ResponseT> extends ClientCall.Listener<ResponseT> 
   public RetryListener(
       RetryingCall<RequestT, ResponseT> call,
       RequestT payload,
-      Metadata.Headers requestHeaders,
+      Metadata requestHeaders,
       boolean isRetriableCall,
       ClientCall.Listener<ResponseT> delegate) {
     this.retryingCall = call;
@@ -54,13 +54,13 @@ class RetryListener<RequestT, ResponseT> extends ClientCall.Listener<ResponseT> 
   }
 
   @Override
-  public void onHeaders(Metadata.Headers headers) {
+  public void onHeaders(Metadata headers) {
     stateSignalledToListener = true;
     delegate.onHeaders(headers);
   }
 
   @Override
-  public void onClose(Status status, Metadata.Trailers trailers) {
+  public void onClose(Status status, Metadata trailers) {
     if (isRetriableStatus(status.getCode())
         && isRetriableCall
         && !stateSignalledToListener) {

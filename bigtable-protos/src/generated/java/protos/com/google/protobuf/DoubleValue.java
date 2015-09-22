@@ -15,7 +15,7 @@ public  final class DoubleValue extends
     // @@protoc_insertion_point(message_implements:google.protobuf.DoubleValue)
     DoubleValueOrBuilder {
   // Use DoubleValue.newBuilder() to construct.
-  private DoubleValue(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private DoubleValue(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private DoubleValue() {
@@ -105,9 +105,8 @@ public  final class DoubleValue extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -115,7 +114,7 @@ public  final class DoubleValue extends
       size += com.google.protobuf.CodedOutputStream
         .computeDoubleSize(1, value_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -360,8 +359,8 @@ public  final class DoubleValue extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<DoubleValue> PARSER =
-      new com.google.protobuf.AbstractParser<DoubleValue>() {
+  private static final com.google.protobuf.Parser<DoubleValue>
+      PARSER = new com.google.protobuf.AbstractParser<DoubleValue>() {
     public DoubleValue parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

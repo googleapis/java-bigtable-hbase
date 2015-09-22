@@ -15,7 +15,7 @@ public  final class Column extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.Column)
     ColumnOrBuilder {
   // Use Column.newBuilder() to construct.
-  private Column(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Column(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Column() {
@@ -57,7 +57,7 @@ public  final class Column extends
               cells_ = new java.util.ArrayList<com.google.bigtable.v1.Cell>();
               mutable_bitField0_ |= 0x00000002;
             }
-            cells_.add(input.readMessage(com.google.bigtable.v1.Cell.PARSER, extensionRegistry));
+            cells_.add(input.readMessage(com.google.bigtable.v1.Cell.parser(), extensionRegistry));
             break;
           }
         }
@@ -180,9 +180,8 @@ public  final class Column extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -194,7 +193,7 @@ public  final class Column extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(2, cells_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -812,8 +811,8 @@ public  final class Column extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Column> PARSER =
-      new com.google.protobuf.AbstractParser<Column>() {
+  private static final com.google.protobuf.Parser<Column>
+      PARSER = new com.google.protobuf.AbstractParser<Column>() {
     public Column parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

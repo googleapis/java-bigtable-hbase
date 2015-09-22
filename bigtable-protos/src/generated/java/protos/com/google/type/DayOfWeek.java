@@ -171,8 +171,8 @@ public enum DayOfWeek
       internalGetValueMap() {
     return internalValueMap;
   }
-  private static com.google.protobuf.Internal.EnumLiteMap<DayOfWeek>
-      internalValueMap =
+  private static final com.google.protobuf.Internal.EnumLiteMap<
+      DayOfWeek> internalValueMap =
         new com.google.protobuf.Internal.EnumLiteMap<DayOfWeek>() {
           public DayOfWeek findValueByNumber(int number) {
             return DayOfWeek.valueOf(number);

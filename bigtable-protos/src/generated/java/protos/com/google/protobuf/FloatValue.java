@@ -15,7 +15,7 @@ public  final class FloatValue extends
     // @@protoc_insertion_point(message_implements:google.protobuf.FloatValue)
     FloatValueOrBuilder {
   // Use FloatValue.newBuilder() to construct.
-  private FloatValue(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private FloatValue(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private FloatValue() {
@@ -105,9 +105,8 @@ public  final class FloatValue extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -115,7 +114,7 @@ public  final class FloatValue extends
       size += com.google.protobuf.CodedOutputStream
         .computeFloatSize(1, value_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -360,8 +359,8 @@ public  final class FloatValue extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<FloatValue> PARSER =
-      new com.google.protobuf.AbstractParser<FloatValue>() {
+  private static final com.google.protobuf.Parser<FloatValue>
+      PARSER = new com.google.protobuf.AbstractParser<FloatValue>() {
     public FloatValue parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

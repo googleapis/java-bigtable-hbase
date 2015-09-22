@@ -16,7 +16,7 @@ public  final class RequestInfo extends
     // @@protoc_insertion_point(message_implements:google.rpc.RequestInfo)
     RequestInfoOrBuilder {
   // Use RequestInfo.newBuilder() to construct.
-  private RequestInfo(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private RequestInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private RequestInfo() {
@@ -49,15 +49,15 @@ public  final class RequestInfo extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            requestId_ = bs;
+            requestId_ = s;
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            servingData_ = bs;
+            servingData_ = s;
             break;
           }
         }
@@ -102,9 +102,7 @@ public  final class RequestInfo extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        requestId_ = s;
-      }
+      requestId_ = s;
       return s;
     }
   }
@@ -148,9 +146,7 @@ public  final class RequestInfo extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        servingData_ = s;
-      }
+      servingData_ = s;
       return s;
     }
   }
@@ -189,28 +185,25 @@ public  final class RequestInfo extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getRequestIdBytes().isEmpty()) {
-      output.writeBytes(1, getRequestIdBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, requestId_);
     }
     if (!getServingDataBytes().isEmpty()) {
-      output.writeBytes(2, getServingDataBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, servingData_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getRequestIdBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getRequestIdBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, requestId_);
     }
     if (!getServingDataBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getServingDataBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, servingData_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -418,9 +411,7 @@ public  final class RequestInfo extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          requestId_ = s;
-        }
+        requestId_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -492,7 +483,8 @@ public  final class RequestInfo extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       requestId_ = value;
       onChanged();
       return this;
@@ -513,9 +505,7 @@ public  final class RequestInfo extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          servingData_ = s;
-        }
+        servingData_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -587,7 +577,8 @@ public  final class RequestInfo extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       servingData_ = value;
       onChanged();
       return this;
@@ -616,8 +607,8 @@ public  final class RequestInfo extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<RequestInfo> PARSER =
-      new com.google.protobuf.AbstractParser<RequestInfo>() {
+  private static final com.google.protobuf.Parser<RequestInfo>
+      PARSER = new com.google.protobuf.AbstractParser<RequestInfo>() {
     public RequestInfo parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

@@ -15,7 +15,7 @@ public  final class Option extends
     // @@protoc_insertion_point(message_implements:google.protobuf.Option)
     OptionOrBuilder {
   // Use Option.newBuilder() to construct.
-  private Option(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private Option(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Option() {
@@ -47,9 +47,9 @@ public  final class Option extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
           case 18: {
@@ -57,7 +57,7 @@ public  final class Option extends
             if (value_ != null) {
               subBuilder = value_.toBuilder();
             }
-            value_ = input.readMessage(com.google.protobuf.Any.PARSER, extensionRegistry);
+            value_ = input.readMessage(com.google.protobuf.Any.parser(), extensionRegistry);
             if (subBuilder != null) {
               subBuilder.mergeFrom(value_);
               value_ = subBuilder.buildPartial();
@@ -106,9 +106,7 @@ public  final class Option extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -179,28 +177,26 @@ public  final class Option extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
     if (value_ != null) {
       output.writeMessage(2, getValue());
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
     if (value_ != null) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(2, getValue());
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -413,9 +409,7 @@ public  final class Option extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -483,7 +477,8 @@ public  final class Option extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -665,8 +660,8 @@ public  final class Option extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<Option> PARSER =
-      new com.google.protobuf.AbstractParser<Option>() {
+  private static final com.google.protobuf.Parser<Option>
+      PARSER = new com.google.protobuf.AbstractParser<Option>() {
     public Option parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

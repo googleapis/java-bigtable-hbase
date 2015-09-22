@@ -15,7 +15,7 @@ public  final class ReadRowsResponse extends
     // @@protoc_insertion_point(message_implements:google.bigtable.v1.ReadRowsResponse)
     ReadRowsResponseOrBuilder {
   // Use ReadRowsResponse.newBuilder() to construct.
-  private ReadRowsResponse(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ReadRowsResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ReadRowsResponse() {
@@ -57,7 +57,7 @@ public  final class ReadRowsResponse extends
               chunks_ = new java.util.ArrayList<com.google.bigtable.v1.ReadRowsResponse.Chunk>();
               mutable_bitField0_ |= 0x00000002;
             }
-            chunks_.add(input.readMessage(com.google.bigtable.v1.ReadRowsResponse.Chunk.PARSER, extensionRegistry));
+            chunks_.add(input.readMessage(com.google.bigtable.v1.ReadRowsResponse.Chunk.parser(), extensionRegistry));
             break;
           }
         }
@@ -133,6 +133,8 @@ public  final class ReadRowsResponse extends
      * </pre>
      */
     boolean getCommitRow();
+
+    public com.google.bigtable.v1.ReadRowsResponse.Chunk.ChunkCase getChunkCase();
   }
   /**
    * Protobuf type {@code google.bigtable.v1.ReadRowsResponse.Chunk}
@@ -147,7 +149,7 @@ public  final class ReadRowsResponse extends
       // @@protoc_insertion_point(message_implements:google.bigtable.v1.ReadRowsResponse.Chunk)
       ChunkOrBuilder {
     // Use Chunk.newBuilder() to construct.
-    private Chunk(com.google.protobuf.GeneratedMessage.Builder builder) {
+    private Chunk(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
     private Chunk() {
@@ -182,7 +184,8 @@ public  final class ReadRowsResponse extends
               if (chunkCase_ == 1) {
                 subBuilder = ((com.google.bigtable.v1.Family) chunk_).toBuilder();
               }
-              chunk_ = input.readMessage(com.google.bigtable.v1.Family.PARSER, extensionRegistry);
+              chunk_ =
+                  input.readMessage(com.google.bigtable.v1.Family.parser(), extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom((com.google.bigtable.v1.Family) chunk_);
                 chunk_ = subBuilder.buildPartial();
@@ -348,9 +351,8 @@ public  final class ReadRowsResponse extends
       }
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -368,7 +370,7 @@ public  final class ReadRowsResponse extends
           .computeBoolSize(
               3, (boolean)((java.lang.Boolean) chunk_));
       }
-      memoizedSerializedSize = size;
+      memoizedSize = size;
       return size;
     }
 
@@ -894,8 +896,8 @@ public  final class ReadRowsResponse extends
       return DEFAULT_INSTANCE;
     }
 
-    public static final com.google.protobuf.Parser<Chunk> PARSER =
-        new com.google.protobuf.AbstractParser<Chunk>() {
+    private static final com.google.protobuf.Parser<Chunk>
+        PARSER = new com.google.protobuf.AbstractParser<Chunk>() {
       public Chunk parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1019,9 +1021,8 @@ public  final class ReadRowsResponse extends
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
@@ -1033,7 +1034,7 @@ public  final class ReadRowsResponse extends
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(2, chunks_.get(i));
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -1645,8 +1646,8 @@ public  final class ReadRowsResponse extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ReadRowsResponse> PARSER =
-      new com.google.protobuf.AbstractParser<ReadRowsResponse>() {
+  private static final com.google.protobuf.Parser<ReadRowsResponse>
+      PARSER = new com.google.protobuf.AbstractParser<ReadRowsResponse>() {
     public ReadRowsResponse parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

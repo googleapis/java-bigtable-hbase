@@ -15,7 +15,7 @@ public  final class ListZonesRequest extends
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.cluster.v1.ListZonesRequest)
     ListZonesRequestOrBuilder {
   // Use ListZonesRequest.newBuilder() to construct.
-  private ListZonesRequest(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private ListZonesRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ListZonesRequest() {
@@ -47,9 +47,9 @@ public  final class ListZonesRequest extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            name_ = bs;
+            name_ = s;
             break;
           }
         }
@@ -95,9 +95,7 @@ public  final class ListZonesRequest extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        name_ = s;
-      }
+      name_ = s;
       return s;
     }
   }
@@ -137,21 +135,19 @@ public  final class ListZonesRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      output.writeBytes(1, getNameBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNameBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -352,9 +348,7 @@ public  final class ListZonesRequest extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
+        name_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -430,7 +424,8 @@ public  final class ListZonesRequest extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       name_ = value;
       onChanged();
       return this;
@@ -459,8 +454,8 @@ public  final class ListZonesRequest extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<ListZonesRequest> PARSER =
-      new com.google.protobuf.AbstractParser<ListZonesRequest>() {
+  private static final com.google.protobuf.Parser<ListZonesRequest>
+      PARSER = new com.google.protobuf.AbstractParser<ListZonesRequest>() {
     public ListZonesRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

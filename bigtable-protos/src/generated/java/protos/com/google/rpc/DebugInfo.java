@@ -15,7 +15,7 @@ public  final class DebugInfo extends
     // @@protoc_insertion_point(message_implements:google.rpc.DebugInfo)
     DebugInfoOrBuilder {
   // Use DebugInfo.newBuilder() to construct.
-  private DebugInfo(com.google.protobuf.GeneratedMessage.Builder builder) {
+  private DebugInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private DebugInfo() {
@@ -48,18 +48,18 @@ public  final class DebugInfo extends
             break;
           }
           case 10: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
               stackEntries_ = new com.google.protobuf.LazyStringArrayList();
               mutable_bitField0_ |= 0x00000001;
             }
-            stackEntries_.add(bs);
+            stackEntries_.add(s);
             break;
           }
           case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+            String s = input.readStringRequireUtf8();
 
-            detail_ = bs;
+            detail_ = s;
             break;
           }
         }
@@ -152,9 +152,7 @@ public  final class DebugInfo extends
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        detail_ = s;
-      }
+      detail_ = s;
       return s;
     }
   }
@@ -192,33 +190,30 @@ public  final class DebugInfo extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     for (int i = 0; i < stackEntries_.size(); i++) {
-      output.writeBytes(1, stackEntries_.getByteString(i));
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, stackEntries_.getRaw(i));
     }
     if (!getDetailBytes().isEmpty()) {
-      output.writeBytes(2, getDetailBytes());
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, detail_);
     }
   }
 
-  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
     {
       int dataSize = 0;
       for (int i = 0; i < stackEntries_.size(); i++) {
-        dataSize += com.google.protobuf.CodedOutputStream
-          .computeBytesSizeNoTag(stackEntries_.getByteString(i));
+        dataSize += computeStringSizeNoTag(stackEntries_.getRaw(i));
       }
       size += dataSize;
       size += 1 * getStackEntriesList().size();
     }
     if (!getDetailBytes().isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getDetailBytes());
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, detail_);
     }
-    memoizedSerializedSize = size;
+    memoizedSize = size;
     return size;
   }
 
@@ -547,7 +542,8 @@ public  final class DebugInfo extends
       if (value == null) {
     throw new NullPointerException();
   }
-  ensureStackEntriesIsMutable();
+  checkByteStringIsUtf8(value);
+      ensureStackEntriesIsMutable();
       stackEntries_.add(value);
       onChanged();
       return this;
@@ -567,9 +563,7 @@ public  final class DebugInfo extends
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          detail_ = s;
-        }
+        detail_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
@@ -637,7 +631,8 @@ public  final class DebugInfo extends
       if (value == null) {
     throw new NullPointerException();
   }
-  
+  checkByteStringIsUtf8(value);
+      
       detail_ = value;
       onChanged();
       return this;
@@ -666,8 +661,8 @@ public  final class DebugInfo extends
     return DEFAULT_INSTANCE;
   }
 
-  public static final com.google.protobuf.Parser<DebugInfo> PARSER =
-      new com.google.protobuf.AbstractParser<DebugInfo>() {
+  private static final com.google.protobuf.Parser<DebugInfo>
+      PARSER = new com.google.protobuf.AbstractParser<DebugInfo>() {
     public DebugInfo parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)

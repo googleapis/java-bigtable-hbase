@@ -353,4 +353,6 @@ public interface RowFilterOrBuilder extends
    */
   com.google.protobuf.ByteString
       getApplyLabelTransformerBytes();
+
+  public com.google.bigtable.v1.RowFilter.FilterCase getFilterCase();
 }

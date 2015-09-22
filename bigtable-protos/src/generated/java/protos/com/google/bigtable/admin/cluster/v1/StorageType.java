@@ -65,8 +65,8 @@ public enum StorageType
       internalGetValueMap() {
     return internalValueMap;
   }
-  private static com.google.protobuf.Internal.EnumLiteMap<StorageType>
-      internalValueMap =
+  private static final com.google.protobuf.Internal.EnumLiteMap<
+      StorageType> internalValueMap =
         new com.google.protobuf.Internal.EnumLiteMap<StorageType>() {
           public StorageType findValueByNumber(int number) {
             return StorageType.valueOf(number);
