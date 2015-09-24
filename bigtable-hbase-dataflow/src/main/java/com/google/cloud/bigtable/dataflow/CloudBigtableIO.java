@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -605,7 +604,7 @@ public class CloudBigtableIO {
     private transient Connection conn;
     private transient BufferedMutator mutator;
 
-    private CloudBigtableSingleTableWriteFn(CloudBigtableTableConfiguration config) {
+    public CloudBigtableSingleTableWriteFn(CloudBigtableTableConfiguration config) {
       this.config = config;
     }
 
@@ -634,18 +633,13 @@ public class CloudBigtableIO {
       };
     }
 
-    protected void logExceptions(final Context context,
-        RetriesExhaustedWithDetailsException exception) {
-      List<Throwable> causes = exception.getCauses();
-      String failEventId = UUID.randomUUID().toString();
-      String message =
-          String.format("For context %s: eventId: %s occured during bulk writing.", context,
-            failEventId);
-      LOG.warn(message, exception);
-      for (int i = 0; i < causes.size(); i++) {
-        LOG.warn(String.format("context %s: eventId %s excepition %d", context, failEventId, i),
-          causes.get(i));
-      }
+    /**
+     * Logs the {@link Context} and the exception's
+     * {@link RetriesExhaustedWithDetailsException#getExhaustiveDescription()}.
+     */
+    protected void logExceptions(Context context, RetriesExhaustedWithDetailsException exception) {
+      LOG.warn("For context {}: exception occured during bulk writing: {}", context,
+        exception.getExhaustiveDescription());
     }
 
     /**
