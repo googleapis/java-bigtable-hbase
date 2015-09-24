@@ -16,7 +16,6 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.bigtable.v1.BigtableServiceGrpc;
@@ -105,10 +104,10 @@ public class BigtableSession implements AutoCloseable {
   /** Number of threads to use to initiate retry calls */
   public static final int RETRY_THREAD_COUNT = 4;
   public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
-  private static final Map<MethodDescriptor<?, ?>, Predicate<?>> methodsToRetryMap =
+  public static final Map<MethodDescriptor<?, ?>, Predicate<?>> METHODS_TO_RETRY_MAP =
       createMethodRetryMap();
   private static final Logger LOG = new Logger(BigtableSession.class);
-  private static final SslContextBuilder sslBuilder = createGrpcSslBuilder();
+  private static SslContextBuilder sslBuilder;
 
   private static ExecutorService connectionStartupExecutor =
       Executors.newCachedThreadPool(
@@ -127,8 +126,15 @@ public class BigtableSession implements AutoCloseable {
     return sslBuilder;
   }
 
+  private static synchronized SslContextBuilder getSslBuilder() {
+    if (sslBuilder == null) {
+      sslBuilder = createGrpcSslBuilder();
+    }
+    return sslBuilder;
+  }
+
   private static SslContext createSslContext() throws SSLException {
-     return sslBuilder.build();
+    return getSslBuilder().build();
   }
 
   private static void performWarmup() {
@@ -490,7 +496,7 @@ public class BigtableSession implements AutoCloseable {
       channel = new UnaryCallRetryInterceptor(
           channel,
           scheduledRetries,
-          methodsToRetryMap,
+          METHODS_TO_RETRY_MAP,
           unaryCallRetryOptions);
     }
 
@@ -513,8 +519,7 @@ public class BigtableSession implements AutoCloseable {
    * Create a Map of MethodDescriptor instances to predicates that will be used to
    * specify which method calls should be retried and which should not.
    */
-  @VisibleForTesting
-  protected static Map<MethodDescriptor<?, ?>, Predicate<?>> createMethodRetryMap() {
+  private static Map<MethodDescriptor<?, ?>, Predicate<?>> createMethodRetryMap() {
     Predicate<MutateRowRequest> retryMutationsWithTimestamps = new Predicate<MutateRowRequest>() {
       @Override
       public boolean apply(@Nullable MutateRowRequest mutateRowRequest) {
