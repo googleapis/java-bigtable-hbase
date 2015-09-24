@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.hadoop.conf.Configuration;
 
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
@@ -87,13 +88,35 @@ public class CloudBigtableConfiguration implements Serializable {
     }
 
     /**
+     * Used for creating a new {@link Builder} from a {@link CloudBigtableConfiguration} or its
+     * subclasses.
+     */
+    protected T setConfiguration(Map<String, String> configuration) {
+      this.additionalConfiguration.putAll(configuration);
+
+      this.projectId = configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY);
+      this.zoneId = configuration.get(BigtableOptionsFactory.ZONE_KEY);
+      this.clusterId = configuration.get(BigtableOptionsFactory.CLUSTER_KEY);
+
+      this.additionalConfiguration.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
+      this.additionalConfiguration.remove(BigtableOptionsFactory.ZONE_KEY);
+      this.additionalConfiguration.remove(BigtableOptionsFactory.CLUSTER_KEY);
+
+      return (T) this;
+    }
+
+    /**
      * Builds the {@link CloudBigtableConfiguration}.
      * @return The new {@link CloudBigtableConfiguration}.
      */
     public CloudBigtableConfiguration build() {
       return new CloudBigtableConfiguration(projectId, zoneId, clusterId, additionalConfiguration);
     }
-  }
+
+    public boolean equals(Object obj) {
+      return EqualsBuilder.reflectionEquals(this, obj);
+    }
+}
 
   // Not final due to serialization of CloudBigtableScanConfiguration.
   protected Map<String, String> configuration;
@@ -115,14 +138,15 @@ public class CloudBigtableConfiguration implements Serializable {
   public CloudBigtableConfiguration(String projectId, String zoneId, String clusterId,
       Map<String, String> additionalConfiguration) {
     this.configuration = new HashMap<>(additionalConfiguration);
-    setValue(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
-    setValue(BigtableOptionsFactory.ZONE_KEY, zoneId);
-    setValue(BigtableOptionsFactory.CLUSTER_KEY, clusterId);
+    setValue(BigtableOptionsFactory.PROJECT_ID_KEY, projectId, "Project ID");
+    setValue(BigtableOptionsFactory.ZONE_KEY, zoneId, "Zone ID");
+    setValue(BigtableOptionsFactory.CLUSTER_KEY, clusterId, "Cluster ID");
   }
 
-  private void setValue(String key, String value) {
+  private void setValue(String key, String value, String type) {
     Preconditions.checkArgument(!configuration.containsKey(key),
       String.format("%s was set twice", key));
+    Preconditions.checkArgument(value != null, String.format("%s must be set.", type));
     configuration.put(key, value);
   }
 
@@ -168,5 +192,18 @@ public class CloudBigtableConfiguration implements Serializable {
       config.set(entry.getKey(), entry.getValue());
     }
     return config;
+  }
+
+  /**
+   * Creates a new Builder from the configuration
+   * @return A new {@link Builder}
+   */
+  @SuppressWarnings("rawtypes")
+  public Builder toBuilder() {
+    return new Builder<Builder<?>>().setConfiguration(configuration);
+  }
+
+  public boolean equals(Object obj) {
+    return EqualsBuilder.reflectionEquals(this, obj);
   }
 }

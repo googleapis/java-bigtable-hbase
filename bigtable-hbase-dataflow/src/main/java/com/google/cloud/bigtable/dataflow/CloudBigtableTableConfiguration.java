@@ -94,4 +94,12 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   public String getTableId() {
     return tableId;
   }
+
+  @SuppressWarnings("rawtypes")
+  @Override
+  public Builder toBuilder() {
+    return new Builder<Builder<?>>()
+        .setConfiguration(configuration)
+        .withTableId(tableId);
+  }
 }

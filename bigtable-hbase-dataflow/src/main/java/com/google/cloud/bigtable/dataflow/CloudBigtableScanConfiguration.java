@@ -102,7 +102,11 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-      out.writeObject(Base64.encodeBytes(ProtobufUtil.toScan(scan).toByteArray()));
+      out.writeObject(toEncodedString());
+    }
+
+    protected String toEncodedString() throws IOException {
+      return Base64.encodeBytes(ProtobufUtil.toScan(scan).toByteArray());
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -114,6 +118,19 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
         return ProtobufUtil.toScan(ClientProtos.Scan.parseFrom(Base64.decode(scanStr)));
       } catch (InvalidProtocolBufferException ipbe) {
         throw new IOException("Could not deserialize the Scan.", ipbe);
+      }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null || !(obj instanceof SerializableScan)) {
+        return false;
+      }
+      SerializableScan other = (SerializableScan) obj;
+      try {
+        return toEncodedString().equals(other.toEncodedString());
+      } catch (IOException e) {
+        throw new RuntimeException("Could not check SerializableScan equality", e);
       }
     }
   }
@@ -154,5 +171,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    */
   public Scan getScan() {
     return serializableScan.scan;
+  }
+
+  @Override
+  public Builder toBuilder() {
+    return new Builder()
+        .setConfiguration(configuration)
+        .withTableId(tableId)
+        .withScan(serializableScan.scan);
   }
 }
