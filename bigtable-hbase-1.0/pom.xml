@@ -52,6 +52,10 @@ limitations under the License.
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <resources>
@@ -91,6 +95,8 @@ limitations under the License.
                                         <exclude>io.grpc:grpc-all:*</exclude>
                                         <exclude>io.netty:netty-all:*</exclude>
                                         <exclude>io.netty:netty:*</exclude>
+                                        <exclude>log4j:log4j:*</exclude>
+                                        <exclude>org.slf4j:lf4j-log4j12:*</exclude>
                                     </excludes>
                                     <includes>
                                         <include>com.google.guava:guava:${guava.version}</include>
@@ -124,11 +130,11 @@ limitations under the License.
 
                                 Using shadedArtifactAttached=true causes some tricky issues.  If =true is on,
                                 then the main artifact isn't usable, because of the incompatibility issues in the artifacts found
-                                in the relocations section.  If HBase updates its dependencies to compatible versions, then 
+                                in the relocations section.  If HBase updates its dependencies to compatible versions, then
                                 this project will not need to relocate and include those dependencies in a shaded jar.
 
-                                As an example, the start up of hbase requires guava, and using a newer version of guava causes 
-                                startup issues.  If an older version of guava is in the classpath, then HBase classes will load 
+                                As an example, the start up of hbase requires guava, and using a newer version of guava causes
+                                startup issues.  If an older version of guava is in the classpath, then HBase classes will load
                                 fine, but CBT will have runtime issues.
 
                                 Additionally, if shadedArtifactAttached=true there are even ssues using the shaded classifier.
