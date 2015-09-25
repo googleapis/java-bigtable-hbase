@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
@@ -178,7 +181,7 @@ public class TestAsyncExecutor {
       underTest.mutateRowAsync(MutateRowRequest.newBuilder()
           .setRowKey(ByteString.copyFrom(new byte[1000])).build());
       final AtomicBoolean newRpcInvoked = new AtomicBoolean(false);
-      testExecutor.submit(new Callable<Void>() {
+      Future<Void> future = testExecutor.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
@@ -186,10 +189,14 @@ public class TestAsyncExecutor {
           return null;
         }
       });
-      Thread.sleep(10);
-      Assert.assertFalse(newRpcInvoked.get());
+      try {
+        future.get(100, TimeUnit.MILLISECONDS);
+        Assert.fail("The future.get() call should timeout.");
+      } catch(TimeoutException expected) {
+        // Expected Exception.
+      }
       completeCall();
-      Thread.sleep(10);
+      future.get(100, TimeUnit.MILLISECONDS);
       Assert.assertTrue(newRpcInvoked.get());
     } finally {
       testExecutor.shutdownNow();
