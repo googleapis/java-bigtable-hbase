@@ -67,7 +67,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   /**
    * Builds a {@link CloudBigtableScanConfiguration}.
    */
-  public static class Builder extends CloudBigtableTableConfiguration.Builder<Builder> {
+  public static class Builder extends CloudBigtableTableConfiguration.Builder {
     protected Scan scan = new Scan();
 
     public Builder() {
@@ -84,6 +84,55 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     public Builder withScan(Scan scan) {
       this.scan = scan;
+      return this;
+    }
+
+    /*
+     * Overrides of the CloudBigtableConfiguration.Builder's with*() so that they return
+     * CloudBigtableScanConfiguration.Builder.
+     */
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Builder withProjectId(String projectId) {
+      super.withProjectId(projectId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Builder withZoneId(String zoneId) {
+      super.withZoneId(zoneId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Builder withClusterId(String clusterId) {
+      super.withClusterId(clusterId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Builder withConfiguration(String key, String value) {
+      super.withConfiguration(key, value);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Builder withTableId(String tableId) {
+      super.withTableId(tableId);
       return this;
     }
 

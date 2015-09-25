@@ -89,6 +89,5 @@ public class CloudBigtableScanConfigurationTest {
     Assert.assertNotSame(underTest, copy);
     Assert.assertEquals(underTest, copy);
   }
-
 }
 

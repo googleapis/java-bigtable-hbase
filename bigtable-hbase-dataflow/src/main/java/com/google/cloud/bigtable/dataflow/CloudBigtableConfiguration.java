@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.dataflow;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,8 +40,7 @@ public class CloudBigtableConfiguration implements Serializable {
   /**
    * Builds a {@link CloudBigtableConfiguration}.
    */
-  @SuppressWarnings("unchecked")
-  public static class Builder<T extends Builder<?>> {
+  public static class Builder {
     protected String projectId;
     protected String zoneId;
     protected String clusterId;
@@ -64,9 +62,9 @@ public class CloudBigtableConfiguration implements Serializable {
      * @param projectId The project ID for the cluster.
      * @return The original {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
-    public T withProjectId(String projectId) {
+    public Builder withProjectId(String projectId) {
       this.projectId = projectId;
-      return (T) this;
+      return this;
     }
 
     /**
@@ -74,9 +72,9 @@ public class CloudBigtableConfiguration implements Serializable {
      * @param zoneId The zone where the cluster is located.
      * @return The original {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
-    public T withZoneId(String zoneId) {
+    public Builder withZoneId(String zoneId) {
       this.zoneId = zoneId;
-      return (T) this;
+      return this;
     }
 
     /**
@@ -84,9 +82,9 @@ public class CloudBigtableConfiguration implements Serializable {
      * @param clusterId The cluster ID for the cluster.
      * @return The original {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
-    public T withClusterId(String clusterId) {
+    public Builder withClusterId(String clusterId) {
       this.clusterId = clusterId;
-      return (T) this;
+      return this;
     }
 
     /**
@@ -94,10 +92,10 @@ public class CloudBigtableConfiguration implements Serializable {
      * {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
      * configuration options.
      */
-    public T withConfiguration(String key, String value) {
+    public Builder withConfiguration(String key, String value) {
       Preconditions.checkArgument(value != null, "Value cannot be null");
       this.additionalConfiguration.put(key, value);
-      return (T) this;
+      return this;
     }
 
     /**
@@ -193,7 +191,6 @@ public class CloudBigtableConfiguration implements Serializable {
    * Creates a new Builder from the configuration
    * @return A new {@link Builder}
    */
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   public Builder toBuilder() {
     return new Builder(getConfiguration());
   }
