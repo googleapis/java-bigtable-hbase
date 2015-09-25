@@ -17,13 +17,16 @@ package com.google.cloud.bigtable.dataflow;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.hadoop.conf.Configuration;
 
-import com.google.api.client.repackaged.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
@@ -44,6 +47,17 @@ public class CloudBigtableConfiguration implements Serializable {
     protected String zoneId;
     protected String clusterId;
     protected Map<String, String> additionalConfiguration = new HashMap<>();
+
+    public Builder() {
+    }
+
+    protected Builder(Map<String, String> configuration) {
+      this.additionalConfiguration.putAll(configuration);
+
+      this.projectId = this.additionalConfiguration.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
+      this.zoneId = this.additionalConfiguration.remove(BigtableOptionsFactory.ZONE_KEY);
+      this.clusterId = this.additionalConfiguration.remove(BigtableOptionsFactory.CLUSTER_KEY);
+    }
 
     /**
      * Specifies the project ID for the Cloud Bigtable cluster.
@@ -93,10 +107,14 @@ public class CloudBigtableConfiguration implements Serializable {
     public CloudBigtableConfiguration build() {
       return new CloudBigtableConfiguration(projectId, zoneId, clusterId, additionalConfiguration);
     }
-  }
+
+    public boolean equals(Object obj) {
+      return EqualsBuilder.reflectionEquals(this, obj);
+    }
+}
 
   // Not final due to serialization of CloudBigtableScanConfiguration.
-  protected Map<String, String> configuration;
+  private Map<String, String> configuration;
 
   // Used for serialization of CloudBigtableScanConfiguration.
   CloudBigtableConfiguration() {
@@ -115,14 +133,15 @@ public class CloudBigtableConfiguration implements Serializable {
   public CloudBigtableConfiguration(String projectId, String zoneId, String clusterId,
       Map<String, String> additionalConfiguration) {
     this.configuration = new HashMap<>(additionalConfiguration);
-    setValue(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
-    setValue(BigtableOptionsFactory.ZONE_KEY, zoneId);
-    setValue(BigtableOptionsFactory.CLUSTER_KEY, clusterId);
+    setValue(BigtableOptionsFactory.PROJECT_ID_KEY, projectId, "Project ID");
+    setValue(BigtableOptionsFactory.ZONE_KEY, zoneId, "Zone ID");
+    setValue(BigtableOptionsFactory.CLUSTER_KEY, clusterId, "Cluster ID");
   }
 
-  private void setValue(String key, String value) {
+  private void setValue(String key, String value, String type) {
     Preconditions.checkArgument(!configuration.containsKey(key),
       String.format("%s was set twice", key));
+    Preconditions.checkArgument(value != null, String.format("%s must be set.", type));
     configuration.put(key, value);
   }
 
@@ -168,5 +187,25 @@ public class CloudBigtableConfiguration implements Serializable {
       config.set(entry.getKey(), entry.getValue());
     }
     return config;
+  }
+
+  /**
+   * Creates a new Builder from the configuration
+   * @return A new {@link Builder}
+   */
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  public Builder toBuilder() {
+    return new Builder(getConfiguration());
+  }
+
+  /**
+   * Returns an unmodifiable copy of the configuration map.
+   */
+  protected Map<String, String> getConfiguration() {
+    return ImmutableMap.copyOf(configuration);
+  }
+
+  public boolean equals(Object obj) {
+    return EqualsBuilder.reflectionEquals(this, obj);
   }
 }
