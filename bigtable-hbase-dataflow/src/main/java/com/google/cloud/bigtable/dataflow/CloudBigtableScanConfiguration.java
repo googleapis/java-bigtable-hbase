@@ -70,6 +70,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public static class Builder extends CloudBigtableTableConfiguration.Builder<Builder> {
     protected Scan scan = new Scan();
 
+    public Builder() {
+    }
+
+    protected Builder(Map<String, String> configuration) {
+      super(configuration);
+    }
+
     /**
      * Specifies the {@link Scan} that will be used to filter the table.
      * @param scan The {@link Scan} to add to the configuration.
@@ -105,7 +112,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       out.writeObject(toEncodedString());
     }
 
-    protected String toEncodedString() throws IOException {
+    private String toEncodedString() throws IOException {
       return Base64.encodeBytes(ProtobufUtil.toScan(scan).toByteArray());
     }
 
@@ -123,7 +130,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     @Override
     public boolean equals(Object obj) {
-      if (obj == null || !(obj instanceof SerializableScan)) {
+      if (!(obj instanceof SerializableScan)) {
         return false;
       }
       SerializableScan other = (SerializableScan) obj;
@@ -175,8 +182,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   @Override
   public Builder toBuilder() {
-    return new Builder()
-        .setConfiguration(configuration)
+    return new Builder(getConfiguration())
         .withTableId(tableId)
         .withScan(serializableScan.scan);
   }

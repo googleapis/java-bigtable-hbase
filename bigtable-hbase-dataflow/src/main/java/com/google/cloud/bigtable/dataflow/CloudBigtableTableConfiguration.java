@@ -47,6 +47,13 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   public static class Builder<T extends Builder<?>> extends CloudBigtableConfiguration.Builder<T> {
     protected String tableId;
 
+    public Builder() {
+    }
+
+    protected Builder(Map<String, String> configuration) {
+      super(configuration);
+    }
+
     /**
      * Specifies the table to connect to.
      * @param tableId The table to connect to.
@@ -95,11 +102,10 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     return tableId;
   }
 
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
   public Builder toBuilder() {
-    return new Builder<Builder<?>>()
-        .setConfiguration(configuration)
+    return new Builder(getConfiguration())
         .withTableId(tableId);
   }
 }

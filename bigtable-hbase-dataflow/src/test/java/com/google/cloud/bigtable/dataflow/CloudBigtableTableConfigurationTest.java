@@ -96,7 +96,7 @@ public class CloudBigtableTableConfigurationTest {
         new CloudBigtableTableConfiguration(PROJECT, ZONE, CLUSTER, TABLE,
             Collections.singletonMap("somekey", "somevalue"));
     CloudBigtableTableConfiguration copy = underTest.toBuilder().build();
-    Assert.assertTrue(underTest != copy);
+    Assert.assertNotSame(underTest, copy);
     Assert.assertEquals(underTest, copy);
   }
 }

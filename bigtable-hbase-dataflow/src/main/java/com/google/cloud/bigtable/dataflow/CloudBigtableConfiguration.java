@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.dataflow;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,7 +25,8 @@ import java.util.Map.Entry;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.hadoop.conf.Configuration;
 
-import com.google.api.client.repackaged.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
@@ -45,6 +47,17 @@ public class CloudBigtableConfiguration implements Serializable {
     protected String zoneId;
     protected String clusterId;
     protected Map<String, String> additionalConfiguration = new HashMap<>();
+
+    public Builder() {
+    }
+
+    protected Builder(Map<String, String> configuration) {
+      this.additionalConfiguration.putAll(configuration);
+
+      this.projectId = this.additionalConfiguration.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
+      this.zoneId = this.additionalConfiguration.remove(BigtableOptionsFactory.ZONE_KEY);
+      this.clusterId = this.additionalConfiguration.remove(BigtableOptionsFactory.CLUSTER_KEY);
+    }
 
     /**
      * Specifies the project ID for the Cloud Bigtable cluster.
@@ -88,24 +101,6 @@ public class CloudBigtableConfiguration implements Serializable {
     }
 
     /**
-     * Used for creating a new {@link Builder} from a {@link CloudBigtableConfiguration} or its
-     * subclasses.
-     */
-    protected T setConfiguration(Map<String, String> configuration) {
-      this.additionalConfiguration.putAll(configuration);
-
-      this.projectId = configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY);
-      this.zoneId = configuration.get(BigtableOptionsFactory.ZONE_KEY);
-      this.clusterId = configuration.get(BigtableOptionsFactory.CLUSTER_KEY);
-
-      this.additionalConfiguration.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
-      this.additionalConfiguration.remove(BigtableOptionsFactory.ZONE_KEY);
-      this.additionalConfiguration.remove(BigtableOptionsFactory.CLUSTER_KEY);
-
-      return (T) this;
-    }
-
-    /**
      * Builds the {@link CloudBigtableConfiguration}.
      * @return The new {@link CloudBigtableConfiguration}.
      */
@@ -119,7 +114,7 @@ public class CloudBigtableConfiguration implements Serializable {
 }
 
   // Not final due to serialization of CloudBigtableScanConfiguration.
-  protected Map<String, String> configuration;
+  private Map<String, String> configuration;
 
   // Used for serialization of CloudBigtableScanConfiguration.
   CloudBigtableConfiguration() {
@@ -198,9 +193,16 @@ public class CloudBigtableConfiguration implements Serializable {
    * Creates a new Builder from the configuration
    * @return A new {@link Builder}
    */
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public Builder toBuilder() {
-    return new Builder<Builder<?>>().setConfiguration(configuration);
+    return new Builder(getConfiguration());
+  }
+
+  /**
+   * Returns an unmodifiable copy of the configuration map.
+   */
+  protected Map<String, String> getConfiguration() {
+    return ImmutableMap.copyOf(configuration);
   }
 
   public boolean equals(Object obj) {

@@ -67,6 +67,9 @@ public class CloudBigtableConfigurationTest {
     CloudBigtableConfiguration underTest4 =
         new CloudBigtableConfiguration("other_project", ZONE, CLUSTER,
             Collections.<String, String> emptyMap());
+    CloudBigtableConfiguration underTest5 =
+      new CloudBigtableConfiguration(PROJECT, ZONE, CLUSTER,
+        Collections.singletonMap("somekey", "somevalue"));
 
     // Test CloudBigtableConfiguration that should be equal.
     Assert.assertEquals(underTest1, underTest2);
@@ -76,7 +79,10 @@ public class CloudBigtableConfigurationTest {
 
     // Test CloudBigtableConfiguration with different ProjectId are not equal.
     Assert.assertNotEquals(underTest1, underTest4);
-  }
+
+    // Test CloudBigtableConfiguration with the same extended parameters are equal.
+    Assert.assertEquals(underTest3, underTest5);
+}
 
   @Test
   public void testToBuilder() {
@@ -84,7 +90,7 @@ public class CloudBigtableConfigurationTest {
         new CloudBigtableConfiguration(PROJECT, ZONE, CLUSTER, Collections.singletonMap("somekey",
           "somevalue"));
     CloudBigtableConfiguration copy = underTest.toBuilder().build();
-    Assert.assertTrue(underTest != copy);
+    Assert.assertNotSame(underTest, copy);
     Assert.assertEquals(underTest, copy);
   }
 }

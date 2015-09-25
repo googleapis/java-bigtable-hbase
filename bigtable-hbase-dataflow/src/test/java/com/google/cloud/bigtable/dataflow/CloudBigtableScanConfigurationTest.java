@@ -86,7 +86,7 @@ public class CloudBigtableScanConfigurationTest {
         new CloudBigtableScanConfiguration(PROJECT, ZONE, CLUSTER, TABLE, new Scan(START_ROW,
             STOP_ROW), Collections.<String, String> emptyMap());
     CloudBigtableScanConfiguration copy = underTest.toBuilder().build();
-    Assert.assertTrue(underTest != copy);
+    Assert.assertNotSame(underTest, copy);
     Assert.assertEquals(underTest, copy);
   }
 
