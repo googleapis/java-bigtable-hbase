@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
+import com.google.bigtable.repackaged.com.google.common.collect.ImmutableList;
 import com.google.bigtable.v1.BigtableServiceGrpc.BigtableService;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
@@ -143,6 +144,7 @@ public class CloudBigtableIO {
      * Configuration for a Cloud Bigtable connection, a table, and an optional scan.
      */
     private final CloudBigtableScanConfiguration configuration;
+    private transient ImmutableList<SampleRowKeysResponse> sampleRowKeys;
 
     /**
      * A {@link BoundedSource} for a Cloud Bigtable {@link Table} with a start/stop key range, along
@@ -453,15 +455,18 @@ public class CloudBigtableIO {
      * Perform a call to the {@link BigtableDataClient#sampleRowKeys(SampleRowKeysRequest)} that
      * gives information about tablet key boundaries and estimated sizes.
      */
-    private List<SampleRowKeysResponse> getSampleRowKeys() throws IOException {
-      BigtableOptions bigtableOptions = configuration.toBigtableOptions();
-      try (BigtableSession session = new BigtableSession(bigtableOptions)) {
-        BigtableTableName tableName =
-            bigtableOptions.getClusterName().toTableName(configuration.getTableId());
-        SampleRowKeysRequest request =
-            SampleRowKeysRequest.newBuilder().setTableName(tableName.toString()).build();
-        return session.getDataClient().sampleRowKeys(request);
+    synchronized List<SampleRowKeysResponse> getSampleRowKeys() throws IOException {
+      if (sampleRowKeys == null) {
+        BigtableOptions bigtableOptions = configuration.toBigtableOptions();
+        try (BigtableSession session = new BigtableSession(bigtableOptions)) {
+          BigtableTableName tableName =
+              bigtableOptions.getClusterName().toTableName(configuration.getTableId());
+          SampleRowKeysRequest request =
+              SampleRowKeysRequest.newBuilder().setTableName(tableName.toString()).build();
+          sampleRowKeys = session.getDataClient().sampleRowKeys(request);
+        }
       }
+      return sampleRowKeys;
     }
 
     /**
