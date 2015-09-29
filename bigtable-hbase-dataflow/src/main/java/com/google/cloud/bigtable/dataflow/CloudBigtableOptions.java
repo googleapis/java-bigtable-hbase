@@ -15,17 +15,18 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
+import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions;
 import com.google.cloud.dataflow.sdk.options.Description;
-import com.google.cloud.dataflow.sdk.options.PipelineOptions;
+
 
 /**
- * CloudBigtableOptions is an extension of {@link PipelineOptions} containing the information
- * required for a connection to Cloud Bigtable.
+ * CloudBigtableOptions is an extension of {@link DataflowPipelineOptions} containing the
+ * information required for a connection to Cloud Bigtable.
  */
 @Description("Options used to configure CloudBigtable.  " +
    "see https://cloud.google.com/bigtable/ for more information.  " +
    "See https://cloud.google.com/bigtable/docs/creating-cluster for getting started with Bigtable.")
-public interface CloudBigtableOptions extends PipelineOptions {
+public interface CloudBigtableOptions extends DataflowPipelineOptions {
 
   @Description("The Google Cloud projectId for the Cloud Bigtable cluster.")
   String getBigtableProjectId();
