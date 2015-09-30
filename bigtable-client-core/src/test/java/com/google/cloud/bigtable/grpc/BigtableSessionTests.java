@@ -42,7 +42,7 @@ public class BigtableSessionTests {
   @SuppressWarnings({ "unchecked" })
   @Test
   public void createMethodRetryMap() throws Exception {
-    Map<MethodDescriptor<?, ?>, Predicate<?>> map = BigtableSession.createMethodRetryMap();
+    Map<MethodDescriptor<?, ?>, Predicate<?>> map = BigtableSession.METHODS_TO_RETRY_MAP;
     Field[] fields = BigtableServiceGrpc.class.getDeclaredFields();
     for (Field field : fields) {
       if (field.getType() == MethodDescriptor.class) {
