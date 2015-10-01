@@ -48,7 +48,6 @@ public class CloudBigtableIOIntegrationTest {
   private static BigtableConnection connection;
   private static CloudBigtableConfiguration config;
 
-  @SuppressWarnings("rawtypes")
   @BeforeClass
   public static void setup() throws IOException {
     config =

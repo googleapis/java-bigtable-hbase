@@ -43,8 +43,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   /**
    * Builds a {@link CloudBigtableTableConfiguration}.
    */
-  @SuppressWarnings("unchecked")
-  public static class Builder<T extends Builder<?>> extends CloudBigtableConfiguration.Builder<T> {
+  public static class Builder extends CloudBigtableConfiguration.Builder {
     protected String tableId;
 
     public Builder() {
@@ -60,9 +59,49 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      * @return The original {@link CloudBigtableTableConfiguration.Builder} for chaining
      * 		convenience.
      */
-    public T withTableId(String tableId) {
+    public Builder withTableId(String tableId) {
       this.tableId = tableId;
-      return (T) this;
+      return this;
+    }
+
+    /*
+     * Overrides of the CloudBigtableConfiguration.Builder's with*() so that they return
+     * CloudBigtableTableConfiguration.Builder.
+     */
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Builder withProjectId(String projectId) {
+      super.withProjectId(projectId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Builder withZoneId(String zoneId) {
+      super.withZoneId(zoneId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Builder withClusterId(String clusterId) {
+      super.withClusterId(clusterId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Builder withConfiguration(String key, String value) {
+      super.withConfiguration(key, value);
+      return this;
     }
 
     /**
@@ -102,7 +141,6 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     return tableId;
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
   public Builder toBuilder() {
     return new Builder(getConfiguration())
