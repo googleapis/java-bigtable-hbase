@@ -53,8 +53,10 @@ import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -120,21 +122,16 @@ public class BigtableSession implements AutoCloseable {
     performWarmup();
   }
 
-  private static SslContextBuilder createGrpcSslBuilder() {
-    SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
-    sslBuilder.ciphers(null);
-    return sslBuilder;
-  }
-
-  private static synchronized SslContextBuilder getSslBuilder() {
+  private synchronized static SslContext createSslContext() throws SSLException {
     if (sslBuilder == null) {
-      sslBuilder = createGrpcSslBuilder();
+      sslBuilder = GrpcSslContexts.forClient().ciphers(null);
+      if (OpenSsl.isAvailable()) {
+        LOG.info("gRPC is using the OpenSSL provider");
+      } else {
+        LOG.info("gRPC is using the JDK provder");
+      }
     }
-    return sslBuilder;
-  }
-
-  private static SslContext createSslContext() throws SSLException {
-    return getSslBuilder().build();
+    return sslBuilder.build();
   }
 
   private static void performWarmup() {
@@ -146,13 +143,6 @@ public class BigtableSession implements AutoCloseable {
         // The first invocation of createSslContext() is expensive.
         // Create a throw away object in order to speed up the creation of the first
         // BigtableConnection which uses SslContexts under the covers.
-        try {
-          Class.forName("org.eclipse.jetty.alpn.ALPN");
-        } catch (ClassNotFoundException e1) {
-          LOG.warn(
-            "Could not asynchronously create the ssl context, since ALPN is not installed.");
-          return;
-        }
         try {
           // We create multiple channels via refreshing and pooling channel implementation.
           // Each one needs its own SslContext.
