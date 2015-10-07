@@ -583,6 +583,50 @@ public class CloudBigtableIO {
     return p;
   }
 
+  private static abstract class AbstractCloudBigtableTableWriteFn<In, Out> extends DoFn<In, Out> {
+    private static final long serialVersionUID = 1L;
+    protected final Logger LOG = LoggerFactory.getLogger(getClass());
+    protected CloudBigtableConfiguration config;
+    protected transient Connection conn;
+
+    public AbstractCloudBigtableTableWriteFn(CloudBigtableConfiguration config) {
+      this.config = config;
+    }
+
+    /**
+     * Creates a {@link Connection}.
+     */
+    @Override
+    public void startBundle(Context context) throws Exception {
+      LOG.debug("Creating the Bigtable connection.");
+      conn = new BigtableConnection(config.toHBaseConfig());
+    }
+
+    @Override
+    public void finishBundle(DoFn<In, Out>.Context c) throws Exception {
+      LOG.debug("Closing the Bigtable connection.");
+      conn.close();
+    }
+
+    /**
+     * Logs the {@link Context} and the exception's
+     * {@link RetriesExhaustedWithDetailsException#getExhaustiveDescription()}.
+     */
+    protected void logExceptions(Context context, RetriesExhaustedWithDetailsException exception) {
+      LOG.warn("For context {}: exception occured during bulk writing: {}", context,
+        exception.getExhaustiveDescription());
+    }
+
+    protected static void retrowException(RetriesExhaustedWithDetailsException exception)
+        throws Exception {
+      if (exception.getCauses().size() == 1) {
+        throw (Exception) exception.getCause(0);
+      } else {
+        throw exception;
+      }
+    }
+  }
+
   /**
    * <p>
    * A {@link DoFn} that can write either a bounded or unbounded {@link PCollection} of
@@ -597,15 +641,15 @@ public class CloudBigtableIO {
    * multiple versions could be a problem, it's best to add a timestamp on the Put.
    * </p>
    */
-  public static class CloudBigtableSingleTableWriteFn extends DoFn<Mutation, Void> {
+  public static class CloudBigtableSingleTableWriteFn extends
+      AbstractCloudBigtableTableWriteFn<Mutation, Void> {
     private static final long serialVersionUID = 2L;
-    private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableSingleTableWriteFn.class);
-    private final CloudBigtableTableConfiguration config;
-    private transient Connection conn;
     private transient BufferedMutator mutator;
+    private final String tableName;
 
     public CloudBigtableSingleTableWriteFn(CloudBigtableTableConfiguration config) {
-      this.config = config;
+      super(config);
+      this.tableName = config.getTableId();
     }
 
     /**
@@ -613,12 +657,12 @@ public class CloudBigtableIO {
      */
     @Override
     public void startBundle(Context context) throws Exception {
-      conn = new BigtableConnection(config.toHBaseConfig());
-      TableName tableName = TableName.valueOf(config.getTableId());
+      super.startBundle(context);
       ExceptionListener listener = createExceptionListener(context);
-      BufferedMutatorParams params = new BufferedMutatorParams(tableName)
+      BufferedMutatorParams params = new BufferedMutatorParams(TableName.valueOf(tableName))
           .writeBufferSize(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT)
           .listener(listener);
+      LOG.debug("Creating the Bigtable bufferedMutator.");
       mutator = conn.getBufferedMutator(params);
     }
 
@@ -634,20 +678,15 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Logs the {@link Context} and the exception's
-     * {@link RetriesExhaustedWithDetailsException#getExhaustiveDescription()}.
-     */
-    protected void logExceptions(Context context, RetriesExhaustedWithDetailsException exception) {
-      LOG.warn("For context {}: exception occured during bulk writing: {}", context,
-        exception.getExhaustiveDescription());
-    }
-
-    /**
      * Performs an asyc mutation via {@link BufferedMutator#mutate(Mutation)}.
      */
     @Override
     public void processElement(ProcessContext context) throws Exception {
-      mutator.mutate(context.element());
+      Mutation mutation = context.element();
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Persisting {}", Bytes.toString(mutation.getRow()));
+      }
+      mutator.mutate(mutation);
     }
 
     /**
@@ -656,16 +695,15 @@ public class CloudBigtableIO {
     @Override
     public void finishBundle(Context context) throws Exception {
       try {
+        LOG.debug("Closing the BufferedMutator.");
         mutator.close();
-      } catch (RetriesExhaustedWithDetailsException e) {
-        List<Throwable> causes = e.getCauses();
-        if (causes.size() == 1) {
-          throw (Exception) causes.get(0);
-        } else {
-          throw e;
-        }
+      } catch (RetriesExhaustedWithDetailsException exception) {
+        logExceptions(context, exception);
+        retrowException(exception);
+      } finally {
+        // Close the connection to clean up resources.
+        super.finishBundle(context);
       }
-      conn.close();
     }
   }
 
@@ -686,23 +724,11 @@ public class CloudBigtableIO {
    * </p>
    */
   public static class CloudBigtableMultiTableWriteFn extends
-      DoFn<KV<String, Iterable<Mutation>>, Void> {
+  AbstractCloudBigtableTableWriteFn<KV<String, Iterable<Mutation>>, Void> {
     private static final long serialVersionUID = 2L;
-    private final CloudBigtableConfiguration config;
-    private transient Connection conn;
 
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
-      this.config = config;
-    }
-
-    /**
-     * Create a {@link Connection} from the provided {@link CloudBigtableConfiguration} that will
-     * live for the lifetime of the {@link DoFn}.
-     * @param context The context for the {@link DoFn}.
-     */
-    @Override
-    public void startBundle(Context context) throws Exception {
-      conn = new BigtableConnection(config.toHBaseConfig());
+      super(config);
     }
 
     /**
@@ -713,19 +739,17 @@ public class CloudBigtableIO {
     @Override
     public void processElement(ProcessContext context) throws Exception {
       KV<String, Iterable<Mutation>> element = context.element();
-      try (Table t = conn.getTable(TableName.valueOf(element.getKey()))) {
+      String tableName = element.getKey();
+      try (Table t = conn.getTable(TableName.valueOf(tableName))) {
         List<Mutation> mutations = Lists.newArrayList(element.getValue());
-        Object results[] = new Object[mutations.size()];
-        t.batch(mutations, results);
+        int mutationCount = mutations.size();
+        LOG.trace("Persisting {} elements to table {}.", mutationCount, tableName);
+        t.batch(mutations, new Object[mutationCount]);
+        LOG.trace("Finished persisting {} elements to table {}.", mutationCount, tableName);
+      } catch (RetriesExhaustedWithDetailsException exception) {
+        logExceptions(context, exception);
+        retrowException(exception);
       }
-    }
-
-    /**
-     * Close the {@link Connection}.
-     */
-    @Override
-    public void finishBundle(Context context) throws Exception {
-      conn.close();
     }
   }
 
