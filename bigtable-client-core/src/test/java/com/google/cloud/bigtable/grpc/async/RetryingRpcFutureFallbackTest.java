@@ -97,7 +97,7 @@ public class RetryingRpcFutureFallbackTest {
         return start + totalSleep.get();
       }
     });
-    underTest.sleeper = new RetryingRpcFutureFallback.Sleeper() {
+    underTest.sleeper = new Sleeper() {
       @Override
       public void sleep(long ms) throws InterruptedException {
         totalSleep.addAndGet(ms * 1000000);
