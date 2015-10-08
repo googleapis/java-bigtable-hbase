@@ -278,19 +278,20 @@ public class BatchExecutor {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.
       Futures.successfulAsList(resultFutures).get();
-      List<Throwable> problems = new ArrayList<Throwable>();
-      List<Row> problemActions = new ArrayList<Row>();
+      List<Throwable> problems = new ArrayList<>();
+      List<Row> problemActions = new ArrayList<>();
+      List<String> hosts = new ArrayList<>();
       for (int i = 0; i < resultFutures.size(); i++){
         try {
           resultFutures.get(i).get();
         } catch (ExecutionException e) {
           problemActions.add(actions.get(i));
           problems.add(e.getCause());
+          hosts.add(options.getDataHost().toString());
         }
       }
       if (problems.size() > 0) {
-        throw new RetriesExhaustedWithDetailsException(
-            problems, problemActions, new ArrayList<String>(problems.size()));
+        throw new RetriesExhaustedWithDetailsException(problems, problemActions, hosts);
       }
     } catch (ExecutionException e) {
       LOG.error("Encountered exception in batch(List<>, Object[]).", e);
