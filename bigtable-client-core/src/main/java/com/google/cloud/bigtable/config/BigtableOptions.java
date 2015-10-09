@@ -67,11 +67,6 @@ public class BigtableOptions {
     private int timeoutMs = BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT;
     private int dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
 
-    // Debugging information about the types of calls that were made and their success rates.
-    private String callStatusReportPath;
-    private String callTimingReportPath;
-
-
     public Builder setTableAdminHost(String tableAdminHost) {
       this.tableAdminHost = tableAdminHost;
       return this;
@@ -126,16 +121,6 @@ public class BigtableOptions {
       return this;
     }
 
-    public Builder setCallStatusReportPath(String callStatusReportPath) {
-      this.callStatusReportPath = callStatusReportPath;
-      return this;
-    }
-
-    public Builder setCallTimingReportPath(String callTimingReportPath) {
-      this.callTimingReportPath = callTimingReportPath;
-      return this;
-    }
-
     public Builder setDataChannelCount(int dataChannelCount) {
       this.dataChannelCount = dataChannelCount;
       return this;
@@ -163,8 +148,6 @@ public class BigtableOptions {
           clusterId,
           credentialOptions,
           userAgent,
-          callTimingReportPath,
-          callStatusReportPath,
           retryOptions,
           timeoutMs,
           dataChannelCount);
@@ -181,8 +164,6 @@ public class BigtableOptions {
   private final String clusterId;
   private final CredentialOptions credentialOptions;
   private final String userAgent;
-  private final String callTimingReportPath;
-  private final String callStatusReportPath;
   private final RetryOptions retryOptions;
   private final int timeoutMs;
   private final int channelCount;
@@ -200,8 +181,6 @@ public class BigtableOptions {
       clusterId = null;
       credentialOptions = null;
       userAgent = null;
-      callTimingReportPath = null;
-      callStatusReportPath = null;
       retryOptions = null;
       timeoutMs = 0;
       channelCount = 1;
@@ -219,8 +198,6 @@ public class BigtableOptions {
       String clusterId,
       CredentialOptions credentialOptions,
       String userAgent,
-      String callTimingReportPath,
-      String callStatusReportPath,
       RetryOptions retryOptions,
       int timeoutMs,
       int channelCount) {
@@ -246,8 +223,6 @@ public class BigtableOptions {
     this.clusterId = clusterId;
     this.credentialOptions = credentialOptions;
     this.userAgent = userAgent;
-    this.callTimingReportPath = callTimingReportPath;
-    this.callStatusReportPath = callStatusReportPath;
     this.retryOptions = retryOptions;
     this.timeoutMs = timeoutMs;
     this.channelCount = channelCount;
@@ -313,20 +288,6 @@ public class BigtableOptions {
    */
   public String getUserAgent() {
     return userAgent;
-  }
-
-  /**
-   * Get the client-local file to which a report of call timings will be appended.
-   */
-  public String getCallTimingReportPath() {
-    return callTimingReportPath;
-  }
-
-  /**
-   * Get the client-local file to which a report of call statuses will be appended.
-   */
-  public String getCallStatusReportPath() {
-    return callStatusReportPath;
   }
 
   /**

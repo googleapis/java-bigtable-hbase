@@ -32,9 +32,6 @@ import org.apache.hadoop.conf.Configuration;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * Static methods to convert an instance of {@link Configuration}
@@ -53,7 +50,6 @@ public class BigtableOptionsFactory {
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
   public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
   public static final String ZONE_KEY = "google.bigtable.zone.name";
-  public static final String CALL_REPORT_DIRECTORY_KEY = "google.bigtable.call.report.directory";
 
   /**
    * If set, bypass DNS host lookup and use the given IP address.
@@ -182,31 +178,6 @@ public class BigtableOptionsFactory {
       setChannelOptions(BigtableOptions.Builder builder, Configuration configuration)
           throws IOException {
     setCredentialOptions(builder, configuration);
-
-    // TODO(sduskis): I think that this call report directory mechanism doesn't work anymore as is.
-    // We need to make sure that if we want this feature, that we have only a single interceptor
-    // for all BigtableChannels.  Right now, we create one interceptor per channel, so there
-    // are at least 2: 1 for admin and 1 for data.
-
-    // Set up aggregate performance and call error rate logging:
-    if (!isNullOrEmpty(configuration.get(CALL_REPORT_DIRECTORY_KEY))) {
-      String reportDirectory = configuration.get(CALL_REPORT_DIRECTORY_KEY);
-      Path reportDirectoryPath = FileSystems.getDefault().getPath(reportDirectory);
-      if (Files.exists(reportDirectoryPath)) {
-        Preconditions.checkState(
-            Files.isDirectory(reportDirectoryPath), "Report path %s must be a directory");
-      } else {
-        Files.createDirectories(reportDirectoryPath);
-      }
-      String callStatusReport =
-          reportDirectoryPath.resolve("call_status.txt").toAbsolutePath().toString();
-      String callTimingReport =
-          reportDirectoryPath.resolve("call_timing.txt").toAbsolutePath().toString();
-      LOG.debug("Logging call status aggregates to %s", callStatusReport);
-      LOG.debug("Logging call timing aggregates to %s", callTimingReport);
-      builder.setCallStatusReportPath(callStatusReport);
-      builder.setCallTimingReportPath(callTimingReport);
-    }
 
     builder.setRetryOptions(createRetryOptions(configuration));
 
