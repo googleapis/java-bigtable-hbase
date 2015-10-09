@@ -46,7 +46,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.repackaged.com.google.common.collect.ImmutableList;
 import com.google.bigtable.v1.BigtableServiceGrpc.BigtableService;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
@@ -144,7 +143,7 @@ public class CloudBigtableIO {
      * Configuration for a Cloud Bigtable connection, a table, and an optional scan.
      */
     private final CloudBigtableScanConfiguration configuration;
-    private transient ImmutableList<SampleRowKeysResponse> sampleRowKeys;
+    private transient List<SampleRowKeysResponse> sampleRowKeys;
 
     /**
      * A {@link BoundedSource} for a Cloud Bigtable {@link Table} with a start/stop key range, along
