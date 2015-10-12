@@ -124,13 +124,37 @@ public class BigtableSession implements AutoCloseable {
   private synchronized static SslContext createSslContext() throws SSLException {
     if (sslBuilder == null) {
       sslBuilder = GrpcSslContexts.forClient().ciphers(null);
-      if (OpenSsl.isAvailable()) {
-        LOG.info("gRPC is using the OpenSSL provider (tcnactive jar)");
+      // gRPC uses tcnative / OpenSsl by default, if it's available.  It defaults to alpn-boot
+      // if tcnative is not in the classpath.
+      if (OpenSsl.isAlpnSupported()) {
+        LOG.info("gRPC is using the OpenSSL provider (tcnactive jar - Open Ssl version: %s)",
+          OpenSsl.versionString());
       } else {
-        LOG.info("gRPC is using the JDK provider (alpn-boot jar)");
+        if (isJettyAlpnConfigured()) {
+          // gRPC uses jetty ALPN as a backup to tcnative.
+          LOG.info("gRPC is using the JDK provider (alpn-boot jar)");
+        } else {
+          LOG.info("gRPC cannot be configured.  Neither OpenSsl nor Alpn are available.");
+        }
       }
     }
     return sslBuilder.build();
+  }
+
+  public static boolean isAlpnProviderEnabled() {
+    return OpenSsl.isAlpnSupported() || isJettyAlpnConfigured();
+  }
+
+  /**
+   * Indicates whether or not the Jetty ALPN jar is installed in the boot classloader.
+   */
+  private static boolean isJettyAlpnConfigured() {
+    try {
+      Class.forName("org.eclipse.jetty.alpn.ALPN", true, null);
+      return true;
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
   }
 
   private static void performWarmup() {
@@ -142,21 +166,14 @@ public class BigtableSession implements AutoCloseable {
         // The first invocation of createSslContext() is expensive.
         // Create a throw away object in order to speed up the creation of the first
         // BigtableConnection which uses SslContexts under the covers.
-        if (!OpenSsl.isAvailable()) {
+        if (isAlpnProviderEnabled()) {
           try {
-            Class.forName("org.eclipse.jetty.alpn.ALPN");
-          } catch (ClassNotFoundException e1) {
-            LOG.warn(
-              "Could not asynchronously create the ssl context, since ALPN is not installed.");
-            return;
+            // We create multiple channels via refreshing and pooling channel implementation.
+            // Each one needs its own SslContext.
+            createSslContext();
+          } catch (SSLException e) {
+            LOG.warn("Could not asynchronously create the ssl context", e);
           }
-        }
-        try {
-          // We create multiple channels via refreshing and pooling channel implementation.
-          // Each one needs its own SslContext.
-          createSslContext();
-        } catch (SSLException e) {
-          LOG.warn("Could not asynchronously create the ssl context", e);
         }
       }
     });
@@ -240,6 +257,12 @@ public class BigtableSession implements AutoCloseable {
   public BigtableSession(BigtableOptions options, @Nullable ExecutorService batchPool,
       @Nullable EventLoopGroup elg, @Nullable ScheduledExecutorService scheduledRetries)
       throws IOException {
+    if(!isAlpnProviderEnabled()) {
+      // TODO: REMOVE THE EXCEPTION LOGGING BEFORE RELEASING.  THIS IS FOR DIAGNOSING A DEV ISSUE.
+      LOG.warn("Could not load the OpenSSL provider", OpenSsl.unavailabilityCause());
+
+      throw new IllegalStateException("Jetty ALPN has not been properly configured.");
+    }
     if (batchPool == null) {
       this.terminateBatchPool = true;
       this.batchPool = createDefaultBatchPool();

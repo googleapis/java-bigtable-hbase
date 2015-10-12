@@ -131,6 +131,8 @@ import com.google.cloud.dataflow.sdk.values.PDone;
 
 public class CloudBigtableIO {
 
+  private static Logger LOG = LoggerFactory.getLogger(CloudBigtableIO.class);
+
   /**
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
    * {@link Scan}.
@@ -841,18 +843,17 @@ public class CloudBigtableIO {
     checkNotNullOrEmpty(configuration.getClusterId(), "clusterId");
     if (tableId != null) {
       checkNotNullOrEmpty(tableId, "tableid");
-    }
-    try (BigtableConnection conn = new BigtableConnection(configuration.toHBaseConfig());
-        Admin admin = conn.getAdmin()) {
-      if (tableId != null) {
-        Preconditions.checkState(admin.tableExists(TableName.valueOf(tableId)));
+      if (BigtableSession.isAlpnConfigured()) {
+        try (BigtableConnection conn = new BigtableConnection(configuration.toHBaseConfig());
+            Admin admin = conn.getAdmin()) {
+          Preconditions.checkState(admin.tableExists(TableName.valueOf(tableId)));
+        } catch (IOException | IllegalArgumentException | ExceptionInInitializerError e) {
+          LOG.error(String.format("Could not validate that the table exists: %s (%s)", e.getClass()
+              .getName(), e.getMessage()), e);
+        }
       } else {
-        admin.listTableNames();
+        LOG.info("ALPN is not configured. Skipping table existence check.");
       }
-    } catch (IOException | IllegalArgumentException | ExceptionInInitializerError e) {
-      LoggerFactory.getLogger(CloudBigtableIO.class).error(
-        String.format("Could not validate that the table exists: %s (%s)", e.getClass().getName(),
-          e.getMessage()), e);
     }
   }
 }
