@@ -843,7 +843,7 @@ public class CloudBigtableIO {
     checkNotNullOrEmpty(configuration.getClusterId(), "clusterId");
     if (tableId != null) {
       checkNotNullOrEmpty(tableId, "tableid");
-      if (BigtableSession.isAlpnConfigured()) {
+      if (BigtableSession.isAlpnProviderEnabled()) {
         try (BigtableConnection conn = new BigtableConnection(configuration.toHBaseConfig());
             Admin admin = conn.getAdmin()) {
           Preconditions.checkState(admin.tableExists(TableName.valueOf(tableId)));
