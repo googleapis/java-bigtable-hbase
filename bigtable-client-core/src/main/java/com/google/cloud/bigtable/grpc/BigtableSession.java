@@ -302,7 +302,8 @@ public class BigtableSession implements AutoCloseable {
     if (credentials != null) {
       if (credentials instanceof OAuth2Credentials) {
         final RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
-            new RefreshingOAuth2CredentialsInterceptor(batchPool, (OAuth2Credentials) credentials);
+            new RefreshingOAuth2CredentialsInterceptor(batchPool, (OAuth2Credentials) credentials,
+                this.options.getRetryOptions());
         credentialRefreshFuture = batchPool.submit(new Callable<Void>() {
           @Override
           public Void call() throws Exception {

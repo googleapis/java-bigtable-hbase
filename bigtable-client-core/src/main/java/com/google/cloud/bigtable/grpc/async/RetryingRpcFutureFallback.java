@@ -32,7 +32,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * A FutureFallback that retries a RetryableRpc request.
+ * A {@link FutureFallback} that retries a {@link RetryableRpc} request.
  */
 public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFallback<ResponseT> {
 
@@ -41,18 +41,6 @@ public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFal
     return new RetryingRpcFutureFallback<RequestT, ResponseT>(retryOptions, request, retryableRpc);
   }
 
-  @VisibleForTesting
-  interface Sleeper {
-    void sleep(long ms) throws InterruptedException;
-  }
-
-  static Sleeper THREAD_SLEEPER = new Sleeper() {
-    @Override
-    public void sleep(long ms) throws InterruptedException {
-      Thread.sleep(ms);
-    }
-  };
-
   protected final Log LOG = LogFactory.getLog(RetryingRpcFutureFallback.class);
 
   private final RequestT request;
@@ -60,7 +48,7 @@ public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFal
   @VisibleForTesting
   BackOff currentBackoff;
   @VisibleForTesting
-  Sleeper sleeper = THREAD_SLEEPER;
+  Sleeper sleeper = Sleeper.DEFAULT;
 
   private final RetryableRpc<RequestT, ResponseT> retryableRpc;
   private final RetryOptions retryOptions;
