@@ -259,7 +259,10 @@ public class BigtableSession implements AutoCloseable {
       throws IOException {
     if(!isAlpnProviderEnabled()) {
       // TODO: REMOVE THE EXCEPTION LOGGING BEFORE RELEASING.  THIS IS FOR DIAGNOSING A DEV ISSUE.
-      LOG.warn("Could not load the OpenSSL provider", OpenSsl.unavailabilityCause());
+      LOG.warn(
+        "Could not load the OpenSSL provider.  OpenSsl.isAvailable(): %s.  OpenSsl.isAlpnSupported(): %s.  Version: %s",
+        OpenSsl.unavailabilityCause(), OpenSsl.isAvailable(), OpenSsl.isAlpnSupported(),
+        OpenSsl.version());
 
       throw new IllegalStateException("Jetty ALPN has not been properly configured.");
     }
