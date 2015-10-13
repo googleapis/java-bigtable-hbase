@@ -20,8 +20,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
-
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Increment;
@@ -45,15 +43,6 @@ import com.google.cloud.dataflow.sdk.values.TypeDescriptor;
  * Tests for {@link CloudBigtableIO}.
  */
 public class CloudBigtableIOTest {
-
-  private static final String PROJECT = "my_project";
-  private static final String CLUSTER = "cluster";
-  private static final String ZONE = "some-zone-1a";
-  private static final String TABLE = "some-zone-1a";
-
-  private static final CloudBigtableTableConfiguration config =
-      new CloudBigtableTableConfiguration(PROJECT, ZONE, CLUSTER, TABLE,
-          Collections.<String, String> emptyMap());
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -81,8 +70,6 @@ public class CloudBigtableIOTest {
     checkRegistry(Put.class);
     checkRegistry(Delete.class);
     checkRegistry(Mutation.class);
-
-    CloudBigtableIO.writeToTable(config).validate(null);
   }
 
   @Test
