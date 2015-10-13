@@ -126,7 +126,7 @@ public class BigtableSession implements AutoCloseable {
       sslBuilder = GrpcSslContexts.forClient().ciphers(null);
       // gRPC uses tcnative / OpenSsl by default, if it's available.  It defaults to alpn-boot
       // if tcnative is not in the classpath.
-      if (OpenSsl.isAlpnSupported()) {
+      if (OpenSsl.isAvailable()) {
         LOG.info("gRPC is using the OpenSSL provider (tcnactive jar - Open Ssl version: %s)",
           OpenSsl.versionString());
       } else {
@@ -142,7 +142,7 @@ public class BigtableSession implements AutoCloseable {
   }
 
   public static boolean isAlpnProviderEnabled() {
-    return OpenSsl.isAlpnSupported() || isJettyAlpnConfigured();
+    return OpenSsl.isAvailable() || isJettyAlpnConfigured();
   }
 
   /**
