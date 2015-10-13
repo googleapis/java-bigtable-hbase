@@ -20,10 +20,13 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +47,9 @@ public class CloudBigtableIOIntegrationTest {
   private static String projectId = System.getProperty(BIGTABLE_PROJECT_KEY);
   private static String zoneId = System.getProperty(BIGTABLE_ZONE_KEY);
   private static String clusterId = System.getProperty(BIGTABLE_CLUSTER_KEY);
+
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
 
   public static TableName newTestTableName() {
     return TableName.valueOf("test-dataflow-" + UUID.randomUUID().toString());
@@ -66,6 +72,33 @@ public class CloudBigtableIOIntegrationTest {
   @AfterClass
   public static void shutdown() throws IOException {
     connection.close();
+  }
+
+  @Test
+  public void testWriteToTable_tableDoesNotExist() throws Exception {
+    LOG.info("Testing testWriteToTable_tableDoesNotExist()");
+    CloudBigtableTableConfiguration tableConfig = new CloudBigtableTableConfiguration(projectId,
+        zoneId, clusterId, "does-not-exist-table", Collections.<String, String>emptyMap());
+    // The table doesn't exist.
+    expectedException.expect(IllegalStateException.class);
+    CloudBigtableIO.writeToTable(tableConfig).validate(null);
+  }
+
+  @Test
+  public void testWriteToTable_tableExist() throws Exception {
+    TableName tableName = newTestTableName();
+    try (Admin admin = connection.getAdmin()) {
+      LOG.info("Creating table in testWriteToTable_tableExist()");
+      admin.createTable(
+          new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
+      try {
+        CloudBigtableTableConfiguration tableConfig = new CloudBigtableTableConfiguration(projectId,
+            zoneId, clusterId, tableName.getNameAsString(), Collections.<String, String>emptyMap());
+        CloudBigtableIO.writeToTable(tableConfig).validate(null);
+      } finally {
+        admin.deleteTable(tableName);
+      }
+    }
   }
 
   @Test
