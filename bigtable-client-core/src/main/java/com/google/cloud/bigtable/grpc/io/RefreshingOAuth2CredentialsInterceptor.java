@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
-import javax.annotation.Nullable;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Clock;
@@ -145,12 +143,20 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   private final ExecutorService executor;
   private final OAuth2Credentials credentials;
   private final RetryOptions retryOptions;
+  private final Logger logger;
 
   public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler,
       OAuth2Credentials credentials, RetryOptions retryOptions) {
+    this(scheduler, credentials, retryOptions, LOG);
+  }
+
+  @VisibleForTesting
+  RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler,
+      OAuth2Credentials credentials, RetryOptions retryOptions, Logger logger) {
     this.executor = Preconditions.checkNotNull(scheduler);
     this.credentials = Preconditions.checkNotNull(credentials);
     this.retryOptions = Preconditions.checkNotNull(retryOptions);
+    this.logger = Preconditions.checkNotNull(logger);
   }
 
   @Override
@@ -244,7 +250,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     if (!requiresRefresh) {
       return false;
     }
-    HeaderCacheElement cacheElement = refreshCredentialsWithRetry(null);
+    HeaderCacheElement cacheElement = refreshCredentialsWithRetry();
     synchronized (isRefreshing) {
       headerCache.set(cacheElement);
       isRefreshing.set(false);
@@ -254,8 +260,19 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   }
 
   /**
+   * <p>
    * Calls {@link OAuth2Credentials#refreshAccessToken()}. In case of an IOException, retry the call
    * as per the {@link Backoff} policy defined by {@link RetryOptions#createBackoff()}.
+   * </p>
+   * <p>
+   * This method retries until one of the following conditions occurs:
+   * <ol>
+   * <li>An OAuth request was completed. If the value is null, return an exception.
+   * <li>A non-IOException Exception is thrown - return an error status
+   * <li>All retries have been exhausted, i.e. when the Backoff.nextBackOffMillis() returns
+   * BackOff.STOP
+   * <li>An interrupt occurs.
+   * </ol>
    * @param backoff defines the current state of the retries. Initially, the value is null. In the
    *          case of an {@link IOException}, create a new {@link BackOff}; see
    *          {@link RetryOptions#createBackoff()} for more details on the initial construction. If
@@ -263,45 +280,45 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
    *          retry exhaustion logic.
    * @return HeaderCacheElement containing either a valid {@link AccessToken} or an exception.
    */
-  protected HeaderCacheElement refreshCredentialsWithRetry(@Nullable BackOff backoff) {
-    try {
-      LOG.info("Refreshing the OAuth token");
-      AccessToken newToken = credentials.refreshAccessToken();
-      if (newToken == null) {
-        // The current implementations of refreshAccessToken() throws an IOException or return
-        // a valid token. This handling is future proofing just in case credentials returns null for
-        // some reason. This case was caught by a poorly coded unit test.
-        LOG.info("Refreshed the OAuth token");
-        return new HeaderCacheElement(new IOException("Could not load the token for credentials: "
-            + credentials));
-      } else {
-        // Success!
-        return new HeaderCacheElement(newToken);
-      }
-    } catch (IOException exception) {
-      LOG.warn("Got an unexpected IOException when refreshing google credentials.", exception);
-      // An IOException occurred. Retry with backoff.
-      if (backoff == null) {
-        // initialize backoff.
-        backoff = retryOptions.createBackoff();
-      }
-
-      // Given the backoff, either sleep for a short duration, or terminate if the backoff has
-      // reached its configured timeout limit.
+  protected HeaderCacheElement refreshCredentialsWithRetry() {
+    BackOff backoff = null;
+    while (true) {
       try {
-        RetryState retryState = getRetryState(backoff);
-        if (retryState == RetryState.PerformRetry) {
-          return refreshCredentialsWithRetry(backoff);
+        logger.info("Refreshing the OAuth token");
+        AccessToken newToken = credentials.refreshAccessToken();
+        if (newToken == null) {
+          // The current implementations of refreshAccessToken() throws an IOException or return
+          // a valid token. This handling is future proofing just in case credentials returns null for
+          // some reason. This case was caught by a poorly coded unit test.
+          logger.info("Refreshed the OAuth token");
+          return new HeaderCacheElement(new IOException("Could not load the token for credentials: "
+              + credentials));
         } else {
+          // Success!
+          return new HeaderCacheElement(newToken);
+        }
+      } catch (IOException exception) {
+        logger.warn("Got an unexpected IOException when refreshing google credentials.", exception);
+        // An IOException occurred. Retry with backoff.
+        if (backoff == null) {
+          // initialize backoff.
+          backoff = retryOptions.createBackoff();
+        }
+        // Given the backoff, either sleep for a short duration, or terminate if the backoff has
+        // reached its configured timeout limit.
+        try {
+          RetryState retryState = getRetryState(backoff);
+          if (retryState != RetryState.PerformRetry) {
+            return new HeaderCacheElement(exception);
+          } // else Retry.
+        } catch (IOException e) {
+          logger.warn("Got an exception while trying to run backoff.nextBackOffMillis()", e);
           return new HeaderCacheElement(exception);
         }
-      } catch (IOException e) {
-        LOG.warn("Got an exception while trying to run backoff.nextBackOffMillis()", e);
-        return new HeaderCacheElement(exception);
+      } catch (Exception e) {
+        logger.warn("Got an unexpected exception while trying to refresh google credentials.", e);
+        return new HeaderCacheElement(new IOException("Could not read headers", e));
       }
-    } catch (Exception e) {
-      LOG.warn("Got an unexpected exception while trying to refresh google credentials.", e);
-      return new HeaderCacheElement(new IOException("Could not read headers", e));
     }
   }
 
@@ -314,7 +331,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
   protected RetryState getRetryState(BackOff backoff) throws IOException{
     long nextBackOffMillis = backoff.nextBackOffMillis();
     if (nextBackOffMillis == BackOff.STOP) {
-      LOG.warn("Exhausted the number of retries for credentials refresh after "
+      logger.warn("Exhausted the number of retries for credentials refresh after "
           + this.retryOptions.getMaxElaspedBackoffMillis() + " milliseconds.");
       return RetryState.RetriesExhausted;
     }
@@ -323,7 +340,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
       // Try to perform another call.
       return RetryState.PerformRetry;
     } catch (InterruptedException e) {
-      LOG.warn("Interrupted while trying to refresh credentials.");
+      logger.warn("Interrupted while trying to refresh credentials.");
       Thread.interrupted();
       // If the thread is interrupted, terminate immediately.
       return RetryState.Interrupted;

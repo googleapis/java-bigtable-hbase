@@ -80,7 +80,6 @@ public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFal
     }
     long nextBackOff = currentBackoff.nextBackOffMillis();
     if (nextBackOff == BackOff.STOP) {
-      LOG.warn("RetriesExhausted: ", cause);
       throw new ScanRetriesExhaustedException("Exhausted streaming retries.", cause);
     }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
@@ -63,6 +64,8 @@ public class ResumingStreamingResultScannerTest {
   ResultScanner<Row> mockScannerPostResume;
   @Mock
   BigtableResultScannerFactory mockScannerFactory;
+  @Mock
+  Logger logger;
 
   RetryOptions retryOptions;
   ReadRowsRequest readRowsRequest = ReadRowsRequest.getDefaultInstance();
@@ -171,7 +174,7 @@ public class ResumingStreamingResultScannerTest {
         .thenReturn(mockScannerPostResume);
 
     ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(
-        retryOptions, originalRequest.build(), mockScannerFactory);
+        retryOptions, originalRequest.build(), mockScannerFactory, logger);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -201,6 +204,7 @@ public class ResumingStreamingResultScannerTest {
     if (numRowsLimit != 1 && numRowsLimit != 2) {
       verify(mockScannerFactory, times(1)).createScanner(eq(expectedResumeRequest.build()));
     }
+    scanner.close();
   }
 
   @Test
@@ -235,7 +239,8 @@ public class ResumingStreamingResultScannerTest {
         .thenReturn(mockScanner);
 
     ResumingStreamingResultScanner scanner =
-        new ResumingStreamingResultScanner(retryOptions, readRowsRequest, mockScannerFactory);
+        new ResumingStreamingResultScanner(retryOptions, readRowsRequest, mockScannerFactory,
+            logger);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -254,5 +259,6 @@ public class ResumingStreamingResultScannerTest {
 
     verify(mockScannerFactory, times(1)).createScanner(eq(readRowsRequest));
     verifyNoMoreInteractions(mockScannerPostResume, mockScannerFactory);
+    scanner.close();
   }
 }

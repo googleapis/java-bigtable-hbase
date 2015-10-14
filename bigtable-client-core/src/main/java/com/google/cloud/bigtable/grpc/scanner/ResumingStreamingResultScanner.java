@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,12 +24,11 @@ import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import io.grpc.Status;
 
@@ -42,7 +41,7 @@ import java.io.IOException;
  */
 public class ResumingStreamingResultScanner extends AbstractBigtableResultScanner {
 
-  protected static final Log LOG = LogFactory.getLog(ResumingStreamingResultScanner.class);
+  private static final Logger LOG = new Logger(ResumingStreamingResultScanner.class);
 
   private static final ByteString NEXT_ROW_SUFFIX = ByteString.copyFrom(new byte[]{0x00});
   private final BigtableResultScannerFactory scannerFactory;
@@ -65,10 +64,21 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   // The number of rows read so far.
   private long rowCount = 0;
 
+  private final Logger logger;
+
   public ResumingStreamingResultScanner(
+    RetryOptions retryOptions,
+    ReadRowsRequest originalRequest,
+    BigtableResultScannerFactory scannerFactory) {
+    this(retryOptions, originalRequest, scannerFactory, LOG);
+  }
+
+  @VisibleForTesting
+  ResumingStreamingResultScanner(
       RetryOptions retryOptions,
       ReadRowsRequest originalRequest,
-      BigtableResultScannerFactory scannerFactory) {
+      BigtableResultScannerFactory scannerFactory,
+      Logger logger) {
     Preconditions.checkArgument(
         !originalRequest.getAllowRowInterleaving(),
         "Row interleaving is not supported when using resumable streams");
@@ -81,6 +91,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     this.currentBackoff = backOffBuilder.build();
     this.currentDelegate = scannerFactory.createScanner(originalRequest);
     this.retryOptions = retryOptions;
+    this.logger = logger;
   }
 
   @Override
@@ -97,10 +108,10 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
         return result;
       } catch (ScanTimeoutException rte) {
-        LOG.warn("ReadTimeoutException: ", rte);
+        logger.warn("ReadTimeoutException: ", rte);
         backOffAndRetry(rte);
       } catch (IOExceptionWithStatus ioe) {
-        LOG.warn("IOExceptionWithStatus: ", ioe);
+        logger.warn("IOExceptionWithStatus: ", ioe);
         Status.Code code = ioe.getStatus().getCode();
         if (retryOptions.isRetryableRead(code)) {
           backOffAndRetry(ioe);
@@ -122,7 +133,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
       ScanRetriesExhaustedException {
     long nextBackOff = currentBackoff.nextBackOffMillis();
     if (nextBackOff == BackOff.STOP) {
-      LOG.warn("RetriesExhausted: ", cause);
+      logger.warn("RetriesExhausted: ", cause);
       throw new ScanRetriesExhaustedException(
           "Exhausted streaming retries.", cause);
     }
@@ -140,7 +151,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     try {
       currentDelegate.close();
     } catch (IOException ioe) {
-      LOG.warn("Error closing scanner before reissuing request: ", ioe);
+      logger.warn("Error closing scanner before reissuing request: ", ioe);
     }
 
     ReadRowsRequest.Builder newRequest = originalRequest.toBuilder();
