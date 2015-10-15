@@ -69,4 +69,8 @@ limitations under the License.
         <name>google.bigtable.auth.service.account.keyfile</name>
         <value>${google.bigtable.auth.service.account.keyfile}</value>
     </property>
+    <property>
+        <name>google.bigtable.force.jdk.provider</name>
+        <value>${google.bigtable.force.jdk.provider}</value>
+    </property>
 </configuration>
