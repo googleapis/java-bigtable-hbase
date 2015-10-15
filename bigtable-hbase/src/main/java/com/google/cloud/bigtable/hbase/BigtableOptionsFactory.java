@@ -130,6 +130,12 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_CHANNEL_TIMEOUT_MS_KEY =
       "google.bigtable.grpc.channel.timeout.ms";
 
+  /**
+   * Force the use of the JDK provider rather than Native if the native provider (OpenSsl) is
+   * available.  This is useful for testing purposes.
+   */
+  public static final String FORCE_JDK_PROVIDER_KEY = "google.bigtable.force.jdk.provider";
+
   public static BigtableOptions fromConfiguration(final Configuration configuration)
       throws IOException {
 
@@ -138,7 +144,10 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
     bigtableOptionsBuilder.setZoneId(getValue(configuration, ZONE_KEY, "Zone"));
     bigtableOptionsBuilder.setClusterId(getValue(configuration, CLUSTER_KEY, "Cluster"));
-
+    boolean jdkProvider = configuration.getBoolean(FORCE_JDK_PROVIDER_KEY,
+      false);
+    System.out.println("JDK PRovider? " + configuration.get(FORCE_JDK_PROVIDER_KEY) + " " + jdkProvider);
+    bigtableOptionsBuilder.setForceJdkTlsProvider(jdkProvider);
     String overrideIp = configuration.get(IP_OVERRIDE_KEY);
     if (!isNullOrEmpty(overrideIp)) {
       LOG.debug("Using override IP address %s", overrideIp);

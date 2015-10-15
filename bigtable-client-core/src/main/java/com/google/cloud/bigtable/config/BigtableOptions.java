@@ -18,7 +18,10 @@ package com.google.cloud.bigtable.config;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.api.client.util.Strings;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.base.Preconditions;
+
+import io.netty.handler.ssl.SslProvider;
 
 import java.util.concurrent.TimeUnit;
 
@@ -71,6 +74,7 @@ public class BigtableOptions {
     private String callStatusReportPath;
     private String callTimingReportPath;
 
+    private boolean forceJdkTlsProvider = false;
 
     public Builder setTableAdminHost(String tableAdminHost) {
       this.tableAdminHost = tableAdminHost;
@@ -151,6 +155,15 @@ public class BigtableOptions {
       return this;
     }
 
+    /**
+     * Force the use of the slower JDK TLS provider even if the faster OPENSSL provider is
+     * configured.
+     */
+    public Builder setForceJdkTlsProvider(boolean forceJdkTlsProvider) {
+      this.forceJdkTlsProvider = forceJdkTlsProvider;
+      return this;
+    }
+
     public BigtableOptions build() {
       return new BigtableOptions(
           clusterAdminHost,
@@ -167,7 +180,8 @@ public class BigtableOptions {
           callStatusReportPath,
           retryOptions,
           timeoutMs,
-          dataChannelCount);
+          dataChannelCount,
+          forceJdkTlsProvider);
     }
   }
 
@@ -187,6 +201,7 @@ public class BigtableOptions {
   private final int timeoutMs;
   private final int channelCount;
   private final BigtableClusterName clusterName;
+  private final boolean forceJdkTlsProvider;
 
   @VisibleForTesting
   BigtableOptions() {
@@ -206,6 +221,7 @@ public class BigtableOptions {
       timeoutMs = 0;
       channelCount = 1;
       clusterName = null;
+      forceJdkTlsProvider = false;
   }
 
   private BigtableOptions(
@@ -223,7 +239,8 @@ public class BigtableOptions {
       String callStatusReportPath,
       RetryOptions retryOptions,
       int timeoutMs,
-      int channelCount) {
+      int channelCount,
+      boolean forceJdkTlsProvider) {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
     Preconditions.checkArgument(
@@ -251,6 +268,7 @@ public class BigtableOptions {
     this.retryOptions = retryOptions;
     this.timeoutMs = timeoutMs;
     this.channelCount = channelCount;
+    this.forceJdkTlsProvider = forceJdkTlsProvider;
     this.clusterName = new BigtableClusterName(getProjectId(), getZoneId(), getClusterId());
 
     LOG.debug("Connection Configuration: projectId: %s, zoneId: %s, clusterId: %s, data host %s, "
@@ -350,5 +368,13 @@ public class BigtableOptions {
 
   public BigtableClusterName getClusterName() {
     return clusterName;
+  }
+
+  /**
+   * Should the {@link BigtableSession} force the use of the JDK {@link SslProvider} provider
+   * (alpn-boot bootclasspath) for its connections?
+   */
+  public boolean isForceJdkTlsProvider() {
+    return forceJdkTlsProvider;
   }
 }

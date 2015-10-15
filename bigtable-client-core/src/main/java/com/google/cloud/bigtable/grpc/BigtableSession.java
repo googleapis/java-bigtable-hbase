@@ -56,6 +56,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -121,10 +122,22 @@ public class BigtableSession implements AutoCloseable {
     performWarmup();
   }
 
-  private synchronized static SslContext createSslContext() throws SSLException {
-    if (sslBuilder == null) {
+  private synchronized static SslContext createSslContext(boolean forceJdkProvider) throws SSLException {
+    SslContextBuilder sslBuilder = BigtableSession.sslBuilder;
+    if (forceJdkProvider) {
+      // This allows a user to use the alpn-boot dependent configuration when both both
+      // netty-tcnative and alpn-boot are present.  By default, gRPC uses netty-tcnative by default
+      // if both are present, since it's considerably more performant. This option exists primarily
+      // for testing scenarios.
+      sslBuilder = GrpcSslContexts
+          .configure(SslContextBuilder.forClient(), SslProvider.JDK)
+          .sslProvider(SslProvider.JDK)
+          .ciphers(null);
+      LOG.info("gRPC is using the JDK provider (alpn-boot jar)");
+    } else if (sslBuilder == null) {
       sslBuilder = GrpcSslContexts.forClient().ciphers(null);
-      // gRPC uses tcnative / OpenSsl by default, if it's available.  It defaults to alpn-boot
+      BigtableSession.sslBuilder = sslBuilder;
+      // gRPC uses tcnative / OpenSsl by default, if it's available. It defaults to alpn-boot
       // if tcnative is not in the classpath.
       if (OpenSsl.isAvailable()) {
         LOG.info("gRPC is using the OpenSSL provider (tcnactive jar - Open Ssl version: %s)",
@@ -170,7 +183,7 @@ public class BigtableSession implements AutoCloseable {
           try {
             // We create multiple channels via refreshing and pooling channel implementation.
             // Each one needs its own SslContext.
-            createSslContext();
+            createSslContext(false);
           } catch (SSLException e) {
             LOG.warn("Could not asynchronously create the ssl context", e);
           }
@@ -429,7 +442,7 @@ public class BigtableSession implements AutoCloseable {
         return NettyChannelBuilder
             .forAddress(host)
             .maxMessageSize(256 * 1024 * 1024) // 256 MB, server has 256 MB limit.
-            .sslContext(createSslContext())
+            .sslContext(createSslContext(options.isForceJdkTlsProvider()))
             .eventLoopGroup(elg)
             .executor(batchPool)
             .negotiationType(NegotiationType.TLS)
