@@ -32,13 +32,12 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
 
-import static com.google.cloud.bigtable.config.RetryOptions.*;
 /**
  * Test for {@link RetryingRpcFutureFallback}
  */
@@ -60,15 +59,7 @@ public class RetryingRpcFutureFallbackTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    RetryOptions retryOptions =
-        new RetryOptions(true, true, DEFAULT_INITIAL_BACKOFF_MILLIS, DEFAULT_BACKOFF_MULTIPLIER,
-            DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS, DEFAULT_STREAMING_BUFFER_SIZE,
-            DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS) {
-          @Override
-          protected ExponentialBackOff.Builder createBackoffBuilder() {
-            return super.createBackoffBuilder().setNanoClock(nanoClock);
-          }
-        };
+    RetryOptions retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
     underTest =
         RetryingRpcFutureFallback.create(retryOptions, ReadRowsRequest.getDefaultInstance(),
           readAsync);
