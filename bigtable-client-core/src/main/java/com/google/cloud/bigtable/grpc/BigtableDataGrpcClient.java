@@ -95,10 +95,17 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private RetryableRpc<SampleRowKeysRequest, List<SampleRowKeysResponse>> sampleRowKeysAsync;
   private RetryableRpc<ReadRowsRequest, List<Row>> readRowsAsync;
 
-  @VisibleForTesting
   private ClientCallService clientCallService;
 
   public BigtableDataGrpcClient(
+    Channel channel,
+    ExecutorService executorService,
+    RetryOptions retryOptions) {
+    this(channel, executorService, retryOptions, ClientCallService.DEFAULT);
+  }
+
+  @VisibleForTesting
+  BigtableDataGrpcClient(
       Channel channel,
       ExecutorService executorService,
       RetryOptions retryOptions,
