@@ -15,11 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_BACKOFF_MULTIPLIER;
-import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_INITIAL_BACKOFF_MILLIS;
-import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
-import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
-import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_STREAMING_BUFFER_SIZE;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeast;
@@ -50,12 +45,12 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.Clock;
-import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.NanoClock;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.async.Sleeper;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.HeaderCacheElement;
@@ -97,15 +92,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         return getTimeInMilliseconds() * 1000000;
       }
     });
-    retryOptions =
-        new RetryOptions(true, true, DEFAULT_INITIAL_BACKOFF_MILLIS, DEFAULT_BACKOFF_MULTIPLIER,
-            DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS, DEFAULT_STREAMING_BUFFER_SIZE,
-            DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS) {
-          @Override
-          protected ExponentialBackOff.Builder createBackoffBuilder() {
-            return super.createBackoffBuilder().setNanoClock(nanoClock);
-          }
-        };
+    retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
     setTimeInMillieconds(0L);
   }
 
