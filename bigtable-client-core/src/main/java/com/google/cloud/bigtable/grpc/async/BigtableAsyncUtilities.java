@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,6 +32,7 @@ import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.io.ClientCallService;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -66,25 +66,29 @@ public final class BigtableAsyncUtilities {
       };
 
   public static RetryableRpc<SampleRowKeysRequest, List<SampleRowKeysResponse>>
-      createSampleRowKeyAsyncReader(final Channel channel) {
+      createSampleRowKeyAsyncReader(Channel channel, ClientCallService clientCallService) {
     return createStreamingAsync(channel, BigtableServiceGrpc.METHOD_SAMPLE_ROW_KEYS,
-      IMMUTABLE_LIST_TRANSFORMER);
+      IMMUTABLE_LIST_TRANSFORMER, clientCallService);
   }
 
-  public static RetryableRpc<ReadRowsRequest, List<Row>> createRowKeyAysncReader(
-      final Channel channel) {
-    return createStreamingAsync(channel, BigtableServiceGrpc.METHOD_READ_ROWS, ROW_TRANSFORMER);
+  public static RetryableRpc<ReadRowsRequest, List<Row>> createRowKeyAysncReader(Channel channel,
+      ClientCallService clientCallService) {
+    return createStreamingAsync(channel, BigtableServiceGrpc.METHOD_READ_ROWS, ROW_TRANSFORMER,
+      clientCallService);
   }
 
   private static <RequestT, ResponseT, OutputT> RetryableRpc<RequestT, List<OutputT>>
-      createStreamingAsync(final Channel channel, final MethodDescriptor<RequestT, ResponseT> method,
-          final Function<List<ResponseT>, List<OutputT>> function) {
+      createStreamingAsync(
+          final Channel channel,
+          final MethodDescriptor<RequestT, ResponseT> method,
+          final Function<List<ResponseT>, List<OutputT>> function,
+          final ClientCallService clientCallService) {
     return new RetryableRpc<RequestT, List<OutputT>>() {
       @Override
       public ListenableFuture<List<OutputT>> call(RequestT request) {
         ClientCall<RequestT, ResponseT> readRowsCall = channel.newCall(method, CallOptions.DEFAULT);
         CollectingStreamObserver<ResponseT> responseCollector = new CollectingStreamObserver<>();
-        ClientCalls.asyncServerStreamingCall(readRowsCall, request, responseCollector);
+        clientCallService.asyncServerStreamingCall(readRowsCall, request, responseCollector);
         return Futures.transform(responseCollector.getResponseCompleteFuture(), function);
       }
     };
@@ -110,14 +114,6 @@ public final class BigtableAsyncUtilities {
           executorService);
     }
     return listenableFuture;
-  }
-
-  public static <T, V> ListenableFuture<V> listenableAsyncCall(Channel channel,
-      MethodDescriptor<T, V> method, T request) {
-    ClientCall<T, V> call = channel.newCall(method, CallOptions.DEFAULT);
-    AsyncUnaryOperationObserver<V> observer = new AsyncUnaryOperationObserver<>();
-    ClientCalls.asyncUnaryCall(call, request, observer);
-    return observer.getCompletionFuture();
   }
 
   private BigtableAsyncUtilities(){
