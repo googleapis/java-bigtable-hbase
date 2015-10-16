@@ -76,7 +76,6 @@ limitations under the License.
         <google.bigtable.endpoint.host>bigtable.googleapis.com</google.bigtable.endpoint.host>
         <google.bigtable.admin.endpoint.host>bigtabletableadmin.googleapis.com</google.bigtable.admin.endpoint.host>
         <google.bigtable.cluster.admin.endpoint.host>bigtableclusteradmin.googleapis.com</google.bigtable.cluster.admin.endpoint.host>
-        <google.bigtable.call.report.directory>target/call_reports</google.bigtable.call.report.directory>
         <!-- This is false for unit tests, and overriden to be true in
              bigtable-hbase-integration-tests/pom.xml -->
         <google.bigtable.auth.service.account.enable>false</google.bigtable.auth.service.account.enable>

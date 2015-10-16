@@ -26,16 +26,13 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.io.CallCompletionStatusInterceptor;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.ReconnectingChannel;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor;
 import com.google.cloud.bigtable.grpc.io.UnaryCallRetryInterceptor;
 import com.google.cloud.bigtable.grpc.io.UserAgentInterceptor;
 import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Multiset;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -57,11 +54,8 @@ import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 
-import java.io.BufferedWriter;
 import java.io.Closeable;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -96,11 +90,6 @@ import javax.net.ssl.SSLException;
 public class BigtableSession implements AutoCloseable {
 
   public static final String BATCH_POOL_THREAD_NAME = "bigtable-batch-pool";
-
-  /** Entry in call reports that indicates an entry is from before retries */
-  private static final String PRE_RETRY_REPORT_ENTRY = "PreRetry";
-  /** Entry in call reports that indicates an entry is from after retries */
-  private static final String POST_RETRY_REPORT_ENTRY = "PostRetry";
   public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
   /** Number of threads to use to initiate retry calls */
   public static final int RETRY_THREAD_COUNT = 4;
@@ -503,12 +492,6 @@ public class BigtableSession implements AutoCloseable {
       interceptors.add(clientAuthInterceptor);
     }
 
-    CallCompletionStatusInterceptor preRetryCallStatusInterceptor = null;
-    if (!Strings.isNullOrEmpty(options.getCallStatusReportPath())) {
-      preRetryCallStatusInterceptor = new CallCompletionStatusInterceptor();
-      interceptors.add(preRetryCallStatusInterceptor);
-    }
-
     interceptors.add(new UserAgentInterceptor(options.getUserAgent()));
 
     if (!interceptors.isEmpty()) {
@@ -523,18 +506,6 @@ public class BigtableSession implements AutoCloseable {
           scheduledRetries,
           METHODS_TO_RETRY_MAP,
           unaryCallRetryOptions);
-    }
-
-    if (!Strings.isNullOrEmpty(options.getCallStatusReportPath())) {
-      CallCompletionStatusInterceptor postRetryCallStatusInterceptor =
-          new CallCompletionStatusInterceptor();
-
-      registerCallStatusReportingShutdownHook(
-          options.getCallStatusReportPath(),
-          preRetryCallStatusInterceptor,
-          postRetryCallStatusInterceptor);
-
-      channel = ClientInterceptors.intercept(channel, postRetryCallStatusInterceptor);
     }
 
     return channel;
@@ -585,45 +556,6 @@ public class BigtableSession implements AutoCloseable {
         .put(BigtableServiceGrpc.METHOD_MUTATE_ROW, retryMutationsWithTimestamps)
         .put(BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW, retryCheckAndMutateWithTimestamps)
         .build();
-  }
-
-  /**
-   * Write out CallCompletionStatus entries to a PrintWriter.
-   */
-  protected static void writeCallStatusesTo(
-      PrintWriter writer, String linePrefix, CallCompletionStatusInterceptor interceptor) {
-    for (Multiset.Entry<CallCompletionStatusInterceptor.CallCompletionStatus> entry :
-        interceptor.getCallCompletionStatuses().entrySet()) {
-      writer.println(String.format(
-          "%s,%s,%s,%s",
-          linePrefix,
-          entry.getElement().getMethod().getFullMethodName(),
-          entry.getElement().getCallStatus().getCode(),
-          entry.getCount()));
-    }
-  }
-
-  /**
-   * Register a shutdown hook that writes out call reports on JVM shutdown.
-   */
-  private static void registerCallStatusReportingShutdownHook(
-      final String reportPath,
-      final CallCompletionStatusInterceptor preRetryCallStatusInterceptor,
-      final CallCompletionStatusInterceptor postRetryCallStatusInterceptor) {
-
-    Thread reportingThread = new Thread() {
-      @Override
-      public void run() {
-        try (PrintWriter out =
-            new PrintWriter(new BufferedWriter(new FileWriter(reportPath, true)))) {
-          writeCallStatusesTo(out, PRE_RETRY_REPORT_ENTRY, preRetryCallStatusInterceptor);
-          writeCallStatusesTo(out, POST_RETRY_REPORT_ENTRY, postRetryCallStatusInterceptor);
-        } catch (IOException e) {
-          System.err.println(String.format("Error writing retry report %s", e));
-        }
-      }};
-
-    Runtime.getRuntime().addShutdownHook(reportingThread);
   }
 }
 

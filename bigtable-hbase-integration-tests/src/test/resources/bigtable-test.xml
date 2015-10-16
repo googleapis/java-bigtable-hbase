@@ -58,10 +58,6 @@ limitations under the License.
         <value>true</value>
     </property>
     <property>
-        <name>google.bigtable.call.report.directory</name>
-        <value>${google.bigtable.call.report.directory}</value>
-    </property>
-    <property>
         <name>google.bigtable.auth.service.account.email</name>
         <value>${google.bigtable.auth.service.account.email}</value>
     </property>
