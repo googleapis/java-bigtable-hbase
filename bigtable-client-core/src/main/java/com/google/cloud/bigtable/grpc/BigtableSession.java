@@ -28,6 +28,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.CallCompletionStatusInterceptor;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
+import com.google.cloud.bigtable.grpc.io.ClientCallService;
 import com.google.cloud.bigtable.grpc.io.ReconnectingChannel;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor;
 import com.google.cloud.bigtable.grpc.io.UnaryCallRetryInterceptor;
@@ -355,7 +356,7 @@ public class BigtableSession implements AutoCloseable {
   private BigtableDataClient initializeDataClient() throws IOException {
     Channel channel = createChannel(options.getDataHost(), options.getChannelCount());
     RetryOptions retryOptions = options.getRetryOptions();
-    return new BigtableDataGrpcClient(channel, batchPool, retryOptions);
+    return new BigtableDataGrpcClient(channel, batchPool, retryOptions, ClientCallService.DEFAULT);
   }
 
   private BigtableTableAdminClient initializeAdminClient() throws IOException {
