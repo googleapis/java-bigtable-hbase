@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import com.google.api.client.util.BackOff;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -43,7 +44,8 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
   private final Channel channel;
   private final MethodDescriptor<RequestT, ResponseT> method;
   private final CallOptions callOptions;
-  private final BackOff backOff;
+  private final RetryOptions retryOptions;
+  private BackOff backOff;
   private final Predicate<RequestT> payloadIsRetriablePredicate;
   private final ScheduledExecutorService scheduledExecutorService;
 
@@ -59,13 +61,13 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
       CallOptions callOptions,
       Predicate<RequestT> payloadIsRetriablePredicate,
       ScheduledExecutorService scheduledExecutorService,
-      BackOff backOff) {
+      RetryOptions retryOptions) {
     this.channel = channel;
     this.method = method;
     this.callOptions = callOptions;
     this.payloadIsRetriablePredicate = payloadIsRetriablePredicate;
     this.scheduledExecutorService = scheduledExecutorService;
-    this.backOff = backOff;
+    this.retryOptions = retryOptions;
   }
 
   @Override
@@ -139,11 +141,14 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
 
   // Always called from the listener.
   @VisibleForTesting
-  boolean retryCallAfterBackoff(
+  synchronized boolean retryCallAfterBackoff(
       final RequestT payload,
       final Metadata requestHeaders,
       final Listener<ResponseT> listener) {
     long sleepTimeout = BackOff.STOP;
+    if (backOff == null) {
+      backOff = retryOptions.createBackoff();
+    }
     try {
       sleepTimeout = backOff.nextBackOffMillis();
     } catch (IOException e) {

@@ -38,8 +38,8 @@ public interface ClientCallService {
 
   <ReqT, RespT> RespT blockingUnaryCall(ClientCall<ReqT, RespT> call, ReqT request);
 
-  <ReqT, RespT> ListenableFuture<RespT> listenableAsyncCall(ReqT request,
-      ClientCall<ReqT, RespT> call);
+  <ReqT, RespT> ListenableFuture<RespT> listenableAsyncCall(ClientCall<ReqT, RespT> call,
+      ReqT request);
 
   ClientCallService DEFAULT = new ClientCallService() {
 
@@ -61,8 +61,8 @@ public interface ClientCallService {
     }
 
     @Override
-    public <ReqT, RespT> ListenableFuture<RespT> listenableAsyncCall(ReqT request,
-        ClientCall<ReqT, RespT> call) {
+    public <ReqT, RespT> ListenableFuture<RespT> listenableAsyncCall(ClientCall<ReqT, RespT> call,
+        ReqT request) {
       AsyncUnaryOperationObserver<RespT> observer = new AsyncUnaryOperationObserver<>();
       ClientCalls.asyncUnaryCall(call, request, observer);
       return observer.getCompletionFuture();

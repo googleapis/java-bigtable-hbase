@@ -59,7 +59,7 @@ public class UnaryCallRetryInterceptor extends Channel {
           callOptions,
           isPayloadRetriablePredicate,
           executorService,
-          retryOptions.createBackoff());
+          retryOptions);
     }
     return delegate.newCall(methodDescriptor, callOptions);
   }

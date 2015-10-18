@@ -519,15 +519,8 @@ public class BigtableSession implements AutoCloseable {
     Predicate<MutateRowRequest> retryMutationsWithTimestamps = new Predicate<MutateRowRequest>() {
       @Override
       public boolean apply(@Nullable MutateRowRequest mutateRowRequest) {
-        if (mutateRowRequest == null) {
-          return false;
-        }
-        for (Mutation mut : mutateRowRequest.getMutationsList()) {
-          if (mut.getSetCell().getTimestampMicros() == -1) {
-            return false;
-          }
-        }
-        return true;
+        return mutateRowRequest != null
+            && allCellsHaveTimestamps(mutateRowRequest.getMutationsList());
       }
     };
 
@@ -535,20 +528,9 @@ public class BigtableSession implements AutoCloseable {
         new Predicate<CheckAndMutateRowRequest>() {
           @Override
           public boolean apply(@Nullable CheckAndMutateRowRequest checkAndMutateRowRequest) {
-            if (checkAndMutateRowRequest == null) {
-              return false;
-            }
-            for (Mutation mut : checkAndMutateRowRequest.getTrueMutationsList()) {
-              if (mut.getSetCell().getTimestampMicros() == -1) {
-                return false;
-              }
-            }
-            for (Mutation mut : checkAndMutateRowRequest.getFalseMutationsList()) {
-              if (mut.getSetCell().getTimestampMicros() == -1) {
-                return false;
-              }
-            }
-            return true;
+            return checkAndMutateRowRequest != null
+                && allCellsHaveTimestamps(checkAndMutateRowRequest.getTrueMutationsList())
+                && allCellsHaveTimestamps(checkAndMutateRowRequest.getFalseMutationsList());
           }
         };
 
@@ -556,6 +538,15 @@ public class BigtableSession implements AutoCloseable {
         .put(BigtableServiceGrpc.METHOD_MUTATE_ROW, retryMutationsWithTimestamps)
         .put(BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW, retryCheckAndMutateWithTimestamps)
         .build();
+  }
+
+  private static final boolean allCellsHaveTimestamps(Iterable<Mutation> mutations) {
+    for (Mutation mut : mutations) {
+      if (mut.getSetCell().getTimestampMicros() == -1) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 
