@@ -17,18 +17,13 @@ package com.google.cloud.bigtable.grpc.io;
 
 import com.google.common.net.HttpHeaders;
 
-import io.grpc.CallOptions;
-import io.grpc.ClientCall;
-import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 
 /**
  * An {@link ClientInterceptor} that updates "User-Agent" header.
  */
-public class UserAgentInterceptor implements ClientInterceptor {
+public class UserAgentInterceptor implements HeaderInterceptor {
 
   private final static Metadata.Key<String> USER_AGENT_KEY =
       Metadata.Key.of(HttpHeaders.USER_AGENT, Metadata.ASCII_STRING_MARSHALLER);
@@ -40,20 +35,13 @@ public class UserAgentInterceptor implements ClientInterceptor {
   }
 
   @Override
-  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-      MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-    return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
-      @Override
-      public void start(Listener<RespT> responseListener, Metadata headers) {
-        String userAgents = headers.get(USER_AGENT_KEY);
-        if (userAgents == null) {
-          userAgents = userAgent;
-        } else {
-          userAgents += " " + userAgent;
-        }
-        headers.put(USER_AGENT_KEY, userAgents);
-        super.start(responseListener, headers);
-      }
-    };
+  public void updateHeaders(Metadata headers) throws Exception {
+    String userAgents = headers.get(USER_AGENT_KEY);
+    if (userAgents == null) {
+      userAgents = userAgent;
+    } else {
+      userAgents += " " + userAgent;
+    }
+    headers.put(USER_AGENT_KEY, userAgents);
   }
 }

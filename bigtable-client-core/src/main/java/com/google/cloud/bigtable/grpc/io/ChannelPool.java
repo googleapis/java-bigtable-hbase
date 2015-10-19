@@ -18,8 +18,11 @@ package com.google.cloud.bigtable.grpc.io;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -32,9 +35,11 @@ public class ChannelPool extends Channel {
 
   private final Channel[] channels;
   private final AtomicInteger requestCount = new AtomicInteger();
+  private final List<HeaderInterceptor> headerInterceptors;
 
-  public ChannelPool(Channel[] channels) {
+  public ChannelPool(Channel[] channels, List<HeaderInterceptor> headerInterceptors) {
     this.channels = channels;
+    this.headerInterceptors = headerInterceptors;
   }
 
   @Override
@@ -42,7 +47,19 @@ public class ChannelPool extends Channel {
       MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
     int currentRequestNum = requestCount.getAndIncrement();
     int index = Math.abs(currentRequestNum % channels.length);
-    return channels[index].newCall(methodDescriptor, callOptions);
+    ClientCall<RequestT, ResponseT> delegate =
+        channels[index].newCall(methodDescriptor, callOptions);
+    return new CheckedForwardingClientCall<RequestT, ResponseT>(delegate) {
+      @Override
+      protected void
+          checkedStart(ClientCall.Listener<ResponseT> responseListener, Metadata headers)
+              throws Exception {
+        for (HeaderInterceptor interceptor : headerInterceptors) {
+          interceptor.updateHeaders(headers);
+        }
+        delegate().start(responseListener, headers);
+      }
+    };
   }
 
   @Override
