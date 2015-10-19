@@ -19,7 +19,6 @@ import com.google.api.client.util.BackOff;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -39,14 +38,13 @@ import java.util.concurrent.TimeUnit;
  * @param <RequestT> The type of the request message
  * @param <ResponseT> The type of the response message
  */
-class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> {
+public class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> {
 
   private final Channel channel;
   private final MethodDescriptor<RequestT, ResponseT> method;
   private final CallOptions callOptions;
   private final RetryOptions retryOptions;
   private BackOff backOff;
-  private final Predicate<RequestT> payloadIsRetriablePredicate;
   private final ScheduledExecutorService scheduledExecutorService;
 
   private Listener<ResponseT> listener;
@@ -59,13 +57,11 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
       Channel channel,
       MethodDescriptor<RequestT, ResponseT> method,
       CallOptions callOptions,
-      Predicate<RequestT> payloadIsRetriablePredicate,
       ScheduledExecutorService scheduledExecutorService,
       RetryOptions retryOptions) {
     this.channel = channel;
     this.method = method;
     this.callOptions = callOptions;
-    this.payloadIsRetriablePredicate = payloadIsRetriablePredicate;
     this.scheduledExecutorService = scheduledExecutorService;
     this.retryOptions = retryOptions;
   }
@@ -75,7 +71,8 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
     Preconditions.checkState(
         this.listener == null,
         "start should not be invoked more than once for unary calls.");
-    this.listener = listener;
+    this.listener = new RetryListener<>(this, message, headers, payloadIsRetriable,
+        listener);
     this.headers = headers;
   }
 
@@ -84,7 +81,7 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
     // Ignoring flow control since this is a unary call. This is not exactly
     // compliant with the Reactive-Streams-style flow control API in that
     // we'll still deliver the message even if it wasn't requested, but this
-    // isn't a concern for cloud bigtable.
+    // isn't a concern for Cloud Bigtable.
   }
 
   @Override
@@ -98,26 +95,11 @@ class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> 
     Preconditions.checkState(this.message == null,
       "sendPayload should not be invoked more than once for unary calls.");
     this.message = message;
-    this.payloadIsRetriable = payloadIsRetriablePredicate.apply(message);
   }
 
   @Override
   public void halfClose() {
-    runCall();
-  }
-
-  private void runCall() {
-    if (payloadIsRetriable) {
-      retryCall(
-          message,
-          headers,
-          new RetryListener<>(this, message, headers, payloadIsRetriable, listener));
-    } else {
-      retryCall(
-          message,
-          headers,
-          listener);
-    }
+    retryCall(message, headers, listener);
   }
 
   // retryCall can be invoked from any thread.

@@ -15,14 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.MutationCase;
 import com.google.bigtable.v1.Mutation.SetCell;
-import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.common.base.Predicate;
 
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Assert;
@@ -179,7 +177,6 @@ public class TestPutAdapter {
     adapter.adapt(emptyPut);
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Test
   public void testRetry(){
     byte[] row = dataHelper.randomData("rk-");
@@ -191,10 +188,8 @@ public class TestPutAdapter {
     hbasePut.addColumn(family1, qualifier1, value1);
     MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     MutateRowRequest request = rowMutationBuilder.build();
-    Predicate predicate =
-        BigtableSession.METHODS_TO_RETRY_MAP.get(BigtableServiceGrpc.METHOD_MUTATE_ROW);
 
     // Is the Put retryable?
-    Assert.assertTrue(predicate.apply(request));
+    Assert.assertTrue(BigtableDataGrpcClient.IS_RETRYABLE_MUTATION.apply(request));
   }
 }

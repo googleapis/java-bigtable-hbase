@@ -18,10 +18,6 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
-import com.google.bigtable.v1.BigtableServiceGrpc;
-import com.google.bigtable.v1.CheckAndMutateRowRequest;
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.Mutation;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
@@ -29,10 +25,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.ReconnectingChannel;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor;
-import com.google.cloud.bigtable.grpc.io.UnaryCallRetryInterceptor;
 import com.google.cloud.bigtable.grpc.io.UserAgentInterceptor;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -42,7 +35,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
-import io.grpc.MethodDescriptor;
 import io.grpc.auth.ClientAuthInterceptor;
 import io.grpc.internal.ManagedChannelImpl;
 import io.grpc.netty.GrpcSslContexts;
@@ -64,7 +56,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -94,8 +85,6 @@ public class BigtableSession implements AutoCloseable {
   /** Number of threads to use to initiate retry calls */
   public static final int RETRY_THREAD_COUNT = 4;
   public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
-  public static final Map<MethodDescriptor<?, ?>, Predicate<?>> METHODS_TO_RETRY_MAP =
-      createMethodRetryMap();
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
 
@@ -344,7 +333,7 @@ public class BigtableSession implements AutoCloseable {
   private BigtableDataClient initializeDataClient() throws IOException {
     Channel channel = createChannel(options.getDataHost(), options.getChannelCount());
     RetryOptions retryOptions = options.getRetryOptions();
-    return new BigtableDataGrpcClient(channel, batchPool, retryOptions);
+    return new BigtableDataGrpcClient(channel, batchPool, scheduledRetries, retryOptions);
   }
 
   private BigtableTableAdminClient initializeAdminClient() throws IOException {
@@ -499,54 +488,7 @@ public class BigtableSession implements AutoCloseable {
       interceptors.clear();
     }
 
-    if (options.getRetryOptions().enableRetries()) {
-      RetryOptions unaryCallRetryOptions = options.getRetryOptions();
-      channel = new UnaryCallRetryInterceptor(
-          channel,
-          scheduledRetries,
-          METHODS_TO_RETRY_MAP,
-          unaryCallRetryOptions);
-    }
-
     return channel;
-  }
-
-  /**
-   * Create a Map of MethodDescriptor instances to predicates that will be used to
-   * specify which method calls should be retried and which should not.
-   */
-  private static Map<MethodDescriptor<?, ?>, Predicate<?>> createMethodRetryMap() {
-    Predicate<MutateRowRequest> retryMutationsWithTimestamps = new Predicate<MutateRowRequest>() {
-      @Override
-      public boolean apply(@Nullable MutateRowRequest mutateRowRequest) {
-        return mutateRowRequest != null
-            && allCellsHaveTimestamps(mutateRowRequest.getMutationsList());
-      }
-    };
-
-    Predicate<CheckAndMutateRowRequest> retryCheckAndMutateWithTimestamps =
-        new Predicate<CheckAndMutateRowRequest>() {
-          @Override
-          public boolean apply(@Nullable CheckAndMutateRowRequest checkAndMutateRowRequest) {
-            return checkAndMutateRowRequest != null
-                && allCellsHaveTimestamps(checkAndMutateRowRequest.getTrueMutationsList())
-                && allCellsHaveTimestamps(checkAndMutateRowRequest.getFalseMutationsList());
-          }
-        };
-
-    return ImmutableMap.<MethodDescriptor<?, ?>, Predicate<?>>builder()
-        .put(BigtableServiceGrpc.METHOD_MUTATE_ROW, retryMutationsWithTimestamps)
-        .put(BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW, retryCheckAndMutateWithTimestamps)
-        .build();
-  }
-
-  private static final boolean allCellsHaveTimestamps(Iterable<Mutation> mutations) {
-    for (Mutation mut : mutations) {
-      if (mut.getSetCell().getTimestampMicros() == -1) {
-        return false;
-      }
-    }
-    return true;
   }
 }
 
