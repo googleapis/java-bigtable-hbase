@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.hadoop.conf.Configuration;
 
 import com.google.common.base.Preconditions;
@@ -104,10 +104,6 @@ public class CloudBigtableConfiguration implements Serializable {
      */
     public CloudBigtableConfiguration build() {
       return new CloudBigtableConfiguration(projectId, zoneId, clusterId, additionalConfiguration);
-    }
-
-    public boolean equals(Object obj) {
-      return EqualsBuilder.reflectionEquals(this, obj);
     }
 }
 
@@ -203,6 +199,10 @@ public class CloudBigtableConfiguration implements Serializable {
   }
 
   public boolean equals(Object obj) {
-    return EqualsBuilder.reflectionEquals(this, obj);
+    if (obj == null || obj.getClass() != this.getClass()) {
+      return false;
+    }
+    CloudBigtableConfiguration other = (CloudBigtableConfiguration) obj;
+    return Objects.equals(configuration, other.configuration);
   }
 }
