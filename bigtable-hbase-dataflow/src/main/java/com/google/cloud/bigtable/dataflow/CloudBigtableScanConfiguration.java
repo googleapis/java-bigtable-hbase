@@ -28,6 +28,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This class defines information that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -227,6 +228,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    */
   public Scan getScan() {
     return serializableScan.scan;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return super.equals(obj)
+        && Objects
+            .equals(serializableScan, ((CloudBigtableScanConfiguration) obj).serializableScan);
   }
 
   @Override

@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.dataflow;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This class defines information that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -145,5 +146,10 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   public Builder toBuilder() {
     return new Builder(getConfiguration())
         .withTableId(tableId);
+  }
+
+  public boolean equals(Object obj) {
+    return super.equals(obj)
+        && Objects.equals(tableId, ((CloudBigtableTableConfiguration) obj).tableId);
   }
 }
