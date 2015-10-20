@@ -15,13 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -52,7 +46,7 @@ import com.google.common.annotations.VisibleForTesting;
  * next refresh time. The refresh is scheduled asynchronously.
  * </p>
  */
-public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor {
+public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor {
 
   /**
    * <p>
@@ -159,19 +153,10 @@ public class RefreshingOAuth2CredentialsInterceptor implements ClientInterceptor
     this.logger = Preconditions.checkNotNull(logger);
   }
 
+
   @Override
-  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-      CallOptions callOptions, Channel next) {
-    // TODO(sduskis): If the call fails for Auth reasons, this does not properly propagate info that
-    // would be in WWW-Authenticate, because it does not yet have access to the header.
-    return new CheckedForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
-      @Override
-      protected void checkedStart(Listener<RespT> responseListener, Metadata headers)
-          throws Exception {
-        headers.put(AUTHORIZATION_HEADER_KEY, getHeader());
-        delegate().start(responseListener, headers);
-      }
-    };
+  public void updateHeaders(Metadata headers) throws Exception {
+    headers.put(AUTHORIZATION_HEADER_KEY, getHeader());
   }
 
   public void asyncRefresh() {

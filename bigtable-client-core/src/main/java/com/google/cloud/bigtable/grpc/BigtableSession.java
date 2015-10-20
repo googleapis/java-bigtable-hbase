@@ -16,26 +16,7 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import com.google.auth.Credentials;
-import com.google.auth.oauth2.OAuth2Credentials;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.CredentialFactory;
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.io.ChannelPool;
-import com.google.cloud.bigtable.grpc.io.ReconnectingChannel;
-import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor;
-import com.google.cloud.bigtable.grpc.io.UserAgentInterceptor;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import io.grpc.Channel;
-import io.grpc.ClientInterceptor;
-import io.grpc.ClientInterceptors;
-import io.grpc.auth.ClientAuthInterceptor;
 import io.grpc.internal.ManagedChannelImpl;
 import io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.NegotiationType;
@@ -66,6 +47,26 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
+
+import com.google.common.base.Preconditions;
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.OAuth2Credentials;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.CredentialFactory;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.io.ChannelPool;
+import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
+import com.google.cloud.bigtable.grpc.io.ReconnectingChannel;
+import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor;
+import com.google.cloud.bigtable.grpc.io.UserAgentInterceptor;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -222,7 +223,7 @@ public class BigtableSession implements AutoCloseable {
   private final ScheduledExecutorService scheduledRetries;
   private final List<Closeable> clientCloseHandlers = Collections
       .synchronizedList(new ArrayList<Closeable>());
-  private ClientInterceptor clientAuthInterceptor;
+  private final ImmutableList<HeaderInterceptor> headerInterceptors;
 
   public BigtableSession(BigtableOptions options) throws IOException {
     this (options, null, null, null);
@@ -235,13 +236,11 @@ public class BigtableSession implements AutoCloseable {
   public BigtableSession(BigtableOptions options, @Nullable ExecutorService batchPool,
       @Nullable EventLoopGroup elg, @Nullable ScheduledExecutorService scheduledRetries)
       throws IOException {
+    LOG.info("Opening connection for projectId %s, zoneId %s, clusterId %s, " +
+        "on data host %s, table admin host %s.",
+        options.getProjectId(), options.getZoneId(), options.getClusterId(),
+        options.getDataHost(), options.getTableAdminHost());
     if(!isAlpnProviderEnabled()) {
-      // TODO: REMOVE THE EXCEPTION LOGGING BEFORE RELEASING.  THIS IS FOR DIAGNOSING A DEV ISSUE.
-      LOG.warn(
-        "Could not load the OpenSSL provider.  OpenSsl.isAvailable(): %s.  OpenSsl.isAlpnSupported(): %s.  Version: %s",
-        OpenSsl.unavailabilityCause(), OpenSsl.isAvailable(), OpenSsl.isAlpnSupported(),
-        OpenSsl.version());
-
       throw new IllegalStateException("Jetty ALPN has not been properly configured.");
     }
     if (batchPool == null) {
@@ -263,22 +262,32 @@ public class BigtableSession implements AutoCloseable {
       }
     });
     this.elg = (elg == null) ? createDefaultEventLoopGroup() : elg;
-    LOG.info("Opening connection for projectId %s, zoneId %s, clusterId %s, " +
-        "on data host %s, table admin host %s.",
-        options.getProjectId(), options.getZoneId(), options.getClusterId(),
-        options.getDataHost(), options.getTableAdminHost());
 
     this.scheduledRetries =
         (scheduledRetries == null) ? createDefaultRetryExecutor() : scheduledRetries;
 
-    Future<Void> credentialRefreshingFuture = initializeCredentials(credentialsFuture);
+    Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
+    headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
+    Credentials credentials = get(credentialsFuture, "Could not initialize credentials");
+    if (credentials != null) {
+      Preconditions.checkState(credentials instanceof OAuth2Credentials, String.format(
+        "Credentials must be an instance of OAuth2Credentials, but got %s.", credentials.getClass()
+            .getName()));
+      RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
+          new RefreshingOAuth2CredentialsInterceptor(batchPool, (OAuth2Credentials) credentials,
+              this.options.getRetryOptions());
+      oauth2Interceptor.asyncRefresh();
+      headerInterceptorBuilder.add(oauth2Interceptor);
+    }
+    headerInterceptors = headerInterceptorBuilder.build();
 
-    Future<BigtableDataClient> dataClientFuture = this.batchPool.submit(new Callable<BigtableDataClient>() {
-      @Override
-      public BigtableDataClient call() throws Exception {
-        return initializeDataClient();
-      }
-    });
+    Future<BigtableDataClient> dataClientFuture =
+        this.batchPool.submit(new Callable<BigtableDataClient>() {
+          @Override
+          public BigtableDataClient call() throws Exception {
+            return initializeDataClient();
+          }
+        });
 
     Future<BigtableTableAdminClient> tableAdminFuture =
         this.batchPool.submit(new Callable<BigtableTableAdminClient>() {
@@ -288,46 +297,9 @@ public class BigtableSession implements AutoCloseable {
           }
         });
 
-    if (credentialRefreshingFuture != null) {
-      get(credentialRefreshingFuture, "Could not initialize credentials");
-    }
-
     this.dataClient = get(dataClientFuture, "Could not initialize the data API client");
     this.tableAdminClient = get(tableAdminFuture, "Could not initialize the table Admin client");
     awaiteTerminated(connectionStartupExecutor);
-  }
-
-  private Future<Void> initializeCredentials(Future<Credentials> credentialsFuture)
-      throws IOException {
-    final Credentials credentials = get(credentialsFuture, "Could not initialize credentials");
-    Future<Void> credentialRefreshFuture = null;
-    if (credentials != null) {
-      if (credentials instanceof OAuth2Credentials) {
-        final RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
-            new RefreshingOAuth2CredentialsInterceptor(batchPool, (OAuth2Credentials) credentials,
-                this.options.getRetryOptions());
-        credentialRefreshFuture = batchPool.submit(new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            oauth2Interceptor.syncRefresh();
-            return null;
-          }
-        });
-        this.clientAuthInterceptor = oauth2Interceptor;
-      } else {
-        this.clientAuthInterceptor = new ClientAuthInterceptor(credentials, batchPool);
-        credentialRefreshFuture = batchPool.submit(new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            credentials.refresh();
-            return null;
-          }
-        });
-      }
-    } else {
-      this.clientAuthInterceptor = null;
-    }
-    return credentialRefreshFuture;
   }
 
   private BigtableDataClient initializeDataClient() throws IOException {
@@ -374,11 +346,10 @@ public class BigtableSession implements AutoCloseable {
 
   /**
    * <p>
-   * Create a new Channel, optionally adding ChannelInterceptors - auth headers, performance
-   * interceptors, and user agent.
+   * Create a new Channel, with auth headers and user agent interceptors.
    * </p>
    */
-  protected Channel createChannel(String hostString, int channelCount) throws IOException {
+  protected ChannelPool createChannel(String hostString, int channelCount) throws IOException {
     final InetSocketAddress host = new InetSocketAddress(getHost(hostString), options.getPort());
     final Channel channels[] = new Channel[channelCount];
     for (int i = 0; i < channelCount; i++) {
@@ -386,7 +357,7 @@ public class BigtableSession implements AutoCloseable {
       clientCloseHandlers.add(reconnectingChannel);
       channels[i] = reconnectingChannel;
     }
-    return wrapChannel(new ChannelPool(channels));
+    return new ChannelPool(channels, headerInterceptors);
   }
 
   private InetAddress getHost(String hostName) throws IOException {
@@ -473,22 +444,6 @@ public class BigtableSession implements AutoCloseable {
     while (!executorService.isTerminated()) {
       MoreExecutors.shutdownAndAwaitTermination(executorService, 5, TimeUnit.SECONDS);
     }
-  }
-
-  private Channel wrapChannel(Channel channel) {
-    List<ClientInterceptor> interceptors = new ArrayList<>();
-    if (clientAuthInterceptor != null) {
-      interceptors.add(clientAuthInterceptor);
-    }
-
-    interceptors.add(new UserAgentInterceptor(options.getUserAgent()));
-
-    if (!interceptors.isEmpty()) {
-      channel = ClientInterceptors.intercept(channel, interceptors);
-      interceptors.clear();
-    }
-
-    return channel;
   }
 }
 
