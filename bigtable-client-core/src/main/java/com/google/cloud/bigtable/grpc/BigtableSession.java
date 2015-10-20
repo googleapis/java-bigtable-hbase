@@ -274,8 +274,8 @@ public class BigtableSession implements AutoCloseable {
         "Credentials must be an instance of OAuth2Credentials, but got %s.", credentials.getClass()
             .getName()));
       RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
-          new RefreshingOAuth2CredentialsInterceptor(batchPool, (OAuth2Credentials) credentials,
-              this.options.getRetryOptions());
+          new RefreshingOAuth2CredentialsInterceptor(this.batchPool,
+              (OAuth2Credentials) credentials, this.options.getRetryOptions());
       oauth2Interceptor.asyncRefresh();
       headerInterceptorBuilder.add(oauth2Interceptor);
     }
