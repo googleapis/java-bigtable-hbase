@@ -91,6 +91,8 @@ public class FilterAdapter {
         PageFilter.class, new PageFilterAdapter());
     adapter.addFilterAdapter(
       WhileMatchFilter.class, new WhileMatchFilterAdapter(adapter));
+    adapter.addFilterAdapter(
+        org.apache.hadoop.hbase.filter.RowFilter.class, new RowFilterAdapter());
 
     // Passing the FilterAdapter in to the FilterListAdapter is a bit
     // unfortunate, but makes adapting the FilterList's subfilters simpler.
