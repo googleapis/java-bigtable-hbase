@@ -22,7 +22,6 @@ import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import io.grpc.CallOptions;
-import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
 
@@ -42,6 +41,7 @@ import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.SetCell;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
+import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.ClientCallService;
 import com.google.cloud.bigtable.grpc.io.RetryingCall;
 import com.google.common.base.Predicate;
@@ -52,7 +52,7 @@ import com.google.protobuf.ServiceException;
 public class BigtableDataGrpcClientTests {
 
   @Mock
-  Channel channel;
+  ChannelPool channel;
 
   @SuppressWarnings("rawtypes")
   @Mock
