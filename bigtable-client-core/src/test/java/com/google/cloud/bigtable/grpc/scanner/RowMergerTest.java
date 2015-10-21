@@ -19,15 +19,13 @@ import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.createCont
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.createReadRowsResponse;
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.generateReadRowsResponses;
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.randomBytes;
+import static com.google.cloud.bigtable.grpc.scanner.RowMatcher.matchesRow;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,16 +33,12 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.v1.Column;
-import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.ReadRowsResponse.Chunk;
 import com.google.bigtable.v1.Row;
-import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
 public class RowMergerTest {
-
 
   private static final Chunk RESET_CHUNK = Chunk.newBuilder().setResetRow(true).build();
   private static final Chunk COMPLETE_CHUNK = Chunk.newBuilder().setCommitRow(true).build();
@@ -72,135 +66,132 @@ public class RowMergerTest {
     }
   }
 
-  @Test
-  public void multipleChunksAreMerged() throws IOException {
-    String rowKey = "row-1";
-
-    ReadRowsResponse response = createReadRowsResponse(rowKey, Family1_c1_CHUNK);
-    ReadRowsResponse response2 = createReadRowsResponse(rowKey, Family1_c2_CHUNK);
-    ReadRowsResponse response3 = createReadRowsResponse(rowKey, Family2_null_CHUNK);
-    ReadRowsResponse response4 = createReadRowsResponse(rowKey, COMPLETE_CHUNK);
-
-    Iterator<ReadRowsResponse> iterator = getIterator(response, response2, response3, response4);
-
-    Row resultRow = RowMerger.readNextRow(iterator);
-    Assert.assertEquals(2, resultRow.getFamiliesCount());
-
-    Map<String, Family> familyMap = new HashMap<>();
-    for (Family family : resultRow.getFamiliesList()) {
-      familyMap.put(family.getName(), family);
-    }
-
-    Family resultFamily1 = familyMap.get("Family1");
-    Assert.assertEquals(2, resultFamily1.getColumnsCount());
-    Assert.assertEquals(ByteString.copyFromUtf8("c1"),
-        resultFamily1.getColumns(0).getQualifier());
-    Assert.assertEquals(ByteString.copyFromUtf8("c2"),
-        resultFamily1.getColumns(1).getQualifier());
-
-    Family resultFamily2 = familyMap.get("Family2");
-    Assert.assertEquals(0, resultFamily2.getColumnsCount());
-
-    Assert.assertFalse(iterator.hasNext());
-  }
-
   private Iterator<ReadRowsResponse> getIterator(ReadRowsResponse ... responses) {
     return Arrays.asList(responses).iterator();
   }
 
+  private void matchResponses(ReadRowsResponse[] responses, RowMatcher[] expectedRows) {
+    Iterator<ReadRowsResponse> iterator = getIterator(responses);
+    for (int i = 0; i < expectedRows.length; ++i) {
+      Assert.assertTrue("More expected rows than supplied responses", iterator.hasNext());
+      Row result = RowMerger.readNextRow(iterator);
+      Assert.assertThat("Expected row does not match!", result, expectedRows[i]);
+    }
+    Assert.assertFalse("Responses not completely consumed by expected rows", iterator.hasNext());
+  }
+
+  @Test
+  public void multipleChunksAreMerged() throws IOException {
+    matchResponses(
+        new ReadRowsResponse[]{
+            createReadRowsResponse("row-1", Family1_c1_CHUNK),
+            createReadRowsResponse("row-1", Family1_c2_CHUNK),
+            createReadRowsResponse("row-1", Family2_null_CHUNK),
+            createReadRowsResponse("row-1", COMPLETE_CHUNK)
+        },
+        new RowMatcher[]{
+            matchesRow("row-1")
+                .withFamily("Family1")
+                    .withColumn("c1").withAnyCell()
+                    .withColumn("c2").withAnyCell()
+                .withFamily("Family2")
+        });
+  }
+
   @Test
   public void rowsMultipleChunks() throws IOException {
-    String rowKey = "row-1";
-
-    ReadRowsResponse multiChunkResponse =
-        createReadRowsResponse(rowKey, Family1_c1_CHUNK, Family1_c2_CHUNK, COMPLETE_CHUNK);
-
-    Iterator<ReadRowsResponse> iterator = getIterator(multiChunkResponse);
-
-    Row resultRow = RowMerger.readNextRow(iterator);
-
-    Assert.assertEquals(1, resultRow.getFamiliesCount());
-
-    Family resultFamily = resultRow.getFamilies(0);
-    Assert.assertEquals("Family1", resultFamily.getName());
-    Assert.assertEquals(2, resultFamily.getColumnsCount());
-    Assert.assertEquals(ByteString.copyFromUtf8("c1"), resultFamily.getColumns(0).getQualifier());
-    Assert.assertEquals(ByteString.copyFromUtf8("c2"), resultFamily.getColumns(1).getQualifier());
-
-    Assert.assertFalse(iterator.hasNext());
+    matchResponses(
+        new ReadRowsResponse[]{
+            createReadRowsResponse("row-1", Family1_c1_CHUNK, Family1_c2_CHUNK, COMPLETE_CHUNK)
+        },
+        new RowMatcher[]{
+            matchesRow("row-1").withFamily("Family1")
+                .withColumn("c1").withAnyCell()
+                .withColumn("c2").withAnyCell()
+        });
   }
 
   @Test
   public void readMultipleRows() throws IOException {
-    ReadRowsResponse response = createReadRowsResponse("row-1", Family1_c1_CHUNK, COMPLETE_CHUNK);
-    ReadRowsResponse response2 = createReadRowsResponse("row-2", Family1_c2_CHUNK, COMPLETE_CHUNK);
-
-    Iterator<ReadRowsResponse> iterator = getIterator(response, response2);
-
-    {
-      Row resultRow = RowMerger.readNextRow(iterator);
-
-      Assert.assertEquals("row-1", resultRow.getKey().toStringUtf8());
-      Assert.assertEquals(1, resultRow.getFamiliesCount());
-
-      Family resultFamily = resultRow.getFamilies(0);
-      Assert.assertEquals("Family1", resultFamily.getName());
-      Assert.assertEquals(1, resultFamily.getColumnsCount());
-      Assert.assertEquals(ByteString.copyFromUtf8("c1"), resultFamily.getColumns(0).getQualifier());
-    }
-
-    Assert.assertTrue(iterator.hasNext());
-
-    {
-      Row resultRow = RowMerger.readNextRow(iterator);
-
-      Assert.assertEquals("row-2", resultRow.getKey().toStringUtf8());
-      Assert.assertEquals(1, resultRow.getFamiliesCount());
-
-      Family resultFamily = resultRow.getFamilies(0);
-      Assert.assertEquals("Family1", resultFamily.getName());
-      Assert.assertEquals(1, resultFamily.getColumnsCount());
-      Assert.assertEquals(ByteString.copyFromUtf8("c2"), resultFamily.getColumns(0).getQualifier());
-    }
-
-    Assert.assertFalse(iterator.hasNext());
+    matchResponses(
+        new ReadRowsResponse[]{
+            createReadRowsResponse("row-1", Family1_c1_CHUNK, COMPLETE_CHUNK),
+            createReadRowsResponse("row-2", Family1_c2_CHUNK, COMPLETE_CHUNK)
+        },
+        new RowMatcher[]{
+            matchesRow("row-1").withFamily("Family1").withColumn("c1").withAnyCell(),
+            matchesRow("row-2").withFamily("Family1").withColumn("c2").withAnyCell()
+        });
   }
 
   @Test
   public void rowsCanBeReset() throws IOException {
-    String rowKey = "row-1";
+    matchResponses(
+        new ReadRowsResponse[]{
+            createReadRowsResponse("row-1", Family1_c1_CHUNK),
+            createReadRowsResponse("row-1", RESET_CHUNK),
+            createReadRowsResponse("row-1", Family1_c2_CHUNK),
+            createReadRowsResponse("row-1", COMPLETE_CHUNK),
+            // Second row same as the first, except in 2 responses instead of 4.
+            createReadRowsResponse("row-2", Family1_c1_CHUNK),
+            createReadRowsResponse("row-2", RESET_CHUNK, Family1_c2_CHUNK, COMPLETE_CHUNK),
+            // Same, but with slightly different grouping into responses.
+            createReadRowsResponse("row-3", Family1_c1_CHUNK),
+            createReadRowsResponse("row-3", RESET_CHUNK, Family1_c2_CHUNK),
+            createReadRowsResponse("row-3", COMPLETE_CHUNK),
+            // An initial reset with no preceding data shouldn't happen but is OK.
+            createReadRowsResponse("row-4", RESET_CHUNK, Family1_c1_CHUNK),
+            createReadRowsResponse("row-4", COMPLETE_CHUNK),
+        },
+        new RowMatcher[]{
+            matchesRow("row-1").withFamily("Family1").withColumn("c2").withAnyCell(),
+            matchesRow("row-2").withFamily("Family1").withColumn("c2").withAnyCell(),
+            matchesRow("row-3").withFamily("Family1").withColumn("c2").withAnyCell(),
+            matchesRow("row-4").withFamily("Family1").withColumn("c1").withAnyCell(),
+        });
+  }
 
-    ReadRowsResponse response = createReadRowsResponse(rowKey, Family1_c1_CHUNK);
-    ReadRowsResponse response2 = createReadRowsResponse(rowKey, RESET_CHUNK);
-    ReadRowsResponse response3 = createReadRowsResponse(rowKey, Family1_c2_CHUNK);
-    ReadRowsResponse response4 = createReadRowsResponse(rowKey, COMPLETE_CHUNK);
-
-    Iterator<ReadRowsResponse> iterator = getIterator(response, response2, response3, response4);
-
-    Row resultRow = RowMerger.readNextRow(iterator);
-
-    Assert.assertEquals(1, resultRow.getFamiliesCount());
-
-    Family resultFamily = resultRow.getFamilies(0);
-    Assert.assertEquals("Family1", resultFamily.getName());
-    Assert.assertEquals(1, resultFamily.getColumnsCount());
-    Column resultColumn = resultFamily.getColumns(0);
-    Assert.assertEquals(ByteString.copyFromUtf8("c2"), resultColumn.getQualifier());
-
-    Assert.assertFalse(iterator.hasNext());
+  @Test
+  public void rowsCanBeResetMultipleTimes() throws IOException {
+    matchResponses(
+        new ReadRowsResponse[]{
+            createReadRowsResponse("row-1", Family1_c1_CHUNK),
+            createReadRowsResponse("row-1", RESET_CHUNK),
+            createReadRowsResponse("row-1", Family1_c2_CHUNK),
+            createReadRowsResponse("row-1", RESET_CHUNK, Family1_c1_CHUNK, COMPLETE_CHUNK),
+            // Same, but with slightly different grouping into responses.
+            createReadRowsResponse("row-2", Family1_c1_CHUNK),
+            createReadRowsResponse("row-2", RESET_CHUNK, Family1_c2_CHUNK),
+            createReadRowsResponse("row-2", RESET_CHUNK, Family1_c1_CHUNK, COMPLETE_CHUNK),
+        },
+        new RowMatcher[]{
+            matchesRow("row-1").withFamily("Family1").withColumn("c1").withAnyCell(),
+            matchesRow("row-2").withFamily("Family1").withColumn("c1").withAnyCell()
+        });
   }
 
   @Test
   public void singleChunkRowsAreRead() throws IOException {
-    String rowKey = "row-1";
-    ReadRowsResponse response = createReadRowsResponse(rowKey, COMPLETE_CHUNK);
-
-    final Iterator<ReadRowsResponse> iter = getIterator(response);
-    Row resultRow = RowMerger.readNextRow(iter);
-    Assert.assertEquals(0, resultRow.getFamiliesCount());
-    Assert.assertEquals(ByteString.copyFromUtf8("row-1"), resultRow.getKey());
-
-    Assert.assertFalse(iter.hasNext());
+    matchResponses(
+        new ReadRowsResponse[]{
+            createReadRowsResponse("row-1", COMPLETE_CHUNK),
+            // Data and a reset, followed by a single commit (in various groupings).
+            createReadRowsResponse("row-2", Family1_c1_CHUNK, RESET_CHUNK, COMPLETE_CHUNK),
+            createReadRowsResponse("row-3", Family1_c1_CHUNK),
+            createReadRowsResponse("row-3", RESET_CHUNK, COMPLETE_CHUNK),
+            createReadRowsResponse("row-4", Family1_c1_CHUNK),
+            createReadRowsResponse("row-4", RESET_CHUNK),
+            createReadRowsResponse("row-4", COMPLETE_CHUNK),
+            createReadRowsResponse("row-5", Family1_c1_CHUNK, RESET_CHUNK),
+            createReadRowsResponse("row-5", COMPLETE_CHUNK),
+        },
+        new RowMatcher[]{
+            matchesRow("row-1"),
+            matchesRow("row-2"),
+            matchesRow("row-3"),
+            matchesRow("row-4"),
+            matchesRow("row-5"),
+        });
   }
 
   @Test
