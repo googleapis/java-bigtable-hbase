@@ -63,6 +63,7 @@ import com.google.common.base.Preconditions;
     TestListTables.class,
     TestPut.class,
     TestTimestamp.class,
+    TestTruncateTable.class,
     TestImport.class
 })
 public class IntegrationTests {
