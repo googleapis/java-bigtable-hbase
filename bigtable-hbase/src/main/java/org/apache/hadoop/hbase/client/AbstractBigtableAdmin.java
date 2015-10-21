@@ -568,7 +568,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public HTableDescriptor[] getTableDescriptorsByTableName(List<TableName> tableNames)
       throws IOException {
-    throw new UnsupportedOperationException("getTableDescriptorsByTableName");  // TODO
+    TableName[] tableNameArray = tableNames.toArray(new TableName[tableNames.size()]);
+    return getTableDescriptors(tableNameArray);
   }
 
   @Override
