@@ -589,29 +589,33 @@ public class CloudBigtableIO {
     return p;
   }
 
-  private static abstract class AbstractCloudBigtableTableWriteFn<In, Out> extends DoFn<In, Out> {
+  static abstract class AbstractCloudBigtableTableWriteFn<In, Out> extends DoFn<In, Out> {
     private static final long serialVersionUID = 1L;
+
+    private static final CloudBigtableConnectionPool pool = new CloudBigtableConnectionPool();
+
     protected final Logger LOG = LoggerFactory.getLogger(getClass());
     protected CloudBigtableConfiguration config;
-    protected transient Connection conn;
+    protected transient volatile CloudBigtableConnectionPool.PoolEntry connectionEntry;
 
     public AbstractCloudBigtableTableWriteFn(CloudBigtableConfiguration config) {
       this.config = config;
     }
 
-    /**
-     * Creates a {@link Connection}.
-     */
-    @Override
-    public void startBundle(Context context) throws Exception {
-      LOG.debug("Creating the Bigtable connection.");
-      conn = new BigtableConnection(config.toHBaseConfig());
+    protected synchronized Connection getConnection() throws IOException {
+      if (connectionEntry == null) {
+        connectionEntry = pool.getConnection(config.toHBaseConfig());
+      }
+      return connectionEntry.getConnection();
     }
 
     @Override
-    public void finishBundle(DoFn<In, Out>.Context c) throws Exception {
+    public synchronized void finishBundle(DoFn<In, Out>.Context c) throws Exception {
       LOG.debug("Closing the Bigtable connection.");
-      conn.close();
+      if (connectionEntry != null) {
+        pool.returnConnection(connectionEntry);
+        connectionEntry = null;
+      }
     }
 
     /**
@@ -658,18 +662,17 @@ public class CloudBigtableIO {
       this.tableName = config.getTableId();
     }
 
-    /**
-     * Creates a {@link Connection} and a {@link BufferedMutator}.
-     */
-    @Override
-    public void startBundle(Context context) throws Exception {
-      super.startBundle(context);
-      ExceptionListener listener = createExceptionListener(context);
-      BufferedMutatorParams params = new BufferedMutatorParams(TableName.valueOf(tableName))
-          .writeBufferSize(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT)
-          .listener(listener);
-      LOG.debug("Creating the Bigtable bufferedMutator.");
-      mutator = conn.getBufferedMutator(params);
+    private synchronized BufferedMutator getBufferedMutator(Context context)
+        throws IOException {
+      if (mutator == null) {
+        ExceptionListener listener = createExceptionListener(context);
+        BufferedMutatorParams params =
+            new BufferedMutatorParams(TableName.valueOf(tableName)).writeBufferSize(
+              AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT).listener(listener);
+        LOG.debug("Creating the Bigtable bufferedMutator.");
+        mutator = getConnection().getBufferedMutator(params);
+      }
+      return mutator;
     }
 
     protected ExceptionListener createExceptionListener(final Context context) {
@@ -684,7 +687,7 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Performs an asyc mutation via {@link BufferedMutator#mutate(Mutation)}.
+     * Performs an asynchronous mutation via {@link BufferedMutator#mutate(Mutation)}.
      */
     @Override
     public void processElement(ProcessContext context) throws Exception {
@@ -692,7 +695,7 @@ public class CloudBigtableIO {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Persisting {}", Bytes.toString(mutation.getRow()));
       }
-      mutator.mutate(mutation);
+      getBufferedMutator(context).mutate(mutation);
     }
 
     /**
@@ -702,7 +705,9 @@ public class CloudBigtableIO {
     public void finishBundle(Context context) throws Exception {
       try {
         LOG.debug("Closing the BufferedMutator.");
-        mutator.close();
+        if (mutator != null) {
+          mutator.close();
+        }
       } catch (RetriesExhaustedWithDetailsException exception) {
         logExceptions(context, exception);
         retrowException(exception);
@@ -746,7 +751,7 @@ public class CloudBigtableIO {
     public void processElement(ProcessContext context) throws Exception {
       KV<String, Iterable<Mutation>> element = context.element();
       String tableName = element.getKey();
-      try (Table t = conn.getTable(TableName.valueOf(tableName))) {
+      try (Table t = getConnection().getTable(TableName.valueOf(tableName))) {
         List<Mutation> mutations = Lists.newArrayList(element.getValue());
         int mutationCount = mutations.size();
         LOG.trace("Persisting {} elements to table {}.", mutationCount, tableName);
