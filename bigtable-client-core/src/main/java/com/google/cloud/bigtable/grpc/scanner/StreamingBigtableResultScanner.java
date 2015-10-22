@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,17 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.bigtable.v1.ReadRowsResponse;
-import com.google.bigtable.v1.Row;
-import com.google.cloud.bigtable.grpc.io.CancellationToken;
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
-
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import com.google.bigtable.v1.ReadRowsResponse;
+import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.grpc.io.CancellationToken;
+import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 /**
  * A {@link ResultScanner} implementation against the v1 bigtable API.
@@ -97,17 +98,17 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   private final CancellationToken cancellationToken;
   private final BlockingQueue<ResultQueueEntry<ReadRowsResponse>> resultQueue;
   private final ResponseQueueReader responseQueueReader;
+  private final PooledChannel reservedChannel;
 
   public StreamingBigtableResultScanner(
-      int capacity,
-      int readPartialRowTimeoutMillis,
+      PooledChannel reservedChannel, int capacity, int readPartialRowTimeoutMillis,
       CancellationToken cancellationToken) {
     Preconditions.checkArgument(cancellationToken != null, "cancellationToken cannot be null");
     Preconditions.checkArgument(capacity > 0, "capacity must be a positive integer");
+    this.reservedChannel = reservedChannel;
     this.cancellationToken = cancellationToken;
     this.resultQueue = new LinkedBlockingQueue<>(capacity);
-    this.responseQueueReader = new ResponseQueueReader(
-        resultQueue, readPartialRowTimeoutMillis);
+    this.responseQueueReader = new ResponseQueueReader(resultQueue, readPartialRowTimeoutMillis);
   }
 
   private void add(ResultQueueEntry<ReadRowsResponse> entry) {
@@ -124,10 +125,12 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   }
 
   public void setError(Throwable error) {
+    reservedChannel.returnToPool();
     add(ResultQueueEntry.<ReadRowsResponse>newThrowable(error));
   }
 
   public void complete() {
+    reservedChannel.returnToPool();
     add(ResultQueueEntry.<ReadRowsResponse>newCompletionMarker());
   }
 
@@ -144,5 +147,6 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   @Override
   public void close() throws IOException {
     cancellationToken.cancel();
+    reservedChannel.returnToPool();
   }
 }

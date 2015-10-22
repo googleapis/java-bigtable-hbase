@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,8 @@ import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.createRead
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.extractRowsWithKeys;
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.generateReadRowsResponses;
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.randomBytes;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -39,11 +41,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import com.google.bigtable.v1.Column;
 import com.google.bigtable.v1.Family;
@@ -51,6 +56,7 @@ import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.ReadRowsResponse.Chunk;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
+import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 
@@ -116,14 +122,21 @@ public class StreamingBigtableResultScannerTest {
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
-  private int defaultTimeout =
-      (int) TimeUnit.MILLISECONDS.convert(10, TimeUnit.SECONDS);
+  private int defaultTimeout = (int) TimeUnit.MILLISECONDS.convert(10, TimeUnit.SECONDS);
+
+  @Mock
+  PooledChannel channel;
+
+  @Before
+  public void setup(){
+    MockitoAnnotations.initMocks(this);
+  }
 
   @Test
   public void resultsAreReadable() throws IOException {
     CancellationToken cancellationToken = new CancellationToken();
     StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
+        new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken);
 
     List<ReadRowsResponse> responses =
         generateReadRowsResponses("rowKey-%s", 3);
@@ -133,6 +146,15 @@ public class StreamingBigtableResultScannerTest {
 
     assertScannerContains(scanner, extractRowsWithKeys(responses));
     assertScannerEmpty(scanner);
+    assertChannelReturned();
+  }
+
+  private void assertChannelReturned() {
+    assertChannelReturned(1);
+  }
+
+  private void assertChannelReturned(int times) {
+    verify(channel, times(times)).returnToPool();
   }
 
   @Test
@@ -147,19 +169,20 @@ public class StreamingBigtableResultScannerTest {
     }, Executors.newCachedThreadPool());
 
     StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
+        new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken);
 
     scanner.close();
     // Verify that we've in fact finished.
     Assert.assertTrue("Waited 10ms for cancellation, but it was not triggered.",
         countDownLatch.await(10, TimeUnit.MILLISECONDS));
+    assertChannelReturned();
   }
 
   @Test
   public void throwablesAreThrownWhenRead() throws IOException {
     CancellationToken cancellationToken = new CancellationToken();
     StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
+        new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken);
 
     List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", 2);
     final String innerExceptionMessage = "This message is the causedBy message";
@@ -167,6 +190,7 @@ public class StreamingBigtableResultScannerTest {
     scanner.setError(new IOException(innerExceptionMessage));
 
     assertScannerContains(scanner, extractRowsWithKeys(responses));
+    assertChannelReturned();
 
     // The next call to next() should throw the exception:
     expectedException.expect(IOException.class);
@@ -181,7 +205,7 @@ public class StreamingBigtableResultScannerTest {
     int generatedResponseCount = 3;
     CancellationToken cancellationToken = new CancellationToken();
     StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
+        new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken);
 
     List<ReadRowsResponse> responses = generateReadRowsResponses(
         "rowKey-%s", generatedResponseCount);
@@ -195,6 +219,7 @@ public class StreamingBigtableResultScannerTest {
     }
     Assert.assertEquals(generatedResponseCount, readRows.length);
     assertScannerEmpty(scanner);
+    assertChannelReturned();
   }
 
   @Test
@@ -213,7 +238,7 @@ public class StreamingBigtableResultScannerTest {
 
     CancellationToken cancellationToken = new CancellationToken();
     StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
+        new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken);
 
     scanner.addResult(response);
     scanner.addResult(response2);
@@ -242,6 +267,7 @@ public class StreamingBigtableResultScannerTest {
     Assert.assertEquals(0, resultFamily2.getColumnsCount());
 
     assertScannerEmpty(scanner);
+    assertChannelReturned();
   }
 
   @Test
@@ -261,7 +287,7 @@ public class StreamingBigtableResultScannerTest {
 
     CancellationToken cancellationToken = new CancellationToken();
     StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
+        new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken);
 
     scanner.addResult(response);
     scanner.addResult(response2);
@@ -281,6 +307,7 @@ public class StreamingBigtableResultScannerTest {
     Assert.assertEquals(ByteString.copyFromUtf8("c2"), resultColumn.getQualifier());
 
     assertScannerEmpty(scanner);
+    assertChannelReturned();
   }
 
   @Test
@@ -291,7 +318,7 @@ public class StreamingBigtableResultScannerTest {
 
     CancellationToken cancellationToken = new CancellationToken();
     StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
+        new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken);
 
     scanner.addResult(response);
     scanner.complete();
@@ -301,13 +328,14 @@ public class StreamingBigtableResultScannerTest {
     Assert.assertEquals(ByteString.copyFromUtf8("row-1"), resultRow.getKey());
 
     assertScannerEmpty(scanner);
+    assertChannelReturned();
   }
 
   @Test
   public void anEmptyStreamDoesNotThrow() throws IOException {
     CancellationToken cancellationToken = new CancellationToken();
     StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
+        new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken);
 
     scanner.complete();
 
@@ -315,13 +343,14 @@ public class StreamingBigtableResultScannerTest {
 
     Assert.assertNull(resultRow);
     assertScannerEmpty(scanner);
+    assertChannelReturned();
   }
 
   @Test
   public void readingPastEndReturnsNull() throws IOException {
     CancellationToken cancellationToken = new CancellationToken();
     StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken);
+        new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken);
 
     scanner.complete();
 
@@ -330,25 +359,27 @@ public class StreamingBigtableResultScannerTest {
     resultRow = scanner.next();
     Assert.assertNull(resultRow);
     assertScannerEmpty(scanner);
+    assertChannelReturned();
   }
 
   @Test
   public void endOfStreamMidRowThrows() throws IOException {
     CancellationToken cancellationToken = new CancellationToken();
     try (StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken)) {
-  
+        new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken)) {
+
       String rowKey = "row-1";
       Chunk contentChunk = createContentChunk("Family1", "c1", randomBytes(10), 100L);
       ReadRowsResponse response = createReadRowsResponse(rowKey, contentChunk);
-  
+
       scanner.addResult(response);
       scanner.complete();
-  
+
       expectedException.expectMessage("End of stream marker encountered while merging a row.");
       expectedException.expect(IllegalStateException.class);
       @SuppressWarnings("unused")
       Row resultRow = scanner.next();
+      assertChannelReturned();
     }
   }
 
@@ -364,11 +395,11 @@ public class StreamingBigtableResultScannerTest {
     CancellationToken cancellationToken = new CancellationToken();
     final ExecutorService executorService = Executors.newFixedThreadPool(1);
     try (final StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(queueDepth, defaultTimeout, cancellationToken)) {
+        new StreamingBigtableResultScanner(channel, queueDepth, defaultTimeout, cancellationToken)) {
 
       final List<ReadRowsResponse> responses =
           generateReadRowsResponses("rowKey-%s", queueDepth * 2);
-  
+
       executorService.submit(new Runnable() {
         @Override
         public void run() {
@@ -384,37 +415,40 @@ public class StreamingBigtableResultScannerTest {
           addProcessDone.countDown();
         }
       });
-  
+
       // Make sure it's blocked.
       Assert.assertFalse(addProcessDone.await(500, TimeUnit.MILLISECONDS));
-  
+
       // Other tests validate the contents of the queue, we just care that we blocked.
       scanner.next();
       // We buffer queueDepth messages in the queue, one slot is needed for scanner.complete()
       scanner.next();
-  
+
       Assert.assertTrue(
           "Expected add process to complete within 500 ms",
           addProcessDone.await(500, TimeUnit.MILLISECONDS));
     }
     executorService.shutdownNow();
+    
+    // Both scanner.complete() and scanner.close() will return the channel to the pool.
+    assertChannelReturned(2);
   }
 
   @Test
   public void readTimeoutOnPartialRows() throws IOException, InterruptedException {
     CancellationToken cancellationToken = new CancellationToken();
     try (final StreamingBigtableResultScanner scanner =
-        new StreamingBigtableResultScanner(
-            10, 10 /* timeout millis */, cancellationToken)) {
-  
+        new StreamingBigtableResultScanner(channel, 10, 10 /* timeout millis */, cancellationToken)) {
+
       ByteString rowKey = ByteString.copyFromUtf8("rowKey");
       // Add a single response that does not complete the row or stream:
       scanner.addResult(ReadRowsResponse.newBuilder().setRowKey(rowKey).build());
-  
+
       expectedException.expect(ScanTimeoutException.class);
       expectedException.expectMessage("Timeout while merging responses.");
-  
+
       scanner.next();
+      assertChannelReturned();
     }
   }
 
@@ -431,7 +465,7 @@ public class StreamingBigtableResultScannerTest {
       public void run() {
         CancellationToken cancellationToken = new CancellationToken();
         try (StreamingBigtableResultScanner scanner =
-            new StreamingBigtableResultScanner(10, defaultTimeout, cancellationToken)) {
+            new StreamingBigtableResultScanner(channel, 10, defaultTimeout, cancellationToken)) {
           try {
             barrier.await();
           } catch (InterruptedException | BrokenBarrierException e) {
@@ -448,7 +482,7 @@ public class StreamingBigtableResultScannerTest {
           }
         } catch (IOException e) {
           thrownException.set(e);
-        } 
+        }
       }
     });
 
