@@ -89,13 +89,6 @@ public class BigtableSession implements AutoCloseable {
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
 
-  private static ExecutorService connectionStartupExecutor =
-      Executors.newCachedThreadPool(
-          new ThreadFactoryBuilder()
-              .setNameFormat("BigtableSession-startup-%s")
-              .setDaemon(true)
-              .build());
-
   static {
     performWarmup();
   }
@@ -138,6 +131,12 @@ public class BigtableSession implements AutoCloseable {
 
   private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
+    ExecutorService connectionStartupExecutor =
+        Executors.newCachedThreadPool(
+            new ThreadFactoryBuilder()
+                .setNameFormat("BigtableSession-startup-%s")
+                .setDaemon(true)
+                .build());
 
     connectionStartupExecutor.execute(new Runnable() {
       @Override
@@ -299,7 +298,6 @@ public class BigtableSession implements AutoCloseable {
 
     this.dataClient = get(dataClientFuture, "Could not initialize the data API client");
     this.tableAdminClient = get(tableAdminFuture, "Could not initialize the table Admin client");
-    awaiteTerminated(connectionStartupExecutor);
   }
 
   private BigtableDataClient initializeDataClient() throws IOException {
