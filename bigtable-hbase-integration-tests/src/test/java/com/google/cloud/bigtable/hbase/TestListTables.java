@@ -19,8 +19,10 @@ import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -65,6 +67,7 @@ public class TestListTables extends AbstractTest {
       Assert.assertFalse(ArrayUtils.contains(admin.listTableNames(), tableName1));
 
       createTable(admin, tableName1);
+      checkColumnFamilies(admin, tableName1);
 
       {
         Assert.assertTrue(admin.tableExists(tableName1));
@@ -74,8 +77,8 @@ public class TestListTables extends AbstractTest {
         Assert.assertFalse(ArrayUtils.contains(tableList, tableName2));
       }
 
-      checkColumnFamilies(admin, tableName1);
       createTable(admin, tableName2);
+      checkColumnFamilies(admin, tableName2);
 
       {
         Assert.assertTrue(admin.tableExists(tableName1));
@@ -85,8 +88,34 @@ public class TestListTables extends AbstractTest {
         Assert.assertTrue(ArrayUtils.contains(tableList, tableName2));
       }
 
-      checkColumnFamilies(admin, tableName2);
+      {
+        TableName[] tableList = admin.listTableNames(Pattern.compile("list_table1-.*"));
+        Assert.assertTrue(ArrayUtils.contains(tableList, tableName1));
+        Assert.assertFalse(ArrayUtils.contains(tableList, tableName2));
+      }
+
+      {
+        HTableDescriptor[] descriptors = admin.listTables(Pattern.compile("list_table1-.*"));
+        Assert.assertTrue(contains(descriptors, tableName1));
+        Assert.assertFalse(contains(descriptors, tableName2));
+      }
+
+      {
+        HTableDescriptor[] descriptors =
+            admin.getTableDescriptorsByTableName(Collections.singletonList(tableName2));
+        Assert.assertFalse(contains(descriptors, tableName1));
+        Assert.assertTrue(contains(descriptors, tableName2));
+      }
     }
+  }
+
+  private static boolean contains(HTableDescriptor[] descriptors, TableName tableName) {
+    for (HTableDescriptor descriptor : descriptors) {
+      if (descriptor.getTableName().equals(tableName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Test
