@@ -146,6 +146,11 @@ public class TestBigtableTable {
           }
 
           @Override
+          public int available() {
+            return 0;
+          }
+
+          @Override
           public void close() throws IOException {
           }
         });

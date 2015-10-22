@@ -122,6 +122,11 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     }
   }
 
+  @Override
+  public int available() {
+    return currentDelegate.available();
+  }
+
   /**
    * Backs off and reissues request.
    *

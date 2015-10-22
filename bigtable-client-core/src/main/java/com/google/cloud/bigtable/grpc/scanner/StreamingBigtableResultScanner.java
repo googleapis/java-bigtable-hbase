@@ -145,6 +145,11 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   }
 
   @Override
+  public int available() {
+    return resultQueue.size();
+  }
+
+  @Override
   public void close() throws IOException {
     cancellationToken.cancel();
     reservedChannel.returnToPool();

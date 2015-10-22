@@ -429,7 +429,7 @@ public class StreamingBigtableResultScannerTest {
           addProcessDone.await(500, TimeUnit.MILLISECONDS));
     }
     executorService.shutdownNow();
-    
+
     // Both scanner.complete() and scanner.close() will return the channel to the pool.
     assertChannelReturned(2);
   }
@@ -506,4 +506,33 @@ public class StreamingBigtableResultScannerTest {
         "testThread should have recorded that it was interrupted.",
         interruptedSet.get());
   }
+
+  @Test
+  public void availableGivesTheNumberOfBufferedItems() throws IOException, InterruptedException {
+
+    final int queueDepth = 10;
+    CancellationToken cancellationToken = new CancellationToken();
+
+    try (final StreamingBigtableResultScanner scanner =
+        new StreamingBigtableResultScanner(channel, queueDepth, defaultTimeout, cancellationToken)) {
+
+      final List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", queueDepth);
+
+      for (ReadRowsResponse response: responses) {
+        scanner.addResult(response);
+      }
+
+      Assert.assertEquals(
+          "Expected same number of items in scanner as added", queueDepth, scanner.available());
+
+      scanner.next();
+
+      Assert.assertEquals(
+          "Expected same number of items in scanner as added less one",
+          queueDepth - 1, scanner.available());
+
+    }
+
+  }
+
 }
