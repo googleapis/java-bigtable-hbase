@@ -600,12 +600,31 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   @Override
   public void truncateTable(TableName tableName, boolean preserveSplits) throws IOException {
-    throw new UnsupportedOperationException("truncateTable");  // TODO
+    byte[][] splitKeys = null;
+    if (preserveSplits) {
+      splitKeys = getSplits(tableName);
+    }
+    HTableDescriptor tableDescriptor = getTableDescriptor(tableName);
+    LOG.info("Deleting table %s for truncation.", tableName);
+    deleteTable(tableName);
+    LOG.info("Recreating table %s for truncation", tableName);
+    createTable(tableDescriptor, splitKeys);
+  }
+
+  private byte[][] getSplits(TableName tableName) throws IOException {
+    try (RegionLocator regionLocator = connection.getRegionLocator(tableName)) {
+      List<HRegionLocation> allRegionLocations = regionLocator.getAllRegionLocations();
+      byte[][] splits = new byte[allRegionLocations.size() - 1][];
+      for (int i = 0; i < allRegionLocations.size() - 1; i++) {
+        splits[i] = allRegionLocations.get(i).getRegionInfo().getEndKey();
+      }
+      return splits;
+    }
   }
 
   @Override
   public boolean isTableAvailable(TableName tableName, byte[][] splitKeys) throws IOException {
-    throw new UnsupportedOperationException("isTableAvailable");  // TODO
+    return tableExists(tableName);
   }
 
   @Override
