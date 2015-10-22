@@ -57,7 +57,6 @@ public class ReadRowTestUtils {
     if (columnQualifier != null) {
       Column.Builder columnBuilder = Column.newBuilder();
       columnBuilder.setQualifier(ByteString.copyFromUtf8(columnQualifier));
-      familyBuilder.addColumns(columnBuilder);
 
       if (value != null) {
         Cell.Builder cellBuilder = Cell.newBuilder();
@@ -65,6 +64,7 @@ public class ReadRowTestUtils {
         cellBuilder.setValue(ByteString.copyFrom(value));
         columnBuilder.addCells(cellBuilder);
       }
+      familyBuilder.addColumns(columnBuilder);
     }
 
     return Chunk.newBuilder().setRowContents(familyBuilder).build();
