@@ -29,6 +29,7 @@ import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -89,7 +90,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private static final Set<RegionLocator> locatorCache = new CopyOnWriteArraySet<>();
 
   private final Configuration conf;
-  private volatile boolean closed;
+  private volatile boolean closed = false;
   private volatile boolean aborted;
   private volatile ExecutorService batchPool = null;
 
@@ -108,22 +109,22 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
       User user) throws IOException {
-    this.batchPool = pool;
-    this.closed = false;
-    this.conf = conf;
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
-
-    if (batchPool == null) {
-      batchPool = getBatchPool();
-    }
-
+    this.conf = conf;
     try {
       this.options = BigtableOptionsFactory.fromConfiguration(conf);
     } catch (IOException ioe) {
       LOG.error("Error loading BigtableOptions from Configuration.", ioe);
       throw ioe;
+    }
+
+    this.batchPool = pool;
+    this.closed = false;
+
+    if (batchPool == null) {
+      batchPool = getBatchPool();
     }
 
     this.session = new BigtableSession(options, batchPool);
@@ -305,13 +306,13 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       synchronized (this) {
         if (batchPool == null) {
           int maxThreads = getMaxThreads();
-          long keepAliveTime = conf.getLong(
-              "hbase.hconnection.threads.keepalivetime", 60);
+          int minThreads = Math.min(getCoreThreads(), maxThreads);
+          long keepAliveTime = conf.getLong("hbase.hconnection.threads.keepalivetime", 60);
           LinkedBlockingQueue<Runnable> workQueue =
-              new LinkedBlockingQueue<Runnable>(128 *
-                  conf.getInt("hbase.client.max.total.tasks", 200));
+              new LinkedBlockingQueue<Runnable>(128 * conf.getInt("hbase.client.max.total.tasks",
+                200));
           this.batchPool = new ThreadPoolExecutor(
-              maxThreads,
+              minThreads,
               maxThreads,
               keepAliveTime,
               TimeUnit.SECONDS,
@@ -322,6 +323,14 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       }
     }
     return this.batchPool;
+  }
+
+  private int getCoreThreads() {
+    int coreThreads = conf.getInt("hbase.hconnection.threads.core", options.getChannelCount() * 2);
+    if (coreThreads == 0) {
+      coreThreads = Runtime.getRuntime().availableProcessors() * 8;
+    }
+    return coreThreads;
   }
 
   private int getMaxThreads() {
