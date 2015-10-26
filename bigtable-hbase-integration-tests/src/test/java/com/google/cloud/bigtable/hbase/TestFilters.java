@@ -392,6 +392,31 @@ public class TestFilters extends AbstractTest {
     table.close();
   }
 
+
+  @Test
+  public void testRowFilterBinaryComparator_Equals() throws Exception {
+    // Initialize data
+    Table table = getConnection().getTable(TABLE_NAME);
+    String rowKeyPrefix = "testRowFilter-" + RandomStringUtils.randomAlphabetic(10);
+    byte[] rowKey1 = Bytes.toBytes(rowKeyPrefix + "A");
+    byte[] rowKey2 = Bytes.toBytes(rowKeyPrefix + "AA");
+    byte[] rowKey3 = Bytes.toBytes(rowKeyPrefix + "B");
+    byte[] rowKey4 = Bytes.toBytes(rowKeyPrefix + "BB");
+    byte[] qual = Bytes.toBytes("testqual");
+    byte[] value = Bytes.toBytes("testvalue");
+    for (byte[] rowKey : new byte[][] { rowKey1, rowKey2, rowKey3, rowKey4}) {
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
+      table.put(put);
+    }
+
+    // Test BinaryComparator - EQUAL
+    ByteArrayComparable rowKey2Comparable = new BinaryComparator(rowKey2);
+    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowKey2Comparable);
+    Result[] results = scanWithFilter(table, rowKey1, rowKey4, qual, filter);
+    Assert.assertEquals("# results", 1, results.length);
+    Assert.assertArrayEquals(rowKey2, results[0].getRow());
+  }
+
   /**
    * Requirement 9.5
    *
@@ -952,6 +977,44 @@ public class TestFilters extends AbstractTest {
     Assert.assertEquals("# results", 0, results.length);
 
     table.close();
+  }
+
+  @Test
+  public void testRowFilterRegexStringComparator_Equals() throws Exception {
+    // Initialize data
+    Table table = getConnection().getTable(TABLE_NAME);
+    byte[] row0 = Bytes.toBytes("0");  // Substring match, but out of row range
+    byte[] rowGoodIP1 = Bytes.toBytes("192.168.2.13");
+    byte[] rowGoodIP2 = Bytes.toBytes("8.8.8.8");
+    byte[] rowGoodIPv6 = Bytes.toBytes("FE80:0000:0000:0000:0202:B3FF:FE1E:8329");
+    byte[] rowBadIP = Bytes.toBytes("1.2.278.0");
+    byte[] rowTelephone = Bytes.toBytes("1-212-867-5309");
+    byte[] rowRandom = dataHelper.randomData("9-rowkey");
+    byte[] endRow = Bytes.fromHex("ffffff");
+    byte[] qual = dataHelper.randomData("testqual");
+    byte[] value = Bytes.toBytes("testvalue");
+    for (byte[] rowKey : new byte[][] { row0, rowGoodIP1, rowGoodIP2, rowGoodIPv6, rowBadIP,
+        rowTelephone, rowRandom }) {
+      Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, value);
+      table.put(put);
+    }
+    String regexIPAddr =
+      // v4 IP address
+      "(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3,3}" +
+        "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(\\/[0-9]+)?" +
+        "|" +
+        // v6 IP address
+        "((([\\dA-Fa-f]{1,4}:){7}[\\dA-Fa-f]{1,4})(:([\\d]{1,3}.)" +
+        "{3}[\\d]{1,3})?)(\\/[0-9]+)?";
+
+    // Test RegexStringComparator - EQUAL
+    ByteArrayComparable rowKey2Comparable = new RegexStringComparator(regexIPAddr);
+    Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, rowKey2Comparable);
+    Result[] results = scanWithFilter(table, row0, endRow, qual, filter);
+    Assert.assertEquals("# results", 3, results.length);
+    Assert.assertArrayEquals(rowGoodIP1, results[0].getRow());
+    Assert.assertArrayEquals(rowGoodIP2, results[1].getRow());
+    Assert.assertArrayEquals(rowGoodIPv6, results[2].getRow());
   }
 
   /**
