@@ -17,10 +17,10 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.ReadRowsRequest.Builder;
+import com.google.cloud.bigtable.util.ByteStringer;
 
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.util.ByteStringer;
 
 /**
  * A Get adapter that transform the Get into a ReadRowsRequest using the proto-based

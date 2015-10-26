@@ -19,15 +19,13 @@ import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.SetCell.Builder;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.HBaseZeroCopyByteString;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.util.ByteStringer;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -51,7 +49,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
     }
 
     for (Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
-      String familyString = new String(entry.getKey(), StandardCharsets.UTF_8);
+      ByteString familyString = ByteStringer.wrap(entry.getKey());
 
       for (Cell cell : entry.getValue()) {
         // Since we are not using the interface involving KeyValues, we reconstruct how big they would be.
@@ -72,7 +70,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
             cell.getQualifierOffset(),
             cell.getQualifierLength());
 
-        setCellBuilder.setFamilyName(familyString);
+        setCellBuilder.setFamilyNameBytes(familyString);
         setCellBuilder.setColumnQualifier(cellQualifierByteString);
 
         if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
@@ -85,7 +83,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
         }
 
         setCellBuilder.setValue(
-            HBaseZeroCopyByteString.wrap(
+            ByteStringer.wrap(
                 cell.getValueArray(),
                 cell.getValueOffset(),
                 cell.getValueLength()));
