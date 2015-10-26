@@ -26,12 +26,11 @@ import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Optional;
-import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.TimeRange;
-import org.apache.hadoop.hbase.util.ByteStringer;
 
 import java.io.IOException;
 import java.util.Map;
