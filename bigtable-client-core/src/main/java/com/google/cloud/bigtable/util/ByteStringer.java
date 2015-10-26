@@ -47,4 +47,12 @@ public class ByteStringer {
     return USE_ZEROCOPYBYTESTRING? BigtableZeroCopyByteString.wrap(array, offset, length):
       ByteString.copyFrom(array, offset, length);
   }
+
+  /**
+   * Attempts to extract the byte[] from the input wiht zeroCopy if possible.
+   */
+  public static byte[] extractBytes(ByteString value) {
+    return USE_ZEROCOPYBYTESTRING ? BigtableZeroCopyByteString.zeroCopyGetBytes(value) :
+      value.toByteArray();
+  }
 }

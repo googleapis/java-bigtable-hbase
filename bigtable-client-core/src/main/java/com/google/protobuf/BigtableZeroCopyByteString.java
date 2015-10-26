@@ -1,6 +1,5 @@
 package com.google.protobuf;
 
-
 /**
  * Helper class to extract byte arrays from {@link ByteString} without copy.
  * <p>
@@ -33,19 +32,16 @@ public final class BigtableZeroCopyByteString extends LiteralByteString {
     return new BoundedByteString(array, offset, length);
   }
 
-  // TODO:
-  // ZeroCopyLiteralByteString.wrap(this.buf, 0, this.count);
-
   /**
    * Extracts the byte array from the given {@link ByteString} without copy.
    * @param buf A buffer from which to extract the array.  This buffer must be
    * actually an instance of a {@code LiteralByteString}.
    */
   public static byte[] zeroCopyGetBytes(final ByteString buf) {
-    if (buf instanceof LiteralByteString) {
+    if (buf.getClass() == LiteralByteString.class) {
       return ((LiteralByteString) buf).bytes;
+    } else {
+      return buf.toByteArray();
     }
-    throw new UnsupportedOperationException("Need a LiteralByteString, got a "
-                                            + buf.getClass().getName());
   }
 }
