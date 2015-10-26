@@ -108,7 +108,7 @@ public class TestClusterAPI {
 
     TableName autoDeletedTableName =
         TableName.valueOf("auto-deleted-" + UUID.randomUUID().toString());
-    try (Connection connection = new TestBigtableConnection(configuration);
+    try (Connection connection = new TestBigtableConnectionImplementation(configuration);
         Admin admin = connection.getAdmin()) {
       countTables(admin, 0);
       createTable(admin, autoDeletedTableName);

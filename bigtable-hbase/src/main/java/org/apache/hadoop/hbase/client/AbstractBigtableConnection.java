@@ -28,10 +28,10 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -64,7 +64,9 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       "google.bigtable.buffered.mutator.max.memory";
 
   private static final AtomicLong SEQUENCE_GENERATOR = new AtomicLong();
-  private static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
+  
+  @VisibleForTesting
+  static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
       Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
 
   static {
@@ -109,6 +111,20 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
       User user) throws IOException {
+    this(conf, managed, pool, user, null);
+  }
+  
+  /**
+   * Ctor used to construct a client with an existing Bigtable session.
+   * @param conf The Hadoop configuration to load values from.
+   * @param managed Must be false, managed connections are not supported.
+   * @param pool A thread pool to use for operations. If null a new pool is created.
+   * @param user Unused in this implementation.
+   * @param session An optional Bigtable session. If null, a new session is created.
+   * @throws IOException If there was an issue loading settings from the config file(s).
+   */
+  protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
+      User user, BigtableSession session) throws IOException {
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
@@ -127,7 +143,11 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       batchPool = getBatchPool();
     }
 
-    this.session = new BigtableSession(options, batchPool);
+    if (session == null) {
+      this.session = new BigtableSession(options, batchPool);
+    } else {
+      this.session = session;
+    }
     this.tableConfig = new TableConfiguration(conf);
   }
 
@@ -154,15 +174,23 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   }
 
   @Override
-  public BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
+  public BufferedMutator getBufferedMutator(final BufferedMutatorParams params) throws IOException {
     TableName tableName = params.getTableName();
     if (tableName == null) {
       throw new IllegalArgumentException("TableName cannot be null.");
     }
     ExecutorService pool = params.getPool();
+    final boolean shutdownPool;
     if (pool == null) {
-      pool = getBatchPool();
+      pool = Executors.newCachedThreadPool(   
+          new ThreadFactoryBuilder()   
+             .setNameFormat("bufferedMutator-%s")    
+             .setDaemon(true)   
+             .build());
+      shutdownPool = true;
       params.pool(pool);
+    } else {
+      shutdownPool = false;
     }
     if (params.getWriteBufferSize() == BufferedMutatorParams.UNSET) {
       params.writeBufferSize(tableConfig.getWriteBufferSize());
@@ -172,13 +200,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
-
-    final ExecutorService heapSizeExecutor = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder()
-          .setNameFormat("heapSize-async-%s")
-          .setDaemon(true)
-          .build());
-
+    
     BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(
         session.getDataClient(),
         createAdapter(tableName),
@@ -187,13 +209,15 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         params.getWriteBufferSize(),
         options.getDataHost().toString(),
         params.getListener(),
-        heapSizeExecutor){
+        pool){
 
       @Override
       public void close() throws IOException {
         try {
           super.close();
-          heapSizeExecutor.shutdownNow();
+          if (shutdownPool) {
+            params.getPool().shutdownNow();
+          }
         } finally {
           ACTIVE_BUFFERED_MUTATORS.remove(id);
         }

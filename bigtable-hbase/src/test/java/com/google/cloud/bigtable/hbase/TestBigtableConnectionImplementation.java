@@ -16,16 +16,30 @@
 package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.security.User;
 
-public class TestBigtableConnection extends AbstractBigtableConnection {
+import com.google.cloud.bigtable.grpc.BigtableSession;
 
-  public TestBigtableConnection(Configuration conf) throws IOException {
+public class TestBigtableConnectionImplementation extends AbstractBigtableConnection {
+
+  public TestBigtableConnectionImplementation(Configuration conf) throws IOException {
     super(conf);
+  }
+  
+  protected TestBigtableConnectionImplementation(Configuration conf, boolean managed, ExecutorService pool,
+      User user) throws IOException {
+    super(conf, managed, pool, user);
+  }
+  
+  public TestBigtableConnectionImplementation(Configuration conf, boolean managed, ExecutorService pool,
+      User user, BigtableSession session) throws IOException {
+    super(conf, managed, pool, user, session);
   }
 
   @Override
