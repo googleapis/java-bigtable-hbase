@@ -20,10 +20,12 @@ import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.SetCell.Builder;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.HBaseZeroCopyByteString;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.util.ByteStringer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -65,7 +67,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
         Mutation.Builder modBuilder = result.addMutationsBuilder();
         Builder setCellBuilder = modBuilder.getSetCellBuilder();
 
-        ByteString cellQualifierByteString = ByteString.copyFrom(
+        ByteString cellQualifierByteString = ByteStringer.wrap(
             cell.getQualifierArray(),
             cell.getQualifierOffset(),
             cell.getQualifierLength());
@@ -83,7 +85,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
         }
 
         setCellBuilder.setValue(
-            ByteString.copyFrom(
+            HBaseZeroCopyByteString.wrap(
                 cell.getValueArray(),
                 cell.getValueOffset(),
                 cell.getValueLength()));
