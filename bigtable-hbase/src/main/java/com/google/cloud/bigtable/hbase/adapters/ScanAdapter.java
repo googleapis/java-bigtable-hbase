@@ -31,9 +31,9 @@ import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.TimeRange;
+import org.apache.hadoop.hbase.util.ByteStringer;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.NavigableSet;
 
@@ -90,13 +90,15 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   @Override
   public Builder adapt(Scan scan, ReadHooks readHooks) {
     throwIfUnsupportedScan(scan);
+    // For gets, startRow == stopRow.  There's no need to create a new ByteString for stopRow
+    RowFilter filter = buildFilter(scan, readHooks);
 
     return ReadRowsRequest.newBuilder()
-        .setFilter(buildFilter(scan, readHooks))
+        .setFilter(filter)
         .setRowRange(
             RowRange.newBuilder()
-                .setStartKey(ByteString.copyFrom(scan.getStartRow()))
-                .setEndKey(ByteString.copyFrom(scan.getStopRow())));
+                .setStartKey(ByteStringer.wrap(scan.getStartRow()))
+                .setEndKey(ByteStringer.wrap(scan.getStopRow())));
   }
 
   private static byte[] quoteRegex(byte[] unquoted)  {
@@ -120,15 +122,14 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   private RowFilter createColumnQualifierFilter(byte[] unquotedQualifier) {
     return RowFilter.newBuilder()
         .setColumnQualifierRegexFilter(
-            ByteString.copyFrom(
-                quoteRegex(unquotedQualifier)))
+          ByteStringer.wrap(quoteRegex(unquotedQualifier)))
         .build();
   }
 
   private RowFilter createFamilyFilter(byte[] familyName) {
     return RowFilter.newBuilder()
-        .setFamilyNameRegexFilter(
-            new String(quoteRegex(familyName), StandardCharsets.UTF_8))
+        .setFamilyNameRegexFilterBytes(
+            ByteStringer.wrap(quoteRegex(familyName)))
         .build();
   }
 
