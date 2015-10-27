@@ -32,6 +32,11 @@ import java.util.TreeSet;
  * Adapt a bigtable.v1.Row to an hbase client Result.
  */
 public class RowAdapter implements ResponseAdapter<Row, Result> {
+  // This only works because BIGTABLE_TIMEUNIT is smaller than HBASE_TIMEUNIT, otherwise we will get
+  // 0.
+  static final long TIME_CONVERSION_UNIT = BigtableConstants.BIGTABLE_TIMEUNIT.convert(1,
+    BigtableConstants.HBASE_TIMEUNIT);
+
   @Override
   public Result adaptResponse(Row response) {
     if (response == null) {
@@ -57,8 +62,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
           // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
           // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
           // HBase will treat them as duplicates.
-          long hbaseTimestamp = BigtableConstants.HBASE_TIMEUNIT.convert(
-              cell.getTimestampMicros(), BigtableConstants.BIGTABLE_TIMEUNIT);
+          long hbaseTimestamp = cell.getTimestampMicros() / TIME_CONVERSION_UNIT;
           KeyValue keyValue = new KeyValue(
               rowKey,
               familyNameBytes,
