@@ -16,15 +16,11 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 /**
@@ -32,71 +28,7 @@ import com.google.common.base.Preconditions;
  */
 public class StreamingBigtableResultScanner extends AbstractBigtableResultScanner {
 
-  /**
-   * Helper to read a queue of ResultQueueEntries and use the RowMergers to reconstruct
-   * complete Row objects from the partial ReadRowsResponse objects.
-   */
-  protected static class ResponseQueueReader {
-    private final BlockingQueue<ResultQueueEntry<ReadRowsResponse>> resultQueue;
-    private final int readPartialRowTimeoutMillis;
-    private boolean lastResponseProcessed = false;
-
-    public ResponseQueueReader(
-        BlockingQueue<ResultQueueEntry<ReadRowsResponse>> resultQueue,
-        int readPartialRowTimeoutMillis) {
-      this.resultQueue = resultQueue;
-      this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
-    }
-
-    /**
-     * Get the next complete Row object from the response queue.
-     * @return Optional.absent() if end-of-stream, otherwise a complete Row.
-     * @throws IOException On errors.
-     */
-    public Optional<Row> getNextMergedRow() throws IOException {
-      ResultQueueEntry<ReadRowsResponse> queueEntry;
-      RowMerger builder = null;
-
-      while (!lastResponseProcessed) {
-        try {
-          queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw new IOException("Interrupted while waiting for next result", e);
-        }
-        if (queueEntry == null) {
-          throw new ScanTimeoutException("Timeout while merging responses.");
-        }
-
-        if (queueEntry.isCompletionMarker()) {
-          lastResponseProcessed = true;
-          break;
-        }
-
-        ReadRowsResponse partialRow = queueEntry.getResponseOrThrow();
-        if (builder == null) {
-          builder = new RowMerger();
-        }
-
-        builder.addPartialRow(partialRow);
-
-        if (builder.isRowCommitted()) {
-          return Optional.of(builder.buildRow());
-        }
-      }
-
-      Preconditions.checkState(
-          builder == null,
-          "End of stream marker encountered while merging a row.");
-      Preconditions.checkState(
-          lastResponseProcessed,
-          "Should only exit merge loop with by returning a complete Row or hitting end of stream.");
-      return Optional.absent();
-    }
-  }
-
   private final CancellationToken cancellationToken;
-  private final BlockingQueue<ResultQueueEntry<ReadRowsResponse>> resultQueue;
   private final ResponseQueueReader responseQueueReader;
   private final PooledChannel reservedChannel;
 
@@ -107,13 +39,12 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
     Preconditions.checkArgument(capacity > 0, "capacity must be a positive integer");
     this.reservedChannel = reservedChannel;
     this.cancellationToken = cancellationToken;
-    this.resultQueue = new LinkedBlockingQueue<>(capacity);
-    this.responseQueueReader = new ResponseQueueReader(resultQueue, readPartialRowTimeoutMillis);
+    this.responseQueueReader = new ResponseQueueReader(capacity, readPartialRowTimeoutMillis);
   }
 
   private void add(ResultQueueEntry<ReadRowsResponse> entry) {
     try {
-      resultQueue.put(entry);
+      responseQueueReader.add(entry);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
@@ -136,17 +67,12 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
 
   @Override
   public Row next() throws IOException {
-    Optional<Row> next = responseQueueReader.getNextMergedRow();
-    if (next.isPresent()) {
-      return next.get();
-    } else {
-      return null;
-    }
+    return responseQueueReader.getNextMergedRow();
   }
 
   @Override
   public int available() {
-    return resultQueue.size();
+    return responseQueueReader.available();
   }
 
   @Override
