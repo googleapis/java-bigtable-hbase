@@ -51,6 +51,7 @@ public class BigtableOptionsFactory {
   public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
   public static final String ZONE_KEY = "google.bigtable.zone.name";
 
+
   /**
    * If set, bypass DNS host lookup and use the given IP address.
    */
@@ -109,12 +110,18 @@ public class BigtableOptionsFactory {
    */
   public static final String MAX_ELAPSED_BACKOFF_MILLIS_KEY =
       "google.bigtable.grpc.retry.max.elapsed.backoff.ms";
- 
+
   /**
    * Key to set the amount of time to wait when reading a partial row.
    */
   public static final String READ_PARTIAL_ROW_TIMEOUT_MS =
       "google.bigtable.grpc.read.partial.row.timeout.ms";
+
+  /**
+   * Key to set the number of buffered read row responses (scanned rows) to read from gRPC.
+   */
+  public static final String STREMING_ROW_BUFFER_SIZE =
+      "google.bigtable.grpc.sreaming.buffer.capacity";
 
   /**
    * The number of grpc channels to open for asynchronous processing such as puts.
@@ -256,6 +263,11 @@ public class BigtableOptionsFactory {
         READ_PARTIAL_ROW_TIMEOUT_MS, RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS);
     LOG.debug("gRPC read partial row timeout (millis): %d", readPartialRowTimeoutMillis);
     retryOptionsBuilder.setReadPartialRowTimeoutMillis(readPartialRowTimeoutMillis);
+
+    int streamingBufferSize = configuration.getInt(
+      STREMING_ROW_BUFFER_SIZE, RetryOptions.DEFAULT_STREAMING_BUFFER_SIZE);
+    LOG.debug("gRPC streaming buffer size (count): %d", streamingBufferSize);
+    retryOptionsBuilder.setStreamingBufferSize(streamingBufferSize);
 
     return retryOptionsBuilder.build();
   }
