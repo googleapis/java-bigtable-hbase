@@ -15,9 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.util.concurrent.FutureCallback;
@@ -34,7 +38,8 @@ public class HeapSizeManager {
   // Flush is not properly synchronized with respect to waiting. It will never exit
   // improperly, but it might wait more than it has to. Setting this to a low value ensures
   // that improper waiting is minimal.
-  private static final long WAIT_MILLIS = 250;
+  private static final long FINISH_WAIT_MILLIS = 250;
+  private static final long REGISTER_WAIT_MILLIS = 5;
 
   // In flush, wait up to this number of milliseconds without any operations completing.  If
   // this amount of time goes by without any updates, flush will log a warning.  Flush()
@@ -42,17 +47,16 @@ public class HeapSizeManager {
   private static final long INTERVAL_NO_SUCCESS_WARNING = 300000;
   private final long maxHeapSize;
   private final int maxInFlightRpcs;
-  private final ExecutorService heapSizeExecutor;
   private final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
+  private final LinkedBlockingDeque<Long> completedOperationIds = new LinkedBlockingDeque<>();
 
   private long currentWriteBufferSize = 0;
-  private long operationSequenceGenerator = 0;
+  private AtomicLong operationSequenceGenerator = new AtomicLong();
   private long lastOperationChange = System.currentTimeMillis();
 
-  public HeapSizeManager(long maxHeapSize, int maxInflightRpcs, ExecutorService heapSizeExecutor) {
+  public HeapSizeManager(long maxHeapSize, int maxInflightRpcs) {
     this.maxHeapSize = maxHeapSize;
     this.maxInFlightRpcs = maxInflightRpcs;
-    this.heapSizeExecutor = heapSizeExecutor;
   }
 
   public long getMaxHeapSize() {
@@ -62,6 +66,10 @@ public class HeapSizeManager {
   public synchronized void waitUntilAllOperationsAreDone() throws InterruptedException {
     boolean performedWarning = false;
     while(!pendingOperationsWithSize.isEmpty()) {
+      cleanupFinishedOperations();
+      if (pendingOperationsWithSize.isEmpty()) {
+        break;
+      }
       if (!performedWarning
           && lastOperationChange + INTERVAL_NO_SUCCESS_WARNING < System.currentTimeMillis()) {
         long lastUpdated = (System.currentTimeMillis() - lastOperationChange) / 1000;
@@ -69,19 +77,27 @@ public class HeapSizeManager {
             + "There are still %d operations in progress.", lastUpdated,
           pendingOperationsWithSize.size());
         performedWarning = true;
+        waitForCompletions(FINISH_WAIT_MILLIS);
       }
-      wait(WAIT_MILLIS);
     }
     if (performedWarning) {
       LOG.info("flush() completed");
     }
   }
 
+
+  private void cleanupFinishedOperations() {
+    List<Long> toClean = new ArrayList<>();
+    completedOperationIds.drainTo(toClean);
+    if (!toClean.isEmpty()) {
+      markOperationsCompleted(toClean);
+    }
+  }
   public synchronized long registerOperationWithHeapSize(long heapSize)
       throws InterruptedException {
-    long operationId = ++operationSequenceGenerator;
-    while (isFull()) {
-      wait(WAIT_MILLIS);
+    long operationId = operationSequenceGenerator.incrementAndGet();
+    while (unsynchronizedIsFull()) {
+      waitForCompletions(REGISTER_WAIT_MILLIS);
     }
 
     lastOperationChange = System.currentTimeMillis();
@@ -90,17 +106,50 @@ public class HeapSizeManager {
     return operationId;
   }
 
-  public boolean isFull() {
+  /**
+   * Waits for a completion and then marks it as complete.
+   */
+  private void waitForCompletions(long timeoutMs) {
+    try {
+      Long completedOperation =
+          this.completedOperationIds.pollFirst(timeoutMs, TimeUnit.MILLISECONDS);
+      if (completedOperation != null) {
+        markCanBeCompleted(completedOperation);
+      }
+    } catch (InterruptedException e) {
+    }
+  }
+
+  public synchronized boolean isFull() {
+    return unsynchronizedIsFull();
+  }
+
+  private boolean unsynchronizedIsFull() {
+    if (!isFullInternal()) {
+      return false;
+    }
+    // If we're not full, don't worry about cleaning up just yet.
+    cleanupFinishedOperations();
+    return isFullInternal();
+  }
+
+  private boolean isFullInternal() {
     return currentWriteBufferSize >= maxHeapSize
         || pendingOperationsWithSize.size() >= maxInFlightRpcs;
   }
 
-  public synchronized void markOperationCompleted(long operationSequenceId) {
+  private synchronized void markOperationsCompleted(List<Long> operationSequenceIds) {
+    for (Long operationSequenceId : operationSequenceIds) {
+      markOperationComplete(operationSequenceId);
+    }
     lastOperationChange = System.currentTimeMillis();
+    notifyAll();
+  }
+
+  private void markOperationComplete(Long operationSequenceId) {
     Long heapSize = pendingOperationsWithSize.remove(operationSequenceId);
     if (heapSize != null) {
       currentWriteBufferSize -= heapSize;
-      notifyAll();
     } else {
       LOG.warn("An operation completion was recieved multiple times. Your operations completed."
           + " Please notify Google that this occurred.");
@@ -108,6 +157,7 @@ public class HeapSizeManager {
   }
 
   public synchronized boolean hasInflightRequests() {
+    cleanupFinishedOperations();
     return !pendingOperationsWithSize.isEmpty();
   }
 
@@ -115,18 +165,23 @@ public class HeapSizeManager {
     return currentWriteBufferSize;
   }
 
-  public <T> void addCallback(ListenableFuture<T> future, final long id) {
+  public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, final Long id) {
     FutureCallback<T> callback = new FutureCallback<T>() {
       @Override
       public void onSuccess(T result) {
-        markOperationCompleted(id);
+        markCanBeCompleted(id);
       }
 
       @Override
       public void onFailure(Throwable t) {
-        markOperationCompleted(id);
+        markCanBeCompleted(id);
       }
     };
-    Futures.addCallback(future, callback, heapSizeExecutor);
+    Futures.addCallback(future, callback);
+    return callback;
+  }
+
+  public void markCanBeCompleted(Long id) {
+    completedOperationIds.offer(id);
   }
 }

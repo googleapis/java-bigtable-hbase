@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
 import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -29,8 +30,6 @@ import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.MoreExecutors;
 
 import org.apache.hadoop.conf.Configuration;
@@ -47,7 +46,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -145,8 +143,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
     BigtableDataClient client = session.getDataClient();
     AsyncExecutor asyncExecutor =
-        new AsyncExecutor(client, AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT,
-            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT, pool);
+        new AsyncExecutor(client, new HeapSizeManager(AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT,
+            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT));
     HBaseRequestAdapter adapter = createAdapter(tableName);
     BatchExecutor batchExecutor =
         new BatchExecutor(asyncExecutor, options, MoreExecutors.listeningDecorator(pool), adapter);
@@ -159,12 +157,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     if (tableName == null) {
       throw new IllegalArgumentException("TableName cannot be null.");
     }
-    ExecutorService pool = params.getPool();
-    if (pool == null) {
-      pool = getBatchPool();
-      params.pool(pool);
-    }
-    if (params.getWriteBufferSize() == BufferedMutatorParams.UNSET) {
+    long maxHeapSize = params.getWriteBufferSize();
+    if (maxHeapSize == BufferedMutatorParams.UNSET) {
       params.writeBufferSize(tableConfig.getWriteBufferSize());
     }
 
@@ -173,27 +167,17 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
 
-    final ExecutorService heapSizeExecutor = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder()
-          .setNameFormat("heapSize-async-%s")
-          .setDaemon(true)
-          .build());
-
     BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(
         session.getDataClient(),
         createAdapter(tableName),
         conf,
-        maxInflightRpcs,
-        params.getWriteBufferSize(),
         options.getDataHost().toString(),
         params.getListener(),
-        heapSizeExecutor){
-
+        new HeapSizeManager(maxHeapSize, maxInflightRpcs)) {
       @Override
       public void close() throws IOException {
         try {
           super.close();
-          heapSizeExecutor.shutdownNow();
         } finally {
           ACTIVE_BUFFERED_MUTATORS.remove(id);
         }

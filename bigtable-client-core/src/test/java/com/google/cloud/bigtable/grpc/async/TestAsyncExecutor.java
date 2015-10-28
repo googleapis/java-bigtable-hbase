@@ -16,8 +16,6 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.same;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -38,17 +36,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 
 /**
@@ -64,24 +59,27 @@ public class TestAsyncExecutor {
   @SuppressWarnings("rawtypes")
   @Mock
   private ListenableFuture future;
-  private List<Runnable> futureRunnables = new ArrayList<>();
 
   private AsyncExecutor underTest;
-
-  private ExecutorService heapSizeExecutorService = MoreExecutors.newDirectExecutorService();
+  private HeapSizeManager heapSizeManager;
+  private List<FutureCallback<?>> callbacks;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    futureRunnables.clear();
-    doAnswer(new Answer<Void>() {
+    callbacks = new ArrayList<>();
+    heapSizeManager = new HeapSizeManager(1000, 10){
       @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        futureRunnables.add((Runnable)invocation.getArguments()[0]);
-        return null;
+      public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, Long id) {
+        FutureCallback<T> callback = super.addCallback(future, id);
+        synchronized (callbacks) {
+          callbacks.add(callback);
+        }
+        return callback;
       }
-    }).when(future).addListener(any(Runnable.class), same(heapSizeExecutorService));
-    underTest = new AsyncExecutor(client, 10, 1000, heapSizeExecutorService);
+    };
+
+    underTest = new AsyncExecutor(client, heapSizeManager);
   }
 
   @Test
@@ -158,10 +156,10 @@ public class TestAsyncExecutor {
           return null;
         }
       });
-      Thread.sleep(10);
+      Thread.sleep(50);
       Assert.assertFalse(eleventRpcInvoked.get());
       completeCall();
-      Thread.sleep(10);
+      Thread.sleep(50);
       Assert.assertTrue(eleventRpcInvoked.get());
     } finally {
       testExecutor.shutdownNow();
@@ -190,13 +188,13 @@ public class TestAsyncExecutor {
         }
       });
       try {
-        future.get(100, TimeUnit.MILLISECONDS);
+        future.get(50, TimeUnit.MILLISECONDS);
         Assert.fail("The future.get() call should timeout.");
       } catch(TimeoutException expected) {
         // Expected Exception.
       }
       completeCall();
-      future.get(100, TimeUnit.MILLISECONDS);
+      future.get(50, TimeUnit.MILLISECONDS);
       Assert.assertTrue(newRpcInvoked.get());
     } finally {
       testExecutor.shutdownNow();
@@ -204,12 +202,11 @@ public class TestAsyncExecutor {
   }
 
   private void completeCall() {
-    // futureRunnables can be updated asynchronously as the current batch of Runnables
-    // completes requests and releases locks.
-    List<Runnable> copy = Lists.newArrayList(futureRunnables);
-    futureRunnables.clear();
-    for (Runnable runnable : copy) {
-      runnable.run();
+    synchronized (callbacks) {
+      for (FutureCallback<?> fc : callbacks) {
+        fc.onSuccess(null);
+      }
+      callbacks.clear();
     }
   }
 }
