@@ -26,7 +26,7 @@ import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Builder;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
-import com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.util.ByteStringer;
 
 /**
  * An adapter for row key filters using comparators and operators. 
@@ -53,12 +53,11 @@ public class RowFilterAdapter implements
     if (comparator == null) {
       throw new IllegalStateException("Comparator cannot be null"); 
     } else if (comparator instanceof RegexStringComparator) {
-      ByteString rawValue = ByteString.copyFrom(comparator.getValue());
-      builder.setRowKeyRegexFilter(rawValue);
+      builder.setRowKeyRegexFilter(ByteStringer.wrap(comparator.getValue()));
     } else if (comparator instanceof BinaryComparator) {
       byte[] quotedRegularExpression =
           ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
-      builder.setRowKeyRegexFilter(ByteString.copyFrom(quotedRegularExpression));
+      builder.setRowKeyRegexFilter(ByteStringer.wrap(quotedRegularExpression));
     } else {
       throw new IllegalStateException(String.format("Cannot adapt comparator %s", comparator
           .getClass().getCanonicalName()));

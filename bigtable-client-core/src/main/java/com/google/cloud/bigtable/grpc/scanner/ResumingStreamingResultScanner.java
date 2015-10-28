@@ -16,6 +16,9 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import io.grpc.Status;
+
+import java.io.IOException;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
@@ -27,12 +30,9 @@ import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
-
-import io.grpc.Status;
-
-import java.io.IOException;
 
 
 /**
@@ -43,7 +43,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
   private static final Logger LOG = new Logger(ResumingStreamingResultScanner.class);
 
-  private static final ByteString NEXT_ROW_SUFFIX = ByteString.copyFrom(new byte[]{0x00});
+  private static final ByteString NEXT_ROW_SUFFIX = ByteStringer.wrap(new byte[]{0x00});
   private final BigtableResultScannerFactory scannerFactory;
 
   /**

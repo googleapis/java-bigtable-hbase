@@ -37,17 +37,9 @@ public class ByteStringer {
    * Wraps a byte array in a {@link ByteString} without copying it.
    */
   public static ByteString wrap(final byte[] array) {
-    return USE_ZEROCOPYBYTESTRING? BigtableZeroCopyByteStringUtil.wrap(array): ByteString.copyFrom(array);
+    return USE_ZEROCOPYBYTESTRING ? BigtableZeroCopyByteStringUtil.wrap(array) : ByteString
+        .copyFrom(array);
   }
-  
-  /**
-   * Wraps a subset of a byte array in a {@link ByteString} without copying it.
-   */
-  public static ByteString wrap(final byte[] array, int offset, int length) {
-    return USE_ZEROCOPYBYTESTRING? BigtableZeroCopyByteStringUtil.wrap(array, offset, length):
-      ByteString.copyFrom(array, offset, length);
-  }
-
 
   public static byte[] extract(ByteString buf) {
     return USE_ZEROCOPYBYTESTRING ? BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(buf) : buf

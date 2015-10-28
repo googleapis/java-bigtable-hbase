@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v1.ColumnRange;
 import com.google.bigtable.v1.RowFilter;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -43,14 +44,14 @@ public class ColumnRangeFilterAdapter implements TypedFilterAdapter<ColumnRangeF
     ColumnRange.Builder rangeBuilder = ColumnRange.newBuilder();
     rangeBuilder.setFamilyName(Bytes.toString(familyName));
 
-    ByteString startQualifier = ByteString.copyFrom(filter.getMinColumn());
+    ByteString startQualifier = ByteStringer.wrap(filter.getMinColumn());
     if (filter.getMinColumnInclusive()) {
       rangeBuilder.setStartQualifierInclusive(startQualifier);
     } else {
       rangeBuilder.setStartQualifierExclusive(startQualifier);
     }
 
-    ByteString endQualifier = ByteString.copyFrom(filter.getMaxColumn());
+    ByteString endQualifier = ByteStringer.wrap(filter.getMaxColumn());
     if (filter.getMaxColumnInclusive()) {
       rangeBuilder.setEndQualifierInclusive(endQualifier);
     } else {

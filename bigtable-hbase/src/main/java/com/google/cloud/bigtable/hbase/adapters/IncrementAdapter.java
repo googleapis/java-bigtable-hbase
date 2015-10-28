@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRule;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -44,7 +45,7 @@ public class IncrementAdapter
 
     ReadModifyWriteRowRequest.Builder result = ReadModifyWriteRowRequest.newBuilder();
 
-    result.setRowKey(ByteString.copyFrom(operation.getRow()));
+    result.setRowKey(ByteStringer.wrap(operation.getRow()));
 
     for (Map.Entry<byte[], NavigableMap<byte[], Long>> familyEntry :
         operation.getFamilyMapOfLongs().entrySet()) {
