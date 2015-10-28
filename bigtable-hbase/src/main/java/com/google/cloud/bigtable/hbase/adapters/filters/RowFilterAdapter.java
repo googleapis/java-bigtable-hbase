@@ -17,11 +17,15 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import java.io.IOException;
 
+import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Builder;
+import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
 import com.google.protobuf.ByteString;
 
 /**
@@ -37,16 +41,27 @@ public class RowFilterAdapter implements
   TypedFilterAdapter<org.apache.hadoop.hbase.filter.RowFilter> {
 
   @Override
-  public RowFilter adapt(FilterAdapterContext context, 
-      org.apache.hadoop.hbase.filter.RowFilter filter)
-      throws IOException {
+  public RowFilter adapt(FilterAdapterContext context,
+      org.apache.hadoop.hbase.filter.RowFilter filter) throws IOException {
+    CompareOp compareOp = filter.getOperator();
+    if (compareOp != CompareFilter.CompareOp.EQUAL) {
+      throw new IllegalStateException(String.format("Cannot adapt operator %s",
+        compareOp == null ? null : compareOp.getClass().getCanonicalName()));
+    }
+    ByteArrayComparable comparator = filter.getComparator();
     Builder builder = RowFilter.newBuilder();
-    if (filter.getOperator() == CompareFilter.CompareOp.EQUAL && 
-        filter.getComparator() != null && 
-        filter.getComparator() instanceof RegexStringComparator) {
-      ByteString rawValue = ByteString.copyFrom(
-          filter.getComparator().getValue());
+    if (comparator == null) {
+      throw new IllegalStateException("Comparator cannot be null"); 
+    } else if (comparator instanceof RegexStringComparator) {
+      ByteString rawValue = ByteString.copyFrom(comparator.getValue());
       builder.setRowKeyRegexFilter(rawValue);
+    } else if (comparator instanceof BinaryComparator) {
+      byte[] quotedRegularExpression =
+          ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
+      builder.setRowKeyRegexFilter(ByteString.copyFrom(quotedRegularExpression));
+    } else {
+      throw new IllegalStateException(String.format("Cannot adapt comparator %s", comparator
+          .getClass().getCanonicalName()));
     }
     return builder.build();
   }
@@ -55,14 +70,14 @@ public class RowFilterAdapter implements
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, 
       org.apache.hadoop.hbase.filter.RowFilter filter) {
-    if (!(filter.getComparator() instanceof RegexStringComparator)) {
-      return FilterSupportStatus.newNotSupported(
-          filter.getComparator().getClass().getName() 
-          + " comparators are not supported");
+    ByteArrayComparable comparator = filter.getComparator();
+    if (!(comparator instanceof RegexStringComparator) && !(comparator instanceof BinaryComparator)) {
+      return FilterSupportStatus.newNotSupported(comparator.getClass().getName()
+          + " comparator is not supported");
     }
     if (filter.getOperator() != CompareFilter.CompareOp.EQUAL) {
-      return FilterSupportStatus.newNotSupported(
-          filter.getOperator() + " operators are not supported");
+      return FilterSupportStatus.newNotSupported(filter.getOperator()
+          + " operator is not supported");
     }
     return FilterSupportStatus.SUPPORTED;
   }
