@@ -42,7 +42,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
   @Override
   public MutateRowRequest.Builder adapt(Put operation) {
     MutateRowRequest.Builder result = MutateRowRequest.newBuilder();
-    result.setRowKey(ByteString.copyFrom(operation.getRow()));
+    result.setRowKey(ByteStringer.wrap(operation.getRow()));
 
     if (operation.isEmpty()) {
       throw new IllegalArgumentException("No columns to insert");
@@ -65,7 +65,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
         Mutation.Builder modBuilder = result.addMutationsBuilder();
         Builder setCellBuilder = modBuilder.getSetCellBuilder();
 
-        ByteString cellQualifierByteString = ByteStringer.wrap(
+        ByteString cellQualifierByteString = ByteString.copyFrom(
             cell.getQualifierArray(),
             cell.getQualifierOffset(),
             cell.getQualifierLength());
@@ -83,7 +83,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
         }
 
         setCellBuilder.setValue(
-            ByteStringer.wrap(
+            ByteString.copyFrom(
                 cell.getValueArray(),
                 cell.getValueOffset(),
                 cell.getValueLength()));

@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class BigtableConstants {
    * Byte string of the column family and column name separator for Bigtable.
    */
   public static final ByteString BIGTABLE_COLUMN_SEPARATOR_BYTE_STRING =
-      ByteString.copyFrom(new byte[] {BIGTABLE_COLUMN_SEPARATOR_BYTE});
+      ByteStringer.wrap(new byte[] {BIGTABLE_COLUMN_SEPARATOR_BYTE});
 
   /**
    * TimeUnit in which HBase clients expects messages to be sent and received.

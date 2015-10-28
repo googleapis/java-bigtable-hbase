@@ -16,11 +16,11 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.protobuf.ByteString;
-
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RowMutations;
+
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.cloud.bigtable.util.ByteStringer;
 
 /**
  * An adapter that adapts a {@link RowMutations} object into an Bigtable
@@ -39,7 +39,7 @@ public class RowMutationsAdapter {
   public MutateRowRequest.Builder adapt(RowMutations mutations) {
     MutateRowRequest.Builder result = MutateRowRequest.newBuilder();
 
-    result.setRowKey(ByteString.copyFrom(mutations.getRow()));
+    result.setRowKey(ByteStringer.wrap(mutations.getRow()));
 
     for (Mutation mutation : mutations.getMutations()) {
       MutateRowRequest.Builder bigtableBuilder = mutationAdapter.adapt(mutation);

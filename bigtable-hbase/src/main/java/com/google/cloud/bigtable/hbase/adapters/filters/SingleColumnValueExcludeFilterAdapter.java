@@ -15,17 +15,18 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.ColumnRange;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
-import com.google.bigtable.v1.RowFilter.Interleave;
-import com.google.protobuf.ByteString;
+import java.io.IOException;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.IOException;
+import com.google.bigtable.v1.ColumnRange;
+import com.google.bigtable.v1.RowFilter;
+import com.google.bigtable.v1.RowFilter.Chain;
+import com.google.bigtable.v1.RowFilter.Interleave;
+import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.protobuf.ByteString;
 
 /**
  * Adapter for the {@link org.apache.hadoop.hbase.filter.SingleColumnValueFilter}
@@ -61,7 +62,7 @@ public class SingleColumnValueExcludeFilterAdapter
   private RowFilter makeExcludeMatchColumnFilter(
       Scan scan, SingleColumnValueExcludeFilter filter) {
     String family = Bytes.toString(scan.getFamilies()[0]);
-    ByteString qualifier = ByteString.copyFrom(filter.getQualifier());
+    ByteString qualifier = ByteStringer.wrap(filter.getQualifier());
     return RowFilter.newBuilder()
         .setInterleave(
             Interleave.newBuilder()

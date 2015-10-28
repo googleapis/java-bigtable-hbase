@@ -15,21 +15,22 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.Mutation;
-import com.google.bigtable.v1.Mutation.Builder;
-import com.google.bigtable.v1.Mutation.DeleteFromFamily;
-import com.google.bigtable.v1.Mutation.DeleteFromRow;
-import com.google.cloud.bigtable.hbase.BigtableConstants;
-import com.google.protobuf.ByteString;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 
-import java.util.List;
-import java.util.Map;
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.Mutation;
+import com.google.bigtable.v1.Mutation.Builder;
+import com.google.bigtable.v1.Mutation.DeleteFromFamily;
+import com.google.bigtable.v1.Mutation.DeleteFromRow;
+import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.protobuf.ByteString;
 
 /**
  * Adapt a single Delete operation to a Bigtable RowMutation
@@ -131,7 +132,7 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
   @Override
   public MutateRowRequest.Builder adapt(Delete operation) {
     MutateRowRequest.Builder result = MutateRowRequest.newBuilder();
-    result.setRowKey(ByteString.copyFrom(operation.getRow()));
+    result.setRowKey(ByteStringer.wrap(operation.getRow()));
 
     if (operation.getFamilyCellMap().isEmpty()) {
       throwIfUnsupportedDeleteRow(operation);
@@ -140,7 +141,7 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
     } else {
       for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
 
-        ByteString familyByteString = ByteString.copyFrom(entry.getKey());
+        ByteString familyByteString = ByteStringer.wrap(entry.getKey());
 
         for (Cell cell : entry.getValue()) {
           if (isColumnDelete(cell) || isPointDelete(cell)) {

@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v1.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
-import com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.util.ByteStringer;
 
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 
@@ -42,9 +42,7 @@ public class ColumnPrefixFilterAdapter implements TypedFilterAdapter<ColumnPrefi
     outputStream.write(ReaderExpressionHelper.ALL_QUALIFIERS_BYTES);
 
     return RowFilter.newBuilder()
-        .setColumnQualifierRegexFilter(
-            ByteString.copyFrom(
-                outputStream.toByteArray()))
+        .setColumnQualifierRegexFilter(ByteStringer.wrap(outputStream.toByteArray()))
         .build();
   }
 

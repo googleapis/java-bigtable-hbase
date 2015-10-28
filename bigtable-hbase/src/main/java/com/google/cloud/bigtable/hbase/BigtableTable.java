@@ -64,9 +64,9 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
@@ -599,7 +599,7 @@ public class BigtableTable implements Table {
 
     requestBuilder.setTableName(hbaseAdapter.getBigtableTableName().toString());
 
-    requestBuilder.setRowKey(ByteString.copyFrom(row));
+    requestBuilder.setRowKey(ByteStringer.wrap(row));
     Scan scan = new Scan().addColumn(family, qualifier);
     scan.setMaxVersions(1);
     if (value == null) {

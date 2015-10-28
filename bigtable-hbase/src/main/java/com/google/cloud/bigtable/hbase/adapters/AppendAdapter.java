@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRule;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -34,7 +35,7 @@ public class AppendAdapter implements OperationAdapter<Append, ReadModifyWriteRo
   @Override
   public ReadModifyWriteRowRequest.Builder adapt(Append operation) {
     ReadModifyWriteRowRequest.Builder result = ReadModifyWriteRowRequest.newBuilder();
-    result.setRowKey(ByteString.copyFrom(operation.getRow()));
+    result.setRowKey(ByteStringer.wrap(operation.getRow()));
 
     for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()){
       String familyName = Bytes.toString(entry.getKey());

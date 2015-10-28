@@ -26,7 +26,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.bigtable.v1.RowFilter.Condition;
-import com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.util.ByteStringer;
 
 /**
  * Adapt SingleColumnValueFilter instances into bigtable RowFilters.
@@ -69,7 +69,7 @@ public class SingleColumnValueFilterAdapter implements TypedFilterAdapter<Single
                     Bytes.toString(quoteRegularExpression(filter.getFamily()))))
             .addFilters(RowFilter.newBuilder()
                 .setColumnQualifierRegexFilter(
-                    ByteString.copyFrom(quoteRegularExpression(filter.getQualifier()))))
+                    ByteStringer.wrap(quoteRegularExpression(filter.getQualifier()))))
             .addFilters(createVersionLimitFilter(filter)))
         .build();
   }

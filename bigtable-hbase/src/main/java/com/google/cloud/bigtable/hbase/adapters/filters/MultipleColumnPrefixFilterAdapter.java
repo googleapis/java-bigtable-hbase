@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
-import com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.util.ByteStringer;
 
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 
@@ -49,8 +49,7 @@ public class MultipleColumnPrefixFilterAdapter
 
       RowFilter.Builder singlePrefixBuilder = RowFilter.newBuilder();
       singlePrefixBuilder.setColumnQualifierRegexFilter(
-          ByteString.copyFrom(
-              outputStream.toByteArray()));
+            ByteStringer.wrap(outputStream.toByteArray()));
 
       interleaveBuilder.addFilters(singlePrefixBuilder);
     }
