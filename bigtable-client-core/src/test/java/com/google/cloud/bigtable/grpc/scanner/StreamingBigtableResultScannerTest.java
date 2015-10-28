@@ -435,7 +435,7 @@ public class StreamingBigtableResultScannerTest {
   }
 
   @Test
-  public void readTimeoutOnPartialRows() throws IOException, InterruptedException {
+  public void readTimeoutOnPartialRows() throws IOException {
     CancellationToken cancellationToken = new CancellationToken();
     try (final StreamingBigtableResultScanner scanner =
         new StreamingBigtableResultScanner(channel, 10, 10 /* timeout millis */, cancellationToken)) {

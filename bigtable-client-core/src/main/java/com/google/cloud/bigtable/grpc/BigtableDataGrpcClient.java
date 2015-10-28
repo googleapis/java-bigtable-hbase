@@ -279,6 +279,9 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         request,
         new ReadRowsStreamObserver(resultScanner));
 
+    // ClientCalls does this as well.  This will ensure that there are always 2 ongoing requests.
+    readRowsCall.request(1);
+
     return resultScanner;
   }
 }
