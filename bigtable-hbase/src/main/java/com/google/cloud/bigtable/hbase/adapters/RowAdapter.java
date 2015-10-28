@@ -20,6 +20,7 @@ import com.google.bigtable.v1.Column;
 import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.util.ByteStringer;
 
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
@@ -39,13 +40,13 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
     }
 
     SortedSet<org.apache.hadoop.hbase.Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);
-    byte[] rowKey = response.getKey().toByteArray();
+    byte[] rowKey = ByteStringer.extract(response.getKey());
 
     for (Family family : response.getFamiliesList()) {
       byte[] familyNameBytes = Bytes.toBytes(family.getName());
 
       for (Column column : family.getColumnsList()) {
-        byte[] columnQualifier = column.getQualifier().toByteArray();
+        byte[] columnQualifier = ByteStringer.extract(column.getQualifier());
 
         for (Cell cell : column.getCellsList()) {
           // Cells with labels are for internal use, do not return them.
@@ -64,7 +65,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
               familyNameBytes,
               columnQualifier,
               hbaseTimestamp,
-              cell.getValue().toByteArray());
+              ByteStringer.extract(cell.getValue()));
 
           hbaseCells.add(keyValue);
         }
