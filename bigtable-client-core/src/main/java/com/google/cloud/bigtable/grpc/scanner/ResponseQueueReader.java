@@ -29,6 +29,7 @@ import com.google.common.base.Preconditions;
  * complete Row objects from the partial ReadRowsResponse objects.
  */
 class ResponseQueueReader {
+  private static final long OFFER_WAIT_SECONDS = 5;
   private final BlockingQueue<ResultQueueEntry<ReadRowsResponse>> resultQueue;
   private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
@@ -94,6 +95,6 @@ class ResponseQueueReader {
   }
 
   public void add(ResultQueueEntry<ReadRowsResponse> entry) throws InterruptedException {
-    resultQueue.put(entry);
+    resultQueue.offer(entry, OFFER_WAIT_SECONDS, TimeUnit.SECONDS);
   }
 }
