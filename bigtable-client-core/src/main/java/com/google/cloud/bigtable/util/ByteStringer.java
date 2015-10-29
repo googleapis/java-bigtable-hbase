@@ -11,12 +11,12 @@ import org.apache.commons.logging.LogFactory;
  */
 public class ByteStringer {
   private static final Log LOG = LogFactory.getLog(ByteStringer.class);
-  
+
   /**
    * Flag set at class loading time.
    */
   private static boolean USE_ZEROCOPYBYTESTRING = true;
-  
+
   // Can I classload HBaseZeroCopyByteString without IllegalAccessError?
   // If we can, use it passing ByteStrings to pb else use native ByteString though more costly
   // because it makes a copy of the passed in array.
@@ -28,26 +28,17 @@ public class ByteStringer {
       LOG.debug("Failed to classload BigtableZeroCopyByteString: " + iae.toString());
     }
   }
-  
+
   private ByteStringer() {
     super();
   }
-  
+
   /**
    * Wraps a byte array in a {@link ByteString} without copying it.
    */
   public static ByteString wrap(final byte[] array) {
     return USE_ZEROCOPYBYTESTRING? BigtableZeroCopyByteStringUtil.wrap(array): ByteString.copyFrom(array);
   }
-  
-  /**
-   * Wraps a subset of a byte array in a {@link ByteString} without copying it.
-   */
-  public static ByteString wrap(final byte[] array, int offset, int length) {
-    return USE_ZEROCOPYBYTESTRING? BigtableZeroCopyByteStringUtil.wrap(array, offset, length):
-      ByteString.copyFrom(array, offset, length);
-  }
-
 
   public static byte[] extract(ByteString buf) {
     return USE_ZEROCOPYBYTESTRING ? BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(buf) : buf
