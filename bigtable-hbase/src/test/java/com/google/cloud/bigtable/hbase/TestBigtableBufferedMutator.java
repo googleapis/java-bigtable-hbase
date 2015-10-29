@@ -126,8 +126,8 @@ public class TestBigtableBufferedMutator {
   }
 
   private void completeCall() {
-    for (FutureCallback<?> callbacks : callbacks) {
-      callbacks.onSuccess(null);
+    for (FutureCallback<?> callback : callbacks) {
+      callback.onSuccess(null);
     }
   }
 }
