@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +16,15 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
+import io.grpc.Metadata;
 import io.grpc.stub.ClientCalls;
 import io.grpc.stub.StreamObserver;
 
 import java.util.Iterator;
 
 import com.google.cloud.bigtable.grpc.async.AsyncUnaryOperationObserver;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
@@ -32,6 +35,8 @@ public interface ClientCallService {
   <ReqT, RespT> void asyncServerStreamingCall(ClientCall<ReqT, RespT> call,
       ReqT request, StreamObserver<RespT> observer);
 
+  <ReqT, RespT> void asyncServerStreamingCall(ClientCall<ReqT, RespT> call, ReqT request,
+      int initialRequestCount, Listener<RespT> listener);
 
   <ReqT, RespT> Iterator<RespT> blockingServerStreamingCall(ClientCall<ReqT, RespT> call,
       ReqT request);
@@ -44,29 +49,54 @@ public interface ClientCallService {
   ClientCallService DEFAULT = new ClientCallService() {
 
     @Override
-    public <ReqT, RespT> void asyncServerStreamingCall(ClientCall<ReqT, RespT> call,
-        ReqT request, StreamObserver<RespT> observer) {
+    public <ReqT, RespT> void asyncServerStreamingCall(
+        ClientCall<ReqT, RespT> call,
+        ReqT request,
+        StreamObserver<RespT> observer) {
       ClientCalls.asyncServerStreamingCall(call, request, observer);
     }
 
     @Override
-    public <ReqT, RespT> Iterator<RespT> blockingServerStreamingCall(ClientCall<ReqT, RespT> call,
+    public <ReqT, RespT> void asyncServerStreamingCall(
+        ClientCall<ReqT, RespT> call,
+        ReqT request,
+        int initialRequestCount,
+        ClientCall.Listener<RespT> listener){
+      call.start(listener, new Metadata());
+      call.request(1);
+      try {
+        call.sendMessage(request);
+        call.halfClose();
+      } catch (Throwable t) {
+        call.cancel();
+        throw Throwables.propagate(t);
+      }
+      if (initialRequestCount > 1) {
+        call.request(initialRequestCount - 1);
+      }
+    }
+
+    @Override
+    public <ReqT, RespT> Iterator<RespT> blockingServerStreamingCall(
+        ClientCall<ReqT, RespT> call,
         ReqT request) {
       return ClientCalls.blockingServerStreamingCall(call, request);
     }
 
     @Override
-    public <ReqT, RespT> RespT blockingUnaryCall(ClientCall<ReqT, RespT> call, ReqT request) {
+    public <ReqT, RespT> RespT blockingUnaryCall(
+        ClientCall<ReqT, RespT> call,
+        ReqT request) {
       return ClientCalls.blockingUnaryCall(call, request);
     }
 
     @Override
-    public <ReqT, RespT> ListenableFuture<RespT> listenableAsyncCall(ClientCall<ReqT, RespT> call,
+    public <ReqT, RespT> ListenableFuture<RespT> listenableAsyncCall(
+        ClientCall<ReqT, RespT> call,
         ReqT request) {
       AsyncUnaryOperationObserver<RespT> observer = new AsyncUnaryOperationObserver<>();
       ClientCalls.asyncUnaryCall(call, request, observer);
       return observer.getCompletionFuture();
     }
   };
-
 }

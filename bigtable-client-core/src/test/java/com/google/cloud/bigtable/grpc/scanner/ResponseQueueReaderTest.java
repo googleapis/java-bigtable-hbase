@@ -20,32 +20,33 @@ import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.createRead
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.extractRowsWithKeys;
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.generateReadRowsResponses;
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.randomBytes;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import io.grpc.ClientCall;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 import com.google.bigtable.v1.Column;
 import com.google.bigtable.v1.Family;
@@ -96,10 +97,22 @@ public class ResponseQueueReaderTest {
 
   static void addResponsesToReader(
       ResponseQueueReader reader,
-      Iterator<ReadRowsResponse> responses) throws InterruptedException {
-    while (responses.hasNext()) {
-      reader.add(ResultQueueEntry.newResult(responses.next()));
+      ReadRowsResponse... responses) throws InterruptedException {
+    for (ReadRowsResponse response : responses) {
+      reader.add(ResultQueueEntry.newResult(response));
     }
+  }
+
+  static void addResponsesToReader(
+      ResponseQueueReader reader,
+      Iterable<ReadRowsResponse> responses) throws InterruptedException {
+    for (ReadRowsResponse response : responses) {
+      reader.add(ResultQueueEntry.newResult(response));
+    }
+  }
+
+  private void addCompletion(ResponseQueueReader reader) throws InterruptedException {
+    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
   }
 
   static void assertReaderContains(ResponseQueueReader reader, Iterable<Row> rows)
@@ -118,31 +131,41 @@ public class ResponseQueueReaderTest {
   public ExpectedException expectedException = ExpectedException.none();
   private int defaultTimeout = (int) TimeUnit.MILLISECONDS.convert(10, TimeUnit.SECONDS);
 
+  ClientCall<?, ReadRowsResponse> call;
+
+  @SuppressWarnings("unchecked")
+  @Before
+  public void setup() {
+    call = Mockito.mock(ClientCall.class);
+  }
 
   @Test
   public void resultsAreReadable() throws Exception {
-    ResponseQueueReader reader = new ResponseQueueReader(10, defaultTimeout);
+    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
     List<ReadRowsResponse> responses =
         generateReadRowsResponses("rowKey-%s", 3);
 
-    addResponsesToReader(reader, responses.iterator());
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    addResponsesToReader(reader, responses);
+    addCompletion(reader);
 
     assertReaderContains(reader, extractRowsWithKeys(responses));
     assertReaderEmpty(reader);
+    verify(call, times(0)).request(anyInt());
   }
 
   @Test
   public void throwablesAreThrownWhenRead() throws Exception {
-    ResponseQueueReader reader = new ResponseQueueReader(10, defaultTimeout);
+    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
     List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", 2);
     final String innerExceptionMessage = "This message is the causedBy message";
-    addResponsesToReader(reader, responses.iterator());
-    reader.add(ResultQueueEntry.<ReadRowsResponse>newThrowable(new IOException(innerExceptionMessage)));
+    addResponsesToReader(reader, responses);
+    reader.add(ResultQueueEntry.<ReadRowsResponse> newThrowable(new IOException(
+        innerExceptionMessage)));
 
     assertReaderContains(reader, extractRowsWithKeys(responses));
+    verify(call, times(0)).request(anyInt());
 
     // The next call to next() should throw the exception:
     expectedException.expect(IOException.class);
@@ -155,19 +178,22 @@ public class ResponseQueueReaderTest {
   @Test
   public void multipleResponsesAreReturnedAtOnce() throws Exception {
     int generatedResponseCount = 3;
-    ResponseQueueReader reader = new ResponseQueueReader(10, defaultTimeout);
+    ResponseQueueReader reader =
+        new ResponseQueueReader(defaultTimeout, generatedResponseCount * 2,
+            generatedResponseCount * 2, generatedResponseCount, call);
 
     List<ReadRowsResponse> responses = generateReadRowsResponses(
         "rowKey-%s", generatedResponseCount);
     List<Row> rows = Lists.newArrayList(extractRowsWithKeys(responses));
-    addResponsesToReader(reader, responses.iterator());
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    addResponsesToReader(reader, responses);
+    addCompletion(reader);
 
     Assert.assertEquals(generatedResponseCount + 1, reader.available());
     for (int idx = 0; idx < generatedResponseCount; idx++) {
       Assert.assertEquals(rows.get(idx).getKey(), reader.getNextMergedRow().getKey());
     }
     assertReaderEmpty(reader);
+    verify(call, times(0)).request(anyInt());
   }
 
   @Test
@@ -184,12 +210,11 @@ public class ResponseQueueReaderTest {
     ReadRowsResponse response3 = createReadRowsResponse(rowKey, contentChunk3);
     ReadRowsResponse response4 = createReadRowsResponse(rowKey, rowCompleteChunk);
 
-    ResponseQueueReader reader = new ResponseQueueReader(10, defaultTimeout);
+    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 8, 8, 4, call);
 
-    addResponsesToReader(reader, Arrays.asList(response, response2, response3, response4)
-        .iterator());
+    addResponsesToReader(reader, response, response2, response3, response4);
 
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    addCompletion(reader);
 
     Row resultRow = reader.getNextMergedRow();
 
@@ -211,6 +236,7 @@ public class ResponseQueueReaderTest {
     Assert.assertEquals(0, resultFamily2.getColumnsCount());
 
     assertReaderEmpty(reader);
+    verify(call, times(0)).request(anyInt());
   }
 
   @Test
@@ -228,12 +254,11 @@ public class ResponseQueueReaderTest {
     ReadRowsResponse response3 = createReadRowsResponse(rowKey, contentChunk2);
     ReadRowsResponse response4 = createReadRowsResponse(rowKey, rowCompleteChunk);
 
-    ResponseQueueReader reader = new ResponseQueueReader(10, defaultTimeout);
+    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 6, 6, 3, call);
 
-    addResponsesToReader(reader, Arrays.asList(response, response2, response3, response4)
-      .iterator());
+    addResponsesToReader(reader, response, response2, response3, response4);
 
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    addCompletion(reader);
 
     Row resultRow = reader.getNextMergedRow();
 
@@ -246,6 +271,7 @@ public class ResponseQueueReaderTest {
     Assert.assertEquals(ByteString.copyFromUtf8("c2"), resultColumn.getQualifier());
 
     assertReaderEmpty(reader);
+    verify(call, times(0)).request(anyInt());
   }
 
   @Test
@@ -254,49 +280,52 @@ public class ResponseQueueReaderTest {
     Chunk rowCompleteChunk = Chunk.newBuilder().setCommitRow(true).build();
     ReadRowsResponse response = createReadRowsResponse(rowKey, rowCompleteChunk);
 
-    ResponseQueueReader reader = new ResponseQueueReader(10, defaultTimeout);
+    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newResult(response));
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    addResponsesToReader(reader, response);
+    addCompletion(reader);
 
     Row resultRow = reader.getNextMergedRow();
     Assert.assertEquals(0, resultRow.getFamiliesCount());
     Assert.assertEquals(ByteString.copyFromUtf8("row-1"), resultRow.getKey());
 
     assertReaderEmpty(reader);
+    verify(call, times(0)).request(eq(1));
   }
 
   @Test
   public void anEmptyStreamDoesNotThrow() throws Exception {
-    ResponseQueueReader reader = new ResponseQueueReader(10, defaultTimeout);
+    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    addCompletion(reader);
 
     assertReaderEmpty(reader);
     assertReaderEmpty(reader);
+    verify(call, times(0)).request(anyInt());
   }
 
   @Test
   public void readingPastEndReturnsNull() throws Exception {
-    ResponseQueueReader reader = new ResponseQueueReader(10, defaultTimeout);
+    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    addCompletion(reader);
 
     assertReaderEmpty(reader);
     assertReaderEmpty(reader);
     assertReaderEmpty(reader);
+    verify(call, times(0)).request(anyInt());
   }
 
   @Test
   public void endOfStreamMidRowThrows() throws Exception {
-    ResponseQueueReader reader = new ResponseQueueReader(10, defaultTimeout);
+    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
     String rowKey = "row-1";
     Chunk contentChunk = createContentChunk("Family1", "c1", randomBytes(10), 100L);
     ReadRowsResponse response = createReadRowsResponse(rowKey, contentChunk);
 
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newResult(response));
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    addResponsesToReader(reader, response);
+    addCompletion(reader);
 
     expectedException.expectMessage("End of stream marker encountered while merging a row.");
     expectedException.expect(IllegalStateException.class);
@@ -305,59 +334,13 @@ public class ResponseQueueReaderTest {
   }
 
   @Test
-  public void scannerBlocksWhenFull() throws Exception {
-    // AtomicLong used as a way to easily return values from a closure:
-    final AtomicLong timeBeforeBlock = new AtomicLong();
-    final AtomicLong timeAfterBlock = new AtomicLong();
-
-    final int queueDepth = 10;
-    final CountDownLatch addProcessDone = new CountDownLatch(1);
-
-    final ResponseQueueReader reader = new ResponseQueueReader(queueDepth, defaultTimeout);
-    final ExecutorService executorService = Executors.newFixedThreadPool(1);
-
-    final List<ReadRowsResponse> responses =
-        generateReadRowsResponses("rowKey-%s", queueDepth * 2);
-
-    executorService.submit(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        for (int i = 0; i < queueDepth; i++) {
-          reader.add(ResultQueueEntry.<ReadRowsResponse> newResult(responses.get(i)));
-        }
-        // The next addResult will block so start a reader in a second and record the time before
-        // the write and after the write. We'll expect a time greater than 500ms of blocking.
-        timeBeforeBlock.set(System.currentTimeMillis());
-        reader.add(ResultQueueEntry.<ReadRowsResponse> newResult(responses.get(queueDepth)));
-        timeAfterBlock.set(System.currentTimeMillis());
-        reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
-        addProcessDone.countDown();
-        return null;
-      }
-    });
-
-    // Make sure it's blocked.
-    Assert.assertFalse(addProcessDone.await(500, TimeUnit.MILLISECONDS));
-
-    // Other tests validate the contents of the queue, we just care that we blocked.
-    reader.getNextMergedRow();
-    // We buffer queueDepth messages in the queue, one slot is needed for scanner.complete()
-    reader.getNextMergedRow();
-
-    Assert.assertTrue(
-        "Expected add process to complete within 500 ms",
-        addProcessDone.await(500, TimeUnit.MILLISECONDS));
-    executorService.shutdownNow();
-  }
-
-  @Test
   public void readTimeoutOnPartialRows() throws Exception {
-    ResponseQueueReader reader = new ResponseQueueReader(10, 10 /* milliseconds */);
+    ResponseQueueReader reader = new ResponseQueueReader(10 /* milliseconds */, 10, 10, 5, call);
 
     ByteString rowKey = ByteString.copyFromUtf8("rowKey");
     // Add a single response that does not complete the row or stream:
     ReadRowsResponse response = ReadRowsResponse.newBuilder().setRowKey(rowKey).build();
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newResult(response));
+    addResponsesToReader(reader, response);
 
     expectedException.expect(ScanTimeoutException.class);
     expectedException.expectMessage("Timeout while merging responses.");
@@ -376,7 +359,7 @@ public class ResponseQueueReaderTest {
     Thread testThread = new Thread(new Runnable() {
       @Override
       public void run() {
-        ResponseQueueReader reader = new ResponseQueueReader(10, defaultTimeout);
+        ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
         try {
           barrier.await();
         } catch (InterruptedException | BrokenBarrierException e) {
@@ -419,19 +402,35 @@ public class ResponseQueueReaderTest {
   public void availableGivesTheNumberOfBufferedItems() throws Exception {
     final int queueDepth = 10;
 
-    ResponseQueueReader reader = new ResponseQueueReader(queueDepth, defaultTimeout);
-    final List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", queueDepth);
+    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
+    List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", queueDepth);
 
-    for (ReadRowsResponse response : responses) {
-      reader.add(ResultQueueEntry.newResult(response));
-    }
+    addResponsesToReader(reader, responses);
 
     Assert.assertEquals("Expected same number of items in scanner as added", queueDepth,
       reader.available());
 
     reader.getNextMergedRow();
+    verify(call, times(0)).request(anyInt());
 
     Assert.assertEquals("Expected same number of items in scanner as added less one",
       queueDepth - 1, reader.available());
+  }
+
+  @Test
+  public void alwaysHaveaRequest() throws Exception {
+    int capacityCap = 30;
+    ReadRowsResponse response = generateReadRowsResponses("rowKey-%s", 1).get(0);
+    Chunk rowCompleteChunk = Chunk.newBuilder().setCommitRow(true).build();
+    ResponseQueueReader reader =
+        new ResponseQueueReader(defaultTimeout, capacityCap, capacityCap, capacityCap/2, call);
+    ReadRowsResponse commit =
+        createReadRowsResponse(response.getRowKey().toString(), rowCompleteChunk);
+    for (int i = 0; i < 20 * capacityCap; i++) {
+      addResponsesToReader(reader, response, commit);
+      reader.getNextMergedRow();
+    }
+    addCompletion(reader);
+    verify(call, times(39)).request(eq(capacityCap / 2));
   }
 }

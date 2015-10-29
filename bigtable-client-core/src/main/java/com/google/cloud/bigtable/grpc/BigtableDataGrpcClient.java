@@ -17,8 +17,9 @@ package com.google.cloud.bigtable.grpc;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import io.grpc.stub.StreamObserver;
+import io.grpc.Status;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -46,6 +47,7 @@ import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
 import com.google.cloud.bigtable.grpc.io.ClientCallService;
 import com.google.cloud.bigtable.grpc.io.RetryingCall;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
+import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
@@ -60,33 +62,6 @@ import com.google.protobuf.ServiceException;
  * A gRPC client to access the v1 Bigtable service.
  */
 public class BigtableDataGrpcClient implements BigtableDataClient {
-
-  /**
-   * A StreamObserver that sends results to a StreamingBigtableResultScanner.
-   */
-  public static class ReadRowsStreamObserver
-      implements StreamObserver<ReadRowsResponse> {
-    private final StreamingBigtableResultScanner scanner;
-
-    public ReadRowsStreamObserver(StreamingBigtableResultScanner scanner) {
-      this.scanner = scanner;
-    }
-
-    @Override
-    public void onNext(ReadRowsResponse readTableResponse) {
-      scanner.addResult(readTableResponse);
-    }
-
-    @Override
-    public void onError(Throwable throwable) {
-      scanner.setError(throwable);
-    }
-
-    @Override
-    public void onCompleted() {
-      scanner.complete();
-    }
-  }
 
   @VisibleForTesting
   public static final Predicate<MutateRowRequest> IS_RETRYABLE_MUTATION =
@@ -267,18 +242,42 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       }
     }, executorService);
 
+    int timeout = retryOptions.getReadPartialRowTimeoutMillis();
+
+    int streamingBufferSize = retryOptions.getStreamingBufferSize();
+    int batchRequestSize = streamingBufferSize / 2;
+    ResponseQueueReader responseQueueReader =
+        new ResponseQueueReader(timeout, streamingBufferSize, batchRequestSize,
+            batchRequestSize, readRowsCall);
+
     StreamingBigtableResultScanner resultScanner =
-        new StreamingBigtableResultScanner(
-          reservedChannel,
-          retryOptions.getStreamingBufferSize(),
-          retryOptions.getReadPartialRowTimeoutMillis(),
-          cancellationToken);
+        new StreamingBigtableResultScanner(reservedChannel, responseQueueReader, cancellationToken);
 
     clientCallService.asyncServerStreamingCall(
         readRowsCall,
         request,
-        new ReadRowsStreamObserver(resultScanner));
+        batchRequestSize,
+        createClientCallListener(resultScanner));
 
     return resultScanner;
+  }
+
+  private ClientCall.Listener<ReadRowsResponse> createClientCallListener(
+      final StreamingBigtableResultScanner resultScanner) {
+    return new ClientCall.Listener<ReadRowsResponse>() {
+      @Override
+      public void onMessage(ReadRowsResponse readRowResponse) {
+        resultScanner.addResult(readRowResponse);
+      }
+
+      @Override
+      public void onClose(Status status, Metadata trailers) {
+        if (status.isOk()) {
+          resultScanner.complete();
+        } else {
+          resultScanner.setError(status.asRuntimeException());
+        }
+      }
+    };
   }
 }

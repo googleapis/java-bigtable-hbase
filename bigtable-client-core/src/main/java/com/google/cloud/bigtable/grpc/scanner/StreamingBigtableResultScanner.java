@@ -33,13 +33,13 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   private final PooledChannel reservedChannel;
 
   public StreamingBigtableResultScanner(
-      PooledChannel reservedChannel, int capacity, int readPartialRowTimeoutMillis,
+      PooledChannel reservedChannel,
+      ResponseQueueReader responseQueueReader,
       CancellationToken cancellationToken) {
     Preconditions.checkArgument(cancellationToken != null, "cancellationToken cannot be null");
-    Preconditions.checkArgument(capacity > 0, "capacity must be a positive integer");
     this.reservedChannel = reservedChannel;
     this.cancellationToken = cancellationToken;
-    this.responseQueueReader = new ResponseQueueReader(capacity, readPartialRowTimeoutMillis);
+    this.responseQueueReader = responseQueueReader;
   }
 
   private void add(ResultQueueEntry<ReadRowsResponse> entry) {
@@ -57,12 +57,12 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
 
   public void setError(Throwable error) {
     reservedChannel.returnToPool();
-    add(ResultQueueEntry.<ReadRowsResponse>newThrowable(error));
+    add(ResultQueueEntry.<ReadRowsResponse> newThrowable(error));
   }
 
   public void complete() {
     reservedChannel.returnToPool();
-    add(ResultQueueEntry.<ReadRowsResponse>newCompletionMarker());
+    add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
   }
 
   @Override
