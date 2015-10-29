@@ -25,7 +25,7 @@ public interface Sleeper {
   void sleep(long ms) throws InterruptedException;
 
   /**
-   * A Sleeper that uses {@link Thread#sleep()}
+   * A Sleeper that uses {@link Thread#sleep(long)}
    */
   public static Sleeper DEFAULT = new Sleeper() {
     @Override

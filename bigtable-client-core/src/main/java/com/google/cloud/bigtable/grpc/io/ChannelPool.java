@@ -36,7 +36,7 @@ public class ChannelPool extends Channel {
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
 
   /**
-   * An implementation of {@link Channle} that knows how to return itself to the {@link ChannelPool}
+   * An implementation of {@link Channel} that knows how to return itself to the {@link ChannelPool}
    */
   public class PooledChannel extends Channel {
     private final Channel delegate;

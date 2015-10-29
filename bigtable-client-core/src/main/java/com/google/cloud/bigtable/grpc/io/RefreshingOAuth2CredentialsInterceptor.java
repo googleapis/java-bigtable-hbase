@@ -247,7 +247,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
   /**
    * <p>
    * Calls {@link OAuth2Credentials#refreshAccessToken()}. In case of an IOException, retry the call
-   * as per the {@link Backoff} policy defined by {@link RetryOptions#createBackoff()}.
+   * as per the {@link BackOff} policy defined by {@link RetryOptions#createBackoff()}.
    * </p>
    * <p>
    * This method retries until one of the following conditions occurs:
@@ -258,11 +258,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
    * BackOff.STOP
    * <li>An interrupt occurs.
    * </ol>
-   * @param backoff defines the current state of the retries. Initially, the value is null. In the
-   *          case of an {@link IOException}, create a new {@link BackOff}; see
-   *          {@link RetryOptions#createBackoff()} for more details on the initial construction. If
-   *          a retry already occurred, the Backoff have the logic to get the next sleep period and
-   *          retry exhaustion logic.
    * @return HeaderCacheElement containing either a valid {@link AccessToken} or an exception.
    */
   protected HeaderCacheElement refreshCredentialsWithRetry() {
@@ -311,7 +306,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
    * Sleep and/or determine if the backoff has timed out.
    * @param backoff
    * @return RetryState indicating the current state of the retry logic.
-   * @throws IOExcetion in some cases from {@link BackOff#nextBackOffMillis()}
+   * @throws IOException in some cases from {@link BackOff#nextBackOffMillis()}
    */
   protected RetryState getRetryState(BackOff backoff) throws IOException{
     long nextBackOffMillis = backoff.nextBackOffMillis();
