@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2015 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
 import com.google.common.base.Preconditions;
 
 /**
- * A {@link ResultScanner} implementation against the v1 bigtable API.
+ * A {@link ResultScanner} implementation against the v1 Bigtable API.
  */
 public class StreamingBigtableResultScanner extends AbstractBigtableResultScanner {
 
@@ -47,7 +47,7 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
       responseQueueReader.add(entry);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
+      throw new RuntimeException("Interrupted while adding a ResultQueueEntry.", e);
     }
   }
 
