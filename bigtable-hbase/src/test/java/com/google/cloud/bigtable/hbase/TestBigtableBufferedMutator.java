@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,7 +24,6 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -39,16 +37,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * Tests for {@link BigtableBufferedMutator}
@@ -62,40 +59,42 @@ public class TestBigtableBufferedMutator {
   @Mock
   private BigtableDataClient client;
 
-  @Mock 
-  private BufferedMutator.ExceptionListener listener;
-
   @SuppressWarnings("rawtypes")
   @Mock
   private ListenableFuture future;
-  private List<Runnable> futureRunnables = new ArrayList<>();
+
+  @Mock
+  private BufferedMutator.ExceptionListener listener;
 
   private BigtableBufferedMutator underTest;
-
-  private ExecutorService heapSizeExecutorService = MoreExecutors.newDirectExecutorService();
+  private List<FutureCallback<?>> callbacks = new ArrayList<>();
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     BigtableClusterName clusterName = new BigtableClusterName("project", "zone", "cluster");
     Configuration configuration = new Configuration();
-    futureRunnables.clear();
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        futureRunnables.add((Runnable)invocation.getArguments()[0]);
-        return null;
-      }
-    }).when(future).addListener(any(Runnable.class), same(heapSizeExecutorService));
+    HeapSizeManager heapSizeManager =
+        new HeapSizeManager(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
+            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT) {
+          @Override
+          public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, Long id) {
+            FutureCallback<T> callback = super.addCallback(future, id);
+            callbacks.add(callback);
+            return callback;
+          }
+        };
+
+    HBaseRequestAdapter adapter =
+        new HBaseRequestAdapter(clusterName, TableName.valueOf("TABLE"), configuration);
+
     underTest = new BigtableBufferedMutator(
-        client,
-        new HBaseRequestAdapter(clusterName,  TableName.valueOf("TABLE"), configuration),
-        configuration,
-        AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT,
-        AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
-        null,
-        listener,
-        heapSizeExecutorService);
+      client,
+      adapter,
+      configuration,
+      null,
+      listener,
+      heapSizeManager);
   }
 
   @Test
@@ -119,16 +118,16 @@ public class TestBigtableBufferedMutator {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenThrow(new RuntimeException());
     underTest.mutate(SIMPLE_PUT);
     verify(listener, times(0)).onException(any(RetriesExhaustedWithDetailsException.class),
-      same(underTest));
+        same(underTest));
     completeCall();
     underTest.mutate(SIMPLE_PUT);
     verify(listener, times(1)).onException(any(RetriesExhaustedWithDetailsException.class),
-      same(underTest));
+        same(underTest));
   }
 
   private void completeCall() {
-    for (Runnable runnable : futureRunnables) {
-      runnable.run();
+    for (FutureCallback<?> callbacks : callbacks) {
+      callbacks.onSuccess(null);
     }
   }
 }

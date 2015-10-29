@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -38,6 +37,7 @@ import org.apache.hadoop.hbase.client.Row;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
@@ -89,16 +89,14 @@ public class BigtableBufferedMutator implements BufferedMutator {
       BigtableDataClient client,
       HBaseRequestAdapter adapter,
       Configuration configuration,
-      int maxInflightRpcs,
-      long maxHeapSize,
       String dataHost,
       BufferedMutator.ExceptionListener listener,
-      ExecutorService heapSizeExecutor) {
+      HeapSizeManager heapSizeManager) {
     this.adapter = adapter;
     this.configuration = configuration;
     this.exceptionListener = listener;
     this.host = dataHost;
-    this.asyncExecutor = new AsyncExecutor(client, maxInflightRpcs, maxHeapSize, heapSizeExecutor);
+    this.asyncExecutor = new AsyncExecutor(client, heapSizeManager);
   }
 
   @Override

@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.grpc.async;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
@@ -89,13 +88,9 @@ public class AsyncExecutor {
   private final BigtableDataClient client;
   private final HeapSizeManager sizeManager;
 
-  public AsyncExecutor(
-      BigtableDataClient client,
-      int maxInflightRpcs,
-      long maxHeapSize,
-      ExecutorService heapSizeExecutor) {
+  public AsyncExecutor(BigtableDataClient client, HeapSizeManager heapSizeManager) {
     this.client = client;
-    this.sizeManager = new HeapSizeManager(maxHeapSize, maxInflightRpcs, heapSizeExecutor);
+    this.sizeManager = heapSizeManager;
   }
 
   public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request)

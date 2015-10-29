@@ -19,31 +19,23 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Matchers;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
-import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 
 @RunWith(JUnit4.class)
 public class TestHeapSizeManager {
-
-  @Mock
-  ExecutorService executorService;
 
   @Mock
   ListenableFuture<?> future;
@@ -53,9 +45,10 @@ public class TestHeapSizeManager {
     MockitoAnnotations.initMocks(this);
   }
 
+
   @Test
   public void testRpcCount() throws InterruptedException{
-    HeapSizeManager underTest = new HeapSizeManager(100l, 2, executorService);
+    HeapSizeManager underTest = new HeapSizeManager(100l, 2);
 
     assertFalse(underTest.isFull());
     assertFalse(underTest.hasInflightRequests());
@@ -68,18 +61,18 @@ public class TestHeapSizeManager {
     assertTrue(underTest.hasInflightRequests());
     assertTrue(underTest.isFull());
 
-    underTest.markOperationCompleted(id);
+    underTest.markCanBeCompleted(id);
     assertFalse(underTest.isFull());
     assertTrue(underTest.hasInflightRequests());
 
-    underTest.markOperationCompleted(id2);
+    underTest.markCanBeCompleted(id2);
     assertFalse(underTest.isFull());
     assertFalse(underTest.hasInflightRequests());
 }
 
   @Test
   public void testSize() throws InterruptedException{
-    HeapSizeManager underTest = new HeapSizeManager(10l, 1000, executorService);
+    HeapSizeManager underTest = new HeapSizeManager(10l, 1000);
     long id = underTest.registerOperationWithHeapSize(5l);
     assertTrue(underTest.hasInflightRequests());
     assertFalse(underTest.isFull());
@@ -95,37 +88,25 @@ public class TestHeapSizeManager {
     assertTrue(underTest.isFull());
     assertEquals(10l, underTest.getHeapSize());
 
-    underTest.markOperationCompleted(id);
+    underTest.markCanBeCompleted(id);
     assertFalse(underTest.isFull());
     assertEquals(5l, underTest.getHeapSize());
 
-    underTest.markOperationCompleted(id2);
-    underTest.markOperationCompleted(id3);
+    underTest.markCanBeCompleted(id2);
+    underTest.markCanBeCompleted(id3);
     assertFalse(underTest.hasInflightRequests());
   }
 
   @Test
   public void testCallback() throws InterruptedException {
-    final List<Runnable> runnables = new ArrayList<>();
-    Mockito.doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        runnables.add((Runnable) invocation.getArguments()[0]);
-        return null;
-      }
-    }).when(future).addListener(Matchers.any(Runnable.class), Matchers.eq(executorService));
-
-    HeapSizeManager underTest = new HeapSizeManager(10l, 1000, executorService);
+    HeapSizeManager underTest = new HeapSizeManager(10l, 1000);
     long id = underTest.registerOperationWithHeapSize(5l);
     assertTrue(underTest.hasInflightRequests());
 
-    underTest.addCallback(future, id);
-    assertFalse(runnables.isEmpty());
+    FutureCallback<?> callback = underTest.addCallback(future, id);
     assertTrue(underTest.hasInflightRequests());
-
-    for (Runnable runnable : runnables) {
-      runnable.run();
-    }
+    callback.onSuccess(null);
+    Thread.sleep(100);
     assertFalse(underTest.hasInflightRequests());
   }
 
@@ -137,7 +118,7 @@ public class TestHeapSizeManager {
   public void testSizeLimitReachWaits() throws InterruptedException {
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
-      final HeapSizeManager underTest = new HeapSizeManager(1l, 1, executorService);
+      final HeapSizeManager underTest = new HeapSizeManager(1l, 1);
       long id = underTest.registerOperationWithHeapSize(5l);
       assertTrue(underTest.hasInflightRequests());
       assertTrue(underTest.isFull());
@@ -156,7 +137,7 @@ public class TestHeapSizeManager {
       // Give some time for the Runnable to be executed.
       Thread.sleep(10);
       assertFalse(secondRequestRegistered.get());
-      underTest.markOperationCompleted(id);
+      underTest.markCanBeCompleted(id);
 
       // Give more time for the Runnable to be executed.
       Thread.sleep(10);
@@ -170,7 +151,7 @@ public class TestHeapSizeManager {
   public void testWaitUntilAllOperationsAreDone() throws InterruptedException {
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
-      final HeapSizeManager underTest = new HeapSizeManager(1l, 1, executorService);
+      final HeapSizeManager underTest = new HeapSizeManager(1l, 1);
       long id = underTest.registerOperationWithHeapSize(5l);
       assertTrue(underTest.hasInflightRequests());
       final AtomicBoolean allOperationsDone = new AtomicBoolean();
@@ -186,12 +167,12 @@ public class TestHeapSizeManager {
         }
       });
       // Give some time for the Runnable to be executed.
-      Thread.sleep(10);
+      Thread.sleep(100);
       assertFalse(allOperationsDone.get());
-      underTest.markOperationCompleted(id);
+      underTest.markCanBeCompleted(id);
 
       // Give more time for the Runnable to be executed.
-      Thread.sleep(10);
+      Thread.sleep(50);
       assertTrue(allOperationsDone.get());
     } finally {
       pool.shutdownNow();
