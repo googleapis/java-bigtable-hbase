@@ -105,7 +105,15 @@ public class CredentialFactory {
     case SuppliedCredentials:
       return ((UserSuppliedCredentialOptions) options).getCredential();
     case SuppliedJson:
-      return getInputStreamCredential(((JsonCredentialsOptions) options).getInputStream());
+      JsonCredentialsOptions jsonCredentialsOptions = (JsonCredentialsOptions) options;
+      synchronized (jsonCredentialsOptions) {
+        if (jsonCredentialsOptions.getCachedCredentials() == null) {
+          jsonCredentialsOptions
+              .setCachedCredentails(getInputStreamCredential(jsonCredentialsOptions
+                  .getInputStream()));
+        }
+        return jsonCredentialsOptions.getCachedCredentials();
+      }
     case None:
       return null;
     default:

@@ -157,6 +157,7 @@ public class CredentialOptions {
    */
   public static class JsonCredentialsOptions extends CredentialOptions {
     private final InputStream inputStream;
+    private Credentials cachedCredentials;
 
     public JsonCredentialsOptions(InputStream inputStream) {
       super(CredentialType.SuppliedJson);
@@ -165,6 +166,14 @@ public class CredentialOptions {
 
     public InputStream getInputStream() {
       return inputStream;
+    }
+
+    public void setCachedCredentails(Credentials credentials) {
+      this.cachedCredentials = credentials;
+    }
+
+    public Credentials getCachedCredentials() {
+      return cachedCredentials;
     }
   }
 
