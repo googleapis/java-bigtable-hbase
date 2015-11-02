@@ -49,20 +49,4 @@ limitations under the License.
         <name>google.bigtable.cluster.name</name>
         <value>${google.bigtable.cluster.name}</value>
     </property>
-    <property>
-        <name>google.bigtable.auth.service.account.enable</name>
-        <value>${google.bigtable.auth.service.account.enable}</value>
-    </property>
-    <property>
-        <name>google.bigtable.auth.null.credential.enable</name>
-        <value>true</value>
-    </property>
-    <property>
-        <name>google.bigtable.auth.service.account.email</name>
-        <value>${google.bigtable.auth.service.account.email}</value>
-    </property>
-    <property>
-        <name>google.bigtable.auth.service.account.keyfile</name>
-        <value>${google.bigtable.auth.service.account.keyfile}</value>
-    </property>
 </configuration>
