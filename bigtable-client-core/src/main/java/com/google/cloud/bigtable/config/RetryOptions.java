@@ -28,7 +28,7 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public class RetryOptions {
 
-  public static int DEFAULT_STREAMING_BUFFER_SIZE = 32;
+  public static int DEFAULT_STREAMING_BUFFER_SIZE = 60;
 
   /**
    * Flag indicating whether or not grpc retries should be enabled.
