@@ -31,7 +31,6 @@ limitations under the License.
     </description>
 
     <properties>
-        <google.bigtable.auth.service.account.enable>true</google.bigtable.auth.service.account.enable>
         <hbase.version>1.0.1</hbase.version>
         <google.bigtable.project.under.test>bigtable-hbase-1.0</google.bigtable.project.under.test>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_0.BigtableConnection</google.bigtable.connection.impl>
@@ -321,6 +320,14 @@ limitations under the License.
             </extension>
         </extensions>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-eclipse-plugin</artifactId>
+                <version>2.9</version>
+                <configuration>
+                    <useProjectReferences>false</useProjectReferences>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>

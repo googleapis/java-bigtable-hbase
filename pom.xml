@@ -69,16 +69,11 @@ limitations under the License.
 
         <!-- Values for integration testing. Set these in ~/.m2/settings.xml or
              via command-line -D flags. -->
-        <google.bigtable.auth.service.account.email />
-        <google.bigtable.auth.service.account.keyfile />
         <google.bigtable.cluster.name>cluster</google.bigtable.cluster.name>
         <google.bigtable.zone.name>us-central1-b</google.bigtable.zone.name>
         <google.bigtable.endpoint.host>bigtable.googleapis.com</google.bigtable.endpoint.host>
         <google.bigtable.admin.endpoint.host>bigtabletableadmin.googleapis.com</google.bigtable.admin.endpoint.host>
         <google.bigtable.cluster.admin.endpoint.host>bigtableclusteradmin.googleapis.com</google.bigtable.cluster.admin.endpoint.host>
-        <!-- This is false for unit tests, and overriden to be true in
-             bigtable-hbase-integration-tests/pom.xml -->
-        <google.bigtable.auth.service.account.enable>false</google.bigtable.auth.service.account.enable>
     </properties>
 
     <distributionManagement>
