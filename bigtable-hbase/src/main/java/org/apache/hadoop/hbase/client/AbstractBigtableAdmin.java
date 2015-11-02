@@ -536,6 +536,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
     deleteColumn(TableName.valueOf(tableName), columnName);
   }
 
+  // Used by the Hbase shell but not defined by Admin. Will be removed once the
+  // shell is switch to use the methods defined in the interface.
+  @Deprecated
+  public void deleteColumn(final String tableName, final String columnName)
+  throws IOException {
+    deleteColumn(TableName.valueOf(tableName), Bytes.toBytes(columnName));
+  }
+
   @Override
   public ClusterStatus getClusterStatus() throws IOException {
     return new ClusterStatus() {
@@ -628,14 +636,22 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return tableExists(tableName);
   }
 
+  /** HBase column operations are not synchronous, since they're not as fast as Bigtable.  Bigtable
+   * does not have async operations, so always return (0, 0).  This is needed for some shell
+   * operations.
+   */
   @Override
   public Pair<Integer, Integer> getAlterStatus(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException("getAlterStatus");  // TODO
+    return new Pair<>(0, 0);
   }
 
   @Override
   public Pair<Integer, Integer> getAlterStatus(byte[] tableName) throws IOException {
-    throw new UnsupportedOperationException("getAlterStatus");  // TODO
+    return getAlterStatus(TableName.valueOf(tableName));
+  }
+
+  public Pair<Integer, Integer> getAlterStatus(String tableName) throws IOException {
+    return getAlterStatus(TableName.valueOf(tableName));
   }
 
   @Override
