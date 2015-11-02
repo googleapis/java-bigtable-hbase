@@ -245,7 +245,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     int timeout = retryOptions.getReadPartialRowTimeoutMillis();
 
     int streamingBufferSize = retryOptions.getStreamingBufferSize();
-    int batchRequestSize = streamingBufferSize / 2;
+    int batchRequestSize = streamingBufferSize / 4;
     ResponseQueueReader responseQueueReader =
         new ResponseQueueReader(timeout, streamingBufferSize, batchRequestSize,
             batchRequestSize, readRowsCall);
