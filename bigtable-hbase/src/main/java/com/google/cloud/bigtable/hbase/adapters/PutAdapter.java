@@ -19,7 +19,6 @@ import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.SetCell.Builder;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -49,7 +48,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
     }
 
     for (Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
-      ByteString familyString = ByteStringer.wrap(entry.getKey());
+      ByteString familyString = ByteString.copyFrom(entry.getKey());
 
       for (Cell cell : entry.getValue()) {
         // Since we are not using the interface involving KeyValues, we reconstruct how big they would be.

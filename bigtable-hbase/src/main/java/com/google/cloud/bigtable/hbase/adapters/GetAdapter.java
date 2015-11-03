@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.ReadRowsRequest.Builder;
-import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Scan;
@@ -39,6 +39,6 @@ public class GetAdapter implements ReadOperationAdapter<Get> {
     scanAdapter.throwIfUnsupportedScan(operationAsScan);
     return ReadRowsRequest.newBuilder()
         .setFilter(scanAdapter.buildFilter(operationAsScan, readHooks))
-        .setRowKey(ByteStringer.wrap(operation.getRow()));
+        .setRowKey(ByteString.copyFrom(operation.getRow()));
   }
 }

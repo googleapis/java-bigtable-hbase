@@ -25,11 +25,12 @@ import org.apache.hadoop.hbase.protobuf.generated.FilterProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.BytesBytesPair;
 import org.apache.hadoop.hbase.util.Pair;
 
-import com.google.common.base.Preconditions;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper.QuoteMetaOutputStream;
+import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 
 /**
@@ -71,7 +72,7 @@ public class FuzzyRowFilterAdapter implements TypedFilterAdapter<FuzzyRowFilter>
         baos.write(ReaderExpressionHelper.ANY_BYTE_BYTES);
       }
     }
-    ByteString quotedValue = ByteString.copyFrom(baos.toByteArray());
+    ByteString quotedValue = ByteStringer.wrap(baos.toByteArray());
     quotingStream.close();
     return RowFilter.newBuilder().setRowKeyRegexFilter(quotedValue).build();
   }

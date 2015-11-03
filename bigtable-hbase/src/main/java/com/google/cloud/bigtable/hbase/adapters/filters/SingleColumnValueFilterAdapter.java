@@ -21,6 +21,7 @@ import java.io.IOException;
 
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
+import org.apache.hadoop.hbase.util.ByteStringer;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.v1.RowFilter;
@@ -69,7 +70,7 @@ public class SingleColumnValueFilterAdapter implements TypedFilterAdapter<Single
                     Bytes.toString(quoteRegularExpression(filter.getFamily()))))
             .addFilters(RowFilter.newBuilder()
                 .setColumnQualifierRegexFilter(
-                    ByteString.copyFrom(quoteRegularExpression(filter.getQualifier()))))
+                    ByteStringer.wrap(quoteRegularExpression(filter.getQualifier()))))
             .addFilters(createVersionLimitFilter(filter)))
         .build();
   }

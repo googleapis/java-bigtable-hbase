@@ -28,6 +28,7 @@ import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Optional;
+import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.TimeRange;
@@ -96,8 +97,8 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
         .setFilter(filter)
         .setRowRange(
             RowRange.newBuilder()
-                .setStartKey(ByteStringer.wrap(scan.getStartRow()))
-                .setEndKey(ByteStringer.wrap(scan.getStopRow())));
+                .setStartKey(ByteString.copyFrom(scan.getStartRow()))
+                .setEndKey(ByteString.copyFrom(scan.getStopRow())));
   }
 
   private static byte[] quoteRegex(byte[] unquoted)  {
@@ -121,7 +122,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   private RowFilter createColumnQualifierFilter(byte[] unquotedQualifier) {
     return RowFilter.newBuilder()
         .setColumnQualifierRegexFilter(
-          ByteStringer.wrap(quoteRegex(unquotedQualifier)))
+            ByteStringer.wrap(quoteRegex(unquotedQualifier)))
         .build();
   }
 
