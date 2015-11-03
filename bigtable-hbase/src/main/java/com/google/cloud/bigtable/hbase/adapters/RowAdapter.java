@@ -64,7 +64,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
           // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
           // HBase will treat them as duplicates.
           long hbaseTimestamp = cell.getTimestampMicros() / TIME_CONVERSION_UNIT;
-          KeyValue keyValue = new KeyValue(
+          RowCell keyValue = new RowCell(
               rowKey,
               familyNameBytes,
               columnQualifier,
