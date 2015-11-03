@@ -54,7 +54,7 @@ public class ResponseQueueReader {
 
   /**
    * Get the next complete Row object from the response queue.
-   * @return Optional.absent() if end-of-stream, otherwise a complete Row.
+   * @return null if end-of-stream, otherwise a complete Row.
    * @throws IOException On errors.
    */
   public synchronized Row getNextMergedRow() throws IOException {
@@ -76,7 +76,13 @@ public class ResponseQueueReader {
       builder.addPartialRow(partialRow);
 
       if (builder.isRowCommitted()) {
-        return builder.buildRow();
+        Row builtRow = builder.buildRow();
+        if (builtRow == null) {
+          // This could happen when a row that was scanned was deleted after the scan started.
+          builder = null;
+        } else {
+          return builtRow;
+        }
       }
     }
 

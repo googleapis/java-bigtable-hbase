@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -72,12 +73,16 @@ public class RowMergerTest {
 
   private void matchResponses(ReadRowsResponse[] responses, RowMatcher[] expectedRows) {
     Iterator<ReadRowsResponse> iterator = getIterator(responses);
-    for (int i = 0; i < expectedRows.length; ++i) {
-      Assert.assertTrue("More expected rows than supplied responses", iterator.hasNext());
-      Row result = RowMerger.readNextRow(iterator);
-      Assert.assertThat("Expected row does not match!", result, expectedRows[i]);
+    int i = 0;
+    while (iterator.hasNext()) {
+      Row row = RowMerger.readNextRow(iterator);
+      if(row != null) {
+        Assert.assertFalse("Responses not completely consumed by expected rows", i >= expectedRows.length);
+        Assert.assertThat("Expected row does not match!", row, expectedRows[i]);
+        i++;
+      }
     }
-    Assert.assertFalse("Responses not completely consumed by expected rows", iterator.hasNext());
+    Assert.assertTrue("More expected rows than supplied responses", expectedRows.length == i);
   }
 
   @Test
@@ -171,7 +176,9 @@ public class RowMergerTest {
   }
 
   @Test
-  public void singleChunkRowsAreRead() throws IOException {
+  public void resetCompleteRowsAreRead() throws IOException {
+    // All of these responses indicate a delete. RowMerger should not return any Row objects for
+    // these cases
     matchResponses(
         new ReadRowsResponse[]{
             createReadRowsResponse("row-1", COMPLETE_CHUNK),
@@ -184,14 +191,12 @@ public class RowMergerTest {
             createReadRowsResponse("row-4", COMPLETE_CHUNK),
             createReadRowsResponse("row-5", Family1_c1_CHUNK, RESET_CHUNK),
             createReadRowsResponse("row-5", COMPLETE_CHUNK),
+            createReadRowsResponse("row-6", RESET_CHUNK, Family1_c1_CHUNK, RESET_CHUNK),
+            createReadRowsResponse("row-6", RESET_CHUNK, Family1_c1_CHUNK, RESET_CHUNK),
+            createReadRowsResponse("row-6", COMPLETE_CHUNK),
+            createReadRowsResponse("row-7", RESET_CHUNK, COMPLETE_CHUNK),
         },
-        new RowMatcher[]{
-            matchesRow("row-1"),
-            matchesRow("row-2"),
-            matchesRow("row-3"),
-            matchesRow("row-4"),
-            matchesRow("row-5"),
-        });
+        new RowMatcher[0]);
   }
 
   @Test

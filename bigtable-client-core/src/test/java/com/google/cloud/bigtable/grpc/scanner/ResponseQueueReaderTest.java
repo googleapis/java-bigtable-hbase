@@ -59,6 +59,8 @@ import com.google.protobuf.ByteString;
 @RunWith(JUnit4.class)
 public class ResponseQueueReaderTest {
 
+  public static Chunk ROW_COMPLETE_CHUNK = Chunk.newBuilder().setCommitRow(true).build();
+
   /**
    * A matcher that requires the message of a causing exception to match a given substring
    */
@@ -203,12 +205,11 @@ public class ResponseQueueReaderTest {
     Chunk contentChunk = createContentChunk("Family1", "c1", randomBytes(10), 100L);
     Chunk contentChunk2 = createContentChunk("Family1", "c2", randomBytes(10), 100L);
     Chunk contentChunk3 = createContentChunk("Family2", null, null, 0L);
-    Chunk rowCompleteChunk = Chunk.newBuilder().setCommitRow(true).build();
 
     ReadRowsResponse response = createReadRowsResponse(rowKey, contentChunk);
     ReadRowsResponse response2 = createReadRowsResponse(rowKey, contentChunk2);
     ReadRowsResponse response3 = createReadRowsResponse(rowKey, contentChunk3);
-    ReadRowsResponse response4 = createReadRowsResponse(rowKey, rowCompleteChunk);
+    ReadRowsResponse response4 = createReadRowsResponse(rowKey, ROW_COMPLETE_CHUNK);
 
     ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 8, 8, 4, call);
 
@@ -247,12 +248,11 @@ public class ResponseQueueReaderTest {
     Chunk contentChunk2 = createContentChunk("Family1", "c2", randomBytes(10), 100L);
 
     Chunk rowResetChunk = Chunk.newBuilder().setResetRow(true).build();
-    Chunk rowCompleteChunk = Chunk.newBuilder().setCommitRow(true).build();
 
     ReadRowsResponse response = createReadRowsResponse(rowKey, contentChunk);
     ReadRowsResponse response2 = createReadRowsResponse(rowKey, rowResetChunk);
     ReadRowsResponse response3 = createReadRowsResponse(rowKey, contentChunk2);
-    ReadRowsResponse response4 = createReadRowsResponse(rowKey, rowCompleteChunk);
+    ReadRowsResponse response4 = createReadRowsResponse(rowKey, ROW_COMPLETE_CHUNK);
 
     ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 6, 6, 3, call);
 
@@ -275,10 +275,9 @@ public class ResponseQueueReaderTest {
   }
 
   @Test
-  public void singleChunkRowsAreRead() throws Exception {
+  public void emptyRowsAreRead() throws Exception {
     String rowKey = "row-1";
-    Chunk rowCompleteChunk = Chunk.newBuilder().setCommitRow(true).build();
-    ReadRowsResponse response = createReadRowsResponse(rowKey, rowCompleteChunk);
+    ReadRowsResponse response = createReadRowsResponse(rowKey, ROW_COMPLETE_CHUNK);
 
     ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
@@ -286,7 +285,25 @@ public class ResponseQueueReaderTest {
     addCompletion(reader);
 
     Row resultRow = reader.getNextMergedRow();
-    Assert.assertEquals(0, resultRow.getFamiliesCount());
+    Assert.assertNull(resultRow);
+
+    assertReaderEmpty(reader);
+    verify(call, times(0)).request(eq(1));
+  }
+
+  @Test
+  public void singleChunkRowsAreRead() throws Exception {
+    String rowKey = "row-1";
+    Chunk chunk1 = createContentChunk("Family1", "c1", randomBytes(10), 100L);
+    ReadRowsResponse response = createReadRowsResponse(rowKey, chunk1, ROW_COMPLETE_CHUNK);
+
+    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
+
+    addResponsesToReader(reader, response);
+    addCompletion(reader);
+
+    Row resultRow = reader.getNextMergedRow();
+    Assert.assertEquals(1, resultRow.getFamiliesCount());
     Assert.assertEquals(ByteString.copyFromUtf8("row-1"), resultRow.getKey());
 
     assertReaderEmpty(reader);
@@ -421,16 +438,15 @@ public class ResponseQueueReaderTest {
   public void alwaysHaveaRequest() throws Exception {
     int capacityCap = 30;
     ReadRowsResponse response = generateReadRowsResponses("rowKey-%s", 1).get(0);
-    Chunk rowCompleteChunk = Chunk.newBuilder().setCommitRow(true).build();
     ResponseQueueReader reader =
         new ResponseQueueReader(defaultTimeout, capacityCap, capacityCap, capacityCap/2, call);
     ReadRowsResponse commit =
-        createReadRowsResponse(response.getRowKey().toString(), rowCompleteChunk);
+        createReadRowsResponse(response.getRowKey().toString(), ROW_COMPLETE_CHUNK);
     for (int i = 0; i < 20 * capacityCap; i++) {
       addResponsesToReader(reader, response, commit);
       reader.getNextMergedRow();
     }
     addCompletion(reader);
-    verify(call, times(39)).request(eq(capacityCap / 2));
+    verify(call, times(20 * 2 * 2 - 1)).request(eq(capacityCap / 2));
   }
 }
