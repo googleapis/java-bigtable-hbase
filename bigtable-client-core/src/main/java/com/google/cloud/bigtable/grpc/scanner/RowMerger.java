@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.grpc.scanner;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.ReadRowsResponse;
@@ -41,7 +43,7 @@ import com.google.protobuf.ByteString;
  * }
  * Row r = rm.buildRow();
  * </pre>
- * 
+ *
  * <p> {@link RowMerger#readNextRow(Iterator)} will essentially perform the code above.</p>
  */
 public class RowMerger {
@@ -50,18 +52,26 @@ public class RowMerger {
    * Reads the next {@link Row} from the responseIterator.
    */
   public static Row readNextRow(Iterator<ReadRowsResponse> responseIterator) {
-    Preconditions.checkState(responseIterator.hasNext(),
-      "End of stream marker encountered while merging a row.");
+    while (true) {
+      Preconditions.checkState(responseIterator.hasNext(),
+        "End of stream marker encountered while merging a row.");
 
-    RowMerger rowMerger = new RowMerger();
-    while (responseIterator.hasNext() && !rowMerger.isRowCommitted()) {
-      rowMerger.addPartialRow(responseIterator.next());
+      RowMerger rowMerger = new RowMerger();
+      while (responseIterator.hasNext() && !rowMerger.isRowCommitted()) {
+        rowMerger.addPartialRow(responseIterator.next());
+      }
+
+      Preconditions.checkState(rowMerger.isRowCommitted(),
+        "End of stream marker encountered while merging a row.");
+
+      Row builtRow = rowMerger.buildRow();
+      // builtRow could be null if the row was deleted after the scan started.
+      if (builtRow != null) {
+        return builtRow;
+      } else if (!responseIterator.hasNext()) {
+        return null;
+      }
     }
-
-    Preconditions.checkState(rowMerger.isRowCommitted(),
-      "End of stream marker encountered while merging a row.");
-
-    return rowMerger.buildRow();
   }
 
   private final Map<String, Family.Builder> familyMap = new HashMap<>();
@@ -107,12 +117,22 @@ public class RowMerger {
   }
 
   /**
-   * Construct a row from previously seen partial rows. This method may only be invoked
-   * when isRowCommitted returns true indicating a COMMIT_ROW chunk has been encountered.
+   * Construct a row from previously seen partial rows. This method may only be invoked when
+   * isRowCommitted returns true indicating a COMMIT_ROW chunk has been encountered without a
+   * RESET_ROW.
+   * @return a Row if there was a Chunk with ROW_CONTENTS without a subsequent RESET_ROW. Otherwise,
+   *         return null
+   * @throws IllegalStateException if the last Chunk was not a COMMIT_ROW.
    */
-  public Row buildRow() {
+  public @Nullable Row buildRow() {
     Preconditions.checkState(committed,
         "Cannot build a Row object if we have not yet encountered a COMMIT_ROW chunk.");
+    if (familyMap.isEmpty()) {
+      // A chunk of a row could be partially read, but then deleted by a different operation.
+      // It would result in a sequence like: [ROW_CONTENTS, ROW_CONTENTS, RESET_ROW, COMMIT_ROW].
+      // Return null in that case.
+      return null;
+    }
     Row.Builder currentRowBuilder = Row.newBuilder();
     currentRowBuilder.setKey(currentRowKey);
     for (Family.Builder builder : familyMap.values()) {
