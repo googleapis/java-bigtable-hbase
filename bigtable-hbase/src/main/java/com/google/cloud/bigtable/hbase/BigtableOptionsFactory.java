@@ -109,12 +109,22 @@ public class BigtableOptionsFactory {
    */
   public static final String MAX_ELAPSED_BACKOFF_MILLIS_KEY =
       "google.bigtable.grpc.retry.max.elapsed.backoff.ms";
- 
+
   /**
    * Key to set the amount of time to wait when reading a partial row.
    */
   public static final String READ_PARTIAL_ROW_TIMEOUT_MS =
       "google.bigtable.grpc.read.partial.row.timeout.ms";
+
+  /**
+   * Key to set the maximum number of messages to buffer when scanning.
+   */
+  public static final String READ_BUFFER_SIZE = "google.bigtable.grpc.read.streaming.buffer.size";
+
+  /**
+   * Key to set the batch size of messages to request when scanning.
+   */
+  public static final String READ_BATCH_SIZE = "google.bigtable.grpc.read.streaming.batch.size";
 
   /**
    * The number of grpc channels to open for asynchronous processing such as puts.
@@ -256,6 +266,16 @@ public class BigtableOptionsFactory {
         READ_PARTIAL_ROW_TIMEOUT_MS, RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS);
     LOG.debug("gRPC read partial row timeout (millis): %d", readPartialRowTimeoutMillis);
     retryOptionsBuilder.setReadPartialRowTimeoutMillis(readPartialRowTimeoutMillis);
+
+    int streamingBufferSize = configuration.getInt(
+      READ_BUFFER_SIZE, RetryOptions.DEFAULT_STREAMING_BUFFER_SIZE);
+    LOG.debug("gRPC read buffer size (count): %d", streamingBufferSize);
+    retryOptionsBuilder.setStreamingBufferSize(streamingBufferSize);
+
+    int streamingBatchSize = configuration.getInt(
+      READ_BATCH_SIZE, RetryOptions.DEFAULT_STREAMING_BATCH_SIZE);
+    LOG.debug("gRPC read batch size (count): %d", streamingBatchSize);
+    retryOptionsBuilder.setStreamingBatchSize(streamingBatchSize);
 
     return retryOptionsBuilder.build();
   }

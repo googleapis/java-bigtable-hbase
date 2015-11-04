@@ -36,7 +36,7 @@ public interface ClientCallService {
       ReqT request, StreamObserver<RespT> observer);
 
   <ReqT, RespT> void asyncServerStreamingCall(ClientCall<ReqT, RespT> call, ReqT request,
-      int initialRequestCount, Listener<RespT> listener);
+      Listener<RespT> listener);
 
   <ReqT, RespT> Iterator<RespT> blockingServerStreamingCall(ClientCall<ReqT, RespT> call,
       ReqT request);
@@ -60,7 +60,6 @@ public interface ClientCallService {
     public <ReqT, RespT> void asyncServerStreamingCall(
         ClientCall<ReqT, RespT> call,
         ReqT request,
-        int initialRequestCount,
         ClientCall.Listener<RespT> listener){
       call.start(listener, new Metadata());
       call.request(1);
@@ -70,9 +69,6 @@ public interface ClientCallService {
       } catch (Throwable t) {
         call.cancel();
         throw Throwables.propagate(t);
-      }
-      if (initialRequestCount > 1) {
-        call.request(initialRequestCount - 1);
       }
     }
 
