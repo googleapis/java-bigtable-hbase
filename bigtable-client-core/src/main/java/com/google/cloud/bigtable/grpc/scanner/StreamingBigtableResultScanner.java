@@ -20,7 +20,6 @@ import java.io.IOException;
 import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
-import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
 import com.google.common.base.Preconditions;
 
 /**
@@ -30,14 +29,11 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
 
   private final CancellationToken cancellationToken;
   private final ResponseQueueReader responseQueueReader;
-  private final PooledChannel reservedChannel;
 
   public StreamingBigtableResultScanner(
-      PooledChannel reservedChannel,
       ResponseQueueReader responseQueueReader,
       CancellationToken cancellationToken) {
     Preconditions.checkArgument(cancellationToken != null, "cancellationToken cannot be null");
-    this.reservedChannel = reservedChannel;
     this.cancellationToken = cancellationToken;
     this.responseQueueReader = responseQueueReader;
   }
@@ -56,12 +52,10 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   }
 
   public void setError(Throwable error) {
-    reservedChannel.returnToPool();
     add(ResultQueueEntry.<ReadRowsResponse> newThrowable(error));
   }
 
   public void complete() {
-    reservedChannel.returnToPool();
     add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
   }
 
@@ -78,6 +72,5 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   @Override
   public void close() throws IOException {
     cancellationToken.cancel();
-    reservedChannel.returnToPool();
   }
 }

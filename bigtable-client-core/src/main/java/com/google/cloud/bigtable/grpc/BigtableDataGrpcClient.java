@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc;
 
 import io.grpc.CallOptions;
+import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
@@ -229,18 +230,17 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   private ResultScanner<Row> streamRows(ReadRowsRequest request) {
-    PooledChannel reservedChannel = channelPool.reserveChannel();
-    final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
-        reservedChannel.newCall(BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
+    boolean isGet = request.getTargetCase() == ReadRowsRequest.TargetCase.ROW_KEY;
 
-    // If the scanner is close()d before we're done streaming, we want to cancel the RPC:
-    CancellationToken cancellationToken = new CancellationToken();
-    cancellationToken.addListener(new Runnable() {
-      @Override
-      public void run() {
-        readRowsCall.cancel();
-      }
-    }, executorService);
+    // If it's a long running scan, reserve the pool. There is a gRPC bug that makes the Channel
+    // unavailable for other streams. Reserve a channel for now. This can probably be removed once
+    // we use gRPC 0.10.0. See https://github.com/grpc/grpc-java/issues/1175 for more details
+    Channel channel = isGet ? channelPool : channelPool.reserveChannel();
+
+    ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
+        channel.newCall(BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
+
+    CancellationToken cancellationToken = createCancellationToken(channel, readRowsCall);
 
     int timeout = retryOptions.getReadPartialRowTimeoutMillis();
 
@@ -252,12 +252,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
             batchRequestSize, readRowsCall);
 
     StreamingBigtableResultScanner resultScanner =
-        new StreamingBigtableResultScanner(reservedChannel, responseQueueReader, cancellationToken);
+        new StreamingBigtableResultScanner(responseQueueReader, cancellationToken);
 
     clientCallService.asyncServerStreamingCall(
         readRowsCall,
         request,
-        createClientCallListener(resultScanner));
+        createClientCallListener(channel, resultScanner));
 
     if (batchRequestSize > 1) {
       readRowsCall.request(batchRequestSize - 1);
@@ -266,8 +266,22 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return resultScanner;
   }
 
+  private CancellationToken createCancellationToken(final Channel channel,
+      final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall) {
+    // If the scanner is closed before we're done streaming, we want to cancel the RPC.
+    CancellationToken cancellationToken = new CancellationToken();
+    cancellationToken.addListener(new Runnable() {
+      @Override
+      public void run() {
+        returnToPool(channel);
+        readRowsCall.cancel();
+      }
+    }, executorService);
+    return cancellationToken;
+  }
+
   private ClientCall.Listener<ReadRowsResponse> createClientCallListener(
-      final StreamingBigtableResultScanner resultScanner) {
+      final Channel channel, final StreamingBigtableResultScanner resultScanner) {
     return new ClientCall.Listener<ReadRowsResponse>() {
       @Override
       public void onMessage(ReadRowsResponse readRowResponse) {
@@ -276,6 +290,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
       @Override
       public void onClose(Status status, Metadata trailers) {
+        returnToPool(channel);
         if (status.isOk()) {
           resultScanner.complete();
         } else {
@@ -283,5 +298,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         }
       }
     };
+  }
+
+  private void returnToPool(Channel channel) {
+    // When channel is not channelPool, we are using a PooledChannel.
+    if (channel != channelPool) {
+      ((PooledChannel) channel).returnToPool();
+    }
   }
 }

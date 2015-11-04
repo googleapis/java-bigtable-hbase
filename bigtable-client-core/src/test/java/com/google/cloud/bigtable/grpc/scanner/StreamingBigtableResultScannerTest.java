@@ -30,13 +30,9 @@ import org.mockito.MockitoAnnotations;
 
 import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
-import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
 
 @RunWith(JUnit4.class)
 public class StreamingBigtableResultScannerTest {
-
-  @Mock
-  PooledChannel channel;
 
   @Mock
   ResponseQueueReader reader;
@@ -49,7 +45,7 @@ public class StreamingBigtableResultScannerTest {
   @Before
   public void setup(){
     MockitoAnnotations.initMocks(this);
-    scanner = new StreamingBigtableResultScanner(channel, reader, cancellationToken);
+    scanner = new StreamingBigtableResultScanner(reader, cancellationToken);
   }
 
   @Test
@@ -57,7 +53,6 @@ public class StreamingBigtableResultScannerTest {
     ReadRowsResponse response = ReadRowsResponse.getDefaultInstance();
     scanner.addResult(response);
     verify(reader, times(1)).add(eq(ResultQueueEntry.newResult(response)));
-    assertChannelReturned(0);
     scanner.close();
   }
 
@@ -66,7 +61,6 @@ public class StreamingBigtableResultScannerTest {
     IOException e = new IOException("Some exception");
     scanner.setError(e);
     verify(reader, times(1)).add(eq(ResultQueueEntry.<ReadRowsResponse> newThrowable(e)));
-    assertChannelReturned(1);
     scanner.close();
   }
 
@@ -74,14 +68,12 @@ public class StreamingBigtableResultScannerTest {
   public void testComplete() throws IOException, InterruptedException {
     scanner.complete();
     verify(reader, times(1)).add(eq(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker()));
-    assertChannelReturned(1);
     scanner.close();
   }
 
   @Test
   public void cancellationIsSignalled() throws IOException, InterruptedException {
     scanner.close();
-    assertChannelReturned(1);
     verify(cancellationToken, times(1)).cancel();
   }
 
@@ -90,9 +82,5 @@ public class StreamingBigtableResultScannerTest {
     scanner.next();
     verify(reader, times(1)).getNextMergedRow();
     scanner.close();
-  }
-
-  private void assertChannelReturned(int times) {
-    verify(channel, times(times)).returnToPool();
   }
 }
