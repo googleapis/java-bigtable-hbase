@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_INITIAL_BACK
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_STREAMING_BUFFER_SIZE;
+import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_STREAMING_BATCH_SIZE;
 
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.NanoClock;
@@ -31,7 +32,7 @@ public class RetryOptionsUtil {
   public static RetryOptions createTestRetryOptions(final NanoClock nanoClock) {
     return new RetryOptions(true, true, DEFAULT_INITIAL_BACKOFF_MILLIS, DEFAULT_BACKOFF_MULTIPLIER,
         DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS, DEFAULT_STREAMING_BUFFER_SIZE,
-        DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS) {
+        DEFAULT_STREAMING_BATCH_SIZE, DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS) {
       @Override
       protected ExponentialBackOff.Builder createBackoffBuilder() {
         return super.createBackoffBuilder().setNanoClock(nanoClock);

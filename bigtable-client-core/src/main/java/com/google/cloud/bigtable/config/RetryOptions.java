@@ -29,6 +29,7 @@ import com.google.common.annotations.VisibleForTesting;
 public class RetryOptions {
 
   public static int DEFAULT_STREAMING_BUFFER_SIZE = 60;
+  public static int DEFAULT_STREAMING_BATCH_SIZE = DEFAULT_STREAMING_BUFFER_SIZE / 2;
 
   /**
    * Flag indicating whether or not grpc retries should be enabled.
@@ -73,6 +74,7 @@ public class RetryOptions {
     private double backoffMultiplier = DEFAULT_BACKOFF_MULTIPLIER;
     private int maxElaspedBackoffMillis = DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
     private int streamingBufferSize = DEFAULT_STREAMING_BUFFER_SIZE;
+    private int streamingBatchSize = DEFAULT_STREAMING_BUFFER_SIZE;
     private int readPartialRowTimeoutMillis = DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
 
     /**
@@ -123,6 +125,14 @@ public class RetryOptions {
       return this;
     }
 
+    /**
+     * Set the number of messages to request when scanning.
+     */
+    public Builder setStreamingBatchSize(int streamingBatchSize) {
+      this.streamingBatchSize = streamingBatchSize;
+      return this;
+    }
+
     public Builder setReadPartialRowTimeoutMillis(int timeout) {
       this.readPartialRowTimeoutMillis = timeout;
       return this;
@@ -139,6 +149,7 @@ public class RetryOptions {
           backoffMultiplier,
           maxElaspedBackoffMillis,
           streamingBufferSize,
+          streamingBatchSize,
           readPartialRowTimeoutMillis);
     }
   }
@@ -151,7 +162,9 @@ public class RetryOptions {
   private final int maxElaspedBackoffMillis;
   private final double backoffMultiplier;
   private final int streamingBufferSize;
+  private final int streamingBatchSize;
   private final int readPartialRowTimeoutMillis;
+
 
   public RetryOptions(
       boolean retriesEnabled,
@@ -160,6 +173,7 @@ public class RetryOptions {
       double backoffMultiplier,
       int maxElaspedBackoffMillis,
       int streamingBufferSize,
+      int streamingBatchSize,
       int readPartialRowTimeoutMillis) {
     this.retriesEnabled = retriesEnabled;
     this.retryOnDeadlineExceeded = retryOnDeadlineExceeded;
@@ -167,6 +181,7 @@ public class RetryOptions {
     this.maxElaspedBackoffMillis = maxElaspedBackoffMillis;
     this.backoffMultiplier = backoffMultiplier;
     this.streamingBufferSize = streamingBufferSize;
+    this.streamingBatchSize = streamingBatchSize;
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
   }
 
@@ -210,6 +225,13 @@ public class RetryOptions {
    */
   public int getStreamingBufferSize() {
     return streamingBufferSize;
+  }
+
+  /**
+   * The number of messages to request when scanning.
+   */
+  public int getStreamingBatchSize() {
+    return streamingBatchSize;
   }
 
   /**
