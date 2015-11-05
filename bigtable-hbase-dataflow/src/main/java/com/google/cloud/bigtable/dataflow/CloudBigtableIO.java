@@ -851,7 +851,8 @@ public class CloudBigtableIO {
       if (BigtableSession.isAlpnProviderEnabled()) {
         try (BigtableConnection conn = new BigtableConnection(configuration.toHBaseConfig());
             Admin admin = conn.getAdmin()) {
-          Preconditions.checkState(admin.tableExists(TableName.valueOf(tableId)));
+          Preconditions.checkState(admin.tableExists(TableName.valueOf(tableId)), "Table "
+              + tableId + " does not exist.  This dataflow operation could not be run.");
         } catch (IOException | IllegalArgumentException | ExceptionInInitializerError e) {
           LOG.error(String.format("Could not validate that the table exists: %s (%s)", e.getClass()
               .getName(), e.getMessage()), e);
