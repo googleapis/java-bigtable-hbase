@@ -232,10 +232,27 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private ResultScanner<Row> streamRows(ReadRowsRequest request) {
     boolean isGet = request.getTargetCase() == ReadRowsRequest.TargetCase.ROW_KEY;
 
+    int streamingBufferSize;
+
+    int batchRequestSize;
+
     // If it's a long running scan, reserve the pool. There is a gRPC bug that makes the Channel
-    // unavailable for other streams. Reserve a channel for now. This can probably be removed once
-    // we use gRPC 0.10.0. See https://github.com/grpc/grpc-java/issues/1175 for more details
-    Channel channel = isGet ? channelPool : channelPool.reserveChannel();
+    // unavailable for other streams. Reserve a channel for now. Reservations can probably be
+    // removed once we use gRPC 0.10.0. See https://github.com/grpc/grpc-java/issues/1175 for more
+    // details
+    Channel channel;
+
+    if (isGet) {
+      // Batch request size is more performant with a value of 1 for single row gets, while a higher
+      // number is more performant for scanning
+      batchRequestSize = 1;
+      streamingBufferSize = 10;
+      channel = channelPool;
+    } else {
+      batchRequestSize = retryOptions.getStreamingBatchSize();
+      streamingBufferSize = retryOptions.getStreamingBufferSize();
+      channel = channelPool.reserveChannel();
+    }
 
     ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
         channel.newCall(BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
@@ -243,9 +260,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     CancellationToken cancellationToken = createCancellationToken(channel, readRowsCall);
 
     int timeout = retryOptions.getReadPartialRowTimeoutMillis();
-
-    int streamingBufferSize = retryOptions.getStreamingBufferSize();
-    int batchRequestSize = retryOptions.getStreamingBatchSize();
 
     ResponseQueueReader responseQueueReader =
         new ResponseQueueReader(timeout, streamingBufferSize, batchRequestSize,

@@ -98,7 +98,7 @@ public class ResponseQueueReader {
     // If there are currently less than or equal to the batch request size, then ask gRPC to
     // request more results in a batch. Batch requests are more efficient that reading one at
     // a time.
-    while (!completionMarkerFound.get() && moreCanBeRequested()) {
+    if (!completionMarkerFound.get() && moreCanBeRequested()) {
       call.request(batchRequestSize);
       outstandingRequestCount.addAndGet(batchRequestSize);
     }
