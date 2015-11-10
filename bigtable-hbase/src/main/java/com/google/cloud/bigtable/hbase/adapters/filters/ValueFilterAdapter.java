@@ -19,6 +19,7 @@ import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.bigtable.v1.ValueRange;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
@@ -73,7 +74,7 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
       case EQUAL:
         byte[] quotedBytes = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
         return RowFilter.newBuilder()
-            .setValueRegexFilter(ByteString.copyFrom(quotedBytes))
+            .setValueRegexFilter(ByteStringer.wrap(quotedBytes))
             .build();
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
