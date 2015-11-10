@@ -53,8 +53,8 @@ limitations under the License.
             <artifactId>hbase-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>log4j-over-slf4j</artifactId>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
         </dependency>
     </dependencies>
     <build>
@@ -95,7 +95,6 @@ limitations under the License.
                                         <exclude>io.grpc:grpc-all:*</exclude>
                                         <exclude>io.netty:netty-all:*</exclude>
                                         <exclude>io.netty:netty:*</exclude>
-                                        <exclude>log4j:log4j:*</exclude>
                                         <exclude>org.slf4j:lf4j-log4j12:*</exclude>
                                     </excludes>
                                     <includes>
