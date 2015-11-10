@@ -139,10 +139,11 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Mockito.when(credentials.refreshAccessToken()).thenThrow(ioException);
     final int startTime = 100000000;
     setTimeInMillieconds(startTime);
+    final int maxElaspedBackoffMillis = retryOptions.getMaxElaspedBackoffMillis();
+    final int max_end = startTime + maxElaspedBackoffMillis * 10;
     underTest =
         new RefreshingOAuth2CredentialsInterceptor(executorService, credentials, retryOptions,
             logger);
-    final int maxElaspedBackoffMillis = retryOptions.getMaxElaspedBackoffMillis();
     underTest.sleeper = new Sleeper() {
       @Override
       public void sleep(long ms) throws InterruptedException {
@@ -150,8 +151,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
         setTimeInMillieconds(now);
         // Make sure that the system "slept" for more than the retryOption max millis. The Backoff logic
         // adds some random variability to the exact elapsed time, so add in a bit of wiggle room.
-        Assert.assertTrue(String.format("%d > %d", now, startTime + maxElaspedBackoffMillis * 2),
-          now < startTime + maxElaspedBackoffMillis * 2);
+        Assert.assertTrue(String.format("%d > %d", now, max_end), now < max_end);
       }
     };
     HeaderCacheElement header = underTest.refreshCredentialsWithRetry();
