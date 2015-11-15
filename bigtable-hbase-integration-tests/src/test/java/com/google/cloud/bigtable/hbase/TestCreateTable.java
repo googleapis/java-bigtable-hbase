@@ -41,6 +41,10 @@ public class TestCreateTable extends AbstractTest {
    */
   @Test
   public void testTableNames() throws IOException {
+    String shouldTest = System.getProperty("bigtable.test.create.table", "true");
+    if (!"true".equals(shouldTest)) {
+      return;
+    }
     String[] goodNames = {
         "a",
         "1",
