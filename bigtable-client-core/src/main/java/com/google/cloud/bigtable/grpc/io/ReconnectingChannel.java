@@ -222,7 +222,7 @@ public class ReconnectingChannel extends Channel implements Closeable {
         try {
           factory.createClosable(channel).close();
         } catch (IOException e) {
-          log.log(Level.WARNING, "Could not close a recycled delegate", e);
+          log.log(Level.INFO, "Could not close a recycled delegate", e);
         } finally {
           closingAsynchronously.decrementAndGet();
           synchronized (closingAsynchronously) {

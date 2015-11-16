@@ -399,7 +399,12 @@ public class BigtableSession implements AutoCloseable {
               throw new IOException("Interrupted while sleeping for close", e);
             }
             if (!channelImpl.isTerminated()) {
-              throw new IOException("Could not close the channel after " + timeoutMs + " ms.");
+              // Sometimes, gRPC channels don't close properly. We cannot explain why that happens,
+              // nor can we reproduce the problem reliably. However, that doesn't actually cause
+              // problems. Synchronous RPCs will throw exceptions right away. Buffered Mutator based
+              // async operations are already logged. Direct async operations may have some trouble,
+              // but users should not currently be using them directly.
+              LOG.trace("Could not close the channel after %d ms.", timeoutMs);
             }
           }
         };
