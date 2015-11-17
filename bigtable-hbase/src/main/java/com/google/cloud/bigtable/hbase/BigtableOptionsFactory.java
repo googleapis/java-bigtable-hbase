@@ -145,12 +145,6 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setZoneId(getValue(configuration, ZONE_KEY, "Zone"));
     bigtableOptionsBuilder.setClusterId(getValue(configuration, CLUSTER_KEY, "Cluster"));
 
-    String overrideIp = configuration.get(IP_OVERRIDE_KEY);
-    if (!isNullOrEmpty(overrideIp)) {
-      LOG.debug("Using override IP address %s", overrideIp);
-      bigtableOptionsBuilder.setOverrideIp(overrideIp);
-    }
-
     bigtableOptionsBuilder.setDataHost(
         getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));
 
