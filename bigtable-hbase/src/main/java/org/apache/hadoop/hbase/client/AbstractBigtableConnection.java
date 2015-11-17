@@ -142,13 +142,15 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
     BigtableDataClient client = session.getDataClient();
-    AsyncExecutor asyncExecutor =
-        new AsyncExecutor(client, new HeapSizeManager(AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT,
-            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT));
-    HBaseRequestAdapter adapter = createAdapter(tableName);
-    BatchExecutor batchExecutor =
-        new BatchExecutor(asyncExecutor, options, MoreExecutors.listeningDecorator(pool), adapter);
-    return new BigtableTable(this, tableName, options, client, adapter, batchExecutor);
+    HeapSizeManager heapSizeManager =
+        new HeapSizeManager(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
+            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT);
+    BatchExecutor batchExecutor = new BatchExecutor(
+         new AsyncExecutor(client, heapSizeManager),
+         options,
+         MoreExecutors.listeningDecorator(pool),
+         createAdapter(tableName));
+    return new BigtableTable(this, tableName, options, client, createAdapter(tableName), batchExecutor);
   }
 
   @Override
