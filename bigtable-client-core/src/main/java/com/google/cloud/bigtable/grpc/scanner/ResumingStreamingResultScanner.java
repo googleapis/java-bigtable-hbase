@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.grpc.scanner;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.api.client.util.BackOff;
-import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.client.util.ExponentialBackOff.Builder;
 import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v1.ReadRowsRequest;
@@ -53,7 +51,6 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     return previous.concat(NEXT_ROW_SUFFIX);
   }
 
-  private final Builder backOffBuilder;
   private final ReadRowsRequest originalRequest;
   private final RetryOptions retryOptions;
 
@@ -82,13 +79,8 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     Preconditions.checkArgument(
         !originalRequest.getAllowRowInterleaving(),
         "Row interleaving is not supported when using resumable streams");
-    this.backOffBuilder = new ExponentialBackOff.Builder()
-        .setInitialIntervalMillis(retryOptions.getInitialBackoffMillis())
-        .setMaxElapsedTimeMillis(retryOptions.getMaxElaspedBackoffMillis())
-        .setMultiplier(retryOptions.getBackoffMultiplier());
     this.originalRequest = originalRequest;
     this.scannerFactory = scannerFactory;
-    this.currentBackoff = backOffBuilder.build();
     this.currentDelegate = scannerFactory.createScanner(originalRequest);
     this.retryOptions = retryOptions;
     this.logger = logger;
@@ -104,16 +96,17 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
           rowCount++;
         }
         // We've had at least one successful RPC, reset the backoff
-        currentBackoff.reset();
+        currentBackoff = null;
 
         return result;
       } catch (ScanTimeoutException rte) {
-        logger.warn("ReadTimeoutException: ", rte);
+        logger.info("The client could not get a repsone in %d ms.  Retrying the scan.",
+          retryOptions.getReadPartialRowTimeoutMillis());
         backOffAndRetry(rte);
       } catch (IOExceptionWithStatus ioe) {
-        logger.warn("IOExceptionWithStatus: ", ioe);
         Status.Code code = ioe.getStatus().getCode();
         if (retryOptions.isRetryableRead(code)) {
+          logger.info("Reissuing scan after receiving error with status: %s.", code.name());
           backOffAndRetry(ioe);
         } else {
           throw ioe;
@@ -136,11 +129,12 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
    */
   private void backOffAndRetry(IOException cause) throws IOException,
       ScanRetriesExhaustedException {
+    if (currentBackoff == null) {
+      currentBackoff = retryOptions.createBackoff();
+    }
     long nextBackOff = currentBackoff.nextBackOffMillis();
     if (nextBackOff == BackOff.STOP) {
-      logger.warn("RetriesExhausted: ", cause);
-      throw new ScanRetriesExhaustedException(
-          "Exhausted streaming retries.", cause);
+      throw new ScanRetriesExhaustedException("Exhausted streaming retries.", cause);
     }
 
     sleep(nextBackOff);

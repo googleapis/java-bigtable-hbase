@@ -94,7 +94,7 @@ public class RetryOptions {
     }
 
     /**
-     * The amount of time in miliiseconds we will wait for our first error retry.
+     * The amount of time in milliseconds we will wait for our first error retry.
      */
     public Builder setInitialBackoffMillis(int initialBackoffMillis) {
       this.initialBackoffMillis = initialBackoffMillis;
@@ -186,7 +186,7 @@ public class RetryOptions {
   }
 
   /**
-   * The amount of time in miliiseconds we will wait for our first error retry.
+   * The amount of time in milliseconds we will wait for our first error retry.
    */
   public int getInitialBackoffMillis() {
     return initialBackoffMillis;
