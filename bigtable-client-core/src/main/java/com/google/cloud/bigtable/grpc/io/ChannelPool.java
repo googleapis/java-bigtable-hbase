@@ -15,18 +15,22 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Logger;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Manages a set of ClosableChannels and uses them in a round robin.
@@ -69,8 +73,12 @@ public class ChannelPool extends Channel {
   private Channel[] channels;
   private final AtomicInteger requestCount = new AtomicInteger();
   private final List<HeaderInterceptor> headerInterceptors;
+  private final ReadWriteLock channelsLock = new ReentrantReadWriteLock();
+  private final Lock readChannelsLock = channelsLock.readLock();
+  private final Lock writeChannelsLock = channelsLock.writeLock();
 
   public ChannelPool(Channel[] channels, List<HeaderInterceptor> headerInterceptors) {
+    Preconditions.checkArgument(channels != null && channels.length > 0);
     this.channels = channels;
     this.headerInterceptors = headerInterceptors;
   }
@@ -99,10 +107,14 @@ public class ChannelPool extends Channel {
     };
   }
 
-  private synchronized Channel getNextChannel() {
+  private Channel getNextChannel() {
     int currentRequestNum = requestCount.getAndIncrement();
-    int index = Math.abs(currentRequestNum % channels.length);
-    return channels[index];
+    readChannelsLock.lock();
+    try {
+      return channels[Math.abs(currentRequestNum % channels.length)];
+    } finally {
+      readChannelsLock.unlock();
+    }
   }
 
   @Override
@@ -115,32 +127,45 @@ public class ChannelPool extends Channel {
    * is another RPC started on the same channel. If the pool only has a single channel, keep the
    * channel in the pool so that other RPCs can at least attempt to use it.
    */
-  public synchronized PooledChannel reserveChannel() {
+  public PooledChannel reserveChannel() {
     Channel reserved;
     boolean returned = false;
-    if (channels.length == 1) {
-      reserved = channels[0];
-      returned = true;
-    } else {
-      reserved = channels[channels.length - 1];
-      Channel[] newChannelArray = new Channel[channels.length - 1];
-      System.arraycopy(channels, 0, newChannelArray, 0, channels.length - 1);
-      channels = newChannelArray;
+    writeChannelsLock.lock();
+    try {
+      if (channels.length == 1) {
+        reserved = channels[0];
+        returned = true;
+      } else {
+        reserved = channels[channels.length - 1];
+        Channel[] newChannelArray = new Channel[channels.length - 1];
+        System.arraycopy(channels, 0, newChannelArray, 0, channels.length - 1);
+        channels = newChannelArray;
+      }
+    } finally {
+      writeChannelsLock.unlock();
     }
     return new PooledChannel(reserved, returned);
   }
 
-  private synchronized void returnChannel(PooledChannel channel){
-    if (!channel.returned) {
+  private void returnChannel(PooledChannel channel){
+    writeChannelsLock.lock();
+    try {
       Channel[] newChannelArray = new Channel[channels.length + 1];
       System.arraycopy(channels, 0, newChannelArray, 0, channels.length);
       newChannelArray[channels.length] = channel.delegate;
       channels = newChannelArray;
+    } finally {
+      writeChannelsLock.unlock();
     }
   }
 
   @VisibleForTesting
-  public synchronized int size() {
-    return channels.length;
+  public int size() {
+    readChannelsLock.lock();
+    try {
+      return channels.length;
+    } finally {
+      readChannelsLock.unlock();
+    }
   }
 }
