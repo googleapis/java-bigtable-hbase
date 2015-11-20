@@ -54,7 +54,6 @@ import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.grpc.io.ReconnectingChannel;
@@ -301,13 +300,12 @@ public class BigtableSession implements AutoCloseable {
   }
 
   private BigtableDataClient initializeDataClient() throws IOException {
-    ChannelPool channel = createChannel(options.getDataHost(), options.getChannelCount());
-    RetryOptions retryOptions = options.getRetryOptions();
-    return new BigtableDataGrpcClient(channel, batchPool, scheduledRetries, retryOptions);
+    ChannelPool dataChannel = createChannel(options.getDataHost());
+    return new BigtableDataGrpcClient(dataChannel, batchPool, scheduledRetries, options);
   }
 
   private BigtableTableAdminClient initializeAdminClient() throws IOException {
-    Channel channel = createChannel(options.getTableAdminHost(), 1);
+    Channel channel = createChannel(options.getTableAdminHost());
     return new BigtableTableAdminGrpcClient(channel);
   }
 
@@ -335,7 +333,7 @@ public class BigtableSession implements AutoCloseable {
 
   public synchronized BigtableClusterAdminClient getClusterAdminClient() throws IOException {
     if (this.clusterAdminClient == null) {
-      Channel channel = createChannel(options.getClusterAdminHost(), 1);
+      Channel channel = createChannel(options.getClusterAdminHost());
       this.clusterAdminClient = new BigtableClusterAdminGrpcClient(channel);
     }
 
@@ -347,15 +345,16 @@ public class BigtableSession implements AutoCloseable {
    * Create a new Channel, with auth headers and user agent interceptors.
    * </p>
    */
-  protected ChannelPool createChannel(String hostString, int channelCount) throws IOException {
+  protected ChannelPool createChannel(String hostString) throws IOException {
     final InetSocketAddress host = new InetSocketAddress(getHost(hostString), options.getPort());
-    final List<Channel> channels = new ArrayList<>(channelCount);
-    for (int i = 0; i < channelCount; i++) {
-      ReconnectingChannel reconnectingChannel = createReconnectingChannel(host);
-      clientCloseHandlers.add(reconnectingChannel);
-      channels.add(reconnectingChannel);
-    }
-    return new ChannelPool(channels, headerInterceptors);
+    return new ChannelPool(headerInterceptors, new ChannelPool.ChannelFactory() {
+      @Override
+      public Channel create() throws IOException {
+        ReconnectingChannel reconnectingChannel = createReconnectingChannel(host);
+        clientCloseHandlers.add(reconnectingChannel);
+        return reconnectingChannel;
+      }
+    });
   }
 
   private InetAddress getHost(String hostName) throws IOException {

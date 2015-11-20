@@ -45,6 +45,8 @@ import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.SetCell;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.RowRange;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.ClientCallService;
@@ -85,9 +87,10 @@ public class BigtableDataGrpcClientTests {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    underTest =
-        new BigtableDataGrpcClient(channelPool, executorService, retryExecutorService,
-            RetryOptionsUtil.createTestRetryOptions(nanoClock), clientCallService);
+    RetryOptions retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
+    BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
+    underTest = new BigtableDataGrpcClient(channelPool, executorService, retryExecutorService,
+        options, clientCallService);
     when(channelPool.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(
       clientCall);
     when(channelPool.reserveChannel()).thenReturn(pooledChannel);

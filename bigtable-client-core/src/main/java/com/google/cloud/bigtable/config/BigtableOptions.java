@@ -34,7 +34,7 @@ public class BigtableOptions {
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
   public static final int DEFAULT_BIGTABLE_PORT = 443;
 
-  public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = 4;
+  public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = 6;
   public static final int BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT =
       (int) TimeUnit.MILLISECONDS.convert(30, TimeUnit.MINUTES);
 
