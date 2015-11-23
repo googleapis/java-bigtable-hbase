@@ -194,6 +194,8 @@ public class ColumnDescriptorAdapter {
   private static void convertGarbageCollectionExpression(String gcExpression,
       HColumnDescriptor columnDescriptor) {
     if (Strings.isNullOrEmpty(gcExpression)) {
+      // No GC Expression means keep all versions, MaxVersions = 0.
+      columnDescriptor.setMaxVersions(0);
       return;
     }
     String maxVersionExpression = null;
