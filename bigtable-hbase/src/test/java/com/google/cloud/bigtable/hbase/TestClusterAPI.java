@@ -63,7 +63,6 @@ import com.google.longrunning.Operation;
 public class TestClusterAPI {
 
   private static final int MAX_WAIT_SECONDS = 20;
-  private static final String TEST_CLUSTER_ID = "test-cluster-api";
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   public static final int MAX_VERSIONS = 6;
 
@@ -80,31 +79,27 @@ public class TestClusterAPI {
       configuration.set(entry.getKey().toString(), entry.getValue().toString());
     }
 
-    BigtableOptions originalOptions = BigtableOptionsFactory.fromConfiguration(configuration);
-    BigtableSession originalSession = new BigtableSession(originalOptions);
+    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+    BigtableSession originalSession = new BigtableSession(options);
     BigtableClusterAdminClient client = originalSession.getClusterAdminClient();
 
-    String projectId = originalOptions.getProjectId();
+    String projectId = options.getProjectId();
     List<Cluster> clusters = getClusters(client, projectId);
+    String clusterId = options.getClusterId();
 
     // cleanup any old clusters
     for (Cluster cluster : clusters) {
-      if (cluster.getName().contains(TEST_CLUSTER_ID)) {
+      if (cluster.getName().endsWith("/clusters/" + clusterId)) {
         dropCluster(client, cluster.getName());
       }
     }
 
     List<Zone> zoneList = getZones(client, projectId);
-    String zoneName = getZoneName(originalOptions.getZoneId(), zoneList);
-    String clusterName = zoneName + "/clusters/" + TEST_CLUSTER_ID;
+    String zoneName = getZoneName(options.getZoneId(), zoneList);
+    String clusterName = zoneName + "/clusters/" + clusterId;
 
-    Cluster cluster = createACluster(client, zoneName, TEST_CLUSTER_ID, clusterSize);
+    Cluster cluster = createACluster(client, zoneName, clusterId, clusterSize);
     waitForOperation(client, cluster.getCurrentOperation().getName(), MAX_WAIT_SECONDS);
-
-    configuration.set(BigtableOptionsFactory.ZONE_KEY,
-      clusterName.replaceFirst(".*/zones/([^/]+)/.*", "$1"));
-    configuration.set(BigtableOptionsFactory.CLUSTER_KEY,
-      clusterName.replaceFirst(".*/clusters/([^/]+)", "$1"));
 
     TableName autoDeletedTableName =
         TableName.valueOf("auto-deleted-" + UUID.randomUUID().toString());
