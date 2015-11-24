@@ -27,6 +27,7 @@ import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class ChannelPoolTest {
     when(channel.newCall(same(descriptor), same(CallOptions.DEFAULT))).thenReturn(
       callStub);
     ChannelPool pool =
-        new ChannelPool(new Channel[] { channel }, Collections.singletonList(interceptor));
+        new ChannelPool(Arrays.asList(channel), Collections.singletonList(interceptor));
     ClientCall call = pool.newCall(descriptor, CallOptions.DEFAULT);
     Metadata headers = new Metadata();
     call.start(null, headers);
@@ -62,7 +63,7 @@ public class ChannelPoolTest {
     Channel channel2 = mock(Channel.class);
     MethodDescriptor descriptor = mock(MethodDescriptor.class);
     MockitoAnnotations.initMocks(this);
-    ChannelPool pool = new ChannelPool(new Channel[] { channel1, channel2 }, null);
+    ChannelPool pool = new ChannelPool(Arrays.asList(channel1, channel2), null);
     pool.newCall(descriptor, CallOptions.DEFAULT);
     verify(channel1, times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
     verify(channel2, times(0)).newCall(same(descriptor), same(CallOptions.DEFAULT));
@@ -73,7 +74,7 @@ public class ChannelPoolTest {
   
   @Test
   public void testReturnToPool() {
-    ChannelPool pool = new ChannelPool(new Channel[] { null, null }, null);
+    ChannelPool pool = new ChannelPool(Arrays.<Channel> asList(null, null), null);
     assertEquals(2, pool.size());
     PooledChannel reserved = pool.reserveChannel();
     assertEquals(1, pool.size());
@@ -83,7 +84,7 @@ public class ChannelPoolTest {
 
   @Test
   public void testReserveNeverExhaustsPool() {
-    ChannelPool pool = new ChannelPool(new Channel[] { null, null }, null);
+    ChannelPool pool = new ChannelPool(Arrays.<Channel> asList(null, null), null);
     for (int i = 0; i < 10; i++) {
       pool.reserveChannel();
       assertEquals(1, pool.size());

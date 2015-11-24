@@ -349,11 +349,11 @@ public class BigtableSession implements AutoCloseable {
    */
   protected ChannelPool createChannel(String hostString, int channelCount) throws IOException {
     final InetSocketAddress host = new InetSocketAddress(getHost(hostString), options.getPort());
-    final Channel channels[] = new Channel[channelCount];
+    final List<Channel> channels = new ArrayList<>(channelCount);
     for (int i = 0; i < channelCount; i++) {
       ReconnectingChannel reconnectingChannel = createReconnectingChannel(host);
       clientCloseHandlers.add(reconnectingChannel);
-      channels[i] = reconnectingChannel;
+      channels.add(reconnectingChannel);
     }
     return new ChannelPool(channels, headerInterceptors);
   }
