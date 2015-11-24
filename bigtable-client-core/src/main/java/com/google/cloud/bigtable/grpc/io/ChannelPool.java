@@ -15,18 +15,19 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
+
+import com.google.common.annotations.VisibleForTesting;
+
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Manages a set of ClosableChannels and uses them in a round robin.
@@ -66,12 +67,12 @@ public class ChannelPool extends Channel {
     }
   }
 
-  private Channel[] channels;
+  private List<Channel> channels;
   private final AtomicInteger requestCount = new AtomicInteger();
   private final List<HeaderInterceptor> headerInterceptors;
 
-  public ChannelPool(Channel[] channels, List<HeaderInterceptor> headerInterceptors) {
-    this.channels = channels;
+  public ChannelPool(List<Channel> channels, List<HeaderInterceptor> headerInterceptors) {
+    this.channels = new ArrayList<>(channels);
     this.headerInterceptors = headerInterceptors;
   }
 
@@ -101,13 +102,13 @@ public class ChannelPool extends Channel {
 
   private synchronized Channel getNextChannel() {
     int currentRequestNum = requestCount.getAndIncrement();
-    int index = Math.abs(currentRequestNum % channels.length);
-    return channels[index];
+    int index = Math.abs(currentRequestNum % channels.size());
+    return channels.get(index);
   }
 
   @Override
   public String authority() {
-    return channels[0].authority();
+    return channels.get(0).authority();
   }
 
   /**
@@ -118,29 +119,23 @@ public class ChannelPool extends Channel {
   public synchronized PooledChannel reserveChannel() {
     Channel reserved;
     boolean returned = false;
-    if (channels.length == 1) {
-      reserved = channels[0];
+    if (channels.size() == 1) {
+      reserved = channels.get(0);
       returned = true;
     } else {
-      reserved = channels[channels.length - 1];
-      Channel[] newChannelArray = new Channel[channels.length - 1];
-      System.arraycopy(channels, 0, newChannelArray, 0, channels.length - 1);
-      channels = newChannelArray;
+      reserved = channels.remove(0);
     }
     return new PooledChannel(reserved, returned);
   }
 
   private synchronized void returnChannel(PooledChannel channel){
     if (!channel.returned) {
-      Channel[] newChannelArray = new Channel[channels.length + 1];
-      System.arraycopy(channels, 0, newChannelArray, 0, channels.length);
-      newChannelArray[channels.length] = channel.delegate;
-      channels = newChannelArray;
+      channels.add(channel.delegate);
     }
   }
 
   @VisibleForTesting
   public synchronized int size() {
-    return channels.length;
+    return channels.size();
   }
 }
