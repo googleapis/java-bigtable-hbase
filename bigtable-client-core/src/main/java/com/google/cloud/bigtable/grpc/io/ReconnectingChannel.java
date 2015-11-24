@@ -26,9 +26,6 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -80,20 +77,22 @@ public class ReconnectingChannel extends Channel implements Closeable {
 
     @Override
     public void start(ClientCall.Listener<ResponseT> responseListener, Metadata headers) {
-      Preconditions.checkState(callDelegate == null, "Already started");
-      ReadLock readLock = delegateLock.readLock();
-      readLock.lock();
-      try {
-        if (delegate == null) {
-          throw new IllegalStateException("Channel is closed");
+      Preconditions.checkState(callDelegate == null, "Call cannot be restarted.");
+      synchronized (ReconnectingChannel.this) {
+        Preconditions.checkState(delegate != null, "Channel is closed");
+        if (requiresRefresh()) {
+          try {
+              // Startup should be non-blocking and async.
+              Channel oldDelegate = delegate;
+              delegate = factory.createChannel();
+              nextRefresh = calculateNewRefreshTime();
+              asyncClose(oldDelegate);
+          } catch (IOException e) {
+            throw new IllegalStateException("Channel cannot create a new call", e);
+          }
         }
-        checkRefresh(readLock);
         callDelegate = delegate.newCall(methodDescriptor, callOptions);
         callDelegate.start(responseListener, headers);
-      } catch (IOException e) {
-        throw new IllegalStateException("Channel cannot create a new call", e);
-      } finally {
-        readLock.unlock();
       }
     }
 
@@ -127,7 +126,6 @@ public class ReconnectingChannel extends Channel implements Closeable {
   // We can't do a newCall on a closed delegate.  This will ensure that refreshes don't 
   // allow a closed delegate to perform a newCall.  Once closed is called, all existing
   // calls will complete before the delegate shuts down.
-  private final ReentrantReadWriteLock delegateLock = new ReentrantReadWriteLock();
   private final AtomicInteger closingAsynchronously = new AtomicInteger(0);
 
   private final long maxRefreshTime;
@@ -153,50 +151,13 @@ public class ReconnectingChannel extends Channel implements Closeable {
     return new DelayingCall<>(methodDescriptor, callOptions);
   }
 
-  private void checkRefresh(ReadLock readLock) throws IOException {
-    if (!requiresRefresh()) {
-      return;
-    }
-    
-    // A writeLock will assure that only a single thread updates to delgate.  See close() for
-    // the other use of writeLocks in this class.
-    //
-    // A write lock can't be granted while there's an outstanding readLock, even by this thread.
-    // A read lock can be granted while holding a write lock.  This read lock was obtained by 
-    // newCall() and will be unlocked there.
-
-    WriteLock writeLock = delegateLock.writeLock();
-    readLock.unlock();
-    writeLock.lock();
-    readLock.lock();
-
-    try {
-      // Double check that a previous call didn't refresh the connection since this thread 
-      // acquired the write lock. 
-      if (requiresRefresh()) {
-        // Startup should be non-blocking and async.
-        Channel oldDelegate = delegate;
-        delegate = factory.createChannel();
-        nextRefresh = calculateNewRefreshTime();
-        asyncClose(oldDelegate);
-      }
-    } finally {
-      writeLock.unlock();
-    }
-  }
-
-  
   @Override
   public void close() throws IOException {
     Channel toClose = null;
 
-    WriteLock writeLock = delegateLock.writeLock();
-    writeLock.lock();
-    try {
+    synchronized(this) {
       toClose = delegate;
       delegate = null;
-    } finally {
-      writeLock.unlock();
     }
     final Channel channel = toClose;
     if (channel != null) {
