@@ -78,6 +78,14 @@ limitations under the License.
         </dependency>
     </dependencies>
     <build>
+        <extensions>
+            <!-- Use os-maven-plugin to initialize the "os.detected" properties -->
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.4.1.Final</version>
+            </extension>
+        </extensions>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -124,4 +132,18 @@ limitations under the License.
             </plugin>
         </plugins>
     </build>
+    <profiles>
+       <profile>
+            <id>tcnative</id>
+            <dependencies>
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-tcnative</artifactId>
+                    <version>1.1.33.Fork9</version>
+                    <classifier>${os.detected.classifier}</classifier>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+       </profile>
+    </profiles>
 </project>
