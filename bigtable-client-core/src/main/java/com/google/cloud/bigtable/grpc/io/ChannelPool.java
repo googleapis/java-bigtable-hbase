@@ -15,12 +15,11 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-
-import com.google.common.annotations.VisibleForTesting;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -35,6 +34,10 @@ import io.grpc.MethodDescriptor;
 public class ChannelPool extends Channel {
 
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
+
+  public interface ChannelFactory {
+    Channel create() throws IOException;
+  }
 
   /**
    * An implementation of {@link Channel} that knows how to return itself to the {@link ChannelPool}
@@ -70,10 +73,25 @@ public class ChannelPool extends Channel {
   private List<Channel> channels;
   private final AtomicInteger requestCount = new AtomicInteger();
   private final List<HeaderInterceptor> headerInterceptors;
+  private ChannelFactory factory;
+  private int reservedChannelCount = 0;
 
-  public ChannelPool(List<Channel> channels, List<HeaderInterceptor> headerInterceptors) {
-    this.channels = new ArrayList<>(channels);
+  public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
+      throws IOException {
+    this.channels = new ArrayList<>();
+    channels.add(factory.create());
+    this.factory = factory;
     this.headerInterceptors = headerInterceptors;
+  }
+
+  public synchronized void ensureChannelCount(int capacity) throws IOException {
+    if (channels.size() + reservedChannelCount < capacity) {
+      int unreservedCapacity = capacity - reservedChannelCount;
+  
+      for (int i = channels.size(); i < unreservedCapacity; i++) {
+        channels.add(factory.create());
+      }
+    }
   }
 
   @Override
@@ -124,6 +142,7 @@ public class ChannelPool extends Channel {
       returned = true;
     } else {
       reserved = channels.remove(0);
+      reservedChannelCount++;
     }
     return new PooledChannel(reserved, returned);
   }
@@ -132,10 +151,14 @@ public class ChannelPool extends Channel {
     if (!channel.returned) {
       channels.add(channel.delegate);
     }
+    reservedChannelCount--;
   }
 
-  @VisibleForTesting
   public synchronized int size() {
+    return channels.size() + reservedChannelCount;
+  }
+
+  public synchronized int availbleSize() {
     return channels.size();
   }
 }

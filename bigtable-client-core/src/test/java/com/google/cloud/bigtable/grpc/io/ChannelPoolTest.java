@@ -16,20 +16,19 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 
-import java.util.Arrays;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,20 +36,36 @@ import org.mockito.MockitoAnnotations;
 
 import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
 
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+
 @RunWith(JUnit4.class)
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ChannelPoolTest {
 
+  private static class MockChannelFactory implements ChannelPool.ChannelFactory {
+    List<Channel> channels = new ArrayList<>();
+
+    @Override
+    public Channel create() throws IOException {
+      Channel channel = mock(Channel.class);
+      ClientCall callStub = mock(ClientCall.class);
+      when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
+          .thenReturn(callStub);
+      channels.add(channel);
+      return channel;
+    }
+  }
+
   @Test
   public void testInterceptorIsCalled() throws Exception {
-    Channel channel = mock(Channel.class);
     MethodDescriptor descriptor = mock(MethodDescriptor.class);
-    ClientCall callStub = mock(ClientCall.class);
     HeaderInterceptor interceptor = mock(HeaderInterceptor.class);
-    when(channel.newCall(same(descriptor), same(CallOptions.DEFAULT))).thenReturn(
-      callStub);
     ChannelPool pool =
-        new ChannelPool(Arrays.asList(channel), Collections.singletonList(interceptor));
+        new ChannelPool(Collections.singletonList(interceptor), new MockChannelFactory());
     ClientCall call = pool.newCall(descriptor, CallOptions.DEFAULT);
     Metadata headers = new Metadata();
     call.start(null, headers);
@@ -58,36 +73,48 @@ public class ChannelPoolTest {
   }
 
   @Test
-  public void testChannelsAreRoundRobinned() {
-    Channel channel1 = mock(Channel.class);
-    Channel channel2 = mock(Channel.class);
+  public void testChannelsAreRoundRobinned() throws IOException {
+    MockChannelFactory factory = new MockChannelFactory();
     MethodDescriptor descriptor = mock(MethodDescriptor.class);
     MockitoAnnotations.initMocks(this);
-    ChannelPool pool = new ChannelPool(Arrays.asList(channel1, channel2), null);
+    ChannelPool pool = new ChannelPool(null, factory);
+    pool.ensureChannelCount(2);
     pool.newCall(descriptor, CallOptions.DEFAULT);
-    verify(channel1, times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
-    verify(channel2, times(0)).newCall(same(descriptor), same(CallOptions.DEFAULT));
+    verify(factory.channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
+    verify(factory.channels.get(1), times(0)).newCall(same(descriptor), same(CallOptions.DEFAULT));
     pool.newCall(descriptor, CallOptions.DEFAULT);
-    verify(channel1, times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
-    verify(channel2, times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
-  }
-  
-  @Test
-  public void testReturnToPool() {
-    ChannelPool pool = new ChannelPool(Arrays.<Channel> asList(null, null), null);
-    assertEquals(2, pool.size());
-    PooledChannel reserved = pool.reserveChannel();
-    assertEquals(1, pool.size());
-    reserved.returnToPool();
-    assertEquals(2, pool.size());
+    verify(factory.channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
+    verify(factory.channels.get(1), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
   }
 
   @Test
-  public void testReserveNeverExhaustsPool() {
-    ChannelPool pool = new ChannelPool(Arrays.<Channel> asList(null, null), null);
+  public void testReturnToPool() throws IOException {
+    ChannelPool pool = new ChannelPool(null, new MockChannelFactory());
+    pool.ensureChannelCount(2);
+    assertEquals(2, pool.size());
+    PooledChannel reserved = pool.reserveChannel();
+    assertEquals(2, pool.size());
+    assertEquals(1, pool.availbleSize());
+    reserved.returnToPool();
+    assertEquals(2, pool.size());
+    assertEquals(2, pool.availbleSize());
+  }
+
+  @Test
+  public void testReserveNeverExhaustsPool() throws IOException{
+    ChannelPool pool = new ChannelPool(null, new MockChannelFactory());
     for (int i = 0; i < 10; i++) {
       pool.reserveChannel();
       assertEquals(1, pool.size());
     }
+  }
+
+  @Test
+  public void testEnsureCapcity() throws IOException {
+    MockChannelFactory factory = new MockChannelFactory();
+    ChannelPool pool = new ChannelPool(null, factory);
+    pool.ensureChannelCount(4);
+    Assert.assertEquals(4, factory.channels.size());
+    Assert.assertEquals(4, pool.size());
   }
 }
