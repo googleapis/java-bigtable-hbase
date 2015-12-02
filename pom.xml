@@ -41,6 +41,7 @@ limitations under the License.
     <modules>
         <module>bigtable-protos</module>
         <module>bigtable-client-core</module>
+        <module>bigtable-dataflow-import</module>
         <module>bigtable-hbase</module>
         <module>bigtable-hbase-1.0</module>
         <module>bigtable-hbase-1.1</module>
