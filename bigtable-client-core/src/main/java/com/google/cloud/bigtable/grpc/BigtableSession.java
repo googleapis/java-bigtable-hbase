@@ -113,7 +113,11 @@ public class BigtableSession implements AutoCloseable {
   }
 
   public static boolean isAlpnProviderEnabled() {
-    return OpenSsl.isAvailable() || isJettyAlpnConfigured();
+    final boolean openSslAvailable = OpenSsl.isAvailable();
+    final boolean jettyAlpnConfigured = isJettyAlpnConfigured();
+    LOG.debug("OpenSSL available: %s", openSslAvailable);
+    LOG.debug("Jetty ALPN available: %s", jettyAlpnConfigured);
+    return openSslAvailable || jettyAlpnConfigured;
   }
 
   /**
@@ -239,7 +243,10 @@ public class BigtableSession implements AutoCloseable {
         options.getProjectId(), options.getZoneId(), options.getClusterId(),
         options.getDataHost(), options.getTableAdminHost());
     if(!isAlpnProviderEnabled()) {
-      throw new IllegalStateException("Jetty ALPN has not been properly configured.");
+      LOG.error("Neither Jetty ALPN nor OpenSSL are available. " +
+          "OpenSSL unavailability cause:\n%s", OpenSsl.unavailabilityCause());
+      throw new IllegalStateException("Neither Jetty ALPN nor OpenSSL via " +
+          "netty-tcnative were properly configured.");
     }
     if (batchPool == null) {
       this.terminateBatchPool = true;
