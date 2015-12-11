@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.dataflow;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
-import com.google.cloud.dataflow.sdk.io.Source;
 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -30,7 +29,8 @@ import java.io.OutputStream;
 import java.io.Serializable;
 
 /**
- * A {@link Coder} that serializes {@link Result} objects used by the Cloud Bigtable {@link Source}.
+ * A {@link Coder} that serializes and deserializes the {@link Result} objects using {@link
+ * ProtobufUtil}.
  */
 public class HBaseResultCoder extends AtomicCoder<Result> implements Serializable{
 
