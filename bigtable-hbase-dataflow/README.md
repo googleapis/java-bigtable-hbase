@@ -43,7 +43,7 @@ Here's [an example](https://github.com/GoogleCloudPlatform/cloud-bigtable-client
 
 To run the example via maven, use the following command, with the values in the brackets replaced with your information:
 
-`mvn exec:java -Dexec.mainClass="com.google.cloud.bigtable.dataflow.example.HelloWorldWrite" -Dexec.args="--runner=BlockingDataflowPipelineRunner --project=[some_project] --stagingLocation=gs://[some_bucket] --bigtableProject=[some_project] --bigtableClusterId=[cluster_name] --bigtableZone=[some_zone] --bigtableTable=[someTableName]" -Dexec.classpathScope="test"`
+`mvn exec:java -Dexec.mainClass="com.google.cloud.bigtable.dataflow.example.HelloWorldWrite" -Dexec.args="--runner=BlockingDataflowPipelineRunner --project=[some_project] --stagingLocation=gs://[some_bucket] --bigtableProjectId=[project_id] --bigtableClusterId=[cluster_id] --bigtableZoneId=[zone_id] --bigtableTableId=[table_id]" -Dexec.classpathScope="test"`
 
 ## Reading
 
