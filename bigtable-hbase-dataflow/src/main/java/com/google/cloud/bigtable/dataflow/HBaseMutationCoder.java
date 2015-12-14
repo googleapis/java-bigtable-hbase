@@ -33,7 +33,8 @@ import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 /**
- * A {@link Coder} that serializes HBase {@link Mutation} objects using Protocol Buffers.
+ * A {@link Coder} that serializes and deserializes the HBase {@link Mutation} objects
+ * using {@link ProtobufUtil}.
  * See {@link CloudBigtableIO#initializeForWrite(Pipeline)}.
  */
 public class HBaseMutationCoder extends AtomicCoder<Mutation> implements Serializable {
