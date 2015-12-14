@@ -41,10 +41,10 @@ import com.google.cloud.dataflow.sdk.transforms.ParDo;
  * This pipeline needs to be configured with four command line options for bigtable:
  * </p>
  * <ul>
- * <li>--bigtableProject=[bigtable project]
- * <li>--bigtableClusterId=[bigtable cluster id]
- * <li>--bigtableZone=[bigtable zone]
- * <li>--bigtableTable=[bigtable tableName]
+ * <li>--bigtableProjectId=[bigtable project ID]
+ * <li>--bigtableClusterId=[bigtable cluster ID]
+ * <li>--bigtableZoneId=[bigtable zone ID]
+ * <li>--bigtableTableId=[bigtable table ID]
  * <p>
  * To run this starter example locally using DirectPipelineRunner, just execute it with the four
  * Bigtable parameters from your favorite development environment. You also need to configure the

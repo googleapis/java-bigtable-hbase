@@ -21,29 +21,29 @@ import com.google.cloud.dataflow.sdk.options.Description;
 
 /**
  * CloudBigtableOptions is an extension of {@link DataflowPipelineOptions} containing the
- * information required for a connection to Cloud Bigtable.
+ * options to configure a Dataflow pipeline that uses Cloud Bigtable.
  */
-@Description("Options used to configure CloudBigtable.  " +
-   "see https://cloud.google.com/bigtable/ for more information.  " +
-   "See https://cloud.google.com/bigtable/docs/creating-cluster for getting started with Bigtable.")
+@Description("Options used to configure a Dataflow pipeline that uses Cloud Bigtable. " +
+   "See https://cloud.google.com/bigtable/ for more information. " +
+   "See https://cloud.google.com/bigtable/docs/creating-cluster for getting started with Cloud Bigtable.")
 public interface CloudBigtableOptions extends DataflowPipelineOptions {
 
-  @Description("The Google Cloud projectId for the Cloud Bigtable cluster.")
+  @Description("The Google Cloud project ID for the Cloud Bigtable cluster.")
   String getBigtableProjectId();
 
   void setBigtableProjectId(String bigtableProjectId);
 
-  @Description("The Cloud Bigtable cluster id.")
+  @Description("The Cloud Bigtable cluster ID.")
   String getBigtableClusterId();
 
   void setBigtableClusterId(String bigtableClusterId);
 
-  @Description("The Google Cloud zoneId in which the cluster resides.")
+  @Description("The Google Cloud zone ID in which the cluster resides.")
   String getBigtableZoneId();
 
   void setBigtableZoneId(String bigtableZoneId);
 
-  @Description("Optional - The id of the Cloud Bigtable table." )
+  @Description("The Cloud Bigtable table ID in the cluster." )
   String getBigtableTableId();
 
   void setBigtableTableId(String bigtableTableId);
