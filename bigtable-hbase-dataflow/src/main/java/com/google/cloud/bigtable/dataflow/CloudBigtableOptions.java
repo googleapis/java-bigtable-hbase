@@ -23,7 +23,7 @@ import com.google.cloud.dataflow.sdk.options.Description;
  * CloudBigtableOptions is an extension of {@link DataflowPipelineOptions} containing the
  * options to configure a Dataflow pipeline that uses Cloud Bigtable.
  */
-@Description("Options used to configure a Cloud Bigtable Dataflow pipeline. " +
+@Description("Options used to configure a Dataflow pipeline that uses Cloud Bigtable. " +
    "See https://cloud.google.com/bigtable/ for more information. " +
    "See https://cloud.google.com/bigtable/docs/creating-cluster for getting started with Cloud Bigtable.")
 public interface CloudBigtableOptions extends DataflowPipelineOptions {
