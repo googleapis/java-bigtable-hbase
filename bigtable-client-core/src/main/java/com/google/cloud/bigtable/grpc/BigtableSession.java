@@ -124,10 +124,14 @@ public class BigtableSession implements AutoCloseable {
    * Indicates whether or not the Jetty ALPN jar is installed in the boot classloader.
    */
   private static boolean isJettyAlpnConfigured() {
+    final String alpnClassName = "org.eclipse.jetty.alpn.ALPN";
     try {
-      Class.forName("org.eclipse.jetty.alpn.ALPN", true, null);
+      Class.forName(alpnClassName, true, null);
       return true;
-    } catch (ClassNotFoundException e) {
+    } catch (ClassNotFoundException | NoClassDefFoundError e) {
+      return false;
+    } catch (Exception e) {
+      LOG.warn("Could not resolve alpn class: %s", e, alpnClassName);
       return false;
     }
   }
