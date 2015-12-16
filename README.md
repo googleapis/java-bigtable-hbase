@@ -44,7 +44,7 @@ You can create a [maven project](https://cloud.google.com/bigtable/docs/using-ma
         <dependency>
           <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-hbase-1.0</artifactId>
-          <version>0.2.0</version>
+          <version>0.2.2</version>
         </dependency>
 
 ### How do I, as a developer, start working on the project?
@@ -62,10 +62,6 @@ You can run the unit tests via *mvn clean install*.  There is also a suite of in
 You can run the following command for Java 7:
 
 `mvn clean integration-test -PbigtableIntegrationTest -Dgoogle.bigtable.project.id=[your cloud project id] -Dgoogle.bigtable.zone.name=[the zone your cluster is in] -Dgoogle.bigtable.cluster.name=[your cluster id] -Dgoogle.bigtable.auth.service -Dgoogle.bigtable.auth.service.account.enable=true`
-
-If you are using Java 8, add the following option:
-
-`-Dalpn.version=8.1.3.v20150130`
 
 There is a possiblity that the versions of ALPN supplied above does not work with your JDK.  If so, you can see more alternatives [on the ALPN version table](http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions).
 
