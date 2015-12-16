@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.config;
 
 import io.grpc.Status;
 
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 import com.google.api.client.util.BackOff;
@@ -26,7 +27,9 @@ import com.google.common.annotations.VisibleForTesting;
 /**
  * Options for retrying requests, including back off configuration.
  */
-public class RetryOptions {
+public class RetryOptions implements Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   public static int DEFAULT_STREAMING_BUFFER_SIZE = 60;
   public static int DEFAULT_STREAMING_BATCH_SIZE = DEFAULT_STREAMING_BUFFER_SIZE / 2;
@@ -261,5 +264,25 @@ public class RetryOptions {
         .setInitialIntervalMillis(getInitialBackoffMillis())
         .setMaxElapsedTimeMillis(getMaxElaspedBackoffMillis())
         .setMultiplier(getBackoffMultiplier());
+  }
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null || obj.getClass() != RetryOptions.class) {
+      return false;
+    }
+    if (this == obj) {
+      return true;
+    }
+    RetryOptions other = (RetryOptions) obj;
+
+    return retriesEnabled == other.retriesEnabled
+        && retryOnDeadlineExceeded == other.retryOnDeadlineExceeded
+        && initialBackoffMillis == other.initialBackoffMillis
+        && maxElaspedBackoffMillis == other.maxElaspedBackoffMillis
+        && backoffMultiplier == other.backoffMultiplier
+        && streamingBufferSize == other.streamingBufferSize
+        && streamingBatchSize == other.streamingBatchSize
+        && readPartialRowTimeoutMillis == other.readPartialRowTimeoutMillis;
   }
 }

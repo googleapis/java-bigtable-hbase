@@ -16,16 +16,21 @@
 package com.google.cloud.bigtable.config;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.api.client.util.Objects;
 import com.google.api.client.util.Strings;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
  */
-public class BigtableOptions {
+public class BigtableOptions implements Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   public static final String BIGTABLE_TABLE_ADMIN_HOST_DEFAULT =
       "bigtabletableadmin.googleapis.com";
@@ -311,5 +316,44 @@ public class BigtableOptions {
 
   public BigtableClusterName getClusterName() {
     return clusterName;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null || obj.getClass() != BigtableOptions.class) {
+      return false;
+    }
+    if (obj == this) {
+      return true;
+    }
+    BigtableOptions other = (BigtableOptions) obj;
+    return (port == other.port) && (timeoutMs == other.timeoutMs)
+        && (channelCount == other.channelCount)
+        && Objects.equal(clusterAdminHost, other.clusterAdminHost)
+        && Objects.equal(tableAdminHost, other.tableAdminHost)
+        && Objects.equal(dataHost, other.dataHost)
+        && Objects.equal(overrideIp, other.overrideIp)
+        && Objects.equal(projectId, other.projectId)
+        && Objects.equal(zoneId, other.zoneId)
+        && Objects.equal(clusterId, other.clusterId)
+        && Objects.equal(userAgent, other.userAgent)
+        && Objects.equal(credentialOptions, other.credentialOptions)
+        && Objects.equal(retryOptions, other.retryOptions);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .omitNullValues()
+        .add("dataHost", dataHost)
+        .add("tableAdminHost", tableAdminHost)
+        .add("clusterAdminHost", clusterAdminHost)
+        .add("overrideIp", overrideIp)
+        .add("projectId", projectId)
+        .add("zoneId", zoneId)
+        .add("clusterId", clusterId)
+        .add("userAgent", userAgent)
+        .add("credentialType", credentialOptions.getCredentialType())
+        .toString();
   }
 }
