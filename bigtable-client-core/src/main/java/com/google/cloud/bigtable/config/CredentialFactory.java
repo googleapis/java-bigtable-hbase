@@ -165,7 +165,7 @@ public class CredentialFactory {
         SecurityUtils.loadPrivateKeyFromKeyStore(SecurityUtils.getPkcs12KeyStore(),
           new FileInputStream(privateKeyFile), "notasecret", "privatekey", "notasecret");
     return new ServiceAccountCredentials(clientId, serviceAccountEmail, privateKey, privateKeyId,
-        scopes, getHttpTransport());
+        scopes, getHttpTransport(), null /* tokenServerUri */);
   }
 
   /**
