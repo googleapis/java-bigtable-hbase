@@ -27,14 +27,14 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutationProto;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutationProto.MutationType;
 
-import com.google.api.services.dataflow.model.Sink;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 /**
- * A {@link Coder} that serializes {@link Mutation} objects used by the Cloud Bigtable {@link Sink}.
+ * A {@link Coder} that serializes and deserializes the HBase {@link Mutation} objects
+ * using {@link ProtobufUtil}.
  * See {@link CloudBigtableIO#initializeForWrite(Pipeline)}.
  */
 public class HBaseMutationCoder extends AtomicCoder<Mutation> implements Serializable {
