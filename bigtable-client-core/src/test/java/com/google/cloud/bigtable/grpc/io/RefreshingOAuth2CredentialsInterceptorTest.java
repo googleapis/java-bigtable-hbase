@@ -168,6 +168,19 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
   }
 
   @Test
+  public void testNullExpiration(){
+    setTimeInMillieconds(100);
+    HeaderCacheElement element = new HeaderCacheElement(new AccessToken("", null));
+    Assert.assertNull(element.expiresTimeMs);
+    Assert.assertNull(element.staleTimeMs);
+    Assert.assertEquals(CacheState.Good, element.getCacheState());
+
+    // Make sure that the header doesn't expire in the distant future.
+    setTimeInMillieconds(100000000000l);
+    Assert.assertEquals(CacheState.Good, element.getCacheState());
+  }
+
+  @Test
   /**
    * Test that checks that concurrent requests to RefreshingOAuth2CredentialsInterceptor refresh
    * logic doesn't cause hanging behavior.  Specifically, when an Expired condition occurs it
