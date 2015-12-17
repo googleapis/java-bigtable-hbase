@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * This class defines information that a Cloud Bigtable client needs to connect to a user's Cloud
+ * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
  * Bigtable cluster; a table to connect to in the cluster; and a filter on the table in the form of
  * a {@link Scan}.
  */
@@ -40,7 +40,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   private static final long serialVersionUID = 2435897354284600685L;
 
   /**
-   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration}.
+   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration}
+   * object with a default full table {@link Scan}.
    * @param options The {@link CloudBigtableOptions} object.
    * @return The new {@link CloudBigtableScanConfiguration}.
    */
@@ -49,8 +50,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   /**
-   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration},
-   * with the addition of a {@link Scan} that filters the table.
+   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration}
+   * that will perform the specified {@link Scan} on the table.
    * @param options The {@link CloudBigtableOptions} object.
    * @param scan The {@link Scan} to add to the configuration.
    * @return The new {@link CloudBigtableScanConfiguration}.
@@ -81,17 +82,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     /**
      * Specifies the {@link Scan} that will be used to filter the table.
      * @param scan The {@link Scan} to add to the configuration.
-     * @return The original {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withScan(Scan scan) {
       this.scan = scan;
       return this;
     }
 
-    /*
-     * Overrides of the CloudBigtableConfiguration.Builder's with*() so that they return
-     * CloudBigtableScanConfiguration.Builder.
-     */
     /**
      * {@inheritDoc}
      */
@@ -130,6 +127,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     /**
      * {@inheritDoc}
+     *
+     * Overrides {@link CloudBigtableScanConfiguration.Builder#withTableId(String)} so that it
+     * returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
     public Builder withTableId(String tableId) {
@@ -141,6 +141,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * Builds the {@link CloudBigtableScanConfiguration}.
      * @return The new {@link CloudBigtableScanConfiguration}.
      */
+    @Override
     public CloudBigtableScanConfiguration build() {
       return new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, scan);
     }
@@ -195,30 +196,34 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   private SerializableScan serializableScan;
 
   /**
-   * Creates a {@link CloudBigtableScanConfiguration} using the specified information.
+   * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, zone, cluster
+   * ID, table ID and {@link Scan}.
+   *
    * @param projectId The project ID for the cluster.
-   * @param zone The zone where the cluster is located.
-   * @param cluster The cluster ID for the cluster.
-   * @param table The table to connect to in the cluster.
+   * @param zoneId The zone where the cluster is located.
+   * @param clusterId The cluster ID for the cluster.
+   * @param tableId The table to connect to in the cluster.
    * @param scan The {@link Scan} that will be used to filter the table.
    */
-  public CloudBigtableScanConfiguration(String projectId, String zone, String cluster,
-      String table, Scan scan) {
-    this(projectId, zone, cluster, table, scan, Collections.<String, String> emptyMap());
+  public CloudBigtableScanConfiguration(String projectId, String zoneId, String clusterId,
+      String tableId, Scan scan) {
+    this(projectId, zoneId, clusterId, tableId, scan, Collections.<String, String> emptyMap());
   }
 
   /**
-   * Creates a {@link CloudBigtableScanConfiguration} using the specified information.
+   * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, zone, cluster
+   * ID, table ID, {@link Scan} and additional connection configuration.
+   *
    * @param projectId The project ID for the cluster.
-   * @param zone The zone where the cluster is located.
-   * @param cluster The cluster ID for the cluster.
-   * @param table The table to connect to in the cluster.
+   * @param zoneId The zone where the cluster is located.
+   * @param clusterId The cluster ID for the cluster.
+   * @param tableId The table to connect to in the cluster.
    * @param scan The {@link Scan} that will be used to filter the table.
-   * @param additionalConfiguration More configuration for creating the BigtableConnection.
+   * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  public CloudBigtableScanConfiguration(String projectId, String zone, String cluster,
-      String table, Scan scan, Map<String, String> additionalConfiguration) {
-    super(projectId, zone, cluster, table, additionalConfiguration);
+  public CloudBigtableScanConfiguration(String projectId, String zoneId, String clusterId,
+      String tableId, Scan scan, Map<String, String> additionalConfiguration) {
+    super(projectId, zoneId, clusterId, tableId, additionalConfiguration);
     this.serializableScan = new SerializableScan(scan);
   }
 

@@ -121,9 +121,9 @@ public class CloudBigtableConfiguration implements Serializable {
    * @param projectId The project ID for the cluster.
    * @param zoneId The zone where the cluster is located.
    * @param clusterId The cluster ID for the cluster.
-   * @param additionalConfiguration A Map with additional connection configuration.
-   *          {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information
-   *          about configuration options.
+   * @param additionalConfiguration A {@link Map} with additional connection configuration.
+   *          See {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more
+   *          information about configuration options.
    */
   public CloudBigtableConfiguration(String projectId, String zoneId, String clusterId,
       Map<String, String> additionalConfiguration) {
@@ -199,6 +199,11 @@ public class CloudBigtableConfiguration implements Serializable {
     return ImmutableMap.copyOf(configuration);
   }
 
+  /**
+   * Compares this configuration with the specified object.
+   * @param obj The object to compare this configuration against.
+   * @return {@code true} if the given object has the same configuration, {@code false} otherwise.
+   */
   @Override
   public boolean equals(Object obj) {
     if (obj == null || obj.getClass() != this.getClass()) {
