@@ -16,8 +16,10 @@
 package com.google.cloud.bigtable.config;
 
 import java.io.InputStream;
+import java.io.Serializable;
 
 import com.google.auth.Credentials;
+import com.google.common.base.Objects;
 
 /**
  * <p>
@@ -40,7 +42,9 @@ import com.google.auth.Credentials;
  * @see CredentialFactory#getCredentials(CredentialOptions) CredentialFactory for more details on
  *      how CredentialOptions are used to create a {@link Credentials}.
  */
-public class CredentialOptions {
+public class CredentialOptions implements Serializable {
+  private static final long serialVersionUID = 1L;
+
   public static final String SERVICE_ACCOUNT_JSON_ENV_VARIABLE = "GOOGLE_APPLICATION_CREDENTIALS";
   protected static final Logger LOG = new Logger(CredentialOptions.class);
 
@@ -133,6 +137,16 @@ public class CredentialOptions {
     public String getKeyFile() {
       return keyFile;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null || obj.getClass() != P12CredentialOptions.class) {
+        return false;
+      }
+      P12CredentialOptions other = (P12CredentialOptions) obj;
+      return Objects.equal(keyFile, other.keyFile)
+          && Objects.equal(serviceAccount, other.serviceAccount);
+    }
   }
 
   /**
@@ -148,6 +162,15 @@ public class CredentialOptions {
 
     public Credentials getCredential() {
       return credential;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null || obj.getClass() != UserSuppliedCredentialOptions.class) {
+        return false;
+      }
+      UserSuppliedCredentialOptions other = (UserSuppliedCredentialOptions) obj;
+      return Objects.equal(credential, other.credential);
     }
   }
 
@@ -175,16 +198,36 @@ public class CredentialOptions {
     public Credentials getCachedCredentials() {
       return cachedCredentials;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null || obj.getClass() != JsonCredentialsOptions.class) {
+        return false;
+      }
+      JsonCredentialsOptions other = (JsonCredentialsOptions) obj;
+      return Objects.equal(cachedCredentials, other.cachedCredentials);
+    }
   }
 
-  private final CredentialType credentialType;
+  private CredentialType credentialType;
 
   private CredentialOptions(CredentialType credentialType) {
     this.credentialType = credentialType;
+  }
+
+  private CredentialOptions() {
   }
 
   public CredentialType getCredentialType() {
     return credentialType;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null || obj.getClass() != CredentialOptions.class){
+      return false;
+    }
+    CredentialOptions other = (CredentialOptions) obj;
+    return credentialType == other.credentialType;
+  }
 }

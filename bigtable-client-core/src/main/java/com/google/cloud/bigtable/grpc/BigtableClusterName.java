@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import java.io.Serializable;
+
 import com.google.api.client.util.Strings;
 import com.google.common.base.Preconditions;
 
@@ -23,7 +25,9 @@ import com.google.common.base.Preconditions;
  * projects/(projectId)/zones/(zoneId)/clusters/(clusterId).  It also has convenience methods
  * to create a tableName and a tableId.  TableName is (clusterName)/tables/(tableId).
  */
-public class BigtableClusterName {
+public class BigtableClusterName implements Serializable {
+  private static final long serialVersionUID = 1L;
+
   public static final String BIGTABLE_V1_CLUSTER_FMT = "projects/%s/zones/%s/clusters/%s";
   public static final String TABLE_SEPARATOR = "tables";
 
