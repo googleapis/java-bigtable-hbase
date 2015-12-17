@@ -22,5 +22,5 @@ import org.junit.runner.RunWith;
 
 @RunWith(Categories.class)
 @IncludeCategory(KnownGap.class)
-class IntegrationTestsGap extends IntegrationTests {
+public class IntegrationTestsGap extends IntegrationTests {
 }

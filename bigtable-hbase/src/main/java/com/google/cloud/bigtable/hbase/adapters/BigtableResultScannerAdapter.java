@@ -56,6 +56,16 @@ public class BigtableResultScannerAdapter {
           throw Throwables.propagate(ioe);
         }
       }
+
+      /**
+       * This is an HBase concept that was added in hbase 1.0.2.  It's not relevent for Cloud
+       * Bigtable.  It will not be called from the hbase code and should not be called by the user.
+       */
+      // Developers Note: Do not add @Override so that this can remain backwards compatible with
+      // 1.0.1.
+      public boolean renewLease() {
+        throw new UnsupportedOperationException("renewLease");
+      }
     };
   }
 }

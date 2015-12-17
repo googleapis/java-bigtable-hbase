@@ -22,5 +22,5 @@ import org.junit.runner.RunWith;
 
 @RunWith(Categories.class)
 @ExcludeCategory(KnownGap.class)
-class IntegrationTestsNoKnownGap extends IntegrationTests {
+public class IntegrationTestsNoKnownGap extends IntegrationTests {
 }

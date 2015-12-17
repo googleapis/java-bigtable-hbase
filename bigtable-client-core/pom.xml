@@ -88,14 +88,9 @@ limitations under the License.
             <artifactId>grpc-stub</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>18.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client</artifactId>
-            <version>1.18.0-rc</version>
+            <version>${google.http.client.version}</version>
         </dependency>
 
         <dependency>
