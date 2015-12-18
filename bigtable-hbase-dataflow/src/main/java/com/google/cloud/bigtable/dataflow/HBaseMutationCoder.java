@@ -27,14 +27,16 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutationProto;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutationProto.MutationType;
 
-import com.google.api.services.dataflow.model.Sink;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 /**
- * A {@link Coder} that serializes {@link Mutation} objects used by the Cloud Bigtable {@link Sink}.
+ * When Dataflow notices a slowdown in executing Puts and Deletes, it will send those Puts and
+ * Deletes to be processed on another Dataflow machine. This class handles the serialization and
+ * deserialization of the Puts and Deletes.
+ *
  * See {@link CloudBigtableIO#initializeForWrite(Pipeline)}.
  */
 public class HBaseMutationCoder extends AtomicCoder<Mutation> implements Serializable {
