@@ -18,9 +18,12 @@ package com.google.cloud.bigtable.grpc.io;
 import io.grpc.Metadata;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.annotation.Nullable;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Clock;
@@ -90,24 +93,40 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
 
     final IOException exception;
     final String header;
-    final long staleTimeMs;
-    final long expiresTimeMs;
+    
+    /**
+     * Defines the amount of time in ms when the header is considered "stale" and should be
+     * refreshed in the near future. A {@code null} value means that the header does not become stale.
+     */
+    final @Nullable Long staleTimeMs;
+
+    /**
+     * Defines the amount of time in ms when the header is considered "expired" and must be
+     * refreshed. A {@code null} value means that the header does not expire.
+     */
+    final @Nullable Long expiresTimeMs;
 
     public HeaderCacheElement(AccessToken token) {
       this.exception = null;
       this.header = "Bearer " + token.getTokenValue();
-      long tokenExpiresTime = token.getExpirationTime().getTime();
-      this.staleTimeMs = tokenExpiresTime - TOKEN_STALENESS_MS;
-      // Block until refresh at this point.
-      this.expiresTimeMs = tokenExpiresTime - TOKEN_EXPIRES_MS;
-      Preconditions.checkState(staleTimeMs < expiresTimeMs);
+      Date expirationTime = token.getExpirationTime();
+      if (expirationTime != null) {
+        long tokenExpiresTime = expirationTime.getTime();
+        this.staleTimeMs = tokenExpiresTime - TOKEN_STALENESS_MS;
+        // Block until refresh at this point.
+        this.expiresTimeMs = tokenExpiresTime - TOKEN_EXPIRES_MS;
+        Preconditions.checkState(staleTimeMs < expiresTimeMs);
+      } else {
+        this.staleTimeMs = null;
+        this.expiresTimeMs = null;
+      }
     }
 
     public HeaderCacheElement(IOException exception) {
       this.exception = exception;
       this.header = null;
-      this.staleTimeMs = -1;
-      this.expiresTimeMs = -1;
+      this.staleTimeMs = null;
+      this.expiresTimeMs = null;
     }
 
     public CacheState getCacheState() {
@@ -115,7 +134,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
         return CacheState.Exception;
       }
       long now = clock.currentTimeMillis();
-      if (now < staleTimeMs) {
+      if (staleTimeMs == null || now < staleTimeMs) {
         return CacheState.Good;
       } else if (now < expiresTimeMs) {
         return CacheState.Stale;
