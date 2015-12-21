@@ -829,15 +829,14 @@ public class CloudBigtableIO {
     checkNotNullOrEmpty(configuration.getZoneId(), "zoneId");
     checkNotNullOrEmpty(configuration.getClusterId(), "clusterId");
     if (tableId != null) {
-      checkNotNullOrEmpty(tableId, "tableid");
       if (BigtableSession.isAlpnProviderEnabled()) {
         try (BigtableConnection conn = new BigtableConnection(configuration.toHBaseConfig());
             Admin admin = conn.getAdmin()) {
-          Preconditions.checkState(admin.tableExists(TableName.valueOf(tableId)), "Table "
-              + tableId + " does not exist.  This dataflow operation could not be run.");
-        } catch (IOException | IllegalArgumentException | ExceptionInInitializerError e) {
-          LOG.error(String.format("Could not validate that the table exists: %s (%s)", e.getClass()
-              .getName(), e.getMessage()), e);
+          Preconditions.checkState(
+              admin.tableExists(TableName.valueOf(tableId)),
+              "Table " + tableId + " does not exist.  This dataflow operation could not be run.");
+        } catch (IOException e) {
+          LOG.error("Could not validate that the table exists", e);
         }
       } else {
         LOG.info("ALPN is not configured. Skipping table existence check.");
