@@ -35,7 +35,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Pubsub and other windowed sources can have a large quantity of bundles in short amounts of time.
- * {@link CloudBigtableIO.AbstractCloudBigtableTableWriteFn} should not create a connection per
+ * {@link CloudBigtableIO.AbstractCloudBigtableTableDoFn} should not create a connection per
  * bundle, since that could happen ever few milliseconds. Rather, it should rely on a connection
  * pool to better manage connection life-cycles.
  */
