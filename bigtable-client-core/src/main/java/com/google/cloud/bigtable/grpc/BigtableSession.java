@@ -48,7 +48,9 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.api.client.util.Strings;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -87,6 +89,15 @@ public class BigtableSession implements AutoCloseable {
   public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
+
+  @VisibleForTesting
+  static final String PROJECT_ID_EMPTY_OR_NULL = "ProjectId must not be empty or null.";
+  @VisibleForTesting
+  static final String ZONE_ID_EMPTY_OR_NULL = "ZoneId must not be empty or null.";
+  @VisibleForTesting
+  static final String CLUSTER_ID_EMPTY_OR_NULL = "ClusterId must not be empty or null.";
+  @VisibleForTesting
+  static final String USER_AGENT_EMPTY_OR_NULL = "UserAgent must not be empty or null";
 
   static {
     performWarmup();
@@ -242,6 +253,14 @@ public class BigtableSession implements AutoCloseable {
   public BigtableSession(BigtableOptions options, @Nullable ExecutorService batchPool,
       @Nullable EventLoopGroup elg, @Nullable ScheduledExecutorService scheduledRetries)
       throws IOException {
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(options.getProjectId()), PROJECT_ID_EMPTY_OR_NULL);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(options.getZoneId()), ZONE_ID_EMPTY_OR_NULL);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(options.getClusterId()), CLUSTER_ID_EMPTY_OR_NULL);
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(options.getUserAgent()), USER_AGENT_EMPTY_OR_NULL);
     LOG.info("Opening connection for projectId %s, zoneId %s, clusterId %s, " +
         "on data host %s, table admin host %s.",
         options.getProjectId(), options.getZoneId(), options.getClusterId(),
@@ -261,6 +280,7 @@ public class BigtableSession implements AutoCloseable {
     }
     this.options = options;
     Future<Credentials> credentialsFuture = this.batchPool.submit(new Callable<Credentials>() {
+      @Override
       public Credentials call() throws IOException {
         try {
           return CredentialFactory.getCredentials(BigtableSession.this.options

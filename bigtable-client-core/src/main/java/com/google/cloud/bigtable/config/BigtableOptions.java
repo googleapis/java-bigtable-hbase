@@ -15,15 +15,15 @@
  */
 package com.google.cloud.bigtable.config;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.api.client.util.Objects;
-import com.google.api.client.util.Strings;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
-
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
+
+import com.google.api.client.util.Objects;
+import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
@@ -225,14 +225,6 @@ public class BigtableOptions implements Serializable {
       RetryOptions retryOptions,
       int timeoutMs,
       int channelCount) {
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(projectId), "ProjectId must not be empty or null.");
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(zoneId), "ZoneId must not be empty or null.");
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(clusterId), "ClusterId must not be empty or null.");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(userAgent),
-        "UserAgent must not be empty or null");
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
     Preconditions.checkArgument(timeoutMs >= -1,
       "ChannelTimeoutMs has to be positive, or -1 for none.");
@@ -250,7 +242,14 @@ public class BigtableOptions implements Serializable {
     this.retryOptions = retryOptions;
     this.timeoutMs = timeoutMs;
     this.dataChannelCount = channelCount;
-    this.clusterName = new BigtableClusterName(getProjectId(), getZoneId(), getClusterId());
+
+    if (!Strings.isNullOrEmpty(projectId)
+        && !Strings.isNullOrEmpty(zoneId)
+        && !Strings.isNullOrEmpty(clusterId)) {
+      this.clusterName = new BigtableClusterName(getProjectId(), getZoneId(), getClusterId());
+    } else {
+      this.clusterName = null;
+    }
 
     LOG.debug("Connection Configuration: projectId: %s, zoneId: %s, clusterId: %s, data host %s, "
         + "table admin host %s, cluster admin host %s.",

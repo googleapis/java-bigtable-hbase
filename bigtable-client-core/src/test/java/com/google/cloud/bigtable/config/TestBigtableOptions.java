@@ -82,4 +82,9 @@ public class TestBigtableOptions {
     BigtableOptions deserialized = (BigtableOptions) iis.readObject();
     Assert.assertEquals(options, deserialized);
   }
+
+  @Test
+  public void testNullStringsDontThrowExceptions() {
+     new BigtableOptions.Builder().build();
+  }
 }
