@@ -72,6 +72,25 @@ public class BigtableOptions implements Serializable {
     private int timeoutMs = BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT;
     private int dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
 
+    public Builder() {
+    }
+
+    private Builder(BigtableOptions original) {
+      this.projectId = original.projectId;
+      this.zoneId = original.zoneId;
+      this.clusterId = original.clusterId;
+      this.userAgent = original.userAgent;
+      this.dataHost = original.dataHost;
+      this.tableAdminHost = original.tableAdminHost;
+      this.clusterAdminHost = original.clusterAdminHost;
+      this.port = original.port;
+      this.overrideIp = original.overrideIp;
+      this.credentialOptions = original.credentialOptions;
+      this.retryOptions = original.retryOptions;
+      this.timeoutMs = original.timeoutMs;
+      this.dataChannelCount = original.dataChannelCount;
+    }
+
     public Builder setTableAdminHost(String tableAdminHost) {
       this.tableAdminHost = tableAdminHost;
       return this;
@@ -171,7 +190,7 @@ public class BigtableOptions implements Serializable {
   private final String userAgent;
   private final RetryOptions retryOptions;
   private final int timeoutMs;
-  private final int channelCount;
+  private final int dataChannelCount;
   private final BigtableClusterName clusterName;
 
   @VisibleForTesting
@@ -188,7 +207,7 @@ public class BigtableOptions implements Serializable {
       userAgent = null;
       retryOptions = null;
       timeoutMs = 0;
-      channelCount = 1;
+      dataChannelCount = 1;
       clusterName = null;
   }
 
@@ -230,7 +249,7 @@ public class BigtableOptions implements Serializable {
     this.userAgent = userAgent;
     this.retryOptions = retryOptions;
     this.timeoutMs = timeoutMs;
-    this.channelCount = channelCount;
+    this.dataChannelCount = channelCount;
     this.clusterName = new BigtableClusterName(getProjectId(), getZoneId(), getClusterId());
 
     LOG.debug("Connection Configuration: projectId: %s, zoneId: %s, clusterId: %s, data host %s, "
@@ -308,10 +327,10 @@ public class BigtableOptions implements Serializable {
   }
 
   /**
-   * The number of channels to create.
+   * The number of data channels to create.
    */
   public int getChannelCount() {
-    return channelCount;
+    return dataChannelCount;
   }
 
   public BigtableClusterName getClusterName() {
@@ -328,7 +347,7 @@ public class BigtableOptions implements Serializable {
     }
     BigtableOptions other = (BigtableOptions) obj;
     return (port == other.port) && (timeoutMs == other.timeoutMs)
-        && (channelCount == other.channelCount)
+        && (dataChannelCount == other.dataChannelCount)
         && Objects.equal(clusterAdminHost, other.clusterAdminHost)
         && Objects.equal(tableAdminHost, other.tableAdminHost)
         && Objects.equal(dataHost, other.dataHost)
@@ -355,5 +374,9 @@ public class BigtableOptions implements Serializable {
         .add("userAgent", userAgent)
         .add("credentialType", credentialOptions.getCredentialType())
         .toString();
+  }
+
+  public Builder toBuilder() {
+    return new Builder(this);
   }
 }
