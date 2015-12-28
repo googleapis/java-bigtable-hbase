@@ -158,7 +158,7 @@ public class TestHeapSizeManager {
         @Override
         public void run() {
           try {
-            underTest.waitUntilAllOperationsAreDone();
+            underTest.flush();
             allOperationsDone.set(true);
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
