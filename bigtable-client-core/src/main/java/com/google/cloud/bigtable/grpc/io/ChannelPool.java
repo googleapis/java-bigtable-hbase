@@ -70,26 +70,30 @@ public class ChannelPool extends Channel {
     }
   }
 
-  private List<Channel> channels;
+  private final List<Channel> channels;
   private final AtomicInteger requestCount = new AtomicInteger();
   private final List<HeaderInterceptor> headerInterceptors;
-  private ChannelFactory factory;
+  private final AtomicInteger totalSize;
+  private final ChannelFactory factory;
   private int reservedChannelCount = 0;
 
   public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
       throws IOException {
     this.channels = new ArrayList<>();
     channels.add(factory.create());
+    totalSize = new AtomicInteger(1);
     this.factory = factory;
     this.headerInterceptors = headerInterceptors;
   }
 
-  public synchronized void ensureChannelCount(int capacity) throws IOException {
-    if (channels.size() + reservedChannelCount < capacity) {
-      int unreservedCapacity = capacity - reservedChannelCount;
-  
-      for (int i = channels.size(); i < unreservedCapacity; i++) {
-        channels.add(factory.create());
+  public void ensureChannelCount(int capacity) throws IOException {
+    if (totalSize.get() < capacity) {
+      synchronized (this) {
+        int unreservedCapacity = capacity - reservedChannelCount;
+        for (int i = channels.size(); i < unreservedCapacity; i++) {
+          channels.add(factory.create());
+        }
+        totalSize.set(capacity);
       }
     }
   }
@@ -154,8 +158,8 @@ public class ChannelPool extends Channel {
     reservedChannelCount--;
   }
 
-  public synchronized int size() {
-    return channels.size() + reservedChannelCount;
+  public int size() {
+    return totalSize.get();
   }
 
   public synchronized int availbleSize() {
