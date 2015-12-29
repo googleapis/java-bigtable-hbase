@@ -21,9 +21,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.cloud.bigtable.config.Logger;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -38,21 +40,29 @@ public class HeapSizeManager {
   // Flush is not properly synchronized with respect to waiting. It will never exit
   // improperly, but it might wait more than it has to. Setting this to a low value ensures
   // that improper waiting is minimal.
-  private static final long FINISH_WAIT_MILLIS = 250;
-  private static final long REGISTER_WAIT_MILLIS = 5;
+  private static final long FINISH_WAIT_MILLIS = 100;
+  private static final long REGISTER_WAIT_MILLIS = 50;
 
   // In flush, wait up to this number of milliseconds without any operations completing.  If
   // this amount of time goes by without any updates, flush will log a warning.  Flush()
   // will still wait to complete.
   private static final long INTERVAL_NO_SUCCESS_WARNING = 300000;
+
+  // If there are this many copmleted ids, then remove the completedOperationIds from the
+  // pendingOperationsWithSize map.
+  private static final int MAX_COMPLETED_ID_SIZE = 100;
+
   private final long maxHeapSize;
   private final int maxInFlightRpcs;
+
+  private AtomicLong operationSequenceGenerator = new AtomicLong();
+
   private final Map<Long, Long> pendingOperationsWithSize = new HashMap<>();
   private final LinkedBlockingDeque<Long> completedOperationIds = new LinkedBlockingDeque<>();
-
   private long currentWriteBufferSize = 0;
-  private AtomicLong operationSequenceGenerator = new AtomicLong();
   private long lastOperationChange = System.currentTimeMillis();
+
+  private AtomicBoolean isFlushing = new AtomicBoolean(false);
 
   public HeapSizeManager(long maxHeapSize, int maxInflightRpcs) {
     this.maxHeapSize = maxHeapSize;
@@ -63,87 +73,47 @@ public class HeapSizeManager {
     return maxHeapSize;
   }
 
-  public synchronized void waitUntilAllOperationsAreDone() throws InterruptedException {
+  public synchronized void flush() throws InterruptedException {
+    isFlushing.set(true);
     boolean performedWarning = false;
-    while(!pendingOperationsWithSize.isEmpty()) {
+    while (true) {
       cleanupFinishedOperations();
       if (pendingOperationsWithSize.isEmpty()) {
         break;
       }
-      if (!performedWarning
-          && lastOperationChange + INTERVAL_NO_SUCCESS_WARNING < System.currentTimeMillis()) {
-        long lastUpdated = (System.currentTimeMillis() - lastOperationChange) / 1000;
-        LOG.warn("No operations completed within the last %d seconds."
-            + "There are still %d operations in progress.", lastUpdated,
-          pendingOperationsWithSize.size());
+      if (!performedWarning && requiresWarning()) {
+        warn();
         performedWarning = true;
-        waitForCompletions(FINISH_WAIT_MILLIS);
       }
+      wait(FINISH_WAIT_MILLIS);
     }
     if (performedWarning) {
       LOG.info("flush() completed");
     }
+    isFlushing.set(false);
   }
 
+  private boolean requiresWarning() {
+    return lastOperationChange + INTERVAL_NO_SUCCESS_WARNING < System.currentTimeMillis();
+  }
+
+  private void warn() {
+    long lastUpdated = (System.currentTimeMillis() - lastOperationChange) / 1000;
+    LOG.warn(
+        "No operations completed within the last %d seconds. "
+        + "There are still %d operations in progress. ",
+        lastUpdated, pendingOperationsWithSize.size());
+  }
 
   private void cleanupFinishedOperations() {
     List<Long> toClean = new ArrayList<>();
     completedOperationIds.drainTo(toClean);
     if (!toClean.isEmpty()) {
-      markOperationsCompleted(toClean);
-    }
-  }
-  public synchronized long registerOperationWithHeapSize(long heapSize)
-      throws InterruptedException {
-    long operationId = operationSequenceGenerator.incrementAndGet();
-    while (unsynchronizedIsFull()) {
-      waitForCompletions(REGISTER_WAIT_MILLIS);
-    }
-
-    lastOperationChange = System.currentTimeMillis();
-    pendingOperationsWithSize.put(operationId, heapSize);
-    currentWriteBufferSize += heapSize;
-    return operationId;
-  }
-
-  /**
-   * Waits for a completion and then marks it as complete.
-   */
-  private void waitForCompletions(long timeoutMs) {
-    try {
-      Long completedOperation =
-          this.completedOperationIds.pollFirst(timeoutMs, TimeUnit.MILLISECONDS);
-      if (completedOperation != null) {
-        markCanBeCompleted(completedOperation);
+      for (Long operationSequenceId : toClean) {
+        markOperationComplete(operationSequenceId);
       }
-    } catch (InterruptedException e) {
+      lastOperationChange = System.currentTimeMillis();
     }
-  }
-
-  public synchronized boolean isFull() {
-    return unsynchronizedIsFull();
-  }
-
-  private boolean unsynchronizedIsFull() {
-    if (!isFullInternal()) {
-      return false;
-    }
-    // If we're not full, don't worry about cleaning up just yet.
-    cleanupFinishedOperations();
-    return isFullInternal();
-  }
-
-  private boolean isFullInternal() {
-    return currentWriteBufferSize >= maxHeapSize
-        || pendingOperationsWithSize.size() >= maxInFlightRpcs;
-  }
-
-  private synchronized void markOperationsCompleted(List<Long> operationSequenceIds) {
-    for (Long operationSequenceId : operationSequenceIds) {
-      markOperationComplete(operationSequenceId);
-    }
-    lastOperationChange = System.currentTimeMillis();
-    notifyAll();
   }
 
   private void markOperationComplete(Long operationSequenceId) {
@@ -156,11 +126,47 @@ public class HeapSizeManager {
     }
   }
 
+  public synchronized long registerOperationWithHeapSize(long heapSize)
+      throws InterruptedException {
+    long operationId = operationSequenceGenerator.incrementAndGet();
+    while (unsynchronizedIsFull()) {
+      // Wait until an operation is completed or REGISTER_WAIT_MILLIS pass.
+      Long completedOperation =
+          completedOperationIds.poll(REGISTER_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+      if (completedOperation != null) {
+        markOperationComplete(completedOperation);
+      }
+    }
+    pendingOperationsWithSize.put(operationId, heapSize);
+    currentWriteBufferSize += heapSize;
+    lastOperationChange = System.currentTimeMillis();
+    return operationId;
+  }
+
+  public synchronized boolean isFull() {
+    return unsynchronizedIsFull();
+  }
+
+  private boolean unsynchronizedIsFull() {
+    if (completedOperationIds.size() < MAX_COMPLETED_ID_SIZE && !isFullInternal()) {
+      // If we're not full, don't worry about cleaning up just yet.
+      return false;
+    }
+    cleanupFinishedOperations();
+    return isFullInternal();
+  }
+
+  private boolean isFullInternal() {
+    return currentWriteBufferSize >= maxHeapSize
+        || pendingOperationsWithSize.size() >= maxInFlightRpcs;
+  }
+
   public synchronized boolean hasInflightRequests() {
     cleanupFinishedOperations();
     return !pendingOperationsWithSize.isEmpty();
   }
 
+  @VisibleForTesting
   synchronized long getHeapSize() {
     return currentWriteBufferSize;
   }
@@ -183,5 +189,10 @@ public class HeapSizeManager {
 
   public void markCanBeCompleted(Long id) {
     completedOperationIds.offer(id);
+    if (this.isFlushing.get() && completedOperationIds.size() == pendingOperationsWithSize.size()) {
+      synchronized (this) {
+        notify();
+      }
+    }
   }
 }
