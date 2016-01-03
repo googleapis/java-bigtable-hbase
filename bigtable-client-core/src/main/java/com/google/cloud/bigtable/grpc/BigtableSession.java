@@ -248,7 +248,7 @@ public class BigtableSession implements AutoCloseable {
         options.getDataHost(), options.getTableAdminHost());
     if(!isAlpnProviderEnabled()) {
       LOG.error("Neither Jetty ALPN nor OpenSSL are available. " +
-          "OpenSSL unavailability cause:\n%s", OpenSsl.unavailabilityCause());
+          "OpenSSL unavailability cause:\n%s", OpenSsl.unavailabilityCause().toString());
       throw new IllegalStateException("Neither Jetty ALPN nor OpenSSL via " +
           "netty-tcnative were properly configured.");
     }
