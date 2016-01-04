@@ -65,20 +65,18 @@ public class HeapSizeManager {
 
   public synchronized void flush() throws InterruptedException {
     boolean performedWarning = false;
+    cleanupFinishedOperations();
     while(!pendingOperationsWithSize.isEmpty()) {
-      cleanupFinishedOperations();
-      if (pendingOperationsWithSize.isEmpty()) {
-        break;
-      }
       if (!performedWarning
           && lastOperationChange + INTERVAL_NO_SUCCESS_WARNING < System.currentTimeMillis()) {
         long lastUpdated = (System.currentTimeMillis() - lastOperationChange) / 1000;
-        LOG.warn("No operations completed within the last %d seconds."
+        LOG.warn("No operations completed within the last %d seconds. "
             + "There are still %d operations in progress.", lastUpdated,
           pendingOperationsWithSize.size());
         performedWarning = true;
-        waitForCompletions(FINISH_WAIT_MILLIS);
       }
+      waitForCompletions(FINISH_WAIT_MILLIS);
+      cleanupFinishedOperations();
     }
     if (performedWarning) {
       LOG.info("flush() completed");
@@ -108,15 +106,13 @@ public class HeapSizeManager {
 
   /**
    * Waits for a completion and then marks it as complete.
+   * @throws InterruptedException
    */
-  private void waitForCompletions(long timeoutMs) {
-    try {
-      Long completedOperation =
-          this.completedOperationIds.pollFirst(timeoutMs, TimeUnit.MILLISECONDS);
-      if (completedOperation != null) {
-        markCanBeCompleted(completedOperation);
-      }
-    } catch (InterruptedException e) {
+  private void waitForCompletions(long timeoutMs) throws InterruptedException {
+    Long completedOperation =
+        this.completedOperationIds.pollFirst(timeoutMs, TimeUnit.MILLISECONDS);
+    if (completedOperation != null) {
+      markOperationComplete(completedOperation);
     }
   }
 
