@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
@@ -128,10 +127,10 @@ public class AsyncExecutor {
     return future;
   }
 
-  public void flush() throws IOException {
+  public void flush() {
     LOG.trace("Flushing");
     try {
-      sizeManager.waitUntilAllOperationsAreDone();
+      sizeManager.flush();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
