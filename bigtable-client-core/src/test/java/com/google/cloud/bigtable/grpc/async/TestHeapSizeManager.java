@@ -19,9 +19,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -30,8 +29,12 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RunWith(JUnit4.class)
 public class TestHeapSizeManager {
@@ -147,31 +150,56 @@ public class TestHeapSizeManager {
   }
 
   @Test
-  public void testWaitUntilAllOperationsAreDone() throws InterruptedException {
+  public void testFlush() throws Exception {
+    final int registerCount = 1000;
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
-      final HeapSizeManager underTest = new HeapSizeManager(1l, 1);
-      long id = underTest.registerOperationWithHeapSize(5l);
-      assertTrue(underTest.hasInflightRequests());
+      final HeapSizeManager underTest = new HeapSizeManager(100l, 100);
       final AtomicBoolean allOperationsDone = new AtomicBoolean();
-      pool.submit(new Runnable() {
+      final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
+      Future<?> writeFuture = pool.submit(new Runnable() {
         @Override
         public void run() {
           try {
-            underTest.waitUntilAllOperationsAreDone();
+            for (int i = 0; i < registerCount; i++) {
+              registeredEvents.offer(underTest.registerOperationWithHeapSize(1));
+            }
+            underTest.flush();
             allOperationsDone.set(true);
+            synchronized (allOperationsDone) {
+              allOperationsDone.notify();
+            }
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+          }
+        }
+      });
+      Thread.sleep(100);
+      Future<?> readFuture = pool.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            for (int i = 0; i < registerCount; i++) {
+              Long registeredId = registeredEvents.poll(1, TimeUnit.SECONDS);
+              if (registeredId == null){
+                i--;
+              } else {
+                if (i % 50 == 0) {
+                  // Exercise the .offer and the flush() in the writeFuture.
+                  Thread.sleep(40);
+                }
+                underTest.markCanBeCompleted(registeredId);
+              }
+            }
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
         }
       });
-      // Give some time for the Runnable to be executed.
-      Thread.sleep(100);
-      assertFalse(allOperationsDone.get());
-      underTest.markCanBeCompleted(id);
 
-      // Give more time for the Runnable to be executed.
-      Thread.sleep(50);
+      readFuture.get(30, TimeUnit.SECONDS);
+      writeFuture.get(30, TimeUnit.SECONDS);
       assertTrue(allOperationsDone.get());
     } finally {
       pool.shutdownNow();
