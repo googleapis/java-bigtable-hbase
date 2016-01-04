@@ -131,7 +131,7 @@ public class AsyncExecutor {
   public void flush() throws IOException {
     LOG.trace("Flushing");
     try {
-      sizeManager.waitUntilAllOperationsAreDone();
+      sizeManager.flush();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }

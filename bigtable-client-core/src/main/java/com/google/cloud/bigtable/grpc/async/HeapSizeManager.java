@@ -63,7 +63,7 @@ public class HeapSizeManager {
     return maxHeapSize;
   }
 
-  public synchronized void waitUntilAllOperationsAreDone() throws InterruptedException {
+  public synchronized void flush() throws InterruptedException {
     boolean performedWarning = false;
     while(!pendingOperationsWithSize.isEmpty()) {
       cleanupFinishedOperations();
