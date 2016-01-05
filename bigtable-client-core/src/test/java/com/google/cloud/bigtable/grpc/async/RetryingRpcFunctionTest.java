@@ -16,9 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Mockito.when;
-import io.grpc.Status;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Before;
@@ -38,14 +36,16 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
 
+import io.grpc.Status;
+
 /**
- * Test for {@link RetryingRpcFutureFallback}
+ * Test for {@link RetryingRpcFunction}
  */
 @RunWith(JUnit4.class)
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class RetryingRpcFutureFallbackTest {
+public class RetryingRpcFunctionTest {
 
-  private RetryingRpcFutureFallback underTest;
+  private RetryingRpcFunction underTest;
 
   @Mock
   private RetryableRpc readAsync;
@@ -61,14 +61,8 @@ public class RetryingRpcFutureFallbackTest {
     MockitoAnnotations.initMocks(this);
     RetryOptions retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
     underTest =
-        RetryingRpcFutureFallback.create(retryOptions, ReadRowsRequest.getDefaultInstance(),
+        RetryingRpcFunction.create(retryOptions, ReadRowsRequest.getDefaultInstance(),
           readAsync);
-  }
-
-  @Test
-  public void testRuntimeException() throws Exception {
-    expectedException.expect(ExecutionException.class);
-    underTest.create(new RuntimeException("thrown")).get();
   }
 
   @Test
@@ -98,7 +92,7 @@ public class RetryingRpcFutureFallbackTest {
     // is a safe number of attempts before assuming that a ScanRetriesExhaustedException will
     // not be thrown.
     for (int i = 0; i < 50; i++) {
-      underTest.create(Status.INTERNAL.asRuntimeException());
+      underTest.apply(Status.INTERNAL.asRuntimeException());
     }
   }
 }

@@ -15,9 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-
 import java.io.IOException;
 
 import org.apache.commons.logging.Log;
@@ -27,21 +24,25 @@ import com.google.api.client.util.BackOff;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.FutureFallback;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-/**
- * A {@link FutureFallback} that retries a {@link RetryableRpc} request.
- */
-public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFallback<ResponseT> {
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 
-  public static <RequestT, ResponseT> RetryingRpcFutureFallback<RequestT, ResponseT> create(
+/**
+ * A {@link AsyncFunction} that retries a {@link RetryableRpc} request.
+ */
+public class RetryingRpcFunction<RequestT, ResponseT>
+    implements AsyncFunction<StatusRuntimeException, ResponseT> {
+
+  public static <RequestT, ResponseT> RetryingRpcFunction<RequestT, ResponseT> create(
       RetryOptions retryOptions, RequestT request, RetryableRpc<RequestT, ResponseT> retryableRpc) {
-    return new RetryingRpcFutureFallback<RequestT, ResponseT>(retryOptions, request, retryableRpc);
+    return new RetryingRpcFunction<RequestT, ResponseT>(retryOptions, request, retryableRpc);
   }
 
-  protected final Log LOG = LogFactory.getLog(RetryingRpcFutureFallback.class);
+  protected final Log LOG = LogFactory.getLog(RetryingRpcFunction.class);
 
   private final RequestT request;
 
@@ -53,7 +54,7 @@ public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFal
   private final RetryableRpc<RequestT, ResponseT> retryableRpc;
   private final RetryOptions retryOptions;
 
-  private RetryingRpcFutureFallback(RetryOptions retryOptions, RequestT request,
+  private RetryingRpcFunction(RetryOptions retryOptions, RequestT request,
       RetryableRpc<RequestT, ResponseT> retryableRpc) {
     this.retryOptions = retryOptions;
     this.request = request;
@@ -61,19 +62,16 @@ public class RetryingRpcFutureFallback<RequestT, ResponseT> implements FutureFal
   }
 
   @Override
-  public ListenableFuture<ResponseT> create(Throwable t)
-      throws Exception {
-    if (t instanceof StatusRuntimeException) {
-      StatusRuntimeException statusException = (StatusRuntimeException) t;
-      Status.Code code = statusException.getStatus().getCode();
-      if (retryOptions.isRetryableRead(code)) {
-        return backOffAndRetry(t);
-      }
+  public ListenableFuture<ResponseT> apply(StatusRuntimeException statusException) throws Exception {
+    Status.Code code = statusException.getStatus().getCode();
+    if (retryOptions.isRetryableRead(code)) {
+      return backOffAndRetry(statusException);
+    } else {
+      return Futures.immediateFailedCheckedFuture(statusException);
     }
-    return Futures.immediateFailedFuture(t);
   }
 
-  private ListenableFuture<ResponseT> backOffAndRetry(Throwable cause) throws IOException,
+  private ListenableFuture<ResponseT> backOffAndRetry(StatusRuntimeException cause) throws IOException,
       ScanRetriesExhaustedException {
     if (this.currentBackoff == null) {
       this.currentBackoff = retryOptions.createBackoff();

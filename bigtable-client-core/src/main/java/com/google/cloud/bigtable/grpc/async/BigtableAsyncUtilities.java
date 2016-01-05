@@ -15,11 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.MethodDescriptor;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +33,12 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.MethodDescriptor;
+import io.grpc.StatusRuntimeException;
 
 /**
  * Utilities for creating and executing async methods.
@@ -108,9 +109,10 @@ public final class BigtableAsyncUtilities {
       RetryableRpc<RequestT, ResponseT> rpc, ExecutorService executorService) {
     ListenableFuture<ResponseT> listenableFuture = rpc.call(request);
     if (retryOptions.enableRetries()) {
-      return Futures.withFallback(
+      return Futures.catchingAsync(
           listenableFuture,
-          RetryingRpcFutureFallback.create(retryOptions, request, rpc),
+          StatusRuntimeException.class,
+          RetryingRpcFunction.create(retryOptions, request, rpc),
           executorService);
     }
     return listenableFuture;
