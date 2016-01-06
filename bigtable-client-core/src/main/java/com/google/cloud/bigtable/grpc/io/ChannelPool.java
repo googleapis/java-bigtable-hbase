@@ -15,11 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
+import com.google.common.collect.ImmutableList;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -27,6 +23,13 @@ import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 
 /**
  * Manages a set of ClosableChannels and uses them in a round robin.
@@ -59,7 +62,7 @@ public class ChannelPool extends Channel {
 
     @Override
     public String authority() {
-      return delegate.authority();
+      return authority;
     }
 
     public synchronized void returnToPool() {
@@ -70,34 +73,117 @@ public class ChannelPool extends Channel {
     }
   }
 
-  private final List<Channel> channels;
+  private final AtomicReference<ImmutableList<Channel>> channels = new AtomicReference<>();
   private final AtomicInteger requestCount = new AtomicInteger();
-  private final List<HeaderInterceptor> headerInterceptors;
+  private final ImmutableList<HeaderInterceptor> headerInterceptors;
   private final AtomicInteger totalSize;
   private final ChannelFactory factory;
   private int reservedChannelCount = 0;
+  private final String authority;
 
   public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
       throws IOException {
-    this.channels = new ArrayList<>();
-    channels.add(factory.create());
+    Channel channel = factory.create();
+    this.channels.set(ImmutableList.of(channel));
+    authority = channel.authority();
     totalSize = new AtomicInteger(1);
     this.factory = factory;
-    this.headerInterceptors = headerInterceptors;
+    if (headerInterceptors == null) {
+      this.headerInterceptors = ImmutableList.of();
+    } else {
+      this.headerInterceptors = ImmutableList.copyOf(headerInterceptors);
+    }
   }
 
+  /**
+   * Makes sure that the number of channels is at least as big as the specified capacity.  This
+   * method is only synchornized when the pool has to be expanded.
+   *
+   * @param capacity The minimum number of channels required for the RPCs of the ChannelPool's
+   * clients.
+   */
   public void ensureChannelCount(int capacity) throws IOException {
     if (totalSize.get() < capacity) {
-      synchronized (this) {
-        int unreservedCapacity = capacity - reservedChannelCount;
-        for (int i = channels.size(); i < unreservedCapacity; i++) {
-          channels.add(factory.create());
+      synchronized(this){
+        if (totalSize.get() < capacity) {
+          List<Channel> newChannelList = new ArrayList<>(channels.get());
+          int unreservedCapacity = capacity - reservedChannelCount;
+          while(newChannelList.size() < unreservedCapacity) {
+            newChannelList.add(factory.create());
+          }
+          setChannels(newChannelList);
+          totalSize.set(capacity);
         }
-        totalSize.set(capacity);
       }
     }
   }
 
+  /**
+   * Performs a simple round robin on the list of {@link Channel}s in the {@code channels} list.
+   * This method should not be synchronized, if possible, to reduce bottlenecks.
+   * 
+   * @return A channel that can be used for a safe 
+   */
+  private Channel getNextChannel() {
+    int currentRequestNum = requestCount.getAndIncrement();
+    ImmutableList<Channel> channelsList = channels.get();
+    int index = Math.abs(currentRequestNum % channelsList.size());
+    return channelsList.get(index);
+  }
+
+  /**
+   * Gets a channel from the pool. Long running streaming RPCs can cause a contention issue if there
+   * is another RPC started on the same channel. If the pool only has a single channel, keep the
+   * channel in the pool so that other RPCs can at least attempt to use it. This is required for
+   * scans due to a gRPC bug. gRPC 0.10 will remove the necessity of reserving a channel.
+   */
+  public synchronized PooledChannel reserveChannel() {
+    Channel reserved;
+    boolean returned = false;
+
+    ImmutableList<Channel> channelsList = channels.get();
+
+    if (channelsList.size() == 1) {
+      reserved = channelsList.get(0);
+      returned = true;
+    } else {
+      List<Channel> newChannelList = new ArrayList<>(channelsList);
+      reserved = newChannelList.remove(newChannelList.size() - 1);
+      setChannels(newChannelList);
+      reservedChannelCount++;
+    }
+    return new PooledChannel(reserved, returned);
+  }
+
+  /**
+   * Return a reserved {@link Channel}, via {@link #reserveChannel()}, to the general pool.
+   */
+  private synchronized void returnChannel(PooledChannel channel){
+    List<Channel> newChannelList = new ArrayList<>(channels.get());
+    newChannelList.add(channel.delegate);
+    setChannels(newChannelList);
+    reservedChannelCount--;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String authority() {
+    return authority;
+  }
+
+  /**
+   * Create a {@link ClientCall} on a Channel from the pool chosen in a round-robin fashion to the
+   * remote operation specified by the given {@link MethodDescriptor}. The returned {@link
+   * ClientCall} does not trigger any remote behavior until {@link
+   * ClientCall#start(ClientCall.Listener, Metadata)} is
+   * invoked.
+   *
+   * @param methodDescriptor describes the name and parameter types of the operation to call.
+   * @param callOptions runtime options to be applied to this call.
+   * @return a {@link ClientCall} bound to the specified method.
+   */
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
@@ -106,10 +192,7 @@ public class ChannelPool extends Channel {
 
   private <ReqT, RespT> ClientCall<ReqT, RespT> createWrappedCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions, Channel channel) {
-    return wrap(channel.newCall(methodDescriptor, callOptions));
-  }
-
-  private <ReqT, RespT> ClientCall<ReqT, RespT> wrap(ClientCall<ReqT, RespT> delegate) {
+    ClientCall<ReqT, RespT> delegate = channel.newCall(methodDescriptor, callOptions);
     return new CheckedForwardingClientCall<ReqT, RespT>(delegate) {
       @Override
       protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
@@ -122,47 +205,21 @@ public class ChannelPool extends Channel {
     };
   }
 
-  private synchronized Channel getNextChannel() {
-    int currentRequestNum = requestCount.getAndIncrement();
-    int index = Math.abs(currentRequestNum % channels.size());
-    return channels.get(index);
-  }
-
-  @Override
-  public String authority() {
-    return channels.get(0).authority();
-  }
-
   /**
-   * Gets a channel from the pool. Long running streaming RPCs can cause a contention issue if there
-   * is another RPC started on the same channel. If the pool only has a single channel, keep the
-   * channel in the pool so that other RPCs can at least attempt to use it.
+   * Sets the values in newChannelList to the {@code channels} AtomicReference.  The values are
+   * copied into an {@link ImmutableList}.
+   *
+   * @param newChannelList A {@link List} of {@link Channel}s to set to the {@code channels}
    */
-  public synchronized PooledChannel reserveChannel() {
-    Channel reserved;
-    boolean returned = false;
-    if (channels.size() == 1) {
-      reserved = channels.get(0);
-      returned = true;
-    } else {
-      reserved = channels.remove(0);
-      reservedChannelCount++;
-    }
-    return new PooledChannel(reserved, returned);
-  }
-
-  private synchronized void returnChannel(PooledChannel channel){
-    if (!channel.returned) {
-      channels.add(channel.delegate);
-    }
-    reservedChannelCount--;
+  private void setChannels(List<Channel> newChannelList) {
+    channels.set(ImmutableList.copyOf(newChannelList));
   }
 
   public int size() {
     return totalSize.get();
   }
 
-  public synchronized int availbleSize() {
-    return channels.size();
+  public int availbleSize() {
+    return channels.get().size();
   }
 }
