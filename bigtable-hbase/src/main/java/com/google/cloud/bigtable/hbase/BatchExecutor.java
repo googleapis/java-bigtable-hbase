@@ -45,7 +45,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
 
 /**
@@ -72,77 +71,56 @@ public class BatchExecutor {
         }
       };
 
-  private static final Function<GeneratedMessage, Object> ROW_RESULT_CONVERTER =
-      new Function<GeneratedMessage, Object>() {
-
-        @Override
-        public Object apply(GeneratedMessage response) {
-          if (response instanceof com.google.bigtable.v1.Row) {
-            return Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v1.Row) response);
-          } else {
-            return new Result();
-          }
-        }
-      };
-
   /**
    * A callback for ListenableFutures issued as a result of an RPC
-   * @param <R>
-   * @param <T> The response messsage type.
+   * @param <T> The type of message the hbase callback requires.
    */
-  static class RpcResultFutureCallback<R, T extends GeneratedMessage>
-      implements FutureCallback<T> {
-
+  static class RpcResultFutureCallback<T> implements FutureCallback<GeneratedMessage> {
     private final Row row;
-    private final Batch.Callback<R> callback;
+    private final Batch.Callback<T> callback;
+
+    // TODO(sduskis): investigate if we really need both the results array and result future.
     private final int index;
     private final Object[] resultsArray;
-    private final SettableFuture<Object> resultFuture;
-    private final Function<T, Object> adapter;
+    private final SettableFuture<Result> resultFuture;
 
     public RpcResultFutureCallback(
         Row row,
-        Batch.Callback<R> callback,
+        Batch.Callback<T> callback,
         int index,
         Object[] resultsArray,
-        SettableFuture<Object> resultFuture,
-        Function<T, Object> adapter) {
+        SettableFuture<Result> resultFuture) {
       this.row = row;
       this.callback = callback;
       this.index = index;
       this.resultsArray = resultsArray;
       this.resultFuture = resultFuture;
-      this.adapter = adapter;
     }
 
     @SuppressWarnings("unchecked")
-    R unchecked(Object o) {
-      return (R)o;
-    }
-
     @Override
-    public void onSuccess(T t) {
+    public final void onSuccess(GeneratedMessage message) {
       try {
-        Object result = adapter.apply(t);
-        resultsArray[index] = result;
-        if (callback != null) {
-          callback.update(NO_REGION, row.getRow(), unchecked(result));
+        Result result = Result.EMPTY_RESULT;
+        if (message instanceof com.google.bigtable.v1.Row) {
+          result = Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v1.Row) message);
         }
+        resultsArray[index] = result;
         resultFuture.set(result);
+        if (callback != null) {
+          callback.update(NO_REGION, row.getRow(), (T) result);
+        }
       } catch (Throwable throwable) {
         resultFuture.setException(throwable);
       }
     }
 
     @Override
-    public void onFailure(Throwable throwable) {
-      try {
-        if (callback != null) {
-          callback.update(NO_REGION, row.getRow(), null);
-        }
-      } finally {
-        resultsArray[index] = null;
-        resultFuture.setException(throwable);
+    public final void onFailure(Throwable throwable) {
+      resultsArray[index] = null;
+      resultFuture.setException(throwable);
+      if (callback != null) {
+        callback.update(NO_REGION, row.getRow(), null);
       }
     }
   }
@@ -164,60 +142,6 @@ public class BatchExecutor {
   }
 
   /**
-   * Adapt and issue a single Delete request returning a ListenableFuture for the MutateRowResponse.
-   */
-  private ListenableFuture<Empty> issueDeleteRequest(Delete delete) throws InterruptedException {
-    LOG.trace("issueDeleteRequest(Delete)");
-    return asyncExecutor.mutateRowAsync(requestAdapter.adapt(delete));
-  }
-
-  /**
-   * Adapt and issue a single Get request returning a ListenableFuture
-   * for the GetRowResponse.
-   */
-  private ListenableFuture<com.google.bigtable.v1.Row> issueGetRequest(Get get)
-      throws InterruptedException {
-    LOG.trace("issueGetRequest(Get)");
-    return Futures.transform(asyncExecutor.readRowsAsync(requestAdapter.adapt(get)),
-      ROWS_TO_ROW_CONVERTER);
-  }
-
-  /**
-   * Adapt and issue a single Append request returning a ListenableFuture for the AppendRowResponse.
-   */
-  private ListenableFuture<com.google.bigtable.v1.Row> issueAppendRequest(Append append)
-      throws InterruptedException {
-    LOG.trace("issueAppendRequest(Append)");
-    return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt(append));
-  }
-
-  /**
-   * Adapt and issue a single Increment request returning a ListenableFuture for the
-   * IncrementRowResponse.
-   */
-  private ListenableFuture<com.google.bigtable.v1.Row> issueIncrementRequest(Increment increment)
-      throws InterruptedException {
-    LOG.trace("issueIncrementRequest(Increment)");
-    return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt(increment));
-  }
-
-  /**
-   * Adapt and issue a single Put request returning a ListenableFuture for the MutateRowResponse.
-   */
-  private ListenableFuture<Empty> issuePutRequest(Put put) throws InterruptedException {
-    LOG.trace("issuePutRequest(Put)");
-    return asyncExecutor.mutateRowAsync(requestAdapter.adapt(put));
-  }
-
-  /**
-   * Adapt and issue a single Put request returning a ListenableFuture for the MutateRowResponse.
-   */
-  private ListenableFuture<Empty> issueRowMutationsRequest(RowMutations mutations)
-      throws InterruptedException {
-    return asyncExecutor.mutateRowAsync(requestAdapter.adapt(mutations));
-  }
-
-  /**
    * Issue a single RPC recording the result into {@code results[index]} and if not-null, invoking
    * the supplied callback.
    * @param row The action to perform
@@ -228,52 +152,49 @@ public class BatchExecutor {
    * @param <T> The type of the callback.
    * @return A ListenableFuture that will have the result when the RPC completes.
    */
-  private <R extends Row, T> ListenableFuture<Object> issueRowRequest(final Row row,
-      final Batch.Callback<T> callback, final Object[] results, final int index)
-      throws InterruptedException {
+  private <R extends Row, T> ListenableFuture<Result> issueAsyncRowRequest(Row row,
+      Batch.Callback<T> callback, Object[] results, int index) throws InterruptedException {
     LOG.trace("issueRowRequest(Row, Batch.Callback, Object[], index");
-    SettableFuture<Object> resultFuture = SettableFuture.create();
+    ListenableFuture<? extends GeneratedMessage> future = issueAsyncRequest(row);
+
+    SettableFuture<Result> resultFuture = SettableFuture.create();
     results[index] = null;
-    ListenableFuture<? extends GeneratedMessage> future = issueRequest(row);
-    Futures.addCallback(future,
-      new RpcResultFutureCallback<T, GeneratedMessage>(
-          row, callback, index, results, resultFuture, ROW_RESULT_CONVERTER),
-      service);
+    RpcResultFutureCallback<T> futureCallback =
+        new RpcResultFutureCallback<T>(row, callback, index, results, resultFuture);
+    Futures.addCallback(future, futureCallback, service);
     return resultFuture;
   }
 
-  ListenableFuture<? extends GeneratedMessage> issueRequest(Row row) throws InterruptedException {
-    if (row instanceof Put) {
-      return issuePutRequest((Put) row);
+  private ListenableFuture<? extends GeneratedMessage> issueAsyncRequest(Row row)
+      throws InterruptedException {
+    if (row instanceof Get) {
+      return Futures.transform(
+          asyncExecutor.readRowsAsync(requestAdapter.adapt((Get) row)), ROWS_TO_ROW_CONVERTER);
+    } else if (row instanceof Put) {
+      return asyncExecutor.mutateRowAsync(requestAdapter.adapt((Put) row));
     } else if (row instanceof Delete) {
-      return issueDeleteRequest((Delete) row);
+      return asyncExecutor.mutateRowAsync(requestAdapter.adapt((Delete) row));
     } else if (row instanceof Append) {
-      return issueAppendRequest((Append) row);
+      return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Append) row));
     } else if (row instanceof Increment) {
-      return issueIncrementRequest((Increment) row);
-    } else if (row instanceof Get) {
-      return issueGetRequest((Get) row);
+      return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Increment) row));
     } else if (row instanceof RowMutations) {
-      return issueRowMutationsRequest((RowMutations) row);
+      return asyncExecutor.mutateRowAsync(requestAdapter.adapt((RowMutations) row));
     }
 
     LOG.error("Encountered unknown action type %s", row.getClass());
-    return Futures.immediateFailedFuture(new IllegalArgumentException(
-        "Encountered unknown action type: " + row.getClass()));
+    return Futures.immediateFailedFuture(
+        new IllegalArgumentException("Encountered unknown action type: " + row.getClass()));
   }
 
-  /**
-   * Implementation of {@link org.apache.hadoop.hbase.client.HTable#batch(List, Object[])}
-   */
   public void batch(List<? extends Row> actions, @Nullable Object[] results)
       throws IOException, InterruptedException {
-    LOG.trace("batch(List<>, Object[])");
     if (results == null) {
       results = new Object[actions.size()];
     }
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must have same dimensions as actions list.");
-    List<ListenableFuture<Object>> resultFutures = issueRowRequests(actions, results);
+    List<ListenableFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, null);
     try {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.
@@ -299,47 +220,24 @@ public class BatchExecutor {
     }
   }
 
-  private List<ListenableFuture<Object>> issueRowRequests(List<? extends Row> actions,
-      Object[] results) throws InterruptedException {
-    List<ListenableFuture<Object>> resultFutures = new ArrayList<>(actions.size());
+  private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
+      Object[] results, Batch.Callback<R> callback) throws InterruptedException {
+    List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());
     for (int i = 0; i < actions.size(); i++) {
-      resultFutures.add(issueRowRequest(actions.get(i), null, results, i));
+      resultFutures.add(issueAsyncRowRequest(actions.get(i), callback, results, i));
     }
     return resultFutures;
   }
 
-  /**
-   * Implementation of {@link org.apache.hadoop.hbase.client.HTable#batch(List)}
-   */
-  public Object[] batch(List<? extends Row> actions) throws IOException {
-    LOG.trace("batch(List<>)");
-    Result[] results = new Result[actions.size()];
+  public Result[] batch(List<? extends Row> actions) throws IOException {
     try {
+      Result[] results = new Result[actions.size()];
       batch(actions, results);
+      return results;
     } catch (InterruptedException e) {
       LOG.error("Encountered exception in batch(List<>).", e);
       throw new IOException("Batch error", e);
     }
-    return results;
-  }
-
-  /**
-   * Implementation of
-   * {@link org.apache.hadoop.hbase.client.HTable#batchCallback(List, Batch.Callback)}
-   */
-  public <R> Object[] batchCallback(
-      List<? extends Row> actions,
-      Batch.Callback<R> callback) throws IOException, InterruptedException {
-    LOG.trace("batchCallback(List<>, Batch.Callback)");
-    Result[] results = new Result[actions.size()];
-    List<ListenableFuture<Object>> resultFutures = issueRowRequests(actions, results);
-    try {
-      Futures.allAsList(resultFutures).get();
-    } catch (ExecutionException e) {
-      LOG.error("Encountered exception in batchCallback(List<>, Batch.Callback). ", e);
-      throw new IOException("batchCallback error", e);
-    }
-    return results;
   }
 
   /**
@@ -348,14 +246,12 @@ public class BatchExecutor {
    */
   public <R> void batchCallback(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
-    LOG.trace("batchCallback(List<>, Object[], Batch.Callback)");
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must be the same length as actions.");
-    List<ListenableFuture<Object>> resultFutures = issueRowRequests(actions, results);
     try {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.
-      Futures.successfulAsList(resultFutures).get();
+      Futures.successfulAsList(issueAsyncRowRequests(actions, results, callback)).get();
     } catch (ExecutionException e) {
       LOG.error("Encountered exception in batchCallback(List<>, Object[], Batch.Callback). ", e);
       throw new IOException("batchCallback error", e);
@@ -363,12 +259,11 @@ public class BatchExecutor {
   }
 
   /**
-   * Implementation of {@link org.apache.hadoop.hbase.client.HTable#exists(List)}.
+   * Implementation of {@link org.apache.hadoop.hbase.client.Table#existsAll(List)}.
    */
   public Boolean[] exists(List<Get> gets) throws IOException {
-    LOG.trace("exists(List<>)");
     // get(gets) will throw if there are any errors:
-    Result[] getResults = (Result[]) batch(gets);
+    Result[] getResults = batch(gets);
 
     Boolean[] exists = new Boolean[getResults.length];
     for (int index = 0; index < getResults.length; index++) {

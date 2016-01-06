@@ -161,6 +161,10 @@ public class BigtableTable implements Table {
     batchExecutor.batch(actions, results);
   }
 
+  /** 
+   * {@inheritDoc}
+   */
+  @Deprecated
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
     LOG.trace("batch(List<>)");
@@ -174,17 +178,23 @@ public class BigtableTable implements Table {
     batchExecutor.batchCallback(actions, results, callback);
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Deprecated
   @Override
   public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback)
       throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Batch.Callback)");
-    return batchExecutor.batchCallback(actions, callback);
+    Object[] results = new Object[actions.size()];
+    batchExecutor.batchCallback(actions, results, callback);
+    return results;
   }
 
   @Override
   public Result[] get(List<Get> gets) throws IOException {
     LOG.trace("get(List<>)");
-    return (Result[]) batchExecutor.batch(gets);
+    return batchExecutor.batch(gets);
   }
 
   @Override
