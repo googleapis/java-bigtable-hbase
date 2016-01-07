@@ -98,7 +98,7 @@ public class TestBigtableBufferedMutator {
   }
 
   @Test
-  public void testNoMutation() throws IOException {
+  public void testNoMutation() {
     Assert.assertFalse(underTest.hasInflightRequests());
   }
 
