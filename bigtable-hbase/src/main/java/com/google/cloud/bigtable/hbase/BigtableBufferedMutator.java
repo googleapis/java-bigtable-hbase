@@ -39,7 +39,6 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -48,7 +47,6 @@ import com.google.protobuf.GeneratedMessage;
 /**
  * Bigtable's {@link BufferedMutator} implementation.
  */
-// TODO: Cleanup the interface so that @VisibleForTesting can be reduced.
 public class BigtableBufferedMutator implements BufferedMutator {
 
   protected static final Logger LOG = new Logger(BigtableBufferedMutator.class);
@@ -170,7 +168,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private void doMutation(final Mutation mutation) throws RetriesExhaustedWithDetailsException {
+  private void doMutation(final Mutation mutation) {
     Futures.addCallback(issueRequest(mutation), new ExceptionCallback(mutation));
   }
 
@@ -255,7 +253,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  @VisibleForTesting
   public boolean hasInflightRequests() {
     return this.asyncExecutor.hasInflightRequests();
   }
