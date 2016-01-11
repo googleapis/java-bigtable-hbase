@@ -62,6 +62,10 @@ public class HeapSizeManager {
   public long getMaxHeapSize() {
     return maxHeapSize;
   }
+  
+  public int getMaxInFlightRpcs() {
+    return maxInFlightRpcs;
+  }
 
   public synchronized void flush() throws InterruptedException {
     boolean performedWarning = false;

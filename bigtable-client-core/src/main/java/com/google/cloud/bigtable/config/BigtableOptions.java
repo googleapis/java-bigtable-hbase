@@ -39,11 +39,18 @@ public class BigtableOptions implements Serializable {
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
   public static final int DEFAULT_BIGTABLE_PORT = 443;
 
-  public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = 6;
+  public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = getDefaultDataChannelCount();
   public static final int BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT =
       (int) TimeUnit.MILLISECONDS.convert(30, TimeUnit.MINUTES);
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
+
+  private static int getDefaultDataChannelCount() {
+    // 10 Channels seemed to work well on a 4 CPU machine, and this seems to scale well for higher
+    // CPU machines. Use no more than 250 Channels by default.
+    int availableProcessors = Runtime.getRuntime().availableProcessors();
+    return (int) Math.min(250, Math.max(1, Math.ceil(availableProcessors * 2.5d)));
+  }
 
   /**
    * A mutable builder for BigtableConnectionOptions.
