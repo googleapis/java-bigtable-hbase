@@ -105,9 +105,11 @@ public class TestBigtableBufferedMutator {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testMutation() throws IOException {
+  public void testMutation() throws IOException, InterruptedException {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
     underTest.mutate(SIMPLE_PUT);
+    // Leave some time for the async worker to handle the request.
+    Thread.sleep(100);
     verify(client, times(1)).mutateRowAsync(any(MutateRowRequest.class));
     Assert.assertTrue(underTest.hasInflightRequests());
     completeCall();
@@ -118,6 +120,8 @@ public class TestBigtableBufferedMutator {
   public void testInvalidPut() throws Exception {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenThrow(new RuntimeException());
     underTest.mutate(SIMPLE_PUT);
+    // Leave some time for the async worker to handle the request.
+    Thread.sleep(100);
     verify(listener, times(0)).onException(any(RetriesExhaustedWithDetailsException.class),
         same(underTest));
     completeCall();
