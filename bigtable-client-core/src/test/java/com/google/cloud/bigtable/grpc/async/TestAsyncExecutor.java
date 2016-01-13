@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.grpc.async;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -83,12 +82,12 @@ public class TestAsyncExecutor {
   }
 
   @Test
-  public void testNoMutation() throws IOException {
+  public void testNoMutation() {
     Assert.assertFalse(underTest.hasInflightRequests());
   }
 
   @Test
-  public void testMutation() throws IOException, InterruptedException {
+  public void testMutation() throws InterruptedException {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
     underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
     Assert.assertTrue(underTest.hasInflightRequests());
@@ -97,7 +96,7 @@ public class TestAsyncExecutor {
   }
 
   @Test
-  public void testCheckAndMutate() throws IOException, InterruptedException {
+  public void testCheckAndMutate() throws InterruptedException {
     when(client.checkAndMutateRowAsync(any(CheckAndMutateRowRequest.class))).thenReturn(future);
     underTest.checkAndMutateRowAsync(CheckAndMutateRowRequest.getDefaultInstance());
     Assert.assertTrue(underTest.hasInflightRequests());
@@ -106,7 +105,7 @@ public class TestAsyncExecutor {
   }
 
   @Test
-  public void testReadWriteModify() throws IOException, InterruptedException {
+  public void testReadWriteModify() throws InterruptedException {
     when(client.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(future);
     underTest.readModifyWriteRowAsync(ReadModifyWriteRowRequest.getDefaultInstance());
     Assert.assertTrue(underTest.hasInflightRequests());
@@ -115,7 +114,7 @@ public class TestAsyncExecutor {
   }
 
   @Test
-  public void testReadRowsAsync() throws IOException, InterruptedException {
+  public void testReadRowsAsync() throws InterruptedException {
     when(client.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(future);
     underTest.readRowsAsync(ReadRowsRequest.getDefaultInstance());
     Assert.assertTrue(underTest.hasInflightRequests());

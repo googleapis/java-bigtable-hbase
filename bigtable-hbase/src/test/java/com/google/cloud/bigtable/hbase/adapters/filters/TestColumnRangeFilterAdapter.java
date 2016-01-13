@@ -35,7 +35,7 @@ public class TestColumnRangeFilterAdapter {
   FilterAdapterContext emptyScanContext = new FilterAdapterContext(emptyScan, null);
 
   @Test
-  public void testColumnRangeFilterThrowsWithNoFamilies() throws IOException {
+  public void testColumnRangeFilterThrowsWithNoFamilies() {
     ColumnRangeFilter filter = new ColumnRangeFilter(
         Bytes.toBytes("a"), true, Bytes.toBytes("b"), true);
     Assert.assertFalse(filterAdapter.isFilterSupported(emptyScanContext, filter).isSupported());

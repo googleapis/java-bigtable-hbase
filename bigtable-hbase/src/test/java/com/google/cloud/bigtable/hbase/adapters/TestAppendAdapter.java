@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
 import java.util.List;
 
 @RunWith(JUnit4.class)
@@ -36,7 +35,7 @@ public class TestAppendAdapter {
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   @Test
-  public void testBasicRowKeyAppend() throws IOException {
+  public void testBasicRowKeyAppend() {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Append append = new Append(rowKey);
     ReadModifyWriteRowRequest request = appendAdapter.adapt(append).build();
@@ -45,7 +44,7 @@ public class TestAppendAdapter {
   }
 
   @Test
-  public void testMultipleAppends() throws IOException {
+  public void testMultipleAppends() {
     byte[] rowKey = dataHelper.randomData("rk1-");
 
     byte[] family1 = Bytes.toBytes("family1");
@@ -74,7 +73,7 @@ public class TestAppendAdapter {
   }
 
   @Test
-  public void testMultipleAppendsWithDuplicates() throws IOException {
+  public void testMultipleAppendsWithDuplicates() {
     byte[] rowKey = dataHelper.randomData("rk1-");
 
     byte[] family1 = Bytes.toBytes("family1");

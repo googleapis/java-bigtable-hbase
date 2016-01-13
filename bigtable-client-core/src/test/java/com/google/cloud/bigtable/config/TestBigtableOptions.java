@@ -27,7 +27,7 @@ import org.junit.Test;
 public class TestBigtableOptions {
 
   @Test
-  public void testEquals() throws IOException, ClassNotFoundException {
+  public void testEquals() {
     BigtableOptions options1 = new BigtableOptions.Builder()
         .setProjectId("project")
         .setZoneId("zone")

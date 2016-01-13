@@ -276,7 +276,7 @@ public class TestBatch extends AbstractTest {
    */
   @Test
   @Category(KnownGap.class)
-  public void testRowMutations() throws IOException, InterruptedException {
+  public void testRowMutations() throws IOException {
     // Initialize data
     Table table = getConnection().getTable(TABLE_NAME);
     byte[] rowKey = dataHelper.randomData("testrow-");

@@ -24,6 +24,7 @@ import com.google.common.base.Functions;
  */
 public class DefaultReadHooks implements ReadHooks {
   private Function<ReadRowsRequest, ReadRowsRequest> preSendHook = Functions.identity();
+  @Override
   public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
     preSendHook = Functions.compose(newHook, preSendHook);
   }

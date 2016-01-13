@@ -27,6 +27,7 @@ public class BigtableTableName {
     this.tableName = tableName;
   }
 
+  @Override
   public String toString() {
     return tableName;
   }

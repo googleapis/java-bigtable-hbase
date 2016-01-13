@@ -134,6 +134,7 @@ public class AsyncExecutor {
       sizeManager.flush();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      throw new IOException("Batch operations were interrupted.");
     }
     LOG.trace("Done flushing");
   }

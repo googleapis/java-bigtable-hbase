@@ -362,16 +362,16 @@ public class CloudBigtableIO {
     /**
      * Splits the table based on keys that belong to tablets, known as "regions" in the HBase API.
      * The current implementation uses the HBase {@link RegionLocator} interface, which calls
-     * {@link BigtableService#sampleRowKeys(com.google.bigtable.v1.SampleRowKeysRequest,
-     * io.grpc.stub.StreamObserver)} under the covers. A {@link SourceWithKeys} may correspond to a
-     * single region or a portion of a region.
-     * 
+     * {@link BigtableService#sampleRowKeys(SampleRowKeysRequest,
+     * com.google.bigtable.repackaged.io.grpc.stub.StreamObserver)} under the covers. 
+     * A {@link SourceWithKeys} may correspond to a single region or a portion of a region.
+     *
      * <p>
      * If a split is smaller than a single region, the split is calculated based on the assumption
      * that the data is distributed evenly between the region's startKey and stopKey. That
      * assumption may not be correct for any specific start/stop key combination.
      * </p>
-     * 
+     *
      * <p>This method is called internally by Cloud Dataflow. Do not call it directly.</p>
      *
      * @param desiredBundleSizeBytes The desired size for each bundle, in bytes.

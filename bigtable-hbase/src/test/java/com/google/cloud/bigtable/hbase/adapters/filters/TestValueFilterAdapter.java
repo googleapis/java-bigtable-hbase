@@ -54,7 +54,7 @@ public class TestValueFilterAdapter {
   }
 
   @Test
-  public void testValueFilterFiltersOnValue() throws IOException {
+  public void testValueFilterFiltersOnValue() {
 
   }
 

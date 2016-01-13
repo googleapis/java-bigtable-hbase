@@ -163,6 +163,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  @Override
   @Deprecated
   public TableName[] listTableNames(String patternStr) throws IOException {
     return listTableNames(Pattern.compile(patternStr));
@@ -569,6 +570,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return regionInfos;
   }
 
+  @Override
   public void close() throws IOException {
     // no-op
   }

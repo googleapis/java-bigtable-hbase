@@ -40,7 +40,7 @@ public class TestIncrementAdapter {
   protected DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   @Test
-  public void testBasicRowKeyIncrement() throws IOException {
+  public void testBasicRowKeyIncrement() {
     byte[] rowKey = dataHelper.randomData("rk1-");
     Increment incr = new Increment(rowKey);
     ReadModifyWriteRowRequest.Builder requestBuilder = incrementAdapter.adapt(incr);
@@ -49,7 +49,7 @@ public class TestIncrementAdapter {
   }
 
   @Test
-  public void testSingleIncrement() throws IOException {
+  public void testSingleIncrement() {
     byte[] rowKey = dataHelper.randomData("rk1-");
     byte[] family = Bytes.toBytes("family");
     byte[] qualifier = Bytes.toBytes("qualifier");
@@ -69,7 +69,7 @@ public class TestIncrementAdapter {
   }
 
   @Test
-  public void testMultipleIncrement() throws IOException {
+  public void testMultipleIncrement() {
     byte[] rowKey = dataHelper.randomData("rk1-");
 
     byte[] family1 = Bytes.toBytes("family1");
@@ -100,7 +100,7 @@ public class TestIncrementAdapter {
 
 
   @Test
-  public void testMultipleIncrementWithDuplicateQualifier() throws IOException {
+  public void testMultipleIncrementWithDuplicateQualifier() {
     byte[] rowKey = dataHelper.randomData("rk1-");
 
     byte[] family1 = Bytes.toBytes("family1");
