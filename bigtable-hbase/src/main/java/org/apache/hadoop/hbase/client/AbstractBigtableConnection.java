@@ -162,6 +162,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     long maxHeapSize = params.getWriteBufferSize();
     if (maxHeapSize == BufferedMutatorParams.UNSET) {
       params.writeBufferSize(tableConfig.getWriteBufferSize());
+      maxHeapSize = params.getWriteBufferSize();
     }
 
     int defaultRpcCount = AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
@@ -173,7 +174,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         session.getDataClient(),
         createAdapter(tableName),
         conf,
-        options.getDataHost().toString(),
+        options,
         params.getListener(),
         new HeapSizeManager(maxHeapSize, maxInflightRpcs)) {
       @Override

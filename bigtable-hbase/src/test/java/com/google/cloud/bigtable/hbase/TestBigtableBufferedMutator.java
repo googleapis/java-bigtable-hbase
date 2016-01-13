@@ -39,6 +39,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
@@ -92,7 +93,7 @@ public class TestBigtableBufferedMutator {
       client,
       adapter,
       configuration,
-      null,
+      new BigtableOptions.Builder().build(),
       listener,
       heapSizeManager);
   }

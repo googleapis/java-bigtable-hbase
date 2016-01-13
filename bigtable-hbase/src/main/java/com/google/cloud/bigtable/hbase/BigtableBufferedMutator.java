@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
@@ -87,14 +88,20 @@ public class BigtableBufferedMutator implements BufferedMutator {
       BigtableDataClient client,
       HBaseRequestAdapter adapter,
       Configuration configuration,
-      String dataHost,
+      BigtableOptions options,
       BufferedMutator.ExceptionListener listener,
       HeapSizeManager heapSizeManager) {
     this.adapter = adapter;
     this.configuration = configuration;
     this.exceptionListener = listener;
-    this.host = dataHost;
+    this.host = options.getDataHost().toString();
     this.asyncExecutor = new AsyncExecutor(client, heapSizeManager);
+    LOG.info(
+        "Initializing BigtableBufferd Mutator with %d channels, %,d byte heap size"
+        + " and %d concurrent requests.",
+        options.getChannelCount(),
+        heapSizeManager.getMaxHeapSize(),
+        heapSizeManager.getMaxInFlightRpcs());
   }
 
   @Override
