@@ -60,7 +60,7 @@ public class BigtableConstants {
   /**
    * A User-Agent token to be added to User-Agent request header.
    */
-  public static final String USER_AGENT = getUserAgent();
+  public static final String USER_AGENT = getUserAgent() + "," + getJavaVersion();
 
   /**
    * Gets user agent from bigtable-hbase.properties. Returns a default dev user agent with current
@@ -91,5 +91,12 @@ public class BigtableConstants {
           e);
     }
     return defaultUserAgent;
+  }
+
+  /**
+   * @return The java specification version; for example, 1.7 or 1.8.
+   */
+  private static String getJavaVersion() {
+    return System.getProperty("java.specification.version");
   }
 }
