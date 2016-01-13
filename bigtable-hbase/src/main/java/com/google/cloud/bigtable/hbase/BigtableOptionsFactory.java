@@ -19,7 +19,8 @@ import static com.google.api.client.util.Strings.isNullOrEmpty;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.DEFAULT_BIGTABLE_PORT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
@@ -130,11 +131,18 @@ public class BigtableOptionsFactory {
    * The number of grpc channels to open for asynchronous processing such as puts.
    */
   public static final String BIGTABLE_DATA_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
+
   /**
    * The maximum length of time to keep a Bigtable grpc channel open.
    */
   public static final String BIGTABLE_CHANNEL_TIMEOUT_MS_KEY =
       "google.bigtable.grpc.channel.timeout.ms";
+
+  /**
+   * The number of asynchronous workers to use for buffered mutator operations.
+   */
+  public static final String BIGTABLE_ASYNC_MUTATOR_COUNT_KEY =
+      "google.bigtable.buffered.mutator.async.worker.count";
 
   public static BigtableOptions fromConfiguration(final Configuration configuration)
       throws IOException {
@@ -161,9 +169,13 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setClusterAdminHost(getHost(configuration,
         BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT, "Cluster Admin"));
 
-    int port = configuration.getInt(BIGTABLE_PORT_KEY, DEFAULT_BIGTABLE_PORT);
+    int port = configuration.getInt(BIGTABLE_PORT_KEY, BIGTABLE_PORT_DEFAULT);
     bigtableOptionsBuilder.setPort(port);
     setChannelOptions(bigtableOptionsBuilder, configuration);
+    
+    int asyncMutatorCount = configuration.getInt(
+        BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
+    bigtableOptionsBuilder.setAsyncMutatorWorkerCount(asyncMutatorCount);
 
     return bigtableOptionsBuilder.build();
   }

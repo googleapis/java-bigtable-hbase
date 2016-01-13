@@ -32,7 +32,7 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
 
 /**
- * This class provides management of asynchronous Bigtable RPCs.  It ensures that there aren't too
+ * This class provides management of asynchronous Bigtable RPCs. It ensures that there aren't too
  * many concurrent, in flight asynchronous RPCs and also makes sure that the memory used by the
  * requests doesn't exceed a threshold.
  */
@@ -52,6 +52,9 @@ public class AsyncExecutor {
     ListenableFuture<ResponseT> call(BigtableDataClient client, RequestT request);
   }
 
+  /**
+   * Calls {@link BigtableDataClient#mutateRowAsync(MutateRowRequest)}.
+   */
   protected static AsyncCall<MutateRowRequest, Empty> MUTATE_ASYNC =
       new AsyncCall<MutateRowRequest, Empty>() {
         @Override
@@ -60,6 +63,9 @@ public class AsyncExecutor {
         }
       };
 
+  /**
+   * Calls {@link BigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRowRequest)}.
+   */
   protected static AsyncCall<ReadModifyWriteRowRequest, Row> READ_MODIFY_WRITE_ASYNC =
       new AsyncCall<ReadModifyWriteRowRequest, Row>() {
         @Override
@@ -69,6 +75,9 @@ public class AsyncExecutor {
         }
       };
 
+  /**
+   * Calls {@link BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest)}.
+   */
   protected static AsyncCall<CheckAndMutateRowRequest, CheckAndMutateRowResponse> CHECK_AND_MUTATE_ASYNC =
       new AsyncCall<CheckAndMutateRowRequest, CheckAndMutateRowResponse>() {
         @Override
@@ -78,6 +87,9 @@ public class AsyncExecutor {
         }
       };
 
+  /**
+   * Calls {@link BigtableDataClient#readRowsAsync(ReadRowsRequest))}.
+   */
   protected static AsyncCall<ReadRowsRequest, List<Row>> READ_ROWS_ASYNC =
       new AsyncCall<ReadRowsRequest, List<Row>>() {
         @Override
@@ -94,22 +106,121 @@ public class AsyncExecutor {
     this.sizeManager = heapSizeManager;
   }
 
+  /**
+   * Performs a {@link BigtableDataClient#mutateRowAsync(MutateRowRequest)} on the
+   * {@link MutateRowRequest} given an operationId generated from
+   * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
+   *
+   * @param request The {@link MutateRowRequest} to send.
+   * @param operationId The Id generated from
+   *          {@link HeapSizeManager#registerOperationWithHeapSize(long)} that will be released when
+   *          the mutate operation is completed.
+   *
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
+  public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request, long operationId) {
+    return call(MUTATE_ASYNC, request, operationId);
+  }
+
+  /**
+   * Performs a {@link BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest)} on the
+   * {@link CheckAndMutateRowRequest} given an operationId generated from
+   * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
+   *
+   * @param request The {@link CheckAndMutateRowRequest} to send.
+   * @param operationId The Id generated from
+   *          {@link HeapSizeManager#registerOperationWithHeapSize(long)} that will be released when
+   *          the checkAndMutateRow operation is completed.
+   *
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
+  public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
+      CheckAndMutateRowRequest request, long operationId) {
+    return call(CHECK_AND_MUTATE_ASYNC, request, operationId);
+  }
+
+  /**
+   * Performs a {@link BigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRowRequest))} on the
+   * {@link ReadModifyWriteRowRequest} given an operationId generated from
+   * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
+   *
+   * @param request The {@link ReadModifyWriteRowRequest} to send.
+   * @param operationId The Id generated from
+   *          {@link HeapSizeManager#registerOperationWithHeapSize(long)} that will be released when
+   *          the readModifyWriteRowAsync operation is completed.
+   *
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
+  public ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRowRequest request,
+      long operationId)  {
+    return call(READ_MODIFY_WRITE_ASYNC, request, operationId);
+  }
+
+  /**
+   * Performs a {@link BigtableDataClient#readRowsAsync(ReadRowsRequest))} on the
+   * {@link ReadRowsRequest} given an operationId generated from
+   * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
+   *
+   * @param request The {@link ReadRowsRequest} to send.
+   *
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
+  public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request, long operationId) {
+    return call(READ_ROWS_ASYNC, request, operationId);
+  }
+
+  /**
+   * Performs a {@link BigtableDataClient#mutateRowAsync(MutateRowRequest)} on the
+   * {@link MutateRowRequest}. This method may block if
+   * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
+   *
+   * @param request The {@link MutateRowRequest} to send.
+   *
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
   public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request)
       throws InterruptedException {
     return call(MUTATE_ASYNC, request);
   }
 
+  /**
+   * Performs a {@link BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest))} on the
+   * {@link CheckAndMutateRowRequest}. This method may block if
+   * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
+   *
+   * @param request The {@link CheckAndMutateRowRequest} to send.
+   *
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
   public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request) throws InterruptedException {
     return call(CHECK_AND_MUTATE_ASYNC, request);
   }
 
+  /**
+   * Performs a {@link BigtableDataClient#readModifyWriteRow(ReadModifyWriteRowRequest)} on the
+   * {@link ReadModifyWriteRowRequest}. This method may block if
+   * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
+   *
+   * @param request The {@link ReadModifyWriteRowRequest} to send.
+   *
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
   public ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRowRequest request)
       throws InterruptedException {
     return call(READ_MODIFY_WRITE_ASYNC, request);
   }
 
-  public ListenableFuture<List<com.google.bigtable.v1.Row>> readRowsAsync(ReadRowsRequest request)
+  /**
+   * Performs a {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
+   * {@link ReadRowsRequest}. This method may block if
+   * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
+   *
+   * @param request The {@link ReadRowsRequest} to send.
+   *
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
+  public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request)
       throws InterruptedException {
     return call(READ_ROWS_ASYNC, request);
   }
@@ -119,6 +230,11 @@ public class AsyncExecutor {
     // Wait until both the memory and rpc count maximum requirements are achieved before getting a
     // unique id used to track this request.
     long id = sizeManager.registerOperationWithHeapSize(request.getSerializedSize());
+    return call(rpc, request, id);
+  }
+
+  private <ResponseT, RequestT extends GeneratedMessage> ListenableFuture<ResponseT>
+      call(AsyncCall<RequestT, ResponseT> rpc, RequestT request, long id) {
     ListenableFuture<ResponseT> future;
     try {
       future = rpc.call(client, request);
@@ -129,6 +245,12 @@ public class AsyncExecutor {
     return future;
   }
 
+  /**
+   * Waits until all operations managed by the {@link HeapSizeManager} complete. See
+   * {@link HeapSizeManager#flush()} for more information.
+   *
+   * @throws IOException if something goes wrong.
+   */
   public void flush() throws IOException {
     LOG.trace("Flushing");
     try {
