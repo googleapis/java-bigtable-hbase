@@ -99,6 +99,7 @@ public class RowCell implements Cell {
     return Type.Put.getCode();
   }
 
+  @Deprecated
   @Override
   public long getMvccVersion() {
     return 0;
@@ -139,21 +140,25 @@ public class RowCell implements Cell {
     return 0;
   }
 
+  @Deprecated
   @Override
   public byte[] getValue() {
     return Bytes.copy(this.valueArray);
   }
 
+  @Deprecated
   @Override
   public byte[] getFamily() {
     return Bytes.copy(this.familyArray);
   }
 
+  @Deprecated
   @Override
   public byte[] getQualifier() {
     return Bytes.copy(this.qualifierArray);
   }
 
+  @Deprecated
   @Override
   public byte[] getRow() {
     return Bytes.copy(this.rowArray);

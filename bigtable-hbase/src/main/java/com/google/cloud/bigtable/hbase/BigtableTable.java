@@ -488,12 +488,14 @@ public class BigtableTable implements Table {
     throw new UnsupportedOperationException();  // TODO
   }
 
+  @Deprecated
   @Override
   public long getWriteBufferSize() {
     LOG.error("Unsupported getWriteBufferSize() called");
     throw new UnsupportedOperationException();  // TODO
   }
 
+  @Deprecated
   @Override
   public void setWriteBufferSize(long writeBufferSize) throws IOException {
     LOG.error("Unsupported getWriteBufferSize() called");

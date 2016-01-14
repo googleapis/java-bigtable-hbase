@@ -21,7 +21,6 @@ import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.generateRe
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.randomBytes;
 import static com.google.cloud.bigtable.grpc.scanner.RowMatcher.matchesRow;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -54,7 +53,7 @@ public class RowMergerTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   @Test
-  public void resultsAreReadable() throws IOException {
+  public void resultsAreReadable() {
     List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", 3);
     List<Row> rows = new ArrayList<>();
     Iterator<ReadRowsResponse> iterator = responses.iterator();
@@ -86,7 +85,7 @@ public class RowMergerTest {
   }
 
   @Test
-  public void multipleChunksAreMerged() throws IOException {
+  public void multipleChunksAreMerged() {
     matchResponses(
         new ReadRowsResponse[]{
             createReadRowsResponse("row-1", Family1_c1_CHUNK),
@@ -104,7 +103,7 @@ public class RowMergerTest {
   }
 
   @Test
-  public void rowsMultipleChunks() throws IOException {
+  public void rowsMultipleChunks() {
     matchResponses(
         new ReadRowsResponse[]{
             createReadRowsResponse("row-1", Family1_c1_CHUNK, Family1_c2_CHUNK, COMPLETE_CHUNK)
@@ -117,7 +116,7 @@ public class RowMergerTest {
   }
 
   @Test
-  public void readMultipleRows() throws IOException {
+  public void readMultipleRows() {
     matchResponses(
         new ReadRowsResponse[]{
             createReadRowsResponse("row-1", Family1_c1_CHUNK, COMPLETE_CHUNK),
@@ -130,7 +129,7 @@ public class RowMergerTest {
   }
 
   @Test
-  public void rowsCanBeReset() throws IOException {
+  public void rowsCanBeReset() {
     matchResponses(
         new ReadRowsResponse[]{
             createReadRowsResponse("row-1", Family1_c1_CHUNK),
@@ -157,7 +156,7 @@ public class RowMergerTest {
   }
 
   @Test
-  public void rowsCanBeResetMultipleTimes() throws IOException {
+  public void rowsCanBeResetMultipleTimes() {
     matchResponses(
         new ReadRowsResponse[]{
             createReadRowsResponse("row-1", Family1_c1_CHUNK),
@@ -176,7 +175,7 @@ public class RowMergerTest {
   }
 
   @Test
-  public void resetCompleteRowsAreRead() throws IOException {
+  public void resetCompleteRowsAreRead() {
     // All of these responses indicate a delete. RowMerger should not return any Row objects for
     // these cases
     matchResponses(
@@ -200,7 +199,7 @@ public class RowMergerTest {
   }
 
   @Test
-  public void endOfStreamMidRowThrows() throws IOException {
+  public void endOfStreamMidRowThrows() {
     String rowKey = "row-1";
     ReadRowsResponse response = createReadRowsResponse(rowKey, Family1_c1_CHUNK);
 
@@ -211,7 +210,7 @@ public class RowMergerTest {
   }
 
   @Test
-  public void oneRowPlusEndofStreamMidRowThrows() throws IOException {
+  public void oneRowPlusEndofStreamMidRowThrows() {
     String rowKey = "row-1";
     ReadRowsResponse response = createReadRowsResponse(rowKey, Family1_c1_CHUNK, COMPLETE_CHUNK);
     ReadRowsResponse response2 = createReadRowsResponse(rowKey, Family1_c2_CHUNK);

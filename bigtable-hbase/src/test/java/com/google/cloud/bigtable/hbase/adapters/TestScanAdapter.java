@@ -29,8 +29,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
-
 /**
  * Lightweight tests for the ScanAdapter. Many of the methods, such as filter building are
  * already tested in {@link TestGetAdapter}.
@@ -65,7 +63,7 @@ public class TestScanAdapter {
   }
 
   @Test
-  public void maxVersionsIsSet() throws IOException {
+  public void maxVersionsIsSet() {
     Scan scan = new Scan();
     scan.setMaxVersions(10);
     ReadRowsRequest.Builder rowRequestBuilder = scanAdapter.adapt(scan, throwingReadHooks);

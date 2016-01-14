@@ -108,7 +108,7 @@ public class TestRowFilterAdapter {
   }
 
   @Test
-  public void testNotSupported_RegexNotEquals() throws IOException {
+  public void testNotSupported_RegexNotEquals() {
     String regexp = "^.*hello world.*$";
     RegexStringComparator comparator = new RegexStringComparator(regexp);
     org.apache.hadoop.hbase.filter.RowFilter filter =
@@ -118,7 +118,7 @@ public class TestRowFilterAdapter {
   }
 
   @Test
-  public void testSupported_BinaryComparatorEquals() throws IOException {
+  public void testSupported_BinaryComparatorEquals() {
     BinaryComparator comparator = new BinaryComparator(new byte[] { 0, 1, 2 });
     org.apache.hadoop.hbase.filter.RowFilter filter =
         new org.apache.hadoop.hbase.filter.RowFilter(
@@ -127,7 +127,7 @@ public class TestRowFilterAdapter {
   }
 
   @Test
-  public void testNotSupported_BinaryNotEquals() throws IOException {
+  public void testNotSupported_BinaryNotEquals() {
     BinaryComparator comparator = new BinaryComparator(new byte[] { 0, 1, 2 });
     org.apache.hadoop.hbase.filter.RowFilter filter =
         new org.apache.hadoop.hbase.filter.RowFilter(
@@ -136,7 +136,7 @@ public class TestRowFilterAdapter {
   }
 
   @Test
-  public void testNotSupported_OtherComparator () throws IOException {
+  public void testNotSupported_OtherComparator () {
     ByteArrayComparable comparator = new LongComparator(1L);
     org.apache.hadoop.hbase.filter.RowFilter filter =
         new org.apache.hadoop.hbase.filter.RowFilter(

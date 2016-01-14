@@ -72,13 +72,13 @@ public class StreamingBigtableResultScannerTest {
   }
 
   @Test
-  public void cancellationIsSignalled() throws IOException, InterruptedException {
+  public void cancellationIsSignalled() throws IOException {
     scanner.close();
     verify(cancellationToken, times(1)).cancel();
   }
 
   @Test
-  public void testNext() throws IOException, InterruptedException {
+  public void testNext() throws IOException {
     scanner.next();
     verify(reader, times(1)).getNextMergedRow();
     scanner.close();

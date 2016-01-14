@@ -105,6 +105,20 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     this(conf, false, null, null);
   }
 
+  /**
+   * The constructor called from {@link ConnectionFactory#createConnection(Configuration)} and
+   * in its many forms via reflection with this specific signature.
+   *
+   * @param conf The configuration for this channel. See {@link BigtableOptionsFactory} for more details.
+   * @param managed This should always be false. It's an artifact of old HBase behavior.
+   * @param pool An {@link ExecutorService} to run HBase/Bigtable object conversions on. The RPCs
+   *             themselves run via NIO, and not on a waiting thread
+   * @param user This is an artifact of HBase which Cloud Bigtable ignores. User information is
+   * captured in the Credentials configuration in conf.
+   *
+   * @throws IOException if the setup is not correct. The most likely issue is ALPN or OpenSSL 
+   * misconfiguration.
+   */
   protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
       User user) throws IOException {
     if (managed) {
@@ -346,7 +360,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   public abstract Admin getAdmin() throws IOException;
 
   /* Methods needed to construct a Bigtable Admin implementation: */
-  protected BigtableTableAdminClient getBigtableTableAdminClient() throws IOException {
+  protected BigtableTableAdminClient getBigtableTableAdminClient() {
     return session.getTableAdminClient();
   }
 

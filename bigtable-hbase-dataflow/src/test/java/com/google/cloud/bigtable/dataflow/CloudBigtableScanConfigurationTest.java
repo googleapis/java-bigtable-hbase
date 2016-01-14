@@ -22,7 +22,6 @@ import org.junit.Test;
 import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration;
 import com.google.cloud.dataflow.sdk.util.SerializableUtils;
 
-import java.io.IOException;
 import java.util.Collections;
 
 /**
@@ -39,7 +38,7 @@ public class CloudBigtableScanConfigurationTest {
   public static final byte[] STOP_ROW = "zz".getBytes();
 
   @Test
-  public void testSerialization() throws IOException, ClassNotFoundException{
+  public void testSerialization() {
     CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
       .withProjectId(PROJECT)
       .withZoneId(ZONE)

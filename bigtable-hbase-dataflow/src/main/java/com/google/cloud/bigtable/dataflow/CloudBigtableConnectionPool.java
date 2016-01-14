@@ -35,7 +35,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Pubsub and other windowed sources can have a large quantity of bundles in short amounts of time.
- * {@link CloudBigtableIO.AbstractCloudBigtableTableDoFn} should not create a connection per
+ * {@link AbstractCloudBigtableTableDoFn} should not create a connection per
  * bundle, since that could happen ever few milliseconds. Rather, it should rely on a connection
  * pool to better manage connection life-cycles.
  */
@@ -134,7 +134,7 @@ public class CloudBigtableConnectionPool {
     return new PoolEntry(key, new BigtableConnection(config));
   }
 
-  public synchronized void returnConnection(PoolEntry entry) throws IOException {
+  public synchronized void returnConnection(PoolEntry entry) {
     if (entry.isExpired()) {
       closeAsynchronously(entry);
     } else {
@@ -142,7 +142,7 @@ public class CloudBigtableConnectionPool {
     }
   }
 
-  private void closeAsynchronously(final PoolEntry entry) throws IOException {
+  private void closeAsynchronously(final PoolEntry entry) {
     connectionCloseExecutor.submit(new Callable<Void>() {
       @Override
       public Void call() throws Exception {

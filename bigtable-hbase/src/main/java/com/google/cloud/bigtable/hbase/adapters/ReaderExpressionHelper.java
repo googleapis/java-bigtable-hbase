@@ -45,8 +45,6 @@ public class ReaderExpressionHelper {
    *
    * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
    * @param outputStream A stream to write quoted output to
-   * @param unquoted
-   * @param outputStream
    */
   public static void writeFilterQuotedExpression(byte[] unquoted, OutputStream outputStream)
       throws IOException{

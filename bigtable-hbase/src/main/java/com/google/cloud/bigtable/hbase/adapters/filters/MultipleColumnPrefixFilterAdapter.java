@@ -19,7 +19,6 @@ import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
-import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 

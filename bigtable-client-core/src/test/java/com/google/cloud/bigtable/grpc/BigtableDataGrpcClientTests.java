@@ -106,7 +106,7 @@ public class BigtableDataGrpcClientTests {
   }
 
   @Test
-  public void testRetyableMutateRowAsync() throws ServiceException {
+  public void testRetyableMutateRowAsync() {
     MutateRowRequest request = MutateRowRequest.getDefaultInstance();
     underTest.mutateRowAsync(request);
     verify(clientCallService).listenableAsyncCall(any(RetryingCall.class), same(request));
@@ -120,7 +120,7 @@ public class BigtableDataGrpcClientTests {
   }
 
   @Test
-  public void testRetyableCheckAndMutateRowAsync() throws ServiceException {
+  public void testRetyableCheckAndMutateRowAsync() {
     CheckAndMutateRowRequest request = CheckAndMutateRowRequest.getDefaultInstance();
     underTest.checkAndMutateRowAsync(request);
     verify(clientCallService).listenableAsyncCall(any(RetryingCall.class), same(request));
