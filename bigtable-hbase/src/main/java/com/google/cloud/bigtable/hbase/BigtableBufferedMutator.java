@@ -270,25 +270,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   /**
-   * Send the operations to the async executor asynchronously.  The conversion from hbase
-   * object to cloud bigtable proto and the async call both take time (microseconds worth) that
-   * could be parallelized, or at least removed from the user's thread.
-   */
-  private void offer(Mutation mutation) throws IOException {
-    if (activeMutationWorkers.get() == 0) {
-      initializeAsyncMutators();
-    }
-    try {
-      long operationId = heapSizeManager.registerOperationWithHeapSize(mutation.heapSize());
-      mutationsToBeSent.add(new MutationOperation(mutation, operationId, false));
-    } catch (InterruptedException e) {
-      Thread.interrupted();
-      throw new IOException("Interrupted in buffered mutator while mutating row : '"
-          + Bytes.toString(mutation.getRow()), e);
-    }
-  }
-
-  /**
    * Being a Mutation. This method will block if either of the following are true:
    * 1) There are more than {@code maxInflightRpcs} RPCs in flight
    * 2) There are more than {@link #getWriteBufferSize()} bytes pending
@@ -304,6 +285,25 @@ public class BigtableBufferedMutator implements BufferedMutator {
       offer(mutation);
     } finally {
       closedReadLock.unlock();
+    }
+  }
+
+  /**
+   * Send the operations to the async executor asynchronously.  The conversion from hbase
+   * object to cloud bigtable proto and the async call both take time (microseconds worth) that
+   * could be parallelized, or at least removed from the user's thread.
+   */
+  private void offer(Mutation mutation) throws IOException {
+    if (activeMutationWorkers.get() == 0) {
+      initializeAsyncMutators();
+    }
+    try {
+      long operationId = heapSizeManager.registerOperationWithHeapSize(mutation.heapSize());
+      mutationsToBeSent.add(new MutationOperation(mutation, operationId, false));
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+      throw new IOException("Interrupted in buffered mutator while mutating row : '"
+          + Bytes.toString(mutation.getRow()), e);
     }
   }
 
