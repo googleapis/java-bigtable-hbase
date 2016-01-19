@@ -142,16 +142,14 @@ public class BigtableBufferedMutator implements BufferedMutator {
             MutationOperation operation =
                 mutationsToBeSent.poll(MUTATION_TO_BE_SENT_WAIT_MS, TimeUnit.MILLISECONDS);
             // The operation can be null if a timeout occurs.
-            if (operation != null) {
-              if (operation.isCloseMarker) {
-                break;
-              }
-              mutation = operation.mutation;
-              ListenableFuture<? extends GeneratedMessage> request =
-                  issueRequest(operation.mutation, operation.operationId);
-              ExceptionCallback callback = new ExceptionCallback(operation.mutation);
-              Futures.addCallback(request, callback);
+            if (operation == null || operation.isCloseMarker) {
+              break;
             }
+            mutation = operation.mutation;
+            ListenableFuture<? extends GeneratedMessage> request =
+                issueRequest(operation.mutation, operation.operationId);
+            ExceptionCallback callback = new ExceptionCallback(operation.mutation);
+            Futures.addCallback(request, callback);
           } catch (InterruptedException e) {
             Thread.interrupted();
             LOG.info("Interrupted. Shutting down mutationRunnable.");
@@ -205,26 +203,29 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.options = options;
     this.heapSizeManager = heapSizeManager;
     this.executorService = executorService;
-    initializeAsyncMutators();
   }
 
   private void initializeAsyncMutators() {
-    for (int i = activeMutationWorkers.get(); i < options.getAsyncMutatorCount(); i++) {
-      executorService.submit(mutationWorker);
+    if (activeMutationWorkers.get() < options.getAsyncMutatorCount()) {
+      synchronized (activeMutationWorkers) {
+        for (int i = activeMutationWorkers.get(); i < options.getAsyncMutatorCount(); i++) {
+          executorService.submit(mutationWorker);
+        }
+      }
     }
   }
 
   @Override
   public void close() throws IOException {
-    flush();
     closedWriteLock.lock();
     try {
-      closed = true;
+      flush();
       executorService.shutdown();
       int activeWorkerCount = activeMutationWorkers.get();
       for (int i = 0; i < activeWorkerCount; i++) {
         mutationsToBeSent.add(CLOSE_MARKER);
       }
+      closed = true;
     } finally {
       closedWriteLock.unlock();
     }
@@ -233,7 +234,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
   @Override
   public void flush() throws IOException {
     // Make sure that the async mutator workers are running.
-    initializeAsyncMutators();
+    if (!mutationsToBeSent.isEmpty()) {
+      initializeAsyncMutators();
+    }
     asyncExecutor.flush();
     handleExceptions();
   }
@@ -294,10 +297,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * could be parallelized, or at least removed from the user's thread.
    */
   private void offer(Mutation mutation) throws IOException {
-    if (activeMutationWorkers.get() == 0) {
-      initializeAsyncMutators();
-    }
     try {
+      initializeAsyncMutators();
       long operationId = heapSizeManager.registerOperationWithHeapSize(mutation.heapSize());
       mutationsToBeSent.add(new MutationOperation(mutation, operationId, false));
     } catch (InterruptedException e) {
