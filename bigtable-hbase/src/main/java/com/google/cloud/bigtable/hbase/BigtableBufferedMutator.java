@@ -137,6 +137,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       activeMutationWorkers.incrementAndGet();
       try {
         while (!executorService.isShutdown()) {
+          Mutation mutation = null;
           try {
             MutationOperation operation =
                 mutationsToBeSent.poll(MUTATION_TO_BE_SENT_WAIT_MS, TimeUnit.MILLISECONDS);
@@ -145,6 +146,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
               if (operation.isCloseMarker) {
                 break;
               }
+              mutation = operation.mutation;
               ListenableFuture<? extends GeneratedMessage> request =
                   issueRequest(operation.mutation, operation.operationId);
               ExceptionCallback callback = new ExceptionCallback(operation.mutation);
@@ -155,7 +157,12 @@ public class BigtableBufferedMutator implements BufferedMutator {
             LOG.info("Interrupted. Shutting down mutationRunnable.");
             break;
           } catch (Exception e) {
-            LOG.error("Exception in mutation worker.", e);
+            if (mutation != null) {
+              LOG.error("Exception in buffered mutator. Could not process row: %s", e,
+                Bytes.toString(mutation.getRow()));
+            } else {
+              LOG.error("Exception in buffered mutator.", e);
+            }
           }
         }
       } finally {
