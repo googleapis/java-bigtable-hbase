@@ -38,26 +38,17 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
 
   protected final Logger DOFN_LOG = LoggerFactory.getLogger(getClass());
   protected CloudBigtableConfiguration config;
-  protected transient volatile CloudBigtableConnectionPool.PoolEntry connectionEntry;
+  protected Connection connection;
 
   public AbstractCloudBigtableTableDoFn(CloudBigtableConfiguration config) {
     this.config = config;
   }
 
   protected synchronized Connection getConnection() throws IOException {
-    if (connectionEntry == null) {
-      connectionEntry = pool.getConnection(config.toHBaseConfig());
+    if (connection == null) {
+      connection = pool.getConnection(config.toHBaseConfig());
     }
-    return connectionEntry.getConnection();
-  }
-
-  @Override
-  public synchronized void finishBundle(DoFn<In, Out>.Context c) throws Exception {
-    DOFN_LOG.debug("Closing the Bigtable connection.");
-    if (connectionEntry != null) {
-      pool.returnConnection(connectionEntry);
-      connectionEntry = null;
-    }
+    return connection;
   }
 
   /**
