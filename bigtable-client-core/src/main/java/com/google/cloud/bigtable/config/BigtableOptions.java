@@ -172,7 +172,7 @@ public class BigtableOptions implements Serializable {
 
     public Builder setAsyncMutatorWorkerCount(int asyncMutatorCount) {
       Preconditions.checkArgument(
-          asyncMutatorCount > 0, "asyncMutatorCount must be greater than 0.");
+          asyncMutatorCount >= 0, "asyncMutatorCount must be greater or equal to 0.");
       this.asyncMutatorCount = asyncMutatorCount;
       return this;
     }

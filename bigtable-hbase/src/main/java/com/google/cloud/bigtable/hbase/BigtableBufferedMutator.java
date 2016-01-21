@@ -72,7 +72,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private static class MutationOperation {
+  private class MutationOperation {
     final Mutation mutation;
     final long operationId;
     final boolean isCloseMarker;
@@ -82,17 +82,28 @@ public class BigtableBufferedMutator implements BufferedMutator {
       this.operationId = operationId;
       this.isCloseMarker = isClosedMarker;
     }
+    
+    public void run() {
+      ListenableFuture<? extends GeneratedMessage> request =
+          issueRequest(mutation, operationId);
+      ExceptionCallback callback = new ExceptionCallback(mutation);
+      Futures.addCallback(request, callback);
+    }
   }
 
-  private static ExecutorService createDefaultExecutorService() {
-    return Executors.newCachedThreadPool(
-            new ThreadFactoryBuilder()
-                .setNameFormat("BigtableBufferedMutator-worker-%s")
-                .setDaemon(true)
-                .build());
+  private static ExecutorService createExecutorService(BigtableOptions options) {
+    if (options.getAsyncMutatorCount() > 0) {
+      return Executors.newCachedThreadPool(
+              new ThreadFactoryBuilder()
+                  .setNameFormat("BigtableBufferedMutator-worker-%s")
+                  .setDaemon(true)
+                  .build());
+    } else {
+      return null;
+    }
   }
 
-  private final static MutationOperation CLOSE_MARKER = new MutationOperation(null, -1, true);
+  private final MutationOperation CLOSE_MARKER = new MutationOperation(null, -1, true);
   private final Configuration configuration;
 
   /**
@@ -129,7 +140,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   /**
    * This {@link Runnable} pulls a mutation from {@link #mutationsToBeSent}, and calls {{@link
-   * #issueRequest(Mutation, long)}.
+   * #issueRequest(Mutation, long)} via {@link MutationOperation#run()}.
    */
   private final Runnable mutationWorker = new Runnable() {
     @Override
@@ -137,7 +148,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
       activeMutationWorkers.incrementAndGet();
       try {
         while (!executorService.isShutdown()) {
-          Mutation mutation = null;
           try {
             MutationOperation operation =
                 mutationsToBeSent.poll(MUTATION_TO_BE_SENT_WAIT_MS, TimeUnit.MILLISECONDS);
@@ -145,22 +155,13 @@ public class BigtableBufferedMutator implements BufferedMutator {
             if (operation == null || operation.isCloseMarker) {
               break;
             }
-            mutation = operation.mutation;
-            ListenableFuture<? extends GeneratedMessage> request =
-                issueRequest(operation.mutation, operation.operationId);
-            ExceptionCallback callback = new ExceptionCallback(operation.mutation);
-            Futures.addCallback(request, callback);
+            operation.run();
           } catch (InterruptedException e) {
             Thread.interrupted();
             LOG.info("Interrupted. Shutting down mutationRunnable.");
             break;
           } catch (Exception e) {
-            if (mutation != null) {
-              LOG.error("Exception in buffered mutator. Could not process row: %s", e,
-                Bytes.toString(mutation.getRow()));
-            } else {
-              LOG.error("Exception in buffered mutator.", e);
-            }
+            LOG.error("Exception in buffered mutator.", e);
           }
         }
       } finally {
@@ -177,7 +178,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       BufferedMutator.ExceptionListener listener,
       HeapSizeManager heapSizeManager) {
     this(client, adapter, configuration, options, listener, heapSizeManager,
-        createDefaultExecutorService());
+        createExecutorService(options));
   }
 
   @VisibleForTesting
@@ -220,7 +221,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
     closedWriteLock.lock();
     try {
       flush();
-      executorService.shutdown();
+      if (executorService != null) {
+        executorService.shutdown();
+      }
       int activeWorkerCount = activeMutationWorkers.get();
       for (int i = 0; i < activeWorkerCount; i++) {
         mutationsToBeSent.add(CLOSE_MARKER);
@@ -300,7 +303,12 @@ public class BigtableBufferedMutator implements BufferedMutator {
     try {
       initializeAsyncMutators();
       long operationId = heapSizeManager.registerOperationWithHeapSize(mutation.heapSize());
-      mutationsToBeSent.add(new MutationOperation(mutation, operationId, false));
+      MutationOperation operation = new MutationOperation(mutation, operationId, false);
+      if (options.getAsyncMutatorCount() > 0) {
+        mutationsToBeSent.add(operation);
+      } else {
+        operation.run();
+      }
     } catch (InterruptedException e) {
       Thread.interrupted();
       throw new IOException("Interrupted in buffered mutator while mutating row : '"

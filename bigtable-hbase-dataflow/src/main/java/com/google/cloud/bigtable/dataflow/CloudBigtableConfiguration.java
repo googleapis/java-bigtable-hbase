@@ -178,6 +178,13 @@ public class CloudBigtableConfiguration implements Serializable {
    */
   public Configuration toHBaseConfig() {
     Configuration config = new Configuration();
+
+    // This setting can potentially decrease performance for large scale writes. However, this
+    // setting prevents problems that occur when streaming Sources, such as PubSub, are used.
+    // To override this behavior, call:
+    //    Builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, 
+    //                              BigtableOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
+    config.set(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, "0");
     for (Entry<String, String> entry : configuration.entrySet()) {
       config.set(entry.getKey(), entry.getValue());
     }
