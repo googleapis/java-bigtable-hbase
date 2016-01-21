@@ -24,12 +24,15 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,11 +69,21 @@ public class TestBigtableBufferedMutator {
   @Mock
   private BufferedMutator.ExceptionListener listener;
 
+  private ExecutorService executorService;
+
   private List<FutureCallback<?>> callbacks = new ArrayList<>();
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
+  }
+
+  @After
+  public void tearDown(){
+    if (executorService != null) {
+      executorService.shutdownNow();
+      executorService = null;
+    }
   }
 
   private BigtableBufferedMutator createMutator(Configuration configuration) throws IOException {
@@ -93,13 +106,17 @@ public class TestBigtableBufferedMutator {
     HBaseRequestAdapter adapter = new HBaseRequestAdapter(
         options.getClusterName(), TableName.valueOf("TABLE"), configuration);
 
+    if (options.getAsyncMutatorCount() > 0) {
+      executorService = Executors.newCachedThreadPool();
+    }
     return new BigtableBufferedMutator(
       client,
       adapter,
       configuration,
       options,
       listener,
-      heapSizeManager);
+      heapSizeManager,
+      executorService);
   }
 
   @Test
