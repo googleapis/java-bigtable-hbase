@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,11 +45,9 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.GeneratedMessage;
 
 /**
@@ -88,18 +85,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
           issueRequest(mutation, operationId);
       ExceptionCallback callback = new ExceptionCallback(mutation);
       Futures.addCallback(request, callback);
-    }
-  }
-
-  private static ExecutorService createExecutorService(BigtableOptions options) {
-    if (options.getAsyncMutatorCount() > 0) {
-      return Executors.newCachedThreadPool(
-              new ThreadFactoryBuilder()
-                  .setNameFormat("BigtableBufferedMutator-worker-%s")
-                  .setDaemon(true)
-                  .build());
-    } else {
-      return null;
     }
   }
 
@@ -170,26 +155,25 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   };
 
+  /**
+   * @param client Performs the async operations
+   * @param adapter Converts HBase objects to Bigtable protos
+   * @param configuration For Additional configuration. TODO: move this to options
+   * @param options BigtableOptions
+   * @param listener Handles exceptions. By default, it just throws the exception.
+   * @param heapSizeManager Tracks how much memory is used by the requests and how many outstanding
+   *          operations there are.
+   * @param asyncRpcExecutorService Optional performance improvement for adapting hbase objects and
+   *          starting the async operations on the BigtableDataClient.
+   */
   public BigtableBufferedMutator(
       BigtableDataClient client,
       HBaseRequestAdapter adapter,
       Configuration configuration,
       BigtableOptions options,
       BufferedMutator.ExceptionListener listener,
-      HeapSizeManager heapSizeManager) {
-    this(client, adapter, configuration, options, listener, heapSizeManager,
-        createExecutorService(options));
-  }
-
-  @VisibleForTesting
-  BigtableBufferedMutator(
-      BigtableDataClient client,
-      HBaseRequestAdapter adapter,
-      Configuration configuration,
-      BigtableOptions options,
-      BufferedMutator.ExceptionListener listener,
       HeapSizeManager heapSizeManager,
-      ExecutorService executorService) {
+      ExecutorService asyncRpcExecutorService) {
     this.adapter = adapter;
     this.configuration = configuration;
     this.exceptionListener = listener;
@@ -203,11 +187,11 @@ public class BigtableBufferedMutator implements BufferedMutator {
         heapSizeManager.getMaxInFlightRpcs());
     this.options = options;
     this.heapSizeManager = heapSizeManager;
-    this.executorService = executorService;
+    this.executorService = asyncRpcExecutorService;
   }
 
   private void initializeAsyncMutators() {
-    if (activeMutationWorkers.get() < options.getAsyncMutatorCount()) {
+    if (executorService != null && activeMutationWorkers.get() < options.getAsyncMutatorCount()) {
       synchronized (activeMutationWorkers) {
         for (int i = activeMutationWorkers.get(); i < options.getAsyncMutatorCount(); i++) {
           executorService.submit(mutationWorker);
@@ -221,9 +205,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
     closedWriteLock.lock();
     try {
       flush();
-      if (executorService != null) {
-        executorService.shutdown();
-      }
       int activeWorkerCount = activeMutationWorkers.get();
       for (int i = 0; i < activeWorkerCount; i++) {
         mutationsToBeSent.add(CLOSE_MARKER);
@@ -304,7 +285,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       initializeAsyncMutators();
       long operationId = heapSizeManager.registerOperationWithHeapSize(mutation.heapSize());
       MutationOperation operation = new MutationOperation(mutation, operationId, false);
-      if (options.getAsyncMutatorCount() > 0) {
+      if (executorService == null || options.getAsyncMutatorCount() > 0) {
         mutationsToBeSent.add(operation);
       } else {
         operation.run();

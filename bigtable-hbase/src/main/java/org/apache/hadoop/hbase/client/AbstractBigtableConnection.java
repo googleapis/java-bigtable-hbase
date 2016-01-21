@@ -31,6 +31,7 @@ import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -46,6 +47,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -91,6 +93,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private volatile boolean closed = false;
   private volatile boolean aborted;
   private volatile ExecutorService batchPool = null;
+  private ExecutorService bufferedMutatorExecutorService;
 
   private BigtableSession session;
 
@@ -168,7 +171,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   }
 
   @Override
-  public BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
+  public synchronized BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
     TableName tableName = params.getTableName();
     if (tableName == null) {
       throw new IllegalArgumentException("TableName cannot be null.");
@@ -184,13 +187,22 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
 
+    if (this.bufferedMutatorExecutorService == null && options.getAsyncMutatorCount() > 0) {
+      bufferedMutatorExecutorService = Executors.newCachedThreadPool(
+          new ThreadFactoryBuilder()
+              .setNameFormat("BigtableBufferedMutator-worker-%s")
+              .setDaemon(true)
+              .build());
+    }
+
     BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(
         session.getDataClient(),
         createAdapter(tableName),
         conf,
         options,
         params.getListener(),
-        new HeapSizeManager(maxHeapSize, maxInflightRpcs)) {
+        new HeapSizeManager(maxHeapSize, maxInflightRpcs),
+        bufferedMutatorExecutorService) {
       @Override
       public void close() throws IOException {
         try {
@@ -285,6 +297,10 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       // shutting down the clients, it's not entirely safe to shutdown the pool
       // (via a finally block).
       shutdownBatchPool();
+      if (this.bufferedMutatorExecutorService != null) {
+        this.bufferedMutatorExecutorService.shutdown();
+        this.bufferedMutatorExecutorService = null;
+      }
       this.closed = true;
     }
   }
