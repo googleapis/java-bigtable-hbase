@@ -34,11 +34,11 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 
 import com.google.api.client.util.Preconditions;
+import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -155,33 +155,47 @@ public class BatchExecutor {
   private <R extends Row, T> ListenableFuture<Result> issueAsyncRowRequest(Row row,
       Batch.Callback<T> callback, Object[] results, int index) throws InterruptedException {
     LOG.trace("issueRowRequest(Row, Batch.Callback, Object[], index");
-    ListenableFuture<? extends GeneratedMessage> future = issueAsyncRequest(row);
-
     SettableFuture<Result> resultFuture = SettableFuture.create();
-    results[index] = null;
     RpcResultFutureCallback<T> futureCallback =
         new RpcResultFutureCallback<T>(row, callback, index, results, resultFuture);
-    Futures.addCallback(future, futureCallback, service);
+    results[index] = null;
+    if (service.isShutdown()) {
+      // If the service is shutdown, that means that the connection is shut down. It also means that
+      // the line:
+      // Futures.addCallback(future, futureCallback, service);
+      // which uses the service will throw a rejected execution exception. A
+      // ConnectionClosedException is more appropriate and informative.
+      ListenableFuture<? extends GeneratedMessage> failFuture =
+          Futures.immediateFailedFuture(new IOException(
+              "Cannot perform batch operations when a connection is closed"));
+      Futures.addCallback(failFuture, futureCallback);
+    } else {
+      ListenableFuture<? extends GeneratedMessage> future = issueAsyncRequest(row);
+      Futures.addCallback(future, futureCallback, service);
+    }
     return resultFuture;
   }
 
   private ListenableFuture<? extends GeneratedMessage> issueAsyncRequest(Row row)
       throws InterruptedException {
-    if (row instanceof Get) {
-      return Futures.transform(
-          asyncExecutor.readRowsAsync(requestAdapter.adapt((Get) row)), ROWS_TO_ROW_CONVERTER);
-    } else if (row instanceof Put) {
-      return asyncExecutor.mutateRowAsync(requestAdapter.adapt((Put) row));
-    } else if (row instanceof Delete) {
-      return asyncExecutor.mutateRowAsync(requestAdapter.adapt((Delete) row));
-    } else if (row instanceof Append) {
-      return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Append) row));
-    } else if (row instanceof Increment) {
-      return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Increment) row));
-    } else if (row instanceof RowMutations) {
-      return asyncExecutor.mutateRowAsync(requestAdapter.adapt((RowMutations) row));
+    try {
+      if (row instanceof Get) {
+        return Futures.transform(
+            asyncExecutor.readRowsAsync(requestAdapter.adapt((Get) row)), ROWS_TO_ROW_CONVERTER);
+      } else if (row instanceof Put) {
+        return asyncExecutor.mutateRowAsync(requestAdapter.adapt((Put) row));
+      } else if (row instanceof Delete) {
+        return asyncExecutor.mutateRowAsync(requestAdapter.adapt((Delete) row));
+      } else if (row instanceof Append) {
+        return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Append) row));
+      } else if (row instanceof Increment) {
+        return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Increment) row));
+      } else if (row instanceof RowMutations) {
+        return asyncExecutor.mutateRowAsync(requestAdapter.adapt((RowMutations) row));
+      }
+    } catch (Exception e) {
+      return Futures.immediateFailedFuture(e);
     }
-
     LOG.error("Encountered unknown action type %s", row.getClass());
     return Futures.immediateFailedFuture(
         new IllegalArgumentException("Encountered unknown action type: " + row.getClass()));
