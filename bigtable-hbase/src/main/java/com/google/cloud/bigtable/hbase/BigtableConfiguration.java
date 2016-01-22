@@ -44,7 +44,7 @@ public class BigtableConfiguration {
   }
 
   public static Configuration configure(String projectId, String zoneName, String clusterName) {
-    Configuration config = new Configuration();
+    Configuration config = new Configuration(false);
     config.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
     config.set(BigtableOptionsFactory.ZONE_KEY, zoneName);
     config.set(BigtableOptionsFactory.CLUSTER_KEY, clusterName);

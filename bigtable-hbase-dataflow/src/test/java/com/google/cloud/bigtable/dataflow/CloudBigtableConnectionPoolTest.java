@@ -33,7 +33,7 @@ import org.junit.runners.JUnit4;
 @SuppressWarnings("deprecation")
 public class CloudBigtableConnectionPoolTest {
 
-  private static Configuration config = new Configuration();
+  private static Configuration config = new Configuration(false);
 
   private static class TestCloudbigtableConnectionPool extends CloudBigtableConnectionPool {
     @Override
