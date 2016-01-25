@@ -106,9 +106,7 @@ public class TestBigtableBufferedMutator {
     HBaseRequestAdapter adapter = new HBaseRequestAdapter(
         options.getClusterName(), TableName.valueOf("TABLE"), configuration);
 
-    if (options.getAsyncMutatorCount() > 0) {
-      executorService = Executors.newCachedThreadPool();
-    }
+    executorService = Executors.newCachedThreadPool();
     return new BigtableBufferedMutator(
       client,
       adapter,
