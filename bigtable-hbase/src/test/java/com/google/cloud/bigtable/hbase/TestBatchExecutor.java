@@ -23,37 +23,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.coprocessor.Batch.Callback;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
@@ -68,6 +37,41 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Empty;
 
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.coprocessor.Batch.Callback;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 /**
  * Tests {@link BatchExecutor}
  */
@@ -81,12 +85,11 @@ public class TestBatchExecutor {
   @Mock
   private ListenableFuture mockFuture;
   @Mock
-  private BigtableOptions mockOptions;
-  @Mock
   private HBaseRequestAdapter mockRequestAdapter;
 
-  private ListeningExecutorService service =
-      MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService());
+  private final BigtableOptions options = new BigtableOptions.Builder().build();
+
+  private ListeningExecutorService service;
 
   private List<Runnable> runnables = null;
 
@@ -94,6 +97,8 @@ public class TestBatchExecutor {
 
   @Before
   public void setup() throws InterruptedException {
+    service =
+        MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService());
     MockitoAnnotations.initMocks(this);
     when(mockAsyncExecutor.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);
@@ -106,7 +111,13 @@ public class TestBatchExecutor {
         return null;
       }
     }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
-    underTest = new BatchExecutor(mockAsyncExecutor, mockOptions, service, mockRequestAdapter);
+    underTest = new BatchExecutor(mockAsyncExecutor, options, service, mockRequestAdapter);
+  }
+
+  @After
+  public void tearDown() {
+    service.shutdown();
+    service = null;
   }
 
   @Test
@@ -140,6 +151,33 @@ public class TestBatchExecutor {
   @Test
   public void testRowMutations() throws Exception {
     testMutation(new RowMutations(EMPTY_KEY));
+  }
+
+  @Test
+  public void testShutdownService() throws Exception {
+    service.shutdown();
+    service.awaitTermination(1000, TimeUnit.MILLISECONDS);
+    try {
+      underTest.batch(Arrays.asList(new Put(EMPTY_KEY)));
+    } catch (RetriesExhaustedWithDetailsException e) {
+      Assert.assertEquals(1, e.getCauses().size());
+      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
+      Assert.assertTrue(e.getCause(0).getMessage().toLowerCase().contains("closed"));
+    }
+  }
+
+  @Test
+  public void testAsyncException() throws Exception {
+    String message = "Something bad happened";
+    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class)))
+        .thenThrow(new RuntimeException(message));
+    try {
+      underTest.batch(Arrays.asList(new Put(EMPTY_KEY)));
+    } catch (RetriesExhaustedWithDetailsException e) {
+      Assert.assertEquals(1, e.getCauses().size());
+      Assert.assertEquals(RuntimeException.class, e.getCause(0).getClass());
+      Assert.assertEquals(message, e.getCause(0).getMessage());
+    }
   }
 
   private void testMutation(org.apache.hadoop.hbase.client.Row mutation)
@@ -194,7 +232,7 @@ public class TestBatchExecutor {
   }
 
   private Matcher<Result> matchesRow(final Result expected) {
-    return new Matcher<Result>() {
+    return new BaseMatcher<Result>() {
 
       @Override
       public void describeTo(Description description) {
@@ -212,10 +250,6 @@ public class TestBatchExecutor {
 
       @Override
       public void describeMismatch(Object item, Description mismatchDescription) {
-      }
-
-      @Override
-      public void _dont_implement_Matcher___instead_extend_BaseMatcher_() {
       }
     };
   }

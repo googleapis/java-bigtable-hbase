@@ -153,7 +153,7 @@ public class BatchExecutor {
    * @return A ListenableFuture that will have the result when the RPC completes.
    */
   private <R extends Row, T> ListenableFuture<Result> issueAsyncRowRequest(Row row,
-      Batch.Callback<T> callback, Object[] results, int index) throws InterruptedException {
+      Batch.Callback<T> callback, Object[] results, int index) {
     LOG.trace("issueRowRequest(Row, Batch.Callback, Object[], index");
     SettableFuture<Result> resultFuture = SettableFuture.create();
     RpcResultFutureCallback<T> futureCallback =
@@ -163,8 +163,8 @@ public class BatchExecutor {
       // If the service is shutdown, that means that the connection is shut down. It also means that
       // the line:
       // Futures.addCallback(future, futureCallback, service);
-      // which uses the service will throw a rejected execution exception. A
-      // ConnectionClosedException is more appropriate and informative.
+      // which uses the service will throw a rejected execution exception. In that case, throw an
+      // IOException like HBase does.
       ListenableFuture<? extends GeneratedMessage> failFuture =
           Futures.immediateFailedFuture(new IOException(
               "Cannot perform batch operations when a connection is closed"));
@@ -176,8 +176,7 @@ public class BatchExecutor {
     return resultFuture;
   }
 
-  private ListenableFuture<? extends GeneratedMessage> issueAsyncRequest(Row row)
-      throws InterruptedException {
+  private ListenableFuture<? extends GeneratedMessage> issueAsyncRequest(Row row) {
     try {
       if (row instanceof Get) {
         return Futures.transform(
@@ -235,7 +234,7 @@ public class BatchExecutor {
   }
 
   private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
-      Object[] results, Batch.Callback<R> callback) throws InterruptedException {
+      Object[] results, Batch.Callback<R> callback) {
     List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());
     for (int i = 0; i < actions.size(); i++) {
       resultFutures.add(issueAsyncRowRequest(actions.get(i), callback, results, i));
