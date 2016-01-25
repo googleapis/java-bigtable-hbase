@@ -177,7 +177,7 @@ public class CloudBigtableConfiguration implements Serializable {
    * @return The {@link Configuration}.
    */
   public Configuration toHBaseConfig() {
-    Configuration config = new Configuration();
+    Configuration config = new Configuration(false);
 
     // This setting can potentially decrease performance for large scale writes. However, this
     // setting prevents problems that occur when streaming Sources, such as PubSub, are used.

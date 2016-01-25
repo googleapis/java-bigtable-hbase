@@ -108,7 +108,7 @@ public class TestBigtableTable {
         .setUserAgent("testAgent")
         .build();
 
-    Configuration config = new Configuration();
+    Configuration config = new Configuration(false);
     TableName tableName = TableName.valueOf(TEST_TABLE);
     HBaseRequestAdapter hbaseAdapter =
         new HBaseRequestAdapter(options.getClusterName(), tableName, config);

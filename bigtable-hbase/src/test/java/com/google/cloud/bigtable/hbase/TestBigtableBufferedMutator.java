@@ -119,7 +119,7 @@ public class TestBigtableBufferedMutator {
 
   @Test
   public void testNoMutation() throws IOException {
-    BigtableBufferedMutator underTest = createMutator(new Configuration());
+    BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     Assert.assertFalse(underTest.hasInflightRequests());
   }
 
@@ -127,7 +127,7 @@ public class TestBigtableBufferedMutator {
   @Test
   public void testMutation() throws IOException, InterruptedException {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
-    try (BigtableBufferedMutator underTest = createMutator(new Configuration())) {
+    try (BigtableBufferedMutator underTest = createMutator(new Configuration(false))) {
       underTest.mutate(SIMPLE_PUT);
       // Leave some time for the async worker to handle the request.
       Thread.sleep(100);
@@ -141,7 +141,7 @@ public class TestBigtableBufferedMutator {
   @Test
   public void testInvalidPut() throws Exception {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenThrow(new RuntimeException());
-    try (BigtableBufferedMutator underTest = createMutator(new Configuration())) {
+    try (BigtableBufferedMutator underTest = createMutator(new Configuration(false))) {
       underTest.mutate(SIMPLE_PUT);
       // Leave some time for the async worker to handle the request.
       Thread.sleep(100);
@@ -158,7 +158,7 @@ public class TestBigtableBufferedMutator {
   @Test
   public void testZeroWorkers() throws Exception {
     when(client.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(future);
-    Configuration config = new Configuration();
+    Configuration config = new Configuration(false);
     config.set(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, "0");
     try (BigtableBufferedMutator underTest = createMutator(config)) {
       underTest.mutate(SIMPLE_PUT);

@@ -74,7 +74,7 @@ public class TestClusterAPI {
     }
     int clusterSize = Integer.parseInt(System.getProperty("bigtable.test.cluster.size", "3"));
 
-    Configuration configuration = new Configuration();
+    Configuration configuration = new Configuration(false);
     for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
       configuration.set(entry.getKey().toString(), entry.getValue().toString());
     }

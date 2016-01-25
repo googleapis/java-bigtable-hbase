@@ -47,7 +47,7 @@ public class TestBigtableOptionsFactory {
 
   @Before
   public void setup() {
-    configuration = new Configuration();
+    configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(BigtableOptionsFactory.CLUSTER_KEY, TEST_CLUSTER_NAME);
@@ -56,7 +56,7 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testProjectIdIsRequired() throws IOException {
-    Configuration configuration = new Configuration();
+    Configuration configuration = new Configuration(false);
     configuration.unset(BigtableOptionsFactory.PROJECT_ID_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
@@ -65,7 +65,7 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testHostIsRequired() throws IOException {
-    Configuration configuration = new Configuration();
+    Configuration configuration = new Configuration(false);
     configuration.unset(BigtableOptionsFactory.BIGTABLE_HOST_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
@@ -74,7 +74,7 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testClusterIsRequired() throws IOException {
-    Configuration configuration = new Configuration();
+    Configuration configuration = new Configuration(false);
     configuration.unset(BigtableOptionsFactory.CLUSTER_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
@@ -83,7 +83,7 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testZoneIsRequired() throws IOException {
-    Configuration configuration = new Configuration();
+    Configuration configuration = new Configuration(false);
     configuration.unset(BigtableOptionsFactory.ZONE_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
