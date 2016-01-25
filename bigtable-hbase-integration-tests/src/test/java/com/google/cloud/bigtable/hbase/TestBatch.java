@@ -15,11 +15,20 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
+import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
@@ -34,11 +43,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 public class TestBatch extends AbstractTest {
   /**
@@ -365,5 +369,20 @@ public class TestBatch extends AbstractTest {
       CellUtil.cloneValue(((Result) results[1]).getColumnLatestCell(COLUMN_FAMILY, qual2)));
 
     table.close();
+  }
+
+  @Test
+  public void testBatchDoesntHang() throws Exception {
+    Connection closedConnection = ConnectionFactory.createConnection(IntegrationTests.getConfiguration());
+    Table table = closedConnection.getTable(TABLE_NAME);
+    closedConnection.close();
+    try {
+      table.batch(Arrays.asList(new Get(Bytes.toBytes("key"))), new Object[1]);
+      Assert.fail("Expected an exception");
+    } catch(RetriesExhaustedWithDetailsException e) {
+      Assert.assertEquals(1, e.getCauses().size());
+      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
+      Assert.assertTrue(e.getCause(0).getMessage().toLowerCase().contains("closed"));
+    }
   }
 }
