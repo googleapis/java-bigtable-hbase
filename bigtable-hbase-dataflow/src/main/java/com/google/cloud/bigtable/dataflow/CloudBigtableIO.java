@@ -144,6 +144,7 @@ public class CloudBigtableIO {
   static class Source extends BoundedSource<Result> {
     private static final long serialVersionUID = -5580115943635114126L;
     private static final Logger SOURCE_LOG = LoggerFactory.getLogger(Source.class);
+    private static final long MAX_SPLIT_COUNT = 4_000;
 
     /**
      * Configuration for a Cloud Bigtable connection, a table, and an optional scan.
@@ -381,6 +382,22 @@ public class CloudBigtableIO {
     @Override
     public List<SourceWithKeys> splitIntoBundles(
         long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
+      // Update the desiredBundleSizeBytes in order to limit the number of splits to
+      // MAX_SPLIT_COUNT.  This is an extremely rough estimate for large scale jobs.  There is
+      // currently a hard limit on both the count of Sources as well as the sum of the sizes of
+      // serialized Sources.  This solution will not work for large workloads for cases where either
+      // the row key sizes are large, or the scan is large.
+      //
+      // TODO: Work on a more robust algorithm for splitting that works for more cases.  
+      long sizeEstimate = getEstimatedSizeBytes(options);
+      desiredBundleSizeBytes = Math.max(sizeEstimate / MAX_SPLIT_COUNT, desiredBundleSizeBytes);
+      List<SourceWithKeys> splits = getSplits(desiredBundleSizeBytes);
+      SOURCE_LOG.info("Creating {} splits.", splits.size());
+      SOURCE_LOG.debug("Created splits {}.", splits);
+      return splits;
+    }
+
+    protected List<SourceWithKeys> getSplits(long desiredBundleSizeBytes) throws IOException {
       Scan scan = configuration.getScan();
       byte[] scanStartKey = scan.getStartRow();
 
@@ -424,8 +441,6 @@ public class CloudBigtableIO {
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
         splits.add(new SourceWithKeys(startKey, endKey, 0));
       }
-      SOURCE_LOG.info("Creating {} splits.", splits.size());
-      SOURCE_LOG.debug("Created splits {}.", splits);
       return splits;
     }
 
