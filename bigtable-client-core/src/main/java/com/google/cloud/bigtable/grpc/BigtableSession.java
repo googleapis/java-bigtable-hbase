@@ -16,8 +16,6 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import static com.google.cloud.bigtable.util.ThreadPoolUtil.createThreadFactory;
-
 import io.grpc.Channel;
 import io.grpc.internal.ManagedChannelImpl;
 import io.grpc.netty.GrpcSslContexts;
@@ -63,6 +61,7 @@ import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.grpc.io.ReconnectingChannel;
 import com.google.cloud.bigtable.grpc.io.UserAgentInterceptor;
+import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.util.concurrent.Futures;
@@ -150,8 +149,8 @@ public class BigtableSession implements AutoCloseable {
 
   private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
-    ExecutorService connectionStartupExecutor =
-        Executors.newCachedThreadPool(createThreadFactory("BigtableSession-startup"));
+    ExecutorService connectionStartupExecutor = Executors
+        .newCachedThreadPool(ThreadPoolUtil.createThreadFactory("BigtableSession-startup"));
 
     connectionStartupExecutor.execute(new Runnable() {
       @Override
@@ -201,17 +200,18 @@ public class BigtableSession implements AutoCloseable {
     connectionStartupExecutor.shutdown();
   }
 
-  protected static ExecutorService createDefaultBatchPool(){
-    return Executors.newCachedThreadPool(createThreadFactory(BATCH_POOL_THREAD_NAME));
+  protected static ExecutorService createDefaultBatchPool() {
+    return Executors
+        .newCachedThreadPool(ThreadPoolUtil.createThreadFactory(BATCH_POOL_THREAD_NAME));
   }
 
   protected static EventLoopGroup createDefaultEventLoopGroup() {
-    return new NioEventLoopGroup(0, createThreadFactory(GRPC_EVENTLOOP_GROUP_NAME));
+    return new NioEventLoopGroup(0, ThreadPoolUtil.createThreadFactory(GRPC_EVENTLOOP_GROUP_NAME));
   }
 
   protected static ScheduledExecutorService createDefaultRetryExecutor() {
     return Executors.newScheduledThreadPool(RETRY_THREAD_COUNT,
-      createThreadFactory(RETRY_THREADPOOL_NAME));
+      ThreadPoolUtil.createThreadFactory(RETRY_THREADPOOL_NAME));
   }
 
   private BigtableDataClient dataClient;
