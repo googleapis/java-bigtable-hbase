@@ -31,6 +31,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
+import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;

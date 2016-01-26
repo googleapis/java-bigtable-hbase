@@ -46,12 +46,12 @@ import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.NanoClock;
+import com.google.api.client.util.Sleeper;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
-import com.google.cloud.bigtable.grpc.async.Sleeper;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.CacheState;
 import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor.HeaderCacheElement;
 

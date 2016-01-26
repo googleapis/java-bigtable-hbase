@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.google.api.client.util.BackOff;
+import com.google.api.client.util.Sleeper;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
 import com.google.common.annotations.VisibleForTesting;
