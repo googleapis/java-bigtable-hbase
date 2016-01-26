@@ -318,12 +318,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
       @Override
       public void onClose(Status status, Metadata trailers) {
-        returnToPool(channel);
         if (status.isOk()) {
           resultScanner.complete();
         } else {
           resultScanner.setError(status.asRuntimeException());
         }
+        returnToPool(channel);
       }
     };
   }
