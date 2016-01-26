@@ -55,7 +55,9 @@ import com.google.common.base.Preconditions;
 import com.google.api.client.util.Strings;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
+import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
@@ -67,7 +69,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -150,11 +151,7 @@ public class BigtableSession implements AutoCloseable {
   private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
     ExecutorService connectionStartupExecutor =
-        Executors.newCachedThreadPool(
-            new ThreadFactoryBuilder()
-                .setNameFormat("BigtableSession-startup-%s")
-                .setDaemon(true)
-                .build());
+        Executors.newCachedThreadPool(createThreadFactory("BigtableSession-startup"));
 
     connectionStartupExecutor.execute(new Runnable() {
       @Override
@@ -268,13 +265,24 @@ public class BigtableSession implements AutoCloseable {
     }
     this.options = options;
     Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
-    Future<Void> credentialsFuture = this.batchPool.submit(createCredentialsCallback(headerInterceptorBuilder));
+
+    // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
+    // take as long, but still take time. Get the credentials on one thread, and start up the elg
+    // and scheduledRetries thread pools on another thread.
+
+    Future<Void> credentialsFuture =
+        this.batchPool.submit(createCredentialsCallback(headerInterceptorBuilder));
     this.elg = (elg == null) ? createDefaultEventLoopGroup() : elg;
 
     this.scheduledRetries =
         (scheduledRetries == null) ? createDefaultRetryExecutor() : scheduledRetries;
+
     headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
+
+    // Make sure that the credentialsFuture is complete before proceeding. If an exception occurs in
+    // that future, then throw that exception. The completion is important, but the results are not.
     get(credentialsFuture, "Could not initialize credentials");
+
     headerInterceptors = headerInterceptorBuilder.build();
 
     Future<BigtableDataClient> dataClientFuture =
@@ -303,9 +311,11 @@ public class BigtableSession implements AutoCloseable {
       @Override
       public Void call() throws IOException {
         try {
+          CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
+          RetryOptions retryOptions = options.getRetryOptions();
+          CredentialOptions credentialOptions = options.getCredentialOptions();
           HeaderInterceptor headerInterceptor =
-              CredentialInterceptorCache.getInstance().getCredentialsInterceptor(
-                  options.getCredentialOptions(), options.getRetryOptions());
+              credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
           if (headerInterceptor != null) {
             headerInterceptorBuilder.add(headerInterceptor);
           }

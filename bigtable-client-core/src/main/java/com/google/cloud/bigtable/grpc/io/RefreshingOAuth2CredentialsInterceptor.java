@@ -172,7 +172,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
     this.logger = Preconditions.checkNotNull(logger);
   }
 
-
   @Override
   public void updateHeaders(Metadata headers) throws Exception {
     headers.put(AUTHORIZATION_HEADER_KEY, getHeader());
