@@ -16,6 +16,8 @@
 
 package com.google.cloud.bigtable.grpc;
 
+import static com.google.cloud.bigtable.util.ThreadPoolUtil.createThreadFactory;
+
 import io.grpc.Channel;
 import io.grpc.internal.ManagedChannelImpl;
 import io.grpc.netty.GrpcSslContexts;
@@ -43,7 +45,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
@@ -52,17 +53,13 @@ import javax.net.ssl.SSLException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.api.client.util.Strings;
-import com.google.auth.Credentials;
-import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
-import com.google.cloud.bigtable.config.CredentialOptions;
-import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
+import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.grpc.io.ReconnectingChannel;
-import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor;
 import com.google.cloud.bigtable.grpc.io.UserAgentInterceptor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -92,7 +89,6 @@ public class BigtableSession implements AutoCloseable {
   public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
-  private static HeaderInterceptor defaultCredentialOauth;
 
   @VisibleForTesting
   static final String PROJECT_ID_EMPTY_OR_NULL = "ProjectId must not be empty or null.";
@@ -102,9 +98,6 @@ public class BigtableSession implements AutoCloseable {
   static final String CLUSTER_ID_EMPTY_OR_NULL = "ClusterId must not be empty or null.";
   @VisibleForTesting
   static final String USER_AGENT_EMPTY_OR_NULL = "UserAgent must not be empty or null";
-
-  private static final ExecutorService CREDENTIALS_REFRESH_EXECUTOR_SERVICE =
-      Executors.newCachedThreadPool(createThreadFactory("Credentials-Refresh"));
 
   static {
     performWarmup();
@@ -224,13 +217,6 @@ public class BigtableSession implements AutoCloseable {
       createThreadFactory(RETRY_THREADPOOL_NAME));
   }
 
-  protected static ThreadFactory createThreadFactory(String namePrefix) {
-    return new ThreadFactoryBuilder()
-        .setDaemon(true)
-        .setNameFormat(namePrefix + "-%d")
-        .build();
-  }
-
   private BigtableDataClient dataClient;
   private BigtableTableAdminClient tableAdminClient;
   private BigtableClusterAdminClient clusterAdminClient;
@@ -314,50 +300,18 @@ public class BigtableSession implements AutoCloseable {
   protected Callable<Void>
       createCredentialsCallback(final Builder<HeaderInterceptor> headerInterceptorBuilder) {
     return new Callable<Void>() {
-
       @Override
       public Void call() throws IOException {
         try {
-          HeaderInterceptor headerInterceptor = getCredentialsInterceptor();
+          HeaderInterceptor headerInterceptor =
+              CredentialInterceptorCache.getInstance().getCredentialsInterceptor(
+                  options.getCredentialOptions(), options.getRetryOptions());
           if (headerInterceptor != null) {
             headerInterceptorBuilder.add(headerInterceptor);
           }
           return null;
         } catch (GeneralSecurityException e) {
           throw new IOException("Could not load auth credentials", e);
-        }
-      }
-
-      protected HeaderInterceptor getCredentialsInterceptor() throws IOException, GeneralSecurityException {
-        CredentialOptions credentialOptions = BigtableSession.this.options.getCredentialOptions();
-
-        // Default credentials is the most likely CredentialType. It's also the only CredentialType
-        // that can be safely cached.
-        boolean isDefaultCredentials =
-            credentialOptions.getCredentialType() == CredentialType.DefaultCredentials;
-
-        synchronized (CREDENTIALS_REFRESH_EXECUTOR_SERVICE) {
-          if (isDefaultCredentials && defaultCredentialOauth != null) {
-            return defaultCredentialOauth;
-          }
-
-          Credentials credentials = CredentialFactory.getCredentials(credentialOptions);
-
-          if (credentials == null) {
-            return null;
-          }
-          Preconditions.checkState(credentials instanceof OAuth2Credentials,
-            String.format("Credentials must be an instance of OAuth2Credentials, but got %s.",
-              credentials.getClass().getName()));
-          RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
-              new RefreshingOAuth2CredentialsInterceptor(CREDENTIALS_REFRESH_EXECUTOR_SERVICE,
-                  (OAuth2Credentials) credentials,
-                  BigtableSession.this.options.getRetryOptions());
-          oauth2Interceptor.asyncRefresh();
-          if (isDefaultCredentials) {
-            defaultCredentialOauth = oauth2Interceptor;
-          }
-          return oauth2Interceptor;
         }
       }
     };
