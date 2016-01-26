@@ -94,13 +94,13 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
         if (result != null) {
           lastRowKey = result.getKey();
           rowCount++;
+          // We've had at least one successful RPC, reset the backoff
+          currentBackoff = null;
         }
-        // We've had at least one successful RPC, reset the backoff
-        currentBackoff = null;
 
         return result;
       } catch (ScanTimeoutException rte) {
-        logger.info("The client could not get a repsone in %d ms.  Retrying the scan.",
+        logger.info("The client could not get a response in %d ms. Retrying the scan.",
           retryOptions.getReadPartialRowTimeoutMillis());
         backOffAndRetry(rte);
       } catch (IOExceptionWithStatus ioe) {
