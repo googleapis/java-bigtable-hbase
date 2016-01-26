@@ -51,23 +51,23 @@ import javax.net.ssl.SSLException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.api.client.util.Strings;
-import com.google.auth.Credentials;
-import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
+import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
+import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.grpc.io.ReconnectingChannel;
-import com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor;
 import com.google.cloud.bigtable.grpc.io.UserAgentInterceptor;
+import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -149,12 +149,8 @@ public class BigtableSession implements AutoCloseable {
 
   private static void performWarmup() {
     // Initialize some core dependencies in parallel.  This can speed up startup by 150+ ms.
-    ExecutorService connectionStartupExecutor =
-        Executors.newCachedThreadPool(
-            new ThreadFactoryBuilder()
-                .setNameFormat("BigtableSession-startup-%s")
-                .setDaemon(true)
-                .build());
+    ExecutorService connectionStartupExecutor = Executors
+        .newCachedThreadPool(ThreadPoolUtil.createThreadFactory("BigtableSession-startup"));
 
     connectionStartupExecutor.execute(new Runnable() {
       @Override
@@ -204,29 +200,18 @@ public class BigtableSession implements AutoCloseable {
     connectionStartupExecutor.shutdown();
   }
 
-  protected static ExecutorService createDefaultBatchPool(){
-    return Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder()
-          .setNameFormat(BATCH_POOL_THREAD_NAME + "-%d")
-          .setDaemon(true)
-          .build());
+  protected static ExecutorService createDefaultBatchPool() {
+    return Executors
+        .newCachedThreadPool(ThreadPoolUtil.createThreadFactory(BATCH_POOL_THREAD_NAME));
   }
 
   protected static EventLoopGroup createDefaultEventLoopGroup() {
-    return new NioEventLoopGroup(0,
-        new ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat(GRPC_EVENTLOOP_GROUP_NAME + "-%d")
-            .build());
+    return new NioEventLoopGroup(0, ThreadPoolUtil.createThreadFactory(GRPC_EVENTLOOP_GROUP_NAME));
   }
 
   protected static ScheduledExecutorService createDefaultRetryExecutor() {
-    return Executors.newScheduledThreadPool(
-        RETRY_THREAD_COUNT,
-        new ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat(RETRY_THREADPOOL_NAME + "-%d")
-            .build());
+    return Executors.newScheduledThreadPool(RETRY_THREAD_COUNT,
+      ThreadPoolUtil.createThreadFactory(RETRY_THREADPOOL_NAME));
   }
 
   private BigtableDataClient dataClient;
@@ -279,35 +264,25 @@ public class BigtableSession implements AutoCloseable {
       this.batchPool = batchPool;
     }
     this.options = options;
-    Future<Credentials> credentialsFuture = this.batchPool.submit(new Callable<Credentials>() {
-      @Override
-      public Credentials call() throws IOException {
-        try {
-          return CredentialFactory.getCredentials(BigtableSession.this.options
-              .getCredentialOptions());
-        } catch (GeneralSecurityException e) {
-          throw new IOException("Could not load auth credentials", e);
-        }
-      }
-    });
+    Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
+
+    // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
+    // take as long, but still take time. Get the credentials on one thread, and start up the elg
+    // and scheduledRetries thread pools on another thread.
+
+    Future<Void> credentialsFuture =
+        this.batchPool.submit(createCredentialsCallback(headerInterceptorBuilder));
     this.elg = (elg == null) ? createDefaultEventLoopGroup() : elg;
 
     this.scheduledRetries =
         (scheduledRetries == null) ? createDefaultRetryExecutor() : scheduledRetries;
 
-    Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
     headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
-    Credentials credentials = get(credentialsFuture, "Could not initialize credentials");
-    if (credentials != null) {
-      Preconditions.checkState(credentials instanceof OAuth2Credentials, String.format(
-        "Credentials must be an instance of OAuth2Credentials, but got %s.", credentials.getClass()
-            .getName()));
-      RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
-          new RefreshingOAuth2CredentialsInterceptor(this.batchPool,
-              (OAuth2Credentials) credentials, this.options.getRetryOptions());
-      oauth2Interceptor.asyncRefresh();
-      headerInterceptorBuilder.add(oauth2Interceptor);
-    }
+
+    // Make sure that the credentialsFuture is complete before proceeding. If an exception occurs in
+    // that future, then throw that exception. The completion is important, but the results are not.
+    get(credentialsFuture, "Could not initialize credentials");
+
     headerInterceptors = headerInterceptorBuilder.build();
 
     Future<BigtableDataClient> dataClientFuture =
@@ -328,6 +303,28 @@ public class BigtableSession implements AutoCloseable {
 
     this.dataClient = get(dataClientFuture, "Could not initialize the data API client");
     this.tableAdminClient = get(tableAdminFuture, "Could not initialize the table Admin client");
+  }
+
+  protected Callable<Void>
+      createCredentialsCallback(final Builder<HeaderInterceptor> headerInterceptorBuilder) {
+    return new Callable<Void>() {
+      @Override
+      public Void call() throws IOException {
+        try {
+          CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
+          RetryOptions retryOptions = options.getRetryOptions();
+          CredentialOptions credentialOptions = options.getCredentialOptions();
+          HeaderInterceptor headerInterceptor =
+              credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
+          if (headerInterceptor != null) {
+            headerInterceptorBuilder.add(headerInterceptor);
+          }
+          return null;
+        } catch (GeneralSecurityException e) {
+          throw new IOException("Could not load auth credentials", e);
+        }
+      }
+    };
   }
 
   private BigtableDataClient initializeDataClient() throws IOException {
