@@ -25,6 +25,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,6 +38,7 @@ import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.CannotProvideCoderException;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
+import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor;
 
 /**
@@ -54,7 +56,7 @@ public class CloudBigtableIOTest {
   CloudBigtableOptions cbtOptions;
 
   private CoderRegistry registry = new CoderRegistry();
-  
+
   @SuppressWarnings("unchecked")
   @Before
   public void setup(){
@@ -64,7 +66,14 @@ public class CloudBigtableIOTest {
     when(cbtOptions.as(any(Class.class))).thenReturn(cbtOptions);
     CloudBigtableIO.initializeForWrite(underTest);
   }
- 
+
+  private void checkRegistry(Class<? extends Mutation> mutationClass)
+      throws CannotProvideCoderException {
+    Coder<? extends Mutation> coder = registry.getCoder(TypeDescriptor.of(mutationClass));
+    assertNotNull(coder);
+    assertEquals(HBaseMutationCoder.class, coder.getClass());
+  }
+
   @Test
   public void testInitialize() throws Exception{
     checkRegistry(Put.class);
@@ -84,12 +93,19 @@ public class CloudBigtableIOTest {
     registry.getCoder(TypeDescriptor.of(Increment.class));
   }
 
+  @Test
+  public void testSourceToString() throws Exception {
+    CloudBigtableIO.Source source = new CloudBigtableIO.Source(null);
+    byte[] startKey = "abc d".getBytes();
+    byte[] stopKey = "def g".getBytes();
+    BoundedSource<Result> sourceWithKeys = source.new SourceWithKeys(startKey, stopKey, 10);
+    assertEquals("Split start: 'abc d', end: 'def g', size: 10", sourceWithKeys.toString());
 
-  private void checkRegistry(Class<? extends Mutation> mutationClass)
-      throws CannotProvideCoderException {
-    Coder<? extends Mutation> coder = registry.getCoder(TypeDescriptor.of(mutationClass));
-    assertNotNull(coder);
-    assertEquals(HBaseMutationCoder.class, coder.getClass());
+    startKey = new byte[]{0, 1, 2, 3, 4, 5};
+    stopKey = new byte[]{104, 101, 108, 108, 111};  // hello
+    sourceWithKeys = source.new SourceWithKeys(startKey, stopKey, 10);
+    assertEquals("Split start: '\\x00\\x01\\x02\\x03\\x04\\x05', end: 'hello', size: 10",
+        sourceWithKeys.toString());
   }
 }
 
