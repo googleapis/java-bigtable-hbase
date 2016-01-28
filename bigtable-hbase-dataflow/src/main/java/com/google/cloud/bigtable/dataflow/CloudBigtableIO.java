@@ -66,6 +66,7 @@ import com.google.cloud.dataflow.sdk.transforms.ParDo;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PDone;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * <p>
@@ -156,7 +157,7 @@ public class CloudBigtableIO {
      * A {@link BoundedSource} for a Cloud Bigtable {@link Table} with a start/stop key range, along
      * with a potential filter via a {@link Scan}.
      */
-    private class SourceWithKeys extends BoundedSource<Result> {
+    protected class SourceWithKeys extends BoundedSource<Result> {
       private static final long serialVersionUID = 2561066007121040429L;
 
       /**
@@ -179,11 +180,14 @@ public class CloudBigtableIO {
        */
       private final long estimatedSize;
 
-      private SourceWithKeys(byte[] startKey, byte[] stopKey, long estimatedSize) {
+      @VisibleForTesting
+      protected SourceWithKeys(byte[] startKey, byte[] stopKey, long estimatedSize) {
         if (stopKey.length > 0) {
           Preconditions.checkState(Bytes.compareTo(startKey, stopKey) < 0,
-            "[startKey, stopKey]", new String(startKey), new String(stopKey));
-          Preconditions.checkState(estimatedSize > 0);
+              "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startKey),
+              Bytes.toStringBinary(stopKey));
+          Preconditions.checkState(estimatedSize > 0, "Source size must be positive",
+              estimatedSize);
         }
         this.startKey = startKey;
         this.stopKey = stopKey;
@@ -277,8 +281,8 @@ public class CloudBigtableIO {
 
       @Override
       public String toString() {
-        return String.format("Split start: '%s', end: '%s', size: %d", Bytes.toString(startKey),
-            Bytes.toString(stopKey), estimatedSize);
+        return String.format("Split start: '%s', end: '%s', size: %d",
+            Bytes.toStringBinary(startKey), Bytes.toStringBinary(stopKey), estimatedSize);
       }
     }
 
@@ -553,9 +557,11 @@ public class CloudBigtableIO {
       } else {
         Preconditions.checkState(desiredBundleSizeBytes > 0);
         if (stopKey.length > 0) {
-          Preconditions.checkState(Bytes.compareTo(startKey, stopKey) <= 0, "[startKey, stopKey]",
-            new String(startKey), new String(stopKey));
-          Preconditions.checkState(regionSize > 0);
+          Preconditions.checkState(Bytes.compareTo(startKey, stopKey) <= 0,
+              "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startKey),
+              Bytes.toStringBinary(stopKey));
+          Preconditions.checkState(regionSize > 0, "Source size must be positive",
+              regionSize);
         }
         int splitCount = (int) Math.ceil((double) (regionSize) / (double) (desiredBundleSizeBytes));
         byte[][] splitKeys = Bytes.split(startKey, stopKey, splitCount - 1);
@@ -650,7 +656,7 @@ public class CloudBigtableIO {
     public void processElement(ProcessContext context) throws Exception {
       Mutation mutation = context.element();
       if (DOFN_LOG.isTraceEnabled()) {
-        DOFN_LOG.trace("Persisting {}", Bytes.toString(mutation.getRow()));
+        DOFN_LOG.trace("Persisting {}", Bytes.toStringBinary(mutation.getRow()));
       }
       getBufferedMutator(context).mutate(mutation);
     }
