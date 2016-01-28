@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
@@ -33,8 +32,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.MockitoAnnotations;
-
-import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -85,28 +82,6 @@ public class ChannelPoolTest {
     pool.newCall(descriptor, CallOptions.DEFAULT);
     verify(factory.channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
     verify(factory.channels.get(1), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
-  }
-
-  @Test
-  public void testReturnToPool() throws IOException {
-    ChannelPool pool = new ChannelPool(null, new MockChannelFactory());
-    pool.ensureChannelCount(2);
-    assertEquals(2, pool.size());
-    PooledChannel reserved = pool.reserveChannel();
-    assertEquals(2, pool.size());
-    assertEquals(1, pool.availbleSize());
-    reserved.returnToPool();
-    assertEquals(2, pool.size());
-    assertEquals(2, pool.availbleSize());
-  }
-
-  @Test
-  public void testReserveNeverExhaustsPool() throws IOException{
-    ChannelPool pool = new ChannelPool(null, new MockChannelFactory());
-    for (int i = 0; i < 10; i++) {
-      pool.reserveChannel();
-      assertEquals(1, pool.size());
-    }
   }
 
   @Test

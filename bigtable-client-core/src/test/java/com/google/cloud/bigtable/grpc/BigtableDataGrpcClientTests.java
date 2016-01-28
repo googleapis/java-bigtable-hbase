@@ -23,9 +23,6 @@ import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import io.grpc.CallOptions;
-import io.grpc.ClientCall;
-import io.grpc.MethodDescriptor;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -51,10 +48,14 @@ import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.ClientCallService;
 import com.google.cloud.bigtable.grpc.io.RetryingCall;
-import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
 import com.google.common.base.Predicate;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
+
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.MethodDescriptor;
 
 @RunWith(JUnit4.class)
 @SuppressWarnings("unchecked")
@@ -64,7 +65,7 @@ public class BigtableDataGrpcClientTests {
   ChannelPool channelPool;
 
   @Mock
-  PooledChannel pooledChannel;
+  Channel channel;
 
   @SuppressWarnings("rawtypes")
   @Mock
@@ -93,8 +94,7 @@ public class BigtableDataGrpcClientTests {
         options, clientCallService);
     when(channelPool.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(
       clientCall);
-    when(channelPool.reserveChannel()).thenReturn(pooledChannel);
-    when(pooledChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(
+    when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(
       clientCall);
   }
 
@@ -163,7 +163,6 @@ public class BigtableDataGrpcClientTests {
     ReadRowsRequest request =
         ReadRowsRequest.newBuilder().setRowKey(ByteString.copyFrom(new byte[0])).build();
     underTest.readRows(request);
-    verify(channelPool, times(0)).reserveChannel();
     verify(channelPool, times(1)).newCall(eq(BigtableServiceGrpc.METHOD_READ_ROWS),
       same(CallOptions.DEFAULT));
   }
@@ -173,8 +172,7 @@ public class BigtableDataGrpcClientTests {
     ReadRowsRequest request =
         ReadRowsRequest.newBuilder().setRowRange(RowRange.getDefaultInstance()).build();
     underTest.readRows(request);
-    verify(channelPool, times(1)).reserveChannel();
-    verify(channelPool, times(0)).newCall(eq(BigtableServiceGrpc.METHOD_READ_ROWS),
+    verify(channelPool, times(1)).newCall(eq(BigtableServiceGrpc.METHOD_READ_ROWS),
       same(CallOptions.DEFAULT));
   }
 }

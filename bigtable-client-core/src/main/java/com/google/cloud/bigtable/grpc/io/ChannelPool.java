@@ -42,43 +42,11 @@ public class ChannelPool extends Channel {
     Channel create() throws IOException;
   }
 
-  /**
-   * An implementation of {@link Channel} that knows how to return itself to the {@link ChannelPool}
-   */
-  public class PooledChannel extends Channel {
-    private final Channel delegate;
-    private boolean returned = false;
-
-    private PooledChannel(Channel delegate, boolean returned) {
-      this.delegate = delegate;
-      this.returned = returned;
-    }
-
-    @Override
-    public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
-        MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
-      return createWrappedCall(methodDescriptor, callOptions, delegate);
-    }
-
-    @Override
-    public String authority() {
-      return authority;
-    }
-
-    public synchronized void returnToPool() {
-      if (!returned) {
-        ChannelPool.this.returnChannel(this);
-        returned = true;
-      }
-    }
-  }
-
   private final AtomicReference<ImmutableList<Channel>> channels = new AtomicReference<>();
   private final AtomicInteger requestCount = new AtomicInteger();
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
   private final AtomicInteger totalSize;
   private final ChannelFactory factory;
-  private int reservedChannelCount = 0;
   private final String authority;
 
   public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
@@ -107,8 +75,7 @@ public class ChannelPool extends Channel {
       synchronized(this){
         if (totalSize.get() < capacity) {
           List<Channel> newChannelList = new ArrayList<>(channels.get());
-          int unreservedCapacity = capacity - reservedChannelCount;
-          while(newChannelList.size() < unreservedCapacity) {
+          while(newChannelList.size() < capacity) {
             newChannelList.add(factory.create());
           }
           setChannels(newChannelList);
@@ -129,40 +96,6 @@ public class ChannelPool extends Channel {
     ImmutableList<Channel> channelsList = channels.get();
     int index = Math.abs(currentRequestNum % channelsList.size());
     return channelsList.get(index);
-  }
-
-  /**
-   * Gets a channel from the pool. Long running streaming RPCs can cause a contention issue if there
-   * is another RPC started on the same channel. If the pool only has a single channel, keep the
-   * channel in the pool so that other RPCs can at least attempt to use it. This is required for
-   * scans due to a gRPC bug. gRPC 0.10 will remove the necessity of reserving a channel.
-   */
-  public synchronized PooledChannel reserveChannel() {
-    Channel reserved;
-    boolean returned = false;
-
-    ImmutableList<Channel> channelsList = channels.get();
-
-    if (channelsList.size() == 1) {
-      reserved = channelsList.get(0);
-      returned = true;
-    } else {
-      List<Channel> newChannelList = new ArrayList<>(channelsList);
-      reserved = newChannelList.remove(newChannelList.size() - 1);
-      setChannels(newChannelList);
-      reservedChannelCount++;
-    }
-    return new PooledChannel(reserved, returned);
-  }
-
-  /**
-   * Return a reserved {@link Channel}, via {@link #reserveChannel()}, to the general pool.
-   */
-  private synchronized void returnChannel(PooledChannel channel){
-    List<Channel> newChannelList = new ArrayList<>(channels.get());
-    newChannelList.add(channel.delegate);
-    setChannels(newChannelList);
-    reservedChannelCount--;
   }
 
   /**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,6 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -105,15 +104,15 @@ public class TestScan extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void test100ResultsInScanner() throws IOException {
+    String prefix = "scan_row_";
     int rowsToWrite = 100;
 
     // Initialize variables
     Table table = getConnection().getTable(TABLE_NAME);
 
     byte[][] rowKeys = new byte[rowsToWrite][];
-    rowKeys[0] = dataHelper.randomData("scan_row_");
+    rowKeys[0] = dataHelper.randomData(prefix);
     for (int i = 1; i < rowsToWrite; i++) {
       rowKeys[i] = rowFollowingSameLength(rowKeys[i - 1]);
     }
@@ -139,25 +138,23 @@ public class TestScan extends AbstractTest {
         .setStopRow(rowFollowing(rowKeys[rowsToWrite - 1]))
         .addFamily(COLUMN_FAMILY);
 
-    ResultScanner resultScanner = table.getScanner(scan);
+    try(ResultScanner resultScanner = table.getScanner(scan)) {
+      for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
+        Result result = resultScanner.next();
 
-    for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
-      Result result = resultScanner.next();
+        Assert.assertNotNull(String.format("Didn't expect row %s to be null", rowIndex), result);
 
-      Assert.assertNotNull(String.format("Didn't expect row %s to be null", rowIndex), result);
-
-      Assert.assertEquals(numValuesPerRow, result.size());
-      for (int i = 0; i < numValuesPerRow; ++i) {
-        Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, quals[i]));
-        Assert.assertArrayEquals(values[i],
-            CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[i])));
+        Assert.assertEquals(numValuesPerRow, result.size());
+        for (int i = 0; i < numValuesPerRow; ++i) {
+          Assert.assertTrue(result.containsColumn(COLUMN_FAMILY, quals[i]));
+          Assert.assertArrayEquals(values[i],
+              CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, quals[i])));
+        }
       }
+
+      // Verify that there are no more rows:
+      Assert.assertNull("There should not be any more results in the scanner.", resultScanner.next());
     }
-
-    // Verify that there are no more rows:
-    Assert.assertNull("There should not be any more results in the scanner.", resultScanner.next());
-
-    resultScanner.close();
 
     // Cleanup
     ArrayList<Delete> deletes = new ArrayList<>(rowsToWrite);
@@ -166,5 +163,56 @@ public class TestScan extends AbstractTest {
     }
     table.delete(deletes);
     table.close();
+  }
+
+  @Test
+  /**
+   * Cloud Bigtable had problems with operations that happened during a scan. Create 100 rows, scan
+   * for them, and delete each resulting row. Make sure that this problem doesn't reoccur.
+   */
+  public void testScanDelete() throws IOException {
+    String prefix = "scan_delete_";
+    int rowsToWrite = 100;
+
+    // Initialize variables
+    Table table = getConnection().getTable(TABLE_NAME);
+
+    byte[][] rowKeys = new byte[rowsToWrite][];
+    rowKeys[0] = dataHelper.randomData(prefix);
+    for (int i = 1; i < rowsToWrite; i++) {
+      rowKeys[i] = rowFollowingSameLength(rowKeys[i - 1]);
+    }
+
+    int numValuesPerRow = 3;
+    byte[][] quals = dataHelper.randomData("qual-", numValuesPerRow);
+    byte[][] values = dataHelper.randomData("value-", numValuesPerRow);
+
+    ArrayList<Put> puts = new ArrayList<>(rowsToWrite);
+
+    // Insert some columns
+    for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
+      Put put = new Put(rowKeys[rowIndex]);
+      for (int qualifierIndex = 0; qualifierIndex < numValuesPerRow; qualifierIndex++) {
+        put.addColumn(COLUMN_FAMILY, quals[qualifierIndex], values[qualifierIndex]);
+      }
+      puts.add(put);
+    }
+    table.put(puts);
+
+    Scan scan = new Scan();
+    scan.setStartRow(rowKeys[0])
+        .setStopRow(rowFollowing(rowKeys[rowsToWrite - 1]))
+        .addFamily(COLUMN_FAMILY);
+    int deleteCount = 0;
+    try (ResultScanner resultScanner = table.getScanner(scan)) {
+      for (Result result : resultScanner) {
+        table.delete(new Delete(result.getRow()));
+        deleteCount++;
+      }
+    }
+    Assert.assertEquals(rowsToWrite, deleteCount);
+    try (ResultScanner resultScanner = table.getScanner(scan)) {
+      Assert.assertNull(resultScanner.next());
+    }
   }
 }

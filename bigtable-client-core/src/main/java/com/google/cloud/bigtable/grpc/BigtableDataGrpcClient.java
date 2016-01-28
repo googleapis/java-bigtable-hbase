@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc;
 
 import io.grpc.CallOptions;
-import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
@@ -47,7 +46,6 @@ import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.async.RetryableRpc;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
-import com.google.cloud.bigtable.grpc.io.ChannelPool.PooledChannel;
 import com.google.cloud.bigtable.grpc.io.ClientCallService;
 import com.google.cloud.bigtable.grpc.io.RetryingCall;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
@@ -244,34 +242,22 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     boolean isGet = request.getTargetCase() == ReadRowsRequest.TargetCase.ROW_KEY;
 
     int streamingBufferSize;
-
     int batchRequestSize;
-
-    // If it's a long running scan, reserve the pool. There is a gRPC bug that makes the Channel
-    // unavailable for other streams. Reserve a channel for now. Reservations can probably be
-    // removed once we use gRPC 0.10.0. See https://github.com/grpc/grpc-java/issues/1175 for more
-    // details
-    Channel channel;
 
     if (isGet) {
       // Batch request size is more performant with a value of 1 for single row gets, while a higher
       // number is more performant for scanning
       batchRequestSize = 1;
       streamingBufferSize = 10;
-      channel = channelPool;
     } else {
-      // This ensures that if there is an ongoing scan, a user can also perform additional RPCs
-      // like delete and get on a second connection.
-      expandPoolIfNecessary(2);
       batchRequestSize = retryOptions.getStreamingBatchSize();
       streamingBufferSize = retryOptions.getStreamingBufferSize();
-      channel = channelPool.reserveChannel();
     }
 
     ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
-        channel.newCall(BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
+        channelPool.newCall(BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
 
-    CancellationToken cancellationToken = createCancellationToken(channel, readRowsCall);
+    CancellationToken cancellationToken = createCancellationToken(readRowsCall);
 
     int timeout = retryOptions.getReadPartialRowTimeoutMillis();
 
@@ -285,7 +271,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     clientCallService.asyncServerStreamingCall(
         readRowsCall,
         request,
-        createClientCallListener(channel, resultScanner));
+        createClientCallListener(resultScanner));
 
     if (batchRequestSize > 1) {
       readRowsCall.request(batchRequestSize - 1);
@@ -294,22 +280,20 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return resultScanner;
   }
 
-  private CancellationToken createCancellationToken(final Channel channel,
-      final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall) {
+  private CancellationToken createCancellationToken(final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall) {
     // If the scanner is closed before we're done streaming, we want to cancel the RPC.
     CancellationToken cancellationToken = new CancellationToken();
     cancellationToken.addListener(new Runnable() {
       @Override
       public void run() {
-        returnToPool(channel);
         readRowsCall.cancel();
       }
     }, executorService);
     return cancellationToken;
   }
 
-  private ClientCall.Listener<ReadRowsResponse> createClientCallListener(
-      final Channel channel, final StreamingBigtableResultScanner resultScanner) {
+  private ClientCall.Listener<ReadRowsResponse>
+      createClientCallListener(final StreamingBigtableResultScanner resultScanner) {
     return new ClientCall.Listener<ReadRowsResponse>() {
       @Override
       public void onMessage(ReadRowsResponse readRowResponse) {
@@ -323,16 +307,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         } else {
           resultScanner.setError(status.asRuntimeException());
         }
-        returnToPool(channel);
       }
     };
-  }
-
-  private void returnToPool(Channel channel) {
-    // When channel is not channelPool, we are using a PooledChannel.
-    if (channel != channelPool) {
-      ((PooledChannel) channel).returnToPool();
-    }
   }
 
   private void expandPoolIfNecessary(int channelCount) {
