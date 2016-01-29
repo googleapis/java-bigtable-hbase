@@ -55,19 +55,6 @@ public  final class Cluster extends
             name_ = s;
             break;
           }
-          case 18: {
-            com.google.protobuf.Timestamp.Builder subBuilder = null;
-            if (deleteTime_ != null) {
-              subBuilder = deleteTime_.toBuilder();
-            }
-            deleteTime_ = input.readMessage(com.google.protobuf.Timestamp.parser(), extensionRegistry);
-            if (subBuilder != null) {
-              subBuilder.mergeFrom(deleteTime_);
-              deleteTime_ = subBuilder.buildPartial();
-            }
-
-            break;
-          }
           case 26: {
             com.google.longrunning.Operation.Builder subBuilder = null;
             if (currentOperation_ != null) {
@@ -168,45 +155,6 @@ public  final class Cluster extends
     } else {
       return (com.google.protobuf.ByteString) ref;
     }
-  }
-
-  public static final int DELETE_TIME_FIELD_NUMBER = 2;
-  private com.google.protobuf.Timestamp deleteTime_;
-  /**
-   * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-   *
-   * <pre>
-   * If this cluster has been deleted, the time at which its backup will
-   * be irrevocably destroyed. Omitted otherwise.
-   * This cannot be set directly, only through DeleteCluster.
-   * </pre>
-   */
-  public boolean hasDeleteTime() {
-    return deleteTime_ != null;
-  }
-  /**
-   * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-   *
-   * <pre>
-   * If this cluster has been deleted, the time at which its backup will
-   * be irrevocably destroyed. Omitted otherwise.
-   * This cannot be set directly, only through DeleteCluster.
-   * </pre>
-   */
-  public com.google.protobuf.Timestamp getDeleteTime() {
-    return deleteTime_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : deleteTime_;
-  }
-  /**
-   * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-   *
-   * <pre>
-   * If this cluster has been deleted, the time at which its backup will
-   * be irrevocably destroyed. Omitted otherwise.
-   * This cannot be set directly, only through DeleteCluster.
-   * </pre>
-   */
-  public com.google.protobuf.TimestampOrBuilder getDeleteTimeOrBuilder() {
-    return getDeleteTime();
   }
 
   public static final int CURRENT_OPERATION_FIELD_NUMBER = 3;
@@ -349,9 +297,6 @@ public  final class Cluster extends
     if (!getNameBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
-    if (deleteTime_ != null) {
-      output.writeMessage(2, getDeleteTime());
-    }
     if (currentOperation_ != null) {
       output.writeMessage(3, getCurrentOperation());
     }
@@ -373,10 +318,6 @@ public  final class Cluster extends
     size = 0;
     if (!getNameBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
-    }
-    if (deleteTime_ != null) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(2, getDeleteTime());
     }
     if (currentOperation_ != null) {
       size += com.google.protobuf.CodedOutputStream
@@ -510,12 +451,6 @@ public  final class Cluster extends
       super.clear();
       name_ = "";
 
-      if (deleteTimeBuilder_ == null) {
-        deleteTime_ = null;
-      } else {
-        deleteTime_ = null;
-        deleteTimeBuilder_ = null;
-      }
       if (currentOperationBuilder_ == null) {
         currentOperation_ = null;
       } else {
@@ -551,11 +486,6 @@ public  final class Cluster extends
     public com.google.bigtable.admin.cluster.v1.Cluster buildPartial() {
       com.google.bigtable.admin.cluster.v1.Cluster result = new com.google.bigtable.admin.cluster.v1.Cluster(this);
       result.name_ = name_;
-      if (deleteTimeBuilder_ == null) {
-        result.deleteTime_ = deleteTime_;
-      } else {
-        result.deleteTime_ = deleteTimeBuilder_.build();
-      }
       if (currentOperationBuilder_ == null) {
         result.currentOperation_ = currentOperation_;
       } else {
@@ -582,9 +512,6 @@ public  final class Cluster extends
       if (!other.getName().isEmpty()) {
         name_ = other.name_;
         onChanged();
-      }
-      if (other.hasDeleteTime()) {
-        mergeDeleteTime(other.getDeleteTime());
       }
       if (other.hasCurrentOperation()) {
         mergeCurrentOperation(other.getCurrentOperation());
@@ -727,177 +654,6 @@ public  final class Cluster extends
       name_ = value;
       onChanged();
       return this;
-    }
-
-    private com.google.protobuf.Timestamp deleteTime_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
-        com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> deleteTimeBuilder_;
-    /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-     *
-     * <pre>
-     * If this cluster has been deleted, the time at which its backup will
-     * be irrevocably destroyed. Omitted otherwise.
-     * This cannot be set directly, only through DeleteCluster.
-     * </pre>
-     */
-    public boolean hasDeleteTime() {
-      return deleteTimeBuilder_ != null || deleteTime_ != null;
-    }
-    /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-     *
-     * <pre>
-     * If this cluster has been deleted, the time at which its backup will
-     * be irrevocably destroyed. Omitted otherwise.
-     * This cannot be set directly, only through DeleteCluster.
-     * </pre>
-     */
-    public com.google.protobuf.Timestamp getDeleteTime() {
-      if (deleteTimeBuilder_ == null) {
-        return deleteTime_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : deleteTime_;
-      } else {
-        return deleteTimeBuilder_.getMessage();
-      }
-    }
-    /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-     *
-     * <pre>
-     * If this cluster has been deleted, the time at which its backup will
-     * be irrevocably destroyed. Omitted otherwise.
-     * This cannot be set directly, only through DeleteCluster.
-     * </pre>
-     */
-    public Builder setDeleteTime(com.google.protobuf.Timestamp value) {
-      if (deleteTimeBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        deleteTime_ = value;
-        onChanged();
-      } else {
-        deleteTimeBuilder_.setMessage(value);
-      }
-
-      return this;
-    }
-    /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-     *
-     * <pre>
-     * If this cluster has been deleted, the time at which its backup will
-     * be irrevocably destroyed. Omitted otherwise.
-     * This cannot be set directly, only through DeleteCluster.
-     * </pre>
-     */
-    public Builder setDeleteTime(
-        com.google.protobuf.Timestamp.Builder builderForValue) {
-      if (deleteTimeBuilder_ == null) {
-        deleteTime_ = builderForValue.build();
-        onChanged();
-      } else {
-        deleteTimeBuilder_.setMessage(builderForValue.build());
-      }
-
-      return this;
-    }
-    /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-     *
-     * <pre>
-     * If this cluster has been deleted, the time at which its backup will
-     * be irrevocably destroyed. Omitted otherwise.
-     * This cannot be set directly, only through DeleteCluster.
-     * </pre>
-     */
-    public Builder mergeDeleteTime(com.google.protobuf.Timestamp value) {
-      if (deleteTimeBuilder_ == null) {
-        if (deleteTime_ != null) {
-          deleteTime_ =
-            com.google.protobuf.Timestamp.newBuilder(deleteTime_).mergeFrom(value).buildPartial();
-        } else {
-          deleteTime_ = value;
-        }
-        onChanged();
-      } else {
-        deleteTimeBuilder_.mergeFrom(value);
-      }
-
-      return this;
-    }
-    /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-     *
-     * <pre>
-     * If this cluster has been deleted, the time at which its backup will
-     * be irrevocably destroyed. Omitted otherwise.
-     * This cannot be set directly, only through DeleteCluster.
-     * </pre>
-     */
-    public Builder clearDeleteTime() {
-      if (deleteTimeBuilder_ == null) {
-        deleteTime_ = null;
-        onChanged();
-      } else {
-        deleteTime_ = null;
-        deleteTimeBuilder_ = null;
-      }
-
-      return this;
-    }
-    /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-     *
-     * <pre>
-     * If this cluster has been deleted, the time at which its backup will
-     * be irrevocably destroyed. Omitted otherwise.
-     * This cannot be set directly, only through DeleteCluster.
-     * </pre>
-     */
-    public com.google.protobuf.Timestamp.Builder getDeleteTimeBuilder() {
-      
-      onChanged();
-      return getDeleteTimeFieldBuilder().getBuilder();
-    }
-    /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-     *
-     * <pre>
-     * If this cluster has been deleted, the time at which its backup will
-     * be irrevocably destroyed. Omitted otherwise.
-     * This cannot be set directly, only through DeleteCluster.
-     * </pre>
-     */
-    public com.google.protobuf.TimestampOrBuilder getDeleteTimeOrBuilder() {
-      if (deleteTimeBuilder_ != null) {
-        return deleteTimeBuilder_.getMessageOrBuilder();
-      } else {
-        return deleteTime_ == null ?
-            com.google.protobuf.Timestamp.getDefaultInstance() : deleteTime_;
-      }
-    }
-    /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-     *
-     * <pre>
-     * If this cluster has been deleted, the time at which its backup will
-     * be irrevocably destroyed. Omitted otherwise.
-     * This cannot be set directly, only through DeleteCluster.
-     * </pre>
-     */
-    private com.google.protobuf.SingleFieldBuilder<
-        com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
-        getDeleteTimeFieldBuilder() {
-      if (deleteTimeBuilder_ == null) {
-        deleteTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
-                getDeleteTime(),
-                getParentForChildren(),
-                isClean());
-        deleteTime_ = null;
-      }
-      return deleteTimeBuilder_;
     }
 
     private com.google.longrunning.Operation currentOperation_ = null;

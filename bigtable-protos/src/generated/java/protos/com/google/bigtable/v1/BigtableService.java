@@ -59,6 +59,20 @@ public  abstract class BigtableService
         com.google.protobuf.RpcCallback<com.google.protobuf.Empty> done);
 
     /**
+     * <code>rpc MutateRows(.google.bigtable.v1.MutateRowsRequest) returns (.google.bigtable.v1.MutateRowsResponse);</code>
+     *
+     * <pre>
+     * Mutates multiple rows in a batch. Each individual row is mutated
+     * atomically as in MutateRow, but the entire batch is not executed
+     * atomically.
+     * </pre>
+     */
+    public abstract void mutateRows(
+        com.google.protobuf.RpcController controller,
+        com.google.bigtable.v1.MutateRowsRequest request,
+        com.google.protobuf.RpcCallback<com.google.bigtable.v1.MutateRowsResponse> done);
+
+    /**
      * <code>rpc CheckAndMutateRow(.google.bigtable.v1.CheckAndMutateRowRequest) returns (.google.bigtable.v1.CheckAndMutateRowResponse);</code>
      *
      * <pre>
@@ -115,6 +129,14 @@ public  abstract class BigtableService
       }
 
       @java.lang.Override
+      public  void mutateRows(
+          com.google.protobuf.RpcController controller,
+          com.google.bigtable.v1.MutateRowsRequest request,
+          com.google.protobuf.RpcCallback<com.google.bigtable.v1.MutateRowsResponse> done) {
+        impl.mutateRows(controller, request, done);
+      }
+
+      @java.lang.Override
       public  void checkAndMutateRow(
           com.google.protobuf.RpcController controller,
           com.google.bigtable.v1.CheckAndMutateRowRequest request,
@@ -159,8 +181,10 @@ public  abstract class BigtableService
           case 2:
             return impl.mutateRow(controller, (com.google.bigtable.v1.MutateRowRequest)request);
           case 3:
-            return impl.checkAndMutateRow(controller, (com.google.bigtable.v1.CheckAndMutateRowRequest)request);
+            return impl.mutateRows(controller, (com.google.bigtable.v1.MutateRowsRequest)request);
           case 4:
+            return impl.checkAndMutateRow(controller, (com.google.bigtable.v1.CheckAndMutateRowRequest)request);
+          case 5:
             return impl.readModifyWriteRow(controller, (com.google.bigtable.v1.ReadModifyWriteRowRequest)request);
           default:
             throw new java.lang.AssertionError("Can't get here.");
@@ -183,8 +207,10 @@ public  abstract class BigtableService
           case 2:
             return com.google.bigtable.v1.MutateRowRequest.getDefaultInstance();
           case 3:
-            return com.google.bigtable.v1.CheckAndMutateRowRequest.getDefaultInstance();
+            return com.google.bigtable.v1.MutateRowsRequest.getDefaultInstance();
           case 4:
+            return com.google.bigtable.v1.CheckAndMutateRowRequest.getDefaultInstance();
+          case 5:
             return com.google.bigtable.v1.ReadModifyWriteRowRequest.getDefaultInstance();
           default:
             throw new java.lang.AssertionError("Can't get here.");
@@ -207,8 +233,10 @@ public  abstract class BigtableService
           case 2:
             return com.google.protobuf.Empty.getDefaultInstance();
           case 3:
-            return com.google.bigtable.v1.CheckAndMutateRowResponse.getDefaultInstance();
+            return com.google.bigtable.v1.MutateRowsResponse.getDefaultInstance();
           case 4:
+            return com.google.bigtable.v1.CheckAndMutateRowResponse.getDefaultInstance();
+          case 5:
             return com.google.bigtable.v1.Row.getDefaultInstance();
           default:
             throw new java.lang.AssertionError("Can't get here.");
@@ -260,6 +288,20 @@ public  abstract class BigtableService
       com.google.protobuf.RpcController controller,
       com.google.bigtable.v1.MutateRowRequest request,
       com.google.protobuf.RpcCallback<com.google.protobuf.Empty> done);
+
+  /**
+   * <code>rpc MutateRows(.google.bigtable.v1.MutateRowsRequest) returns (.google.bigtable.v1.MutateRowsResponse);</code>
+   *
+   * <pre>
+   * Mutates multiple rows in a batch. Each individual row is mutated
+   * atomically as in MutateRow, but the entire batch is not executed
+   * atomically.
+   * </pre>
+   */
+  public abstract void mutateRows(
+      com.google.protobuf.RpcController controller,
+      com.google.bigtable.v1.MutateRowsRequest request,
+      com.google.protobuf.RpcCallback<com.google.bigtable.v1.MutateRowsResponse> done);
 
   /**
    * <code>rpc CheckAndMutateRow(.google.bigtable.v1.CheckAndMutateRowRequest) returns (.google.bigtable.v1.CheckAndMutateRowResponse);</code>
@@ -326,11 +368,16 @@ public  abstract class BigtableService
             done));
         return;
       case 3:
+        this.mutateRows(controller, (com.google.bigtable.v1.MutateRowsRequest)request,
+          com.google.protobuf.RpcUtil.<com.google.bigtable.v1.MutateRowsResponse>specializeCallback(
+            done));
+        return;
+      case 4:
         this.checkAndMutateRow(controller, (com.google.bigtable.v1.CheckAndMutateRowRequest)request,
           com.google.protobuf.RpcUtil.<com.google.bigtable.v1.CheckAndMutateRowResponse>specializeCallback(
             done));
         return;
-      case 4:
+      case 5:
         this.readModifyWriteRow(controller, (com.google.bigtable.v1.ReadModifyWriteRowRequest)request,
           com.google.protobuf.RpcUtil.<com.google.bigtable.v1.Row>specializeCallback(
             done));
@@ -356,8 +403,10 @@ public  abstract class BigtableService
       case 2:
         return com.google.bigtable.v1.MutateRowRequest.getDefaultInstance();
       case 3:
-        return com.google.bigtable.v1.CheckAndMutateRowRequest.getDefaultInstance();
+        return com.google.bigtable.v1.MutateRowsRequest.getDefaultInstance();
       case 4:
+        return com.google.bigtable.v1.CheckAndMutateRowRequest.getDefaultInstance();
+      case 5:
         return com.google.bigtable.v1.ReadModifyWriteRowRequest.getDefaultInstance();
       default:
         throw new java.lang.AssertionError("Can't get here.");
@@ -380,8 +429,10 @@ public  abstract class BigtableService
       case 2:
         return com.google.protobuf.Empty.getDefaultInstance();
       case 3:
-        return com.google.bigtable.v1.CheckAndMutateRowResponse.getDefaultInstance();
+        return com.google.bigtable.v1.MutateRowsResponse.getDefaultInstance();
       case 4:
+        return com.google.bigtable.v1.CheckAndMutateRowResponse.getDefaultInstance();
+      case 5:
         return com.google.bigtable.v1.Row.getDefaultInstance();
       default:
         throw new java.lang.AssertionError("Can't get here.");
@@ -449,12 +500,27 @@ public  abstract class BigtableService
           com.google.protobuf.Empty.getDefaultInstance()));
     }
 
+    public  void mutateRows(
+        com.google.protobuf.RpcController controller,
+        com.google.bigtable.v1.MutateRowsRequest request,
+        com.google.protobuf.RpcCallback<com.google.bigtable.v1.MutateRowsResponse> done) {
+      channel.callMethod(
+        getDescriptor().getMethods().get(3),
+        controller,
+        request,
+        com.google.bigtable.v1.MutateRowsResponse.getDefaultInstance(),
+        com.google.protobuf.RpcUtil.generalizeCallback(
+          done,
+          com.google.bigtable.v1.MutateRowsResponse.class,
+          com.google.bigtable.v1.MutateRowsResponse.getDefaultInstance()));
+    }
+
     public  void checkAndMutateRow(
         com.google.protobuf.RpcController controller,
         com.google.bigtable.v1.CheckAndMutateRowRequest request,
         com.google.protobuf.RpcCallback<com.google.bigtable.v1.CheckAndMutateRowResponse> done) {
       channel.callMethod(
-        getDescriptor().getMethods().get(3),
+        getDescriptor().getMethods().get(4),
         controller,
         request,
         com.google.bigtable.v1.CheckAndMutateRowResponse.getDefaultInstance(),
@@ -469,7 +535,7 @@ public  abstract class BigtableService
         com.google.bigtable.v1.ReadModifyWriteRowRequest request,
         com.google.protobuf.RpcCallback<com.google.bigtable.v1.Row> done) {
       channel.callMethod(
-        getDescriptor().getMethods().get(4),
+        getDescriptor().getMethods().get(5),
         controller,
         request,
         com.google.bigtable.v1.Row.getDefaultInstance(),
@@ -499,6 +565,11 @@ public  abstract class BigtableService
     public com.google.protobuf.Empty mutateRow(
         com.google.protobuf.RpcController controller,
         com.google.bigtable.v1.MutateRowRequest request)
+        throws com.google.protobuf.ServiceException;
+
+    public com.google.bigtable.v1.MutateRowsResponse mutateRows(
+        com.google.protobuf.RpcController controller,
+        com.google.bigtable.v1.MutateRowsRequest request)
         throws com.google.protobuf.ServiceException;
 
     public com.google.bigtable.v1.CheckAndMutateRowResponse checkAndMutateRow(
@@ -555,12 +626,24 @@ public  abstract class BigtableService
     }
 
 
+    public com.google.bigtable.v1.MutateRowsResponse mutateRows(
+        com.google.protobuf.RpcController controller,
+        com.google.bigtable.v1.MutateRowsRequest request)
+        throws com.google.protobuf.ServiceException {
+      return (com.google.bigtable.v1.MutateRowsResponse) channel.callBlockingMethod(
+        getDescriptor().getMethods().get(3),
+        controller,
+        request,
+        com.google.bigtable.v1.MutateRowsResponse.getDefaultInstance());
+    }
+
+
     public com.google.bigtable.v1.CheckAndMutateRowResponse checkAndMutateRow(
         com.google.protobuf.RpcController controller,
         com.google.bigtable.v1.CheckAndMutateRowRequest request)
         throws com.google.protobuf.ServiceException {
       return (com.google.bigtable.v1.CheckAndMutateRowResponse) channel.callBlockingMethod(
-        getDescriptor().getMethods().get(3),
+        getDescriptor().getMethods().get(4),
         controller,
         request,
         com.google.bigtable.v1.CheckAndMutateRowResponse.getDefaultInstance());
@@ -572,7 +655,7 @@ public  abstract class BigtableService
         com.google.bigtable.v1.ReadModifyWriteRowRequest request)
         throws com.google.protobuf.ServiceException {
       return (com.google.bigtable.v1.Row) channel.callBlockingMethod(
-        getDescriptor().getMethods().get(4),
+        getDescriptor().getMethods().get(5),
         controller,
         request,
         com.google.bigtable.v1.Row.getDefaultInstance());

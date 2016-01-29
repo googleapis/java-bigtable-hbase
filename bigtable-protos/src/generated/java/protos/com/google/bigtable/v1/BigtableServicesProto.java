@@ -22,7 +22,7 @@ public final class BigtableServicesProto {
       "tations.proto\032&google/bigtable/v1/bigtab" +
       "le_data.proto\0322google/bigtable/v1/bigtab" +
       "le_service_messages.proto\032\033google/protob" +
-      "uf/empty.proto2\260\007\n\017BigtableService\022\245\001\n\010R" +
+      "uf/empty.proto2\335\010\n\017BigtableService\022\245\001\n\010R" +
       "eadRows\022#.google.bigtable.v1.ReadRowsReq" +
       "uest\032$.google.bigtable.v1.ReadRowsRespon" +
       "se\"L\202\323\344\223\002F\"A/v1/{table_name=projects/*/z" +
@@ -35,19 +35,23 @@ public final class BigtableServicesProto {
       "ow\022$.google.bigtable.v1.MutateRowRequest" +
       "\032\026.google.protobuf.Empty\"X\202\323\344\223\002R\"M/v1/{t" +
       "able_name=projects/*/zones/*/clusters/*/" +
-      "tables/*}/rows/{row_key}:mutate:\001*\022\322\001\n\021C" +
-      "heckAndMutateRow\022,.google.bigtable.v1.Ch",
-      "eckAndMutateRowRequest\032-.google.bigtable" +
-      ".v1.CheckAndMutateRowResponse\"`\202\323\344\223\002Z\"U/" +
-      "v1/{table_name=projects/*/zones/*/cluste" +
-      "rs/*/tables/*}/rows/{row_key}:checkAndMu" +
-      "tate:\001*\022\277\001\n\022ReadModifyWriteRow\022-.google." +
-      "bigtable.v1.ReadModifyWriteRowRequest\032\027." +
-      "google.bigtable.v1.Row\"a\202\323\344\223\002[\"V/v1/{tab" +
-      "le_name=projects/*/zones/*/clusters/*/ta" +
-      "bles/*}/rows/{row_key}:readModifyWrite:\001" +
-      "*B4\n\026com.google.bigtable.v1B\025BigtableSer",
-      "vicesProtoP\001\210\001\001b\006proto3"
+      "tables/*}/rows/{row_key}:mutate:\001*\022\252\001\n\nM" +
+      "utateRows\022%.google.bigtable.v1.MutateRow",
+      "sRequest\032&.google.bigtable.v1.MutateRows" +
+      "Response\"M\202\323\344\223\002G\"B/v1/{table_name=projec" +
+      "ts/*/zones/*/clusters/*/tables/*}:mutate" +
+      "Rows:\001*\022\322\001\n\021CheckAndMutateRow\022,.google.b" +
+      "igtable.v1.CheckAndMutateRowRequest\032-.go" +
+      "ogle.bigtable.v1.CheckAndMutateRowRespon" +
+      "se\"`\202\323\344\223\002Z\"U/v1/{table_name=projects/*/z" +
+      "ones/*/clusters/*/tables/*}/rows/{row_ke" +
+      "y}:checkAndMutate:\001*\022\277\001\n\022ReadModifyWrite" +
+      "Row\022-.google.bigtable.v1.ReadModifyWrite",
+      "RowRequest\032\027.google.bigtable.v1.Row\"a\202\323\344" +
+      "\223\002[\"V/v1/{table_name=projects/*/zones/*/" +
+      "clusters/*/tables/*}/rows/{row_key}:read" +
+      "ModifyWrite:\001*B4\n\026com.google.bigtable.v1" +
+      "B\025BigtableServicesProtoP\001\210\001\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

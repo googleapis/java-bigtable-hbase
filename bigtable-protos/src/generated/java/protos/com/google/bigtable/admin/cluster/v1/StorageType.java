@@ -24,6 +24,15 @@ public enum StorageType
    * </pre>
    */
   STORAGE_SSD(1, 1),
+  /**
+   * <code>STORAGE_HDD = 2;</code>
+   *
+   * <pre>
+   * Data will be stored in HDD, providing high and less predictable
+   * latencies.
+   * </pre>
+   */
+  STORAGE_HDD(2, 2),
   UNRECOGNIZED(-1, -1),
   ;
 
@@ -43,6 +52,15 @@ public enum StorageType
    * </pre>
    */
   public static final int STORAGE_SSD_VALUE = 1;
+  /**
+   * <code>STORAGE_HDD = 2;</code>
+   *
+   * <pre>
+   * Data will be stored in HDD, providing high and less predictable
+   * latencies.
+   * </pre>
+   */
+  public static final int STORAGE_HDD_VALUE = 2;
 
 
   public final int getNumber() {
@@ -57,6 +75,7 @@ public enum StorageType
     switch (value) {
       case 0: return STORAGE_UNSPECIFIED;
       case 1: return STORAGE_SSD;
+      case 2: return STORAGE_HDD;
       default: return null;
     }
   }

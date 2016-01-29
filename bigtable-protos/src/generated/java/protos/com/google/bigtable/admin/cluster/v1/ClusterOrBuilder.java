@@ -32,37 +32,6 @@ public interface ClusterOrBuilder extends
       getNameBytes();
 
   /**
-   * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-   *
-   * <pre>
-   * If this cluster has been deleted, the time at which its backup will
-   * be irrevocably destroyed. Omitted otherwise.
-   * This cannot be set directly, only through DeleteCluster.
-   * </pre>
-   */
-  boolean hasDeleteTime();
-  /**
-   * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-   *
-   * <pre>
-   * If this cluster has been deleted, the time at which its backup will
-   * be irrevocably destroyed. Omitted otherwise.
-   * This cannot be set directly, only through DeleteCluster.
-   * </pre>
-   */
-  com.google.protobuf.Timestamp getDeleteTime();
-  /**
-   * <code>optional .google.protobuf.Timestamp delete_time = 2;</code>
-   *
-   * <pre>
-   * If this cluster has been deleted, the time at which its backup will
-   * be irrevocably destroyed. Omitted otherwise.
-   * This cannot be set directly, only through DeleteCluster.
-   * </pre>
-   */
-  com.google.protobuf.TimestampOrBuilder getDeleteTimeOrBuilder();
-
-  /**
    * <code>optional .google.longrunning.Operation current_operation = 3;</code>
    *
    * <pre>
