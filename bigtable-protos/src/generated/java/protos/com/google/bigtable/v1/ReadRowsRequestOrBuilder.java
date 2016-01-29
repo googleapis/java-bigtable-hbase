@@ -52,6 +52,27 @@ public interface ReadRowsRequestOrBuilder extends
   com.google.bigtable.v1.RowRangeOrBuilder getRowRangeOrBuilder();
 
   /**
+   * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+   *
+   * <pre>
+   * A set of rows from which to read. Entries need not be in order, and will
+   * be deduplicated before reading.
+   * The total serialized size of the set must not exceed 1MB.
+   * </pre>
+   */
+  com.google.bigtable.v1.RowSet getRowSet();
+  /**
+   * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+   *
+   * <pre>
+   * A set of rows from which to read. Entries need not be in order, and will
+   * be deduplicated before reading.
+   * The total serialized size of the set must not exceed 1MB.
+   * </pre>
+   */
+  com.google.bigtable.v1.RowSetOrBuilder getRowSetOrBuilder();
+
+  /**
    * <code>optional .google.bigtable.v1.RowFilter filter = 5;</code>
    *
    * <pre>

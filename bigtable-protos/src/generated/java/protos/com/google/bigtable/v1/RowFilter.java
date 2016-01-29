@@ -4128,6 +4128,8 @@ public  final class RowFilter extends
    *
    * <pre>
    * Skips the first N cells of each row, matching all subsequent cells.
+   * If duplicate cells are present, as is possible when using an Interleave,
+   * each copy of the cell is counted separately.
    * </pre>
    */
   public int getCellsPerRowOffsetFilter() {
@@ -4143,6 +4145,8 @@ public  final class RowFilter extends
    *
    * <pre>
    * Matches only the first N cells of each row.
+   * If duplicate cells are present, as is possible when using an Interleave,
+   * each copy of the cell is counted separately.
    * </pre>
    */
   public int getCellsPerRowLimitFilter() {
@@ -4161,6 +4165,8 @@ public  final class RowFilter extends
    * if N=2, this filter would match column "foo:bar" at timestamps 10 and 9,
    * skip all earlier cells in "foo:bar", and then begin matching again in
    * column "foo:bar2".
+   * If duplicate cells are present, as is possible when using an Interleave,
+   * each copy of the cell is counted separately.
    * </pre>
    */
   public int getCellsPerColumnLimitFilter() {
@@ -6459,6 +6465,8 @@ public  final class RowFilter extends
      *
      * <pre>
      * Skips the first N cells of each row, matching all subsequent cells.
+     * If duplicate cells are present, as is possible when using an Interleave,
+     * each copy of the cell is counted separately.
      * </pre>
      */
     public int getCellsPerRowOffsetFilter() {
@@ -6472,6 +6480,8 @@ public  final class RowFilter extends
      *
      * <pre>
      * Skips the first N cells of each row, matching all subsequent cells.
+     * If duplicate cells are present, as is possible when using an Interleave,
+     * each copy of the cell is counted separately.
      * </pre>
      */
     public Builder setCellsPerRowOffsetFilter(int value) {
@@ -6485,6 +6495,8 @@ public  final class RowFilter extends
      *
      * <pre>
      * Skips the first N cells of each row, matching all subsequent cells.
+     * If duplicate cells are present, as is possible when using an Interleave,
+     * each copy of the cell is counted separately.
      * </pre>
      */
     public Builder clearCellsPerRowOffsetFilter() {
@@ -6501,6 +6513,8 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only the first N cells of each row.
+     * If duplicate cells are present, as is possible when using an Interleave,
+     * each copy of the cell is counted separately.
      * </pre>
      */
     public int getCellsPerRowLimitFilter() {
@@ -6514,6 +6528,8 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only the first N cells of each row.
+     * If duplicate cells are present, as is possible when using an Interleave,
+     * each copy of the cell is counted separately.
      * </pre>
      */
     public Builder setCellsPerRowLimitFilter(int value) {
@@ -6527,6 +6543,8 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only the first N cells of each row.
+     * If duplicate cells are present, as is possible when using an Interleave,
+     * each copy of the cell is counted separately.
      * </pre>
      */
     public Builder clearCellsPerRowLimitFilter() {
@@ -6546,6 +6564,8 @@ public  final class RowFilter extends
      * if N=2, this filter would match column "foo:bar" at timestamps 10 and 9,
      * skip all earlier cells in "foo:bar", and then begin matching again in
      * column "foo:bar2".
+     * If duplicate cells are present, as is possible when using an Interleave,
+     * each copy of the cell is counted separately.
      * </pre>
      */
     public int getCellsPerColumnLimitFilter() {
@@ -6562,6 +6582,8 @@ public  final class RowFilter extends
      * if N=2, this filter would match column "foo:bar" at timestamps 10 and 9,
      * skip all earlier cells in "foo:bar", and then begin matching again in
      * column "foo:bar2".
+     * If duplicate cells are present, as is possible when using an Interleave,
+     * each copy of the cell is counted separately.
      * </pre>
      */
     public Builder setCellsPerColumnLimitFilter(int value) {
@@ -6578,6 +6600,8 @@ public  final class RowFilter extends
      * if N=2, this filter would match column "foo:bar" at timestamps 10 and 9,
      * skip all earlier cells in "foo:bar", and then begin matching again in
      * column "foo:bar2".
+     * If duplicate cells are present, as is possible when using an Interleave,
+     * each copy of the cell is counted separately.
      * </pre>
      */
     public Builder clearCellsPerColumnLimitFilter() {

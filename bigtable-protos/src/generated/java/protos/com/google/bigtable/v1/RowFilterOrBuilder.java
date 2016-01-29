@@ -282,6 +282,8 @@ public interface RowFilterOrBuilder extends
    *
    * <pre>
    * Skips the first N cells of each row, matching all subsequent cells.
+   * If duplicate cells are present, as is possible when using an Interleave,
+   * each copy of the cell is counted separately.
    * </pre>
    */
   int getCellsPerRowOffsetFilter();
@@ -291,6 +293,8 @@ public interface RowFilterOrBuilder extends
    *
    * <pre>
    * Matches only the first N cells of each row.
+   * If duplicate cells are present, as is possible when using an Interleave,
+   * each copy of the cell is counted separately.
    * </pre>
    */
   int getCellsPerRowLimitFilter();
@@ -303,6 +307,8 @@ public interface RowFilterOrBuilder extends
    * if N=2, this filter would match column "foo:bar" at timestamps 10 and 9,
    * skip all earlier cells in "foo:bar", and then begin matching again in
    * column "foo:bar2".
+   * If duplicate cells are present, as is possible when using an Interleave,
+   * each copy of the cell is counted separately.
    * </pre>
    */
   int getCellsPerColumnLimitFilter();

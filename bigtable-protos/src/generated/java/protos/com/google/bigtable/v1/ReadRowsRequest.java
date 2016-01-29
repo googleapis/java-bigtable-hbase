@@ -96,6 +96,20 @@ public  final class ReadRowsRequest extends
             numRowsLimit_ = input.readInt64();
             break;
           }
+          case 66: {
+            com.google.bigtable.v1.RowSet.Builder subBuilder = null;
+            if (targetCase_ == 8) {
+              subBuilder = ((com.google.bigtable.v1.RowSet) target_).toBuilder();
+            }
+            target_ =
+                input.readMessage(com.google.bigtable.v1.RowSet.parser(), extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom((com.google.bigtable.v1.RowSet) target_);
+              target_ = subBuilder.buildPartial();
+            }
+            targetCase_ = 8;
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -126,6 +140,7 @@ public  final class ReadRowsRequest extends
       implements com.google.protobuf.Internal.EnumLite {
     ROW_KEY(2),
     ROW_RANGE(3),
+    ROW_SET(8),
     TARGET_NOT_SET(0);
     private int value = 0;
     private TargetCase(int value) {
@@ -135,6 +150,7 @@ public  final class ReadRowsRequest extends
       switch (value) {
         case 2: return ROW_KEY;
         case 3: return ROW_RANGE;
+        case 8: return ROW_SET;
         case 0: return TARGET_NOT_SET;
         default: throw new java.lang.IllegalArgumentException(
           "Value is undefined for this oneof enum.");
@@ -234,6 +250,38 @@ public  final class ReadRowsRequest extends
        return (com.google.bigtable.v1.RowRange) target_;
     }
     return com.google.bigtable.v1.RowRange.getDefaultInstance();
+  }
+
+  public static final int ROW_SET_FIELD_NUMBER = 8;
+  /**
+   * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+   *
+   * <pre>
+   * A set of rows from which to read. Entries need not be in order, and will
+   * be deduplicated before reading.
+   * The total serialized size of the set must not exceed 1MB.
+   * </pre>
+   */
+  public com.google.bigtable.v1.RowSet getRowSet() {
+    if (targetCase_ == 8) {
+       return (com.google.bigtable.v1.RowSet) target_;
+    }
+    return com.google.bigtable.v1.RowSet.getDefaultInstance();
+  }
+  /**
+   * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+   *
+   * <pre>
+   * A set of rows from which to read. Entries need not be in order, and will
+   * be deduplicated before reading.
+   * The total serialized size of the set must not exceed 1MB.
+   * </pre>
+   */
+  public com.google.bigtable.v1.RowSetOrBuilder getRowSetOrBuilder() {
+    if (targetCase_ == 8) {
+       return (com.google.bigtable.v1.RowSet) target_;
+    }
+    return com.google.bigtable.v1.RowSet.getDefaultInstance();
   }
 
   public static final int FILTER_FIELD_NUMBER = 5;
@@ -336,6 +384,9 @@ public  final class ReadRowsRequest extends
     if (numRowsLimit_ != 0L) {
       output.writeInt64(7, numRowsLimit_);
     }
+    if (targetCase_ == 8) {
+      output.writeMessage(8, (com.google.bigtable.v1.RowSet) target_);
+    }
   }
 
   public int getSerializedSize() {
@@ -366,6 +417,10 @@ public  final class ReadRowsRequest extends
     if (numRowsLimit_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(7, numRowsLimit_);
+    }
+    if (targetCase_ == 8) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(8, (com.google.bigtable.v1.RowSet) target_);
     }
     memoizedSize = size;
     return size;
@@ -529,6 +584,13 @@ public  final class ReadRowsRequest extends
           result.target_ = rowRangeBuilder_.build();
         }
       }
+      if (targetCase_ == 8) {
+        if (rowSetBuilder_ == null) {
+          result.target_ = target_;
+        } else {
+          result.target_ = rowSetBuilder_.build();
+        }
+      }
       if (filterBuilder_ == null) {
         result.filter_ = filter_;
       } else {
@@ -572,6 +634,10 @@ public  final class ReadRowsRequest extends
         }
         case ROW_RANGE: {
           mergeRowRange(other.getRowRange());
+          break;
+        }
+        case ROW_SET: {
+          mergeRowSet(other.getRowSet());
           break;
         }
         case TARGET_NOT_SET: {
@@ -913,6 +979,184 @@ public  final class ReadRowsRequest extends
       targetCase_ = 3;
       onChanged();;
       return rowRangeBuilder_;
+    }
+
+    private com.google.protobuf.SingleFieldBuilder<
+        com.google.bigtable.v1.RowSet, com.google.bigtable.v1.RowSet.Builder, com.google.bigtable.v1.RowSetOrBuilder> rowSetBuilder_;
+    /**
+     * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+     *
+     * <pre>
+     * A set of rows from which to read. Entries need not be in order, and will
+     * be deduplicated before reading.
+     * The total serialized size of the set must not exceed 1MB.
+     * </pre>
+     */
+    public com.google.bigtable.v1.RowSet getRowSet() {
+      if (rowSetBuilder_ == null) {
+        if (targetCase_ == 8) {
+          return (com.google.bigtable.v1.RowSet) target_;
+        }
+        return com.google.bigtable.v1.RowSet.getDefaultInstance();
+      } else {
+        if (targetCase_ == 8) {
+          return rowSetBuilder_.getMessage();
+        }
+        return com.google.bigtable.v1.RowSet.getDefaultInstance();
+      }
+    }
+    /**
+     * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+     *
+     * <pre>
+     * A set of rows from which to read. Entries need not be in order, and will
+     * be deduplicated before reading.
+     * The total serialized size of the set must not exceed 1MB.
+     * </pre>
+     */
+    public Builder setRowSet(com.google.bigtable.v1.RowSet value) {
+      if (rowSetBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        target_ = value;
+        onChanged();
+      } else {
+        rowSetBuilder_.setMessage(value);
+      }
+      targetCase_ = 8;
+      return this;
+    }
+    /**
+     * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+     *
+     * <pre>
+     * A set of rows from which to read. Entries need not be in order, and will
+     * be deduplicated before reading.
+     * The total serialized size of the set must not exceed 1MB.
+     * </pre>
+     */
+    public Builder setRowSet(
+        com.google.bigtable.v1.RowSet.Builder builderForValue) {
+      if (rowSetBuilder_ == null) {
+        target_ = builderForValue.build();
+        onChanged();
+      } else {
+        rowSetBuilder_.setMessage(builderForValue.build());
+      }
+      targetCase_ = 8;
+      return this;
+    }
+    /**
+     * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+     *
+     * <pre>
+     * A set of rows from which to read. Entries need not be in order, and will
+     * be deduplicated before reading.
+     * The total serialized size of the set must not exceed 1MB.
+     * </pre>
+     */
+    public Builder mergeRowSet(com.google.bigtable.v1.RowSet value) {
+      if (rowSetBuilder_ == null) {
+        if (targetCase_ == 8 &&
+            target_ != com.google.bigtable.v1.RowSet.getDefaultInstance()) {
+          target_ = com.google.bigtable.v1.RowSet.newBuilder((com.google.bigtable.v1.RowSet) target_)
+              .mergeFrom(value).buildPartial();
+        } else {
+          target_ = value;
+        }
+        onChanged();
+      } else {
+        if (targetCase_ == 8) {
+          rowSetBuilder_.mergeFrom(value);
+        }
+        rowSetBuilder_.setMessage(value);
+      }
+      targetCase_ = 8;
+      return this;
+    }
+    /**
+     * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+     *
+     * <pre>
+     * A set of rows from which to read. Entries need not be in order, and will
+     * be deduplicated before reading.
+     * The total serialized size of the set must not exceed 1MB.
+     * </pre>
+     */
+    public Builder clearRowSet() {
+      if (rowSetBuilder_ == null) {
+        if (targetCase_ == 8) {
+          targetCase_ = 0;
+          target_ = null;
+          onChanged();
+        }
+      } else {
+        if (targetCase_ == 8) {
+          targetCase_ = 0;
+          target_ = null;
+        }
+        rowSetBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+     *
+     * <pre>
+     * A set of rows from which to read. Entries need not be in order, and will
+     * be deduplicated before reading.
+     * The total serialized size of the set must not exceed 1MB.
+     * </pre>
+     */
+    public com.google.bigtable.v1.RowSet.Builder getRowSetBuilder() {
+      return getRowSetFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+     *
+     * <pre>
+     * A set of rows from which to read. Entries need not be in order, and will
+     * be deduplicated before reading.
+     * The total serialized size of the set must not exceed 1MB.
+     * </pre>
+     */
+    public com.google.bigtable.v1.RowSetOrBuilder getRowSetOrBuilder() {
+      if ((targetCase_ == 8) && (rowSetBuilder_ != null)) {
+        return rowSetBuilder_.getMessageOrBuilder();
+      } else {
+        if (targetCase_ == 8) {
+          return (com.google.bigtable.v1.RowSet) target_;
+        }
+        return com.google.bigtable.v1.RowSet.getDefaultInstance();
+      }
+    }
+    /**
+     * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
+     *
+     * <pre>
+     * A set of rows from which to read. Entries need not be in order, and will
+     * be deduplicated before reading.
+     * The total serialized size of the set must not exceed 1MB.
+     * </pre>
+     */
+    private com.google.protobuf.SingleFieldBuilder<
+        com.google.bigtable.v1.RowSet, com.google.bigtable.v1.RowSet.Builder, com.google.bigtable.v1.RowSetOrBuilder> 
+        getRowSetFieldBuilder() {
+      if (rowSetBuilder_ == null) {
+        if (!(targetCase_ == 8)) {
+          target_ = com.google.bigtable.v1.RowSet.getDefaultInstance();
+        }
+        rowSetBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+            com.google.bigtable.v1.RowSet, com.google.bigtable.v1.RowSet.Builder, com.google.bigtable.v1.RowSetOrBuilder>(
+                (com.google.bigtable.v1.RowSet) target_,
+                getParentForChildren(),
+                isClean());
+        target_ = null;
+      }
+      targetCase_ = 8;
+      onChanged();;
+      return rowSetBuilder_;
     }
 
     private com.google.bigtable.v1.RowFilter filter_ = null;
