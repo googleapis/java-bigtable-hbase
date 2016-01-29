@@ -64,7 +64,6 @@ public class TestColumnFamilyAdmin extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testCreateTableFull() throws IOException {
     HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
     Assert.assertEquals(descriptor, retrievedDescriptor);
@@ -86,7 +85,6 @@ public class TestColumnFamilyAdmin extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testAddAndCompareColumn() throws IOException {
     HColumnDescriptor newColumn = new HColumnDescriptor("NEW_COLUMN");
     admin.addColumn(tableName, newColumn);
@@ -100,7 +98,6 @@ public class TestColumnFamilyAdmin extends AbstractTest {
 
 
   @Test
-  @Category(KnownGap.class)
   public void testRemoveColumn() throws IOException {
     admin.deleteColumn(tableName, DELETE_COLUMN_FAMILY);
     HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);

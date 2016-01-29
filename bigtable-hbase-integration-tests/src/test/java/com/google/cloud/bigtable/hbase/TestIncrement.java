@@ -53,7 +53,6 @@ public class TestIncrement extends AbstractTest {
    * Requirement 6.4 - Return post-increment value(s)
    */
   @Test
-  @Category(KnownGap.class)
   public void testIncrement() throws IOException {
     // Initialize data
     try (Table table = getConnection().getTable(TABLE_NAME)){
