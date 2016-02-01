@@ -56,7 +56,7 @@ public class CredentialInterceptorCache {
    *   <li> Look up the credentials
    *   <li> If there are credentials, create a gRPC interceptor that gets OAuth2 security tokens
    *        and add that token as a header on all calls.
-   *        <br/>NOTE: {@link RefreshingOAuth2CredentialsInterceptor} ensures that the token stays
+   *        <br>NOTE: {@link RefreshingOAuth2CredentialsInterceptor} ensures that the token stays
    *        fresh. It does token lookups asynchronously so that the calls themselves take as little
    *        performance penalty as possible.
    *   <li> Cache the interceptor in step #2 if the {@link CredentialOptions} uses
