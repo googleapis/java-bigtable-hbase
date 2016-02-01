@@ -56,7 +56,6 @@ public class TestBatch extends AbstractTest {
    * a batch() operation.
    */
   @Test
-  @Category(KnownGap.class)
   public void testBatchPutGetAndDelete() throws IOException, InterruptedException {
     // Initialize data
     Table table = getConnection().getTable(TABLE_NAME);
