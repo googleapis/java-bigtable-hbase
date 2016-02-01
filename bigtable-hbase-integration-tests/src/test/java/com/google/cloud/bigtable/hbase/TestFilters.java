@@ -328,6 +328,7 @@ public class TestFilters extends AbstractTest {
    * Bytes.compareTo(byte[], byte[]).
    */
   @Test
+  @Category(KnownGap.class)
   public void testRowFilterBinaryComparator() throws Exception {
     // Initialize data
     Table table = getConnection().getTable(TABLE_NAME);
