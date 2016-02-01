@@ -88,7 +88,7 @@ public class AsyncExecutor {
       };
 
   /**
-   * Calls {@link BigtableDataClient#readRowsAsync(ReadRowsRequest))}.
+   * Calls {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)}.
    */
   protected static AsyncCall<ReadRowsRequest, List<Row>> READ_ROWS_ASYNC =
       new AsyncCall<ReadRowsRequest, List<Row>>() {
@@ -140,7 +140,7 @@ public class AsyncExecutor {
   }
 
   /**
-   * Performs a {@link BigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRowRequest))} on the
+   * Performs a {@link BigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRowRequest)} on the
    * {@link ReadModifyWriteRowRequest} given an operationId generated from
    * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
    *
@@ -157,7 +157,7 @@ public class AsyncExecutor {
   }
 
   /**
-   * Performs a {@link BigtableDataClient#readRowsAsync(ReadRowsRequest))} on the
+   * Performs a {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
    * {@link ReadRowsRequest} given an operationId generated from
    * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
    *
@@ -184,7 +184,7 @@ public class AsyncExecutor {
   }
 
   /**
-   * Performs a {@link BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest))} on the
+   * Performs a {@link BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest)} on the
    * {@link CheckAndMutateRowRequest}. This method may block if
    * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
    *
