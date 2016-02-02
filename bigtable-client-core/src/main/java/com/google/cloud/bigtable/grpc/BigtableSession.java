@@ -22,7 +22,6 @@ import io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -80,11 +79,6 @@ import com.google.common.util.concurrent.MoreExecutors;
  */
 public class BigtableSession implements AutoCloseable {
 
-  public static final String BATCH_POOL_THREAD_NAME = "bigtable-batch-pool";
-  public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
-  /** Number of threads to use to initiate retry calls */
-  public static final int RETRY_THREAD_COUNT = 4;
-  public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
 
@@ -198,44 +192,16 @@ public class BigtableSession implements AutoCloseable {
     connectionStartupExecutor.shutdown();
   }
 
-  protected static ExecutorService createDefaultBatchPool() {
-    return Executors
-        .newCachedThreadPool(ThreadPoolUtil.createThreadFactory(BATCH_POOL_THREAD_NAME));
-  }
-
-  protected static EventLoopGroup createDefaultEventLoopGroup() {
-    return new NioEventLoopGroup(0, ThreadPoolUtil.createThreadFactory(GRPC_EVENTLOOP_GROUP_NAME));
-  }
-
-  protected static ScheduledExecutorService createDefaultRetryExecutor() {
-    return Executors.newScheduledThreadPool(RETRY_THREAD_COUNT,
-      ThreadPoolUtil.createThreadFactory(RETRY_THREADPOOL_NAME));
-  }
-
   private BigtableDataClient dataClient;
   private BigtableTableAdminClient tableAdminClient;
   private BigtableClusterAdminClient clusterAdminClient;
 
   private final BigtableOptions options;
-  private final ExecutorService batchPool;
-  private final boolean terminateBatchPool;
-  private final EventLoopGroup elg;
-  private final ScheduledExecutorService scheduledRetries;
   private final List<Closeable> clientCloseHandlers = Collections
       .synchronizedList(new ArrayList<Closeable>());
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
 
   public BigtableSession(BigtableOptions options) throws IOException {
-    this (options, null, null, null);
-  }
-
-  public BigtableSession(BigtableOptions options, ExecutorService batchPool) throws IOException {
-    this(options, batchPool, null, null);
-  }
-
-  public BigtableSession(BigtableOptions options, @Nullable ExecutorService batchPool,
-      @Nullable EventLoopGroup elg, @Nullable ScheduledExecutorService scheduledRetries)
-      throws IOException {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(options.getProjectId()), PROJECT_ID_EMPTY_OR_NULL);
     Preconditions.checkArgument(
@@ -244,63 +210,92 @@ public class BigtableSession implements AutoCloseable {
         !Strings.isNullOrEmpty(options.getClusterId()), CLUSTER_ID_EMPTY_OR_NULL);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(options.getUserAgent()), USER_AGENT_EMPTY_OR_NULL);
-    LOG.info("Opening connection for projectId %s, zoneId %s, clusterId %s, " +
-        "on data host %s, table admin host %s.",
-        options.getProjectId(), options.getZoneId(), options.getClusterId(),
-        options.getDataHost(), options.getTableAdminHost());
-    if(!isAlpnProviderEnabled()) {
-      LOG.error("Neither Jetty ALPN nor OpenSSL are available. " +
-          "OpenSSL unavailability cause:\n%s", OpenSsl.unavailabilityCause().toString());
-      throw new IllegalStateException("Neither Jetty ALPN nor OpenSSL via " +
-          "netty-tcnative were properly configured.");
-    }
-    if (batchPool == null) {
-      this.terminateBatchPool = true;
-      this.batchPool = createDefaultBatchPool();
-    } else {
-      this.terminateBatchPool = false;
-      this.batchPool = batchPool;
+    LOG.info(
+        "Opening connection for projectId %s, zoneId %s, clusterId %s, "
+        + "on data host %s, table admin host %s.",
+        options.getProjectId(), options.getZoneId(), options.getClusterId(), options.getDataHost(),
+        options.getTableAdminHost());
+    if (!isAlpnProviderEnabled()) {
+      LOG.error(
+          "Neither Jetty ALPN nor OpenSSL are available. "
+          + "OpenSSL unavailability cause:\n%s",
+          OpenSsl.unavailabilityCause().toString());
+      throw new IllegalStateException("Neither Jetty ALPN nor OpenSSL via "
+          + "netty-tcnative were properly configured.");
     }
     this.options = options;
+
     Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
+    ExecutorService initializerExecutor =
+        Executors.newCachedThreadPool(ThreadPoolUtil.createThreadFactory("BigtableSessionInit"));
 
-    // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
-    // take as long, but still take time. Get the credentials on one thread, and start up the elg
-    // and scheduledRetries thread pools on another thread.
+    try {
+      // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
+      // take as long, but still take time. Get the credentials on one thread, and start up the elg
+      // and scheduledRetries thread pools on another thread.
+      Future<Void> credentialsFuture =
+          initializerExecutor.submit(createCredentialsCallback(headerInterceptorBuilder));
 
-    Future<Void> credentialsFuture =
-        this.batchPool.submit(createCredentialsCallback(headerInterceptorBuilder));
-    this.elg = (elg == null) ? createDefaultEventLoopGroup() : elg;
+      // Make sure that the credentialsFuture is complete before proceeding. If an exception occurs
+      // in that future, then throw that exception. The completion is important, but the results are
+      // not.
+      get(credentialsFuture, "Could not initialize credentials");
 
-    this.scheduledRetries =
-        (scheduledRetries == null) ? createDefaultRetryExecutor() : scheduledRetries;
+      headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
+      headerInterceptors = headerInterceptorBuilder.build();
 
-    headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
+      Future<BigtableDataClient> dataClientFuture =
+          initializerExecutor.submit(new Callable<BigtableDataClient>() {
+            @Override
+            public BigtableDataClient call() throws Exception {
+              return initializeDataClient();
+            }
+          });
 
-    // Make sure that the credentialsFuture is complete before proceeding. If an exception occurs in
-    // that future, then throw that exception. The completion is important, but the results are not.
-    get(credentialsFuture, "Could not initialize credentials");
+      Future<BigtableTableAdminClient> tableAdminFuture =
+          initializerExecutor.submit(new Callable<BigtableTableAdminClient>() {
+            @Override
+            public BigtableTableAdminClient call() throws Exception {
+              return initializeAdminClient();
+            }
+          });
 
-    headerInterceptors = headerInterceptorBuilder.build();
+      this.dataClient = get(dataClientFuture, "Could not initialize the data API client");
+      this.tableAdminClient = get(tableAdminFuture, "Could not initialize the table Admin client");
+    } finally {
+      initializerExecutor.shutdown();
+    }
+  }
 
-    Future<BigtableDataClient> dataClientFuture =
-        this.batchPool.submit(new Callable<BigtableDataClient>() {
-          @Override
-          public BigtableDataClient call() throws Exception {
-            return initializeDataClient();
-          }
-        });
+  /**
+   * Use {@link BigtableSession#BigtableSession(BigtableOptions)} instead;
+   */
+  @Deprecated
+  public BigtableSession(BigtableOptions options, ExecutorService batchPool) throws IOException {
+    this(options);
+  }
 
-    Future<BigtableTableAdminClient> tableAdminFuture =
-        this.batchPool.submit(new Callable<BigtableTableAdminClient>() {
-          @Override
-          public BigtableTableAdminClient call() throws Exception {
-            return initializeAdminClient();
-          }
-        });
-
-    this.dataClient = get(dataClientFuture, "Could not initialize the data API client");
-    this.tableAdminClient = get(tableAdminFuture, "Could not initialize the table Admin client");
+  /**
+   * Use {@link BigtableSession#BigtableSession(BigtableOptions)} instead;
+   */
+  @Deprecated
+  public BigtableSession(BigtableOptions options,
+      @Nullable ExecutorService batchPool, @Nullable EventLoopGroup elg,
+      @Nullable ScheduledExecutorService scheduledRetries) throws IOException {
+    this(options);
+    if (elg != null) {
+      // There used to be a default EventLoopGroup if the elg is not passed in.
+      // AbstractBigtableConnection never sent one in, but some users may have. With the shared
+      // threadpools, the user supplied EventLoopGroup is no longer used. Previously, the elg would
+      // have been shut down in BigtableSession.close(), so shut it here.
+      elg.shutdown();
+    }
+    if (scheduledRetries != null) {
+      // Just like the EventLoopGroup, the schedule retries threadpool used to be a user feature
+      // that wasn't often used. It was shutdown in the close() method. Since it's no longer used,
+      // shut it down immediately.
+      scheduledRetries.shutdown();
+    }
   }
 
   protected Callable<Void>
@@ -327,7 +322,9 @@ public class BigtableSession implements AutoCloseable {
 
   private BigtableDataClient initializeDataClient() throws IOException {
     ChannelPool dataChannel = createChannel(options.getDataHost());
-    return new BigtableDataGrpcClient(dataChannel, batchPool, scheduledRetries, options);
+    BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
+    return new BigtableDataGrpcClient(dataChannel, sharedPools.getBatchThreadPool(),
+        sharedPools.getRetryExecutor(), options);
   }
 
   private BigtableTableAdminClient initializeAdminClient() throws IOException {
@@ -388,12 +385,13 @@ public class BigtableSession implements AutoCloseable {
   }
 
   protected Channel createNettyChannel(final String host) throws IOException {
+    BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
     return NettyChannelBuilder
         .forAddress(host, options.getPort())
         .maxMessageSize(256 * 1024 * 1024) // 256 MB, server has 256 MB limit.
         .sslContext(createSslContext())
-        .eventLoopGroup(elg)
-        .executor(batchPool)
+        .eventLoopGroup(sharedPools.getElg())
+        .executor(sharedPools.getBatchThreadPool())
         .negotiationType(NegotiationType.TLS)
         .flowControlWindow(1 << 20) // 1 MB -- TODO(sduskis): make this configurable
         .build();
@@ -422,38 +420,21 @@ public class BigtableSession implements AutoCloseable {
   @Override
   public void close() throws IOException {
     List<ListenableFuture<Void>> closingChannelsFutures = new ArrayList<>();
-    ListeningExecutorService listenableBatchPool = MoreExecutors.listeningDecorator(batchPool);
+    ListeningExecutorService listenableBatchPool = MoreExecutors
+        .listeningDecorator(BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
     for (final Closeable clientCloseHandler : clientCloseHandlers) {
-      closingChannelsFutures.add(listenableBatchPool.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          clientCloseHandler.close();
-          return null;
-        }
-      }));
+      closingChannelsFutures.add(listenableBatchPool.submit(createCallable(clientCloseHandler)));
     }
-    try {
-      Futures.allAsList(closingChannelsFutures).get();
-    } catch (InterruptedException e) {
-      Thread.interrupted();
-      throw new IOException("Interrupted while waiting for channels to be closed", e);
-    } catch (ExecutionException e) {
-      throw new IOException("Exception while waiting for channels to be closed", e);
-    }
-    elg.shutdownGracefully();
-    scheduledRetries.shutdown();
-    awaiteTerminated(scheduledRetries);
-    if (terminateBatchPool) {
-      batchPool.shutdown();
-      awaiteTerminated(batchPool);
-    }
-    // Don't wait for elg to shut down.
+    get(Futures.allAsList(closingChannelsFutures), "waiting for channels to be closed");
   }
 
-  private static void awaiteTerminated(ExecutorService executorService) {
-    while (!executorService.isTerminated()) {
-      MoreExecutors.shutdownAndAwaitTermination(executorService, 5, TimeUnit.SECONDS);
-    }
+  protected Callable<Void> createCallable(final Closeable clientCloseHandler) {
+    return new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        clientCloseHandler.close();
+        return null;
+      }
+    };
   }
 }
-
