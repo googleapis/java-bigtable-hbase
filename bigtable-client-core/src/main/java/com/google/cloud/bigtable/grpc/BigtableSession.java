@@ -30,7 +30,6 @@ import io.netty.handler.ssl.SslContextBuilder;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -373,35 +372,24 @@ public class BigtableSession implements AutoCloseable {
    * Create a new Channel, with auth headers and user agent interceptors.
    * </p>
    */
-  protected ChannelPool createChannel(String hostString) throws IOException {
-    final InetSocketAddress host = new InetSocketAddress(getHost(hostString), options.getPort());
+  protected ChannelPool createChannel(final String hostString) throws IOException {
     return new ChannelPool(headerInterceptors, new ChannelPool.ChannelFactory() {
       @Override
       public Channel create() throws IOException {
-        ReconnectingChannel reconnectingChannel = createReconnectingChannel(host);
+        ReconnectingChannel reconnectingChannel = createReconnectingChannel(hostString);
         clientCloseHandlers.add(reconnectingChannel);
         return reconnectingChannel;
       }
     });
   }
 
-  private InetAddress getHost(String hostName) throws IOException {
-    String overrideIp = options.getOverrideIp();
-    if (overrideIp == null) {
-      return InetAddress.getByName(hostName);
-    } else {
-      InetAddress override = InetAddress.getByName(overrideIp);
-      return InetAddress.getByAddress(hostName, override.getAddress());
-    }
-  }
-
-  protected ReconnectingChannel createReconnectingChannel(final InetSocketAddress host)
+  protected ReconnectingChannel createReconnectingChannel(final String host)
       throws IOException {
     return new ReconnectingChannel(options.getTimeoutMs(), new ReconnectingChannel.Factory() {
       @Override
       public Channel createChannel() throws IOException {
         return NettyChannelBuilder
-            .forAddress(host)
+            .forAddress(host, options.getPort())
             .maxMessageSize(256 * 1024 * 1024) // 256 MB, server has 256 MB limit.
             .sslContext(createSslContext())
             .eventLoopGroup(elg)

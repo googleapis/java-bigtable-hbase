@@ -53,11 +53,6 @@ public class BigtableOptionsFactory {
   public static final String ZONE_KEY = "google.bigtable.zone.name";
 
   /**
-   * If set, bypass DNS host lookup and use the given IP address.
-   */
-  public static final String IP_OVERRIDE_KEY = "google.bigtable.endpoint.ip.address.override";
-
-  /**
    * Key to set to enable service accounts to be used, either metadata server-based or P12-based.
    * Defaults to enabled.
    */
@@ -152,12 +147,6 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
     bigtableOptionsBuilder.setZoneId(getValue(configuration, ZONE_KEY, "Zone"));
     bigtableOptionsBuilder.setClusterId(getValue(configuration, CLUSTER_KEY, "Cluster"));
-
-    String overrideIp = configuration.get(IP_OVERRIDE_KEY);
-    if (!isNullOrEmpty(overrideIp)) {
-      LOG.debug("Using override IP address %s", overrideIp);
-      bigtableOptionsBuilder.setOverrideIp(overrideIp);
-    }
 
     bigtableOptionsBuilder.setDataHost(
         getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));

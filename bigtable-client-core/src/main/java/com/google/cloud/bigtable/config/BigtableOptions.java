@@ -68,7 +68,6 @@ public class BigtableOptions implements Serializable {
     private String tableAdminHost = BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
     private String clusterAdminHost = BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT;
     private int port = BIGTABLE_PORT_DEFAULT;
-    private String overrideIp;
 
     // The default credentials get credential from well known locations, such as the GCE
     // metdata service or gcloud configuration in other environments. A user can also override
@@ -93,7 +92,6 @@ public class BigtableOptions implements Serializable {
       this.tableAdminHost = original.tableAdminHost;
       this.clusterAdminHost = original.clusterAdminHost;
       this.port = original.port;
-      this.overrideIp = original.overrideIp;
       this.credentialOptions = original.credentialOptions;
       this.retryOptions = original.retryOptions;
       this.timeoutMs = original.timeoutMs;
@@ -113,15 +111,6 @@ public class BigtableOptions implements Serializable {
 
     public Builder setDataHost(String dataHost) {
       this.dataHost = dataHost;
-      return this;
-    }
-
-    /**
-     * Override IP the for all *Hosts.  This is used for Cloud Bigtable to point to a developer's
-     * Cloud Bigtable server.
-     */
-    public Builder setOverrideIp(String overrideIp) {
-      this.overrideIp = overrideIp;
       return this;
     }
 
@@ -182,7 +171,6 @@ public class BigtableOptions implements Serializable {
           clusterAdminHost,
           tableAdminHost,
           dataHost,
-          overrideIp,
           port,
           projectId,
           zoneId,
@@ -199,7 +187,6 @@ public class BigtableOptions implements Serializable {
   private final String clusterAdminHost;
   private final String tableAdminHost;
   private final String dataHost;
-  private final String overrideIp;
   private final int port;
   private final String projectId;
   private final String zoneId;
@@ -217,7 +204,6 @@ public class BigtableOptions implements Serializable {
       clusterAdminHost = null;
       tableAdminHost = null;
       dataHost = null;
-      overrideIp = null;
       port = 0;
       projectId = null;
       zoneId = null;
@@ -235,7 +221,6 @@ public class BigtableOptions implements Serializable {
       String clusterAdminHost,
       String tableAdminHost,
       String dataHost,
-      String overrideIp,
       int port,
       String projectId,
       String zoneId,
@@ -253,7 +238,6 @@ public class BigtableOptions implements Serializable {
     this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
     this.clusterAdminHost = Preconditions.checkNotNull(clusterAdminHost);
     this.dataHost = Preconditions.checkNotNull(dataHost);
-    this.overrideIp = overrideIp;
     this.port = port;
     this.projectId = projectId;
     this.zoneId = zoneId;
@@ -305,14 +289,6 @@ public class BigtableOptions implements Serializable {
 
   public String getClusterAdminHost() {
     return clusterAdminHost;
-  }
-
-  /**
-   * Returns an override IP for all *Hosts.  This is used for Cloud Bigtable to point to a
-   * developer's Cloud Bigtable server.
-   */
-  public String getOverrideIp() {
-    return overrideIp;
   }
 
   public int getPort() {
@@ -378,7 +354,6 @@ public class BigtableOptions implements Serializable {
         && Objects.equal(clusterAdminHost, other.clusterAdminHost)
         && Objects.equal(tableAdminHost, other.tableAdminHost)
         && Objects.equal(dataHost, other.dataHost)
-        && Objects.equal(overrideIp, other.overrideIp)
         && Objects.equal(projectId, other.projectId)
         && Objects.equal(zoneId, other.zoneId)
         && Objects.equal(clusterId, other.clusterId)
@@ -394,7 +369,6 @@ public class BigtableOptions implements Serializable {
         .add("dataHost", dataHost)
         .add("tableAdminHost", tableAdminHost)
         .add("clusterAdminHost", clusterAdminHost)
-        .add("overrideIp", overrideIp)
         .add("projectId", projectId)
         .add("zoneId", zoneId)
         .add("clusterId", clusterId)
