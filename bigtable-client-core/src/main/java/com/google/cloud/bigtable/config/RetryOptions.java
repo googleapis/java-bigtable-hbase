@@ -285,4 +285,20 @@ public class RetryOptions implements Serializable {
         && streamingBatchSize == other.streamingBatchSize
         && readPartialRowTimeoutMillis == other.readPartialRowTimeoutMillis;
   }
+
+  @Override
+  public int hashCode() {
+    int result;
+    long temp;
+    result = (retriesEnabled ? 1 : 0);
+    result = 31 * result + (retryOnDeadlineExceeded ? 1 : 0);
+    result = 31 * result + initialBackoffMillis;
+    result = 31 * result + maxElaspedBackoffMillis;
+    temp = Double.doubleToLongBits(backoffMultiplier);
+    result = 31 * result + (int) (temp ^ (temp >>> 32));
+    result = 31 * result + streamingBufferSize;
+    result = 31 * result + streamingBatchSize;
+    result = 31 * result + readPartialRowTimeoutMillis;
+    return result;
+  }
 }

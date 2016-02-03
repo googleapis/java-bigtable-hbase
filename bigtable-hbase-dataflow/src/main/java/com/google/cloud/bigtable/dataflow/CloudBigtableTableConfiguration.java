@@ -163,4 +163,11 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     return super.equals(obj)
         && Objects.equals(tableId, ((CloudBigtableTableConfiguration) obj).tableId);
   }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (tableId != null ? tableId.hashCode() : 0);
+    return result;
+  }
 }

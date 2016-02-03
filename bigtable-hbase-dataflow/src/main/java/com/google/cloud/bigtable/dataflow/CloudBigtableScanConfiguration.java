@@ -191,6 +191,11 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
         throw new RuntimeException("Could not check SerializableScan equality", e);
       }
     }
+
+    @Override
+    public int hashCode() {
+      return scan != null ? scan.hashCode() : 0;
+    }
   }
 
   private SerializableScan serializableScan;
@@ -240,6 +245,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     return super.equals(obj)
         && Objects
             .equals(serializableScan, ((CloudBigtableScanConfiguration) obj).serializableScan);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (serializableScan != null ? serializableScan.hashCode() : 0);
+    return result;
   }
 
   @Override
