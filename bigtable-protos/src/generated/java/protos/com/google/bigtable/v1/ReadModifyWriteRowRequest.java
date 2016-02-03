@@ -61,7 +61,7 @@ public  final class ReadModifyWriteRowRequest extends
           }
           case 26: {
             if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-              rules_ = new java.util.ArrayList<com.google.bigtable.v1.ReadModifyWriteRule>();
+              rules_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000004;
             }
             rules_.add(input.readMessage(com.google.bigtable.v1.ReadModifyWriteRule.parser(), extensionRegistry));
@@ -632,7 +632,7 @@ public  final class ReadModifyWriteRowRequest extends
       java.util.Collections.emptyList();
     private void ensureRulesIsMutable() {
       if (!((bitField0_ & 0x00000004) == 0x00000004)) {
-        rules_ = new java.util.ArrayList<com.google.bigtable.v1.ReadModifyWriteRule>(rules_);
+        rules_ = new java.util.ArrayList<>(rules_);
         bitField0_ |= 0x00000004;
        }
     }
@@ -965,8 +965,7 @@ public  final class ReadModifyWriteRowRequest extends
         com.google.bigtable.v1.ReadModifyWriteRule, com.google.bigtable.v1.ReadModifyWriteRule.Builder, com.google.bigtable.v1.ReadModifyWriteRuleOrBuilder> 
         getRulesFieldBuilder() {
       if (rulesBuilder_ == null) {
-        rulesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.v1.ReadModifyWriteRule, com.google.bigtable.v1.ReadModifyWriteRule.Builder, com.google.bigtable.v1.ReadModifyWriteRuleOrBuilder>(
+        rulesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 rules_,
                 ((bitField0_ & 0x00000004) == 0x00000004),
                 getParentForChildren(),

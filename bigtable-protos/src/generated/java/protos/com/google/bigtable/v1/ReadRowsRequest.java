@@ -969,8 +969,7 @@ public  final class ReadRowsRequest extends
         if (!(targetCase_ == 3)) {
           target_ = com.google.bigtable.v1.RowRange.getDefaultInstance();
         }
-        rowRangeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.RowRange, com.google.bigtable.v1.RowRange.Builder, com.google.bigtable.v1.RowRangeOrBuilder>(
+        rowRangeBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.RowRange) target_,
                 getParentForChildren(),
                 isClean());
@@ -1147,8 +1146,7 @@ public  final class ReadRowsRequest extends
         if (!(targetCase_ == 8)) {
           target_ = com.google.bigtable.v1.RowSet.getDefaultInstance();
         }
-        rowSetBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.RowSet, com.google.bigtable.v1.RowSet.Builder, com.google.bigtable.v1.RowSetOrBuilder>(
+        rowSetBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.RowSet) target_,
                 getParentForChildren(),
                 isClean());
@@ -1311,8 +1309,7 @@ public  final class ReadRowsRequest extends
         com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder> 
         getFilterFieldBuilder() {
       if (filterBuilder_ == null) {
-        filterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder>(
+        filterBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getFilter(),
                 getParentForChildren(),
                 isClean());

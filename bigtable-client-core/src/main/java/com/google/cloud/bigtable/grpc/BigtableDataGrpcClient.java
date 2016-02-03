@@ -183,7 +183,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private <ReqT, RespT> ClientCall<ReqT, RespT> createRetryableCall(
       MethodDescriptor<ReqT, RespT> method, Predicate<ReqT> isRetryable, ReqT request) {
     if (retryOptions.enableRetries() && isRetryable.apply(request)) {
-      return new RetryingCall<ReqT, RespT>(channelPool, method, CallOptions.DEFAULT,
+      return new RetryingCall<>(channelPool, method, CallOptions.DEFAULT,
           retryExecutorService, retryOptions);
     } else {
       return channelPool.newCall(method, CallOptions.DEFAULT);

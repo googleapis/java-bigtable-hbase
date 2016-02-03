@@ -932,8 +932,7 @@ public  final class CreateTableRequest extends
         com.google.bigtable.admin.table.v1.Table, com.google.bigtable.admin.table.v1.Table.Builder, com.google.bigtable.admin.table.v1.TableOrBuilder> 
         getTableFieldBuilder() {
       if (tableBuilder_ == null) {
-        tableBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.admin.table.v1.Table, com.google.bigtable.admin.table.v1.Table.Builder, com.google.bigtable.admin.table.v1.TableOrBuilder>(
+        tableBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getTable(),
                 getParentForChildren(),
                 isClean());

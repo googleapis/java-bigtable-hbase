@@ -148,7 +148,7 @@ public  final class HttpRule extends
           }
           case 90: {
             if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
-              additionalBindings_ = new java.util.ArrayList<com.google.api.HttpRule>();
+              additionalBindings_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000080;
             }
             additionalBindings_.add(input.readMessage(com.google.api.HttpRule.parser(), extensionRegistry));
@@ -1688,8 +1688,7 @@ public  final class HttpRule extends
         if (!(patternCase_ == 8)) {
           pattern_ = com.google.api.CustomHttpPattern.getDefaultInstance();
         }
-        customBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.api.CustomHttpPattern, com.google.api.CustomHttpPattern.Builder, com.google.api.CustomHttpPatternOrBuilder>(
+        customBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.api.CustomHttpPattern) pattern_,
                 getParentForChildren(),
                 isClean());
@@ -1803,7 +1802,7 @@ public  final class HttpRule extends
       java.util.Collections.emptyList();
     private void ensureAdditionalBindingsIsMutable() {
       if (!((bitField0_ & 0x00000080) == 0x00000080)) {
-        additionalBindings_ = new java.util.ArrayList<com.google.api.HttpRule>(additionalBindings_);
+        additionalBindings_ = new java.util.ArrayList<>(additionalBindings_);
         bitField0_ |= 0x00000080;
        }
     }
@@ -2118,8 +2117,7 @@ public  final class HttpRule extends
         com.google.api.HttpRule, com.google.api.HttpRule.Builder, com.google.api.HttpRuleOrBuilder> 
         getAdditionalBindingsFieldBuilder() {
       if (additionalBindingsBuilder_ == null) {
-        additionalBindingsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.api.HttpRule, com.google.api.HttpRule.Builder, com.google.api.HttpRuleOrBuilder>(
+        additionalBindingsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 additionalBindings_,
                 ((bitField0_ & 0x00000080) == 0x00000080),
                 getParentForChildren(),

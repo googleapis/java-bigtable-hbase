@@ -83,7 +83,7 @@ public class ColumnDescriptorAdapter {
    * Build a list of configuration keys that we don't know how to handle
    */
   public static List<String> getUnknownFeatures(HColumnDescriptor columnDescriptor) {
-    List<String> unknownFeatures = new ArrayList<String>();
+    List<String> unknownFeatures = new ArrayList<>();
     for (Map.Entry<String, String> entry : columnDescriptor.getConfiguration().entrySet()) {
       String key = entry.getKey();
       if (!SUPPORTED_OPTION_KEYS.contains(key)
@@ -99,7 +99,7 @@ public class ColumnDescriptorAdapter {
    * Build a Map of configuration keys and values describing configuration values we don't support.
    */
   public static Map<String, String> getUnsupportedFeatures(HColumnDescriptor columnDescriptor) {
-    Map<String, String> unsupportedConfiguration = new HashMap<String, String>();
+    Map<String, String> unsupportedConfiguration = new HashMap<>();
 
     Map<String, String> configuration = columnDescriptor.getConfiguration();
     for (Map.Entry<String, String> entry : SUPPORTED_OPTION_VALUES.entrySet()) {
@@ -133,7 +133,7 @@ public class ColumnDescriptorAdapter {
   public static void throwIfRequestingUnsupportedFeatures(HColumnDescriptor columnDescriptor) {
     Map<String, String> unsupportedConfiguration = getUnsupportedFeatures(columnDescriptor);
     if (!unsupportedConfiguration.isEmpty()) {
-      List<String> configurationStrings = new ArrayList<String>(unsupportedConfiguration.size());
+      List<String> configurationStrings = new ArrayList<>(unsupportedConfiguration.size());
       for (Map.Entry<String, String> entry : unsupportedConfiguration.entrySet()) {
         configurationStrings.add(String.format("(%s: %s)", entry.getKey(), entry.getValue()));
       }

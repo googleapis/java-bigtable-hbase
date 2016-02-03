@@ -777,8 +777,7 @@ public  final class CreateColumnFamilyRequest extends
         com.google.bigtable.admin.table.v1.ColumnFamily, com.google.bigtable.admin.table.v1.ColumnFamily.Builder, com.google.bigtable.admin.table.v1.ColumnFamilyOrBuilder> 
         getColumnFamilyFieldBuilder() {
       if (columnFamilyBuilder_ == null) {
-        columnFamilyBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.admin.table.v1.ColumnFamily, com.google.bigtable.admin.table.v1.ColumnFamily.Builder, com.google.bigtable.admin.table.v1.ColumnFamilyOrBuilder>(
+        columnFamilyBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getColumnFamily(),
                 getParentForChildren(),
                 isClean());

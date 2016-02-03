@@ -56,7 +56,7 @@ public  final class QuotaFailure extends
           }
           case 10: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              violations_ = new java.util.ArrayList<com.google.rpc.QuotaFailure.Violation>();
+              violations_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000001;
             }
             violations_.add(input.readMessage(com.google.rpc.QuotaFailure.Violation.parser(), extensionRegistry));
@@ -1131,7 +1131,7 @@ public  final class QuotaFailure extends
       java.util.Collections.emptyList();
     private void ensureViolationsIsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        violations_ = new java.util.ArrayList<com.google.rpc.QuotaFailure.Violation>(violations_);
+        violations_ = new java.util.ArrayList<>(violations_);
         bitField0_ |= 0x00000001;
        }
     }
@@ -1428,8 +1428,7 @@ public  final class QuotaFailure extends
         com.google.rpc.QuotaFailure.Violation, com.google.rpc.QuotaFailure.Violation.Builder, com.google.rpc.QuotaFailure.ViolationOrBuilder> 
         getViolationsFieldBuilder() {
       if (violationsBuilder_ == null) {
-        violationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.rpc.QuotaFailure.Violation, com.google.rpc.QuotaFailure.Violation.Builder, com.google.rpc.QuotaFailure.ViolationOrBuilder>(
+        violationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 violations_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
                 getParentForChildren(),

@@ -357,7 +357,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   @Override
   public HTableDescriptor[] deleteTables(Pattern pattern) throws IOException {
-    List<HTableDescriptor> failed = new LinkedList<HTableDescriptor>();
+    List<HTableDescriptor> failed = new LinkedList<>();
     for (HTableDescriptor table : listTables(pattern)) {
       try {
         deleteTable(table.getTableName());

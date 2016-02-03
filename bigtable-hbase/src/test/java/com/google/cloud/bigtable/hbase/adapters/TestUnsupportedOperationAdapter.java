@@ -32,7 +32,7 @@ public class TestUnsupportedOperationAdapter {
   @Test
   public void testUnsupportedOperationExceptionIsThrownOnUse() {
     UnsupportedOperationAdapter<Append> unsupportedOperationAdapter =
-        new UnsupportedOperationAdapter<Append>("append");
+            new UnsupportedOperationAdapter<>("append");
 
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("operation is unsupported");

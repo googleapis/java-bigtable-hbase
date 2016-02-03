@@ -48,7 +48,7 @@ public  final class MutateRowsResponse extends
           }
           case 10: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              statuses_ = new java.util.ArrayList<com.google.rpc.Status>();
+              statuses_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000001;
             }
             statuses_.add(input.readMessage(com.google.rpc.Status.parser(), extensionRegistry));
@@ -393,7 +393,7 @@ public  final class MutateRowsResponse extends
       java.util.Collections.emptyList();
     private void ensureStatusesIsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        statuses_ = new java.util.ArrayList<com.google.rpc.Status>(statuses_);
+        statuses_ = new java.util.ArrayList<>(statuses_);
         bitField0_ |= 0x00000001;
        }
     }
@@ -708,8 +708,7 @@ public  final class MutateRowsResponse extends
         com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder> 
         getStatusesFieldBuilder() {
       if (statusesBuilder_ == null) {
-        statusesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder>(
+        statusesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 statuses_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
                 getParentForChildren(),

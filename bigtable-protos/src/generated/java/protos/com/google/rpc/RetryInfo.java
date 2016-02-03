@@ -496,8 +496,7 @@ public  final class RetryInfo extends
         com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> 
         getRetryDelayFieldBuilder() {
       if (retryDelayBuilder_ == null) {
-        retryDelayBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder>(
+        retryDelayBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getRetryDelay(),
                 getParentForChildren(),
                 isClean());

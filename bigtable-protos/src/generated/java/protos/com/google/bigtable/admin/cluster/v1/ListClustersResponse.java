@@ -49,7 +49,7 @@ public  final class ListClustersResponse extends
           }
           case 10: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              clusters_ = new java.util.ArrayList<com.google.bigtable.admin.cluster.v1.Cluster>();
+              clusters_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000001;
             }
             clusters_.add(input.readMessage(com.google.bigtable.admin.cluster.v1.Cluster.parser(), extensionRegistry));
@@ -57,7 +57,7 @@ public  final class ListClustersResponse extends
           }
           case 18: {
             if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-              failedZones_ = new java.util.ArrayList<com.google.bigtable.admin.cluster.v1.Zone>();
+              failedZones_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000002;
             }
             failedZones_.add(input.readMessage(com.google.bigtable.admin.cluster.v1.Zone.parser(), extensionRegistry));
@@ -504,7 +504,7 @@ public  final class ListClustersResponse extends
       java.util.Collections.emptyList();
     private void ensureClustersIsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        clusters_ = new java.util.ArrayList<com.google.bigtable.admin.cluster.v1.Cluster>(clusters_);
+        clusters_ = new java.util.ArrayList<>(clusters_);
         bitField0_ |= 0x00000001;
        }
     }
@@ -801,8 +801,7 @@ public  final class ListClustersResponse extends
         com.google.bigtable.admin.cluster.v1.Cluster, com.google.bigtable.admin.cluster.v1.Cluster.Builder, com.google.bigtable.admin.cluster.v1.ClusterOrBuilder> 
         getClustersFieldBuilder() {
       if (clustersBuilder_ == null) {
-        clustersBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.admin.cluster.v1.Cluster, com.google.bigtable.admin.cluster.v1.Cluster.Builder, com.google.bigtable.admin.cluster.v1.ClusterOrBuilder>(
+        clustersBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 clusters_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
                 getParentForChildren(),
@@ -816,7 +815,7 @@ public  final class ListClustersResponse extends
       java.util.Collections.emptyList();
     private void ensureFailedZonesIsMutable() {
       if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-        failedZones_ = new java.util.ArrayList<com.google.bigtable.admin.cluster.v1.Zone>(failedZones_);
+        failedZones_ = new java.util.ArrayList<>(failedZones_);
         bitField0_ |= 0x00000002;
        }
     }
@@ -1113,8 +1112,7 @@ public  final class ListClustersResponse extends
         com.google.bigtable.admin.cluster.v1.Zone, com.google.bigtable.admin.cluster.v1.Zone.Builder, com.google.bigtable.admin.cluster.v1.ZoneOrBuilder> 
         getFailedZonesFieldBuilder() {
       if (failedZonesBuilder_ == null) {
-        failedZonesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.admin.cluster.v1.Zone, com.google.bigtable.admin.cluster.v1.Zone.Builder, com.google.bigtable.admin.cluster.v1.ZoneOrBuilder>(
+        failedZonesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 failedZones_,
                 ((bitField0_ & 0x00000002) == 0x00000002),
                 getParentForChildren(),

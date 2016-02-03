@@ -63,7 +63,7 @@ public class TestPut extends AbstractTest {
 
     // Construct put with NUM_CELL random qualifier/value combos
     Put put = new Put(rowKey);
-    List<QualifierValue> keyValues = new ArrayList<QualifierValue>(100);
+    List<QualifierValue> keyValues = new ArrayList<>(100);
     for (int i = 0; i < NUM_CELLS; ++i) {
       put.addColumn(COLUMN_FAMILY, quals[i], values[i]);
       keyValues.add(new QualifierValue(quals[i], values[i]));
@@ -105,9 +105,9 @@ public class TestPut extends AbstractTest {
     byte[][] values = dataHelper.randomData("testValue-", NUM_ROWS);
 
     // Do puts
-    List<Put> puts = new ArrayList<Put>(NUM_ROWS);
-    List<String> keys = new ArrayList<String>(NUM_ROWS);
-    Map<String, QualifierValue> insertedKeyValues = new TreeMap<String, QualifierValue>();
+    List<Put> puts = new ArrayList<>(NUM_ROWS);
+    List<String> keys = new ArrayList<>(NUM_ROWS);
+    Map<String, QualifierValue> insertedKeyValues = new TreeMap<>();
     for (int i = 0; i < NUM_ROWS; ++i) {
       Put put = new Put(rowKeys[i]);
       put.addColumn(COLUMN_FAMILY, qualifiers[i], values[i]);
@@ -120,7 +120,7 @@ public class TestPut extends AbstractTest {
     table.put(puts);
 
     // Get
-    List<Get> gets = new ArrayList<Get>(NUM_ROWS);
+    List<Get> gets = new ArrayList<>(NUM_ROWS);
     Collections.shuffle(keys);  // Retrieve in random order
     for (String key : keys) {
       Get get = new Get(Bytes.toBytes(key));
@@ -143,7 +143,7 @@ public class TestPut extends AbstractTest {
     }
 
     // Delete
-    List<Delete> deletes = new ArrayList<Delete>(NUM_ROWS);
+    List<Delete> deletes = new ArrayList<>(NUM_ROWS);
     for (byte[] rowKey : rowKeys) {
       Delete delete = new Delete(rowKey);
       deletes.add(delete);
@@ -343,7 +343,7 @@ public class TestPut extends AbstractTest {
     }
     multiplePutsOneBad(numberOfGoodPuts, goodkeys, badkey);
 
-    List<Get> gets = new ArrayList<Get>();
+    List<Get> gets = new ArrayList<>();
     for (int i = 0; i < numberOfGoodPuts; ++i) {
       Get get = new Get(goodkeys[i]);
       gets.add(get);
@@ -368,8 +368,8 @@ public class TestPut extends AbstractTest {
 
     // Construct put with NUM_CELL random qualifier/value combos
     Put put = new Put(rowKey);
-    List<QualifierValue> family1KeyValues = new ArrayList<QualifierValue>(100);
-    List<QualifierValue> family2KeyValues = new ArrayList<QualifierValue>(100);
+    List<QualifierValue> family1KeyValues = new ArrayList<>(100);
+    List<QualifierValue> family2KeyValues = new ArrayList<>(100);
     for (int i = 0; i < NUM_CELLS; i++) {
       put.addColumn(COLUMN_FAMILY, quals[i], values[i]);
       family1KeyValues.add(new QualifierValue(quals[i], values[i]));
@@ -416,7 +416,7 @@ public class TestPut extends AbstractTest {
   private void multiplePutsOneBad(int numberOfGoodPuts, byte[][] goodkeys, byte[] badkey)
       throws IOException {
     Table table = getConnection().getTable(TABLE_NAME);
-    List<Put> puts = new ArrayList<Put>();
+    List<Put> puts = new ArrayList<>();
     for (int i = 0; i < numberOfGoodPuts; ++i) {
       byte[] qualifier = Bytes.toBytes("testQualifier-" + RandomStringUtils.randomAlphanumeric(8));
       byte[] value = Bytes.toBytes("testValue-" + RandomStringUtils.randomAlphanumeric(8));

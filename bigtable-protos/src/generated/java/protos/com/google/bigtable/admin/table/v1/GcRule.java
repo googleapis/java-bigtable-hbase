@@ -209,7 +209,7 @@ public  final class GcRule extends
             }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                rules_ = new java.util.ArrayList<com.google.bigtable.admin.table.v1.GcRule>();
+                rules_ = new java.util.ArrayList<>();
                 mutable_bitField0_ |= 0x00000001;
               }
               rules_.add(input.readMessage(com.google.bigtable.admin.table.v1.GcRule.parser(), extensionRegistry));
@@ -549,7 +549,7 @@ public  final class GcRule extends
         java.util.Collections.emptyList();
       private void ensureRulesIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          rules_ = new java.util.ArrayList<com.google.bigtable.admin.table.v1.GcRule>(rules_);
+          rules_ = new java.util.ArrayList<>(rules_);
           bitField0_ |= 0x00000001;
          }
       }
@@ -846,8 +846,7 @@ public  final class GcRule extends
           com.google.bigtable.admin.table.v1.GcRule, com.google.bigtable.admin.table.v1.GcRule.Builder, com.google.bigtable.admin.table.v1.GcRuleOrBuilder> 
           getRulesFieldBuilder() {
         if (rulesBuilder_ == null) {
-          rulesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.google.bigtable.admin.table.v1.GcRule, com.google.bigtable.admin.table.v1.GcRule.Builder, com.google.bigtable.admin.table.v1.GcRuleOrBuilder>(
+          rulesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                   rules_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
@@ -1007,7 +1006,7 @@ public  final class GcRule extends
             }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                rules_ = new java.util.ArrayList<com.google.bigtable.admin.table.v1.GcRule>();
+                rules_ = new java.util.ArrayList<>();
                 mutable_bitField0_ |= 0x00000001;
               }
               rules_.add(input.readMessage(com.google.bigtable.admin.table.v1.GcRule.parser(), extensionRegistry));
@@ -1347,7 +1346,7 @@ public  final class GcRule extends
         java.util.Collections.emptyList();
       private void ensureRulesIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          rules_ = new java.util.ArrayList<com.google.bigtable.admin.table.v1.GcRule>(rules_);
+          rules_ = new java.util.ArrayList<>(rules_);
           bitField0_ |= 0x00000001;
          }
       }
@@ -1644,8 +1643,7 @@ public  final class GcRule extends
           com.google.bigtable.admin.table.v1.GcRule, com.google.bigtable.admin.table.v1.GcRule.Builder, com.google.bigtable.admin.table.v1.GcRuleOrBuilder> 
           getRulesFieldBuilder() {
         if (rulesBuilder_ == null) {
-          rulesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.google.bigtable.admin.table.v1.GcRule, com.google.bigtable.admin.table.v1.GcRule.Builder, com.google.bigtable.admin.table.v1.GcRuleOrBuilder>(
+          rulesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                   rules_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
@@ -2348,8 +2346,7 @@ public  final class GcRule extends
         if (!(ruleCase_ == 2)) {
           rule_ = com.google.protobuf.Duration.getDefaultInstance();
         }
-        maxAgeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder>(
+        maxAgeBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.protobuf.Duration) rule_,
                 getParentForChildren(),
                 isClean());
@@ -2510,8 +2507,7 @@ public  final class GcRule extends
         if (!(ruleCase_ == 3)) {
           rule_ = com.google.bigtable.admin.table.v1.GcRule.Intersection.getDefaultInstance();
         }
-        intersectionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.admin.table.v1.GcRule.Intersection, com.google.bigtable.admin.table.v1.GcRule.Intersection.Builder, com.google.bigtable.admin.table.v1.GcRule.IntersectionOrBuilder>(
+        intersectionBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.admin.table.v1.GcRule.Intersection) rule_,
                 getParentForChildren(),
                 isClean());
@@ -2672,8 +2668,7 @@ public  final class GcRule extends
         if (!(ruleCase_ == 4)) {
           rule_ = com.google.bigtable.admin.table.v1.GcRule.Union.getDefaultInstance();
         }
-        unionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.admin.table.v1.GcRule.Union, com.google.bigtable.admin.table.v1.GcRule.Union.Builder, com.google.bigtable.admin.table.v1.GcRule.UnionOrBuilder>(
+        unionBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.admin.table.v1.GcRule.Union) rule_,
                 getParentForChildren(),
                 isClean());

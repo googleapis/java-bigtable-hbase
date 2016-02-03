@@ -48,7 +48,7 @@ public  final class ListZonesResponse extends
           }
           case 10: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              zones_ = new java.util.ArrayList<com.google.bigtable.admin.cluster.v1.Zone>();
+              zones_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000001;
             }
             zones_.add(input.readMessage(com.google.bigtable.admin.cluster.v1.Zone.parser(), extensionRegistry));
@@ -388,7 +388,7 @@ public  final class ListZonesResponse extends
       java.util.Collections.emptyList();
     private void ensureZonesIsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        zones_ = new java.util.ArrayList<com.google.bigtable.admin.cluster.v1.Zone>(zones_);
+        zones_ = new java.util.ArrayList<>(zones_);
         bitField0_ |= 0x00000001;
        }
     }
@@ -685,8 +685,7 @@ public  final class ListZonesResponse extends
         com.google.bigtable.admin.cluster.v1.Zone, com.google.bigtable.admin.cluster.v1.Zone.Builder, com.google.bigtable.admin.cluster.v1.ZoneOrBuilder> 
         getZonesFieldBuilder() {
       if (zonesBuilder_ == null) {
-        zonesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.admin.cluster.v1.Zone, com.google.bigtable.admin.cluster.v1.Zone.Builder, com.google.bigtable.admin.cluster.v1.ZoneOrBuilder>(
+        zonesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 zones_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
                 getParentForChildren(),

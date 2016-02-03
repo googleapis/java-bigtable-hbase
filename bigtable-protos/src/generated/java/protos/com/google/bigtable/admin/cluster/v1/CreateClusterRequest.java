@@ -823,8 +823,7 @@ public  final class CreateClusterRequest extends
         com.google.bigtable.admin.cluster.v1.Cluster, com.google.bigtable.admin.cluster.v1.Cluster.Builder, com.google.bigtable.admin.cluster.v1.ClusterOrBuilder> 
         getClusterFieldBuilder() {
       if (clusterBuilder_ == null) {
-        clusterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.admin.cluster.v1.Cluster, com.google.bigtable.admin.cluster.v1.Cluster.Builder, com.google.bigtable.admin.cluster.v1.ClusterOrBuilder>(
+        clusterBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getCluster(),
                 getParentForChildren(),
                 isClean());

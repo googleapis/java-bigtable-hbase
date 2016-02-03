@@ -999,8 +999,7 @@ public  final class ColumnFamily extends
         com.google.bigtable.admin.table.v1.GcRule, com.google.bigtable.admin.table.v1.GcRule.Builder, com.google.bigtable.admin.table.v1.GcRuleOrBuilder> 
         getGcRuleFieldBuilder() {
       if (gcRuleBuilder_ == null) {
-        gcRuleBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.admin.table.v1.GcRule, com.google.bigtable.admin.table.v1.GcRule.Builder, com.google.bigtable.admin.table.v1.GcRuleOrBuilder>(
+        gcRuleBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getGcRule(),
                 getParentForChildren(),
                 isClean());

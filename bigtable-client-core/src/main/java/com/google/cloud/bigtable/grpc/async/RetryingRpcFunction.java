@@ -40,7 +40,7 @@ public class RetryingRpcFunction<RequestT, ResponseT>
 
   public static <RequestT, ResponseT> RetryingRpcFunction<RequestT, ResponseT> create(
       RetryOptions retryOptions, RequestT request, RetryableRpc<RequestT, ResponseT> retryableRpc) {
-    return new RetryingRpcFunction<RequestT, ResponseT>(retryOptions, request, retryableRpc);
+    return new RetryingRpcFunction<>(retryOptions, request, retryableRpc);
   }
 
   protected final Log LOG = LogFactory.getLog(RetryingRpcFunction.class);

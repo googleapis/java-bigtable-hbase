@@ -61,7 +61,7 @@ public  final class MutateRowRequest extends
           }
           case 26: {
             if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-              mutations_ = new java.util.ArrayList<com.google.bigtable.v1.Mutation>();
+              mutations_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000004;
             }
             mutations_.add(input.readMessage(com.google.bigtable.v1.Mutation.parser(), extensionRegistry));
@@ -625,7 +625,7 @@ public  final class MutateRowRequest extends
       java.util.Collections.emptyList();
     private void ensureMutationsIsMutable() {
       if (!((bitField0_ & 0x00000004) == 0x00000004)) {
-        mutations_ = new java.util.ArrayList<com.google.bigtable.v1.Mutation>(mutations_);
+        mutations_ = new java.util.ArrayList<>(mutations_);
         bitField0_ |= 0x00000004;
        }
     }
@@ -958,8 +958,7 @@ public  final class MutateRowRequest extends
         com.google.bigtable.v1.Mutation, com.google.bigtable.v1.Mutation.Builder, com.google.bigtable.v1.MutationOrBuilder> 
         getMutationsFieldBuilder() {
       if (mutationsBuilder_ == null) {
-        mutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.v1.Mutation, com.google.bigtable.v1.Mutation.Builder, com.google.bigtable.v1.MutationOrBuilder>(
+        mutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 mutations_,
                 ((bitField0_ & 0x00000004) == 0x00000004),
                 getParentForChildren(),

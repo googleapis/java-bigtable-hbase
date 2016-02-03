@@ -627,8 +627,7 @@ public  final class Option extends
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
         getValueFieldBuilder() {
       if (valueBuilder_ == null) {
-        valueBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>(
+        valueBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getValue(),
                 getParentForChildren(),
                 isClean());
