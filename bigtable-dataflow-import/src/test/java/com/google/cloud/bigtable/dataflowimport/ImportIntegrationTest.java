@@ -118,9 +118,11 @@ public class ImportIntegrationTest {
   @Before
   public void setup() throws Exception {
     commonOptions = PipelineOptionsFactory.as(HBaseImportOptions.class);
-    commonOptions.setBigtableProjectId(
-        checkNotNull(System.getProperty(BigtableOptionsFactory.PROJECT_ID_KEY),
-            "Required property missing: " + BigtableOptionsFactory.PROJECT_ID_KEY));
+    String projectId = checkNotNull(
+        System.getProperty(BigtableOptionsFactory.PROJECT_ID_KEY),
+        "Required property missing: " + BigtableOptionsFactory.PROJECT_ID_KEY);
+    commonOptions.setBigtableProjectId(projectId);
+    commonOptions.setProject(projectId); // Use Bigtable project as dataflow project.
     commonOptions.setBigtableClusterId(
         checkNotNull(System.getProperty(BigtableOptionsFactory.CLUSTER_KEY),
             "Required property missing: " + BigtableOptionsFactory.CLUSTER_KEY));
