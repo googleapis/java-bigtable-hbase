@@ -58,7 +58,6 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
-import com.google.cloud.bigtable.grpc.io.ReconnectingChannel;
 import com.google.cloud.bigtable.grpc.io.UserAgentInterceptor;
 import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import com.google.common.collect.ImmutableList;
@@ -376,55 +375,48 @@ public class BigtableSession implements AutoCloseable {
     return new ChannelPool(headerInterceptors, new ChannelPool.ChannelFactory() {
       @Override
       public Channel create() throws IOException {
-        ReconnectingChannel reconnectingChannel = createReconnectingChannel(hostString);
-        clientCloseHandlers.add(reconnectingChannel);
-        return reconnectingChannel;
+        final Channel channel = createNettyChannel(hostString);
+        clientCloseHandlers.add(new Closeable() {
+          @Override
+          public void close() throws IOException {
+            BigtableSession.close(channel);
+          }
+        });
+        return channel;
       }
     });
   }
 
-  protected ReconnectingChannel createReconnectingChannel(final String host)
-      throws IOException {
-    return new ReconnectingChannel(options.getTimeoutMs(), new ReconnectingChannel.Factory() {
-      @Override
-      public Channel createChannel() throws IOException {
-        return NettyChannelBuilder
-            .forAddress(host, options.getPort())
-            .maxMessageSize(256 * 1024 * 1024) // 256 MB, server has 256 MB limit.
-            .sslContext(createSslContext())
-            .eventLoopGroup(elg)
-            .executor(batchPool)
-            .negotiationType(NegotiationType.TLS)
-            .flowControlWindow(1 << 20) // 1 MB -- TODO(sduskis): make this configurable
-            .build();
-      }
+  protected Channel createNettyChannel(final String host) throws IOException {
+    return NettyChannelBuilder
+        .forAddress(host, options.getPort())
+        .maxMessageSize(256 * 1024 * 1024) // 256 MB, server has 256 MB limit.
+        .sslContext(createSslContext())
+        .eventLoopGroup(elg)
+        .executor(batchPool)
+        .negotiationType(NegotiationType.TLS)
+        .flowControlWindow(1 << 20) // 1 MB -- TODO(sduskis): make this configurable
+        .build();
+  }
 
-      @Override
-      public Closeable createClosable(final Channel channel) {
-        return new Closeable() {
-          @Override
-          public void close() throws IOException {
-            ManagedChannelImpl channelImpl = (ManagedChannelImpl) channel;
-            channelImpl.shutdown();
-            int timeoutMs = 10000;
-            try {
-              channelImpl.awaitTermination(timeoutMs, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-              Thread.interrupted();
-              throw new IOException("Interrupted while sleeping for close", e);
-            }
-            if (!channelImpl.isTerminated()) {
-              // Sometimes, gRPC channels don't close properly. We cannot explain why that happens,
-              // nor can we reproduce the problem reliably. However, that doesn't actually cause
-              // problems. Synchronous RPCs will throw exceptions right away. Buffered Mutator based
-              // async operations are already logged. Direct async operations may have some trouble,
-              // but users should not currently be using them directly.
-              LOG.trace("Could not close the channel after %d ms.", timeoutMs);
-            }
-          }
-        };
-      }
-    });
+  protected static void close(final Channel channel) throws IOException {
+    ManagedChannelImpl channelImpl = (ManagedChannelImpl) channel;
+    channelImpl.shutdown();
+    int timeoutMs = 10000;
+    try {
+      channelImpl.awaitTermination(timeoutMs, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+      throw new IOException("Interrupted while sleeping for close", e);
+    }
+    if (!channelImpl.isTerminated()) {
+      // Sometimes, gRPC channels don't close properly. We cannot explain why that happens,
+      // nor can we reproduce the problem reliably. However, that doesn't actually cause
+      // problems. Synchronous RPCs will throw exceptions right away. Buffered Mutator based
+      // async operations are already logged. Direct async operations may have some trouble,
+      // but users should not currently be using them directly.
+      LOG.trace("Could not close the channel after %d ms.", timeoutMs);
+    }
   }
 
   @Override
