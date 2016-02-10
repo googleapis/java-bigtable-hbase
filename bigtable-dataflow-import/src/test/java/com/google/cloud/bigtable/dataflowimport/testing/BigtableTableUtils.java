@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.cloud.bigtable.dataflowimport.testing;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
@@ -16,31 +31,32 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Set;
 
 /**
  * Helper for creating, deleting and reading a Cloud Bigtable during tests. Each instance manages
- * a specific table that has one column family.
+ * a specific table.
  */
 public class BigtableTableUtils implements AutoCloseable {
-  private static final int MAX_VERSISON = 5;
+  private static final int MAX_VERSISON = 50;
 
   private final Connection connection;
   private final Admin admin;
   private final TableName tableName;
-  private final String columnFamilyName;
+  private final String[] columnFamilyNames;
 
   private BigtableTableUtils(
-      Connection connection, Admin admin, String tableName, String columnFamilyName)
+      Connection connection, Admin admin, String tableName, String ...columnFamilyNames)
       throws IOException {
     this.connection = connection;
     this.admin = admin;
     this.tableName = TableName.valueOf(tableName);
-    this.columnFamilyName = columnFamilyName;
+    this.columnFamilyNames = Arrays.copyOf(columnFamilyNames, columnFamilyNames.length);
   }
 
   /**
-   * Creates an empty table with a single column family as specified by {@code columnFamily}.
+   * Creates an empty table with column families specified by {@code columnFamilyNames}.
    * If table already exists, it is removed and recreated.
    */
   public void createEmptyTable() throws IOException {
@@ -49,7 +65,10 @@ public class BigtableTableUtils implements AutoCloseable {
       admin.deleteTable(tableName);
     }
     HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-    tableDescriptor.addFamily(new HColumnDescriptor(columnFamilyName).setMaxVersions(MAX_VERSISON));
+    for (String columnFamilyName : columnFamilyNames) {
+      tableDescriptor.addFamily(
+          new HColumnDescriptor(columnFamilyName).setMaxVersions(MAX_VERSISON));
+    }
     admin.createTable(tableDescriptor);
   }
 
@@ -97,11 +116,11 @@ public class BigtableTableUtils implements AutoCloseable {
 
     /**
      * Creates a {@link BigtableTableUtils} instance that manages a table named {@code tableName}.
-     * This table will have a single column family named {@code columnFamilyName}.
+     * The {@code columnFamilies} parameter defines the column families in this table.
      */
-    public BigtableTableUtils createBigtableTableUtils(String tableName, String columnFamilyName)
+    public BigtableTableUtils createBigtableTableUtils(String tableName, String ...columnFamilies)
         throws IOException {
-      return new BigtableTableUtils(connection, admin, tableName, columnFamilyName);
+      return new BigtableTableUtils(connection, admin, tableName, columnFamilies);
     }
 
     public void close() throws IOException {

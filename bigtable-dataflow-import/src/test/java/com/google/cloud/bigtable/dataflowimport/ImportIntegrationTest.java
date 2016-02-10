@@ -49,6 +49,7 @@ import org.junit.runners.JUnit4;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -91,6 +92,7 @@ public class ImportIntegrationTest {
   private static final String CLOUD_TEST_DATA_FOLDER = "cloud.test.data.folder";
   private static final String HBASE_094_SUBFOLDER = "hbase094";
   private static final String HBASE_CURRENT_SUBFOLDER = "post-hbase094";
+  private static final String DELETE_MARKER_SUBFOLDER = "post-hbase094-delete-marker";
 
   // Column family name used in all test bigtables.
   private static final byte[] CF = Bytes.toBytes("column_family");
@@ -190,26 +192,25 @@ public class ImportIntegrationTest {
    */
   @Test
   public void testImportSequenceFile_fromGcs() throws Exception {
-    runImportFileTestFromGcs(false /** isHBase094Format **/);
+    runImportFileTestFromGcs(CloudTestDataType.CURRENT_FORMAT_NO_DELETE_MARKER, getTestData());
   }
 
   @Test
   public void testImportSequenceFile_fromGcsWithHBase094Format() throws Exception {
-    runImportFileTestFromGcs(true /** isHBase094Format **/);
+    runImportFileTestFromGcs(CloudTestDataType.HBASE_094_FORMAT_NO_DELETE_MARKER, getTestData());
   }
 
-  private void runImportFileTestFromGcs(boolean isHBase094Format) throws Exception {
+  // For on-cloud tests input files already exist on GCS. {@code expected} returns
+  // all data that we know are in the file.
+  // TODO Generate and upload input sequence files for on-cloud tests and remove once done.
+  private void runImportFileTestFromGcs(CloudTestDataType dataType, Set<? extends Cell> expected)
+      throws Exception {
     String tableId = "test_" + UUID.randomUUID().toString();
-    // For this test input files already exist on GCS. getTestData() returns
-    // all data that we know are in the file. See java doc for that method for more information.
-    // TODO Generate and upload input sequence files for on-cloud tests and remove once done.
-    Set<? extends Cell> expected = getTestData();
-
     HBaseImportOptions options = createImportOptions(
-        getCloudTestDataFolder(isHBase094Format), tableId, isHBase094Format);
+        getCloudTestDataFolder(dataType), tableId, dataType.isHBase094Format());
     options.setFilePattern(options.getFilePattern());
     try (BigtableTableUtils tableUtils = tableUtilsFactory.createBigtableTableUtils(
-        tableId, Bytes.toString(CF))) {
+        tableId, dataType.getColumnFamilies())) {
       tableUtils.createEmptyTable();
       assertEquals(Collections.EMPTY_SET, tableUtils.readAllCellsFromTable());
       doImport(options);
@@ -250,7 +251,8 @@ public class ImportIntegrationTest {
 
     // Use data on GCS because we cannot programmatically create input in old format.
     HBaseImportOptions options = createImportOptions(
-        getCloudTestDataFolder(true), tableId, false  /** isHBase094Format **/);
+        getCloudTestDataFolder(CloudTestDataType.HBASE_094_FORMAT_NO_DELETE_MARKER),
+        tableId, false  /** isHBase094Format **/);
     options.setFilePattern(options.getFilePattern());
     try (BigtableTableUtils tableUtils = tableUtilsFactory.createBigtableTableUtils(
         tableId, Bytes.toString(CF))) {
@@ -260,12 +262,95 @@ public class ImportIntegrationTest {
     }
   }
 
-  private String getCloudTestDataFolder(boolean isHBase094Format) {
-    return cloudTestDataFolder + (isHBase094Format ? HBASE_094_SUBFOLDER : HBASE_CURRENT_SUBFOLDER);
+  /**
+   * Verifies that a Sequence File with Delete Markers may be imported into Cloud Bigtable.
+   *
+   * <p>As of HBase 1.1.2, the delete-all-cells-in-family-by-exact-timestamp marker cannot be
+   * exported to sequence file because the Serializer used by HBase does not recognize this
+   * cell type. Therefore our test data file does not contain this marker.
+   * This marker is still tested in unit tests.
+   */
+  @Test
+  public void testImportSequeneFile_fromGcsWithDeleteMarker() throws Exception {
+    final byte[] r1 = Bytes.toBytes("r1");
+    final byte[] r2 = Bytes.toBytes("r2");
+    final byte[] cf1 = Bytes.toBytes("cf1");
+    final byte[] cf2 = Bytes.toBytes("cf2");
+    final byte[] c1 = Bytes.toBytes("c1");
+    final byte[] c2 = Bytes.toBytes("c2");
+    final byte[] val = Bytes.toBytes("1");
+
+    /*
+     * The input sequence file consists of two rows.
+     *
+     * Data cells in the first row are added this way:
+     *    Put put = new Put(r1);
+     *    put.addColumn(cf1, c1, 1000, val);
+     *    put.addColumn(cf1, c1, 1010, val);
+     *    put.addColumn(cf1, c1, 1020, val);
+     *    put.addColumn(cf1, c1, 1030, val);
+     *    put.addColumn(cf1, c1, 1040, val);
+     *    put.addColumn(cf1, c1, 1050, val);
+     *    put.addColumn(cf1, c1, 980, val);
+     *    put.addColumn(cf1, c1, 970, val);
+     *    put.addColumn(cf1, c1, 990, val);
+     *    put.addColumn(cf1, c2, 100, val);
+     *    put.addColumn(cf2, c1, 990, val);
+     *    put.addColumn(cf2, c2, 990, val);
+     *    put.addColumn(cf2, c1, 1000, val);
+     *    put.addColumn(cf2, c2, 1000, val);
+     *    put.addColumn(cf2, c1, 1010, val);
+     *    put.addColumn(cf2, c2, 1010, val);
+     *    put.addColumn(cf2, c1, 1020, val);
+     *    put.addColumn(cf2, c2, 1020, val);
+     *    put.addColumn(cf2, c1, 1030, val);
+     *    put.addColumn(cf2, c2, 1030, val);
+     *    put.addColumn(cf2, c1, 1040, val);
+     *    put.addColumn(cf2, c2, 1040, val);
+     *    put.addColumn(cf2, c1, 1050, val);
+     *    put.addColumn(cf2, c2, 1050, val);
+     *
+     * The Data cells in the second row are added this way:
+     *     Put put2 = new Put(r2);
+     *     put2.addColumn(cf1, c1, 1000, val);
+     *
+     * Three types of delete Markers are added to row 'r1' after all data cells are inserted.
+     * The DeleteFamilyVersion marker is omitted.
+     *     Delete delete = new Delete(r1)
+     *         .addColumn(cf1, c1, 1045))    // No effect
+     *         .addColumn(cf1, c1, 1040))    // Deletes one cell
+     *         .addColumns(cf1, c1, 1000))   // Deletes all cells with ts <= 1000
+     *         .addFamilyVersion(cf1, 1045)) // No effect
+     *         .addFamilyVersion(cf2, 1040)) // Deletes two cells in cf2 with ts=1040
+     *         .addFamily(cf2, 1000));       // Deletes everything with ts<= 1000 in cf2
+     */
+    Set<? extends Cell> expected = Sets.newHashSet(
+        new KeyValue(r1, cf1, c1, 1050, val),
+        new KeyValue(r1, cf1, c1, 1030, val),
+        new KeyValue(r1, cf1, c1, 1020, val),
+        new KeyValue(r1, cf1, c1, 1010, val),
+        new KeyValue(r1, cf1, c2, 100, val),
+        new KeyValue(r1, cf2, c1, 1050, val),
+        new KeyValue(r1, cf2, c1, 1040, val),
+        new KeyValue(r1, cf2, c1, 1030, val),
+        new KeyValue(r1, cf2, c1, 1020, val),
+        new KeyValue(r1, cf2, c1, 1010, val),
+        new KeyValue(r1, cf2, c2, 1050, val),
+        new KeyValue(r1, cf2, c2, 1040, val),
+        new KeyValue(r1, cf2, c2, 1030, val),
+        new KeyValue(r1, cf2, c2, 1020, val),
+        new KeyValue(r1, cf2, c2, 1010, val),
+        new KeyValue(r2, cf1, c1, 1000, val));
+    runImportFileTestFromGcs(CloudTestDataType.CURRENT_FORMAT_WITH_DELETE_MARKER, expected);
+  }
+
+  private String getCloudTestDataFolder(CloudTestDataType dataType) {
+    return cloudTestDataFolder + dataType.getDataSubfoler();
   }
 
   /**
-   * Returns test data for import.
+   * Returns test data (that do not contain delete markers) for import. Delete marker test data are
+   * created elsewhere.
    *
    * <p>Currently for on-cloud tests, test sequence files are manually created and uploaded
    * to Google Cloud Storage. If this method changes, the test files must be updated. The files
@@ -337,5 +422,34 @@ public class ImportIntegrationTest {
         };
     assertEquals(Sets.newHashSet(Iterables.transform(expected, keyValueFunc)),
         Sets.newHashSet(Iterables.transform(actual, keyValueFunc)));
+  }
+
+  private enum CloudTestDataType {
+    CURRENT_FORMAT_NO_DELETE_MARKER(HBASE_CURRENT_SUBFOLDER, false, Bytes.toString(CF)),
+    HBASE_094_FORMAT_NO_DELETE_MARKER(HBASE_094_SUBFOLDER, true, Bytes.toString(CF)),
+    CURRENT_FORMAT_WITH_DELETE_MARKER(DELETE_MARKER_SUBFOLDER, false, "cf1", "cf2");
+
+    private final String dataSubfoler;
+    private final boolean isHBase094Format;
+    private final String[] columnFamilies;
+
+    public String[] getColumnFamilies() {
+      return Arrays.copyOf(columnFamilies, columnFamilies.length);
+    }
+
+    private CloudTestDataType(
+        String dataSubfoler, boolean isHBase094Format, String ...columnFamilies) {
+      this.dataSubfoler = dataSubfoler;
+      this.isHBase094Format = isHBase094Format;
+      this.columnFamilies = columnFamilies;
+    }
+
+    public String getDataSubfoler() {
+      return dataSubfoler;
+    }
+
+    public boolean isHBase094Format() {
+      return isHBase094Format;
+    }
   }
 }
