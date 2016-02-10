@@ -24,7 +24,7 @@
  * that's ideal for web, mobile, and Internet of Things applications requiring terabytes to
  * petabytes of data. Unlike comparable market offerings, Cloud Bigtable doesn't require you to
  * sacrifice speed, scale, or cost efficiency when your applications grow. Cloud Bigtable has been
- * battle-tested at Google for more than 10 years—it's the database driving major applications such
+ * battle-tested at Google for more than 10 years--it's the database driving major applications such
  * as Google Analytics and Gmail.
  * </p>
  */
