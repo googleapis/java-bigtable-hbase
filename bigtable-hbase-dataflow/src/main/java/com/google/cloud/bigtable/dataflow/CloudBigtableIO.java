@@ -80,7 +80,7 @@ import com.google.common.annotations.VisibleForTesting;
  * that's ideal for web, mobile, and Internet of Things applications requiring terabytes to
  * petabytes of data. Unlike comparable market offerings, Cloud Bigtable doesn't require you to
  * sacrifice speed, scale, or cost efficiency when your applications grow. Cloud Bigtable has been
- * battle-tested at Google for more than 10 years—it's the database driving major applications such
+ * battle-tested at Google for more than 10 years--it's the database driving major applications such
  * as Google Analytics and Gmail.
  * </p>
  * 
@@ -182,7 +182,7 @@ public class CloudBigtableIO {
 
       @VisibleForTesting
       protected SourceWithKeys(byte[] startKey, byte[] stopKey, long estimatedSize) {
-        if (stopKey.length > 0) {
+        if (stopKey.length > 0) {b
           Preconditions.checkState(Bytes.compareTo(startKey, stopKey) < 0,
               "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startKey),
               Bytes.toStringBinary(stopKey));
