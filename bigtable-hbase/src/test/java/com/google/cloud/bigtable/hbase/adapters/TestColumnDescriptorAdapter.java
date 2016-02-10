@@ -191,10 +191,8 @@ public class TestColumnDescriptorAdapter {
 
   @Test
   public void testBlankExpression(){
-    // An empty gc expression means keep all versions, which is not supported by HBase.
-    expectedException.expectMessage("Maximum versions must be positive");
-    expectedException.expect(IllegalArgumentException.class);
-
-    adapter.adapt("family", asColumnFamily(""));
+    HColumnDescriptor descriptor = adapter.adapt("family", asColumnFamily(""));
+    Assert.assertEquals(Integer.MAX_VALUE, descriptor.getMaxVersions());
+    Assert.assertEquals("", ColumnDescriptorAdapter.buildGarbageCollectionExpression(descriptor));
   }
 }

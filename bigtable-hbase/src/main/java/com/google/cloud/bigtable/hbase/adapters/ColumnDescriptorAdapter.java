@@ -170,7 +170,9 @@ public class ColumnDescriptorAdapter {
     if (buffer.length() != 0) {
       buffer.append(" || ");
     }
-    buffer.append(String.format("(version() > %s)", maxVersions));
+    if (maxVersions != Integer.MAX_VALUE) {
+      buffer.append(String.format("(version() > %s)", maxVersions));
+    }
 
     return buffer.toString();
   }
@@ -194,8 +196,9 @@ public class ColumnDescriptorAdapter {
   private static void convertGarbageCollectionExpression(String gcExpression,
       HColumnDescriptor columnDescriptor) {
     if (Strings.isNullOrEmpty(gcExpression)) {
-      // No GC Expression means keep all versions, MaxVersions = 0.
-      columnDescriptor.setMaxVersions(0);
+      // No GC expression in Bigtable means keeping all versions. HBase doesn't support keeping all
+      // version, so we translate it by setting the max version to Integer.MAX_VALUE.
+      columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
       return;
     }
     String maxVersionExpression = null;
