@@ -182,7 +182,7 @@ public class CloudBigtableIO {
 
       @VisibleForTesting
       protected SourceWithKeys(byte[] startKey, byte[] stopKey, long estimatedSize) {
-        if (stopKey.length > 0) {b
+        if (stopKey.length > 0) {
           Preconditions.checkState(Bytes.compareTo(startKey, stopKey) < 0,
               "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startKey),
               Bytes.toStringBinary(stopKey));
