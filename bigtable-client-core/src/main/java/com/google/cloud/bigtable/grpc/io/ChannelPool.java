@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import io.grpc.CallOptions;
@@ -24,9 +25,11 @@ import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -34,7 +37,7 @@ import java.util.logging.Logger;
 /**
  * Manages a set of ClosableChannels and uses them in a round robin.
  */
-public class ChannelPool extends Channel {
+public class ChannelPool extends Channel implements Closeable {
 
   protected static final Logger log = Logger.getLogger(ChannelPool.class.getName());
 
@@ -48,6 +51,8 @@ public class ChannelPool extends Channel {
   private final AtomicInteger totalSize;
   private final ChannelFactory factory;
   private final String authority;
+  
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
       throws IOException {
@@ -85,6 +90,11 @@ public class ChannelPool extends Channel {
     }
   }
 
+  @Override
+  public void close() {
+    this.closed.set(true);
+  }
+
   /**
    * Performs a simple round robin on the list of {@link Channel}s in the {@code channels} list.
    * This method should not be synchronized, if possible, to reduce bottlenecks.
@@ -120,6 +130,7 @@ public class ChannelPool extends Channel {
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
+    Preconditions.checkState(!closed.get(), "Cannot perform operations on a closed connection");
     return createWrappedCall(methodDescriptor, callOptions, getNextChannel());
   }
 
