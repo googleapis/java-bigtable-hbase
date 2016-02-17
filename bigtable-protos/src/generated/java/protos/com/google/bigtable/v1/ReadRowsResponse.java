@@ -54,7 +54,7 @@ public  final class ReadRowsResponse extends
           }
           case 18: {
             if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-              chunks_ = new java.util.ArrayList<com.google.bigtable.v1.ReadRowsResponse.Chunk>();
+              chunks_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000002;
             }
             chunks_.add(input.readMessage(com.google.bigtable.v1.ReadRowsResponse.Chunk.parser(), extensionRegistry));
@@ -771,8 +771,7 @@ public  final class ReadRowsResponse extends
           if (!(chunkCase_ == 1)) {
             chunk_ = com.google.bigtable.v1.Family.getDefaultInstance();
           }
-          rowContentsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.google.bigtable.v1.Family, com.google.bigtable.v1.Family.Builder, com.google.bigtable.v1.FamilyOrBuilder>(
+          rowContentsBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                   (com.google.bigtable.v1.Family) chunk_,
                   getParentForChildren(),
                   isClean());
@@ -1315,7 +1314,7 @@ public  final class ReadRowsResponse extends
       java.util.Collections.emptyList();
     private void ensureChunksIsMutable() {
       if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-        chunks_ = new java.util.ArrayList<com.google.bigtable.v1.ReadRowsResponse.Chunk>(chunks_);
+        chunks_ = new java.util.ArrayList<>(chunks_);
         bitField0_ |= 0x00000002;
        }
     }
@@ -1612,8 +1611,7 @@ public  final class ReadRowsResponse extends
         com.google.bigtable.v1.ReadRowsResponse.Chunk, com.google.bigtable.v1.ReadRowsResponse.Chunk.Builder, com.google.bigtable.v1.ReadRowsResponse.ChunkOrBuilder> 
         getChunksFieldBuilder() {
       if (chunksBuilder_ == null) {
-        chunksBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.v1.ReadRowsResponse.Chunk, com.google.bigtable.v1.ReadRowsResponse.Chunk.Builder, com.google.bigtable.v1.ReadRowsResponse.ChunkOrBuilder>(
+        chunksBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 chunks_,
                 ((bitField0_ & 0x00000002) == 0x00000002),
                 getParentForChildren(),

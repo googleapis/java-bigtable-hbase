@@ -54,7 +54,7 @@ public  final class Column extends
           }
           case 18: {
             if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-              cells_ = new java.util.ArrayList<com.google.bigtable.v1.Cell>();
+              cells_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000002;
             }
             cells_.add(input.readMessage(com.google.bigtable.v1.Cell.parser(), extensionRegistry));
@@ -480,7 +480,7 @@ public  final class Column extends
       java.util.Collections.emptyList();
     private void ensureCellsIsMutable() {
       if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-        cells_ = new java.util.ArrayList<com.google.bigtable.v1.Cell>(cells_);
+        cells_ = new java.util.ArrayList<>(cells_);
         bitField0_ |= 0x00000002;
        }
     }
@@ -777,8 +777,7 @@ public  final class Column extends
         com.google.bigtable.v1.Cell, com.google.bigtable.v1.Cell.Builder, com.google.bigtable.v1.CellOrBuilder> 
         getCellsFieldBuilder() {
       if (cellsBuilder_ == null) {
-        cellsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.v1.Cell, com.google.bigtable.v1.Cell.Builder, com.google.bigtable.v1.CellOrBuilder>(
+        cellsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 cells_,
                 ((bitField0_ & 0x00000002) == 0x00000002),
                 getParentForChildren(),

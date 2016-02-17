@@ -44,7 +44,7 @@ public  final class ListTablesResponse extends
           }
           case 10: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              tables_ = new java.util.ArrayList<com.google.bigtable.admin.table.v1.Table>();
+              tables_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000001;
             }
             tables_.add(input.readMessage(com.google.bigtable.admin.table.v1.Table.parser(), extensionRegistry));
@@ -385,7 +385,7 @@ public  final class ListTablesResponse extends
       java.util.Collections.emptyList();
     private void ensureTablesIsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        tables_ = new java.util.ArrayList<com.google.bigtable.admin.table.v1.Table>(tables_);
+        tables_ = new java.util.ArrayList<>(tables_);
         bitField0_ |= 0x00000001;
        }
     }
@@ -700,8 +700,7 @@ public  final class ListTablesResponse extends
         com.google.bigtable.admin.table.v1.Table, com.google.bigtable.admin.table.v1.Table.Builder, com.google.bigtable.admin.table.v1.TableOrBuilder> 
         getTablesFieldBuilder() {
       if (tablesBuilder_ == null) {
-        tablesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.admin.table.v1.Table, com.google.bigtable.admin.table.v1.Table.Builder, com.google.bigtable.admin.table.v1.TableOrBuilder>(
+        tablesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 tables_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
                 getParentForChildren(),

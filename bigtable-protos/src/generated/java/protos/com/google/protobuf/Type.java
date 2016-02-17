@@ -57,7 +57,7 @@ public  final class Type extends
           }
           case 18: {
             if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-              fields_ = new java.util.ArrayList<com.google.protobuf.Field>();
+              fields_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000002;
             }
             fields_.add(input.readMessage(com.google.protobuf.Field.parser(), extensionRegistry));
@@ -74,7 +74,7 @@ public  final class Type extends
           }
           case 34: {
             if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-              options_ = new java.util.ArrayList<com.google.protobuf.Option>();
+              options_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000008;
             }
             options_.add(input.readMessage(com.google.protobuf.Option.parser(), extensionRegistry));
@@ -815,7 +815,7 @@ public  final class Type extends
       java.util.Collections.emptyList();
     private void ensureFieldsIsMutable() {
       if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-        fields_ = new java.util.ArrayList<com.google.protobuf.Field>(fields_);
+        fields_ = new java.util.ArrayList<>(fields_);
         bitField0_ |= 0x00000002;
        }
     }
@@ -1112,8 +1112,7 @@ public  final class Type extends
         com.google.protobuf.Field, com.google.protobuf.Field.Builder, com.google.protobuf.FieldOrBuilder> 
         getFieldsFieldBuilder() {
       if (fieldsBuilder_ == null) {
-        fieldsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.protobuf.Field, com.google.protobuf.Field.Builder, com.google.protobuf.FieldOrBuilder>(
+        fieldsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 fields_,
                 ((bitField0_ & 0x00000002) == 0x00000002),
                 getParentForChildren(),
@@ -1266,7 +1265,7 @@ public  final class Type extends
       java.util.Collections.emptyList();
     private void ensureOptionsIsMutable() {
       if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-        options_ = new java.util.ArrayList<com.google.protobuf.Option>(options_);
+        options_ = new java.util.ArrayList<>(options_);
         bitField0_ |= 0x00000008;
        }
     }
@@ -1563,8 +1562,7 @@ public  final class Type extends
         com.google.protobuf.Option, com.google.protobuf.Option.Builder, com.google.protobuf.OptionOrBuilder> 
         getOptionsFieldBuilder() {
       if (optionsBuilder_ == null) {
-        optionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.protobuf.Option, com.google.protobuf.Option.Builder, com.google.protobuf.OptionOrBuilder>(
+        optionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 options_,
                 ((bitField0_ & 0x00000008) == 0x00000008),
                 getParentForChildren(),
@@ -1717,8 +1715,7 @@ public  final class Type extends
         com.google.protobuf.SourceContext, com.google.protobuf.SourceContext.Builder, com.google.protobuf.SourceContextOrBuilder> 
         getSourceContextFieldBuilder() {
       if (sourceContextBuilder_ == null) {
-        sourceContextBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.SourceContext, com.google.protobuf.SourceContext.Builder, com.google.protobuf.SourceContextOrBuilder>(
+        sourceContextBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getSourceContext(),
                 getParentForChildren(),
                 isClean());

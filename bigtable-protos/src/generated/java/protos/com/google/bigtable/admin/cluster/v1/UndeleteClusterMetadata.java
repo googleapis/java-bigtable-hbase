@@ -545,8 +545,7 @@ public  final class UndeleteClusterMetadata extends
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
         getRequestTimeFieldBuilder() {
       if (requestTimeBuilder_ == null) {
-        requestTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
+        requestTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getRequestTime(),
                 getParentForChildren(),
                 isClean());
@@ -698,8 +697,7 @@ public  final class UndeleteClusterMetadata extends
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
         getFinishTimeFieldBuilder() {
       if (finishTimeBuilder_ == null) {
-        finishTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
+        finishTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getFinishTime(),
                 getParentForChildren(),
                 isClean());

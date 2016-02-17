@@ -350,7 +350,7 @@ public  final class RowFilter extends
             }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                filters_ = new java.util.ArrayList<com.google.bigtable.v1.RowFilter>();
+                filters_ = new java.util.ArrayList<>();
                 mutable_bitField0_ |= 0x00000001;
               }
               filters_.add(input.readMessage(com.google.bigtable.v1.RowFilter.parser(), extensionRegistry));
@@ -700,7 +700,7 @@ public  final class RowFilter extends
         java.util.Collections.emptyList();
       private void ensureFiltersIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          filters_ = new java.util.ArrayList<com.google.bigtable.v1.RowFilter>(filters_);
+          filters_ = new java.util.ArrayList<>(filters_);
           bitField0_ |= 0x00000001;
          }
       }
@@ -1033,8 +1033,7 @@ public  final class RowFilter extends
           com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder> 
           getFiltersFieldBuilder() {
         if (filtersBuilder_ == null) {
-          filtersBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder>(
+          filtersBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                   filters_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
@@ -1305,7 +1304,7 @@ public  final class RowFilter extends
             }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                filters_ = new java.util.ArrayList<com.google.bigtable.v1.RowFilter>();
+                filters_ = new java.util.ArrayList<>();
                 mutable_bitField0_ |= 0x00000001;
               }
               filters_.add(input.readMessage(com.google.bigtable.v1.RowFilter.parser(), extensionRegistry));
@@ -1756,7 +1755,7 @@ public  final class RowFilter extends
         java.util.Collections.emptyList();
       private void ensureFiltersIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          filters_ = new java.util.ArrayList<com.google.bigtable.v1.RowFilter>(filters_);
+          filters_ = new java.util.ArrayList<>(filters_);
           bitField0_ |= 0x00000001;
          }
       }
@@ -2449,8 +2448,7 @@ public  final class RowFilter extends
           com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder> 
           getFiltersFieldBuilder() {
         if (filtersBuilder_ == null) {
-          filtersBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder>(
+          filtersBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                   filters_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
@@ -3246,8 +3244,7 @@ public  final class RowFilter extends
           com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder> 
           getPredicateFilterFieldBuilder() {
         if (predicateFilterBuilder_ == null) {
-          predicateFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder>(
+          predicateFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                   getPredicateFilter(),
                   getParentForChildren(),
                   isClean());
@@ -3408,8 +3405,7 @@ public  final class RowFilter extends
           com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder> 
           getTrueFilterFieldBuilder() {
         if (trueFilterBuilder_ == null) {
-          trueFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder>(
+          trueFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                   getTrueFilter(),
                   getParentForChildren(),
                   isClean());
@@ -3579,8 +3575,7 @@ public  final class RowFilter extends
           com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder> 
           getFalseFilterFieldBuilder() {
         if (falseFilterBuilder_ == null) {
-          falseFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder>(
+          falseFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                   getFalseFilter(),
                   getParentForChildren(),
                   isClean());
@@ -4981,8 +4976,7 @@ public  final class RowFilter extends
         if (!(filterCase_ == 1)) {
           filter_ = com.google.bigtable.v1.RowFilter.Chain.getDefaultInstance();
         }
-        chainBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.RowFilter.Chain, com.google.bigtable.v1.RowFilter.Chain.Builder, com.google.bigtable.v1.RowFilter.ChainOrBuilder>(
+        chainBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.RowFilter.Chain) filter_,
                 getParentForChildren(),
                 isClean());
@@ -5151,8 +5145,7 @@ public  final class RowFilter extends
         if (!(filterCase_ == 2)) {
           filter_ = com.google.bigtable.v1.RowFilter.Interleave.getDefaultInstance();
         }
-        interleaveBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.RowFilter.Interleave, com.google.bigtable.v1.RowFilter.Interleave.Builder, com.google.bigtable.v1.RowFilter.InterleaveOrBuilder>(
+        interleaveBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.RowFilter.Interleave) filter_,
                 getParentForChildren(),
                 isClean());
@@ -5321,8 +5314,7 @@ public  final class RowFilter extends
         if (!(filterCase_ == 3)) {
           filter_ = com.google.bigtable.v1.RowFilter.Condition.getDefaultInstance();
         }
-        conditionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.RowFilter.Condition, com.google.bigtable.v1.RowFilter.Condition.Builder, com.google.bigtable.v1.RowFilter.ConditionOrBuilder>(
+        conditionBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.RowFilter.Condition) filter_,
                 getParentForChildren(),
                 isClean());
@@ -6067,8 +6059,7 @@ public  final class RowFilter extends
         if (!(filterCase_ == 7)) {
           filter_ = com.google.bigtable.v1.ColumnRange.getDefaultInstance();
         }
-        columnRangeFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.ColumnRange, com.google.bigtable.v1.ColumnRange.Builder, com.google.bigtable.v1.ColumnRangeOrBuilder>(
+        columnRangeFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.ColumnRange) filter_,
                 getParentForChildren(),
                 isClean());
@@ -6229,8 +6220,7 @@ public  final class RowFilter extends
         if (!(filterCase_ == 8)) {
           filter_ = com.google.bigtable.v1.TimestampRange.getDefaultInstance();
         }
-        timestampRangeFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.TimestampRange, com.google.bigtable.v1.TimestampRange.Builder, com.google.bigtable.v1.TimestampRangeOrBuilder>(
+        timestampRangeFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.TimestampRange) filter_,
                 getParentForChildren(),
                 isClean());
@@ -6448,8 +6438,7 @@ public  final class RowFilter extends
         if (!(filterCase_ == 15)) {
           filter_ = com.google.bigtable.v1.ValueRange.getDefaultInstance();
         }
-        valueRangeFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.ValueRange, com.google.bigtable.v1.ValueRange.Builder, com.google.bigtable.v1.ValueRangeOrBuilder>(
+        valueRangeFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.ValueRange) filter_,
                 getParentForChildren(),
                 isClean());

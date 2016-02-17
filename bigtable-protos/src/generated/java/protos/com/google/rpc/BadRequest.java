@@ -49,7 +49,7 @@ public  final class BadRequest extends
           }
           case 10: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              fieldViolations_ = new java.util.ArrayList<com.google.rpc.BadRequest.FieldViolation>();
+              fieldViolations_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000001;
             }
             fieldViolations_.add(input.readMessage(com.google.rpc.BadRequest.FieldViolation.parser(), extensionRegistry));
@@ -1070,7 +1070,7 @@ public  final class BadRequest extends
       java.util.Collections.emptyList();
     private void ensureFieldViolationsIsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        fieldViolations_ = new java.util.ArrayList<com.google.rpc.BadRequest.FieldViolation>(fieldViolations_);
+        fieldViolations_ = new java.util.ArrayList<>(fieldViolations_);
         bitField0_ |= 0x00000001;
        }
     }
@@ -1367,8 +1367,7 @@ public  final class BadRequest extends
         com.google.rpc.BadRequest.FieldViolation, com.google.rpc.BadRequest.FieldViolation.Builder, com.google.rpc.BadRequest.FieldViolationOrBuilder> 
         getFieldViolationsFieldBuilder() {
       if (fieldViolationsBuilder_ == null) {
-        fieldViolationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.rpc.BadRequest.FieldViolation, com.google.rpc.BadRequest.FieldViolation.Builder, com.google.rpc.BadRequest.FieldViolationOrBuilder>(
+        fieldViolationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 fieldViolations_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
                 getParentForChildren(),

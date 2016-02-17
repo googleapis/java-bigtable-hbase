@@ -51,7 +51,7 @@ public  final class Help extends
           }
           case 10: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              links_ = new java.util.ArrayList<com.google.rpc.Help.Link>();
+              links_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000001;
             }
             links_.add(input.readMessage(com.google.rpc.Help.Link.parser(), extensionRegistry));
@@ -1056,7 +1056,7 @@ public  final class Help extends
       java.util.Collections.emptyList();
     private void ensureLinksIsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        links_ = new java.util.ArrayList<com.google.rpc.Help.Link>(links_);
+        links_ = new java.util.ArrayList<>(links_);
         bitField0_ |= 0x00000001;
        }
     }
@@ -1353,8 +1353,7 @@ public  final class Help extends
         com.google.rpc.Help.Link, com.google.rpc.Help.Link.Builder, com.google.rpc.Help.LinkOrBuilder> 
         getLinksFieldBuilder() {
       if (linksBuilder_ == null) {
-        linksBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.rpc.Help.Link, com.google.rpc.Help.Link.Builder, com.google.rpc.Help.LinkOrBuilder>(
+        linksBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 links_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
                 getParentForChildren(),

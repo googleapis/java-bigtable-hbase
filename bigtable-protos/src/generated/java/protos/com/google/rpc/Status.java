@@ -99,7 +99,7 @@ public  final class Status extends
           }
           case 26: {
             if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-              details_ = new java.util.ArrayList<com.google.protobuf.Any>();
+              details_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000004;
             }
             details_.add(input.readMessage(com.google.protobuf.Any.parser(), extensionRegistry));
@@ -707,7 +707,7 @@ public  final class Status extends
       java.util.Collections.emptyList();
     private void ensureDetailsIsMutable() {
       if (!((bitField0_ & 0x00000004) == 0x00000004)) {
-        details_ = new java.util.ArrayList<com.google.protobuf.Any>(details_);
+        details_ = new java.util.ArrayList<>(details_);
         bitField0_ |= 0x00000004;
        }
     }
@@ -1022,8 +1022,7 @@ public  final class Status extends
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
         getDetailsFieldBuilder() {
       if (detailsBuilder_ == null) {
-        detailsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>(
+        detailsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 details_,
                 ((bitField0_ & 0x00000004) == 0x00000004),
                 getParentForChildren(),

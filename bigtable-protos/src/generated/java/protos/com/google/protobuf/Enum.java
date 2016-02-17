@@ -56,7 +56,7 @@ public  final class Enum extends
           }
           case 18: {
             if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-              enumvalue_ = new java.util.ArrayList<com.google.protobuf.EnumValue>();
+              enumvalue_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000002;
             }
             enumvalue_.add(input.readMessage(com.google.protobuf.EnumValue.parser(), extensionRegistry));
@@ -64,7 +64,7 @@ public  final class Enum extends
           }
           case 26: {
             if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-              options_ = new java.util.ArrayList<com.google.protobuf.Option>();
+              options_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000004;
             }
             options_.add(input.readMessage(com.google.protobuf.Option.parser(), extensionRegistry));
@@ -725,7 +725,7 @@ public  final class Enum extends
       java.util.Collections.emptyList();
     private void ensureEnumvalueIsMutable() {
       if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-        enumvalue_ = new java.util.ArrayList<com.google.protobuf.EnumValue>(enumvalue_);
+        enumvalue_ = new java.util.ArrayList<>(enumvalue_);
         bitField0_ |= 0x00000002;
        }
     }
@@ -1022,8 +1022,7 @@ public  final class Enum extends
         com.google.protobuf.EnumValue, com.google.protobuf.EnumValue.Builder, com.google.protobuf.EnumValueOrBuilder> 
         getEnumvalueFieldBuilder() {
       if (enumvalueBuilder_ == null) {
-        enumvalueBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.protobuf.EnumValue, com.google.protobuf.EnumValue.Builder, com.google.protobuf.EnumValueOrBuilder>(
+        enumvalueBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 enumvalue_,
                 ((bitField0_ & 0x00000002) == 0x00000002),
                 getParentForChildren(),
@@ -1037,7 +1036,7 @@ public  final class Enum extends
       java.util.Collections.emptyList();
     private void ensureOptionsIsMutable() {
       if (!((bitField0_ & 0x00000004) == 0x00000004)) {
-        options_ = new java.util.ArrayList<com.google.protobuf.Option>(options_);
+        options_ = new java.util.ArrayList<>(options_);
         bitField0_ |= 0x00000004;
        }
     }
@@ -1334,8 +1333,7 @@ public  final class Enum extends
         com.google.protobuf.Option, com.google.protobuf.Option.Builder, com.google.protobuf.OptionOrBuilder> 
         getOptionsFieldBuilder() {
       if (optionsBuilder_ == null) {
-        optionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.protobuf.Option, com.google.protobuf.Option.Builder, com.google.protobuf.OptionOrBuilder>(
+        optionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 options_,
                 ((bitField0_ & 0x00000004) == 0x00000004),
                 getParentForChildren(),
@@ -1488,8 +1486,7 @@ public  final class Enum extends
         com.google.protobuf.SourceContext, com.google.protobuf.SourceContext.Builder, com.google.protobuf.SourceContextOrBuilder> 
         getSourceContextFieldBuilder() {
       if (sourceContextBuilder_ == null) {
-        sourceContextBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.SourceContext, com.google.protobuf.SourceContext.Builder, com.google.protobuf.SourceContextOrBuilder>(
+        sourceContextBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getSourceContext(),
                 getParentForChildren(),
                 isClean());

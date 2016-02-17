@@ -899,8 +899,7 @@ public  final class Table extends
         com.google.longrunning.Operation, com.google.longrunning.Operation.Builder, com.google.longrunning.OperationOrBuilder> 
         getCurrentOperationFieldBuilder() {
       if (currentOperationBuilder_ == null) {
-        currentOperationBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.longrunning.Operation, com.google.longrunning.Operation.Builder, com.google.longrunning.OperationOrBuilder>(
+        currentOperationBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getCurrentOperation(),
                 getParentForChildren(),
                 isClean());

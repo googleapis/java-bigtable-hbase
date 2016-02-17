@@ -105,7 +105,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final ExceptionListener exceptionListener;
 
   private final AtomicBoolean hasExceptions = new AtomicBoolean(false);
-  private final List<MutationException> globalExceptions = new ArrayList<MutationException>();
+  private final List<MutationException> globalExceptions = new ArrayList<>();
 
   private final String host;
 

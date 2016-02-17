@@ -49,7 +49,7 @@ public  final class ListOperationsResponse extends
           }
           case 10: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              operations_ = new java.util.ArrayList<com.google.longrunning.Operation>();
+              operations_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000001;
             }
             operations_.add(input.readMessage(com.google.longrunning.Operation.parser(), extensionRegistry));
@@ -453,7 +453,7 @@ public  final class ListOperationsResponse extends
       java.util.Collections.emptyList();
     private void ensureOperationsIsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        operations_ = new java.util.ArrayList<com.google.longrunning.Operation>(operations_);
+        operations_ = new java.util.ArrayList<>(operations_);
         bitField0_ |= 0x00000001;
        }
     }
@@ -750,8 +750,7 @@ public  final class ListOperationsResponse extends
         com.google.longrunning.Operation, com.google.longrunning.Operation.Builder, com.google.longrunning.OperationOrBuilder> 
         getOperationsFieldBuilder() {
       if (operationsBuilder_ == null) {
-        operationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.longrunning.Operation, com.google.longrunning.Operation.Builder, com.google.longrunning.OperationOrBuilder>(
+        operationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 operations_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
                 getParentForChildren(),

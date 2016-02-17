@@ -157,7 +157,7 @@ public class BatchExecutor {
     LOG.trace("issueRowRequest(Row, Batch.Callback, Object[], index");
     SettableFuture<Result> resultFuture = SettableFuture.create();
     RpcResultFutureCallback<T> futureCallback =
-        new RpcResultFutureCallback<T>(row, callback, index, results, resultFuture);
+            new RpcResultFutureCallback<>(row, callback, index, results, resultFuture);
     results[index] = null;
     if (service.isShutdown()) {
       // If the service is shutdown, that means that the connection is shut down. It also means that

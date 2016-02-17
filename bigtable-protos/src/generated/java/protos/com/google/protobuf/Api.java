@@ -57,7 +57,7 @@ public  final class Api extends
           }
           case 18: {
             if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-              methods_ = new java.util.ArrayList<com.google.protobuf.Method>();
+              methods_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000002;
             }
             methods_.add(input.readMessage(com.google.protobuf.Method.parser(), extensionRegistry));
@@ -65,7 +65,7 @@ public  final class Api extends
           }
           case 26: {
             if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-              options_ = new java.util.ArrayList<com.google.protobuf.Option>();
+              options_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000004;
             }
             options_.add(input.readMessage(com.google.protobuf.Option.parser(), extensionRegistry));
@@ -833,7 +833,7 @@ public  final class Api extends
       java.util.Collections.emptyList();
     private void ensureMethodsIsMutable() {
       if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-        methods_ = new java.util.ArrayList<com.google.protobuf.Method>(methods_);
+        methods_ = new java.util.ArrayList<>(methods_);
         bitField0_ |= 0x00000002;
        }
     }
@@ -1130,8 +1130,7 @@ public  final class Api extends
         com.google.protobuf.Method, com.google.protobuf.Method.Builder, com.google.protobuf.MethodOrBuilder> 
         getMethodsFieldBuilder() {
       if (methodsBuilder_ == null) {
-        methodsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.protobuf.Method, com.google.protobuf.Method.Builder, com.google.protobuf.MethodOrBuilder>(
+        methodsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 methods_,
                 ((bitField0_ & 0x00000002) == 0x00000002),
                 getParentForChildren(),
@@ -1145,7 +1144,7 @@ public  final class Api extends
       java.util.Collections.emptyList();
     private void ensureOptionsIsMutable() {
       if (!((bitField0_ & 0x00000004) == 0x00000004)) {
-        options_ = new java.util.ArrayList<com.google.protobuf.Option>(options_);
+        options_ = new java.util.ArrayList<>(options_);
         bitField0_ |= 0x00000004;
        }
     }
@@ -1442,8 +1441,7 @@ public  final class Api extends
         com.google.protobuf.Option, com.google.protobuf.Option.Builder, com.google.protobuf.OptionOrBuilder> 
         getOptionsFieldBuilder() {
       if (optionsBuilder_ == null) {
-        optionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.protobuf.Option, com.google.protobuf.Option.Builder, com.google.protobuf.OptionOrBuilder>(
+        optionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 options_,
                 ((bitField0_ & 0x00000004) == 0x00000004),
                 getParentForChildren(),
@@ -1784,8 +1782,7 @@ public  final class Api extends
         com.google.protobuf.SourceContext, com.google.protobuf.SourceContext.Builder, com.google.protobuf.SourceContextOrBuilder> 
         getSourceContextFieldBuilder() {
       if (sourceContextBuilder_ == null) {
-        sourceContextBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.SourceContext, com.google.protobuf.SourceContext.Builder, com.google.protobuf.SourceContextOrBuilder>(
+        sourceContextBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getSourceContext(),
                 getParentForChildren(),
                 isClean());

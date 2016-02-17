@@ -62,7 +62,7 @@ public  final class CheckAndMutateRowRequest extends
           }
           case 34: {
             if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-              trueMutations_ = new java.util.ArrayList<com.google.bigtable.v1.Mutation>();
+              trueMutations_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000008;
             }
             trueMutations_.add(input.readMessage(com.google.bigtable.v1.Mutation.parser(), extensionRegistry));
@@ -70,7 +70,7 @@ public  final class CheckAndMutateRowRequest extends
           }
           case 42: {
             if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
-              falseMutations_ = new java.util.ArrayList<com.google.bigtable.v1.Mutation>();
+              falseMutations_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000010;
             }
             falseMutations_.add(input.readMessage(com.google.bigtable.v1.Mutation.parser(), extensionRegistry));
@@ -1020,8 +1020,7 @@ public  final class CheckAndMutateRowRequest extends
         com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder> 
         getPredicateFilterFieldBuilder() {
       if (predicateFilterBuilder_ == null) {
-        predicateFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.RowFilter, com.google.bigtable.v1.RowFilter.Builder, com.google.bigtable.v1.RowFilterOrBuilder>(
+        predicateFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getPredicateFilter(),
                 getParentForChildren(),
                 isClean());
@@ -1034,7 +1033,7 @@ public  final class CheckAndMutateRowRequest extends
       java.util.Collections.emptyList();
     private void ensureTrueMutationsIsMutable() {
       if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-        trueMutations_ = new java.util.ArrayList<com.google.bigtable.v1.Mutation>(trueMutations_);
+        trueMutations_ = new java.util.ArrayList<>(trueMutations_);
         bitField0_ |= 0x00000008;
        }
     }
@@ -1403,8 +1402,7 @@ public  final class CheckAndMutateRowRequest extends
         com.google.bigtable.v1.Mutation, com.google.bigtable.v1.Mutation.Builder, com.google.bigtable.v1.MutationOrBuilder> 
         getTrueMutationsFieldBuilder() {
       if (trueMutationsBuilder_ == null) {
-        trueMutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.v1.Mutation, com.google.bigtable.v1.Mutation.Builder, com.google.bigtable.v1.MutationOrBuilder>(
+        trueMutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 trueMutations_,
                 ((bitField0_ & 0x00000008) == 0x00000008),
                 getParentForChildren(),
@@ -1418,7 +1416,7 @@ public  final class CheckAndMutateRowRequest extends
       java.util.Collections.emptyList();
     private void ensureFalseMutationsIsMutable() {
       if (!((bitField0_ & 0x00000010) == 0x00000010)) {
-        falseMutations_ = new java.util.ArrayList<com.google.bigtable.v1.Mutation>(falseMutations_);
+        falseMutations_ = new java.util.ArrayList<>(falseMutations_);
         bitField0_ |= 0x00000010;
        }
     }
@@ -1787,8 +1785,7 @@ public  final class CheckAndMutateRowRequest extends
         com.google.bigtable.v1.Mutation, com.google.bigtable.v1.Mutation.Builder, com.google.bigtable.v1.MutationOrBuilder> 
         getFalseMutationsFieldBuilder() {
       if (falseMutationsBuilder_ == null) {
-        falseMutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.v1.Mutation, com.google.bigtable.v1.Mutation.Builder, com.google.bigtable.v1.MutationOrBuilder>(
+        falseMutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 falseMutations_,
                 ((bitField0_ & 0x00000010) == 0x00000010),
                 getParentForChildren(),

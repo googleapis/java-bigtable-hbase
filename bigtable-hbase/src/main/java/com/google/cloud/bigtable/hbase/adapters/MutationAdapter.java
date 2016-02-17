@@ -36,7 +36,7 @@ public class MutationAdapter
 
   static class AdapterInstanceMap {
     private Map<Class<?>, OperationAdapter<?, ?>> unsafeMap =
-        new HashMap<Class<?>, OperationAdapter<?, ?>>();
+            new HashMap<>();
 
     public <S extends Mutation, U extends OperationAdapter<S, MutateRowRequest.Builder>>
     Class<S> put(Class<S> key, U adapter) {

@@ -893,8 +893,7 @@ public  final class Operation extends
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
         getMetadataFieldBuilder() {
       if (metadataBuilder_ == null) {
-        metadataBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>(
+        metadataBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getMetadata(),
                 getParentForChildren(),
                 isClean());
@@ -1094,8 +1093,7 @@ public  final class Operation extends
         if (!(resultCase_ == 4)) {
           result_ = com.google.rpc.Status.getDefaultInstance();
         }
-        errorBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder>(
+        errorBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.rpc.Status) result_,
                 getParentForChildren(),
                 isClean());
@@ -1312,8 +1310,7 @@ public  final class Operation extends
         if (!(resultCase_ == 5)) {
           result_ = com.google.protobuf.Any.getDefaultInstance();
         }
-        responseBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>(
+        responseBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.protobuf.Any) result_,
                 getParentForChildren(),
                 isClean());

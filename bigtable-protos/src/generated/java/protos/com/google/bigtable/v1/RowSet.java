@@ -49,7 +49,7 @@ public  final class RowSet extends
           }
           case 10: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              rowKeys_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+              rowKeys_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000001;
             }
             rowKeys_.add(input.readBytes());
@@ -57,7 +57,7 @@ public  final class RowSet extends
           }
           case 18: {
             if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-              rowRanges_ = new java.util.ArrayList<com.google.bigtable.v1.RowRange>();
+              rowRanges_ = new java.util.ArrayList<>();
               mutable_bitField0_ |= 0x00000002;
             }
             rowRanges_.add(input.readMessage(com.google.bigtable.v1.RowRange.parser(), extensionRegistry));
@@ -462,7 +462,7 @@ public  final class RowSet extends
     private java.util.List<com.google.protobuf.ByteString> rowKeys_ = java.util.Collections.emptyList();
     private void ensureRowKeysIsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        rowKeys_ = new java.util.ArrayList<com.google.protobuf.ByteString>(rowKeys_);
+        rowKeys_ = new java.util.ArrayList<>(rowKeys_);
         bitField0_ |= 0x00000001;
        }
     }
@@ -563,7 +563,7 @@ public  final class RowSet extends
       java.util.Collections.emptyList();
     private void ensureRowRangesIsMutable() {
       if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-        rowRanges_ = new java.util.ArrayList<com.google.bigtable.v1.RowRange>(rowRanges_);
+        rowRanges_ = new java.util.ArrayList<>(rowRanges_);
         bitField0_ |= 0x00000002;
        }
     }
@@ -860,8 +860,7 @@ public  final class RowSet extends
         com.google.bigtable.v1.RowRange, com.google.bigtable.v1.RowRange.Builder, com.google.bigtable.v1.RowRangeOrBuilder> 
         getRowRangesFieldBuilder() {
       if (rowRangesBuilder_ == null) {
-        rowRangesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-            com.google.bigtable.v1.RowRange, com.google.bigtable.v1.RowRange.Builder, com.google.bigtable.v1.RowRangeOrBuilder>(
+        rowRangesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<>(
                 rowRanges_,
                 ((bitField0_ & 0x00000002) == 0x00000002),
                 getParentForChildren(),

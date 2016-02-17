@@ -262,7 +262,7 @@ public class TestGet extends AbstractTest {
 
     // Insert a bunch of columns.
     Put put = new Put(rowKey);
-    List<QualifierValue> keyValues = new ArrayList<QualifierValue>();
+    List<QualifierValue> keyValues = new ArrayList<>();
     for (int i = 0; i < totalColumns; ++i) {
       put.addColumn(COLUMN_FAMILY, quals[i], timestamps[i], values[i]);
 
@@ -345,7 +345,7 @@ public class TestGet extends AbstractTest {
     byte[][] values = dataHelper.randomData("value-", numValues);
 
     // Insert a bunch of data
-    List<Put> puts = new ArrayList<Put>(numValues);
+    List<Put> puts = new ArrayList<>(numValues);
     for (int i = 0; i < numValues; ++i) {
       Put put = new Put(rowKeys[i]);
       put.addColumn(COLUMN_FAMILY, quals[i], values[0]);
@@ -354,7 +354,7 @@ public class TestGet extends AbstractTest {
     table.put(puts);
 
     // Test just keys, both individually and as batch.
-    List<Get> gets = new ArrayList<Get>(numValues);
+    List<Get> gets = new ArrayList<>(numValues);
     for(int i = 0; i < numValues; ++i) {
       Get get = new Get(rowKeys[i]);
       Assert.assertTrue(table.exists(get));
@@ -470,7 +470,7 @@ public class TestGet extends AbstractTest {
     int numValues = 10;
 
     // Run a control test.
-    List<Get> gets = new ArrayList<Get>(numValues + 1);
+    List<Get> gets = new ArrayList<>(numValues + 1);
     for (int i = 0; i < numValues; ++i) {
       Get get = new Get(dataHelper.randomData("key-"));
       get.addColumn(COLUMN_FAMILY, dataHelper.randomData("qual-"));

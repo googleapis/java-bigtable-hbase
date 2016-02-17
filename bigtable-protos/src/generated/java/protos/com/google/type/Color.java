@@ -978,8 +978,7 @@ public  final class Color extends
         com.google.protobuf.FloatValue, com.google.protobuf.FloatValue.Builder, com.google.protobuf.FloatValueOrBuilder> 
         getAlphaFieldBuilder() {
       if (alphaBuilder_ == null) {
-        alphaBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.FloatValue, com.google.protobuf.FloatValue.Builder, com.google.protobuf.FloatValueOrBuilder>(
+        alphaBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 getAlpha(),
                 getParentForChildren(),
                 isClean());

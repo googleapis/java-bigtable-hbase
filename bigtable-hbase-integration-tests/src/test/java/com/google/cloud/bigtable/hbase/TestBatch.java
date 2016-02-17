@@ -69,7 +69,7 @@ public class TestBatch extends AbstractTest {
 
     Put put1 = new Put(rowKey1).addColumn(COLUMN_FAMILY, qual1, value1);
     Put put2 = new Put(rowKey2).addColumn(COLUMN_FAMILY, qual2, value2);
-    List<Row> batch = new ArrayList<Row>(2);
+    List<Row> batch = new ArrayList<>(2);
     batch.add(put1);
     batch.add(put2);
     Object[] results = new Object[batch.size()];
@@ -144,7 +144,7 @@ public class TestBatch extends AbstractTest {
     // Put
     Put put1 = new Put(rowKey1).addColumn(COLUMN_FAMILY, qual1, Bytes.toBytes(value1));
     Put put2 = new Put(rowKey2).addColumn(COLUMN_FAMILY, qual2, Bytes.toBytes(value2));
-    List<Row> batch = new ArrayList<Row>(2);
+    List<Row> batch = new ArrayList<>(2);
     batch.add(put1);
     batch.add(put2);
     table.batch(batch, null);
@@ -184,7 +184,7 @@ public class TestBatch extends AbstractTest {
     // Put
     Put put1 = new Put(rowKey1).addColumn(COLUMN_FAMILY, qual1, value1_1);
     Put put2 = new Put(rowKey2).addColumn(COLUMN_FAMILY, qual2, value2_1);
-    List<Row> batch = new ArrayList<Row>(2);
+    List<Row> batch = new ArrayList<>(2);
     batch.add(put1);
     batch.add(put2);
     table.batch(batch, null);
@@ -226,7 +226,7 @@ public class TestBatch extends AbstractTest {
     Put put2 = new Put(rowKeys[2]).addColumn(COLUMN_FAMILY, quals[2], values[2]);
     Put put3 = new Put(rowKeys[3]).addColumn(Bytes.toBytes("NO SUCH FAMILY"), quals[3], values[3]);
     Put put4 = new Put(rowKeys[4]).addColumn(COLUMN_FAMILY, quals[4], values[4]);
-    List<Row> batch = new ArrayList<Row>(5);
+    List<Row> batch = new ArrayList<>(5);
     Object[] results = new Object[5];
     batch.add(put0);
     batch.add(put1);  // This one is bad
@@ -256,7 +256,7 @@ public class TestBatch extends AbstractTest {
     Assert.assertTrue("#4 should be a Result", results[4] instanceof Result);
 
     // Check values.  The good puts should have worked.
-    List<Get> gets = new ArrayList<Get>(5);
+    List<Get> gets = new ArrayList<>(5);
     for (int i = 0; i < 5; ++i) {
       gets.add(new Get(rowKeys[i]));
     }
@@ -335,7 +335,7 @@ public class TestBatch extends AbstractTest {
 
     Put put1 = new Put(rowKey1).addColumn(COLUMN_FAMILY, qual1, value1);
     Put put2 = new Put(rowKey2).addColumn(COLUMN_FAMILY, qual2, value2);
-    List<Row> batch = new ArrayList<Row>(2);
+    List<Row> batch = new ArrayList<>(2);
     batch.add(put1);
     batch.add(put2);
     Object[] results = new Object[batch.size()];

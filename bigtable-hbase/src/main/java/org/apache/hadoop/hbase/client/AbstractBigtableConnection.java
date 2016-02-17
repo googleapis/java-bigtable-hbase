@@ -326,8 +326,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
           int minThreads = Math.min(getCoreThreads(), maxThreads);
           long keepAliveTime = conf.getLong("hbase.hconnection.threads.keepalivetime", 60);
           LinkedBlockingQueue<Runnable> workQueue =
-              new LinkedBlockingQueue<Runnable>(128 * conf.getInt("hbase.client.max.total.tasks",
-                200));
+                  new LinkedBlockingQueue<>(128 * conf.getInt("hbase.client.max.total.tasks",
+                          200));
           this.batchPool = new ThreadPoolExecutor(
               minThreads,
               maxThreads,

@@ -1664,8 +1664,7 @@ public  final class Mutation extends
           com.google.bigtable.v1.TimestampRange, com.google.bigtable.v1.TimestampRange.Builder, com.google.bigtable.v1.TimestampRangeOrBuilder> 
           getTimeRangeFieldBuilder() {
         if (timeRangeBuilder_ == null) {
-          timeRangeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.google.bigtable.v1.TimestampRange, com.google.bigtable.v1.TimestampRange.Builder, com.google.bigtable.v1.TimestampRangeOrBuilder>(
+          timeRangeBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                   getTimeRange(),
                   getParentForChildren(),
                   isClean());
@@ -3145,8 +3144,7 @@ public  final class Mutation extends
         if (!(mutationCase_ == 1)) {
           mutation_ = com.google.bigtable.v1.Mutation.SetCell.getDefaultInstance();
         }
-        setCellBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.Mutation.SetCell, com.google.bigtable.v1.Mutation.SetCell.Builder, com.google.bigtable.v1.Mutation.SetCellOrBuilder>(
+        setCellBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.Mutation.SetCell) mutation_,
                 getParentForChildren(),
                 isClean());
@@ -3307,8 +3305,7 @@ public  final class Mutation extends
         if (!(mutationCase_ == 2)) {
           mutation_ = com.google.bigtable.v1.Mutation.DeleteFromColumn.getDefaultInstance();
         }
-        deleteFromColumnBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.Mutation.DeleteFromColumn, com.google.bigtable.v1.Mutation.DeleteFromColumn.Builder, com.google.bigtable.v1.Mutation.DeleteFromColumnOrBuilder>(
+        deleteFromColumnBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.Mutation.DeleteFromColumn) mutation_,
                 getParentForChildren(),
                 isClean());
@@ -3469,8 +3466,7 @@ public  final class Mutation extends
         if (!(mutationCase_ == 3)) {
           mutation_ = com.google.bigtable.v1.Mutation.DeleteFromFamily.getDefaultInstance();
         }
-        deleteFromFamilyBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.Mutation.DeleteFromFamily, com.google.bigtable.v1.Mutation.DeleteFromFamily.Builder, com.google.bigtable.v1.Mutation.DeleteFromFamilyOrBuilder>(
+        deleteFromFamilyBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.Mutation.DeleteFromFamily) mutation_,
                 getParentForChildren(),
                 isClean());
@@ -3631,8 +3627,7 @@ public  final class Mutation extends
         if (!(mutationCase_ == 4)) {
           mutation_ = com.google.bigtable.v1.Mutation.DeleteFromRow.getDefaultInstance();
         }
-        deleteFromRowBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.bigtable.v1.Mutation.DeleteFromRow, com.google.bigtable.v1.Mutation.DeleteFromRow.Builder, com.google.bigtable.v1.Mutation.DeleteFromRowOrBuilder>(
+        deleteFromRowBuilder_ = new com.google.protobuf.SingleFieldBuilder<>(
                 (com.google.bigtable.v1.Mutation.DeleteFromRow) mutation_,
                 getParentForChildren(),
                 isClean());
