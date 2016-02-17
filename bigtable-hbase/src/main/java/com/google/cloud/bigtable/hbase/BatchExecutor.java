@@ -193,7 +193,7 @@ public class BatchExecutor {
         return asyncExecutor.mutateRowAsync(requestAdapter.adapt((RowMutations) row));
       }
     } catch (Exception e) {
-      return Futures.immediateFailedFuture(e);
+      return Futures.immediateFailedFuture(new IOException("Could not process the batch", e));
     }
     LOG.error("Encountered unknown action type %s", row.getClass());
     return Futures.immediateFailedFuture(

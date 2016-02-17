@@ -175,8 +175,9 @@ public class TestBatchExecutor {
       underTest.batch(Arrays.asList(new Put(EMPTY_KEY)));
     } catch (RetriesExhaustedWithDetailsException e) {
       Assert.assertEquals(1, e.getCauses().size());
-      Assert.assertEquals(RuntimeException.class, e.getCause(0).getClass());
-      Assert.assertEquals(message, e.getCause(0).getMessage());
+      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
+      Assert.assertEquals(RuntimeException.class, e.getCause(0).getCause().getClass());
+      Assert.assertEquals(message, e.getCause(0).getCause().getMessage());
     }
   }
 

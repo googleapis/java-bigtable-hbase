@@ -369,7 +369,7 @@ public class BigtableSession implements AutoCloseable {
    * </p>
    */
   protected ChannelPool createChannel(final String hostString) throws IOException {
-    return new ChannelPool(headerInterceptors, new ChannelPool.ChannelFactory() {
+    ChannelPool channelPool = new ChannelPool(headerInterceptors, new ChannelPool.ChannelFactory() {
       @Override
       public Channel create() throws IOException {
         final Channel channel = createNettyChannel(hostString);
@@ -382,6 +382,8 @@ public class BigtableSession implements AutoCloseable {
         return channel;
       }
     });
+    clientCloseHandlers.add(channelPool);
+    return channelPool;
   }
 
   protected Channel createNettyChannel(final String host) throws IOException {
