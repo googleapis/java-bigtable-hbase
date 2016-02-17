@@ -34,6 +34,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
+import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.CannotProvideCoderException;
 import com.google.cloud.dataflow.sdk.coders.Coder;
@@ -95,17 +96,16 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testSourceToString() throws Exception {
-    CloudBigtableIO.Source source = new CloudBigtableIO.Source(null);
+    CloudBigtableIO.Source source = (Source) CloudBigtableIO.read(null);
     byte[] startKey = "abc d".getBytes();
     byte[] stopKey = "def g".getBytes();
-    BoundedSource<Result> sourceWithKeys = source.new SourceWithKeys(startKey, stopKey, 10);
+    BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
     assertEquals("Split start: 'abc d', end: 'def g', size: 10", sourceWithKeys.toString());
 
     startKey = new byte[]{0, 1, 2, 3, 4, 5};
     stopKey = new byte[]{104, 101, 108, 108, 111};  // hello
-    sourceWithKeys = source.new SourceWithKeys(startKey, stopKey, 10);
+    sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
     assertEquals("Split start: '\\x00\\x01\\x02\\x03\\x04\\x05', end: 'hello', size: 10",
         sourceWithKeys.toString());
   }
 }
-
