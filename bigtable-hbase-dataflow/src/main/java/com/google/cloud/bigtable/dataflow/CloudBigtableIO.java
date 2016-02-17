@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -251,9 +252,7 @@ public class CloudBigtableIO {
           PipelineOptions options) throws Exception {
         List<SourceWithKeys> newSplits =
             split(estimatedSize, desiredBundleSizeBytes, startKey, stopKey);
-        if (SOURCE_LOG.isDebugEnabled()) {
-          SOURCE_LOG.debug("Splitting split {} into {}", this, newSplits);
-        }
+        SOURCE_LOG.trace("Splitting split {} into {}", this, newSplits);
         return newSplits;
       }
 
@@ -293,10 +292,12 @@ public class CloudBigtableIO {
       private final BoundedSource<Result> source;
       private final Scan scan;
       private final CloudBigtableScanConfiguration config;
+      protected long workStart;
+      private final AtomicLong rowsRead = new AtomicLong();
 
       private volatile Connection connection;
-      private ResultScanner scanner;
-      private Table table;
+      private volatile ResultScanner scanner;
+      private volatile Table table;
       private Result current;
 
       private Reader(
@@ -312,6 +313,9 @@ public class CloudBigtableIO {
       @Override
       public boolean advance() throws IOException {
         current = scanner.next();
+        if (current != null) {
+          rowsRead.incrementAndGet();
+        }
         return current != null;
       }
 
@@ -323,6 +327,15 @@ public class CloudBigtableIO {
         scanner.close();
         table.close();
         connection.close();
+        long totalOps = rowsRead.get();
+        long elapsedTimeMs = System.currentTimeMillis() - workStart;
+        long operationsPerSecond = totalOps * 1000 / elapsedTimeMs;
+        SOURCE_LOG.info(
+            "{} Complete: {} operations in {} ms. That's {} operations/sec",
+            this,
+            totalOps,
+            elapsedTimeMs,
+            operationsPerSecond);
       }
 
       @Override
@@ -341,10 +354,25 @@ public class CloudBigtableIO {
         */
       @Override
       public boolean start() throws IOException {
+        long connectionStart = System.currentTimeMillis();
         connection = new BigtableConnection(config.toHBaseConfig());
         table = connection.getTable(TableName.valueOf(config.getTableId()));
         scanner = table.getScanner(scan);
+        workStart = System.currentTimeMillis();
+        SOURCE_LOG.info("{} Starting work. Creating Scanner took: {} ms.",
+          this,
+          workStart - connectionStart);
         return advance();
+      }
+
+      @Override
+      public String toString() {
+        byte[] startRow = scan.getStartRow();
+        byte[] stopRow = scan.getStopRow();
+        return String.format(
+            "Reader for: ['%s' - '%s']",
+            Bytes.toStringBinary(startRow),
+            Bytes.toStringBinary(stopRow));
       }
     }
 
@@ -655,6 +683,7 @@ public class CloudBigtableIO {
     @Override
     public void processElement(ProcessContext context) throws Exception {
       Mutation mutation = context.element();
+      incrementOperationCounter();
       if (DOFN_LOG.isTraceEnabled()) {
         DOFN_LOG.trace("Persisting {}", Bytes.toStringBinary(mutation.getRow()));
       }
@@ -717,9 +746,10 @@ public class CloudBigtableIO {
       try (Table t = getConnection().getTable(TableName.valueOf(tableName))) {
         List<Mutation> mutations = Lists.newArrayList(element.getValue());
         int mutationCount = mutations.size();
-        DOFN_LOG.trace("Persisting {} elements to table {}.", mutationCount, tableName);
+        incrementOperationCounter(mutationCount);
+        DOFN_LOG.debug("Persisting {} elements to table {}.", mutationCount, tableName);
         t.batch(mutations, new Object[mutationCount]);
-        DOFN_LOG.trace("Finished persisting {} elements to table {}.", mutationCount, tableName);
+        DOFN_LOG.debug("Finished persisting {} elements to table {}.", mutationCount, tableName);
       } catch (RetriesExhaustedWithDetailsException exception) {
         logExceptions(context, exception);
         retrowException(exception);
