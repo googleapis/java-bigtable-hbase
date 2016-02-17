@@ -20,6 +20,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
@@ -31,12 +32,10 @@ import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.util.Threads;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -47,9 +46,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -138,11 +134,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     this.batchPool = pool;
     this.closed = false;
 
-    if (batchPool == null) {
-      batchPool = getBatchPool();
-    }
-
-    this.session = new BigtableSession(options, batchPool);
+    this.session = new BigtableSession(options);
     this.tableConfig = new TableConfiguration(conf);
   }
 
@@ -153,7 +145,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   @Override
   public Table getTable(TableName tableName) throws IOException {
-    return getTable(tableName, getBatchPool());
+    return getTable(tableName, batchPool);
   }
 
   @Override
@@ -162,6 +154,9 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     HeapSizeManager heapSizeManager =
         new HeapSizeManager(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
             AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT);
+    if (pool == null) {
+      pool = BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
+    }
     BatchExecutor batchExecutor = new BatchExecutor(
          new AsyncExecutor(client, heapSizeManager),
          options,
@@ -171,7 +166,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   }
 
   @Override
-  public synchronized BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
+  public BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
     TableName tableName = params.getTableName();
     if (tableName == null) {
       throw new IllegalArgumentException("TableName cannot be null.");
@@ -187,14 +182,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
 
-    if (this.bufferedMutatorExecutorService == null && options.getAsyncMutatorCount() > 0) {
-      bufferedMutatorExecutorService = Executors.newCachedThreadPool(
-          new ThreadFactoryBuilder()
-              .setNameFormat("BigtableBufferedMutator-worker-%s")
-              .setDaemon(true)
-              .build());
-    }
-
+    ExecutorService pool = batchPool != null ? batchPool
+        : BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
     BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(
         session.getDataClient(),
         createAdapter(tableName),
@@ -202,7 +191,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         options,
         params.getListener(),
         new HeapSizeManager(maxHeapSize, maxInflightRpcs),
-        bufferedMutatorExecutorService) {
+        pool) {
       @Override
       public void close() throws IOException {
         try {
@@ -314,48 +303,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       .add("dataHost", options.getDataHost())
       .add("tableAdminHost", options.getTableAdminHost())
       .toString();
-  }
-
-  // Copied from org.apache.hadoop.hbase.client.HConnectionManager#getBatchPool()
-  private ExecutorService getBatchPool() {
-    if (batchPool == null) {
-      // shared HTable thread executor not yet initialized
-      synchronized (this) {
-        if (batchPool == null) {
-          int maxThreads = getMaxThreads();
-          int minThreads = Math.min(getCoreThreads(), maxThreads);
-          long keepAliveTime = conf.getLong("hbase.hconnection.threads.keepalivetime", 60);
-          LinkedBlockingQueue<Runnable> workQueue =
-              new LinkedBlockingQueue<Runnable>(128 * conf.getInt("hbase.client.max.total.tasks",
-                200));
-          this.batchPool = new ThreadPoolExecutor(
-              minThreads,
-              maxThreads,
-              keepAliveTime,
-              TimeUnit.SECONDS,
-              workQueue,
-              Threads.newDaemonThreadFactory("bigtable-connection-shared-executor"));
-        }
-        this.cleanupPool = true;
-      }
-    }
-    return this.batchPool;
-  }
-
-  private int getCoreThreads() {
-    int coreThreads = conf.getInt("hbase.hconnection.threads.core", options.getChannelCount() * 2);
-    if (coreThreads == 0) {
-      coreThreads = Runtime.getRuntime().availableProcessors() * 8;
-    }
-    return coreThreads;
-  }
-
-  private int getMaxThreads() {
-    int maxThreads = conf.getInt("hbase.hconnection.threads.max", 256);
-    if (maxThreads == 0) {
-      maxThreads = Runtime.getRuntime().availableProcessors() * 8;
-    }
-    return maxThreads;
   }
 
   // Copied from org.apache.hadoop.hbase.client.HConnectionManager#shutdownBatchPool()
