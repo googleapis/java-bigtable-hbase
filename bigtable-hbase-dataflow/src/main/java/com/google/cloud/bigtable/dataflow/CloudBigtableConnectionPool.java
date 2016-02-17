@@ -43,6 +43,15 @@ public class CloudBigtableConnectionPool {
   public CloudBigtableConnectionPool() {
   }
 
+  /**
+   * Gets a shared connection where the cluster name from the config is the key.
+   *
+   * <p>NOTE: Do not call close() on the connection, since it's shared.
+   *
+   * @param config
+   * @return
+   * @throws IOException
+   */
   public Connection getConnection(Configuration config) throws IOException {
     String key = BigtableOptionsFactory.fromConfiguration(config).getClusterName().toString();
     return getConnection(config, key);
@@ -60,6 +69,15 @@ public class CloudBigtableConnectionPool {
 
   @VisibleForTesting
   protected Connection createConnection(Configuration config) throws IOException {
-    return new BigtableConnection(config);
+    return new BigtableConnection(config) {
+      @Override
+      public void close() throws IOException {
+        // Users should not actually close the shared connection. Make sure that if a user does call
+        // close, that nothing bad happens to other potential users.
+        // All of the resources will be cleaned up when the JVM closes.
+        LOG.info("Calling close() on the connection from dataflow is a noop. "
+            + "Please don't close() the connection yourself.");
+      }
+    };
   }
 }
