@@ -23,6 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -35,7 +38,52 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, Out> {
   private static final long serialVersionUID = 1L;
 
-  private static final CloudBigtableConnectionPool pool = new CloudBigtableConnectionPool();
+  static final CloudBigtableConnectionPool pool = new CloudBigtableConnectionPool();
+
+  public static void logRetriesExhaustedWithDetailsException(
+      Logger log, String context, RetriesExhaustedWithDetailsException exception) {
+
+    if (log.isDebugEnabled()) {
+      log.error("For context {}: exception occured during a bulk operation: {}", context,
+        exception.getExhaustiveDescription());
+    }
+    if (exception.getNumExceptions() == 0) {
+      log.error(
+          "For context {}: Got a RetriesExhaustedWithDetailsException without any details.",
+          exception);
+      return;
+    }
+    Map<String, Integer> furtherInfo = new TreeMap<>();
+    List<Throwable> causes = exception.getCauses();
+    for (Throwable throwable : causes) {
+      String message = throwable.getMessage();
+      Integer count = furtherInfo.get(message);
+      if (count == null) {
+        furtherInfo.put(message, 1);
+      } else {
+        furtherInfo.put(message, 1 + count);
+      }
+    }
+    log.error(
+        String.format(
+            "For context %s: %d exceptions occured during a bulk operation:\n\t%s.\n"
+                + "The stack trace is a sample exception, of the first exception.\n"
+                + "Breakdown of exceptions {type - count}: %s",
+            context,
+            exception.getNumExceptions(),
+            exception.getMessage(),
+            furtherInfo),
+        exception.getCause(0));
+  }
+
+  protected static void retrowException(RetriesExhaustedWithDetailsException exception)
+      throws Exception {
+    if (exception.getCauses().size() == 1) {
+      throw (Exception) exception.getCause(0);
+    } else {
+      throw exception;
+    }
+  }
 
   protected final Logger DOFN_LOG = LoggerFactory.getLogger(getClass());
   protected CloudBigtableConfiguration config;
@@ -74,8 +122,7 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
    * {@link RetriesExhaustedWithDetailsException#getExhaustiveDescription()}.
    */
   protected void logExceptions(Context context, RetriesExhaustedWithDetailsException exception) {
-    DOFN_LOG.warn("For context {}: exception occured during bulk writing: {}", context,
-      exception.getExhaustiveDescription());
+    logRetriesExhaustedWithDetailsException(DOFN_LOG, context.toString(), exception);
   }
 
   protected long incrementOperationCounter() {
@@ -104,12 +151,4 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
     super.finishBundle(c);
   }
 
-  protected static void retrowException(RetriesExhaustedWithDetailsException exception)
-      throws Exception {
-    if (exception.getCauses().size() == 1) {
-      throw (Exception) exception.getCause(0);
-    } else {
-      throw exception;
-    }
-  }
 }
