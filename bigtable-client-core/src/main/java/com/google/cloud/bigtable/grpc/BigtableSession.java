@@ -244,24 +244,10 @@ public class BigtableSession implements AutoCloseable {
       headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
       headerInterceptors = headerInterceptorBuilder.build();
 
-      Future<BigtableDataClient> dataClientFuture =
-          initializerExecutor.submit(new Callable<BigtableDataClient>() {
-            @Override
-            public BigtableDataClient call() throws Exception {
-              return initializeDataClient();
-            }
-          });
+      // More often than not, users want the dataClient. Create a new one in the constructor.
+      this.dataClient = initializeDataClient();
 
-      Future<BigtableTableAdminClient> tableAdminFuture =
-          initializerExecutor.submit(new Callable<BigtableTableAdminClient>() {
-            @Override
-            public BigtableTableAdminClient call() throws Exception {
-              return initializeAdminClient();
-            }
-          });
-
-      this.dataClient = get(dataClientFuture, "Could not initialize the data API client");
-      this.tableAdminClient = get(tableAdminFuture, "Could not initialize the table Admin client");
+      // Defer the creation of both the tableAdminClient and clusterAdminClient until we need them.
     } finally {
       initializerExecutor.shutdown();
     }
@@ -350,7 +336,10 @@ public class BigtableSession implements AutoCloseable {
     return dataClient;
   }
 
-  public BigtableTableAdminClient getTableAdminClient() {
+  public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
+    if (tableAdminClient == null) {
+      tableAdminClient = initializeAdminClient();
+    }
     return tableAdminClient;
   }
 
