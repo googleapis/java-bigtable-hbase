@@ -16,8 +16,7 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import io.grpc.Channel;
-import io.grpc.internal.ManagedChannelImpl;
+import io.grpc.ManagedChannel;
 import io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
@@ -61,10 +60,6 @@ import com.google.cloud.bigtable.grpc.io.UserAgentInterceptor;
 import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -77,7 +72,7 @@ import com.google.common.util.concurrent.MoreExecutors;
  *   <li> Close anything above that needs to be closed (ExecutorService, CahnnelImpls)
  * </ol>
  */
-public class BigtableSession implements AutoCloseable {
+public class BigtableSession implements Closeable {
 
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
@@ -197,8 +192,8 @@ public class BigtableSession implements AutoCloseable {
   private BigtableClusterAdminClient clusterAdminClient;
 
   private final BigtableOptions options;
-  private final List<Closeable> clientCloseHandlers = Collections
-      .synchronizedList(new ArrayList<Closeable>());
+  private final List<ManagedChannel> managedChannels = Collections
+      .synchronizedList(new ArrayList<ManagedChannel>());
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
 
   public BigtableSession(BigtableOptions options) throws IOException {
@@ -243,9 +238,18 @@ public class BigtableSession implements AutoCloseable {
 
       headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
       headerInterceptors = headerInterceptorBuilder.build();
+      ChannelPool dataChannel = new ChannelPool(headerInterceptors, new ChannelPool.ChannelFactory() {
+        @Override
+        public ManagedChannel create() throws IOException {
+          return createNettyChannel(BigtableSession.this.options.getDataHost());
+        }
+      });
+      managedChannels.add(dataChannel);
+      BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
       // More often than not, users want the dataClient. Create a new one in the constructor.
-      this.dataClient = initializeDataClient();
+      this.dataClient = new BigtableDataGrpcClient(dataChannel, sharedPools.getBatchThreadPool(),
+      sharedPools.getRetryExecutor(), options);
 
       // Defer the creation of both the tableAdminClient and clusterAdminClient until we need them.
     } finally {
@@ -306,18 +310,6 @@ public class BigtableSession implements AutoCloseable {
     };
   }
 
-  private BigtableDataClient initializeDataClient() throws IOException {
-    ChannelPool dataChannel = createChannel(options.getDataHost());
-    BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
-    return new BigtableDataGrpcClient(dataChannel, sharedPools.getBatchThreadPool(),
-        sharedPools.getRetryExecutor(), options);
-  }
-
-  private BigtableTableAdminClient initializeAdminClient() throws IOException {
-    Channel channel = createChannel(options.getTableAdminHost());
-    return new BigtableTableAdminGrpcClient(channel);
-  }
-
   private static <T> T get(Future<T> future, String errorMessage) throws IOException {
     try {
       return future.get();
@@ -338,14 +330,15 @@ public class BigtableSession implements AutoCloseable {
 
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
-      tableAdminClient = initializeAdminClient();
+      ManagedChannel channel = createChannelPool(options.getTableAdminHost());
+      tableAdminClient = new BigtableTableAdminGrpcClient(channel);
     }
     return tableAdminClient;
   }
 
   public synchronized BigtableClusterAdminClient getClusterAdminClient() throws IOException {
     if (this.clusterAdminClient == null) {
-      Channel channel = createChannel(options.getClusterAdminHost());
+      ManagedChannel channel = createChannelPool(options.getClusterAdminHost());
       this.clusterAdminClient = new BigtableClusterAdminGrpcClient(channel);
     }
 
@@ -354,28 +347,21 @@ public class BigtableSession implements AutoCloseable {
 
   /**
    * <p>
-   * Create a new Channel, with auth headers and user agent interceptors.
+   * Create a new {@link ChannelPool}, with auth headers and user agent interceptors.
    * </p>
    */
-  protected ChannelPool createChannel(final String hostString) throws IOException {
+  protected ChannelPool createChannelPool(final String hostString) throws IOException {
     ChannelPool channelPool = new ChannelPool(headerInterceptors, new ChannelPool.ChannelFactory() {
       @Override
-      public Channel create() throws IOException {
-        final Channel channel = createNettyChannel(hostString);
-        clientCloseHandlers.add(new Closeable() {
-          @Override
-          public void close() throws IOException {
-            BigtableSession.close(channel);
-          }
-        });
-        return channel;
+      public ManagedChannel create() throws IOException {
+        return createNettyChannel(hostString);
       }
     });
-    clientCloseHandlers.add(channelPool);
+    managedChannels.add(channelPool);
     return channelPool;
   }
 
-  protected Channel createNettyChannel(final String host) throws IOException {
+  protected ManagedChannel createNettyChannel(final String host) throws IOException {
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
     return NettyChannelBuilder
         .forAddress(host, options.getPort())
@@ -388,44 +374,40 @@ public class BigtableSession implements AutoCloseable {
         .build();
   }
 
-  protected static void close(final Channel channel) throws IOException {
-    ManagedChannelImpl channelImpl = (ManagedChannelImpl) channel;
-    channelImpl.shutdown();
-    int timeoutMs = 10000;
-    try {
-      channelImpl.awaitTermination(timeoutMs, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      Thread.interrupted();
-      throw new IOException("Interrupted while sleeping for close", e);
-    }
-    if (!channelImpl.isTerminated()) {
-      // Sometimes, gRPC channels don't close properly. We cannot explain why that happens,
-      // nor can we reproduce the problem reliably. However, that doesn't actually cause
-      // problems. Synchronous RPCs will throw exceptions right away. Buffered Mutator based
-      // async operations are already logged. Direct async operations may have some trouble,
-      // but users should not currently be using them directly.
-      LOG.trace("Could not close the channel after %d ms.", timeoutMs);
-    }
-  }
-
   @Override
-  public void close() throws IOException {
-    List<ListenableFuture<Void>> closingChannelsFutures = new ArrayList<>();
-    ListeningExecutorService listenableBatchPool = MoreExecutors
-        .listeningDecorator(BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool());
-    for (final Closeable clientCloseHandler : clientCloseHandlers) {
-      closingChannelsFutures.add(listenableBatchPool.submit(createCallable(clientCloseHandler)));
+  public synchronized void close() throws IOException {
+    if (managedChannels.isEmpty()) {
+      return;
     }
-    get(Futures.allAsList(closingChannelsFutures), "waiting for channels to be closed");
-  }
-
-  protected Callable<Void> createCallable(final Closeable clientCloseHandler) {
-    return new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        clientCloseHandler.close();
-        return null;
+    long timeoutNanos = TimeUnit.SECONDS.toNanos(10);
+    long endTimeNanos = System.nanoTime() + timeoutNanos;
+    for (ManagedChannel channel : managedChannels) {
+      channel.shutdown();
+    }
+    for (ManagedChannel channel : managedChannels) {
+      long awaitTimeNanos = endTimeNanos - System.nanoTime();
+      if (awaitTimeNanos <= 0) {
+        break;
       }
-    };
+      try {
+        channel.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
+      } catch (InterruptedException e) {
+        throw new IOException("Interrupted while closing the channelPools");
+      }
+    }
+    for (ManagedChannel channel : managedChannels) {
+      if (!channel.isTerminated()) {
+        // Sometimes, gRPC channels don't close properly. We cannot explain why that happens,
+        // nor can we reproduce the problem reliably. However, that doesn't actually cause
+        // problems. Synchronous RPCs will throw exceptions right away. Buffered Mutator based
+        // async operations are already logged. Direct async operations may have some trouble,
+        // but users should not currently be using them directly.
+        //
+        // NOTE: We haven't seen this problem since removing the RefreshingChannel
+        LOG.info("Could not close the channel after 10 seconds.");
+        break;
+      }
+    }
+    managedChannels.clear();
   }
 }
