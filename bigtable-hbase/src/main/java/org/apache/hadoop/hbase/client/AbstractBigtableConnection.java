@@ -323,7 +323,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   public abstract Admin getAdmin() throws IOException;
 
   /* Methods needed to construct a Bigtable Admin implementation: */
-  protected BigtableTableAdminClient getBigtableTableAdminClient() {
+  protected BigtableTableAdminClient getBigtableTableAdminClient() throws IOException {
     return session.getTableAdminClient();
   }
 
