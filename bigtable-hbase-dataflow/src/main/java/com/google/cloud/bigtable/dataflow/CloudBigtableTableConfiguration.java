@@ -34,6 +34,17 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    * @return The new {@link CloudBigtableTableConfiguration}.
    */
   public static CloudBigtableTableConfiguration fromCBTOptions(CloudBigtableOptions options){
+    // NOTE: This runs on the client, and they may not have slf4j set up.  They should know about the performance
+    // impact of their configuration.
+    if (options.getZone() == null) {
+      System.out.println(String.format(
+        "WARNING: Set the --zone parameter to %s for optimal performance", options.getZone()));
+    } else if (!options.getZone().equals(options.getBigtableZoneId())) {
+      System.out.println(String.format(
+        "WARNING: The Bigtable zone(--bigtableZoneId) is: %s. The Dataflow zone (--zone) is set to %s."
+            + "Set the parameters to the same value for optimal performance.",
+        options.getBigtableZoneId(), options.getZone()));
+    }
     return new CloudBigtableTableConfiguration(
         options.getBigtableProjectId(),
         options.getBigtableZoneId(),
