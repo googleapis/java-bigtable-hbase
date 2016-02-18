@@ -32,7 +32,7 @@ import java.io.Serializable;
  * A {@link Coder} that serializes and deserializes the {@link Result} objects using {@link
  * ProtobufUtil}.
  */
-public class HBaseResultCoder extends AtomicCoder<Result> implements Serializable{
+public class HBaseResultCoder extends AtomicCoder<Result> implements Serializable {
 
   private static final long serialVersionUID = -4975428837770254686L;
 
@@ -43,8 +43,8 @@ public class HBaseResultCoder extends AtomicCoder<Result> implements Serializabl
   }
 
   @Override
-  public void encode(Result value, OutputStream outputStream,
-      Coder.Context context) throws CoderException, IOException {
+  public void encode(Result value, OutputStream outputStream, Coder.Context context)
+      throws CoderException, IOException {
     ProtobufUtil.toResult(value).writeDelimitedTo(outputStream);
   }
 }
