@@ -29,39 +29,46 @@ Your data is protected through redundant storage at multiple physical locations.
 ### Proven
 
 Cloud Bigtable has been used by Google for 10+ years for its largest applications, including search, Gmail, Google Maps, Google Earth, and many others.
-**Include authorship, support contact and release information.**
 
 
 ## Project setup, installation, and configuration
 
 There are a few things you need to do to get a working Bigtable project before you can execute code against it:
 
-1. [Creating a bigtable cluster](https://cloud.google.com/bigtable/docs/creating-cluster)
+1. [Create a Cloud Bigtable cluster](https://cloud.google.com/bigtable/docs/creating-cluster)
 1. It's recommended to [install the Cloud SDK for Cloud Bigtable](https://cloud.google.com/bigtable/docs/installing-cloud-sdk)
 
-You can create a [maven project](https://cloud.google.com/bigtable/docs/using-maven) with the following dependency:
+You can create a [Maven project](https://cloud.google.com/bigtable/docs/using-maven) with the following dependency:
 
-        <dependency>
-          <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-hbase-1.0</artifactId>
-          <version>0.2.2</version>
-        </dependency>
+```xml
+<dependency>
+  <groupId>com.google.cloud.bigtable</groupId>
+  <artifactId>bigtable-hbase-1.0</artifactId>
+  <version>0.2.2</version>
+</dependency>
+```
 
 ### How do I, as a developer, start working on the project?
 
-You'll need Java, Maven, Google Cloud project with a Bigtable Cluster (see above for details) and the cloud SDK (see above).
+You'll need Java, Maven, Google Cloud Platform project with a Bigtable cluster (see above for details) and the Google Cloud SDK (see above).
 
-You can run *mvn clean install* to create a local version of all of the Cloud Bigtable client binaries. 
+You can run `mvn clean install` to create a local version of all of the Cloud Bigtable client binaries. 
 
-Additionally see our [example project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples)
+Additionally, see our [example project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
 
 ## Testing
 
-You can run the unit tests via *mvn clean install*.  There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the cloud SDK configuration.
+You can run the unit tests via `mvn clean install`.  There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the cloud SDK configuration.
 
 You can run the following command for Java 7:
 
-`mvn clean integration-test -PbigtableIntegrationTest -Dgoogle.bigtable.project.id=[your cloud project id] -Dgoogle.bigtable.zone.name=[the zone your cluster is in] -Dgoogle.bigtable.cluster.name=[your cluster id] -Dgoogle.bigtable.auth.service -Dgoogle.bigtable.auth.service.account.enable=true`
+    mvn clean integration-test \
+        -PbigtableIntegrationTest \
+        -Dgoogle.bigtable.project.id=[your cloud project id] \
+        -Dgoogle.bigtable.zone.name=[the zone your cluster is in] \
+        -Dgoogle.bigtable.cluster.name=[your cluster id] \
+        -Dgoogle.bigtable.auth.service \
+        -Dgoogle.bigtable.auth.service.account.enable=true
 
 There is a possiblity that the versions of ALPN supplied above does not work with your JDK.  If so, you can see more alternatives [on the ALPN version table](http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions).
 
