@@ -15,8 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -29,6 +34,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -77,16 +85,46 @@ public class ChannelPool extends Channel implements Closeable {
    */
   public void ensureChannelCount(int capacity) throws IOException {
     if (totalSize.get() < capacity) {
-      synchronized(this){
+      synchronized (totalSize) {
         if (totalSize.get() < capacity) {
-          List<Channel> newChannelList = new ArrayList<>(channels.get());
-          while(newChannelList.size() < capacity) {
-            newChannelList.add(factory.create());
-          }
-          setChannels(newChannelList);
+          channels.set(
+              ImmutableList.<Channel> builder()
+                  .addAll(channels.get())
+                  .addAll(createNewChannels(capacity - totalSize.get()))
+                  .build()
+          );
           totalSize.set(capacity);
         }
       }
+    }
+  }
+
+  /**
+   * Creates a new list of {@link Channel} to be used in parallel operations.
+   * @param newChannelCount The number of new Channels to create.
+   * @return a new List of {@link Channel}
+   * @throws IOException if an exception occurred during Channel creation.
+   */
+  protected List<Channel> createNewChannels(int newChannelCount) throws IOException {
+    ExecutorService executorService = BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
+    ListeningExecutorService listeningExecutor = MoreExecutors.listeningDecorator(executorService);
+
+    Callable<Channel> createChannelCallable = new Callable<Channel>() {
+      @Override
+      public Channel call() throws Exception {
+        return factory.create();
+      }
+    };
+
+    List<ListenableFuture<Channel>> connectionFutures = new ArrayList<>(newChannelCount);
+    for (int i = 0; i < newChannelCount; i++) {
+      connectionFutures.add(listeningExecutor.submit(createChannelCallable));
+    }
+
+    try {
+      return Futures.successfulAsList(connectionFutures).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Could not add new channels.", e);
     }
   }
 
@@ -149,21 +187,7 @@ public class ChannelPool extends Channel implements Closeable {
     };
   }
 
-  /**
-   * Sets the values in newChannelList to the {@code channels} AtomicReference.  The values are
-   * copied into an {@link ImmutableList}.
-   *
-   * @param newChannelList A {@link List} of {@link Channel}s to set to the {@code channels}
-   */
-  private void setChannels(List<Channel> newChannelList) {
-    channels.set(ImmutableList.copyOf(newChannelList));
-  }
-
   public int size() {
     return totalSize.get();
-  }
-
-  public int availbleSize() {
-    return channels.get().size();
   }
 }
