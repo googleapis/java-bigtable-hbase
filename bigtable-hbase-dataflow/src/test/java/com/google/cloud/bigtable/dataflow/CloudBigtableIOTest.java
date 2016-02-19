@@ -96,7 +96,7 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testSourceToString() throws Exception {
-    CloudBigtableIO.Source source = (Source) CloudBigtableIO.read(null);
+    CloudBigtableIO.Source<Result> source = (Source<Result>) CloudBigtableIO.read(null);
     byte[] startKey = "abc d".getBytes();
     byte[] stopKey = "def g".getBytes();
     BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
