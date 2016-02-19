@@ -380,6 +380,7 @@ public class TestBatch extends AbstractTest {
       Assert.fail("Expected an exception");
     } catch(RetriesExhaustedWithDetailsException e) {
       Assert.assertEquals(1, e.getCauses().size());
+      Assert.assertTrue(e.getCause(0).getMessage().toLowerCase().contains("closed"));
     }
   }
 }
