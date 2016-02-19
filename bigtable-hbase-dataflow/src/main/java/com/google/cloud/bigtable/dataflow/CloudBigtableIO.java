@@ -200,7 +200,7 @@ public class CloudBigtableIO {
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
    * {@link Scan}.
    */
-  static class Source<ResultType> extends BoundedSource<ResultType> {
+  public static class Source<ResultType> extends BoundedSource<ResultType> {
     private static final long serialVersionUID = -5580115943635114126L;
     private static final Logger SOURCE_LOG = LoggerFactory.getLogger(Source.class);
     private static final long MAX_SPLIT_COUNT = 4_000;
@@ -466,7 +466,7 @@ public class CloudBigtableIO {
      * {@link BigtableDataClient#sampleRowKeys(SampleRowKeysRequest)} if they are not yet cached.
      * The sample row keys give information about tablet key boundaries and estimated sizes.
      */
-    synchronized List<SampleRowKeysResponse> getSampleRowKeys() throws IOException {
+    public synchronized List<SampleRowKeysResponse> getSampleRowKeys() throws IOException {
       if (sampleRowKeys == null) {
         BigtableOptions bigtableOptions = configuration.toBigtableOptions();
         try (BigtableSession session = new BigtableSession(bigtableOptions)) {
