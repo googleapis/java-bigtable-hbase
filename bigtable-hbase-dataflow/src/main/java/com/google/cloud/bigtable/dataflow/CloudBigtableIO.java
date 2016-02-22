@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -589,6 +590,8 @@ public class CloudBigtableIO {
    * Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}.
    */
   private static class Reader<ResultType> extends BoundedReader<ResultType> {
+    private static final Logger READER_LOG = LoggerFactory.getLogger(Reader.class);
+
     private final BoundedSource<ResultType> source;
     private final Scan scan;
     private final CloudBigtableScanConfiguration config;
@@ -598,6 +601,8 @@ public class CloudBigtableIO {
     private volatile ResultScanner scanner;
     private volatile Table table;
     private volatile ResultType current;
+    protected long workStart;
+    private final AtomicLong rowsRead = new AtomicLong();
 
     private Reader(
         BoundedSource<ResultType> source,
@@ -620,6 +625,23 @@ public class CloudBigtableIO {
     }
 
     /**
+     * Creates a {@link Connection}, {@link Table} and {@link ResultScanner} and advances to the
+     * next {@link Result}.
+      */
+    @Override
+    public boolean start() throws IOException {
+      long connectionStart = System.currentTimeMillis();
+      connection = new BigtableConnection(config.toHBaseConfig());
+      table = connection.getTable(TableName.valueOf(config.getTableId()));
+      scanner = table.getScanner(scan);
+      workStart = System.currentTimeMillis();
+      READER_LOG.info("{} Starting work. Creating Scanner took: {} ms.",
+        this,
+        workStart - connectionStart);
+      return advance();
+    }
+
+    /**
      * Closes the {@link ResultScanner}, {@link Table}, and {@link Connection}.
      */
     @Override
@@ -627,6 +649,15 @@ public class CloudBigtableIO {
       scanner.close();
       table.close();
       connection.close();
+      long totalOps = rowsRead.get();
+      long elapsedTimeMs = System.currentTimeMillis() - workStart;
+      long operationsPerSecond = totalOps * 1000 / elapsedTimeMs;
+      READER_LOG.info(
+          "{} Complete: {} operations in {} ms. That's {} operations/sec",
+          this,
+          totalOps,
+          elapsedTimeMs,
+          operationsPerSecond);
     }
 
     @Override
@@ -637,18 +668,6 @@ public class CloudBigtableIO {
     @Override
     public BoundedSource<ResultType> getCurrentSource() {
       return source;
-    }
-
-    /**
-     * Creates a {@link Connection}, {@link Table} and {@link ResultScanner} and advances to the
-     * next {@link Result}.
-      */
-    @Override
-    public boolean start() throws IOException {
-      connection = new BigtableConnection(config.toHBaseConfig());
-      table = connection.getTable(TableName.valueOf(config.getTableId()));
-      scanner = table.getScanner(scan);
-      return advance();
     }
   }
 
