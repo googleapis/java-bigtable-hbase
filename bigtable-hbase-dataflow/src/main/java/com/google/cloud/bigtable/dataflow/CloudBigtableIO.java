@@ -144,27 +144,31 @@ public class CloudBigtableIO {
 
   /**
    * Performs a {@link ResultScanner#next()} or {@link ResultScanner#next(int)}.  It also checks if 
-   * the {@link ResultType} marks the last value in the {@ResultScan}.
+   * the {@link ResultOutputType} marks the last value in the {@ResultScan}.
    *
-   * @param <ResultType> is either a {@link Result} or {@link Result}[];
+   * @param <ResultOutputType> is either a {@link Result} or {@link Result}[];
    */
-  private interface ScanIterator<ResultType> extends Serializable {
+  private interface ScanIterator<ResultOutputType> extends Serializable {
     /**
      * Get the next unit of work.
      */
-    ResultType next(ResultScanner resultScanner) throws IOException;
+    ResultOutputType next(ResultScanner resultScanner) throws IOException;
 
     /**
      * Is the work complete? Checks for null in the case of {@link Result}, or empty in the case of
      * an array of Results.
      */
-    boolean isCompletionMarker(ResultType result);
+    boolean isCompletionMarker(ResultOutputType result);
+
+    long getRowCount(ResultOutputType current);
   }
 
   /**
    * Iterates the {@link ResultScanner} via {@link ResultScanner#next()}.
    */
   private static final ScanIterator<Result> RESULT_ADVANCER = new ScanIterator<Result>() {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public Result next(ResultScanner resultScanner) throws IOException {
       return resultScanner.next();
@@ -174,12 +178,18 @@ public class CloudBigtableIO {
     public boolean isCompletionMarker(Result result) {
       return result == null;
     }
+
+    @Override
+    public long getRowCount(Result result) {
+      return result == null ? 0 : 1;
+    }
   };
 
   /**
    * Iterates the {@link ResultScanner} via {@link ResultScanner#next(int)}.
    */
   private static final class ResultArrayIterator implements ScanIterator<Result[]> {
+    private static final long serialVersionUID = 1L;
     private final int arraySize;
 
     public ResultArrayIterator(int arraySize) {
@@ -195,13 +205,18 @@ public class CloudBigtableIO {
     public boolean isCompletionMarker(Result[] result) {
       return result == null || result.length == 0;
     }
+
+    @Override
+    public long getRowCount(Result[] result) {
+      return result == null ? 0 : result.length;
+    }
   }
 
   /**
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
    * {@link Scan}.
    */
-  public static class Source<ResultType> extends BoundedSource<ResultType> {
+  public static class Source<ResultOutputType> extends BoundedSource<ResultOutputType> {
     private static final long serialVersionUID = -5580115943635114126L;
     private static final Logger SOURCE_LOG = LoggerFactory.getLogger(Source.class);
     private static final long MAX_SPLIT_COUNT = 4_000;
@@ -211,14 +226,14 @@ public class CloudBigtableIO {
      */
     private final CloudBigtableScanConfiguration configuration;
     private transient List<SampleRowKeysResponse> sampleRowKeys;
-    private final Coder<ResultType> defaultCoder;
-    private final ScanIterator<ResultType> scanIterator;
+    private final Coder<ResultOutputType> defaultCoder;
+    private final ScanIterator<ResultOutputType> scanIterator;
 
     /**
      * A {@link BoundedSource} for a Cloud Bigtable {@link Table} with a start/stop key range, along
      * with a potential filter via a {@link Scan}.
      */
-    protected class SourceWithKeys extends BoundedSource<ResultType> {
+    protected class SourceWithKeys extends BoundedSource<ResultOutputType> {
       private static final long serialVersionUID = 2561066007121040429L;
 
       /**
@@ -290,7 +305,7 @@ public class CloudBigtableIO {
        * @return A coder for {@link Result} objects.
        */
       @Override
-      public Coder<ResultType> getDefaultOutputCoder() {
+      public Coder<ResultOutputType> getDefaultOutputCoder() {
         return defaultCoder;
       }
 
@@ -308,9 +323,9 @@ public class CloudBigtableIO {
        * @return A list of sources split into groups.
        */
       @Override
-      public List<BoundedSource<ResultType>> splitIntoBundles(long desiredBundleSizeBytes,
+      public List<BoundedSource<ResultOutputType>> splitIntoBundles(long desiredBundleSizeBytes,
           PipelineOptions options) throws Exception {
-        List<BoundedSource<ResultType>> newSplits =
+        List<BoundedSource<ResultOutputType>> newSplits =
             split(estimatedSize, desiredBundleSizeBytes, startKey, stopKey);
         SOURCE_LOG.trace("Splitting split {} into {}", this, newSplits);
         return newSplits;
@@ -330,7 +345,7 @@ public class CloudBigtableIO {
        * {@link #startKey} and {@link #stopKey}.
        */
       @Override
-      public BoundedSource.BoundedReader<ResultType> createReader(PipelineOptions options)
+      public BoundedSource.BoundedReader<ResultOutputType> createReader(PipelineOptions options)
           throws IOException {
         Scan scan = new Scan(configuration.getScan());
         scan.setStartRow(startKey);
@@ -347,8 +362,8 @@ public class CloudBigtableIO {
 
     Source(
         CloudBigtableScanConfiguration configuration,
-        Coder<ResultType> defaultCoder,
-        ScanIterator<ResultType> scanIterator) {
+        Coder<ResultOutputType> defaultCoder,
+        ScanIterator<ResultOutputType> scanIterator) {
       this.configuration = configuration;
       this.defaultCoder = defaultCoder;
       this.scanIterator = scanIterator;
@@ -360,7 +375,7 @@ public class CloudBigtableIO {
      * @return A coder for {@link Result} objects.
      */
     @Override
-    public Coder<ResultType> getDefaultOutputCoder() {
+    public Coder<ResultOutputType> getDefaultOutputCoder() {
       return defaultCoder;
     }
 
@@ -386,7 +401,7 @@ public class CloudBigtableIO {
      * @return A list of sources split into groups.
      */
     @Override
-    public List<BoundedSource<ResultType>> splitIntoBundles(
+    public List<BoundedSource<ResultOutputType>> splitIntoBundles(
         long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
       // Update the desiredBundleSizeBytes in order to limit the number of splits to
       // MAX_SPLIT_COUNT.  This is an extremely rough estimate for large scale jobs.  There is
@@ -397,7 +412,7 @@ public class CloudBigtableIO {
       // TODO: Work on a more robust algorithm for splitting that works for more cases.
       long sizeEstimate = getEstimatedSizeBytes(options);
       desiredBundleSizeBytes = Math.max(sizeEstimate / MAX_SPLIT_COUNT, desiredBundleSizeBytes);
-      List<BoundedSource<ResultType>> splits = getSplits(desiredBundleSizeBytes);
+      List<BoundedSource<ResultOutputType>> splits = getSplits(desiredBundleSizeBytes);
       SOURCE_LOG.info("Creating {} splits.", splits.size());
       SOURCE_LOG.debug("Created splits {}.", splits);
       return splits;
@@ -405,12 +420,12 @@ public class CloudBigtableIO {
 
     // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between dataflow needs
     // and Cloud Bigtable logic.
-    protected List<BoundedSource<ResultType>> getSplits(long desiredBundleSizeBytes) throws IOException {
+    protected List<BoundedSource<ResultOutputType>> getSplits(long desiredBundleSizeBytes) throws IOException {
       Scan scan = configuration.getScan();
       byte[] scanStartKey = scan.getStartRow();
 
       byte[] scanEndKey = scan.getStopRow();
-      List<BoundedSource<ResultType>> splits = new ArrayList<>();
+      List<BoundedSource<ResultOutputType>> splits = new ArrayList<>();
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
       for (SampleRowKeysResponse response : getSampleRowKeys()) {
@@ -545,7 +560,7 @@ public class CloudBigtableIO {
      * @return A reader for the table.
      */
     @Override
-    public BoundedSource.BoundedReader<ResultType> createReader(PipelineOptions options)
+    public BoundedSource.BoundedReader<ResultOutputType> createReader(PipelineOptions options)
         throws IOException {
       return new CloudBigtableIO.Reader<>(
           this, configuration, configuration.getScan(), scanIterator);
@@ -555,10 +570,10 @@ public class CloudBigtableIO {
      * Splits the region based on the start and stop key. Uses
      * {@link Bytes#split(byte[], byte[], int)} under the covers.
      */
-    private List<BoundedSource<ResultType>> split(long regionSize, long desiredBundleSizeBytes,
+    private List<BoundedSource<ResultOutputType>> split(long regionSize, long desiredBundleSizeBytes,
         byte[] startKey, byte[] stopKey) {
       if (regionSize < desiredBundleSizeBytes || stopKey.length == 0) {
-        BoundedSource<ResultType> source = createSourceWithKeys(startKey, stopKey, regionSize);
+        BoundedSource<ResultOutputType> source = createSourceWithKeys(startKey, stopKey, regionSize);
         return Collections.singletonList(source);
       } else {
         Preconditions.checkState(desiredBundleSizeBytes > 0);
@@ -572,7 +587,7 @@ public class CloudBigtableIO {
         int splitCount = (int) Math.ceil((double) (regionSize) / (double) (desiredBundleSizeBytes));
         byte[][] splitKeys = Bytes.split(startKey, stopKey, splitCount - 1);
         Preconditions.checkState(splitCount + 1 == splitKeys.length);
-        List<BoundedSource<ResultType>> result = new ArrayList<>();
+        List<BoundedSource<ResultOutputType>> result = new ArrayList<>();
         for (int i = 0; i < splitCount; i++) {
           result.add(createSourceWithKeys(splitKeys[i], splitKeys[i + 1], regionSize));
         }
@@ -581,7 +596,7 @@ public class CloudBigtableIO {
     }
 
     @VisibleForTesting
-    BoundedSource<ResultType> createSourceWithKeys(byte[] startKey, byte[] stopKey, long size) {
+    BoundedSource<ResultOutputType> createSourceWithKeys(byte[] startKey, byte[] stopKey, long size) {
       return new SourceWithKeys(startKey, stopKey, size);
     }
   }
@@ -621,6 +636,7 @@ public class CloudBigtableIO {
     @Override
     public boolean advance() throws IOException {
       current = scanIterator.next(scanner);
+      rowsRead.addAndGet(scanIterator.getRowCount(current));
       return !scanIterator.isCompletionMarker(current);
     }
 
@@ -668,6 +684,16 @@ public class CloudBigtableIO {
     @Override
     public BoundedSource<ResultType> getCurrentSource() {
       return source;
+    }
+
+    @Override
+    public String toString() {
+      byte[] startRow = scan.getStartRow();
+      byte[] stopRow = scan.getStopRow();
+      return String.format(
+          "Reader for: ['%s' - '%s']",
+          Bytes.toStringBinary(startRow),
+          Bytes.toStringBinary(stopRow));
     }
   }
 
