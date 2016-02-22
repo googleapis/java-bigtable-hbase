@@ -38,7 +38,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     // impact of their configuration.
     if (options.getZone() == null) {
       System.out.println(String.format(
-        "WARNING: Set the --zone parameter to %s for optimal performance", options.getZone()));
+        "WARNING: Set the --zone parameter to %s (--bigtableZoneId)) for optimal performance",
+        options.getBigtableZoneId()));
     } else if (!options.getZone().equals(options.getBigtableZoneId())) {
       System.out.println(String.format(
         "WARNING: The Bigtable zone(--bigtableZoneId) is: %s. The Dataflow zone (--zone) is set to %s."
