@@ -682,22 +682,16 @@ public class CloudBigtableIO {
 
   /**
    * A {@link DoFn} that can write either a bounded or unbounded {@link PCollection} of
-   * {@link Mutation}s to a table specified via a {@link CloudBigtableTableConfiguration}.
-   *
-   * <p>NOTE: This will write Puts and Deletes, not Appends and Increments. The limitation exists
-   * because the batch can fail half way, and Appends/Increments might be re-run causing the
-   * Mutation to be executed twice, which is never the user's intent. Re-running a Delete will not
-   * cause any differences. Re-running a Put isn't normally a problem, but might cause problems in
-   * some cases when the number of versions in the ColumnFamily is greater than one. In a case where
-   * multiple versions could be a problem, it's best to add a timestamp on the Put.
+   * {@link Mutation}s to a table specified via a {@link CloudBigtableTableConfiguration} using the
+   * BufferedMutator.
    */
-  public static class CloudBigtableSingleTableWriteFn
+  public static class CloudBigtableSingleTableBufferedWriteFn
       extends AbstractCloudBigtableTableDoFn<Mutation, Void> {
     private static final long serialVersionUID = 2L;
     private transient BufferedMutator mutator;
     private final String tableName;
 
-    public CloudBigtableSingleTableWriteFn(CloudBigtableTableConfiguration config) {
+    public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
       this.tableName = config.getTableId();
     }
@@ -745,13 +739,75 @@ public class CloudBigtableIO {
     @Override
     public void finishBundle(Context context) throws Exception {
       try {
-        DOFN_LOG.debug("Closing the BufferedMutator.");
         if (mutator != null) {
+          DOFN_LOG.debug("Closing the BufferedMutator.");
           mutator.close();
         }
       } catch (RetriesExhaustedWithDetailsException exception) {
         logExceptions(context, exception);
         retrowException(exception);
+      } finally {
+        // Close the connection to clean up resources.
+        super.finishBundle(context);
+      }
+    }
+  }
+
+  /**
+   * A {@link DoFn} that can write either a bounded or unbounded {@link PCollection} of
+   * {@link Mutation}s to a table specified via a {@link CloudBigtableTableConfiguration} doing a
+   * a single mutation per processElement call.
+   */
+  public static class CloudBigtableSingleTableSerialWriteFn
+      extends AbstractCloudBigtableTableDoFn<Mutation, Void> {
+    // Enable the use of this class instead of the buffered mutator one.
+    public static final String DO_SERIAL_WRITES = "google.bigtable.dataflow.singletable.serial";
+    private static final long serialVersionUID = 2L;
+    private transient Table table;
+    private final String tableId;
+
+    public CloudBigtableSingleTableSerialWriteFn(CloudBigtableTableConfiguration config) {
+      super(config);
+      this.tableId = config.getTableId();
+    }
+
+    private synchronized Table getTable() throws IOException {
+      if (table == null) {
+        table = getConnection().getTable(TableName.valueOf(tableId));
+      }
+      return table;
+    }
+
+    /**
+     * Performs an asynchronous mutation via {@link BufferedMutator#mutate(Mutation)}.
+     */
+    @Override
+    public void processElement(ProcessContext context) throws Exception {
+      incrementOperationCounter();
+
+      Mutation mutation = context.element();
+      if (DOFN_LOG.isTraceEnabled()) {
+        DOFN_LOG.trace("Persisting {}", Bytes.toStringBinary(mutation.getRow()));
+      }
+
+      if (mutation instanceof Put) {
+        getTable().put((Put) mutation);
+      } else if (mutation instanceof Delete) {
+        getTable().delete((Delete) mutation);
+      } else {
+        throw new IllegalArgumentException("Encountered unsupported mutation type: " + mutation.getClass());
+      }
+    }
+
+    /**
+     * Closes the {@link Table} and {@link Connection}.
+     */
+    @Override
+    public void finishBundle(Context context) throws Exception {
+      try {
+        if (table != null) {
+          table.close();
+        }
       } finally {
         // Close the connection to clean up resources.
         super.finishBundle(context);
@@ -842,7 +898,18 @@ public class CloudBigtableIO {
   public static PTransform<PCollection<Mutation>, PDone> writeToTable(
       CloudBigtableTableConfiguration config) {
     validate(config, config.getTableId());
-    return new CloudBigtableWriteTransform<>(new CloudBigtableSingleTableWriteFn(config));
+
+    DoFn<Mutation, Void> writeFn = null;
+
+    // Provide a way to do serial writes, slower but easier to troubleshoot.
+    if (config.getConfiguration().get(
+        CloudBigtableSingleTableSerialWriteFn.DO_SERIAL_WRITES) != null) {
+      writeFn = new CloudBigtableSingleTableSerialWriteFn(config);
+    } else {
+      writeFn = new CloudBigtableSingleTableBufferedWriteFn(config);
+    }
+
+    return new CloudBigtableWriteTransform<>(writeFn);
   }
 
    /**

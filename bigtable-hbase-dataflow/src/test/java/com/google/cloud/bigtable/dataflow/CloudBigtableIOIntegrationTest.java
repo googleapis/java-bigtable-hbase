@@ -119,13 +119,16 @@ public class CloudBigtableIOIntegrationTest {
   }
 
   @Test
-  public void testWriteToTable_dataWritten() throws Exception {
+  public void testWriteToTable_dataWrittenSerial() throws Exception {
     final int INSERT_COUNT = 50;
     try (Admin admin = connection.getAdmin()) {
-      LOG.info("Creating table in testWriteToTable_dataWritten()");
       TableName tableName = createNewTable(admin);
+      DoFn<Mutation, Void> writer =
+        new CloudBigtableIO.CloudBigtableSingleTableSerialWriteFn(
+            createTableConfig(tableName.getNameAsString()));
+
       try {
-        writeThroughDataflow(tableName, INSERT_COUNT);
+        writeThroughDataflow(writer, INSERT_COUNT);
         checkTableRowCount(tableName, INSERT_COUNT);
       } finally {
         admin.deleteTable(tableName);
@@ -133,10 +136,26 @@ public class CloudBigtableIOIntegrationTest {
     }
   }
 
-  private void writeThroughDataflow(TableName tableName, int insertCount) throws Exception {
-    CloudBigtableIO.CloudBigtableSingleTableWriteFn writer =
-        new CloudBigtableIO.CloudBigtableSingleTableWriteFn(
+  @Test
+  public void testWriteToTable_dataWrittenBuffered() throws Exception {
+    final int INSERT_COUNT = 50;
+    try (Admin admin = connection.getAdmin()) {
+      TableName tableName = createNewTable(admin);
+      DoFn<Mutation, Void> writer =
+        new CloudBigtableIO.CloudBigtableSingleTableBufferedWriteFn(
             createTableConfig(tableName.getNameAsString()));
+
+      try {
+        writeThroughDataflow(writer, INSERT_COUNT);
+        checkTableRowCount(tableName, INSERT_COUNT);
+      } finally {
+        admin.deleteTable(tableName);
+      }
+    }
+  }
+
+
+  private void writeThroughDataflow(DoFn<Mutation, Void> writer, int insertCount) throws Exception {
     @SuppressWarnings("unchecked")
     DoFn<Mutation, Void>.ProcessContext mockContext = mock(ProcessContext.class);
     final AtomicInteger counter = new AtomicInteger();
