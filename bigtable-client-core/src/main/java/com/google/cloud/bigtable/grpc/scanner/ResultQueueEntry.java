@@ -89,4 +89,12 @@ class ResultQueueEntry<T> {
         && Objects.equal(response, other.response)
         && Objects.equal(isComplete, other.isComplete);
   }
+
+  @Override
+  public int hashCode() {
+    int result = throwable != null ? throwable.hashCode() : 0;
+    result = 31 * result + (response != null ? response.hashCode() : 0);
+    result = 31 * result + (isComplete ? 1 : 0);
+    return result;
+  }
 }

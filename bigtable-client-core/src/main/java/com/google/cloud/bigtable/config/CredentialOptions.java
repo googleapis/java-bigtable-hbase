@@ -147,6 +147,13 @@ public class CredentialOptions implements Serializable {
       return Objects.equal(keyFile, other.keyFile)
           && Objects.equal(serviceAccount, other.serviceAccount);
     }
+
+    @Override
+    public int hashCode() {
+      int result = serviceAccount != null ? serviceAccount.hashCode() : 0;
+      result = 31 * result + (keyFile != null ? keyFile.hashCode() : 0);
+      return result;
+    }
   }
 
   /**
@@ -171,6 +178,13 @@ public class CredentialOptions implements Serializable {
       }
       UserSuppliedCredentialOptions other = (UserSuppliedCredentialOptions) obj;
       return Objects.equal(credential, other.credential);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + (credential != null ? credential.hashCode() : 0);
+      return result;
     }
   }
 
@@ -207,6 +221,14 @@ public class CredentialOptions implements Serializable {
       JsonCredentialsOptions other = (JsonCredentialsOptions) obj;
       return Objects.equal(cachedCredentials, other.cachedCredentials);
     }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + (inputStream != null ? inputStream.hashCode() : 0);
+      result = 31 * result + (cachedCredentials != null ? cachedCredentials.hashCode() : 0);
+      return result;
+    }
   }
 
   private CredentialType credentialType;
@@ -229,5 +251,10 @@ public class CredentialOptions implements Serializable {
     }
     CredentialOptions other = (CredentialOptions) obj;
     return credentialType == other.credentialType;
+  }
+
+  @Override
+  public int hashCode() {
+    return credentialType != null ? credentialType.hashCode() : 0;
   }
 }

@@ -385,4 +385,22 @@ public class BigtableOptions implements Serializable {
     return new Builder(this);
   }
 
+  @Override
+  public int hashCode() {
+    int result = clusterAdminHost != null ? clusterAdminHost.hashCode() : 0;
+    result = 31 * result + (tableAdminHost != null ? tableAdminHost.hashCode() : 0);
+    result = 31 * result + (dataHost != null ? dataHost.hashCode() : 0);
+    result = 31 * result + port;
+    result = 31 * result + (projectId != null ? projectId.hashCode() : 0);
+    result = 31 * result + (zoneId != null ? zoneId.hashCode() : 0);
+    result = 31 * result + (clusterId != null ? clusterId.hashCode() : 0);
+    result = 31 * result + (credentialOptions != null ? credentialOptions.hashCode() : 0);
+    result = 31 * result + (userAgent != null ? userAgent.hashCode() : 0);
+    result = 31 * result + (retryOptions != null ? retryOptions.hashCode() : 0);
+    result = 31 * result + timeoutMs;
+    result = 31 * result + dataChannelCount;
+    result = 31 * result + (clusterName != null ? clusterName.hashCode() : 0);
+    result = 31 * result + asyncMutatorCount;
+    return result;
+  }
 }

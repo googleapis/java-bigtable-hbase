@@ -219,4 +219,9 @@ public class CloudBigtableConfiguration implements Serializable {
     CloudBigtableConfiguration other = (CloudBigtableConfiguration) obj;
     return Objects.equals(configuration, other.configuration);
   }
+
+  @Override
+  public int hashCode() {
+    return configuration != null ? configuration.hashCode() : 0;
+  }
 }
