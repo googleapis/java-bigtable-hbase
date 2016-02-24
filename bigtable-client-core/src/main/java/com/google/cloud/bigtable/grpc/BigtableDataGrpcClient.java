@@ -32,6 +32,9 @@ import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.MutateRowsRequest;
+import com.google.bigtable.v1.MutateRowsRequest.Entry;
+import com.google.bigtable.v1.MutateRowsResponse;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
@@ -74,6 +77,23 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         public boolean apply(@Nullable MutateRowRequest mutateRowRequest) {
           return mutateRowRequest != null
               && allCellsHaveTimestamps(mutateRowRequest.getMutationsList());
+        }
+      };
+
+  @VisibleForTesting
+  public static final Predicate<MutateRowsRequest> ARE_RETRYABLE_MUTATIONS =
+      new Predicate<MutateRowsRequest>() {
+        @Override
+        public boolean apply(@Nullable MutateRowsRequest mutateRowsRequest) {
+          if (mutateRowsRequest == null) {
+            return false;
+          }
+          for (Entry entry : mutateRowsRequest.getEntriesList()) {
+            if (!allCellsHaveTimestamps(entry.getMutationsList())) {
+              return false;
+            }
+          }
+          return true;
         }
       };
 
@@ -157,6 +177,17 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   @Override
+  public MutateRowsResponse mutateRows(MutateRowsRequest request) throws ServiceException {
+    return clientCallService.blockingUnaryCall(createMutateRowsCall(request), request);
+  }
+
+  @Override
+  public ListenableFuture<MutateRowsResponse> mutateRowsAsync(MutateRowsRequest request) {
+    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
+    return clientCallService.listenableAsyncCall(createMutateRowsCall(request), request);
+  }
+
+  @Override
   public CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request)
       throws ServiceException {
     return clientCallService.blockingUnaryCall(createCheckAndMutateRowCall(request), request);
@@ -172,6 +203,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private ClientCall<MutateRowRequest, Empty> createMutateRowCall(MutateRowRequest request) {
     return createRetryableCall(BigtableServiceGrpc.METHOD_MUTATE_ROW,
       IS_RETRYABLE_MUTATION, request);
+  }
+
+  private ClientCall<MutateRowsRequest, MutateRowsResponse>
+      createMutateRowsCall(MutateRowsRequest request) {
+    return createRetryableCall(BigtableServiceGrpc.METHOD_MUTATE_ROWS, ARE_RETRYABLE_MUTATIONS,
+      request);
   }
 
   private ClientCall<CheckAndMutateRowRequest, CheckAndMutateRowResponse>

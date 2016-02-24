@@ -21,6 +21,8 @@ import java.util.List;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.MutateRowsRequest;
+import com.google.bigtable.v1.MutateRowsResponse;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
@@ -55,11 +57,23 @@ public class AsyncExecutor {
   /**
    * Calls {@link BigtableDataClient#mutateRowAsync(MutateRowRequest)}.
    */
-  protected static AsyncCall<MutateRowRequest, Empty> MUTATE_ASYNC =
+  protected static AsyncCall<MutateRowRequest, Empty> MUTATE_ROW_ASYNC =
       new AsyncCall<MutateRowRequest, Empty>() {
         @Override
         public ListenableFuture<Empty> call(BigtableDataClient client, MutateRowRequest request) {
           return client.mutateRowAsync(request);
+        }
+      };
+
+  /**
+   * Calls {@link BigtableDataClient#mutateRowsAsync(MutateRowRequest)}.
+   */
+  protected static AsyncCall<MutateRowsRequest, MutateRowsResponse> MUTATE_ROWS_ASYNC =
+      new AsyncCall<MutateRowsRequest, MutateRowsResponse>() {
+        @Override
+        public ListenableFuture<MutateRowsResponse> call(BigtableDataClient client,
+            MutateRowsRequest request) {
+          return client.mutateRowsAsync(request);
         }
       };
 
@@ -119,7 +133,23 @@ public class AsyncExecutor {
    * @return a {@link ListenableFuture} which can be listened to for completion events.
    */
   public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request, long operationId) {
-    return call(MUTATE_ASYNC, request, operationId);
+    return call(MUTATE_ROW_ASYNC, request, operationId);
+  }
+
+  /**
+   * Performs a {@link BigtableDataClient#mutateRowsAsync(MutateRowsRequest)} on the
+   * {@link MutateRowsRequest} given an operationId generated from
+   * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
+   *
+   * @param request The {@link MutateRowsRequest} to send.
+   * @param operationId The Id generated from
+   *          {@link HeapSizeManager#registerOperationWithHeapSize(long)} that will be released when
+   *          the mutate operation is completed.
+   *
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
+  public ListenableFuture<MutateRowsResponse> mutateRowAsync(MutateRowsRequest request, long operationId) {
+    return call(MUTATE_ROWS_ASYNC, request, operationId);
   }
 
   /**
@@ -180,7 +210,19 @@ public class AsyncExecutor {
    */
   public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request)
       throws InterruptedException {
-    return call(MUTATE_ASYNC, request);
+    return call(MUTATE_ROW_ASYNC, request);
+  }
+
+  /**
+   * Performs a {@link BigtableDataClient#mutateRowsAsync(MutateRowsRequest)} on the
+   * {@link MutateRowsRequest}. This method may block if
+   * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
+   * @param request The {@link MutateRowRequest} to send.
+   * @return a {@link ListenableFuture} which can be listened to for completion events.
+   */
+  public ListenableFuture<MutateRowsResponse> mutateRowsAsync(MutateRowsRequest request)
+      throws InterruptedException {
+    return call(MUTATE_ROWS_ASYNC, request);
   }
 
   /**
