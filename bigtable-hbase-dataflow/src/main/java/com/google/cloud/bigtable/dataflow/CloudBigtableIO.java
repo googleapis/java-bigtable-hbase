@@ -739,13 +739,12 @@ public class CloudBigtableIO {
     private final String tableName;
 
     // Stats
-    private final Aggregator<Long, Long> mutations;
+    private final Aggregator<Long, Long> mutationsCounter;
 
     public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
-      this.tableName = config.getTableId();
-
-      mutations = createAggregator("mutations", new Sum.SumLongFn());
+      tableName = config.getTableId();
+      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
     }
 
     private synchronized BufferedMutator getBufferedMutator(Context context)
@@ -783,7 +782,7 @@ public class CloudBigtableIO {
         DOFN_LOG.trace("Persisting {}", Bytes.toStringBinary(mutation.getRow()));
       }
       getBufferedMutator(context).mutate(mutation);
-      mutations.addValue(1L);
+      mutationsCounter.addValue(1L);
     }
 
     /**
@@ -821,13 +820,13 @@ public class CloudBigtableIO {
     private final String tableId;
 
     // Stats
-    private final Aggregator<Long, Long> mutations;
+    private final Aggregator<Long, Long> mutationsCounter;
 
     public CloudBigtableSingleTableSerialWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
-      this.tableId = config.getTableId();
+      tableId = config.getTableId();
 
-      mutations = createAggregator("mutations", new Sum.SumLongFn());
+      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
     }
 
     private synchronized Table getTable() throws IOException {
@@ -857,7 +856,7 @@ public class CloudBigtableIO {
         throw new IllegalArgumentException("Encountered unsupported mutation type: " + mutation.getClass());
       }
 
-      mutations.addValue(1L);
+      mutationsCounter.addValue(1L);
     }
 
     /**
@@ -894,12 +893,12 @@ public class CloudBigtableIO {
     private static final long serialVersionUID = 2L;
 
     // Stats
-    private final Aggregator<Long, Long> mutations;
+    private final Aggregator<Long, Long> mutationsCounter;
 
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       super(config);
 
-      mutations = createAggregator("mutations", new Sum.SumLongFn());
+      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
     }
 
     /**
@@ -918,7 +917,7 @@ public class CloudBigtableIO {
         List<Mutation> mutations = Lists.newArrayList(element.getValue());
         int mutationCount = mutations.size();
         incrementOperationCounter(mutationCount);
-        mutations.addValue(mutationCount);
+        mutationsCounter.addValue((long) mutationCount);
         DOFN_LOG.debug("Persisting {} elements to table {}.", mutationCount, tableName);
         t.batch(mutations, new Object[mutationCount]);
         DOFN_LOG.debug("Finished persisting {} elements to table {}.", mutationCount, tableName);
