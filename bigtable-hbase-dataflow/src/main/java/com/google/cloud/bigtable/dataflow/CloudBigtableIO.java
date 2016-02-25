@@ -64,9 +64,11 @@ import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
+import com.google.cloud.dataflow.sdk.transforms.Aggregator;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.PTransform;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
+import com.google.cloud.dataflow.sdk.transforms.Sum;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PDone;
@@ -736,9 +738,14 @@ public class CloudBigtableIO {
     private transient BufferedMutator mutator;
     private final String tableName;
 
+    // Stats
+    private final Aggregator<Long, Long> mutations;
+
     public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
       this.tableName = config.getTableId();
+
+      mutations = createAggregator("mutations", new Sum.SumLongFn());
     }
 
     private synchronized BufferedMutator getBufferedMutator(Context context)
@@ -776,6 +783,7 @@ public class CloudBigtableIO {
         DOFN_LOG.trace("Persisting {}", Bytes.toStringBinary(mutation.getRow()));
       }
       getBufferedMutator(context).mutate(mutation);
+      mutations.addValue(1L);
     }
 
     /**
@@ -805,15 +813,21 @@ public class CloudBigtableIO {
    */
   public static class CloudBigtableSingleTableSerialWriteFn
       extends AbstractCloudBigtableTableDoFn<Mutation, Void> {
-    // Enable the use of this class instead of the buffered mutator one.
+    // Enables the use of this class instead of the buffered mutator one.
     public static final String DO_SERIAL_WRITES = "google.bigtable.dataflow.singletable.serial";
+
     private static final long serialVersionUID = 2L;
     private transient Table table;
     private final String tableId;
 
+    // Stats
+    private final Aggregator<Long, Long> mutations;
+
     public CloudBigtableSingleTableSerialWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
       this.tableId = config.getTableId();
+
+      mutations = createAggregator("mutations", new Sum.SumLongFn());
     }
 
     private synchronized Table getTable() throws IOException {
@@ -842,6 +856,8 @@ public class CloudBigtableIO {
       } else {
         throw new IllegalArgumentException("Encountered unsupported mutation type: " + mutation.getClass());
       }
+
+      mutations.addValue(1L);
     }
 
     /**
@@ -877,8 +893,13 @@ public class CloudBigtableIO {
   AbstractCloudBigtableTableDoFn<KV<String, Iterable<Mutation>>, Void> {
     private static final long serialVersionUID = 2L;
 
+    // Stats
+    private final Aggregator<Long, Long> mutations;
+
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       super(config);
+
+      mutations = createAggregator("mutations", new Sum.SumLongFn());
     }
 
     /**
@@ -897,6 +918,7 @@ public class CloudBigtableIO {
         List<Mutation> mutations = Lists.newArrayList(element.getValue());
         int mutationCount = mutations.size();
         incrementOperationCounter(mutationCount);
+        mutations.addValue(mutationCount);
         DOFN_LOG.debug("Persisting {} elements to table {}.", mutationCount, tableName);
         t.batch(mutations, new Object[mutationCount]);
         DOFN_LOG.debug("Finished persisting {} elements to table {}.", mutationCount, tableName);
