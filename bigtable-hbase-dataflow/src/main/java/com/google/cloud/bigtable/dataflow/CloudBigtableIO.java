@@ -64,9 +64,11 @@ import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
+import com.google.cloud.dataflow.sdk.transforms.Aggregator;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.PTransform;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
+import com.google.cloud.dataflow.sdk.transforms.Sum;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PDone;
@@ -143,7 +145,7 @@ public class CloudBigtableIO {
   private static Logger LOG = LoggerFactory.getLogger(CloudBigtableIO.class);
 
   /**
-   * Performs a {@link ResultScanner#next()} or {@link ResultScanner#next(int)}.  It also checks if 
+   * Performs a {@link ResultScanner#next()} or {@link ResultScanner#next(int)}.  It also checks if
    * the {@link ResultOutputType} marks the last value in the {@ResultScan}.
    *
    * @param <ResultOutputType> is either a {@link Result} or {@link Result}[];
@@ -736,9 +738,15 @@ public class CloudBigtableIO {
     private transient BufferedMutator mutator;
     private final String tableName;
 
+    // Stats
+    private final Aggregator<Long, Long> mutationsCounter;
+    private final Aggregator<Long, Long> exceptionsCounter;
+
     public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
-      this.tableName = config.getTableId();
+      tableName = config.getTableId();
+      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
+      exceptionsCounter = createAggregator("exceptions", new Sum.SumLongFn());
     }
 
     private synchronized BufferedMutator getBufferedMutator(Context context)
@@ -748,7 +756,6 @@ public class CloudBigtableIO {
         BufferedMutatorParams params =
             new BufferedMutatorParams(TableName.valueOf(tableName)).writeBufferSize(
               AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT).listener(listener);
-        DOFN_LOG.debug("Creating the Bigtable bufferedMutator.");
         mutator = getConnection().getBufferedMutator(params);
       }
       return mutator;
@@ -771,11 +778,11 @@ public class CloudBigtableIO {
     @Override
     public void processElement(ProcessContext context) throws Exception {
       Mutation mutation = context.element();
-      incrementOperationCounter();
       if (DOFN_LOG.isTraceEnabled()) {
         DOFN_LOG.trace("Persisting {}", Bytes.toStringBinary(mutation.getRow()));
       }
       getBufferedMutator(context).mutate(mutation);
+      mutationsCounter.addValue(1L);
     }
 
     /**
@@ -785,10 +792,10 @@ public class CloudBigtableIO {
     public void finishBundle(Context context) throws Exception {
       try {
         if (mutator != null) {
-          DOFN_LOG.debug("Closing the BufferedMutator.");
           mutator.close();
         }
       } catch (RetriesExhaustedWithDetailsException exception) {
+        exceptionsCounter.addValue((long) exception.getCauses().size());
         logExceptions(context, exception);
         retrowException(exception);
       } finally {
@@ -805,15 +812,21 @@ public class CloudBigtableIO {
    */
   public static class CloudBigtableSingleTableSerialWriteFn
       extends AbstractCloudBigtableTableDoFn<Mutation, Void> {
-    // Enable the use of this class instead of the buffered mutator one.
+    // Enables the use of this class instead of the buffered mutator one.
     public static final String DO_SERIAL_WRITES = "google.bigtable.dataflow.singletable.serial";
+
     private static final long serialVersionUID = 2L;
     private transient Table table;
     private final String tableId;
 
+    // Stats
+    private final Aggregator<Long, Long> mutationsCounter;
+
     public CloudBigtableSingleTableSerialWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
-      this.tableId = config.getTableId();
+      tableId = config.getTableId();
+
+      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
     }
 
     private synchronized Table getTable() throws IOException {
@@ -828,8 +841,6 @@ public class CloudBigtableIO {
      */
     @Override
     public void processElement(ProcessContext context) throws Exception {
-      incrementOperationCounter();
-
       Mutation mutation = context.element();
       if (DOFN_LOG.isTraceEnabled()) {
         DOFN_LOG.trace("Persisting {}", Bytes.toStringBinary(mutation.getRow()));
@@ -842,6 +853,8 @@ public class CloudBigtableIO {
       } else {
         throw new IllegalArgumentException("Encountered unsupported mutation type: " + mutation.getClass());
       }
+
+      mutationsCounter.addValue(1L);
     }
 
     /**
@@ -877,8 +890,13 @@ public class CloudBigtableIO {
   AbstractCloudBigtableTableDoFn<KV<String, Iterable<Mutation>>, Void> {
     private static final long serialVersionUID = 2L;
 
+    // Stats
+    private final Aggregator<Long, Long> mutationsCounter;
+
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       super(config);
+
+      mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
     }
 
     /**
@@ -896,10 +914,8 @@ public class CloudBigtableIO {
       try (Table t = getConnection().getTable(TableName.valueOf(tableName))) {
         List<Mutation> mutations = Lists.newArrayList(element.getValue());
         int mutationCount = mutations.size();
-        incrementOperationCounter(mutationCount);
-        DOFN_LOG.debug("Persisting {} elements to table {}.", mutationCount, tableName);
         t.batch(mutations, new Object[mutationCount]);
-        DOFN_LOG.debug("Finished persisting {} elements to table {}.", mutationCount, tableName);
+        mutationsCounter.addValue((long) mutationCount);
       } catch (RetriesExhaustedWithDetailsException exception) {
         logExceptions(context, exception);
         retrowException(exception);
@@ -972,7 +988,7 @@ public class CloudBigtableIO {
    */
    public static PTransform<PCollection<KV<String, Iterable<Mutation>>>, PDone>
       writeToMultipleTables(CloudBigtableConfiguration config) {
-    validate(config, null);
+    validate(config);
     return new CloudBigtableWriteTransform<>(new CloudBigtableMultiTableWriteFn(config));
   }
 
@@ -1003,23 +1019,25 @@ public class CloudBigtableIO {
   }
 
   private static void validate(CloudBigtableConfiguration configuration, String tableId) {
+    validate(configuration);
+    checkNotNullOrEmpty(tableId, "tableid");
+    if (BigtableSession.isAlpnProviderEnabled()) {
+      try (BigtableConnection conn = new BigtableConnection(configuration.toHBaseConfig());
+          Admin admin = conn.getAdmin()) {
+        Preconditions.checkState(admin.tableExists(TableName.valueOf(tableId)), "Table "
+            + tableId + " does not exist.  This dataflow operation could not be run.");
+      } catch (IOException | IllegalArgumentException | ExceptionInInitializerError e) {
+        LOG.error(String.format("Could not validate that the table exists: %s (%s)", e.getClass()
+              .getName(), e.getMessage()), e);
+      }
+    } else {
+      LOG.info("ALPN is not configured. Skipping table existence check.");
+    }
+  }
+
+  private static void validate(CloudBigtableConfiguration configuration) {
     checkNotNullOrEmpty(configuration.getProjectId(), "projectId");
     checkNotNullOrEmpty(configuration.getZoneId(), "zoneId");
     checkNotNullOrEmpty(configuration.getClusterId(), "clusterId");
-    if (tableId != null) {
-      checkNotNullOrEmpty(tableId, "tableid");
-      if (BigtableSession.isAlpnProviderEnabled()) {
-        try (BigtableConnection conn = new BigtableConnection(configuration.toHBaseConfig());
-            Admin admin = conn.getAdmin()) {
-          Preconditions.checkState(admin.tableExists(TableName.valueOf(tableId)), "Table "
-              + tableId + " does not exist.  This dataflow operation could not be run.");
-        } catch (IOException | IllegalArgumentException | ExceptionInInitializerError e) {
-          LOG.error(String.format("Could not validate that the table exists: %s (%s)", e.getClass()
-              .getName(), e.getMessage()), e);
-        }
-      } else {
-        LOG.info("ALPN is not configured. Skipping table existence check.");
-      }
-    }
   }
 }
