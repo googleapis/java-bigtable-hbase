@@ -80,6 +80,8 @@ public class BigtableOptions implements Serializable {
     private int dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
     private int asyncMutatorCount = BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 
+    private boolean useBulkApi = false;
+
     public Builder() {
     }
 
@@ -97,6 +99,7 @@ public class BigtableOptions implements Serializable {
       this.timeoutMs = original.timeoutMs;
       this.dataChannelCount = original.dataChannelCount;
       this.asyncMutatorCount = original.asyncMutatorCount;
+      this.useBulkApi = original.useBulkApi;
     }
 
     public Builder setTableAdminHost(String tableAdminHost) {
@@ -159,6 +162,11 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
+    public Builder setUseBulkApi(boolean useBulkApi) {
+      this.useBulkApi = useBulkApi;
+      return this;
+    }
+
     public Builder setAsyncMutatorWorkerCount(int asyncMutatorCount) {
       Preconditions.checkArgument(
           asyncMutatorCount >= 0, "asyncMutatorCount must be greater or equal to 0.");
@@ -180,7 +188,8 @@ public class BigtableOptions implements Serializable {
           retryOptions,
           timeoutMs,
           dataChannelCount,
-          asyncMutatorCount);
+          asyncMutatorCount,
+          useBulkApi);
     }
   }
 
@@ -198,6 +207,8 @@ public class BigtableOptions implements Serializable {
   private final int dataChannelCount;
   private final BigtableClusterName clusterName;
   private final int asyncMutatorCount;
+  private final boolean useBulkApi;
+
 
   @VisibleForTesting
   BigtableOptions() {
@@ -215,6 +226,7 @@ public class BigtableOptions implements Serializable {
       dataChannelCount = 1;
       clusterName = null;
       asyncMutatorCount = 1;
+      useBulkApi = false;
   }
 
   private BigtableOptions(
@@ -230,7 +242,8 @@ public class BigtableOptions implements Serializable {
       RetryOptions retryOptions,
       int timeoutMs,
       int channelCount,
-      int asyncMutatorCount) {
+      int asyncMutatorCount,
+      boolean useBulkApi) {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
     Preconditions.checkArgument(timeoutMs >= -1,
       "ChannelTimeoutMs has to be positive, or -1 for none.");
@@ -248,6 +261,7 @@ public class BigtableOptions implements Serializable {
     this.timeoutMs = timeoutMs;
     this.dataChannelCount = channelCount;
     this.asyncMutatorCount = asyncMutatorCount;
+    this.useBulkApi = useBulkApi;
 
     if (!Strings.isNullOrEmpty(projectId)
         && !Strings.isNullOrEmpty(zoneId)
@@ -338,6 +352,10 @@ public class BigtableOptions implements Serializable {
     return asyncMutatorCount;
   }
 
+  public boolean useBulkApi() {
+    return useBulkApi;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (obj == null || obj.getClass() != BigtableOptions.class) {
@@ -351,6 +369,7 @@ public class BigtableOptions implements Serializable {
         && (timeoutMs == other.timeoutMs)
         && (dataChannelCount == other.dataChannelCount)
         && (asyncMutatorCount == other.asyncMutatorCount)
+        && (useBulkApi == other.useBulkApi)
         && Objects.equal(clusterAdminHost, other.clusterAdminHost)
         && Objects.equal(tableAdminHost, other.tableAdminHost)
         && Objects.equal(dataHost, other.dataHost)
@@ -378,11 +397,11 @@ public class BigtableOptions implements Serializable {
         .add("timeoutMs", timeoutMs)
         .add("dataChannelCount", dataChannelCount)
         .add("asyncMutatorCount", asyncMutatorCount)
+        .add("useBulkApi", useBulkApi)
         .toString();
   }
 
   public Builder toBuilder() {
     return new Builder(this);
   }
-
 }

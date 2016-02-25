@@ -133,6 +133,9 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_CHANNEL_TIMEOUT_MS_KEY =
       "google.bigtable.grpc.channel.timeout.ms";
 
+  public static final String BIGTABLE_USE_BULK_API =
+      "google.bigtable.use.bulk.api";
+
   /**
    * The number of asynchronous workers to use for buffered mutator operations.
    */
@@ -165,6 +168,8 @@ public class BigtableOptionsFactory {
     int asyncMutatorCount = configuration.getInt(
         BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
     bigtableOptionsBuilder.setAsyncMutatorWorkerCount(asyncMutatorCount);
+
+    bigtableOptionsBuilder.setUseBulkApi(configuration.getBoolean(BIGTABLE_USE_BULK_API, false));
 
     return bigtableOptionsBuilder.build();
   }

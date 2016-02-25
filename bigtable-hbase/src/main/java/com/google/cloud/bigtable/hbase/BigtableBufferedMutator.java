@@ -39,15 +39,19 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.MutateRowsResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
 
 /**
@@ -69,26 +73,27 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private class MutationOperation {
+  private final static Runnable SHUTDOWN_MARKER = new Runnable() {
+    @Override
+    public void run() {
+    }
+  };
+
+  private class MutationOperation implements Runnable {
     final Mutation mutation;
     final long operationId;
-    final boolean isCloseMarker;
 
-    public MutationOperation(Mutation mutation, long operationId, boolean isClosedMarker) {
+    public MutationOperation(Mutation mutation, long operationId) {
       this.mutation = mutation;
       this.operationId = operationId;
-      this.isCloseMarker = isClosedMarker;
     }
-    
+
+    @Override
     public void run() {
-      ListenableFuture<? extends GeneratedMessage> request =
-          issueRequest(mutation, operationId);
-      ExceptionCallback callback = new ExceptionCallback(mutation);
-      Futures.addCallback(request, callback);
+      issueRequest(mutation, operationId);
     }
   }
 
-  private final MutationOperation CLOSE_MARKER = new MutationOperation(null, -1, true);
   private final Configuration configuration;
 
   /**
@@ -114,8 +119,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final ExecutorService executorService;
   private final BigtableOptions options;
 
-  private final LinkedBlockingQueue<MutationOperation> mutationsToBeSent =
-      new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<Runnable> asyncOperationsQueue = new LinkedBlockingQueue<>();
 
   /**
    * A counter for the number of {@link #mutationWorker}s are
@@ -123,8 +127,11 @@ public class BigtableBufferedMutator implements BufferedMutator {
    */
   private final AtomicInteger activeMutationWorkers = new AtomicInteger();
 
+  private Object bulkMutationLock = new String("");
+  private BulkMutation bulkMutation = null;
+
   /**
-   * This {@link Runnable} pulls a mutation from {@link #mutationsToBeSent}, and calls {{@link
+   * This {@link Runnable} pulls a mutation from {@link #asyncOperationsQueue}, and calls {{@link
    * #issueRequest(Mutation, long)} via {@link MutationOperation#run()}.
    */
   private final Runnable mutationWorker = new Runnable() {
@@ -134,16 +141,15 @@ public class BigtableBufferedMutator implements BufferedMutator {
       try {
         while (!executorService.isShutdown()) {
           try {
-            MutationOperation operation =
-                mutationsToBeSent.poll(MUTATION_TO_BE_SENT_WAIT_MS, TimeUnit.MILLISECONDS);
+            Runnable operation =
+                asyncOperationsQueue.poll(MUTATION_TO_BE_SENT_WAIT_MS, TimeUnit.MILLISECONDS);
             // The operation can be null if a timeout occurs.
-            if (operation == null || operation.isCloseMarker) {
+            if (operation == null || operation == SHUTDOWN_MARKER) {
               break;
             }
             operation.run();
           } catch (InterruptedException e) {
-            Thread.interrupted();
-            LOG.info("Interrupted. Shutting down mutationRunnable.");
+            LOG.info("Interrupted. Shutting down the mutatio worker.");
             break;
           } catch (Exception e) {
             LOG.error("Exception in buffered mutator.", e);
@@ -207,8 +213,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
       flush();
       int activeWorkerCount = activeMutationWorkers.get();
       for (int i = 0; i < activeWorkerCount; i++) {
-        mutationsToBeSent.add(CLOSE_MARKER);
+        asyncOperationsQueue.add(SHUTDOWN_MARKER);
       }
+      asyncExecutor.flush();
       closed = true;
     } finally {
       closedWriteLock.unlock();
@@ -218,11 +225,32 @@ public class BigtableBufferedMutator implements BufferedMutator {
   @Override
   public void flush() throws IOException {
     // Make sure that the async mutator workers are running.
-    if (!mutationsToBeSent.isEmpty()) {
+    if (!asyncOperationsQueue.isEmpty()) {
       initializeAsyncMutators();
     }
+    // If there is a bulk mutation in progress, then send it.
+    synchronized (bulkMutationLock) {
+      if (bulkMutation != null) {
+        mutateRowsAsync(bulkMutation);
+        bulkMutation = null;
+      }
+    }
     asyncExecutor.flush();
+    LOG.info("finished flush()");
     handleExceptions();
+  }
+
+  protected void mutateRowsAsync(BulkMutation bulkMutation) {
+    ListenableFuture<MutateRowsResponse> future = null;
+    try {
+      future = asyncExecutor.mutateRowsAsync(bulkMutation.toRequest());
+    } catch (InterruptedException e) {
+      future = Futures.<MutateRowsResponse> immediateFailedFuture(e);
+    } finally {
+      if (future != null) {
+        bulkMutation.addCallback(future);
+      }
+    }
   }
 
   @Override
@@ -283,21 +311,56 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private void offer(Mutation mutation) throws IOException {
     try {
       initializeAsyncMutators();
-      long operationId = heapSizeManager.registerOperationWithHeapSize(mutation.heapSize());
-      MutationOperation operation = new MutationOperation(mutation, operationId, false);
-      if (executorService != null && options.getAsyncMutatorCount() > 0) {
-        mutationsToBeSent.add(operation);
+      Runnable operation = null;
+      if (options.useBulkApi() && (mutation instanceof Put || mutation instanceof Delete)) {
+        // TODO: Do this logic asynchronously. 
+        synchronized (bulkMutationLock) {
+          if (bulkMutation == null) {
+            bulkMutation = new BulkMutation(this.adapter.getBigtableTableName().toString());
+          }
+          ListenableFuture<Empty> future = bulkMutation.add(adapt(mutation));
+          addExceptionCallback(future, mutation);
+          if (bulkMutation.isFull()) {
+            mutateRowsAsync(bulkMutation);
+            bulkMutation = null;
+          }
+        }
       } else {
-        operation.run();
+        long operationId = heapSizeManager.registerOperationWithHeapSize(mutation.heapSize());
+        operation = new MutationOperation(mutation, operationId);
+        if (executorService != null && options.getAsyncMutatorCount() > 0) {
+          asyncOperationsQueue.add(operation);
+        } else {
+          operation.run();
+        }
       }
     } catch (InterruptedException e) {
-      Thread.interrupted();
       throw new IOException("Interrupted in buffered mutator while mutating row : '"
           + Bytes.toString(mutation.getRow()), e);
     }
   }
 
-  private ListenableFuture<? extends GeneratedMessage> issueRequest(Mutation mutation,
+  private void issueRequest(Mutation mutation, long operationId) {
+    addExceptionCallback(issueRequestDetails(mutation, operationId), mutation);
+  }
+
+  protected void addExceptionCallback(ListenableFuture<? extends GeneratedMessage> future,
+      Mutation mutation) {
+    Futures.addCallback(future, new ExceptionCallback(mutation));
+  }
+
+  protected MutateRowRequest adapt(Mutation mutation) {
+    if (mutation instanceof Put) {
+      return adapter.adapt((Put) mutation);
+    } else if (mutation instanceof Delete) {
+      return adapter.adapt((Delete) mutation);
+    } else {
+      throw new IllegalArgumentException(
+          "Encountered unknown mutation type: " + mutation.getClass());
+    }
+  }
+
+  private ListenableFuture<? extends GeneratedMessage> issueRequestDetails(Mutation mutation,
       long operationId) {
     try {
       if (mutation == null) {

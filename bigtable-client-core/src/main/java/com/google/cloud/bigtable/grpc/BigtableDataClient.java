@@ -20,6 +20,8 @@ import java.util.List;
 import com.google.bigtable.v1.CheckAndMutateRowRequest;
 import com.google.bigtable.v1.CheckAndMutateRowResponse;
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.MutateRowsRequest;
+import com.google.bigtable.v1.MutateRowsResponse;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
@@ -42,19 +44,40 @@ public interface BigtableDataClient {
   Empty mutateRow(MutateRowRequest request) throws ServiceException;
 
   /**
-   * Mutate a row atomically, returning a Future that will finish when
+   * Mutate a row atomically.
+   *
+   * @return a {@link ListenableFuture} that will finish when
    * the mutation has completed.
    */
   ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request);
 
   /**
-   * Mutate a row atomically dependant on a precondition.
+   * Mutates multiple rows in a batch. Each individual row is mutated
+   * atomically as in MutateRow, but the entire batch is not executed
+   * atomically. 
+   */
+  MutateRowsResponse mutateRows(MutateRowsRequest request) throws ServiceException;
+
+  /**
+   * Mutates multiple rows in a batch. Each individual row is mutated
+   * atomically as in MutateRow, but the entire batch is not executed
+   * atomically.
+   * 
+   * @return a {@link ListenableFuture} that will finish when
+   * the mutations have all been completed.
+   */
+  ListenableFuture<MutateRowsResponse> mutateRowsAsync(MutateRowsRequest request);
+
+  /**
+   * Mutate a row atomically dependent on a precondition.
    */
   CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request)
       throws ServiceException;
 
   /**
-   * Mutate a row atomically dependant on a precondition, returning a Future that will finish when
+   * Mutate a row atomically dependent on a precondition.
+   *
+   * @return a {@link ListenableFuture} that will finish when
    * the mutation has completed.
    */
   ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
@@ -66,8 +89,10 @@ public interface BigtableDataClient {
   Row readModifyWriteRow(ReadModifyWriteRowRequest request);
 
   /**
-   * Perform an atomic read-modify-write operation on a row, returning a Future that will complete
-   * when the mutation has completed.
+   * Perform an atomic read-modify-write operation on a row,
+   *
+   * @return a {@link ListenableFuture} that will finish when
+   * the mutation has completed.
    */
   ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRowRequest request);
 
@@ -88,8 +113,10 @@ public interface BigtableDataClient {
   ResultScanner<Row> readRows(ReadRowsRequest request);
 
   /**
-   * Read multiple Rows into an in-memory list, returning a Future that will complete when the
-   * readRows call has completed.
+   * Read multiple Rows into an in-memory list.
+   *
+   * @return a {@link ListenableFuture} that will finish when
+   * all reads have completed.
    */
   ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request);
 }
