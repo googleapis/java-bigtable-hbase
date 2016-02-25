@@ -8,7 +8,7 @@ import com.google.cloud.bigtable.hbase1_0.BigtableConnection;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
-import com.google.cloud.dataflow.sdk.transforms.DoFn.ProcessContext;
+import com.google.cloud.dataflow.sdk.transforms.DoFnTester;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -29,8 +29,6 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -154,23 +152,15 @@ public class CloudBigtableIOIntegrationTest {
     }
   }
 
-
   private void writeThroughDataflow(DoFn<Mutation, Void> writer, int insertCount) throws Exception {
-    @SuppressWarnings("unchecked")
-    DoFn<Mutation, Void>.ProcessContext mockContext = mock(ProcessContext.class);
-    final AtomicInteger counter = new AtomicInteger();
-    when(mockContext.element()).thenAnswer(new Answer<Put>() {
-      @Override
-      public Put answer(InvocationOnMock invocation) throws Throwable {
-        byte[] row = Bytes.toBytes("row_" + counter.incrementAndGet());
-        return new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER1,
-          Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8)));
-      }
-    });
+    DoFnTester<Mutation, Void> fnTester = DoFnTester.of(writer);
     for (int i = 0; i < insertCount; i++) {
-      writer.processElement(mockContext);
+      byte[] row = Bytes.toBytes("row_" + i);
+      Mutation mutation =  new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER1,
+          Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8)));
+
+      fnTester.processBatch(mutation);
     }
-    writer.finishBundle(null);
   }
 
   private void checkTableRowCount(TableName tableName, int rowCount) throws IOException {
