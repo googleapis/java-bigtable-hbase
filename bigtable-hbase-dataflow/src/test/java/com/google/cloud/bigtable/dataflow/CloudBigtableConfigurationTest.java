@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.dataflow;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.util.Collections;
 
 import org.junit.Assert;
@@ -41,7 +42,7 @@ public class CloudBigtableConfigurationTest {
   private static final String ZONE = "some-zone-1a";
 
   @Test
-  public void testHBaseConfig(){
+  public void testHBaseConfig() throws IOException {
     CloudBigtableConfiguration underTest =
         new CloudBigtableConfiguration(PROJECT, ZONE, CLUSTER,
             Collections.<String, String> emptyMap());
