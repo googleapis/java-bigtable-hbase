@@ -68,6 +68,8 @@ public class BigtableOptions implements Serializable {
     private String tableAdminHost = BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
     private String clusterAdminHost = BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT;
     private int port = BIGTABLE_PORT_DEFAULT;
+    private String dataIpOverride;
+    private String adminIpOverride;
 
     // The default credentials get credential from well known locations, such as the GCE
     // metdata service or gcloud configuration in other environments. A user can also override
@@ -94,6 +96,8 @@ public class BigtableOptions implements Serializable {
       this.tableAdminHost = original.tableAdminHost;
       this.clusterAdminHost = original.clusterAdminHost;
       this.port = original.port;
+      this.dataIpOverride = original.dataIpOverride;
+      this.adminIpOverride = original.adminIpOverride;
       this.credentialOptions = original.credentialOptions;
       this.retryOptions = original.retryOptions;
       this.timeoutMs = original.timeoutMs;
@@ -119,6 +123,16 @@ public class BigtableOptions implements Serializable {
 
     public Builder setPort(int port) {
       this.port = port;
+      return this;
+    }
+
+    public Builder setDataIpOverride(String dataIpOverride) {
+      this.dataIpOverride = dataIpOverride;
+      return this;
+    }
+
+    public Builder setAdminIpOverride(String adminIpOverride) {
+      this.adminIpOverride = adminIpOverride;
       return this;
     }
 
@@ -180,6 +194,8 @@ public class BigtableOptions implements Serializable {
           tableAdminHost,
           dataHost,
           port,
+          dataIpOverride,
+          adminIpOverride,
           projectId,
           zoneId,
           clusterId,
@@ -197,6 +213,8 @@ public class BigtableOptions implements Serializable {
   private final String tableAdminHost;
   private final String dataHost;
   private final int port;
+  private final String dataIpOverride;
+  private final String adminIpOverride;
   private final String projectId;
   private final String zoneId;
   private final String clusterId;
@@ -216,6 +234,8 @@ public class BigtableOptions implements Serializable {
       tableAdminHost = null;
       dataHost = null;
       port = 0;
+      dataIpOverride = null;
+      adminIpOverride = null;
       projectId = null;
       zoneId = null;
       clusterId = null;
@@ -234,6 +254,8 @@ public class BigtableOptions implements Serializable {
       String tableAdminHost,
       String dataHost,
       int port,
+      String dataIpOverride,
+      String adminIpOverride,
       String projectId,
       String zoneId,
       String clusterId,
@@ -252,6 +274,8 @@ public class BigtableOptions implements Serializable {
     this.clusterAdminHost = Preconditions.checkNotNull(clusterAdminHost);
     this.dataHost = Preconditions.checkNotNull(dataHost);
     this.port = port;
+    this.dataIpOverride = dataIpOverride;
+    this.adminIpOverride = adminIpOverride;
     this.projectId = projectId;
     this.zoneId = zoneId;
     this.clusterId = clusterId;
@@ -272,13 +296,15 @@ public class BigtableOptions implements Serializable {
     }
 
     LOG.debug("Connection Configuration: projectId: %s, zoneId: %s, clusterId: %s, data host %s, "
-        + "table admin host %s, cluster admin host %s.",
+        + "table admin host %s, cluster admin host %s, data ip override %s, admin ip override.",
         projectId,
         zoneId,
         clusterId,
         dataHost,
         tableAdminHost,
-        clusterAdminHost);
+        clusterAdminHost,
+        dataIpOverride,
+        adminIpOverride);
   }
 
   public String getProjectId() {
@@ -307,6 +333,14 @@ public class BigtableOptions implements Serializable {
 
   public int getPort() {
     return port;
+  }
+
+  public String getDataIpOverride() {
+    return dataIpOverride;
+  }
+
+  public String getAdminIpOverride() {
+    return adminIpOverride;
   }
 
   /**
@@ -372,6 +406,8 @@ public class BigtableOptions implements Serializable {
         && (useBulkApi == other.useBulkApi)
         && Objects.equal(clusterAdminHost, other.clusterAdminHost)
         && Objects.equal(tableAdminHost, other.tableAdminHost)
+        && Objects.equal(dataIpOverride, other.dataIpOverride)
+        && Objects.equal(adminIpOverride, other.adminIpOverride)
         && Objects.equal(dataHost, other.dataHost)
         && Objects.equal(projectId, other.projectId)
         && Objects.equal(zoneId, other.zoneId)
@@ -388,6 +424,8 @@ public class BigtableOptions implements Serializable {
         .add("dataHost", dataHost)
         .add("tableAdminHost", tableAdminHost)
         .add("clusterAdminHost", clusterAdminHost)
+        .add("dataIpOverride", dataIpOverride)
+        .add("adminIpOverride", adminIpOverride)
         .add("projectId", projectId)
         .add("zoneId", zoneId)
         .add("clusterId", clusterId)
