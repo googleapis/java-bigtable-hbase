@@ -40,7 +40,7 @@ public class TestBigtableSession {
           .setZoneId(zoneId)
           .setClusterId(clusterId)
           .setUserAgent(userAgent)
-          .build(), null, null, null);
+          .build());
   }
 
   @Rule
@@ -73,5 +73,7 @@ public class TestBigtableSession {
     expectedException.expectMessage(BigtableSession.USER_AGENT_EMPTY_OR_NULL);
     createSession(PROJECT_ID, ZONE_ID, CLUSTER_ID, null);
   }
+
+
 
 }

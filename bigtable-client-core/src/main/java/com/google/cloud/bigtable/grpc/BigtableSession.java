@@ -28,6 +28,7 @@ import io.netty.handler.ssl.SslContextBuilder;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -241,7 +242,8 @@ public class BigtableSession implements Closeable {
       ChannelPool dataChannel = new ChannelPool(headerInterceptors, new ChannelPool.ChannelFactory() {
         @Override
         public ManagedChannel create() throws IOException {
-          return createNettyChannel(BigtableSession.this.options.getDataHost());
+          return createNettyChannel(BigtableSession.this.options.getDataHost(),
+              BigtableSession.this.options.getDataIpOverride());
         }
       });
       managedChannels.add(dataChannel);
@@ -330,7 +332,8 @@ public class BigtableSession implements Closeable {
 
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
-      ManagedChannel channel = createChannelPool(options.getTableAdminHost());
+      ManagedChannel channel =
+          createChannelPool(options.getTableAdminHost(), options.getAdminIpOverride());
       tableAdminClient = new BigtableTableAdminGrpcClient(channel);
     }
     return tableAdminClient;
@@ -338,7 +341,8 @@ public class BigtableSession implements Closeable {
 
   public synchronized BigtableClusterAdminClient getClusterAdminClient() throws IOException {
     if (this.clusterAdminClient == null) {
-      ManagedChannel channel = createChannelPool(options.getClusterAdminHost());
+      ManagedChannel channel =
+          createChannelPool(options.getClusterAdminHost(), null);
       this.clusterAdminClient = new BigtableClusterAdminGrpcClient(channel);
     }
 
@@ -350,21 +354,37 @@ public class BigtableSession implements Closeable {
    * Create a new {@link ChannelPool}, with auth headers and user agent interceptors.
    * </p>
    */
-  protected ChannelPool createChannelPool(final String hostString) throws IOException {
+  protected ChannelPool createChannelPool(
+      final String hostString, @Nullable final String ipOverride) throws IOException {
     ChannelPool channelPool = new ChannelPool(headerInterceptors, new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
-        return createNettyChannel(hostString);
+        return createNettyChannel(hostString, ipOverride);
       }
     });
     managedChannels.add(channelPool);
     return channelPool;
   }
 
-  protected ManagedChannel createNettyChannel(final String host) throws IOException {
+  private InetAddress getAddressFromIp(String hostString, String ipOverride) throws IOException {
+    InetAddress override = InetAddress.getByName(ipOverride);
+    return InetAddress.getByAddress(hostString, override.getAddress());
+  }
+
+  protected ManagedChannel createNettyChannel(
+      final String host, @Nullable final String ipOverride) throws IOException {
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
-    return NettyChannelBuilder
-        .forAddress(host, options.getPort())
+    NettyChannelBuilder builder;
+    if (ipOverride == null) {
+      builder = NettyChannelBuilder.forAddress(host, options.getPort());
+    }
+    else {
+      LOG.info("Overriding host %s with ip address %s - this is expected behavior for dataflow",
+          host, ipOverride);
+      InetAddress override = getAddressFromIp(host, ipOverride);
+      builder = NettyChannelBuilder.forAddress(new InetSocketAddress(override, options.getPort()));
+    }
+    return builder
         .maxMessageSize(256 * 1024 * 1024) // 256 MB, server has 256 MB limit.
         .sslContext(createSslContext())
         .eventLoopGroup(sharedPools.getElg())

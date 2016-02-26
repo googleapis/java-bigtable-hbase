@@ -46,7 +46,11 @@ public class BigtableOptionsFactory {
       "google.bigtable.cluster.admin.endpoint.host";
   public static final String BIGTABLE_TABLE_ADMIN_HOST_KEY =
       "google.bigtable.admin.endpoint.host";
-  public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
+  public static final String BIGTABLE_DATA_HOST_KEY = "google.bigtable.endpoint.host";
+  public static final String BIGTABLE_DATA_IP_OVERRIDE_KEY =
+      "google.bigtable.endpoint.data.ip.override";
+  public static final String BIGTABLE_ADMIN_IP_OVERRIDE_KEY =
+      "google.bigtable.endpoint.admin.ip.override";
 
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
   public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
@@ -152,7 +156,7 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setClusterId(getValue(configuration, CLUSTER_KEY, "Cluster"));
 
     bigtableOptionsBuilder.setDataHost(
-        getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));
+        getHost(configuration, BIGTABLE_DATA_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));
 
     bigtableOptionsBuilder.setTableAdminHost(getHost(
       configuration, BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT,
@@ -160,6 +164,9 @@ public class BigtableOptionsFactory {
 
     bigtableOptionsBuilder.setClusterAdminHost(getHost(configuration,
         BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT, "Cluster Admin"));
+
+    bigtableOptionsBuilder.setDataIpOverride(configuration.get(BIGTABLE_DATA_IP_OVERRIDE_KEY));
+    bigtableOptionsBuilder.setAdminIpOverride(configuration.get(BIGTABLE_ADMIN_IP_OVERRIDE_KEY));
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, BIGTABLE_PORT_DEFAULT);
     bigtableOptionsBuilder.setPort(port);
