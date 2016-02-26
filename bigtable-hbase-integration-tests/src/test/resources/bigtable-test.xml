@@ -49,4 +49,8 @@ limitations under the License.
         <name>google.bigtable.cluster.name</name>
         <value>${google.bigtable.cluster.name}</value>
     </property>
+    <property>
+        <name>google.bigtable.use.bulk.api</name>
+        <value>${google.bigtable.use.bulk.api}</value>
+    </property>
 </configuration>

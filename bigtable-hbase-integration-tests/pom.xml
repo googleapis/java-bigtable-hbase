@@ -35,7 +35,7 @@ limitations under the License.
         <google.bigtable.project.under.test>bigtable-hbase-1.0</google.bigtable.project.under.test>
         <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_0.BigtableConnection</google.bigtable.connection.impl>
         <protobuff-java.version>2.5.0</protobuff-java.version>
-        <ld.library.path>/usr/local/lib</ld.library.path>
+        <google.bigtable.use.bulk.api>true</google.bigtable.use.bulk.api>
     </properties>
 
     <profiles>
@@ -130,9 +130,6 @@ limitations under the License.
                                 <phase>integration-test</phase>
                                 <configuration>
                                     <forkCount>1</forkCount>
-                                    <environmentVariables>
-                                        <LD_LIBRARY_PATH>${ld.library.path}</LD_LIBRARY_PATH>
-                                    </environmentVariables>
                                     <includes>
                                         <include>**/IntegrationTestsNoKnownGap.java</include>
                                     </includes>
