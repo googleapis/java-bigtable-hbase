@@ -28,6 +28,8 @@ import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -103,6 +105,8 @@ public class TestBatchExecutor {
     when(mockAsyncExecutor.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
+    BigtableTableName tableName = new BigtableClusterName("projectId", "zoneId", "clusterId").toTableName("table");
+    when(mockRequestAdapter.getBigtableTableName()).thenReturn(tableName);
     runnables = new ArrayList<>();
     doAnswer(new Answer<Void>() {
       @Override
