@@ -146,11 +146,12 @@ public class TestPutAdapter {
   }
 
   @Test
-  public void testImplicitTimestampsAreUnset() {
+  public void testUnsetTimestampsArePopulated() {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family1 = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
     byte[] value1 = dataHelper.randomData("v1");
+    long startTimeMillis = System.currentTimeMillis();
 
     Put hbasePut = new Put(row);
     hbasePut.addColumn(family1, qualifier1, value1);
@@ -166,7 +167,8 @@ public class TestPutAdapter {
 
     Assert.assertArrayEquals(family1, setCell.getFamilyNameBytes().toByteArray());
     Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
-    Assert.assertEquals(-1L, setCell.getTimestampMicros());
+    Assert.assertTrue(startTimeMillis * 1000 <= setCell.getTimestampMicros());
+    Assert.assertTrue(setCell.getTimestampMicros() <= System.currentTimeMillis() * 1000);
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
   }
 

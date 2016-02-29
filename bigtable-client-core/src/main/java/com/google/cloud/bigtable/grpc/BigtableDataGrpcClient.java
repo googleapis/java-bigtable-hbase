@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
 
@@ -69,14 +70,14 @@ import com.google.protobuf.ServiceException;
 public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private static final Logger LOG = new Logger(BigtableDataGrpcClient.class);
+  private static AtomicInteger LOG_COUNT = new AtomicInteger();
 
   @VisibleForTesting
   public static final Predicate<MutateRowRequest> IS_RETRYABLE_MUTATION =
       new Predicate<MutateRowRequest>() {
         @Override
-        public boolean apply(@Nullable MutateRowRequest mutateRowRequest) {
-          return mutateRowRequest != null
-              && allCellsHaveTimestamps(mutateRowRequest.getMutationsList());
+        public boolean apply(MutateRowRequest mutateRowRequest) {
+          return allCellsHaveTimestamps(mutateRowRequest.getMutationsList());
         }
       };
 
@@ -84,10 +85,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   public static final Predicate<MutateRowsRequest> ARE_RETRYABLE_MUTATIONS =
       new Predicate<MutateRowsRequest>() {
         @Override
-        public boolean apply(@Nullable MutateRowsRequest mutateRowsRequest) {
-          if (mutateRowsRequest == null) {
-            return false;
-          }
+        public boolean apply(MutateRowsRequest mutateRowsRequest) {
           for (Entry entry : mutateRowsRequest.getEntriesList()) {
             if (!allCellsHaveTimestamps(entry.getMutationsList())) {
               return false;
@@ -101,9 +99,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   public static final Predicate<CheckAndMutateRowRequest> IS_RETRYABLE_CHECK_AND_MUTATE =
       new Predicate<CheckAndMutateRowRequest>() {
         @Override
-        public boolean apply(@Nullable CheckAndMutateRowRequest checkAndMutateRowRequest) {
-          return checkAndMutateRowRequest != null
-              && allCellsHaveTimestamps(checkAndMutateRowRequest.getTrueMutationsList())
+        public boolean apply(CheckAndMutateRowRequest checkAndMutateRowRequest) {
+          return allCellsHaveTimestamps(checkAndMutateRowRequest.getTrueMutationsList())
               && allCellsHaveTimestamps(checkAndMutateRowRequest.getFalseMutationsList());
         }
       };
@@ -123,7 +120,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final ExecutorService executorService;
   private final RetryOptions retryOptions;
   private final BigtableOptions bigtableOptions;
-
   private final BigtableResultScannerFactory streamingScannerFactory =
       new BigtableResultScannerFactory() {
         @Override
@@ -223,6 +219,16 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       return new RetryingCall<ReqT, RespT>(channelPool, method, CallOptions.DEFAULT,
           retryExecutorService, retryOptions);
     } else {
+      if (retryOptions.enableRetries()) {
+        // Do not retry the call despite retries being enabled. The call is not idempontent and
+        // retrying it could cause unexpected behavior.
+        // Only log for powers of two to avoid spam.
+        int count = LOG_COUNT.incrementAndGet();
+        if ((count & (count - 1)) == 0) {
+          LOG.info("Retries configured for non-retryiable request. Not retrying. " +
+              "In future releases this case will fail.");
+        }
+      }
       return channelPool.newCall(method, CallOptions.DEFAULT);
     }
   }

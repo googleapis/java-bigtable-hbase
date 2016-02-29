@@ -47,6 +47,10 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
       throw new IllegalArgumentException("No columns to insert");
     }
 
+    // Bigtable uses a 1ms granularity. Use this timestamp if the Put does not have one specified to
+    // make mutations idempotent.
+    long currentTimestampMicros = System.currentTimeMillis() * 1000;
+
     for (Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
       ByteString familyString = ByteString.copyFrom(entry.getKey());
 
@@ -78,7 +82,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
               BigtableConstants.HBASE_TIMEUNIT);
           setCellBuilder.setTimestampMicros(timestampMicros);
         } else {
-          setCellBuilder.setTimestampMicros(-1);
+          setCellBuilder.setTimestampMicros(currentTimestampMicros);
         }
 
         setCellBuilder.setValue(
