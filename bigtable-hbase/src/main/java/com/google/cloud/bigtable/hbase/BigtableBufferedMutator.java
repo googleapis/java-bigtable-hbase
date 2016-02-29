@@ -185,12 +185,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.exceptionListener = listener;
     this.host = options.getDataHost().toString();
     this.asyncExecutor = new AsyncExecutor(client, heapSizeManager);
-    LOG.info(
-        "Initializing BigtableBufferd Mutator with %d channels, %,d byte heap size"
-        + " and %d concurrent requests.",
-        options.getChannelCount(),
-        heapSizeManager.getMaxHeapSize(),
-        heapSizeManager.getMaxInFlightRpcs());
     this.options = options;
     this.heapSizeManager = heapSizeManager;
     this.executorService = asyncRpcExecutorService;
@@ -236,7 +230,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
       }
     }
     asyncExecutor.flush();
-    LOG.info("finished flush()");
     handleExceptions();
   }
 
