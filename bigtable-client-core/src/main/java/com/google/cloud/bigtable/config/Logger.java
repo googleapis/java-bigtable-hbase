@@ -46,6 +46,12 @@ public class Logger {
     }
   }
 
+  public void info(String message, Throwable t, Object ... args) {
+    if (log.isInfoEnabled()) {
+      log.info(String.format(message, args), t);
+    }
+  }
+
   public void warn(String message, Object ... args) {
     if (log.isWarnEnabled()) {
       log.warn(String.format(message, args));

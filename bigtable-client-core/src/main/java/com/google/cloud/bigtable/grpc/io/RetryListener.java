@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.io;
 
+import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.grpc.ClientCall;
@@ -26,25 +27,24 @@ import io.grpc.Status;
  * to retry the call if the call supports retrying.
  */
 class RetryListener<RequestT, ResponseT> extends ClientCall.Listener<ResponseT> {
+  private static final Logger LOG = new Logger(RetryListener.class);
 
   private final RetryingCall<RequestT, ResponseT> retryingCall;
   private final RequestT payload;
   private final Metadata requestHeaders;
-  private final boolean isRetriableCall;
   private final ClientCall.Listener<ResponseT> delegate;
   private boolean stateSignalledToListener = false;
+  private int failedCount = 0;
 
   public RetryListener(
       RetryingCall<RequestT, ResponseT> call,
       RequestT payload,
       Metadata requestHeaders,
-      boolean isRetriableCall,
       ClientCall.Listener<ResponseT> delegate) {
     this.retryingCall = call;
     this.delegate = delegate;
     this.payload = payload;
     this.requestHeaders = requestHeaders;
-    this.isRetriableCall = isRetriableCall;
   }
 
   @Override
@@ -62,10 +62,11 @@ class RetryListener<RequestT, ResponseT> extends ClientCall.Listener<ResponseT> 
   @Override
   public void onClose(Status status, Metadata trailers) {
     if (isRetriableStatus(status.getCode())
-        && isRetriableCall
         && !stateSignalledToListener) {
       if (retryingCall.retryCallAfterBackoff(payload, requestHeaders, this)) {
-        // We are retrying
+        // A retryable error.
+        failedCount += 1;
+        LOG.info("Retrying failed call. Failure #" + failedCount + ", got: " + status, status.getCause());
         return;
       }
     }
