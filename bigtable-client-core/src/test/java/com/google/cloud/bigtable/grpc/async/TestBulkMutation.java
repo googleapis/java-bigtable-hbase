@@ -79,7 +79,7 @@ public class TestBulkMutation {
   }
 
   @Test
-  public void testCallableNotOKStatus() throws InterruptedException, ExecutionException {
+  public void testCallableNotOKStatus() throws InterruptedException {
     BulkMutation underTest = new BulkMutation(tableName);
     SettableFuture<Empty> rowFuture = underTest.add(createRequest());
     SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();
@@ -120,7 +120,7 @@ public class TestBulkMutation {
   }
 
   @Test
-  public void testCallableException() throws InterruptedException, ExecutionException {
+  public void testCallableException() throws InterruptedException {
     BulkMutation underTest = new BulkMutation(tableName);
     SettableFuture<Empty> rowFuture1 = underTest.add(createRequest());
     SettableFuture<Empty> rowFuture2 = underTest.add(createRequest());
