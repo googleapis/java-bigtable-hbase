@@ -18,11 +18,11 @@ package com.google.cloud.bigtable.dataflowimport;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.google.bigtable.repackaged.com.google.common.collect.Sets;
 import com.google.cloud.bigtable.dataflowimport.testing.HBaseCellUtils;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.util.Bytes;
