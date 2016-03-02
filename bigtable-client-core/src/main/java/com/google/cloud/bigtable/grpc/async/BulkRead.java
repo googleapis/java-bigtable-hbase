@@ -24,6 +24,7 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowSet;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -40,6 +41,8 @@ import com.google.protobuf.ByteString;
  * is not thread safe, and requires calling classes to make it thread safe.
  */
 public class BulkRead {
+
+  protected static final Logger LOG = new Logger(BulkRead.class);
 
   private final AsyncExecutor asyncExecutor;
   private final String tableName;
@@ -74,6 +77,7 @@ public class BulkRead {
    * @throws InterruptedException
    */
   public ListenableFuture<List<Row>> add(ReadRowsRequest request) throws InterruptedException {
+    Preconditions.checkNotNull(request);
     ByteString rowKey = request.getRowKey();
     Preconditions.checkArgument(!rowKey.equals(ByteString.EMPTY));
 
@@ -100,10 +104,15 @@ public class BulkRead {
    */
   public void flush() throws InterruptedException {
     if (futures != null && !futures.isEmpty()) {
+      // TODO(sduskis): remove this once bulk read testing is complete.
+      LOG.info("BulkRead reading %d rows.", futures.keys().size());
       ReadRowsRequest request =
           ReadRowsRequest.newBuilder()
               .setTableName(tableName)
               .setFilter(currentFilter)
+              // This is a performance improvement for this specific case where ordering doesn't
+              // matter and the entire batch is retried.
+              .setAllowRowInterleaving(true)
               .setRowSet(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
               .build();
       Futures.addCallback(asyncExecutor.readRowsAsync(request), createFuture(futures));

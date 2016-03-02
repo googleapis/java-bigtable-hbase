@@ -23,13 +23,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.bigtable.v1.Cell;
+import com.google.bigtable.v1.Column;
+import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.MutateRowsRequest;
 import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -37,8 +40,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -48,6 +56,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.coprocessor.Batch.Callback;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -65,14 +74,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Tests {@link BatchExecutor}
@@ -80,163 +83,18 @@ import java.util.concurrent.TimeoutException;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBatchExecutor {
 
-  static final byte[] EMPTY_KEY = new byte[1];
+  BigtableOptions DEFAULT_OPTIONS = new BigtableOptions.Builder().build();
 
-  @Mock
-  private AsyncExecutor mockAsyncExecutor;
-  @Mock
-  private ListenableFuture mockFuture;
-  @Mock
-  private HBaseRequestAdapter mockRequestAdapter;
-
-  private final BigtableOptions options = new BigtableOptions.Builder().build();
-
-  private ListeningExecutorService service;
-
-  private List<Runnable> runnables = null;
-
-  private BatchExecutor underTest;
-
-  @Before
-  public void setup() throws InterruptedException {
-    service =
-        MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService());
-    MockitoAnnotations.initMocks(this);
-    when(mockAsyncExecutor.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(mockFuture);
-    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);
-    when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
-    BigtableTableName tableName = new BigtableClusterName("projectId", "zoneId", "clusterId").toTableName("table");
-    when(mockRequestAdapter.getBigtableTableName()).thenReturn(tableName);
-    runnables = new ArrayList<>();
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        runnables.add(invocation.getArgumentAt(0, Runnable.class));
-        return null;
-      }
-    }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
-    underTest = new BatchExecutor(mockAsyncExecutor, options, service, mockRequestAdapter);
+  private static Put randomPut() {
+    return new Put(randomBytes(8))
+        .addColumn(Bytes.toBytes("cf"), Bytes.toBytes("qual"), Bytes.toBytes("SomeValue"));
   }
 
-  @After
-  public void tearDown() {
-    service.shutdown();
-    service = null;
+  private static byte[] randomBytes(int count) {
+    return Bytes.toBytes(RandomStringUtils.random(count));
   }
 
-  @Test
-  public void testGet() throws Exception {
-    final Row response = Row.getDefaultInstance();
-    when(mockFuture.get()).thenReturn(ImmutableList.of(response));
-    Result[] results = batch(Arrays.asList(new Get(EMPTY_KEY)));
-    Assert.assertTrue(matchesRow(Adapters.ROW_ADAPTER.adaptResponse(response)).matches(results[0]));
-  }
-
-  @Test
-  public void testPut() throws Exception {
-    testMutation(new Put(EMPTY_KEY));
-  }
-
-  @Test
-  public void testDelete() throws Exception {
-    testMutation(new Delete(EMPTY_KEY));
-  }
-
-  @Test
-  public void testAppend() throws Exception {
-    testMutation(new Append(EMPTY_KEY));
-  }
-
-  @Test
-  public void testIncrement() throws Exception {
-    testMutation(new Increment(EMPTY_KEY));
-  }
-
-  @Test
-  public void testRowMutations() throws Exception {
-    testMutation(new RowMutations(EMPTY_KEY));
-  }
-
-  @Test
-  public void testShutdownService() throws Exception {
-    service.shutdown();
-    service.awaitTermination(1000, TimeUnit.MILLISECONDS);
-    try {
-      underTest.batch(Arrays.asList(new Put(EMPTY_KEY)));
-    } catch (RetriesExhaustedWithDetailsException e) {
-      Assert.assertEquals(1, e.getCauses().size());
-      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
-      Assert.assertTrue(e.getCause(0).getMessage().toLowerCase().contains("closed"));
-    }
-  }
-
-  @Test
-  public void testAsyncException() throws Exception {
-    String message = "Something bad happened";
-    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class)))
-        .thenThrow(new RuntimeException(message));
-    try {
-      underTest.batch(Arrays.asList(new Put(EMPTY_KEY)));
-    } catch (RetriesExhaustedWithDetailsException e) {
-      Assert.assertEquals(1, e.getCauses().size());
-      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
-      Assert.assertEquals(RuntimeException.class, e.getCause(0).getCause().getClass());
-      Assert.assertEquals(message, e.getCause(0).getCause().getMessage());
-    }
-  }
-
-  private void testMutation(org.apache.hadoop.hbase.client.Row mutation)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    when(mockFuture.get()).thenReturn(Empty.getDefaultInstance());
-    Result[] results = batch(Arrays.asList(mutation));
-    Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
-  }
-
-  @Test
-  public void testGetCallback() throws Exception {
-    Row response = Row.getDefaultInstance();
-    when(mockFuture.get()).thenReturn(ImmutableList.of(response));
-    final Callback<Result> callback = Mockito.mock(Callback.class);
-    runBatch(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        List<Get> gets = Arrays.asList(new Get(EMPTY_KEY));
-        underTest.batchCallback(gets, new Result[1], callback);
-        return null;
-      }
-    });
-
-    verify(callback, times(1)).update(same(BatchExecutor.NO_REGION), same(EMPTY_KEY),
-      argThat(matchesRow(Adapters.ROW_ADAPTER.adaptResponse(response))));
-  }
-
-
-  private Result[] batch(final List<? extends org.apache.hadoop.hbase.client.Row> actions)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return runBatch(new Callable<Result[]>() {
-      @Override
-      public Result[] call() throws Exception {
-        return underTest.batch(actions);
-      }
-    });
-  }
-
-  private <T> T runBatch(Callable<T> callable)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    try {
-      Future<T> callableFuture = executorService.submit(callable);
-      Thread.sleep(100L);
-      for (Runnable runnable : runnables) {
-        runnable.run();
-      }
-      return callableFuture.get(100L, TimeUnit.MILLISECONDS);
-    } finally {
-      executorService.shutdownNow();
-    }
-  }
-
-  private Matcher<Result> matchesRow(final Result expected) {
+  private static Matcher<Result> matchesRow(final Result expected) {
     return new BaseMatcher<Result>() {
 
       @Override
@@ -257,5 +115,166 @@ public class TestBatchExecutor {
       public void describeMismatch(Object item, Description mismatchDescription) {
       }
     };
+  }
+  @Mock
+  private AsyncExecutor mockAsyncExecutor;
+  @Mock
+  private ListenableFuture mockFuture;
+
+  private HBaseRequestAdapter requestAdapter =
+      new HBaseRequestAdapter(new BigtableClusterName("project", "zone", "cluster"),
+          TableName.valueOf("table"), new Configuration(false));
+
+  private ListeningExecutorService service;
+
+  @Before
+  public void setup() throws InterruptedException {
+    service =
+        MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService());
+    MockitoAnnotations.initMocks(this);
+    when(mockAsyncExecutor.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(mockFuture);
+    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);
+    when(mockAsyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(mockFuture);
+    when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        invocation.getArgumentAt(0, Runnable.class).run();
+        return null;
+      }
+    }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
+  }
+
+  @After
+  public void tearDown() {
+    service.shutdown();
+    service = null;
+  }
+
+  @Test
+  public void testGet() throws Exception {
+    final Row response = Row.getDefaultInstance();
+    when(mockFuture.get()).thenReturn(ImmutableList.of(response));
+    Result[] results = batch(Arrays.asList(new Get(randomBytes(8))));
+    Assert.assertTrue(matchesRow(Adapters.ROW_ADAPTER.adaptResponse(response)).matches(results[0]));
+  }
+
+  @Test
+  public void testPut() throws Exception {
+    testMutation(randomPut());
+  }
+
+  @Test
+  public void testDelete() throws Exception {
+    testMutation(new Delete(randomBytes(8)));
+  }
+
+  @Test
+  public void testAppend() throws Exception {
+    testMutation(new Append(randomBytes(8)));
+  }
+
+  @Test
+  public void testIncrement() throws Exception {
+    testMutation(new Increment(randomBytes(8)));
+  }
+
+  @Test
+  public void testRowMutations() throws Exception {
+    testMutation(new RowMutations(randomBytes(8)));
+  }
+
+  @Test
+  public void testShutdownService() throws Exception {
+    service.shutdown();
+    service.awaitTermination(1000, TimeUnit.MILLISECONDS);
+    try {
+      batch(Arrays.asList(randomPut()));
+    } catch (RetriesExhaustedWithDetailsException e) {
+      Assert.assertEquals(1, e.getCauses().size());
+      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
+      Assert.assertTrue(e.getCause(0).getMessage().toLowerCase().contains("closed"));
+    }
+  }
+
+  @Test
+  public void testAsyncException() throws Exception {
+    String message = "Something bad happened";
+    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class)))
+        .thenThrow(new RuntimeException(message));
+    try {
+      batch(Arrays.asList(randomPut()));
+    } catch (RetriesExhaustedWithDetailsException e) {
+      Assert.assertEquals(1, e.getCauses().size());
+      Assert.assertEquals(IOException.class, e.getCause(0).getClass());
+      Assert.assertEquals(RuntimeException.class, e.getCause(0).getCause().getClass());
+      Assert.assertEquals(message, e.getCause(0).getCause().getMessage());
+    }
+  }
+
+  @Test
+  public void testGetCallback() throws Exception {
+    Row response = Row.getDefaultInstance();
+    when(mockFuture.get()).thenReturn(ImmutableList.of(response));
+    final Callback<Result> callback = Mockito.mock(Callback.class);
+    byte[] key = randomBytes(8);
+    List<Get> gets = Arrays.asList(new Get(key));
+    createExecutor(DEFAULT_OPTIONS).batchCallback(gets, new Result[1], callback);
+
+    verify(callback, times(1)).update(same(BatchExecutor.NO_REGION), same(key),
+      argThat(matchesRow(Adapters.ROW_ADAPTER.adaptResponse(response))));
+  }
+
+  @Test
+  public void testBatchBulkGets() throws Exception {
+    // Test 10 gets, but return only 9 to test the row not found case.
+    List<Get> gets = new ArrayList<>(10);
+    List<Row> responses = new ArrayList<>(9);
+
+    gets.add(new Get(Bytes.toBytes("key0")));
+    for (int i = 1; i < 10; i++) {
+      byte[] row_key = randomBytes(8);
+      gets.add(new Get(row_key));
+      ByteString key = BigtableZeroCopyByteStringUtil.wrap(row_key);
+      ByteString cellValue = ByteString.copyFrom(randomBytes(8));
+      com.google.bigtable.v1.Cell cell = Cell.newBuilder()
+          .setTimestampMicros(System.nanoTime() / 1000)
+          .setValue(cellValue)
+          .build();
+      Family family =
+          Family.newBuilder()
+              .setName("family")
+              .addColumns(Column.newBuilder().addCells(cell))
+              .build();
+      responses.add(Row.newBuilder().setKey(key).addFamilies(family).build());
+    }
+    when(mockFuture.get()).thenReturn(responses);
+
+    BatchExecutor underTest =
+        createExecutor(new BigtableOptions.Builder().setUseBulkApi(true).build());
+    Result[] results = underTest.batch(gets);
+    verify(mockAsyncExecutor, times(1)).readRowsAsync(any(ReadRowsRequest.class));
+    Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
+    for (int i = 1; i < results.length; i++) {
+      Result response = Adapters.ROW_ADAPTER.adaptResponse(responses.get(i - 1));
+      Assert.assertTrue(Bytes.equals(response.getRow(), results[i].getRow()));
+    }
+  }
+
+  // HELPERS
+
+  private void testMutation(org.apache.hadoop.hbase.client.Row mutation) throws Exception {
+    when(mockFuture.get()).thenReturn(Empty.getDefaultInstance());
+    Result[] results = batch(Arrays.asList(mutation));
+    Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
+  }
+
+  private BatchExecutor createExecutor(BigtableOptions options) {
+    return new BatchExecutor(mockAsyncExecutor, options, service, requestAdapter);
+  }
+
+  private Result[] batch(final List<? extends org.apache.hadoop.hbase.client.Row> actions)
+      throws Exception {
+    return createExecutor(DEFAULT_OPTIONS).batch(actions);
   }
 }
