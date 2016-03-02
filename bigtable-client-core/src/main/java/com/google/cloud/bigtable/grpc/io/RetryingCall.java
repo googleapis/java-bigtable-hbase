@@ -50,7 +50,6 @@ public class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, Resp
   private Listener<ResponseT> listener;
   private Metadata headers;
   private RequestT message;
-  private boolean payloadIsRetriable = true;
   private final SettableFuture<Void> cancelled = SettableFuture.create();
 
   public RetryingCall(
@@ -71,8 +70,7 @@ public class RetryingCall<RequestT, ResponseT> extends ClientCall<RequestT, Resp
     Preconditions.checkState(
         this.listener == null,
         "start should not be invoked more than once for unary calls.");
-    this.listener = new RetryListener<>(this, message, headers, payloadIsRetriable,
-        listener);
+    this.listener = new RetryListener<>(this, message, headers, listener);
     this.headers = headers;
   }
 

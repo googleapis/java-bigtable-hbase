@@ -72,7 +72,6 @@ public class RetryListenerTest {
             mockRetryingCall,
             request,
             new Metadata(),
-            true, // always retriable for testing
             mockResponseListener);
 
     listener.onHeaders(new Metadata());
@@ -95,7 +94,6 @@ public class RetryListenerTest {
             mockRetryingCall,
             request,
             headers,
-            true, // always retriable for testing
             mockResponseListener);
 
     // Indicate that retry has begun:
@@ -123,7 +121,6 @@ public class RetryListenerTest {
             mockRetryingCall,
             request,
             requestHeaders,
-            true, // always retriable for testing
             mockResponseListener);
 
     Metadata responseHeaders = new Metadata();
