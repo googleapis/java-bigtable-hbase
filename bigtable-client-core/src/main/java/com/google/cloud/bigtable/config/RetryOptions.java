@@ -244,10 +244,10 @@ public class RetryOptions implements Serializable {
     return readPartialRowTimeoutMillis;
   }
 
-  /*
-   * Determines if the read should be retried based on the input status {@code code}.
+  /**
+   * Determines if the RPC should be retried based on the input {@link Status.Code}.
    */
-  public boolean isRetryableRead(Status.Code code) {
+  public boolean isRetryable(Status.Code code) {
     return code == Status.INTERNAL.getCode()
         || code == Status.UNAVAILABLE.getCode()
         || code == Status.ABORTED.getCode()

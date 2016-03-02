@@ -18,8 +18,8 @@ package com.google.cloud.bigtable.grpc.async;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * This interface represents an RPC that is retryable.
+ * This interface represents a logical asynchronous RPC.
  */
-public interface RetryableRpc<REQUEST, RESPONSE> {
+public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
   ListenableFuture<RESPONSE> call(REQUEST request);
 }

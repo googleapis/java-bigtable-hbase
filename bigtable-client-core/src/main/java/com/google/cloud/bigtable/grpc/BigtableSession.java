@@ -250,8 +250,8 @@ public class BigtableSession implements Closeable {
       BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
       // More often than not, users want the dataClient. Create a new one in the constructor.
-      this.dataClient = new BigtableDataGrpcClient(dataChannel, sharedPools.getBatchThreadPool(),
-      sharedPools.getRetryExecutor(), options);
+      this.dataClient =
+          new BigtableDataGrpcClient(dataChannel, sharedPools.getBatchThreadPool(), options);
 
       // Defer the creation of both the tableAdminClient and clusterAdminClient until we need them.
     } finally {

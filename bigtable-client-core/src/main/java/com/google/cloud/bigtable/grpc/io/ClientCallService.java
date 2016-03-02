@@ -45,6 +45,12 @@ public interface ClientCallService {
 
   <ReqT, RespT> ListenableFuture<RespT> listenableAsyncCall(ClientCall<ReqT, RespT> call,
       ReqT request);
+  
+  <ReqT, RespT> void asyncUnaryCall(
+      ClientCall<ReqT, RespT> call,
+      ReqT request,
+      StreamObserver<RespT> observer);
+
 
   ClientCallService DEFAULT = new ClientCallService() {
 
@@ -91,8 +97,16 @@ public interface ClientCallService {
         ClientCall<ReqT, RespT> call,
         ReqT request) {
       AsyncUnaryOperationObserver<RespT> observer = new AsyncUnaryOperationObserver<>();
-      ClientCalls.asyncUnaryCall(call, request, observer);
+      asyncUnaryCall(call, request, observer);
       return observer.getCompletionFuture();
+    }
+
+    @Override
+    public <ReqT, RespT> void asyncUnaryCall(
+        ClientCall<ReqT, RespT> call,
+        ReqT request,
+        StreamObserver<RespT> observer) {
+      ClientCalls.asyncUnaryCall(call, request, observer);
     }
   };
 }

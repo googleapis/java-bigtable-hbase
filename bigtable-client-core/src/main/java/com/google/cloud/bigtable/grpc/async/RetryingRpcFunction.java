@@ -17,11 +17,10 @@ package com.google.cloud.bigtable.grpc.async;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.scanner.ScanRetriesExhaustedException;
 import com.google.common.annotations.VisibleForTesting;
@@ -33,17 +32,17 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 /**
- * A {@link AsyncFunction} that retries a {@link RetryableRpc} request.
+ * A {@link AsyncFunction} that retries a {@link BigtableAsyncRpc} request.
  */
 public class RetryingRpcFunction<RequestT, ResponseT>
     implements AsyncFunction<StatusRuntimeException, ResponseT> {
 
   public static <RequestT, ResponseT> RetryingRpcFunction<RequestT, ResponseT> create(
-      RetryOptions retryOptions, RequestT request, RetryableRpc<RequestT, ResponseT> retryableRpc) {
+      RetryOptions retryOptions, RequestT request, BigtableAsyncRpc<RequestT, ResponseT> retryableRpc) {
     return new RetryingRpcFunction<RequestT, ResponseT>(retryOptions, request, retryableRpc);
   }
 
-  protected final Log LOG = LogFactory.getLog(RetryingRpcFunction.class);
+  protected final Logger LOG = new Logger(RetryingRpcFunction.class);
 
   private final RequestT request;
 
@@ -52,27 +51,29 @@ public class RetryingRpcFunction<RequestT, ResponseT>
   @VisibleForTesting
   Sleeper sleeper = Sleeper.DEFAULT;
 
-  private final RetryableRpc<RequestT, ResponseT> retryableRpc;
+  private final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   private final RetryOptions retryOptions;
+  private int failedCount;
 
   private RetryingRpcFunction(RetryOptions retryOptions, RequestT request,
-      RetryableRpc<RequestT, ResponseT> retryableRpc) {
+      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc) {
     this.retryOptions = retryOptions;
     this.request = request;
-    this.retryableRpc = retryableRpc;
+    this.rpc = retryableRpc;
   }
 
   @Override
   public ListenableFuture<ResponseT> apply(StatusRuntimeException statusException) throws Exception {
-    Status.Code code = statusException.getStatus().getCode();
-    if (retryOptions.isRetryableRead(code)) {
-      return backOffAndRetry(statusException);
+    final Status status = statusException.getStatus();
+    Status.Code code = status.getCode();
+    if (retryOptions.isRetryable(code)) {
+      return backOffAndRetry(statusException, status);
     } else {
       return Futures.immediateFailedCheckedFuture(statusException);
     }
   }
 
-  private ListenableFuture<ResponseT> backOffAndRetry(StatusRuntimeException cause) throws IOException,
+  private ListenableFuture<ResponseT> backOffAndRetry(StatusRuntimeException cause, Status status) throws IOException,
       ScanRetriesExhaustedException {
     if (this.currentBackoff == null) {
       this.currentBackoff = retryOptions.createBackoff();
@@ -83,7 +84,10 @@ public class RetryingRpcFunction<RequestT, ResponseT>
     }
 
     sleep(nextBackOff);
-    return retryableRpc.call(request);
+    // A retryable error.
+    failedCount += 1;
+    LOG.info("Retrying failed call. Failure #%d, got: %s", status.getCause(), failedCount, status);
+    return rpc.call(request);
   }
 
   private void sleep(long millis) throws IOException {
