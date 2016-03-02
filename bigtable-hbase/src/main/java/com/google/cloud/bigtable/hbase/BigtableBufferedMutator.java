@@ -149,7 +149,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
             }
             operation.run();
           } catch (InterruptedException e) {
-            LOG.info("Interrupted. Shutting down the mutatio worker.");
+            LOG.info("Interrupted. Shutting down the mutation worker.");
             break;
           } catch (Exception e) {
             LOG.error("Exception in buffered mutator.", e);
@@ -303,7 +303,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
    */
   private void offer(Mutation mutation) throws IOException {
     try {
-      initializeAsyncMutators();
       Runnable operation = null;
       if (options.useBulkApi() && (mutation instanceof Put || mutation instanceof Delete)) {
         // TODO: Do this logic asynchronously. 
@@ -313,12 +312,14 @@ public class BigtableBufferedMutator implements BufferedMutator {
           }
           ListenableFuture<Empty> future = bulkMutation.add(adapt(mutation));
           addExceptionCallback(future, mutation);
-          if (bulkMutation.isFull()) {
+          if (bulkMutation.getRowKeyCount() >= options.getBulkMaxRowKeyCount() ||
+              bulkMutation.getApproximateByteSize() >= options.getBulkMaxRequestSize()) {
             mutateRowsAsync(bulkMutation);
             bulkMutation = null;
           }
         }
       } else {
+        initializeAsyncMutators();
         long operationId = heapSizeManager.registerOperationWithHeapSize(mutation.heapSize());
         operation = new MutationOperation(mutation, operationId);
         if (executorService != null && options.getAsyncMutatorCount() > 0) {

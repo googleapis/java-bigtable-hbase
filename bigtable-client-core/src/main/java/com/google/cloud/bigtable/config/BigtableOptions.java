@@ -28,6 +28,7 @@ import com.google.common.base.Strings;
 /**
  * An immutable class providing access to configuration options for Bigtable.
  */
+//TODO: Perhaps break this down into smaller options objects?
 public class BigtableOptions implements Serializable {
 
   private static final long serialVersionUID = 1L;
@@ -43,6 +44,20 @@ public class BigtableOptions implements Serializable {
   public static final int BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT =
       (int) TimeUnit.MILLISECONDS.convert(30, TimeUnit.MINUTES);
   public static final int BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT = 2;
+
+  /**
+   * This describes the maximum size a bulk mutation RPC should be before sending it to the server
+   * and starting the next bulk call. Defaults to 1 MB.
+   */
+  public static final long BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT = 1 << 20;
+
+  /**
+   * This describes the maximum number of individual mutation requests to bundle in a single bulk
+   * mutation RPC before sending it to the server and starting the next bulk call.
+   * The server has a maximum of 100,000.  Since RPCs can be retried, we should limit the number of
+   * keys to 100 by default so we don't keep retrying larger batches.
+   */
+  public static final int BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT = 100;
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
@@ -83,6 +98,8 @@ public class BigtableOptions implements Serializable {
     private int asyncMutatorCount = BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 
     private boolean useBulkApi = false;
+    private int bulkMaxRowKeyCount = BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
+    private long bulkMaxRequestSize = BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
 
     public Builder() {
     }
@@ -104,6 +121,8 @@ public class BigtableOptions implements Serializable {
       this.dataChannelCount = original.dataChannelCount;
       this.asyncMutatorCount = original.asyncMutatorCount;
       this.useBulkApi = original.useBulkApi;
+      this.bulkMaxRowKeyCount = original.bulkMaxRowKeyCount;
+      this.bulkMaxRequestSize = original.bulkMaxRequestSize;
     }
 
     public Builder setTableAdminHost(String tableAdminHost) {
@@ -176,15 +195,29 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
+    public Builder setAsyncMutatorWorkerCount(int asyncMutatorCount) {
+      Preconditions.checkArgument(
+          asyncMutatorCount >= 0, "asyncMutatorCount must be greater or equal to 0.");
+      this.asyncMutatorCount = asyncMutatorCount;
+      return this;
+    }
+
     public Builder setUseBulkApi(boolean useBulkApi) {
       this.useBulkApi = useBulkApi;
       return this;
     }
 
-    public Builder setAsyncMutatorWorkerCount(int asyncMutatorCount) {
+    public Builder setBulkMaxRowKeyCount(int bulkMaxRowKeyCount) {
       Preconditions.checkArgument(
-          asyncMutatorCount >= 0, "asyncMutatorCount must be greater or equal to 0.");
-      this.asyncMutatorCount = asyncMutatorCount;
+        bulkMaxRowKeyCount >= 0, "bulkMaxRowKeyCount must be greater or equal to 0.");
+      this.bulkMaxRowKeyCount = bulkMaxRowKeyCount;
+      return this;
+    }
+
+    public Builder setBulkMaxRequestSize(long bulkMaxRequestSize) {
+      Preconditions.checkArgument(
+        bulkMaxRequestSize >= 0, "bulkMaxRequestSize must be greater or equal to 0.");
+      this.bulkMaxRequestSize = bulkMaxRequestSize;
       return this;
     }
 
@@ -205,7 +238,9 @@ public class BigtableOptions implements Serializable {
           timeoutMs,
           dataChannelCount,
           asyncMutatorCount,
-          useBulkApi);
+          useBulkApi,
+          bulkMaxRowKeyCount,
+          bulkMaxRequestSize);
     }
   }
 
@@ -226,6 +261,8 @@ public class BigtableOptions implements Serializable {
   private final BigtableClusterName clusterName;
   private final int asyncMutatorCount;
   private final boolean useBulkApi;
+  private final int bulkMaxRowKeyCount;
+  private final long bulkMaxRequestSize;
 
 
   @VisibleForTesting
@@ -247,6 +284,8 @@ public class BigtableOptions implements Serializable {
       clusterName = null;
       asyncMutatorCount = 1;
       useBulkApi = false;
+      bulkMaxRowKeyCount = -1;
+      bulkMaxRequestSize = -1;
   }
 
   private BigtableOptions(
@@ -265,7 +304,9 @@ public class BigtableOptions implements Serializable {
       int timeoutMs,
       int channelCount,
       int asyncMutatorCount,
-      boolean useBulkApi) {
+      boolean useBulkApi,
+      int bulkMaxKeyCount,
+      long bulkMaxRequestSize) {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
     Preconditions.checkArgument(timeoutMs >= -1,
       "ChannelTimeoutMs has to be positive, or -1 for none.");
@@ -286,6 +327,8 @@ public class BigtableOptions implements Serializable {
     this.dataChannelCount = channelCount;
     this.asyncMutatorCount = asyncMutatorCount;
     this.useBulkApi = useBulkApi;
+    this.bulkMaxRowKeyCount = bulkMaxKeyCount;
+    this.bulkMaxRequestSize = bulkMaxRequestSize;
 
     if (!Strings.isNullOrEmpty(projectId)
         && !Strings.isNullOrEmpty(zoneId)
@@ -362,7 +405,9 @@ public class BigtableOptions implements Serializable {
   /**
    * Options controlling retries.
    */
-  public RetryOptions getRetryOptions() { return retryOptions; }
+  public RetryOptions getRetryOptions() {
+    return retryOptions;
+  }
 
   /**
    * The timeout for a channel.
@@ -390,6 +435,14 @@ public class BigtableOptions implements Serializable {
     return useBulkApi;
   }
 
+  public int getBulkMaxRowKeyCount() {
+    return bulkMaxRowKeyCount;
+  }
+
+  public long getBulkMaxRequestSize() {
+    return bulkMaxRequestSize;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (obj == null || obj.getClass() != BigtableOptions.class) {
@@ -404,6 +457,8 @@ public class BigtableOptions implements Serializable {
         && (dataChannelCount == other.dataChannelCount)
         && (asyncMutatorCount == other.asyncMutatorCount)
         && (useBulkApi == other.useBulkApi)
+        && (bulkMaxRowKeyCount == other.bulkMaxRowKeyCount)
+        && (bulkMaxRequestSize == other.bulkMaxRequestSize)
         && Objects.equal(clusterAdminHost, other.clusterAdminHost)
         && Objects.equal(tableAdminHost, other.tableAdminHost)
         && Objects.equal(dataIpOverride, other.dataIpOverride)
@@ -436,6 +491,8 @@ public class BigtableOptions implements Serializable {
         .add("dataChannelCount", dataChannelCount)
         .add("asyncMutatorCount", asyncMutatorCount)
         .add("useBulkApi", useBulkApi)
+        .add("bulkMaxKeyCount", bulkMaxRowKeyCount)
+        .add("bulkMaxRequestSize", bulkMaxRequestSize)
         .toString();
   }
 

@@ -37,22 +37,21 @@ import io.grpc.StatusException;
  * thread safe.
  */
 public class BulkMutation {
-  // TODO: make MAX_SIZE and MAX_COUNT configurable.
-  public static final long MAX_SIZE = 1 << 21;
-  public static final int MAX_COUNT = 50000;
 
   private final List<SettableFuture<Empty>> futures = new ArrayList<>();
   private final MutateRowsRequest.Builder builder;
-  private long size = 0l;
+  
+  private long approximateByteSize = 0l;
 
   public BulkMutation(String tableName) {
     this.builder = MutateRowsRequest.newBuilder().setTableName(tableName);
-    this.size = MutateRowsRequest.newBuilder().setTableName(tableName).build().getSerializedSize();
+    this.approximateByteSize = tableName.length() + 2;
   }
 
   /**
-   * Adds a {@link MutateRowRequest} to the {@link MutateRowsRequest.Builder}. NOTE: Users have to
-   * make sure that this gets called in a thread safe way.
+   * Adds a {@link MutateRowRequest} to the
+   * {@link com.google.bigtable.v1.MutateRowsRequest.Builder}. NOTE: Users have to make sure that
+   * this gets called in a thread safe way.
    * @param request The {@link MutateRowRequest} to add
    * @return a {@link SettableFuture} that will be populated when the {@link MutateRowsResponse}
    *         returns from the server. See {@link BulkMutation#addCallback(ListenableFuture)} for
@@ -66,14 +65,17 @@ public class BulkMutation {
       .addAllMutations(request.getMutationsList())
       .build();
     builder.addEntries(entry);
-    size += entry.getSerializedSize();
+    approximateByteSize += entry.getSerializedSize();
     return future;
   }
 
-  public boolean isFull() {
-    return size >= MAX_SIZE || futures.size() >= MAX_COUNT;
+  public long getApproximateByteSize() {
+    return approximateByteSize;
   }
 
+  public int getRowKeyCount() {
+    return futures.size();
+  }
   /**
    * @return a completed {@link MutateRowsRequest} with all of the entries from
    * {@link BulkMutation#add(MutateRowRequest)}.

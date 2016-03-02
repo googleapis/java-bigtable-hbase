@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -184,7 +183,7 @@ public class TestBigtableBufferedMutator {
   }
 
   @Test
-  public void testBulkSingleRequests() throws IOException, InterruptedException, ExecutionException {
+  public void testBulkSingleRequests() throws IOException, InterruptedException {
     Configuration config = new Configuration(false);
     config.set(BigtableOptionsFactory.BIGTABLE_USE_BULK_API, "true");
     SettableFuture<MutateRowsResponse> future = SettableFuture.create();
@@ -212,9 +211,11 @@ public class TestBigtableBufferedMutator {
   }
 
   @Test
-  public void testBulkMultipleRequests() throws IOException, InterruptedException, ExecutionException {
+  public void testBulkMultipleRequests() throws IOException, InterruptedException {
     Configuration config = new Configuration(false);
     config.set(BigtableOptionsFactory.BIGTABLE_USE_BULK_API, "true");
+    config.set(BigtableOptionsFactory.BIGTABLE_BULK_MAX_ROW_KEY_COUNT, "10");
+    config.set(BigtableOptionsFactory.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES, "1000");
     final List<SettableFuture<MutateRowsResponse>> futures = new ArrayList<>();
     when(mockClient.mutateRowsAsync(any(MutateRowsRequest.class)))
         .thenAnswer(new Answer<SettableFuture<MutateRowsResponse>>() {

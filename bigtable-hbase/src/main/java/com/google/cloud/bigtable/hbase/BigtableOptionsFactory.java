@@ -140,6 +140,12 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_USE_BULK_API =
       "google.bigtable.use.bulk.api";
 
+  public static final String BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES =
+      "google.bigtable.bulk.max.request.size.bytes";
+
+  public static final String BIGTABLE_BULK_MAX_ROW_KEY_COUNT =
+      "google.bigtable.bulk.max.row.key.count";
+
   /**
    * The number of asynchronous workers to use for buffered mutator operations.
    */
@@ -177,6 +183,14 @@ public class BigtableOptionsFactory {
     bigtableOptionsBuilder.setAsyncMutatorWorkerCount(asyncMutatorCount);
 
     bigtableOptionsBuilder.setUseBulkApi(configuration.getBoolean(BIGTABLE_USE_BULK_API, false));
+    bigtableOptionsBuilder.setBulkMaxRowKeyCount(
+        configuration.getInt(
+            BIGTABLE_BULK_MAX_ROW_KEY_COUNT,
+            BigtableOptions.BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT));
+    bigtableOptionsBuilder.setBulkMaxRequestSize(
+        configuration.getLong(
+            BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES,
+            BigtableOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT));
 
     return bigtableOptionsBuilder.build();
   }

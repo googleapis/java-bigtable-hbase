@@ -134,28 +134,28 @@ public class BatchExecutor {
   protected static class BulkOperation {
     private final AsyncExecutor asyncExecutor;
     private final String tableName;
-    private final boolean doBulkCall;
+    private final BigtableOptions options;
     private BulkMutation bulkMutation;
     private BulkRead bulkRead;
 
-    public BulkOperation(AsyncExecutor asyncExecutor, String tableName, boolean doBulkCall) {
-      super();
+    public BulkOperation(AsyncExecutor asyncExecutor, String tableName, BigtableOptions options) {
       this.asyncExecutor = asyncExecutor;
       this.tableName = Preconditions.checkNotNull(tableName);
-      this.doBulkCall = doBulkCall;
+      this.options = options;
       this.bulkRead = new BulkRead(asyncExecutor, tableName);
     }
 
     public ListenableFuture<? extends GeneratedMessage> mutateRowAsync(MutateRowRequest request)
         throws InterruptedException {
-      if (!doBulkCall) {
+      if (!options.useBulkApi()) {
         return asyncExecutor.mutateRowAsync(request);
       }
       if (bulkMutation == null) {
         bulkMutation = new BulkMutation(tableName);
       }
       ListenableFuture<Empty> future = bulkMutation.add(request);
-      if (bulkMutation.isFull()) {
+      if (bulkMutation.getRowKeyCount() >= options.getBulkMaxRowKeyCount()
+          || bulkMutation.getApproximateByteSize() >= options.getBulkMaxRequestSize()) {
         mutateRowAsync();
         bulkMutation = null;
       }
@@ -178,7 +178,7 @@ public class BatchExecutor {
 
     public ListenableFuture<? extends GeneratedMessage> readRowsAsync(ReadRowsRequest request)
         throws InterruptedException {
-      if (!doBulkCall) {
+      if (!options.useBulkApi()) {
         return Futures.transform(asyncExecutor.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
       } else {
         return Futures.transform(bulkRead.add(request), ROWS_TO_ROW_CONVERTER);
@@ -308,7 +308,7 @@ public class BatchExecutor {
   private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) throws InterruptedException {
     BulkOperation bulkOperation = new BulkOperation(this.asyncExecutor,
-        this.requestAdapter.getBigtableTableName().toString(), options.useBulkApi());
+        this.requestAdapter.getBigtableTableName().toString(), options);
     try {
       List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());
       for (int i = 0; i < actions.size(); i++) {
