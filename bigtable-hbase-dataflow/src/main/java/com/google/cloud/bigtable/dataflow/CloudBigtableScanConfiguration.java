@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -73,6 +74,11 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     protected Scan scan = new Scan();
 
     public Builder() {
+    }
+
+    public Builder(CloudBigtableTableConfiguration config) {
+    	this(config.getConfiguration());
+    	withTableId(config.getTableId());
     }
 
     protected Builder(Map<String, String> configuration) {
@@ -143,7 +149,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public CloudBigtableScanConfiguration build() {
-      return new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, scan);
+      return new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, scan, additionalConfiguration);
     }
   }
 
