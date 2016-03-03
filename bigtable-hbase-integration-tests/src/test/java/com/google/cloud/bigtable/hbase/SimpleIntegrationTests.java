@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-@SuppressWarnings("deprecation")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
     TestPutGetDelete.class

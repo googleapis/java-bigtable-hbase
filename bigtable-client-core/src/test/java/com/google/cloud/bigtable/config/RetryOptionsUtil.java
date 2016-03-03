@@ -33,6 +33,8 @@ public class RetryOptionsUtil {
     return new RetryOptions(true, true, DEFAULT_INITIAL_BACKOFF_MILLIS, DEFAULT_BACKOFF_MULTIPLIER,
         DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS, DEFAULT_STREAMING_BUFFER_SIZE,
         DEFAULT_STREAMING_BATCH_SIZE, DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS) {
+          private static final long serialVersionUID = 1L;
+
       @Override
       protected ExponentialBackOff.Builder createBackoffBuilder() {
         return super.createBackoffBuilder().setNanoClock(nanoClock);

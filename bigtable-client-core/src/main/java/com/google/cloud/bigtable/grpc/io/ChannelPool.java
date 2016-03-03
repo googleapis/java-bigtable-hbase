@@ -16,19 +16,15 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import io.grpc.CallOptions;
-import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.ManagedChannel;
@@ -49,7 +45,6 @@ public class ChannelPool extends ManagedChannel {
   private final ImmutableList<ManagedChannel> channels;
   private final AtomicInteger requestCount = new AtomicInteger();
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
-  private final ChannelFactory factory;
   private final String authority;
 
   private boolean shutdown = false;
@@ -63,7 +58,6 @@ public class ChannelPool extends ManagedChannel {
       throws IOException {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
     Preconditions.checkNotNull(headerInterceptors, "Must pass non null headerInterceptors");
-    this.factory = factory;
     this.headerInterceptors = ImmutableList.copyOf(headerInterceptors);
 
     ManagedChannel[] channelArray = new ManagedChannel[channelCount];
@@ -148,7 +142,6 @@ public class ChannelPool extends ManagedChannel {
 
   @Override
   public boolean isTerminated() {
-    boolean allTerminated = true;
     for (ManagedChannel managedChannel : channels) {
       if (!managedChannel.isTerminated()) {
         return false;

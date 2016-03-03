@@ -1,14 +1,15 @@
 package com.google.cloud.bigtable.dataflow;
 
-import static org.mockito.Mockito.*;
-import com.google.bigtable.v1.SampleRowKeysResponse;
-import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
-import com.google.cloud.bigtable.hbase1_0.BigtableConnection;
-import com.google.cloud.dataflow.sdk.io.BoundedSource;
-import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
-import com.google.cloud.dataflow.sdk.transforms.DoFn;
-import com.google.cloud.dataflow.sdk.transforms.DoFnTester;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -30,16 +31,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.google.bigtable.v1.SampleRowKeysResponse;
+import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
+import com.google.cloud.bigtable.hbase1_0.BigtableConnection;
+import com.google.cloud.dataflow.sdk.io.BoundedSource;
+import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
+import com.google.cloud.dataflow.sdk.transforms.DoFn;
+import com.google.cloud.dataflow.sdk.transforms.DoFnTester;
 
 public class CloudBigtableIOIntegrationTest {
   private static final String BIGTABLE_PROJECT_KEY = "google.bigtable.project.id";

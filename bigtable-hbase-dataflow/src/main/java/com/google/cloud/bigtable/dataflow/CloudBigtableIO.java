@@ -48,7 +48,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
-import com.google.api.services.datastore.DatastoreV1.EntityResult.ResultType;
 import com.google.bigtable.v1.BigtableServiceGrpc.BigtableService;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
@@ -606,26 +605,26 @@ public class CloudBigtableIO {
   /**
    * Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}.
    */
-  private static class Reader<ResultType> extends BoundedReader<ResultType> {
+  private static class Reader<Results> extends BoundedReader<Results> {
     private static final Logger READER_LOG = LoggerFactory.getLogger(Reader.class);
 
-    private final BoundedSource<ResultType> source;
+    private final BoundedSource<Results> source;
     private final Scan scan;
     private final CloudBigtableScanConfiguration config;
-    private final ScanIterator<ResultType> scanIterator;
+    private final ScanIterator<Results> scanIterator;
 
     private volatile Connection connection;
     private volatile ResultScanner scanner;
     private volatile Table table;
-    private volatile ResultType current;
+    private volatile Results current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
 
     private Reader(
-        BoundedSource<ResultType> source,
+        BoundedSource<Results> source,
         CloudBigtableScanConfiguration config,
         Scan scan,
-        ScanIterator<ResultType> scanIterator) {
+        ScanIterator<Results> scanIterator) {
       this.source = source;
       this.config = config;
       this.scan = scan;
@@ -679,12 +678,12 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public ResultType getCurrent() throws NoSuchElementException {
+    public Results getCurrent() throws NoSuchElementException {
       return current;
     }
 
     @Override
-    public BoundedSource<ResultType> getCurrentSource() {
+    public BoundedSource<Results> getCurrentSource() {
       return source;
     }
 

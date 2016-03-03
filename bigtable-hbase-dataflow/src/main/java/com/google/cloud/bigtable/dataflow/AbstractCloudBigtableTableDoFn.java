@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class can be used as a superclass for {@link DoFn}s that require a {@link Connection} in
