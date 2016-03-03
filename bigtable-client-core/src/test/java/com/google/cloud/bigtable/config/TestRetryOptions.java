@@ -42,12 +42,12 @@ public class TestRetryOptions {
   private void assertIsRetryableRead(boolean retryOnDeadlineExceeded) {
     RetryOptions options =
         new RetryOptions.Builder().setRetryOnDeadlineExceeded(retryOnDeadlineExceeded).build();
-    assertTrue(options.isRetryableRead(Status.INTERNAL.getCode()));
-    assertTrue(options.isRetryableRead(Status.UNAVAILABLE.getCode()));
-    assertTrue(options.isRetryableRead(Status.ABORTED.getCode()));
-    assertFalse(options.isRetryableRead(Status.FAILED_PRECONDITION.getCode()));
+    assertTrue(options.isRetryable(Status.INTERNAL.getCode()));
+    assertTrue(options.isRetryable(Status.UNAVAILABLE.getCode()));
+    assertTrue(options.isRetryable(Status.ABORTED.getCode()));
+    assertFalse(options.isRetryable(Status.FAILED_PRECONDITION.getCode()));
     assertEquals(
-        retryOnDeadlineExceeded, options.isRetryableRead(Status.DEADLINE_EXCEEDED.getCode()));
+        retryOnDeadlineExceeded, options.isRetryable(Status.DEADLINE_EXCEEDED.getCode()));
   }
 }
 

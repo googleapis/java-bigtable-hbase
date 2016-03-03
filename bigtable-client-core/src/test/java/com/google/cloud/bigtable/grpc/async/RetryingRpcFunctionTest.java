@@ -49,7 +49,7 @@ public class RetryingRpcFunctionTest {
   private RetryingRpcFunction underTest;
 
   @Mock
-  private RetryableRpc readAsync;
+  private BigtableAsyncRpc readAsync;
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();

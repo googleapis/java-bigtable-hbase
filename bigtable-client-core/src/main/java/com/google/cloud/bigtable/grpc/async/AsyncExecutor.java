@@ -66,7 +66,7 @@ public class AsyncExecutor {
       };
 
   /**
-   * Calls {@link BigtableDataClient#mutateRowsAsync(MutateRowRequest)}.
+   * Calls {@link BigtableDataClient#mutateRowsAsync(MutateRowsRequest)}.
    */
   protected static AsyncCall<MutateRowsRequest, MutateRowsResponse> MUTATE_ROWS_ASYNC =
       new AsyncCall<MutateRowsRequest, MutateRowsResponse>() {

@@ -105,7 +105,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
         backOffAndRetry(rte);
       } catch (IOExceptionWithStatus ioe) {
         Status.Code code = ioe.getStatus().getCode();
-        if (retryOptions.isRetryableRead(code)) {
+        if (retryOptions.isRetryable(code)) {
           logger.info("Reissuing scan after receiving error with status: %s.", code.name());
           backOffAndRetry(ioe);
         } else {
