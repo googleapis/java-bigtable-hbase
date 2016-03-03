@@ -30,7 +30,6 @@ import org.junit.runners.JUnit4;
  * Tests for {@link CloudBigtableConnectionPool}.
  */
 @RunWith(JUnit4.class)
-@SuppressWarnings("deprecation")
 public class CloudBigtableConnectionPoolTest {
 
   private static Configuration config = new Configuration(false);

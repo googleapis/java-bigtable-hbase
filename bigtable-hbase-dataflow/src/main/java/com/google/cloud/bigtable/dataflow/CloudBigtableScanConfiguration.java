@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.apache.hadoop.hbase.client.Scan;

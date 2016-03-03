@@ -166,7 +166,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request) {
-    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return performAsyncRpc(request, BigtableServiceGrpc.METHOD_MUTATE_ROW, IS_RETRYABLE_MUTATION);
   }
 
@@ -178,7 +177,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ListenableFuture<MutateRowsResponse> mutateRowsAsync(MutateRowsRequest request) {
-    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return performAsyncRpc(request, BigtableServiceGrpc.METHOD_MUTATE_ROWS, ARE_RETRYABLE_MUTATIONS);
   }
 
@@ -192,7 +190,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request) {
-    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return performAsyncRpc(
         request, BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW, IS_RETRYABLE_CHECK_AND_MUTATE);
   }
@@ -253,7 +250,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRowRequest request) {
-    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return clientCallService.listenableAsyncCall(
       channelPool.newCall(BigtableServiceGrpc.METHOD_READ_MODIFY_WRITE_ROW, CallOptions.DEFAULT),
       request);
@@ -276,7 +272,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(final ReadRowsRequest request) {
-    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return BigtableAsyncUtilities
         .performRetryingAsyncRpc(retryOptions, request, readRowsAsync, executorService);
   }
@@ -363,13 +358,5 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         }
       }
     };
-  }
-
-  private void expandPoolIfNecessary(int channelCount) {
-    try {
-      this.channelPool.ensureChannelCount(channelCount);
-    } catch (IOException e) {
-      LOG.info("Could not expand the channel pool.", e);
-    }
   }
 }
