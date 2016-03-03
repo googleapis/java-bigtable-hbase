@@ -95,27 +95,6 @@ public class CloudBigtableIOIntegrationTest {
   }
 
   @Test
-  public void testWriteToTable_tableDoesNotExist() throws Exception {
-    LOG.info("Testing testWriteToTable_tableDoesNotExist()");
-    // The table doesn't exist.
-    expectedException.expect(IllegalStateException.class);
-    CloudBigtableIO.writeToTable(createTableConfig("does-not-exist-table")).validate(null);
-  }
-
-  @Test
-  public void testWriteToTable_tableExist() throws Exception {
-    try (Admin admin = connection.getAdmin()) {
-      LOG.info("Creating table in testWriteToTable_tableExist()");
-      TableName tableName = createNewTable(admin);
-      try {
-        CloudBigtableIO.writeToTable(createTableConfig(tableName.getNameAsString())).validate(null);
-      } finally {
-        admin.deleteTable(tableName);
-      }
-    }
-  }
-
-  @Test
   public void testWriteToTable_dataWrittenSerial() throws Exception {
     final int INSERT_COUNT = 50;
     try (Admin admin = connection.getAdmin()) {
