@@ -105,7 +105,7 @@ public class BulkRead {
   public void flush() throws InterruptedException {
     if (futures != null && !futures.isEmpty()) {
       // TODO(sduskis): remove this once bulk read testing is complete.
-      LOG.info("BulkRead reading %d rows.", futures.keys().size());
+//      LOG.info("BulkRead reading %d rows.", futures.keys().size());
       ReadRowsRequest request =
           ReadRowsRequest.newBuilder()
               .setTableName(tableName)
