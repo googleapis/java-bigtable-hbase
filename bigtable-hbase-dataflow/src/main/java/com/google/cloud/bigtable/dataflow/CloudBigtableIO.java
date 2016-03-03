@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
@@ -140,8 +139,6 @@ import com.google.common.annotations.VisibleForTesting;
  */
 
 public class CloudBigtableIO {
-
-  private static Logger LOG = LoggerFactory.getLogger(CloudBigtableIO.class);
 
   /**
    * Performs a {@link ResultScanner#next()} or {@link ResultScanner#next(int)}.  It also checks if
@@ -332,12 +329,8 @@ public class CloudBigtableIO {
         return newSplits;
       }
 
-      /**
-       * Validates the existence of the table in the configuration.
-       */
       @Override
       public void validate() {
-        CloudBigtableIO.validate(configuration, configuration.getTableId());
       }
 
       /**
@@ -502,7 +495,7 @@ public class CloudBigtableIO {
      */
     @Override
     public void validate() {
-      CloudBigtableIO.validate(configuration, configuration.getTableId());
+      CloudBigtableIO.validateTableConfig(configuration);
     }
 
     /**
@@ -957,7 +950,7 @@ public class CloudBigtableIO {
    */
   public static PTransform<PCollection<Mutation>, PDone> writeToTable(
       CloudBigtableTableConfiguration config) {
-    validate(config, config.getTableId());
+    validateTableConfig(config);
 
     DoFn<Mutation, Void> writeFn = null;
 
@@ -987,7 +980,7 @@ public class CloudBigtableIO {
    */
    public static PTransform<PCollection<KV<String, Iterable<Mutation>>>, PDone>
       writeToMultipleTables(CloudBigtableConfiguration config) {
-    validate(config);
+    validateConfig(config);
     return new CloudBigtableWriteTransform<>(new CloudBigtableMultiTableWriteFn(config));
   }
 
@@ -1017,24 +1010,12 @@ public class CloudBigtableIO {
         !isNullOrEmpty(value), "A " + type + " must be set to configure Bigtable properly.");
   }
 
-  private static void validate(CloudBigtableConfiguration configuration, String tableId) {
-    validate(configuration);
-    checkNotNullOrEmpty(tableId, "tableid");
-    if (BigtableSession.isAlpnProviderEnabled()) {
-      try (BigtableConnection conn = new BigtableConnection(configuration.toHBaseConfig());
-          Admin admin = conn.getAdmin()) {
-        Preconditions.checkState(admin.tableExists(TableName.valueOf(tableId)), "Table "
-            + tableId + " does not exist.  This dataflow operation could not be run.");
-      } catch (IOException | IllegalArgumentException | ExceptionInInitializerError e) {
-        LOG.error(String.format("Could not validate that the table exists: %s (%s)", e.getClass()
-              .getName(), e.getMessage()), e);
-      }
-    } else {
-      LOG.info("ALPN is not configured. Skipping table existence check.");
-    }
+  private static void validateTableConfig(CloudBigtableTableConfiguration configuration) {
+    validateConfig(configuration);
+    checkNotNullOrEmpty(configuration.getTableId(), "tableid");
   }
 
-  private static void validate(CloudBigtableConfiguration configuration) {
+  private static void validateConfig(CloudBigtableConfiguration configuration) {
     checkNotNullOrEmpty(configuration.getProjectId(), "projectId");
     checkNotNullOrEmpty(configuration.getZoneId(), "zoneId");
     checkNotNullOrEmpty(configuration.getClusterId(), "clusterId");
