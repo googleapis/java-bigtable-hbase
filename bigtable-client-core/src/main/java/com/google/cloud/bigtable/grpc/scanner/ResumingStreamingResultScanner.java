@@ -125,16 +125,16 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
    *
    * @param cause
    * @throws IOException
-   * @throws ScanRetriesExhaustedException if retry is exhausted.
+   * @throws BigtableRetriesExhaustedException if retry is exhausted.
    */
   private void backOffAndRetry(IOException cause) throws IOException,
-      ScanRetriesExhaustedException {
+      BigtableRetriesExhaustedException {
     if (currentBackoff == null) {
       currentBackoff = retryOptions.createBackoff();
     }
     long nextBackOff = currentBackoff.nextBackOffMillis();
     if (nextBackOff == BackOff.STOP) {
-      throw new ScanRetriesExhaustedException("Exhausted streaming retries.", cause);
+      throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", cause);
     }
 
     sleep(nextBackOff);
