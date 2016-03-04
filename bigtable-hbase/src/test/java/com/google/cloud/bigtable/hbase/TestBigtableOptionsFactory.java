@@ -156,6 +156,9 @@ public class TestBigtableOptionsFactory {
     assertEquals(
         RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS,
         retryOptions.getReadPartialRowTimeoutMillis());
+    assertEquals(
+        RetryOptions.DEFAULT_MAX_SCAN_TIMEOUT_RETRIES,
+        retryOptions.getMaxScanTimeoutRetries());
   }
 
   @Test

@@ -31,6 +31,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.Status;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -54,12 +55,14 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   private final ReadRowsRequest originalRequest;
   private final RetryOptions retryOptions;
 
-  private BackOff currentBackoff;
+  private BackOff currentErrorBackoff;
   private ResultScanner<Row> currentDelegate;
   private ByteString lastRowKey = null;
   private Sleeper sleeper = Sleeper.DEFAULT;
   // The number of rows read so far.
   private long rowCount = 0;
+  // The number of times we've retried after a timeout
+  private AtomicInteger timeoutRetryCount = new AtomicInteger();
 
   private final Logger logger;
 
@@ -94,51 +97,64 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
         if (result != null) {
           lastRowKey = result.getKey();
           rowCount++;
-          // We've had at least one successful RPC, reset the backoff
-          currentBackoff = null;
+          // We've had at least one successful RPC, reset the backoff and retry counter
+          currentErrorBackoff = null;
+          timeoutRetryCount = null;
         }
 
         return result;
       } catch (ScanTimeoutException rte) {
-        logger.info("The client could not get a response in %d ms. Retrying the scan.",
-          retryOptions.getReadPartialRowTimeoutMillis());
-        backOffAndRetry(rte);
+        handleScanTimeout(rte);
       } catch (IOExceptionWithStatus ioe) {
-        Status.Code code = ioe.getStatus().getCode();
-        if (retryOptions.isRetryable(code)) {
-          logger.info("Reissuing scan after receiving error with status: %s.", code.name());
-          backOffAndRetry(ioe);
-        } else {
-          throw ioe;
-        }
+        handleIOException(ioe);
       }
+    }
+  }
+
+  private void handleScanTimeout(ScanTimeoutException rte) throws IOException {
+    logger.info("The client could not get a response in %d ms. Retrying the scan.",
+      retryOptions.getReadPartialRowTimeoutMillis());
+
+    if (timeoutRetryCount == null) {
+      timeoutRetryCount = new AtomicInteger();
+    }
+
+    // Reset the error backoff in case we encountered this timeout after an error.
+    // Otherwise, we will likely have already exceeded the max elapsed time for the backoff
+    // and won't retry after the next error.
+    currentErrorBackoff = null;
+
+    if (timeoutRetryCount.incrementAndGet() <= retryOptions.getMaxScanTimeoutRetries()) {
+      reissueRequest();
+    }
+    else {
+      throw new BigtableRetriesExhaustedException(
+          "Exhausted streaming retries after too many timeouts", rte);
+    }
+  }
+
+  private void handleIOException(IOExceptionWithStatus ioe) throws IOException {
+    Status.Code code = ioe.getStatus().getCode();
+    if (retryOptions.isRetryable(code)) {
+      logger.info("Reissuing scan after receiving error with status: %s.", code.name());
+      if (currentErrorBackoff == null) {
+        currentErrorBackoff = retryOptions.createBackoff();
+      }
+      long nextBackOffMillis = currentErrorBackoff.nextBackOffMillis();
+      if (nextBackOffMillis == BackOff.STOP) {
+        throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", ioe);
+      }
+
+      sleep(nextBackOffMillis);
+      reissueRequest();
+    } else {
+      throw ioe;
     }
   }
 
   @Override
   public int available() {
     return currentDelegate.available();
-  }
-
-  /**
-   * Backs off and reissues request.
-   *
-   * @param cause
-   * @throws IOException
-   * @throws BigtableRetriesExhaustedException if retry is exhausted.
-   */
-  private void backOffAndRetry(IOException cause) throws IOException,
-      BigtableRetriesExhaustedException {
-    if (currentBackoff == null) {
-      currentBackoff = retryOptions.createBackoff();
-    }
-    long nextBackOff = currentBackoff.nextBackOffMillis();
-    if (nextBackOff == BackOff.STOP) {
-      throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", cause);
-    }
-
-    sleep(nextBackOff);
-    reissueRequest();
   }
 
   @Override

@@ -117,6 +117,12 @@ public class BigtableOptionsFactory {
       "google.bigtable.grpc.read.partial.row.timeout.ms";
 
   /**
+   * Key to set the number of time to retry after a scan timeout
+   */
+  public static final String MAX_SCAN_TIMEOUT_RETRIES =
+      "google.bigtable.grpc.retry.max.scan.timeout.retries";
+
+  /**
    * Key to set the maximum number of messages to buffer when scanning.
    */
   public static final String READ_BUFFER_SIZE = "google.bigtable.grpc.read.streaming.buffer.size";
@@ -303,6 +309,11 @@ public class BigtableOptionsFactory {
       READ_BATCH_SIZE, RetryOptions.DEFAULT_STREAMING_BATCH_SIZE);
     LOG.debug("gRPC read batch size (count): %d", streamingBatchSize);
     retryOptionsBuilder.setStreamingBatchSize(streamingBatchSize);
+
+    int maxScanTimeoutRetries = configuration.getInt(
+        MAX_SCAN_TIMEOUT_RETRIES, RetryOptions.DEFAULT_MAX_SCAN_TIMEOUT_RETRIES);
+    LOG.debug("gRPC max scan timeout retries (count): %d", maxScanTimeoutRetries);
+    retryOptionsBuilder.setMaxScanTimeoutRetries(maxScanTimeoutRetries);
 
     return retryOptionsBuilder.build();
   }
