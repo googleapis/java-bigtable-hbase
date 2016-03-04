@@ -20,10 +20,10 @@ import java.io.IOException;
 /**
  * An Exception that is thrown when an operation fails, even in the face of retries.
  */
-public class ScanRetriesExhaustedException extends IOException {
+public class BigtableRetriesExhaustedException extends IOException {
   private static final long serialVersionUID = 6905598607595217072L;
 
-  public ScanRetriesExhaustedException(String message, Throwable cause) {
+  public BigtableRetriesExhaustedException(String message, Throwable cause) {
     super(message, cause);
   }
 }

@@ -43,7 +43,6 @@ import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ClientCalls;
 
 /**
@@ -148,15 +147,11 @@ public final class BigtableAsyncUtilities {
       final RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> rpc,
       ExecutorService executorService) {
-    ListenableFuture<ResponseT> listenableFuture = rpc.call(request);
     if (retryOptions.enableRetries()) {
-      return Futures.catchingAsync(
-          listenableFuture,
-          StatusRuntimeException.class,
-          RetryingRpcFunction.create(retryOptions, request, rpc),
-          executorService);
+      return new RetryingRpcFunction<>(retryOptions, request, rpc, executorService)
+          .callRpcWithRetry();
     } else {
-      return listenableFuture;
+      return rpc.call(request);
     }
   }
 
