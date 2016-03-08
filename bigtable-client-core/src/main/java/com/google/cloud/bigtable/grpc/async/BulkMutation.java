@@ -26,10 +26,11 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.Any;
 import com.google.protobuf.Empty;
 import com.google.rpc.Status;
 
-import io.grpc.StatusException;
+import io.grpc.StatusRuntimeException;
 
 /**
  * This class combines a collection of {@link MutateRowRequest}s into a single
@@ -37,6 +38,11 @@ import io.grpc.StatusException;
  * thread safe.
  */
 public class BulkMutation {
+
+  private final static StatusRuntimeException MISSING_ENTRY_EXCEPTION =
+      io.grpc.Status.UNKNOWN
+          .withDescription("Mutation does not have a status")
+          .asRuntimeException();
 
   private final List<SettableFuture<Empty>> futures = new ArrayList<>();
   private final MutateRowsRequest.Builder builder;
@@ -96,12 +102,17 @@ public class BulkMutation {
         Iterator<Status> statuses = result.getStatusesList().iterator();
         Iterator<SettableFuture<Empty>> entries = futures.iterator();
         while (entries.hasNext() && statuses.hasNext()) {
-          setStatus(entries.next(), statuses.next());
+          SettableFuture<Empty> future = entries.next();
+          Status status = statuses.next();
+          if (status.getCode() == io.grpc.Status.Code.OK.value()) {
+            future.set(Empty.getDefaultInstance());
+          } else {
+            future.setException(toException(status));
+          }
         }
         // TODO: better handling of these cases?
         while (entries.hasNext()) {
-          entries.next().setException(io.grpc.Status.UNKNOWN
-              .withDescription("Mutation does not have a status").asException());
+          entries.next().setException(MISSING_ENTRY_EXCEPTION);
         }
         if (statuses.hasNext()) {
           int count = 0;
@@ -113,19 +124,14 @@ public class BulkMutation {
         }
       }
 
-      protected void setStatus(SettableFuture<Empty> future, Status status) {
-        if (status.getCode() == io.grpc.Status.Code.OK.value()) {
-          future.set(Empty.getDefaultInstance());
-        } else {
-          future.setException(toException(status));
-        }
-      }
-
-      protected StatusException toException(Status status) {
-        return io.grpc.Status
+      protected StatusRuntimeException toException(Status status) {
+        io.grpc.Status grpcStatus = io.grpc.Status
             .fromCodeValue(status.getCode())
-            .withDescription(status.getMessage())
-            .asException();
+            .withDescription(status.getMessage());
+        for (Any detail : status.getDetailsList()) {
+          grpcStatus.augmentDescription(detail.toString());
+        }
+        return grpcStatus.asRuntimeException();
       }
 
       @Override

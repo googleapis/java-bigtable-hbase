@@ -29,7 +29,7 @@ import com.google.protobuf.Empty;
 import com.google.rpc.Status;
 import com.google.rpc.Status.Builder;
 
-import io.grpc.StatusException;
+import io.grpc.StatusRuntimeException;
 
 /**
  * Tests for {@link BulkMutation}
@@ -91,7 +91,7 @@ public class TestBulkMutation {
     try {
       rowFuture.get();
      } catch (ExecutionException e) {
-      Assert.assertEquals(StatusException.class, e.getCause().getClass());
+      Assert.assertEquals(StatusRuntimeException.class, e.getCause().getClass());
     }
   }
 
@@ -113,9 +113,9 @@ public class TestBulkMutation {
     try {
       rowFuture2.get();
      } catch (ExecutionException e) {
-      Assert.assertEquals(StatusException.class, e.getCause().getClass());
+      Assert.assertEquals(StatusRuntimeException.class, e.getCause().getClass());
       Assert.assertEquals(io.grpc.Status.Code.UNKNOWN,
-        ((StatusException) e.getCause()).getStatus().getCode());
+        ((StatusRuntimeException) e.getCause()).getStatus().getCode());
     }
   }
 
