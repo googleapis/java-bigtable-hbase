@@ -95,10 +95,11 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   private volatile boolean cleanupPool = false;
   private final BigtableOptions options;
-  private final TableConfiguration tableConfig;
 
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
+
+  private final HeapSizeManager heapSizeManager;
 
   public AbstractBigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
@@ -135,7 +136,14 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     this.closed = false;
 
     this.session = new BigtableSession(options);
-    this.tableConfig = new TableConfiguration(conf);
+
+    int defaultRpcCount = AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
+    int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
+    long maxMemory = conf.getLong(
+      BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
+      AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT);
+
+    this.heapSizeManager = new HeapSizeManager(maxMemory, maxInflightRpcs);
   }
 
   @Override
@@ -151,9 +159,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
     BigtableDataClient client = session.getDataClient();
-    HeapSizeManager heapSizeManager =
-        new HeapSizeManager(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
-            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT);
     if (pool == null) {
       pool = BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
     }
@@ -171,14 +176,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     if (tableName == null) {
       throw new IllegalArgumentException("TableName cannot be null.");
     }
-    long maxHeapSize = params.getWriteBufferSize();
-    if (maxHeapSize == BufferedMutatorParams.UNSET) {
-      params.writeBufferSize(tableConfig.getWriteBufferSize());
-      maxHeapSize = params.getWriteBufferSize();
-    }
-
-    int defaultRpcCount = AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
-    int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
 
     final long id = SEQUENCE_GENERATOR.incrementAndGet();
 
@@ -190,7 +187,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         conf,
         options,
         params.getListener(),
-        new HeapSizeManager(maxHeapSize, maxInflightRpcs),
+        heapSizeManager,
         pool) {
       @Override
       public void close() throws IOException {
@@ -214,10 +211,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     // HBase uses 2MB as the write buffer size.  Their limit is the size to reach before performing
     // a batch async write RPC.  Our limit is a memory cap for async RPC after which we throttle.
     // HBase does not throttle like we do.
-    long maxMemory = conf.getLong(
-        BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
-        AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT);
-    return getBufferedMutator(new BufferedMutatorParams(tableName).writeBufferSize(maxMemory));
+    return getBufferedMutator(new BufferedMutatorParams(tableName));
   }
 
   /** This should not be used.  The hbase shell needs this in hbsae 0.99.2.  Remove this once
