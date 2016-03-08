@@ -66,6 +66,10 @@ public class RetryOptions implements Serializable {
    */
   public static final int DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS =
       (int) TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
+  /**
+   * Maximum number of times to retry after a scan timeout
+   */
+  public static final int DEFAULT_MAX_SCAN_TIMEOUT_RETRIES = 3;
 
   /**
    * A Builder for ChannelOptions objects.
@@ -79,6 +83,7 @@ public class RetryOptions implements Serializable {
     private int streamingBufferSize = DEFAULT_STREAMING_BUFFER_SIZE;
     private int streamingBatchSize = DEFAULT_STREAMING_BUFFER_SIZE;
     private int readPartialRowTimeoutMillis = DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
+    private int maxScanTimeoutRetries = DEFAULT_MAX_SCAN_TIMEOUT_RETRIES;
 
     /**
      * Enable or disable retries.
@@ -136,8 +141,20 @@ public class RetryOptions implements Serializable {
       return this;
     }
 
+    /**
+     * Set the timeout in milliseconds for reading individual
+     * ReadRowsResponse messages from a stream.
+     */
     public Builder setReadPartialRowTimeoutMillis(int timeout) {
       this.readPartialRowTimeoutMillis = timeout;
+      return this;
+    }
+
+    /**
+     * Set the maximum number of times to retry after a scan timeout.
+     */
+    public Builder setMaxScanTimeoutRetries(int maxScanTimeoutRetries) {
+      this.maxScanTimeoutRetries = maxScanTimeoutRetries;
       return this;
     }
 
@@ -153,7 +170,8 @@ public class RetryOptions implements Serializable {
           maxElaspedBackoffMillis,
           streamingBufferSize,
           streamingBatchSize,
-          readPartialRowTimeoutMillis);
+          readPartialRowTimeoutMillis,
+          maxScanTimeoutRetries);
     }
   }
 
@@ -167,6 +185,7 @@ public class RetryOptions implements Serializable {
   private final int streamingBufferSize;
   private final int streamingBatchSize;
   private final int readPartialRowTimeoutMillis;
+  private final int maxScanTimeoutRetries;
 
 
   public RetryOptions(
@@ -177,7 +196,8 @@ public class RetryOptions implements Serializable {
       int maxElaspedBackoffMillis,
       int streamingBufferSize,
       int streamingBatchSize,
-      int readPartialRowTimeoutMillis) {
+      int readPartialRowTimeoutMillis,
+      int maxScanTimeoutRetries) {
     this.retriesEnabled = retriesEnabled;
     this.retryOnDeadlineExceeded = retryOnDeadlineExceeded;
     this.initialBackoffMillis = initialBackoffMillis;
@@ -186,6 +206,7 @@ public class RetryOptions implements Serializable {
     this.streamingBufferSize = streamingBufferSize;
     this.streamingBatchSize = streamingBatchSize;
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
+    this.maxScanTimeoutRetries = maxScanTimeoutRetries;
   }
 
   /**
@@ -245,6 +266,13 @@ public class RetryOptions implements Serializable {
   }
 
   /**
+   * The maximum number of times to retry after a scan timeout.
+   */
+  public int getMaxScanTimeoutRetries() {
+    return maxScanTimeoutRetries;
+  }
+
+  /**
    * Determines if the RPC should be retried based on the input {@link Status.Code}.
    */
   public boolean isRetryable(Status.Code code) {
@@ -283,6 +311,7 @@ public class RetryOptions implements Serializable {
         && backoffMultiplier == other.backoffMultiplier
         && streamingBufferSize == other.streamingBufferSize
         && streamingBatchSize == other.streamingBatchSize
-        && readPartialRowTimeoutMillis == other.readPartialRowTimeoutMillis;
+        && readPartialRowTimeoutMillis == other.readPartialRowTimeoutMillis
+        && maxScanTimeoutRetries == other.maxScanTimeoutRetries;
   }
 }
