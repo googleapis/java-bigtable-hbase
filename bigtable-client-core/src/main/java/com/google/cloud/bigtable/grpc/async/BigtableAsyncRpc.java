@@ -15,11 +15,12 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * This interface represents a logical asynchronous RPC.
  */
 public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
-  ListenableFuture<RESPONSE> call(REQUEST request);
+  ListenableFuture<RESPONSE> call(REQUEST request, CancellationToken cancellationToken);
 }

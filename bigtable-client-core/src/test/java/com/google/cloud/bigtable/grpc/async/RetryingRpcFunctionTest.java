@@ -45,6 +45,7 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
+import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -82,7 +83,7 @@ public class RetryingRpcFunctionTest {
     retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
 
     underTest = new RetryingRpcFunction<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
-        readAsync, MoreExecutors.newDirectExecutorService());
+        readAsync, MoreExecutors.newDirectExecutorService(), null);
 
     totalSleep = new AtomicLong();
 
@@ -114,7 +115,7 @@ public class RetryingRpcFunctionTest {
         return null;
       }
     }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
-    when(readAsync.call(any(ReadRowsRequest.class))).thenReturn(mockFuture);
+    when(readAsync.call(any(ReadRowsRequest.class), any(CancellationToken.class))).thenReturn(mockFuture);
   }
 
   @Test
