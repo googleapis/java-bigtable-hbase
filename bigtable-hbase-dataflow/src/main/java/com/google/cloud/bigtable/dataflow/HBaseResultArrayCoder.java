@@ -26,13 +26,18 @@ import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 
 /**
  * A {@link Coder} that serializes and deserializes the {@link Result} array using
  * {@link ProtobufUtil}.
  */
-public class HBaseResultArrayCoder extends AtomicCoder<Result[]> implements Serializable {
+public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
+
+  private static final HBaseResultArrayCoder INSTANCE = new HBaseResultArrayCoder();
+
+  public static HBaseResultArrayCoder getInstance() {
+    return INSTANCE;
+  }
 
   private static final long serialVersionUID = -4975428837770254686L;
 
@@ -56,4 +61,5 @@ public class HBaseResultArrayCoder extends AtomicCoder<Result[]> implements Seri
     }
     scanResponseBuilder.build().writeDelimitedTo(outputStream);
   }
+
 }

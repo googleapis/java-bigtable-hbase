@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -96,7 +97,11 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testSourceToString() throws Exception {
-    CloudBigtableIO.Source<Result> source = (Source<Result>) CloudBigtableIO.read(null);
+    CloudBigtableIO.Source<Result> source =
+        (Source<Result>)
+            CloudBigtableIO.read(
+                new CloudBigtableScanConfiguration(
+                    "project", "zoneId", "clusterId", "tableId", new Scan()));
     byte[] startKey = "abc d".getBytes();
     byte[] stopKey = "def g".getBytes();
     BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);

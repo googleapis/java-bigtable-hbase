@@ -140,9 +140,28 @@ import com.google.common.annotations.VisibleForTesting;
 
 public class CloudBigtableIO {
 
+  enum CoderType {
+    RESULT,
+    RESULT_ARRAY;
+  }
+
+  @SuppressWarnings("rawtypes")
+  public static Coder getCoder(CoderType type) {
+    switch (type) {
+      case RESULT:
+        return HBaseResultCoder.getInstance();
+
+      case RESULT_ARRAY:
+        return HBaseResultArrayCoder.getInstance();
+
+      default:
+        throw new IllegalArgumentException("Can't get a coder for type: " + type.name());
+    }
+  }
+
   /**
    * Performs a {@link ResultScanner#next()} or {@link ResultScanner#next(int)}.  It also checks if
-   * the {@link ResultOutputType} marks the last value in the {@ResultScan}.
+   * the ResultOutputType marks the last value in the {@link ResultScanner}.
    *
    * @param <ResultOutputType> is either a {@link Result} or {@link Result}[];
    */
@@ -164,7 +183,7 @@ public class CloudBigtableIO {
   /**
    * Iterates the {@link ResultScanner} via {@link ResultScanner#next()}.
    */
-  private static final ScanIterator<Result> RESULT_ADVANCER = new ScanIterator<Result>() {
+  static final ScanIterator<Result> RESULT_ADVANCER = new ScanIterator<Result>() {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -186,7 +205,7 @@ public class CloudBigtableIO {
   /**
    * Iterates the {@link ResultScanner} via {@link ResultScanner#next(int)}.
    */
-  private static final class ResultArrayIterator implements ScanIterator<Result[]> {
+  static final class ResultArrayIterator implements ScanIterator<Result[]> {
     private static final long serialVersionUID = 1L;
     private final int arraySize;
 
@@ -214,202 +233,32 @@ public class CloudBigtableIO {
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
    * {@link Scan}.
    */
-  public static class Source<ResultOutputType> extends BoundedSource<ResultOutputType> {
-    private static final long serialVersionUID = -5580115943635114126L;
-    private static final Logger SOURCE_LOG = LoggerFactory.getLogger(Source.class);
-    private static final long MAX_SPLIT_COUNT = 4_000;
+  private static abstract class AbstractSource<ResultOutputType> extends BoundedSource<ResultOutputType> {
+    protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
+    protected static final long MAX_SPLIT_COUNT = 4_000;
 
     /**
      * Configuration for a Cloud Bigtable connection, a table, and an optional scan.
      */
-    private final CloudBigtableScanConfiguration configuration;
+    protected final CloudBigtableScanConfiguration configuration;
+    protected final int coderTypeOrdinal;
+    protected final ScanIterator<ResultOutputType> scanIterator;
+
     private transient List<SampleRowKeysResponse> sampleRowKeys;
-    private final Coder<ResultOutputType> defaultCoder;
-    private final ScanIterator<ResultOutputType> scanIterator;
 
-    /**
-     * A {@link BoundedSource} for a Cloud Bigtable {@link Table} with a start/stop key range, along
-     * with a potential filter via a {@link Scan}.
-     */
-    protected class SourceWithKeys extends BoundedSource<ResultOutputType> {
-      private static final long serialVersionUID = 2561066007121040429L;
-
-      /**
-       * Start key for the range to be scanned.
-       */
-      private final byte[] startKey;
-
-      /**
-       * Stop key for the range to be scanned.
-       */
-      private final byte[] stopKey;
-
-      /**
-       * An estimate of the size of the source, in bytes.
-       *
-       * <p>NOTE: This value is a guesstimate. It could be significantly off, especially if there is
-       * a {@link Scan} selected in the configuration. It will also be off if the start and stop
-       * keys are calculated via
-       * {@link CloudBigtableIO.Source#splitIntoBundles(long, PipelineOptions)}.
-       */
-      private final long estimatedSize;
-
-      @VisibleForTesting
-      protected SourceWithKeys(byte[] startKey, byte[] stopKey, long estimatedSize) {
-        if (stopKey.length > 0) {
-          Preconditions.checkState(Bytes.compareTo(startKey, stopKey) < 0,
-              "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startKey),
-              Bytes.toStringBinary(stopKey));
-          Preconditions.checkState(estimatedSize > 0, "Source size must be positive",
-              estimatedSize);
-        }
-        this.startKey = startKey;
-        this.stopKey = stopKey;
-        this.estimatedSize = estimatedSize;
-        SOURCE_LOG.debug("Source with split: {}.", this);
-      }
-
-      /**
-       * Gets an estimate of the size of the source.
-       *
-       * <p>NOTE: This value is a guesstimate. It could be significantly off, especially if there is
-       * a{@link Scan} selected in the configuration. It will also be off if the start and stop keys
-       * are calculated via {@link Source#splitIntoBundles(long, PipelineOptions)}.
-       *
-       * @param options The pipeline options.
-       * @return The estimated size of the source, in bytes.
-       */
-      @Override
-      public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
-        return estimatedSize;
-      }
-
-      /**
-       * Checks whether the pipeline produces sorted keys.
-       *
-       * <p>NOTE: HBase supports reverse scans, but Cloud Bigtable does not.
-       *
-       * @param options The pipeline options.
-       * @return Whether the pipeline produces sorted keys.
-       */
-      @Override
-      public boolean producesSortedKeys(PipelineOptions options) throws Exception {
-        return true;
-      }
-
-      /**
-       * Gets a coder for HBase {@link Result} objects. See {@link HBaseResultCoder} for more info.
-       *
-       * @return A coder for {@link Result} objects.
-       */
-      @Override
-      public Coder<ResultOutputType> getDefaultOutputCoder() {
-        return defaultCoder;
-      }
-
-      // TODO: Add a method on the server side that will be a more precise split based on server-
-      // side statistics
-      /**
-       * Splits the bundle based on the assumption that the data is distributed evenly between
-       * {@link #startKey} and {@link #stopKey}. That assumption may not be correct for any specific
-       * start/stop key combination.
-       *
-       * <p>This method is called internally by Cloud Dataflow. Do not call it directly.
-       *
-       * @param desiredBundleSizeBytes The desired size for each bundle, in bytes.
-       * @param options The pipeline options.
-       * @return A list of sources split into groups.
-       */
-      @Override
-      public List<BoundedSource<ResultOutputType>> splitIntoBundles(long desiredBundleSizeBytes,
-          PipelineOptions options) throws Exception {
-        List<BoundedSource<ResultOutputType>> newSplits =
-            split(estimatedSize, desiredBundleSizeBytes, startKey, stopKey);
-        SOURCE_LOG.trace("Splitting split {} into {}", this, newSplits);
-        return newSplits;
-      }
-
-      @Override
-      public void validate() {
-      }
-
-      /**
-       * Creates a {@link Scan} given the value of the supplied
-       * {@link CloudBigtableScanConfiguration}'s scan with the key range specified by the
-       * {@link #startKey} and {@link #stopKey}.
-       */
-      @Override
-      public BoundedSource.BoundedReader<ResultOutputType> createReader(PipelineOptions options)
-          throws IOException {
-        Scan scan = new Scan(configuration.getScan());
-        scan.setStartRow(startKey);
-        scan.setStopRow(stopKey);
-        return new CloudBigtableIO.Reader<>(this, configuration, scan, scanIterator);
-      }
-
-      @Override
-      public String toString() {
-        return String.format("Split start: '%s', end: '%s', size: %d",
-            Bytes.toStringBinary(startKey), Bytes.toStringBinary(stopKey), estimatedSize);
-      }
-    }
-
-    Source(
+    AbstractSource(
         CloudBigtableScanConfiguration configuration,
-        Coder<ResultOutputType> defaultCoder,
+        CoderType coderType,
         ScanIterator<ResultOutputType> scanIterator) {
       this.configuration = configuration;
-      this.defaultCoder = defaultCoder;
+      this.coderTypeOrdinal = coderType.ordinal();
       this.scanIterator = scanIterator;
     }
 
-    /**
-     * Creates a coder for HBase {@link Result} objects. See {@link HBaseResultCoder} for more info.
-     *
-     * @return A coder for {@link Result} objects.
-     */
+    @SuppressWarnings("unchecked")
     @Override
     public Coder<ResultOutputType> getDefaultOutputCoder() {
-      return defaultCoder;
-    }
-
-    // TODO: Add a method on the server side that will be a more precise split based on server-side
-    // statistics
-    /**
-     * Splits the table based on keys that belong to tablets, known as "regions" in the HBase API.
-     * The current implementation uses the HBase {@link RegionLocator} interface, which calls
-     * {@link BigtableService#sampleRowKeys(SampleRowKeysRequest,
-     * com.google.bigtable.repackaged.io.grpc.stub.StreamObserver)} under the covers.
-     * A {@link SourceWithKeys} may correspond to a single region or a portion of a region.
-     *
-     * <p>
-     * If a split is smaller than a single region, the split is calculated based on the assumption
-     * that the data is distributed evenly between the region's startKey and stopKey. That
-     * assumption may not be correct for any specific start/stop key combination.
-     * </p>
-     *
-     * <p>This method is called internally by Cloud Dataflow. Do not call it directly.</p>
-     *
-     * @param desiredBundleSizeBytes The desired size for each bundle, in bytes.
-     * @param options The pipeline options.
-     * @return A list of sources split into groups.
-     */
-    @Override
-    public List<BoundedSource<ResultOutputType>> splitIntoBundles(
-        long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
-      // Update the desiredBundleSizeBytes in order to limit the number of splits to
-      // MAX_SPLIT_COUNT.  This is an extremely rough estimate for large scale jobs.  There is
-      // currently a hard limit on both the count of Sources as well as the sum of the sizes of
-      // serialized Sources.  This solution will not work for large workloads for cases where either
-      // the row key sizes are large, or the scan is large.
-      //
-      // TODO: Work on a more robust algorithm for splitting that works for more cases.
-      long sizeEstimate = getEstimatedSizeBytes(options);
-      desiredBundleSizeBytes = Math.max(sizeEstimate / MAX_SPLIT_COUNT, desiredBundleSizeBytes);
-      List<BoundedSource<ResultOutputType>> splits = getSplits(desiredBundleSizeBytes);
-      SOURCE_LOG.info("Creating {} splits.", splits.size());
-      SOURCE_LOG.debug("Created splits {}.", splits);
-      return splits;
+      return getCoder(CoderType.values()[coderTypeOrdinal]);
     }
 
     // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between dataflow needs
@@ -464,7 +313,7 @@ public class CloudBigtableIO {
     /**
      * Checks if the range of the region is within the range of the scan.
      */
-    private static boolean isWithinRange(byte[] scanStartKey, byte[] scanEndKey,
+    protected static boolean isWithinRange(byte[] scanStartKey, byte[] scanEndKey,
         byte[] startKey, byte[] endKey) {
       return (scanStartKey.length == 0 || endKey.length == 0
               || Bytes.compareTo(scanStartKey, endKey) < 0)
@@ -549,23 +398,12 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Creates a reader that will scan the entire table based on the {@link Scan} in the
-     * configuration.
-     * @return A reader for the table.
-     */
-    @Override
-    public BoundedSource.BoundedReader<ResultOutputType> createReader(PipelineOptions options)
-        throws IOException {
-      return new CloudBigtableIO.Reader<>(
-          this, configuration, configuration.getScan(), scanIterator);
-    }
-
-    /**
      * Splits the region based on the start and stop key. Uses
      * {@link Bytes#split(byte[], byte[], int)} under the covers.
+     * @throws IOException
      */
-    private List<BoundedSource<ResultOutputType>> split(long regionSize, long desiredBundleSizeBytes,
-        byte[] startKey, byte[] stopKey) {
+    protected List<BoundedSource<ResultOutputType>> split(long regionSize, long desiredBundleSizeBytes,
+        byte[] startKey, byte[] stopKey) throws IOException {
       Preconditions.checkState(desiredBundleSizeBytes > 0);
       int splitCount = (int) Math.ceil((double) (regionSize) / (double) (desiredBundleSizeBytes));
       if (splitCount < 2 || stopKey.length == 0) {
@@ -588,11 +426,209 @@ public class CloudBigtableIO {
     }
 
     @VisibleForTesting
-    BoundedSource<ResultOutputType> createSourceWithKeys(byte[] startKey, byte[] stopKey, long size) {
-      return new SourceWithKeys(startKey, stopKey, size);
+    BoundedSource<ResultOutputType> createSourceWithKeys(byte[] startKey, byte[] stopKey, long size)
+        throws IOException {
+      CloudBigtableScanConfiguration updatedConfig =
+          augmentConfiguration(configuration, startKey, stopKey);
+      return new SourceWithKeys<>(
+          updatedConfig, CoderType.values()[coderTypeOrdinal], scanIterator, size);
+    }
+
+    /**
+     * Creates a reader that will scan the entire table based on the {@link Scan} in the
+     * configuration.
+     * @return A reader for the table.
+     */
+    @Override
+    public BoundedSource.BoundedReader<ResultOutputType> createReader(PipelineOptions options)
+        throws IOException {
+      return new CloudBigtableIO.Reader<>(this, configuration, scanIterator);
     }
   }
 
+  /**
+   * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
+   * {@link Scan}.
+   */
+  public static class Source<ResultOutputType> extends AbstractSource<ResultOutputType> {
+    private static final long serialVersionUID = -5580115943635114126L;
+
+    Source(
+        CloudBigtableScanConfiguration configuration,
+        CoderType coderType,
+        ScanIterator<ResultOutputType> scanIterator) {
+      super(configuration, coderType, scanIterator);
+    }
+
+    // TODO: Add a method on the server side that will be a more precise split based on server-side
+    // statistics
+    /**
+     * Splits the table based on keys that belong to tablets, known as "regions" in the HBase API.
+     * The current implementation uses the HBase {@link RegionLocator} interface, which calls
+     * {@link BigtableService#sampleRowKeys(SampleRowKeysRequest,
+     * com.google.bigtable.repackaged.io.grpc.stub.StreamObserver)} under the covers.
+     * A {@link SourceWithKeys} may correspond to a single region or a portion of a region.
+     *
+     * <p>
+     * If a split is smaller than a single region, the split is calculated based on the assumption
+     * that the data is distributed evenly between the region's startKey and stopKey. That
+     * assumption may not be correct for any specific start/stop key combination.
+     * </p>
+     *
+     * <p>This method is called internally by Cloud Dataflow. Do not call it directly.</p>
+     *
+     * @param desiredBundleSizeBytes The desired size for each bundle, in bytes.
+     * @param options The pipeline options.
+     * @return A list of sources split into groups.
+     */
+    @Override
+    public List<BoundedSource<ResultOutputType>> splitIntoBundles(
+        long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
+      // Update the desiredBundleSizeBytes in order to limit the number of splits to
+      // MAX_SPLIT_COUNT.  This is an extremely rough estimate for large scale jobs.  There is
+      // currently a hard limit on both the count of Sources as well as the sum of the sizes of
+      // serialized Sources.  This solution will not work for large workloads for cases where either
+      // the row key sizes are large, or the scan is large.
+      //
+      // TODO: Work on a more robust algorithm for splitting that works for more cases.
+      long sizeEstimate = getEstimatedSizeBytes(options);
+      desiredBundleSizeBytes = Math.max(sizeEstimate / MAX_SPLIT_COUNT, desiredBundleSizeBytes);
+      List<BoundedSource<ResultOutputType>> splits = getSplits(desiredBundleSizeBytes);
+      SOURCE_LOG.info("Creating {} splits.", splits.size());
+      SOURCE_LOG.debug("Created splits {}.", splits);
+      return splits;
+    }
+
+    /**
+     * Gets an estimated size based on data returned from {@link #getSampleRowKeys}. The estimate
+     * will be high if a {@link Scan} is set on the {@link CloudBigtableScanConfiguration}; in such
+     * cases, the estimate will not take the Scan into account, and will return a larger estimate
+     * than what the {@link CloudBigtableIO.Reader} will actually read.
+     *
+     * @param options The pipeline options.
+     * @return The estimated size of the data, in bytes.
+     */
+    @Override
+    public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
+      long totalEstimatedSizeBytes = 0;
+
+      Scan scan = configuration.getScan();
+      byte[] scanStartKey = scan.getStartRow();
+      byte[] scanEndKey = scan.getStopRow();
+
+      byte[] startKey = HConstants.EMPTY_START_ROW;
+      long lastOffset = 0;
+      for (SampleRowKeysResponse response : getSampleRowKeys()) {
+        byte[] currentEndKey = response.getRowKey().toByteArray();
+        // Avoid empty regions.
+        if (Bytes.equals(startKey, currentEndKey) && startKey.length != 0) {
+          continue;
+        }
+        long offset = response.getOffsetBytes();
+        if (isWithinRange(scanStartKey, scanEndKey, startKey, currentEndKey)) {
+          totalEstimatedSizeBytes += (offset - lastOffset);
+        }
+        lastOffset = offset;
+        startKey = currentEndKey;
+      }
+      SOURCE_LOG.info("Estimated size in bytes: " + totalEstimatedSizeBytes);
+
+      return totalEstimatedSizeBytes;
+    }
+  }
+
+  private static CloudBigtableScanConfiguration augmentConfiguration(
+      CloudBigtableScanConfiguration configuration, byte[] startKey, byte[] stopKey) throws IOException {
+    Scan scan = new Scan(configuration.getScan());
+    scan.setStartRow(startKey);
+    scan.setStopRow(stopKey);
+    return configuration.toBuilder().withScan(scan).build();
+  }
+
+  /**
+   * A {@link BoundedSource} for a Cloud Bigtable {@link Table} with a start/stop key range, along
+   * with a potential filter via a {@link Scan}.
+   */
+  protected static class SourceWithKeys<ResultOutputType> extends AbstractSource<ResultOutputType> {
+    /**
+     * An estimate of the size of the source, in bytes.
+     *
+     * <p>NOTE: This value is a guesstimate. It could be significantly off, especially if there is
+     * a {@link Scan} selected in the configuration. It will also be off if the start and stop
+     * keys are calculated via
+     * {@link CloudBigtableIO.Source#splitIntoBundles(long, PipelineOptions)}.
+     */
+    private final long estimatedSize;
+
+    protected SourceWithKeys(
+        CloudBigtableScanConfiguration configuration,
+        CoderType coderType,
+        ScanIterator<ResultOutputType> scanIterator,
+        long estimatedSize) {
+      super(configuration, coderType, scanIterator);
+      Scan scan = configuration.getScan();
+
+      byte[] startRow = scan.getStartRow();
+      byte[] stopRow = scan.getStopRow();
+      if (stopRow.length > 0) {
+        Preconditions.checkState(Bytes.compareTo(startRow, stopRow) < 0,
+            "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startRow),
+            Bytes.toStringBinary(stopRow));
+        Preconditions.checkState(estimatedSize > 0, "Source size must be positive",
+            estimatedSize);
+      }
+      this.estimatedSize = estimatedSize;
+      SOURCE_LOG.debug("Source with split: {}.", this);
+    }
+
+    /**
+     * Gets an estimate of the size of the source.
+     *
+     * <p>NOTE: This value is a guesstimate. It could be significantly off, especially if there is
+     * a{@link Scan} selected in the configuration. It will also be off if the start and stop keys
+     * are calculated via {@link Source#splitIntoBundles(long, PipelineOptions)}.
+     *
+     * @param options The pipeline options.
+     * @return The estimated size of the source, in bytes.
+     */
+    @Override
+    public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
+      return estimatedSize;
+    }
+
+    // TODO: Add a method on the server side that will be a more precise split based on server-
+    // side statistics
+    /**
+     * Splits the bundle based on the assumption that the data is distributed evenly between
+     * startKey and stopKey. That assumption may not be correct for any specific
+     * start/stop key combination.
+     *
+     * <p>This method is called internally by Cloud Dataflow. Do not call it directly.
+     *
+     * @param desiredBundleSizeBytes The desired size for each bundle, in bytes.
+     * @param options The pipeline options.
+     * @return A list of sources split into groups.
+     */
+    @Override
+    public List<BoundedSource<ResultOutputType>> splitIntoBundles(long desiredBundleSizeBytes,
+        PipelineOptions options) throws Exception {
+      Scan scan = configuration.getScan();
+      List<BoundedSource<ResultOutputType>> newSplits =
+          split(estimatedSize, desiredBundleSizeBytes, scan.getStartRow(), scan.getStopRow());
+      SOURCE_LOG.trace("Splitting split {} into {}", this, newSplits);
+      return newSplits;
+    }
+
+    @Override
+    public String toString() {
+      Scan scan = configuration.getScan();
+      return String.format(
+          "Split start: '%s', end: '%s', size: %d",
+          Bytes.toStringBinary(scan.getStartRow()),
+          Bytes.toStringBinary(scan.getStopRow()),
+          estimatedSize);
+    }
+  }
   /**
    * Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}.
    */
@@ -600,7 +636,6 @@ public class CloudBigtableIO {
     private static final Logger READER_LOG = LoggerFactory.getLogger(Reader.class);
 
     private final BoundedSource<Results> source;
-    private final Scan scan;
     private final CloudBigtableScanConfiguration config;
     private final ScanIterator<Results> scanIterator;
 
@@ -614,11 +649,9 @@ public class CloudBigtableIO {
     private Reader(
         BoundedSource<Results> source,
         CloudBigtableScanConfiguration config,
-        Scan scan,
         ScanIterator<Results> scanIterator) {
       this.source = source;
       this.config = config;
-      this.scan = scan;
       this.scanIterator = scanIterator;
     }
 
@@ -641,7 +674,7 @@ public class CloudBigtableIO {
       long connectionStart = System.currentTimeMillis();
       connection = new BigtableConnection(config.toHBaseConfig());
       table = connection.getTable(TableName.valueOf(config.getTableId()));
-      scanner = table.getScanner(scan);
+      scanner = table.getScanner(config.getScan());
       workStart = System.currentTimeMillis();
       READER_LOG.info("{} Starting work. Creating Scanner took: {} ms.",
         this,
@@ -680,8 +713,8 @@ public class CloudBigtableIO {
 
     @Override
     public String toString() {
-      byte[] startRow = scan.getStartRow();
-      byte[] stopRow = scan.getStopRow();
+      byte[] startRow = config.getScan().getStartRow();
+      byte[] stopRow = config.getScan().getStopRow();
       return String.format(
           "Reader for: ['%s' - '%s']",
           Bytes.toStringBinary(startRow),
@@ -988,7 +1021,7 @@ public class CloudBigtableIO {
    */
   public static com.google.cloud.dataflow.sdk.io.BoundedSource<Result> read(
       CloudBigtableScanConfiguration config) {
-    return new Source<Result>(config, new HBaseResultCoder(), RESULT_ADVANCER);
+    return new Source<Result>(config, CoderType.RESULT, RESULT_ADVANCER);
   }
 
   /**
@@ -1000,7 +1033,7 @@ public class CloudBigtableIO {
    */
   public static com.google.cloud.dataflow.sdk.io.BoundedSource<Result[]>
       readBulk(CloudBigtableScanConfiguration config, int resultCount) {
-    return new Source<>(config, new HBaseResultArrayCoder(), new ResultArrayIterator(resultCount));
+    return new Source<>(config, CoderType.RESULT_ARRAY, new ResultArrayIterator(resultCount));
   }
 
   private static void checkNotNullOrEmpty(String value, String type) {
