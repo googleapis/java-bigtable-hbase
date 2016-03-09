@@ -149,6 +149,38 @@ limitations under the License.
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <shadeTestJar>true</shadeTestJar>
+                            <artifactSet>
+                                <includes>
+                                    <include>${project.groupId}:bigtable-hbase-1.0</include>
+                                </includes>
+                            </artifactSet>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google.cloud</pattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.cloud</shadedPattern>
+                                    <excludes>
+                                      <exclude>com.google.cloud.bigtable.hbase1_0.BigtableConnection*</exclude>
+                                      <exclude>com.google.cloud.bigtable.dataflow.*</exclude>
+                                    </excludes>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-eclipse-plugin</artifactId>
                 <version>2.9</version>
                 <configuration>
