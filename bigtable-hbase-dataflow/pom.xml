@@ -167,11 +167,12 @@ limitations under the License.
                             </artifactSet>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.google.cloud</pattern>
+                                    <pattern>com.google.cloud.bigtable</pattern>
                                     <shadedPattern>com.google.bigtable.repackaged.com.google.cloud</shadedPattern>
                                     <excludes>
-                                      <exclude>com.google.cloud.bigtable.hbase1_0.BigtableConnection*</exclude>
-                                      <exclude>com.google.cloud.bigtable.dataflow.*</exclude>
+                                        <exclude>com.google.cloud.bigtable.hbase1_0.BigtableConnection*</exclude>
+                                        <exclude>com.google.cloud.bigtable.dataflow.*</exclude>
+                                        <exclude>com.google.cloud.bigtable.hbase.*</exclude>
                                     </excludes>
                                 </relocation>
                             </relocations>
