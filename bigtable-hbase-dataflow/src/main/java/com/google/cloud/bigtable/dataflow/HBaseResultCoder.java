@@ -36,6 +36,12 @@ public class HBaseResultCoder extends AtomicCoder<Result> implements Serializabl
 
   private static final long serialVersionUID = -4975428837770254686L;
 
+  private static final HBaseResultCoder INSTANCE = new HBaseResultCoder();
+
+  public static HBaseResultCoder getInstance() {
+    return INSTANCE;
+  }
+
   @Override
   public Result decode(InputStream inputStream, Coder.Context context)
       throws CoderException, IOException {
