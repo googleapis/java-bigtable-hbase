@@ -566,19 +566,17 @@ public class CloudBigtableIO {
      */
     private List<BoundedSource<ResultOutputType>> split(long regionSize, long desiredBundleSizeBytes,
         byte[] startKey, byte[] stopKey) {
-      if (regionSize < desiredBundleSizeBytes || stopKey.length == 0) {
-        BoundedSource<ResultOutputType> source = createSourceWithKeys(startKey, stopKey, regionSize);
-        return Collections.singletonList(source);
+      Preconditions.checkState(desiredBundleSizeBytes > 0);
+      int splitCount = (int) Math.ceil((double) (regionSize) / (double) (desiredBundleSizeBytes));
+      if (splitCount < 2 || stopKey.length == 0) {
+        return Collections.singletonList(createSourceWithKeys(startKey, stopKey, regionSize));
       } else {
-        Preconditions.checkState(desiredBundleSizeBytes > 0);
         if (stopKey.length > 0) {
           Preconditions.checkState(Bytes.compareTo(startKey, stopKey) <= 0,
-              "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startKey),
-              Bytes.toStringBinary(stopKey));
-          Preconditions.checkState(regionSize > 0, "Source size must be positive",
-              regionSize);
+            "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startKey),
+            Bytes.toStringBinary(stopKey));
+          Preconditions.checkState(regionSize > 0, "Source size must be positive", regionSize);
         }
-        int splitCount = (int) Math.ceil((double) (regionSize) / (double) (desiredBundleSizeBytes));
         byte[][] splitKeys = Bytes.split(startKey, stopKey, splitCount - 1);
         Preconditions.checkState(splitCount + 1 == splitKeys.length);
         List<BoundedSource<ResultOutputType>> result = new ArrayList<>();
