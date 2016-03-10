@@ -29,8 +29,6 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -167,11 +165,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-      GZIPOutputStream gos = new GZIPOutputStream(out);
-      ObjectOutputStream oos = new ObjectOutputStream(gos);
-      oos.writeObject(toEncodedString());
-      oos.close();
-      gos.close();
+      out.writeObject(toEncodedString());
     }
 
     private String toEncodedString() throws IOException {
@@ -179,11 +173,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-      GZIPInputStream gis = new GZIPInputStream(in);
-      ObjectInputStream ois = new ObjectInputStream(gis);
-      this.scan = toScan((String) ois.readObject());
-      ois.close();
-      gis.close();
+      this.scan = toScan((String) in.readObject());
     }
 
     private static Scan toScan(String scanStr) throws IOException {
