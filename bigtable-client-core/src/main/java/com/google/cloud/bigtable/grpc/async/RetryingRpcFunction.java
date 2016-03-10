@@ -22,6 +22,7 @@ import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AsyncFunction;
@@ -50,13 +51,16 @@ public class RetryingRpcFunction<RequestT, ResponseT>
   private final RetryOptions retryOptions;
   private final ExecutorService executorService;
   private int failedCount;
+  private final CancellationToken cancellationToken;
 
   public RetryingRpcFunction(RetryOptions retryOptions, RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, ExecutorService executorService) {
+      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, ExecutorService executorService,
+      CancellationToken cancellationToken) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
     this.executorService = executorService;
+    this.cancellationToken = cancellationToken;
   }
 
   @Override
@@ -97,10 +101,14 @@ public class RetryingRpcFunction<RequestT, ResponseT>
    */
   public ListenableFuture<ResponseT> callRpcWithRetry() {
     return Futures.catchingAsync(
-        rpc.call(request),
+        rpc.call(request, cancellationToken),
         StatusRuntimeException.class,
         this,
         executorService);
+  }
+
+  public CancellationToken getCancellationToken() {
+    return cancellationToken;
   }
 
   private void sleep(long millis) throws IOException {

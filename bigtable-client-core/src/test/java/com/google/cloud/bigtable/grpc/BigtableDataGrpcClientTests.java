@@ -20,14 +20,15 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.After;
 import org.junit.Before;
@@ -36,6 +37,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v1.BigtableServiceGrpc;
@@ -55,11 +58,11 @@ import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.ClientCallService;
 import com.google.common.base.Predicate;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Empty;
 
 import io.grpc.CallOptions;
-import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
 
@@ -72,9 +75,6 @@ public class BigtableDataGrpcClientTests {
   @Mock
   ChannelPool channelPool;
 
-  @Mock
-  Channel channel;
-
   @SuppressWarnings("rawtypes")
   @Mock
   ClientCall clientCall;
@@ -83,7 +83,8 @@ public class BigtableDataGrpcClientTests {
   ClientCallService clientCallService;
 
   @SuppressWarnings("rawtypes")
-  SettableFuture future;
+  @Mock
+  ListenableFuture mockFuture;
 
   @Mock
   NanoClock nanoClock;
@@ -94,80 +95,53 @@ public class BigtableDataGrpcClientTests {
   public void turndownExecutor() {
     executor.shutdownNow();
   }
-  
+
   @Before
   public void setup() {
     executor = Executors.newSingleThreadExecutor();
     MockitoAnnotations.initMocks(this);
-    future = SettableFuture.create();
     RetryOptions retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
     BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
+    when(channelPool.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(
+      clientCall);
+    when(clientCallService.listenableAsyncCall(any(ClientCall.class), any())).thenReturn(mockFuture);
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        invocation.getArgumentAt(0, Runnable.class).run();
+        return null;
+      }
+    }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
+
     underTest =
         new BigtableDataGrpcClient(
             channelPool,
             BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool(),
             options,
             clientCallService);
-    when(channelPool.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(
-      clientCall);
-    when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(
-      clientCall);
-    when(clientCallService.listenableAsyncCall(any(ClientCall.class), any())).thenReturn(future);
   }
 
   @Test
-  public void testRetyableMutateRow() throws InterruptedException {
+  public void testRetyableMutateRow() throws Exception {
     final MutateRowRequest request = MutateRowRequest.getDefaultInstance();
-    final AtomicBoolean done = new AtomicBoolean(false);
-    executor.submit(new Callable<Void>(){
-      @Override
-      public Void call() throws Exception {
-        underTest.mutateRow(request);
-        done.set(true);
-        synchronized (done) {
-          done.notify();
-        }
-        return null;
-      }
-    });
-    Thread.sleep(100);
-    future.set(MutateRowsResponse.getDefaultInstance());
-    synchronized (done) {
-      done.wait(1000);
-    }
-    assertTrue(done.get());
+    when(mockFuture.get()).thenReturn(Empty.getDefaultInstance());
+    underTest.mutateRow(request);
     verify(clientCallService, times(1)).listenableAsyncCall(any(ClientCall.class), same(request));
   }
 
   @Test
-  public void testRetyableMutateRowAsync() {
+  public void testRetyableMutateRowAsync() throws InterruptedException, ExecutionException {
     MutateRowRequest request = MutateRowRequest.getDefaultInstance();
-    future.set(MutateRowsResponse.getDefaultInstance());
+    when(mockFuture.get()).thenReturn(MutateRowsResponse.getDefaultInstance());
     underTest.mutateRowAsync(request);
     verify(clientCallService).listenableAsyncCall(any(ClientCall.class), same(request));
   }
 
   @Test
-  public void testRetyableCheckAndMutateRow() throws InterruptedException {
+  public void testRetyableCheckAndMutateRow() throws Exception {
     final CheckAndMutateRowRequest request = CheckAndMutateRowRequest.getDefaultInstance();
-    final AtomicBoolean done = new AtomicBoolean(false);
-    executor.submit(new Callable<Void>(){
-      @Override
-      public Void call() throws Exception {
-        underTest.checkAndMutateRow(request);
-        done.set(true);
-        synchronized (done) {
-          done.notify();
-        }
-        return null;
-      }
-    });
-    Thread.sleep(100);
-    future.set(CheckAndMutateRowResponse.getDefaultInstance());
-    synchronized (done) {
-      done.wait(1000);
-    }
-    assertTrue(done.get());
+    when(mockFuture.get()).thenReturn(CheckAndMutateRowResponse.getDefaultInstance());
+    underTest.checkAndMutateRow(request);
     verify(clientCallService, times(1)).listenableAsyncCall(any(ClientCall.class), same(request));
   }
 

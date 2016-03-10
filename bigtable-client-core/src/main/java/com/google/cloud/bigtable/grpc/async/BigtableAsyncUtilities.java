@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.ReadRowsRequest;
@@ -49,6 +50,8 @@ import io.grpc.stub.ClientCalls;
  * Utilities for creating and executing async methods.
  */
 public final class BigtableAsyncUtilities {
+
+  private static AtomicInteger LOG_COUNT = new AtomicInteger();
 
   private static final Function<List<SampleRowKeysResponse>, List<SampleRowKeysResponse>> IMMUTABLE_LIST_TRANSFORMER =
       new Function<List<SampleRowKeysResponse>, List<SampleRowKeysResponse>>() {
@@ -89,28 +92,9 @@ public final class BigtableAsyncUtilities {
       final MethodDescriptor<RequestT, ResponseT> method) {
     return new BigtableAsyncRpc<RequestT, ResponseT>() {
       @Override
-      public ListenableFuture<ResponseT> call(RequestT request) {
-        final ClientCall<RequestT, ResponseT> call = channel.newCall(method, CallOptions.DEFAULT);
-        return clientCallService.listenableAsyncCall(call, request);
-      }
-    };
-  }
-
-  public static <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncUnaryRpc(
-      final Channel channel,
-      final ClientCallService clientCallService,
-      final MethodDescriptor<RequestT, ResponseT> method,
-      final CancellationToken token) {
-    return new BigtableAsyncRpc<RequestT, ResponseT>() {
-      @Override
-      public ListenableFuture<ResponseT> call(RequestT request) {
-        final ClientCall<RequestT, ResponseT> call = channel.newCall(method, CallOptions.DEFAULT);
-        token.addListener(new Runnable(){
-          @Override
-          public void run() {
-            call.cancel();
-          }
-        }, MoreExecutors.directExecutor());
+      public ListenableFuture<ResponseT> call(RequestT request, CancellationToken cancellationToken) {
+        ClientCall<RequestT, ResponseT> call = channel.newCall(method, CallOptions.DEFAULT);
+        addCancellationListener(cancellationToken, call);
         return clientCallService.listenableAsyncCall(call, request);
       }
     };
@@ -124,13 +108,26 @@ public final class BigtableAsyncUtilities {
           final ClientCallService clientCallService) {
     return new BigtableAsyncRpc<RequestT, List<OutputT>>() {
       @Override
-      public ListenableFuture<List<OutputT>> call(RequestT request) {
+      public ListenableFuture<List<OutputT>> call(RequestT request, CancellationToken cancellationToken) {
         ClientCall<RequestT, ResponseT> call = channel.newCall(method, CallOptions.DEFAULT);
+        addCancellationListener(cancellationToken, call);
         CollectingStreamObserver<ResponseT> responseCollector = new CollectingStreamObserver<>();
         clientCallService.asyncServerStreamingCall(call, request, responseCollector);
         return Futures.transform(responseCollector.getResponseCompleteFuture(), function);
       }
     };
+  }
+
+  private static void addCancellationListener(CancellationToken token,
+      final ClientCall<?, ?> call) {
+    if (token != null) {
+      token.addListener(new Runnable() {
+        @Override
+        public void run() {
+          call.cancel();
+        }
+      }, MoreExecutors.directExecutor());
+    }
   }
 
   /**
@@ -146,12 +143,14 @@ public final class BigtableAsyncUtilities {
       RetryOptions retryOptions,
       final RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> rpc,
+      CancellationToken cancellationToken,
       ExecutorService executorService) {
     if (retryOptions.enableRetries()) {
-      return new RetryingRpcFunction<>(retryOptions, request, rpc, executorService)
-          .callRpcWithRetry();
+      RetryingRpcFunction<RequestT, ResponseT> retryingRpcFunction =
+          new RetryingRpcFunction<>(retryOptions, request, rpc, executorService, cancellationToken);
+      return retryingRpcFunction.callRpcWithRetry();
     } else {
-      return rpc.call(request);
+      return rpc.call(request, cancellationToken);
     }
   }
 
@@ -178,6 +177,7 @@ public final class BigtableAsyncUtilities {
       throw Status.fromThrowable(e).asRuntimeException();
     }
   }
+
   private BigtableAsyncUtilities(){
   }
 }
