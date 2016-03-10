@@ -16,11 +16,9 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 
-import io.grpc.StatusRuntimeException;
+import io.grpc.Status;
 
 import java.io.IOException;
 
@@ -30,63 +28,49 @@ import java.io.IOException;
  * a Throwable or a marker indicating end-of-stream.
  * @param <T> The type of messages representing data.
  */
-class ResultQueueEntry<T> {
+abstract class ResultQueueEntry<T> {
 
   private static final String EXCEPTION_MESSAGE = "Error in response stream";
-  protected final Throwable throwable;
-  protected final T response;
-  protected final boolean isComplete;
+  @SuppressWarnings("rawtypes")
+  private static final ResultQueueEntry COMPLETION_ENTRY = new ResultQueueEntry() {
+    public boolean isCompletionMarker() {
+      return true;
+    };
 
-  public static <T> ResultQueueEntry<T> newResult(T response) {
+    public Object getResponseOrThrow() throws IOException {
+      throw new UnsupportedOperationException("getResponseOrThrow()");
+    };
+  };
+
+  public static <T> ResultQueueEntry<T> newResult(final T response) {
     Preconditions.checkArgument(response != null, "Response may not be null");
-    return new ResultQueueEntry<>(null, response, false);
+    return new ResultQueueEntry<T>(){
+      @Override
+      public T getResponseOrThrow() throws IOException {
+        return response;
+      }
+    };
   }
 
-  public static <T> ResultQueueEntry<T> newThrowable(Throwable throwable) {
+  public static <T> ResultQueueEntry<T> newThrowable(final Throwable throwable) {
     Preconditions.checkArgument(throwable != null, "Throwable may not be null");
-    return new ResultQueueEntry<>(throwable, null, false);
+    final Status status = Status.fromThrowable(throwable);
+    return new ResultQueueEntry<T>() {
+      @Override
+      public T getResponseOrThrow() throws IOException {
+        throw new IOExceptionWithStatus(EXCEPTION_MESSAGE, status, throwable);
+      }
+    };
   }
 
+  @SuppressWarnings("unchecked")
   public static <T> ResultQueueEntry<T> newCompletionMarker() {
-    return new ResultQueueEntry<>(null, null, true);
-  }
-
-  protected ResultQueueEntry(Throwable throwable, T response, boolean isCompletionMarker) {
-    this.throwable = throwable;
-    this.response = response;
-    this.isComplete = isCompletionMarker;
+    return COMPLETION_ENTRY;
   }
 
   public boolean isCompletionMarker() {
-    return isComplete;
+    return false;
   }
 
-  public T getResponseOrThrow() throws IOException {
-    if (throwable != null) {
-      if (throwable instanceof StatusRuntimeException) {
-        throw new IOExceptionWithStatus(EXCEPTION_MESSAGE, (StatusRuntimeException) throwable);
-      } else if (throwable instanceof UncheckedExecutionException) {
-        if (throwable.getCause() instanceof StatusRuntimeException) {
-          throw new IOExceptionWithStatus(EXCEPTION_MESSAGE,
-              (StatusRuntimeException) throwable.getCause());
-        }
-      }
-      throw new IOException(EXCEPTION_MESSAGE, throwable);
-    } else if (isComplete) {
-      throw new IOException("Attempt to interpret a result stream completion marker as a result");
-    }
-    return response;
-  }
-
-  @Override
-  @SuppressWarnings("rawtypes")
-  public boolean equals(Object obj) {
-    if (!(obj instanceof ResultQueueEntry) || obj == null){
-      return false;
-    }
-    ResultQueueEntry other = (ResultQueueEntry) obj;
-    return Objects.equal(throwable, other.throwable)
-        && Objects.equal(response, other.response)
-        && Objects.equal(isComplete, other.isComplete);
-  }
+  public abstract T getResponseOrThrow() throws IOException;
 }
