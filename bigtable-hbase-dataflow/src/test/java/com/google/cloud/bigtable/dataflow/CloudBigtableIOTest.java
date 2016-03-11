@@ -20,6 +20,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Increment;
@@ -27,6 +31,8 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,8 +40,12 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.bigtable.v1.SampleRowKeysResponse;
+import com.google.cloud.bigtable.dataflow.CloudBigtableIO.AbstractSource;
+import com.google.cloud.bigtable.dataflow.CloudBigtableIO.CoderType;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
+import com.google.cloud.bigtable.dataflow.CloudBigtableIO.SourceWithKeys;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.CannotProvideCoderException;
 import com.google.cloud.dataflow.sdk.coders.Coder;
@@ -112,5 +122,41 @@ public class CloudBigtableIOTest {
     sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
     assertEquals("Split start: '\\x00\\x01\\x02\\x03\\x04\\x05', end: 'hello', size: 10",
         sourceWithKeys.toString());
+  }
+
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @Test
+  public void testSampleRowKeys() throws Exception {
+    List<SampleRowKeysResponse> sampleRowKeys = new ArrayList<>();
+    int count = (int) (AbstractSource.COUNT_MAX_SPLIT_COUNT * 3 - 5);
+    byte[][] keys = Bytes.split("A".getBytes(), "Z".getBytes(), count-2);
+    long tabletSize = 2L * 1024L * 1024L * 1024L;
+    long boundary = 0;
+    for (byte[] currentKey : keys) {
+      boundary += tabletSize;
+      sampleRowKeys.add(SampleRowKeysResponse.newBuilder()
+        .setRowKey(ByteString.copyFrom(currentKey))
+        .setOffsetBytes(boundary)
+        .build());
+    }
+    CloudBigtableScanConfiguration config =
+        new CloudBigtableScanConfiguration("project", "zone", "cluster", "table", new Scan());
+    CloudBigtableIO.Source source = (Source) CloudBigtableIO.read(config);
+    source.setSampleRowKeys(sampleRowKeys);
+    List<CloudBigtableIO.SourceWithKeys> splits = source.getSplits(20000);
+    Assert.assertTrue(splits.size() <= CloudBigtableIO.AbstractSource.COUNT_MAX_SPLIT_COUNT);
+    Iterator<SourceWithKeys> iter = splits.iterator();
+    SourceWithKeys last = iter.next();
+    while(iter.hasNext()) {
+      SourceWithKeys current = iter.next();
+      Assert.assertTrue(Bytes.equals(current.getStartRow(), last.getStopRow()));
+      // The last source will have a stop key of empty.
+      if (iter.hasNext()) {
+        Assert.assertTrue(Bytes.compareTo(current.getStartRow(), current.getStopRow()) < 0);
+      }
+      Assert.assertTrue(current.getEstimatedSize() >= tabletSize);
+      last = current;
+    }
+    // check first and last
   }
 }

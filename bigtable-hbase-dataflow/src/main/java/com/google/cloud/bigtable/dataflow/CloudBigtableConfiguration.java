@@ -138,9 +138,8 @@ public class CloudBigtableConfiguration implements Serializable {
   }
 
   private void setValue(String key, String value, String type) {
-    Preconditions.checkArgument(!configuration.containsKey(key),
-      String.format("%s was set twice", key));
-    Preconditions.checkArgument(value != null, String.format("%s must be set.", type));
+    Preconditions.checkArgument(!configuration.containsKey(key), "%s was set twice", key);
+    Preconditions.checkArgument(value != null, "%s must be set.", type);
     configuration.put(key, value);
   }
 
