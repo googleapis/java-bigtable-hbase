@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import io.grpc.stub.StreamObserver;
+import io.grpc.ClientCall;
+import io.grpc.Metadata;
+import io.grpc.Status;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,10 +26,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 /**
- * CollectingStreamObserver buffers all stream messages in an internal
+ * {@link CollectingClientCallListener} buffers all stream messages in an internal
  * List and signals the result of {@link #getResponseCompleteFuture()} when complete.
  */
-public class CollectingStreamObserver<T> implements StreamObserver<T> {
+public class CollectingClientCallListener<T> extends ClientCall.Listener<T> {
   private final SettableFuture<List<T>> responseCompleteFuture = SettableFuture.create();
   private final List<T> buffer = new ArrayList<>();
 
@@ -36,17 +38,16 @@ public class CollectingStreamObserver<T> implements StreamObserver<T> {
   }
 
   @Override
-  public void onNext(T value) {
-    buffer.add(value);
+  public void onMessage(T message) {
+    buffer.add(message);
   }
 
   @Override
-  public void onError(Throwable throwable) {
-    responseCompleteFuture.setException(throwable);
-  }
-
-  @Override
-  public void onCompleted() {
-    responseCompleteFuture.set(buffer);
+  public void onClose(Status status, Metadata trailers) {
+    if (status.isOk()) {
+      responseCompleteFuture.set(buffer);
+    } else {
+      responseCompleteFuture.setException(status.asRuntimeException());
+    }
   }
 }

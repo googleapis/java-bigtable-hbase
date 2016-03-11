@@ -15,7 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import io.grpc.stub.StreamObserver;
+import io.grpc.ClientCall;
+import io.grpc.Metadata;
+import io.grpc.Status;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -25,21 +27,26 @@ import com.google.common.util.concurrent.SettableFuture;
  * as soon as a single response is received.
  * @param <T> The response type.
  */
-public class AsyncUnaryOperationObserver<T> implements StreamObserver<T> {
+public class AsyncUnaryOperationObserver<T> extends ClientCall.Listener<T> {
   private final SettableFuture<T> completionFuture = SettableFuture.create();
+  private boolean firstResponseReceived;
 
   @Override
-  public void onNext(T t) {
-    completionFuture.set(t);
+  public void onMessage(T message) {
+    if (firstResponseReceived) {
+      throw Status.INTERNAL
+          .withDescription("More than one responses received for unary or client-streaming call")
+          .asRuntimeException();
+    }
+    firstResponseReceived = true;
+    completionFuture.set(message);
   }
 
   @Override
-  public void onError(Throwable throwable) {
-    completionFuture.setException(throwable);
-  }
-
-  @Override
-  public void onCompleted() {
+  public void onClose(Status status, Metadata trailers) {
+    if (!status.isOk()) {
+      completionFuture.setException(status.asRuntimeException());
+    }
   }
 
   public ListenableFuture<T> getCompletionFuture() {

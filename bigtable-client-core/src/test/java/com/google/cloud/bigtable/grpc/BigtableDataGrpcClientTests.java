@@ -28,9 +28,7 @@ import static org.mockito.Mockito.when;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,8 +53,10 @@ import com.google.bigtable.v1.RowRange;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
+import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
-import com.google.cloud.bigtable.grpc.io.ClientCallService;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -70,17 +70,15 @@ import io.grpc.MethodDescriptor;
 @SuppressWarnings("unchecked")
 public class BigtableDataGrpcClientTests {
 
-  private static ExecutorService executor;
-
   @Mock
-  ChannelPool channelPool;
+  ChannelPool mockChannelPool;
 
   @SuppressWarnings("rawtypes")
   @Mock
-  ClientCall clientCall;
+  ClientCall mockClientCall;
 
   @Mock
-  ClientCallService clientCallService;
+  BigtableAsyncUtilities mockAsyncUtilities;
 
   @SuppressWarnings("rawtypes")
   @Mock
@@ -91,20 +89,16 @@ public class BigtableDataGrpcClientTests {
 
   BigtableDataGrpcClient underTest;
 
-  @After
-  public void turndownExecutor() {
-    executor.shutdownNow();
-  }
 
   @Before
   public void setup() {
-    executor = Executors.newSingleThreadExecutor();
     MockitoAnnotations.initMocks(this);
     RetryOptions retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
     BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
-    when(channelPool.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(
-      clientCall);
-    when(clientCallService.listenableAsyncCall(any(ClientCall.class), any())).thenReturn(mockFuture);
+    when(mockChannelPool.newCall(any(MethodDescriptor.class), any(CallOptions.class))).thenReturn(
+      mockClientCall);
+    when(mockAsyncUtilities.performRetryingAsyncRpc(any(), any(BigtableAsyncRpc.class),
+      any(CancellationToken.class), any(ExecutorService.class))).thenReturn(mockFuture);
     doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
@@ -115,10 +109,10 @@ public class BigtableDataGrpcClientTests {
 
     underTest =
         new BigtableDataGrpcClient(
-            channelPool,
+            mockChannelPool,
             BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool(),
             options,
-            clientCallService);
+            mockAsyncUtilities);
   }
 
   @Test
@@ -126,7 +120,8 @@ public class BigtableDataGrpcClientTests {
     final MutateRowRequest request = MutateRowRequest.getDefaultInstance();
     when(mockFuture.get()).thenReturn(Empty.getDefaultInstance());
     underTest.mutateRow(request);
-    verify(clientCallService, times(1)).listenableAsyncCall(any(ClientCall.class), same(request));
+    verify(mockAsyncUtilities, times(1)).performRetryingAsyncRpc(same(request),
+      any(BigtableAsyncRpc.class), any(CancellationToken.class), any(ExecutorService.class));
   }
 
   @Test
@@ -134,7 +129,8 @@ public class BigtableDataGrpcClientTests {
     MutateRowRequest request = MutateRowRequest.getDefaultInstance();
     when(mockFuture.get()).thenReturn(MutateRowsResponse.getDefaultInstance());
     underTest.mutateRowAsync(request);
-    verify(clientCallService).listenableAsyncCall(any(ClientCall.class), same(request));
+    verify(mockAsyncUtilities, times(1)).performRetryingAsyncRpc(same(request),
+      any(BigtableAsyncRpc.class), any(CancellationToken.class), any(ExecutorService.class));
   }
 
   @Test
@@ -142,14 +138,16 @@ public class BigtableDataGrpcClientTests {
     final CheckAndMutateRowRequest request = CheckAndMutateRowRequest.getDefaultInstance();
     when(mockFuture.get()).thenReturn(CheckAndMutateRowResponse.getDefaultInstance());
     underTest.checkAndMutateRow(request);
-    verify(clientCallService, times(1)).listenableAsyncCall(any(ClientCall.class), same(request));
+    verify(mockAsyncUtilities, times(1)).performRetryingAsyncRpc(same(request),
+      any(BigtableAsyncRpc.class), any(CancellationToken.class), any(ExecutorService.class));
   }
 
   @Test
   public void testRetyableCheckAndMutateRowAsync() {
     CheckAndMutateRowRequest request = CheckAndMutateRowRequest.getDefaultInstance();
     underTest.checkAndMutateRowAsync(request);
-    verify(clientCallService).listenableAsyncCall(any(ClientCall.class), same(request));
+    verify(mockAsyncUtilities, times(1)).performRetryingAsyncRpc(same(request),
+      any(BigtableAsyncRpc.class), any(CancellationToken.class), any(ExecutorService.class));
   }
 
   @Test
@@ -202,7 +200,7 @@ public class BigtableDataGrpcClientTests {
     ReadRowsRequest request =
         ReadRowsRequest.newBuilder().setRowKey(ByteString.copyFrom(new byte[0])).build();
     underTest.readRows(request);
-    verify(channelPool, times(1)).newCall(eq(BigtableServiceGrpc.METHOD_READ_ROWS),
+    verify(mockChannelPool, times(1)).newCall(eq(BigtableServiceGrpc.METHOD_READ_ROWS),
       same(CallOptions.DEFAULT));
   }
 
@@ -211,7 +209,7 @@ public class BigtableDataGrpcClientTests {
     ReadRowsRequest request =
         ReadRowsRequest.newBuilder().setRowRange(RowRange.getDefaultInstance()).build();
     underTest.readRows(request);
-    verify(channelPool, times(1)).newCall(eq(BigtableServiceGrpc.METHOD_READ_ROWS),
+    verify(mockChannelPool, times(1)).newCall(eq(BigtableServiceGrpc.METHOD_READ_ROWS),
       same(CallOptions.DEFAULT));
   }
 }
