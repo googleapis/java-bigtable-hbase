@@ -121,13 +121,11 @@ public interface BigtableAsyncUtilities {
             CancellationToken cancellationToken) {
           AsyncUnaryOperationObserver<ResponseT> listener = new AsyncUnaryOperationObserver<>();
           ClientCall<RequestT, ResponseT> call = channel.newCall(method, CallOptions.DEFAULT);
-          call.start(listener, new Metadata());
           // Initially ask for two responses from flow-control so that if a misbehaving server sends
           // more than one responses, we can catch it and fail it in the listener.
           //
           // See ClientCalls.startCall() for more information.
-          call.request(2);
-          send(call, request);
+          start(call, request, listener, 2);
           addCancellationListener(cancellationToken, call);
           return listener.getCompletionFuture();
         }
@@ -144,7 +142,7 @@ public interface BigtableAsyncUtilities {
           ClientCall<RequestT, ResponseT> call = channel.newCall(method, CallOptions.DEFAULT);
           addCancellationListener(cancellationToken, call);
           CollectingClientCallListener<ResponseT> responseCollector =
-              new CollectingClientCallListener<>();
+              new CollectingClientCallListener<>(call);
           asyncServerStreamingCall(call, request, responseCollector);
           return Futures.transform(responseCollector.getResponseCompleteFuture(), function);
         }
@@ -154,18 +152,17 @@ public interface BigtableAsyncUtilities {
     @Override
     public <RequestT, ResponseT> void asyncServerStreamingCall(ClientCall<RequestT, ResponseT> call,
         RequestT request, ClientCall.Listener<ResponseT> listener) {
-      call.start(listener, new Metadata());
-
       // gRPC treats streaming and unary calls differently for the number of responses to retrieve.
       // See createAsyncUnaryRpc for how unary calls are handled.
       //
       // See ClientCalls.startCall() for more information.
-      call.request(1);
-      send(call, request);
+      start(call, request, listener, 1);
     }
 
-    private static <RequestT, ResponseT> void send(ClientCall<RequestT, ResponseT> call,
-        RequestT request) {
+    private static <RequestT, ResponseT> void start(ClientCall<RequestT, ResponseT> call,
+        RequestT request, ClientCall.Listener<ResponseT> listener, int requestCount) {
+      call.start(listener, new Metadata());
+      call.request(requestCount);
       try {
         call.sendMessage(request);
         call.halfClose();

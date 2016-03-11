@@ -32,6 +32,11 @@ import com.google.common.util.concurrent.SettableFuture;
 public class CollectingClientCallListener<T> extends ClientCall.Listener<T> {
   private final SettableFuture<List<T>> responseCompleteFuture = SettableFuture.create();
   private final List<T> buffer = new ArrayList<>();
+  private final ClientCall<?, T> call;
+
+  public CollectingClientCallListener(ClientCall<?, T> call) {
+    this.call = call;
+  }
 
   public ListenableFuture<List<T>> getResponseCompleteFuture() {
     return responseCompleteFuture;
@@ -39,6 +44,7 @@ public class CollectingClientCallListener<T> extends ClientCall.Listener<T> {
 
   @Override
   public void onMessage(T message) {
+    call.request(1);
     buffer.add(message);
   }
 

@@ -29,16 +29,9 @@ import com.google.common.util.concurrent.SettableFuture;
  */
 public class AsyncUnaryOperationObserver<T> extends ClientCall.Listener<T> {
   private final SettableFuture<T> completionFuture = SettableFuture.create();
-  private boolean firstResponseReceived;
 
   @Override
   public void onMessage(T message) {
-    if (firstResponseReceived) {
-      throw Status.INTERNAL
-          .withDescription("More than one responses received for unary or client-streaming call")
-          .asRuntimeException();
-    }
-    firstResponseReceived = true;
     completionFuture.set(message);
   }
 
