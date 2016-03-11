@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -233,9 +234,10 @@ public class CloudBigtableIO {
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
    * {@link Scan}.
    */
-  private static abstract class AbstractSource<ResultOutputType> extends BoundedSource<ResultOutputType> {
+  static abstract class AbstractSource<ResultOutputType> extends BoundedSource<ResultOutputType> {
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
-    protected static final long MAX_SPLIT_COUNT = 4_000;
+    protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 4_000;
+    static final long COUNT_MAX_SPLIT_COUNT= 9_500;
 
     /**
      * Configuration for a Cloud Bigtable connection, a table, and an optional scan.
@@ -263,12 +265,14 @@ public class CloudBigtableIO {
 
     // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between dataflow needs
     // and Cloud Bigtable logic.
-    protected List<BoundedSource<ResultOutputType>> getSplits(long desiredBundleSizeBytes) throws IOException {
+    protected List<SourceWithKeys<ResultOutputType>> getSplits(long desiredBundleSizeBytes) throws Exception {
+      desiredBundleSizeBytes = Math.max(getEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
+        desiredBundleSizeBytes);
       Scan scan = configuration.getScan();
       byte[] scanStartKey = scan.getStartRow();
 
       byte[] scanEndKey = scan.getStopRow();
-      List<BoundedSource<ResultOutputType>> splits = new ArrayList<>();
+      List<SourceWithKeys<ResultOutputType>> splits = new ArrayList<>();
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
       for (SampleRowKeysResponse response : getSampleRowKeys()) {
@@ -307,7 +311,38 @@ public class CloudBigtableIO {
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
         splits.add(createSourceWithKeys(startKey, endKey, 0));
       }
-      return splits;
+      return reduceSplits(splits);
+    }
+
+    private List<SourceWithKeys<ResultOutputType>>
+        reduceSplits(List<SourceWithKeys<ResultOutputType>> splits) throws IOException {
+      if (splits.size() < COUNT_MAX_SPLIT_COUNT) {
+        return splits;
+      }
+      List<SourceWithKeys<ResultOutputType>> reducedSplits = new ArrayList<>();
+      SourceWithKeys<ResultOutputType> start = null;
+      SourceWithKeys<ResultOutputType> lastSeen = null;
+      int numberToCombine = (int) ((splits.size() + COUNT_MAX_SPLIT_COUNT - 1) / COUNT_MAX_SPLIT_COUNT);
+      int counter = 0;
+      long size = 0;
+      for (SourceWithKeys<ResultOutputType> source : splits) {
+        if (counter == 0) {
+          start = source;
+        }
+        size += source.getEstimatedSize();
+        counter++;
+        lastSeen = source;
+        if (counter == numberToCombine) {
+          reducedSplits.add(createSourceWithKeys(start.getStartRow(), source.getStopRow(), size));
+          counter = 0;
+          size = 0;
+          start = null;
+        }
+      }
+      if (start != null) {
+        reducedSplits.add(createSourceWithKeys(start.getStartRow(), lastSeen.getStopRow(), size));
+      }
+      return reducedSplits;
     }
 
     /**
@@ -337,6 +372,11 @@ public class CloudBigtableIO {
         }
       }
       return sampleRowKeys;
+    }
+
+    @VisibleForTesting
+    void setSampleRowKeys(List<SampleRowKeysResponse> sampleRowKeys) {
+      this.sampleRowKeys = sampleRowKeys;
     }
 
     /**
@@ -402,7 +442,7 @@ public class CloudBigtableIO {
      * {@link Bytes#split(byte[], byte[], int)} under the covers.
      * @throws IOException
      */
-    protected List<BoundedSource<ResultOutputType>> split(long regionSize, long desiredBundleSizeBytes,
+    protected List<SourceWithKeys<ResultOutputType>> split(long regionSize, long desiredBundleSizeBytes,
         byte[] startKey, byte[] stopKey) throws IOException {
       Preconditions.checkState(desiredBundleSizeBytes > 0);
       int splitCount = (int) Math.ceil((double) (regionSize) / (double) (desiredBundleSizeBytes));
@@ -417,7 +457,7 @@ public class CloudBigtableIO {
         }
         byte[][] splitKeys = Bytes.split(startKey, stopKey, splitCount - 1);
         Preconditions.checkState(splitCount + 1 == splitKeys.length);
-        List<BoundedSource<ResultOutputType>> result = new ArrayList<>();
+        List<SourceWithKeys<ResultOutputType>> result = new ArrayList<>();
         for (int i = 0; i < splitCount; i++) {
           result.add(createSourceWithKeys(splitKeys[i], splitKeys[i + 1], regionSize));
         }
@@ -426,7 +466,7 @@ public class CloudBigtableIO {
     }
 
     @VisibleForTesting
-    BoundedSource<ResultOutputType> createSourceWithKeys(byte[] startKey, byte[] stopKey, long size)
+    SourceWithKeys<ResultOutputType> createSourceWithKeys(byte[] startKey, byte[] stopKey, long size)
         throws IOException {
       CloudBigtableScanConfiguration updatedConfig =
           augmentConfiguration(configuration, startKey, stopKey);
@@ -482,7 +522,7 @@ public class CloudBigtableIO {
      * @return A list of sources split into groups.
      */
     @Override
-    public List<BoundedSource<ResultOutputType>> splitIntoBundles(
+    public List<? extends BoundedSource<ResultOutputType>> splitIntoBundles(
         long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
       // Update the desiredBundleSizeBytes in order to limit the number of splits to
       // MAX_SPLIT_COUNT.  This is an extremely rough estimate for large scale jobs.  There is
@@ -491,9 +531,7 @@ public class CloudBigtableIO {
       // the row key sizes are large, or the scan is large.
       //
       // TODO: Work on a more robust algorithm for splitting that works for more cases.
-      long sizeEstimate = getEstimatedSizeBytes(options);
-      desiredBundleSizeBytes = Math.max(sizeEstimate / MAX_SPLIT_COUNT, desiredBundleSizeBytes);
-      List<BoundedSource<ResultOutputType>> splits = getSplits(desiredBundleSizeBytes);
+      List<? extends BoundedSource<ResultOutputType>> splits = getSplits(desiredBundleSizeBytes);
       SOURCE_LOG.info("Creating {} splits.", splits.size());
       SOURCE_LOG.debug("Created splits {}.", splits);
       return splits;
@@ -550,6 +588,7 @@ public class CloudBigtableIO {
    * with a potential filter via a {@link Scan}.
    */
   protected static class SourceWithKeys<ResultOutputType> extends AbstractSource<ResultOutputType> {
+    private static final long serialVersionUID = 1L;
     /**
      * An estimate of the size of the source, in bytes.
      *
@@ -571,9 +610,11 @@ public class CloudBigtableIO {
       byte[] startRow = scan.getStartRow();
       byte[] stopRow = scan.getStopRow();
       if (stopRow.length > 0) {
-        Preconditions.checkState(Bytes.compareTo(startRow, stopRow) < 0,
+        if (Bytes.compareTo(startRow, stopRow) >= 0) {
+          throw new IllegalArgumentException(String.format(
             "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startRow),
-            Bytes.toStringBinary(stopRow));
+            Bytes.toStringBinary(stopRow)));
+        }
         Preconditions.checkState(estimatedSize > 0, "Source size must be positive",
             estimatedSize);
       }
@@ -596,6 +637,10 @@ public class CloudBigtableIO {
       return estimatedSize;
     }
 
+    public long getEstimatedSize() {
+      return estimatedSize;
+    }
+
     // TODO: Add a method on the server side that will be a more precise split based on server-
     // side statistics
     /**
@@ -610,13 +655,21 @@ public class CloudBigtableIO {
      * @return A list of sources split into groups.
      */
     @Override
-    public List<BoundedSource<ResultOutputType>> splitIntoBundles(long desiredBundleSizeBytes,
+    public List<? extends BoundedSource<ResultOutputType>> splitIntoBundles(long desiredBundleSizeBytes,
         PipelineOptions options) throws Exception {
       Scan scan = configuration.getScan();
-      List<BoundedSource<ResultOutputType>> newSplits =
+      List<? extends BoundedSource<ResultOutputType>> newSplits =
           split(estimatedSize, desiredBundleSizeBytes, scan.getStartRow(), scan.getStopRow());
       SOURCE_LOG.trace("Splitting split {} into {}", this, newSplits);
       return newSplits;
+    }
+
+    public byte[] getStartRow() {
+      return configuration.getScan().getStartRow();
+    }
+
+    public byte[] getStopRow() {
+      return configuration.getScan().getStopRow();
     }
 
     @Override
