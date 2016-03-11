@@ -145,11 +145,8 @@ public class TestBigtableOptionsFactory {
     RetryOptions retryOptions =
         BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();
     assertEquals(
-      RetryOptions.ENABLE_GRPC_RETRIES_DEFAULT,
+      RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES,
       retryOptions.enableRetries());
-    assertEquals(
-        RetryOptions.ENABLE_GRPC_RETRY_DEADLINE_EXCEEDED_DEFAULT,
-        retryOptions.retryOnDeadlineExceeded());
     assertEquals(
         RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS,
         retryOptions.getMaxElaspedBackoffMillis());

@@ -22,6 +22,7 @@ import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_MAX_SCAN_TIM
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_STREAMING_BUFFER_SIZE;
 import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_STREAMING_BATCH_SIZE;
+import static com.google.cloud.bigtable.config.RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES_SET;
 
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.NanoClock;
@@ -31,10 +32,10 @@ import com.google.api.client.util.NanoClock;
  */
 public class RetryOptionsUtil {
   public static RetryOptions createTestRetryOptions(final NanoClock nanoClock) {
-    return new RetryOptions(true, true, DEFAULT_INITIAL_BACKOFF_MILLIS, DEFAULT_BACKOFF_MULTIPLIER,
+    return new RetryOptions(true, DEFAULT_INITIAL_BACKOFF_MILLIS, DEFAULT_BACKOFF_MULTIPLIER,
         DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS, DEFAULT_STREAMING_BUFFER_SIZE,
         DEFAULT_STREAMING_BATCH_SIZE, DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS,
-        DEFAULT_MAX_SCAN_TIMEOUT_RETRIES) {
+        DEFAULT_MAX_SCAN_TIMEOUT_RETRIES, DEFAULT_ENABLE_GRPC_RETRIES_SET) {
           private static final long serialVersionUID = 1L;
 
       @Override

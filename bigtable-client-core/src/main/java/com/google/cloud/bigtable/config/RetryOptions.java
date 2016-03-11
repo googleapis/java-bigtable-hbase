@@ -16,13 +16,18 @@
 package com.google.cloud.bigtable.config;
 
 import io.grpc.Status;
+import io.grpc.Status.Code;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.client.util.Objects;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Options for retrying requests, including back off configuration.
@@ -38,19 +43,19 @@ public class RetryOptions implements Serializable {
    * Flag indicating whether or not grpc retries should be enabled.
    * The default is to enable retries on failed idempotent operations.
    */
-  public static boolean ENABLE_GRPC_RETRIES_DEFAULT = true;
+  public static final boolean DEFAULT_ENABLE_GRPC_RETRIES = true;
 
-  /**
-   * Flag indicating whether or not to retry grpc call on deadline exceeded.
-   * This flag is used only when grpc retries is enabled.
-   */
-  public static boolean ENABLE_GRPC_RETRY_DEADLINE_EXCEEDED_DEFAULT = true;
+  public static final ImmutableSet<Status.Code> DEFAULT_ENABLE_GRPC_RETRIES_SET = ImmutableSet.of(
+      Status.Code.DEADLINE_EXCEEDED,
+      Status.Code.INTERNAL,
+      Status.Code.UNAVAILABLE,
+      Status.Code.ABORTED);
 
   /** We can timeout when reading large cells with a low value here. With a 10MB
    * cell limit, 60 seconds allows our connection to drop to ~170kbyte/s. A 10 second
    * timeout requires 1Mbyte/s
    */
-  public static int DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS =
+  public static final int DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS =
       (int) TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS);
 
   /**
@@ -75,8 +80,7 @@ public class RetryOptions implements Serializable {
    * A Builder for ChannelOptions objects.
    */
   public static class Builder {
-    private boolean enableRetries = ENABLE_GRPC_RETRIES_DEFAULT;
-    private boolean retryOnDeadlineExceeded = ENABLE_GRPC_RETRY_DEADLINE_EXCEEDED_DEFAULT;
+    private boolean enableRetries = DEFAULT_ENABLE_GRPC_RETRIES;
     private int initialBackoffMillis = DEFAULT_INITIAL_BACKOFF_MILLIS;
     private double backoffMultiplier = DEFAULT_BACKOFF_MULTIPLIER;
     private int maxElaspedBackoffMillis = DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
@@ -84,6 +88,7 @@ public class RetryOptions implements Serializable {
     private int streamingBatchSize = DEFAULT_STREAMING_BUFFER_SIZE;
     private int readPartialRowTimeoutMillis = DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
     private int maxScanTimeoutRetries = DEFAULT_MAX_SCAN_TIMEOUT_RETRIES;
+    private Set<Status.Code> statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
 
     /**
      * Enable or disable retries.
@@ -97,7 +102,11 @@ public class RetryOptions implements Serializable {
      * Enable or disable retry on deadline exceeded.
      */
     public Builder setRetryOnDeadlineExceeded(boolean enabled) {
-      this.retryOnDeadlineExceeded = enabled;
+      if (enabled) {
+        statusToRetryOn.add(Status.Code.DEADLINE_EXCEEDED);
+      } else {
+        statusToRetryOn.remove(Status.Code.DEADLINE_EXCEEDED);
+      }
       return this;
     }
 
@@ -158,27 +167,29 @@ public class RetryOptions implements Serializable {
       return this;
     }
 
+    public Builder addStatusToRetryOn(Status.Code code) {
+      statusToRetryOn.add(code);
+      return this;
+    }
+
     /**
      * Construct a new RetryOptions object.
      */
     public RetryOptions build() {
       return new RetryOptions(
           enableRetries,
-          retryOnDeadlineExceeded,
           initialBackoffMillis,
           backoffMultiplier,
           maxElaspedBackoffMillis,
           streamingBufferSize,
           streamingBatchSize,
           readPartialRowTimeoutMillis,
-          maxScanTimeoutRetries);
+          maxScanTimeoutRetries,
+          ImmutableSet.copyOf(statusToRetryOn));
     }
   }
 
   private final boolean retriesEnabled;
-  // Retry when the response status is deadline exceeded and {@code retriesEnabled} is set to
-  // {@code true}.
-  private final boolean retryOnDeadlineExceeded;
   private final int initialBackoffMillis;
   private final int maxElaspedBackoffMillis;
   private final double backoffMultiplier;
@@ -186,20 +197,20 @@ public class RetryOptions implements Serializable {
   private final int streamingBatchSize;
   private final int readPartialRowTimeoutMillis;
   private final int maxScanTimeoutRetries;
+  private final ImmutableSet<Code> statusToRetryOn;
 
 
   public RetryOptions(
       boolean retriesEnabled,
-      boolean retryOnDeadlineExceeded,
       int initialBackoffMillis,
       double backoffMultiplier,
       int maxElaspedBackoffMillis,
       int streamingBufferSize,
       int streamingBatchSize,
       int readPartialRowTimeoutMillis,
-      int maxScanTimeoutRetries) {
+      int maxScanTimeoutRetries,
+      ImmutableSet<Code> statusToRetryOn) {
     this.retriesEnabled = retriesEnabled;
-    this.retryOnDeadlineExceeded = retryOnDeadlineExceeded;
     this.initialBackoffMillis = initialBackoffMillis;
     this.maxElaspedBackoffMillis = maxElaspedBackoffMillis;
     this.backoffMultiplier = backoffMultiplier;
@@ -207,6 +218,7 @@ public class RetryOptions implements Serializable {
     this.streamingBatchSize = streamingBatchSize;
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
     this.maxScanTimeoutRetries = maxScanTimeoutRetries;
+    this.statusToRetryOn = statusToRetryOn;
   }
 
   /**
@@ -241,7 +253,7 @@ public class RetryOptions implements Serializable {
    * Whether to retry on deadline exceeded.
    */
   public boolean retryOnDeadlineExceeded() {
-    return retryOnDeadlineExceeded;
+    return statusToRetryOn.contains(Status.Code.DEADLINE_EXCEEDED);
   }
 
   /**
@@ -276,10 +288,7 @@ public class RetryOptions implements Serializable {
    * Determines if the RPC should be retried based on the input {@link Status.Code}.
    */
   public boolean isRetryable(Status.Code code) {
-    return code == Status.INTERNAL.getCode()
-        || code == Status.UNAVAILABLE.getCode()
-        || code == Status.ABORTED.getCode()
-        || (retryOnDeadlineExceeded && code == Status.DEADLINE_EXCEEDED.getCode());
+    return statusToRetryOn.contains(code);
   }
 
   public BackOff createBackoff() {
@@ -305,7 +314,7 @@ public class RetryOptions implements Serializable {
     RetryOptions other = (RetryOptions) obj;
 
     return retriesEnabled == other.retriesEnabled
-        && retryOnDeadlineExceeded == other.retryOnDeadlineExceeded
+        && Objects.equal(statusToRetryOn, other.statusToRetryOn)
         && initialBackoffMillis == other.initialBackoffMillis
         && maxElaspedBackoffMillis == other.maxElaspedBackoffMillis
         && backoffMultiplier == other.backoffMultiplier

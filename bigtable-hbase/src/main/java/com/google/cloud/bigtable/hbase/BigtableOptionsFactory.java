@@ -28,6 +28,8 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Preconditions;
 
+import io.grpc.Status;
+
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.FileInputStream;
@@ -97,6 +99,13 @@ public class BigtableOptionsFactory {
    * The default is to enable retries on failed idempotent operations.
    */
   public static final String ENABLE_GRPC_RETRIES_KEY = "google.bigtable.grpc.retry.enable";
+
+  /**
+   * Key to set to a comma separated list of grpc codes to retry. See {@link Status.Code} for more
+   * information.
+   */
+  public static final String ADDITIONAL_RETRY_CODES = "google.bigtable.grpc.retry.codes";
+
   /**
    * Key to set to a boolean flag indicating whether or not to retry grpc call on deadline exceeded.
    * This flag is used only when grpc retries is enabled.
@@ -279,13 +288,25 @@ public class BigtableOptionsFactory {
   private static RetryOptions createRetryOptions(Configuration configuration) {
     RetryOptions.Builder retryOptionsBuilder = new RetryOptions.Builder();
     boolean enableRetries = configuration.getBoolean(
-        ENABLE_GRPC_RETRIES_KEY, RetryOptions.ENABLE_GRPC_RETRIES_DEFAULT);
+        ENABLE_GRPC_RETRIES_KEY, RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES);
     LOG.debug("gRPC retries enabled: %s", enableRetries);
     retryOptionsBuilder.setEnableRetries(enableRetries);
 
-    boolean retryOnDeadlineExceeded = configuration.getBoolean(
-        ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY,
-        RetryOptions.ENABLE_GRPC_RETRY_DEADLINE_EXCEEDED_DEFAULT);
+    String retryCodes = configuration.get(ADDITIONAL_RETRY_CODES, "");
+    String codes[] = retryCodes.split(",");
+    for (String stringCode : codes) {
+      String trimmed = stringCode.trim();
+      if (trimmed.isEmpty()) {
+        continue;
+      }
+      Status.Code code = Status.Code.valueOf(trimmed);
+      Preconditions.checkArgument(code != null, "Code " + stringCode + " not found.");
+      LOG.debug("gRPC retry on: %s", stringCode);
+      retryOptionsBuilder.addStatusToRetryOn(code);
+    }
+
+    boolean retryOnDeadlineExceeded =
+        configuration.getBoolean(ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY, true);
     LOG.debug("gRPC retry on deadline exceeded enabled: %s", retryOnDeadlineExceeded);
     retryOptionsBuilder.setRetryOnDeadlineExceeded(retryOnDeadlineExceeded);
 
