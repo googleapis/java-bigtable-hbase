@@ -315,4 +315,9 @@ public class AsyncExecutor {
   public BigtableDataClient getClient() {
     return client;
   }
+
+  public ListenableFuture<Empty> addMutationRetry(ListenableFuture<Empty> future,
+      MutateRowRequest request) {
+    return this.client.addMutationRetry(future, request);
+  }
 }

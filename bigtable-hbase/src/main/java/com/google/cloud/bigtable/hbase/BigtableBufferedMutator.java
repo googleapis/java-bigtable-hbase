@@ -305,15 +305,17 @@ public class BigtableBufferedMutator implements BufferedMutator {
     try {
       Runnable operation = null;
       if (options.useBulkApi() && (mutation instanceof Put || mutation instanceof Delete)) {
-        // TODO: Do this logic asynchronously. 
+        // TODO: Do this logic asynchronously.
         synchronized (bulkMutationLock) {
           if (bulkMutation == null) {
             bulkMutation = new BulkMutation(this.adapter.getBigtableTableName().toString());
           }
-          ListenableFuture<Empty> future = bulkMutation.add(adapt(mutation));
-          addExceptionCallback(future, mutation);
-          if (bulkMutation.getRowKeyCount() >= options.getBulkMaxRowKeyCount() ||
-              bulkMutation.getApproximateByteSize() >= options.getBulkMaxRequestSize()) {
+          MutateRowRequest request = adapt(mutation);
+          ListenableFuture<Empty> retryingFuture =
+              asyncExecutor.addMutationRetry(bulkMutation.add(request), request);
+          addExceptionCallback(retryingFuture, mutation);
+          if (bulkMutation.getRowKeyCount() >= options.getBulkMaxRowKeyCount()
+              || bulkMutation.getApproximateByteSize() >= options.getBulkMaxRequestSize()) {
             mutateRowsAsync(bulkMutation);
             bulkMutation = null;
           }
