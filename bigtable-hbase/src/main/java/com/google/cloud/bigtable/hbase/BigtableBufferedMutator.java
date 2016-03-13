@@ -313,6 +313,10 @@ public class BigtableBufferedMutator implements BufferedMutator {
           MutateRowRequest request = adapt(mutation);
           ListenableFuture<Empty> retryingFuture =
               asyncExecutor.addMutationRetry(bulkMutation.add(request), request);
+
+          // Make sure that flush will not finish until the retries are finished.
+          long operationId = heapSizeManager.registerOperationWithHeapSize(1);
+          heapSizeManager.addCallback(retryingFuture, operationId);
           addExceptionCallback(retryingFuture, mutation);
           if (bulkMutation.getRowKeyCount() >= options.getBulkMaxRowKeyCount()
               || bulkMutation.getApproximateByteSize() >= options.getBulkMaxRequestSize()) {
