@@ -55,6 +55,10 @@ public interface BigtableAsyncUtilities {
   <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT>
       createAsyncUnaryRpc(MethodDescriptor<RequestT, ResponseT> method);
 
+  <RequestT, ResponseT> ListenableFuture<ResponseT> addRetry(RequestT request,
+      BigtableAsyncRpc<RequestT, ResponseT> rpc, ListenableFuture<ResponseT> future,
+      CancellationToken cancellationToken, ExecutorService executorService);
+
   /**
    * Performs the rpc with retries.
    *
@@ -198,6 +202,21 @@ public interface BigtableAsyncUtilities {
         return rpc.call(request, cancellationToken);
       }
     }
-  };
 
+    @Override
+    public <RequestT, ResponseT> ListenableFuture<ResponseT> addRetry(
+        RequestT request,
+        BigtableAsyncRpc<RequestT, ResponseT> rpc,
+        ListenableFuture<ResponseT> future,
+        CancellationToken cancellationToken,
+        ExecutorService executorService) {
+      if (retryOptions.enableRetries()) {
+        RetryingRpcFunction<RequestT, ResponseT> retryingRpcFunction =
+            new RetryingRpcFunction<>(retryOptions, request, rpc, executorService, cancellationToken);
+        return retryingRpcFunction.addRetry(future);
+      } else {
+        return rpc.call(request, cancellationToken);
+      }
+    }
+  };
 }

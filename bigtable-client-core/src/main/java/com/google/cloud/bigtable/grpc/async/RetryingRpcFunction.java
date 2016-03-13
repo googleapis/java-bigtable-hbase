@@ -100,11 +100,11 @@ public class RetryingRpcFunction<RequestT, ResponseT>
    * @return a {@link ListenableFuture} that will retry on exceptions that are deemed retryable.
    */
   public ListenableFuture<ResponseT> callRpcWithRetry() {
-    return Futures.catchingAsync(
-        rpc.call(request, cancellationToken),
-        StatusRuntimeException.class,
-        this,
-        executorService);
+    return addRetry(rpc.call(request, cancellationToken));
+  }
+
+  public ListenableFuture<ResponseT> addRetry(final ListenableFuture<ResponseT> future) {
+    return Futures.catchingAsync(future, StatusRuntimeException.class, this, executorService);
   }
 
   public CancellationToken getCancellationToken() {

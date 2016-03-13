@@ -178,6 +178,11 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   @Override
+  public ListenableFuture<Empty> addMutationRetry(ListenableFuture<Empty> future, MutateRowRequest request) {
+    return asyncUtilities.addRetry(request, mutateRowRpc, future, null, executorService);
+  }
+
+  @Override
   public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request) {
     return performRetryingAsyncRpc(request, mutateRowRpc, IS_RETRYABLE_MUTATION, null);
   }
@@ -215,7 +220,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }
   }
 
-
   /**
    * Returns the result of calling {@link Future#get()} interruptably on a task known not to throw a
    * checked exception.
@@ -229,7 +233,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
    *
    * @see ClientCalls#getUnchecked(Future)
    */
-  public static <V> V getUnchecked(Future<V> future) {
+  private static <V> V getUnchecked(Future<V> future) {
     try {
       return future.get();
     } catch (InterruptedException e) {
