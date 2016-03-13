@@ -57,6 +57,7 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Empty;
@@ -86,6 +87,8 @@ public class TestBigtableBufferedMutator {
   private ExecutorService executorService;
 
   private List<Runnable> callbacks = new ArrayList<>();
+  @SuppressWarnings("rawtypes")
+  private List<FutureCallback> futureCallbacks = new ArrayList<>();
 
   @Before
   public void setUp() {
@@ -110,7 +113,14 @@ public class TestBigtableBufferedMutator {
   private BigtableBufferedMutator createMutator(Configuration configuration) throws IOException {
     HeapSizeManager heapSizeManager =
         new HeapSizeManager(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
-            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT);
+            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT) {
+      @Override
+      public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, Long id) {
+        FutureCallback<T> callback = super.addCallback(future, id);
+        futureCallbacks.add(callback);
+        return callback;
+      }
+    };
 
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project");
     configuration.set(BigtableOptionsFactory.ZONE_KEY, "zone");
@@ -193,7 +203,8 @@ public class TestBigtableBufferedMutator {
     SettableFuture<Empty> retryFuture = SettableFuture.<Empty>create();
     when(mockClient.addMutationRetry(any(ListenableFuture.class), any(MutateRowRequest.class)))
         .thenReturn(retryFuture);
-    try (final BigtableBufferedMutator underTest = createMutator(config)) {
+    final BigtableBufferedMutator underTest = createMutator(config);
+    try {
       underTest.mutate(SIMPLE_PUT);
       verify(mockClient, times(0)).mutateRowAsync(any(MutateRowRequest.class));
       Future<Void> flushFuture = executorService.submit(new Callable<Void>() {
@@ -213,6 +224,9 @@ public class TestBigtableBufferedMutator {
         e.printStackTrace();
       }
       verify(mockClient, times(1)).mutateRowsAsync(any(MutateRowsRequest.class));
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
     }
   }
 
@@ -236,7 +250,8 @@ public class TestBigtableBufferedMutator {
         });
     when(mockClient.addMutationRetry(any(ListenableFuture.class), any(MutateRowRequest.class)))
         .thenReturn(SettableFuture.<Empty> create());
-    try (final BigtableBufferedMutator underTest = createMutator(config)) {
+    final BigtableBufferedMutator underTest = createMutator(config);
+    try {
       Builder firstResponseBuilder = MutateRowsResponse.newBuilder();
       while(futures.size() == 0) {
         underTest.mutate(SIMPLE_PUT);
@@ -259,16 +274,23 @@ public class TestBigtableBufferedMutator {
       try {
         flushFuture.get(100, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
-        e.printStackTrace();
       }
       verify(mockClient, times(2)).mutateRowsAsync(any(MutateRowsRequest.class));
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
     }
   }
 
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   private void completeCall() {
     for (Runnable callback : callbacks) {
       callback.run();
     }
     callbacks.clear();
+    for (FutureCallback futureCallback : futureCallbacks) {
+      futureCallback.onSuccess(null);
+    }
+    futureCallbacks.clear();
   }
 }
