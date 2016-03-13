@@ -142,7 +142,7 @@ public class BatchExecutor {
       this.asyncExecutor = asyncExecutor;
       this.tableName = Preconditions.checkNotNull(tableName);
       this.options = options;
-      this.bulkRead = new BulkRead(asyncExecutor, tableName);
+      this.bulkRead = new BulkRead(asyncExecutor.getClient(), tableName);
     }
 
     public ListenableFuture<? extends GeneratedMessage> mutateRowAsync(MutateRowRequest request)

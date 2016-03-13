@@ -311,4 +311,8 @@ public class AsyncExecutor {
   public long getMaxHeapSize() {
     return sizeManager.getMaxHeapSize();
   }
+
+  public BigtableDataClient getClient() {
+    return client;
+  }
 }
