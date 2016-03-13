@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
@@ -56,6 +57,7 @@ import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase1_0.BigtableConnection;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.Coder;
@@ -237,7 +239,7 @@ public class CloudBigtableIO {
   static abstract class AbstractSource<ResultOutputType> extends BoundedSource<ResultOutputType> {
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
     protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 4_000;
-    static final long COUNT_MAX_SPLIT_COUNT= 9_500;
+    static final long COUNT_MAX_SPLIT_COUNT= 40_000;
 
     /**
      * Configuration for a Cloud Bigtable connection, a table, and an optional scan.
@@ -725,7 +727,9 @@ public class CloudBigtableIO {
     @Override
     public boolean start() throws IOException {
       long connectionStart = System.currentTimeMillis();
-      connection = new BigtableConnection(config.toHBaseConfig());
+      Configuration hbaseConfig = config.toHBaseConfig();
+      hbaseConfig.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
+      connection = new BigtableConnection(hbaseConfig);
       table = connection.getTable(TableName.valueOf(config.getTableId()));
       scanner = table.getScanner(config.getScan());
       workStart = System.currentTimeMillis();

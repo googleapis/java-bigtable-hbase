@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
@@ -26,11 +27,10 @@ import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowSet;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
@@ -44,7 +44,7 @@ public class BulkRead {
 
   protected static final Logger LOG = new Logger(BulkRead.class);
 
-  private final AsyncExecutor asyncExecutor;
+  private final BigtableDataClient client;
   private final String tableName;
 
   /**
@@ -62,8 +62,8 @@ public class BulkRead {
    */
   private Multimap<ByteString, SettableFuture<List<Row>>> futures;
 
-  public BulkRead(AsyncExecutor asyncExecutor, String tableName) {
-    this.asyncExecutor = asyncExecutor;
+  public BulkRead(BigtableDataClient client, String tableName) {
+    this.client = client;
     this.tableName = tableName;
   }
 
@@ -72,7 +72,7 @@ public class BulkRead {
    *
    * @param request a {@link ReadRowsRequest} with a single row key.
    *
-   * @return a {@link ListenableFuture} that will be populated with the {@link Row} that 
+   * @return a {@link ListenableFuture} that will be populated with the {@link Row} that
    *    corresponds to the request
    * @throws InterruptedException
    */
@@ -85,7 +85,7 @@ public class BulkRead {
     if (currentFilter == null) {
       currentFilter = filter;
     } else if (!filter.equals(currentFilter)) {
-      // TODO: this should probably also happen if there is some maximum number of 
+      // TODO: this should probably also happen if there is some maximum number of
       flush();
       currentFilter = filter;
     }
@@ -100,58 +100,38 @@ public class BulkRead {
   /**
    * Sends all remaining requests to the server. This method does not wait for the method to
    * complete.
-   * @throws InterruptedException
    */
-  public void flush() throws InterruptedException {
+  public void flush() {
     if (futures != null && !futures.isEmpty()) {
-      // TODO(sduskis): remove this once bulk read testing is complete.
-//      LOG.info("BulkRead reading %d rows.", futures.keys().size());
-      ReadRowsRequest request =
-          ReadRowsRequest.newBuilder()
-              .setTableName(tableName)
-              .setFilter(currentFilter)
-              // This is a performance improvement for this specific case where ordering doesn't
-              // matter and the entire batch is retried.
-              .setAllowRowInterleaving(true)
-              .setRowSet(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
-              .build();
-      Futures.addCallback(asyncExecutor.readRowsAsync(request), createFuture(futures));
-    }
-    futures = null;
-    currentFilter = null;
-  }
-
-  /**
-   * Creates a {@link FutureCallback} that sets all of the {@link SettableFuture}s that were created
-   * in {@link BulkRead#add(ReadRowsRequest)}.
-   */
-  protected FutureCallback<List<Row>> createFuture(
-      final Multimap<ByteString, SettableFuture<List<Row>>> futures) {
-    return new FutureCallback<List<Row>>() {
-
-      @Override
-      public void onSuccess(List<Row> result) {
-        for (Row row : result) {
+      try {
+        ResultScanner<Row> scanner = client.readRows(ReadRowsRequest.newBuilder()
+          .setTableName(tableName)
+          .setFilter(currentFilter)
+          .setRowSet(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
+          .build());
+        while (true) {
+          Row row = scanner.next();
+          if (row == null) {
+            break;
+          }
           Collection<SettableFuture<List<Row>>> rowFutures = futures.get(row.getKey());
-          // TODO: What about missking keys?
+          // TODO: What about missing keys?
           for (SettableFuture<List<Row>> rowFuture : rowFutures) {
             rowFuture.set(ImmutableList.of(row));
           }
           futures.removeAll(row.getKey());
         }
-        Collection<Entry<ByteString, SettableFuture<List<Row>>>> entries =
-            futures.entries();
+        Collection<Entry<ByteString, SettableFuture<List<Row>>>> entries = futures.entries();
         for (Entry<ByteString, SettableFuture<List<Row>>> entry : entries) {
           entry.getValue().set(ImmutableList.<Row> of());
         }
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
+      } catch (IOException e) {
         for (Entry<ByteString, SettableFuture<List<Row>>> entry : futures.entries()) {
-          entry.getValue().setException(t);
+          entry.getValue().setException(e);
         }
       }
-    };
+    }
+    futures = null;
+    currentFilter = null;
   }
 }
