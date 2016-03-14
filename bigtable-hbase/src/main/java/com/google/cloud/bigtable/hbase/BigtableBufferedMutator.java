@@ -51,6 +51,7 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
 
@@ -311,13 +312,15 @@ public class BigtableBufferedMutator implements BufferedMutator {
             bulkMutation = new BulkMutation(this.adapter.getBigtableTableName().toString());
           }
           MutateRowRequest request = adapt(mutation);
-          ListenableFuture<Empty> retryingFuture =
-              asyncExecutor.addMutationRetry(bulkMutation.add(request), request);
+          SettableFuture<Empty> future = bulkMutation.add(request);
+          addExceptionCallback(future, mutation);
+//          ListenableFuture<Empty> retryingFuture =
+//              asyncExecutor.addMutationRetry(future, request);
 
           // Make sure that flush will not finish until the retries are finished.
-          long operationId = heapSizeManager.registerOperationWithHeapSize(1);
-          heapSizeManager.addCallback(retryingFuture, operationId);
-          addExceptionCallback(retryingFuture, mutation);
+//          long operationId = heapSizeManager.registerOperationWithHeapSize(1);
+//          heapSizeManager.addCallback(retryingFuture, operationId);
+//          addExceptionCallback(retryingFuture, mutation);
           if (bulkMutation.getRowKeyCount() >= options.getBulkMaxRowKeyCount()
               || bulkMutation.getApproximateByteSize() >= options.getBulkMaxRequestSize()) {
             mutateRowsAsync(bulkMutation);
