@@ -28,6 +28,7 @@ import static org.mockito.Mockito.mock;
 
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
+import com.google.bigtable.v1.RowRange;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
@@ -70,7 +71,10 @@ public class ResumingStreamingResultScannerTest {
   private static final int MAX_SCAN_TIMEOUT_RETRIES = 3;
 
   RetryOptions retryOptions;
-  ReadRowsRequest readRowsRequest = ReadRowsRequest.getDefaultInstance();
+  ByteString blank = ByteString.copyFrom(new byte[0]);
+  ReadRowsRequest readRowsRequest = ReadRowsRequest.newBuilder()
+      .setRowRange(RowRange.newBuilder().setStartKey(blank).setEndKey(blank).build())
+      .build();
 
   @Before
   public void setup() {
@@ -167,6 +171,7 @@ public class ResumingStreamingResultScannerTest {
     doErrorsResume(expectedIOException, numRowsLimit, 1);
   }
 
+  @SuppressWarnings("unchecked")
   private void doErrorsResume(IOException expectedIOException, long numRowsLimit, int numExceptions)
       throws IOException {
     Row row1 = buildRow("row1");
@@ -175,6 +180,8 @@ public class ResumingStreamingResultScannerTest {
     Row row4 = buildRow("row4");
 
     ReadRowsRequest.Builder originalRequest = readRowsRequest.toBuilder();
+    ByteString blank = ByteString.copyFrom(new byte[0]);
+    originalRequest.setRowRange(RowRange.newBuilder().setStartKey(blank).setEndKey(blank).build());
     if (numRowsLimit != 0) {
       originalRequest.setNumRowsLimit(numRowsLimit);
     }
@@ -307,6 +314,7 @@ public class ResumingStreamingResultScannerTest {
     scanner.close();
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   /**
    * Test successfully retrying while receiving a mixture of timeouts and retryable exceptions
