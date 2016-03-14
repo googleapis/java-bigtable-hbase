@@ -240,8 +240,7 @@ public class BigtableSession implements Closeable {
       headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
       headerInterceptors = headerInterceptorBuilder.build();
 
-      ChannelPool dataChannel = createChannelPool(options.getDataHost(), options.getDataIpOverride(),
-          options.getChannelCount());
+      ChannelPool dataChannel = createChannelPool(options.getDataHost(), options.getDataIpOverride());
 
       BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
@@ -329,7 +328,7 @@ public class BigtableSession implements Closeable {
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
       ManagedChannel channel =
-          createChannelPool(options.getTableAdminHost(), options.getAdminIpOverride(), 1);
+          createChannelPool(options.getTableAdminHost(), options.getAdminIpOverride());
       tableAdminClient = new BigtableTableAdminGrpcClient(channel);
     }
     return tableAdminClient;
@@ -338,7 +337,7 @@ public class BigtableSession implements Closeable {
   public synchronized BigtableClusterAdminClient getClusterAdminClient() throws IOException {
     if (this.clusterAdminClient == null) {
       ManagedChannel channel =
-          createChannelPool(options.getClusterAdminHost(), null, 1);
+          createChannelPool(options.getClusterAdminHost(), null);
       this.clusterAdminClient = new BigtableClusterAdminGrpcClient(channel);
     }
 
@@ -351,14 +350,14 @@ public class BigtableSession implements Closeable {
    * </p>
    */
   protected ChannelPool createChannelPool(
-      final String hostString, @Nullable final String ipOverride, int channelCount) throws IOException {
+      final String hostString, @Nullable final String ipOverride) throws IOException {
     ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
         return createNettyChannel(hostString, ipOverride);
       }
     };
-    ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory, channelCount);
+    ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory);
     managedChannels.add(channelPool);
     return channelPool;
   }

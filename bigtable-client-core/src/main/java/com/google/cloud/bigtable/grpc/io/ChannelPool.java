@@ -16,15 +16,18 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import io.grpc.CallOptions;
+import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
 import io.grpc.ManagedChannel;
@@ -42,42 +45,62 @@ public class ChannelPool extends ManagedChannel {
     ManagedChannel create() throws IOException;
   }
 
-  private final ImmutableList<ManagedChannel> channels;
+  private final AtomicReference<ImmutableList<ManagedChannel>> channels = new AtomicReference<>();
   private final AtomicInteger requestCount = new AtomicInteger();
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
+  private final ChannelFactory factory;
   private final String authority;
 
   private boolean shutdown = false;
 
-  public ChannelPool(ChannelFactory factory, int channelCount)
+  public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
       throws IOException {
-    this(ImmutableList.<HeaderInterceptor>of(), factory, channelCount);
-  }
-
-  public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory, int channelCount)
-      throws IOException {
-    Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
-    Preconditions.checkNotNull(headerInterceptors, "Must pass non null headerInterceptors");
-    this.headerInterceptors = ImmutableList.copyOf(headerInterceptors);
-
-    ManagedChannel[] channelArray = new ManagedChannel[channelCount];
-    for (int i = 0; i < channelCount; i++) {
-      channelArray[i] = factory.create();
+    ManagedChannel channel = factory.create();
+    this.channels.set(ImmutableList.of(channel));
+    authority = channel.authority();
+    this.factory = factory;
+    if (headerInterceptors == null) {
+      this.headerInterceptors = ImmutableList.of();
+    } else {
+      this.headerInterceptors = ImmutableList.copyOf(headerInterceptors);
     }
-    authority = channelArray[0].authority();
-    channels = ImmutableList.copyOf(channelArray);
   }
 
   /**
-   * Performs a simple round robin on the list of {@link ManagedChannel}s.
-   * This method is thread safe.
+   * Makes sure that the number of channels is at least as big as the specified capacity.  This
+   * method is only synchornized when the pool has to be expanded.
    *
-   * @return A channel.
+   * @param capacity The minimum number of channels required for the RPCs of the ChannelPool's
+   * clients.
+   */
+  public void ensureChannelCount(int capacity) throws IOException {
+    if (this.shutdown) {
+      throw new IOException("The channel is closed.");
+    }
+    if (channels.get().size() < capacity) {
+      synchronized (this) {
+        if (channels.get().size() < capacity) {
+          List<ManagedChannel> newChannelList = new ArrayList<>(channels.get());
+          while(newChannelList.size() < capacity) {
+            newChannelList.add(factory.create());
+          }
+          setChannels(newChannelList);
+        }
+      }
+    }
+  }
+
+  /**
+   * Performs a simple round robin on the list of {@link Channel}s in the {@code channels} list.
+   * This method should not be synchronized, if possible, to reduce bottlenecks.
+   * 
+   * @return A channel that can be used for a safe 
    */
   private ManagedChannel getNextChannel() {
     int currentRequestNum = requestCount.getAndIncrement();
-    int index = Math.abs(currentRequestNum % channels.size());
-    return channels.get(index);
+    ImmutableList<ManagedChannel> channelsList = channels.get();
+    int index = Math.abs(currentRequestNum % channelsList.size());
+    return channelsList.get(index);
   }
 
   /**
@@ -109,7 +132,6 @@ public class ChannelPool extends ManagedChannel {
   private <ReqT, RespT> ClientCall<ReqT, RespT> createWrappedCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions, ManagedChannel channel) {
     ClientCall<ReqT, RespT> delegate = channel.newCall(methodDescriptor, callOptions);
-
     return new CheckedForwardingClientCall<ReqT, RespT>(delegate) {
       @Override
       protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
@@ -122,13 +144,23 @@ public class ChannelPool extends ManagedChannel {
     };
   }
 
+  /**
+   * Sets the values in newChannelList to the {@code channels} AtomicReference.  The values are
+   * copied into an {@link ImmutableList}.
+   *
+   * @param newChannelList A {@link List} of {@link ManagedChannel}s to set to the {@code channels}
+   */
+  private void setChannels(List<ManagedChannel> newChannelList) {
+    channels.set(ImmutableList.copyOf(newChannelList));
+  }
+
   public int size() {
-    return channels.size();
+    return channels.get().size();
   }
 
   @Override
   public synchronized ManagedChannel shutdown() {
-    for (ManagedChannel channel : channels) {
+    for (ManagedChannel channel : channels.get()) {
       channel.shutdown();
     }
     this.shutdown = true;
@@ -142,7 +174,7 @@ public class ChannelPool extends ManagedChannel {
 
   @Override
   public boolean isTerminated() {
-    for (ManagedChannel managedChannel : channels) {
+    for (ManagedChannel managedChannel: channels.get()) {
       if (!managedChannel.isTerminated()) {
         return false;
       }
@@ -152,7 +184,7 @@ public class ChannelPool extends ManagedChannel {
 
   @Override
   public ManagedChannel shutdownNow() {
-    for (ManagedChannel channel : channels) {
+    for (ManagedChannel channel : channels.get()) {
       channel.shutdownNow();
     }
     return this;
@@ -161,7 +193,7 @@ public class ChannelPool extends ManagedChannel {
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     long endTimeNanos = System.nanoTime() + unit.toNanos(timeout);
-    for (ManagedChannel channel : channels) {
+    for (ManagedChannel channel : channels.get()) {
       long awaitTimeNanos = endTimeNanos - System.nanoTime();
       if (awaitTimeNanos <= 0) {
         break;
