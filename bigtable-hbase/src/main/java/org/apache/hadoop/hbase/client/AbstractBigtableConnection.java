@@ -23,7 +23,8 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
+import com.google.cloud.bigtable.grpc.async.RpcThrottler;
+import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -72,7 +73,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
             int size = ACTIVE_BUFFERED_MUTATORS.size();
             new Logger(AbstractBigtableConnection.class).warn(
               "Shutdown is commencing and you have open %d buffered mutators."
-                  + "You need to close() or flush() them so that is not lost", size);
+                  + "You need to close() or awaitCompletion() them so that is not lost", size);
             break;
           }
         }
@@ -99,7 +100,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
 
-  private final HeapSizeManager heapSizeManager;
+  private static ResourceLimiter resourceLimiter;
+  private final static Object resourceLimitedLock = new Object();
 
   public AbstractBigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
@@ -137,13 +139,16 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     this.session = new BigtableSession(options);
 
-    int defaultRpcCount = AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
-    int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
-    long maxMemory = conf.getLong(
-      BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
-      AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT);
-
-    this.heapSizeManager = new HeapSizeManager(maxMemory, maxInflightRpcs);
+    synchronized (resourceLimitedLock) {
+      if (resourceLimiter == null) {
+        int defaultRpcCount = AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
+        int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
+        long maxMemory = conf.getLong(
+            BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
+            AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT);
+        this.resourceLimiter = new ResourceLimiter(maxMemory, maxInflightRpcs);
+      }
+    }
   }
 
   @Override
@@ -163,7 +168,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       pool = BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
     }
     BatchExecutor batchExecutor = new BatchExecutor(
-         new AsyncExecutor(client, heapSizeManager),
+         new AsyncExecutor(client, new RpcThrottler(resourceLimiter)),
          options,
          MoreExecutors.listeningDecorator(pool),
          createAdapter(tableName));
@@ -187,7 +192,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         conf,
         options,
         params.getListener(),
-        heapSizeManager,
+        new RpcThrottler(resourceLimiter),
         pool) {
       @Override
       public void close() throws IOException {

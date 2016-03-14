@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -37,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RunWith(JUnit4.class)
-public class TestHeapSizeManager {
+public class TestRpcThrottler {
 
   @Mock
   ListenableFuture<?> future;
@@ -47,61 +46,10 @@ public class TestHeapSizeManager {
     MockitoAnnotations.initMocks(this);
   }
 
-
-  @Test
-  public void testRpcCount() throws InterruptedException{
-    HeapSizeManager underTest = new HeapSizeManager(100l, 2);
-
-    assertFalse(underTest.isFull());
-    assertFalse(underTest.hasInflightRequests());
-
-    long id = underTest.registerOperationWithHeapSize(1);
-    assertFalse(underTest.isFull());
-    assertTrue(underTest.hasInflightRequests());
-
-    long id2 = underTest.registerOperationWithHeapSize(1);
-    assertTrue(underTest.hasInflightRequests());
-    assertTrue(underTest.isFull());
-
-    underTest.markCanBeCompleted(id);
-    assertFalse(underTest.isFull());
-    assertTrue(underTest.hasInflightRequests());
-
-    underTest.markCanBeCompleted(id2);
-    assertFalse(underTest.isFull());
-    assertFalse(underTest.hasInflightRequests());
-}
-
-  @Test
-  public void testSize() throws InterruptedException{
-    HeapSizeManager underTest = new HeapSizeManager(10l, 1000);
-    long id = underTest.registerOperationWithHeapSize(5l);
-    assertTrue(underTest.hasInflightRequests());
-    assertFalse(underTest.isFull());
-    assertEquals(5l, underTest.getHeapSize());
-
-    long id2 = underTest.registerOperationWithHeapSize(4l);
-    assertTrue(underTest.hasInflightRequests());
-    assertFalse(underTest.isFull());
-    assertEquals(9l, underTest.getHeapSize());
-
-    long id3 = underTest.registerOperationWithHeapSize(1l);
-    assertTrue(underTest.hasInflightRequests());
-    assertTrue(underTest.isFull());
-    assertEquals(10l, underTest.getHeapSize());
-
-    underTest.markCanBeCompleted(id);
-    assertFalse(underTest.isFull());
-    assertEquals(5l, underTest.getHeapSize());
-
-    underTest.markCanBeCompleted(id2);
-    underTest.markCanBeCompleted(id3);
-    assertFalse(underTest.hasInflightRequests());
-  }
-
   @Test
   public void testCallback() throws InterruptedException {
-    HeapSizeManager underTest = new HeapSizeManager(10l, 1000);
+    ResourceLimiter resourceLimiter = new ResourceLimiter(10l, 1000);
+    RpcThrottler underTest = new RpcThrottler(resourceLimiter);
     long id = underTest.registerOperationWithHeapSize(5l);
     assertTrue(underTest.hasInflightRequests());
 
@@ -114,16 +62,17 @@ public class TestHeapSizeManager {
 
   @Test
   /**
-   * Test to make sure that HeapSizeManager does not register an operation if the HeapSizeManager
+   * Test to make sure that RpcThrottler does not register an operation if the RpcThrottler
    * size limit was reached.
    */
   public void testSizeLimitReachWaits() throws InterruptedException {
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
-      final HeapSizeManager underTest = new HeapSizeManager(1l, 1);
+      ResourceLimiter resourceLimiter = new ResourceLimiter(1l, 1);
+      final RpcThrottler underTest = new RpcThrottler(resourceLimiter);
       long id = underTest.registerOperationWithHeapSize(5l);
       assertTrue(underTest.hasInflightRequests());
-      assertTrue(underTest.isFull());
+      assertTrue(resourceLimiter.isFull());
       final AtomicBoolean secondRequestRegistered = new AtomicBoolean();
       pool.submit(new Runnable() {
         @Override
@@ -139,7 +88,7 @@ public class TestHeapSizeManager {
       // Give some time for the Runnable to be executed.
       Thread.sleep(10);
       assertFalse(secondRequestRegistered.get());
-      underTest.markCanBeCompleted(id);
+      resourceLimiter.markCanBeCompleted(id);
 
       // Give more time for the Runnable to be executed.
       Thread.sleep(10);
@@ -154,7 +103,8 @@ public class TestHeapSizeManager {
     final int registerCount = 1000;
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
-      final HeapSizeManager underTest = new HeapSizeManager(100l, 100);
+      final ResourceLimiter resourceLimiter = new ResourceLimiter(100l, 100);
+      final RpcThrottler underTest = new RpcThrottler(resourceLimiter);
       final AtomicBoolean allOperationsDone = new AtomicBoolean();
       final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
       Future<?> writeFuture = pool.submit(new Runnable() {
@@ -164,7 +114,7 @@ public class TestHeapSizeManager {
             for (int i = 0; i < registerCount; i++) {
               registeredEvents.offer(underTest.registerOperationWithHeapSize(1));
             }
-            underTest.flush();
+            underTest.awaitCompletion();
             allOperationsDone.set(true);
             synchronized (allOperationsDone) {
               allOperationsDone.notify();
@@ -186,10 +136,10 @@ public class TestHeapSizeManager {
                 i--;
               } else {
                 if (i % 50 == 0) {
-                  // Exercise the .offer and the flush() in the writeFuture.
+                  // Exercise the .offer and the awaitCompletion() in the writeFuture.
                   Thread.sleep(40);
                 }
-                underTest.markCanBeCompleted(registeredId);
+                underTest.onCompletion(registeredId);
               }
             }
           } catch (InterruptedException e) {
