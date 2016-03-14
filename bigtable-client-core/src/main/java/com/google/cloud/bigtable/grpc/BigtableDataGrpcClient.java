@@ -318,6 +318,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   private ResultScanner<Row> streamRows(ReadRowsRequest request) {
+    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     boolean isGet = request.getTargetCase() == ReadRowsRequest.TargetCase.ROW_KEY;
 
     int streamingBufferSize;
