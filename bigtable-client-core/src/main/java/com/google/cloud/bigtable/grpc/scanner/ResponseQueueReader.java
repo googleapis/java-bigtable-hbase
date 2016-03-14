@@ -45,7 +45,7 @@ public class ResponseQueueReader {
   public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap,
       int outstandingRequestCount, int batchRequestSize, ClientCall<?, ReadRowsResponse> call) {
     this.resultQueue = new LinkedBlockingQueue<>();
-    this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
+    this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis / 4;
     this.capacityCap = capacityCap;
     this.outstandingRequestCount = new AtomicInteger(outstandingRequestCount);
     this.batchRequestSize = batchRequestSize;
@@ -94,26 +94,26 @@ public class ResponseQueueReader {
   }
 
   private ResultQueueEntry<ReadRowsResponse> getNext() throws IOException {
-
-    // If there are currently less than or equal to the batch request size, then ask gRPC to
-    // request more results in a batch. Batch requests are more efficient that reading one at
-    // a time.
-    if (!completionMarkerFound.get() && moreCanBeRequested()) {
-      call.request(batchRequestSize);
-      outstandingRequestCount.addAndGet(batchRequestSize);
+    for (int i = 0; i < 4; i++) {
+      // If there are currently less than or equal to the batch request size, then ask gRPC to
+      // request more results in a batch. Batch requests are more efficient that reading one at
+      // a time.
+      if (!completionMarkerFound.get() && moreCanBeRequested()) {
+        call.request(batchRequestSize);
+        outstandingRequestCount.addAndGet(batchRequestSize);
+      }
+      try {
+        ResultQueueEntry<ReadRowsResponse> queueEntry =
+            resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
+        if (queueEntry != null) {
+          return queueEntry;
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while waiting for next result", e);
+      }
     }
-    ResultQueueEntry<ReadRowsResponse> queueEntry;
-    try {
-      queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while waiting for next result", e);
-    }
-    if (queueEntry == null) {
-      throw new ScanTimeoutException("Timeout while merging responses.");
-    }
-
-    return queueEntry;
+    throw new ScanTimeoutException("Timeout while merging responses.");
   }
 
   /**
