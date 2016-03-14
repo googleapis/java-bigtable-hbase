@@ -88,7 +88,7 @@ public class ChannelPoolTest {
     MethodDescriptor descriptor = mock(MethodDescriptor.class);
     HeaderInterceptor interceptor = mock(HeaderInterceptor.class);
     ChannelPool pool =
-        new ChannelPool(Collections.singletonList(interceptor), new MockChannelFactory(), 1);
+        new ChannelPool(Collections.singletonList(interceptor), new MockChannelFactory());
     ClientCall call = pool.newCall(descriptor, CallOptions.DEFAULT);
     Metadata headers = new Metadata();
     call.start(null, headers);
@@ -100,7 +100,8 @@ public class ChannelPoolTest {
     MockChannelFactory factory = new MockChannelFactory();
     MethodDescriptor descriptor = mock(MethodDescriptor.class);
     MockitoAnnotations.initMocks(this);
-    ChannelPool pool = new ChannelPool(factory, 2);
+    ChannelPool pool = new ChannelPool(null, factory);
+    pool.ensureChannelCount(2);
     pool.newCall(descriptor, CallOptions.DEFAULT);
     verify(factory.channels.get(0), times(1)).newCall(same(descriptor), same(CallOptions.DEFAULT));
     verify(factory.channels.get(1), times(0)).newCall(same(descriptor), same(CallOptions.DEFAULT));
@@ -110,9 +111,10 @@ public class ChannelPoolTest {
 }
 
   @Test
-  public void testCapcity() throws IOException {
+  public void testEnsureCapcity() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    ChannelPool pool = new ChannelPool(factory, 4);
+    ChannelPool pool = new ChannelPool(null, factory);
+    pool.ensureChannelCount(4);
     Assert.assertEquals(4, factory.channels.size());
     Assert.assertEquals(4, pool.size());
   }
@@ -120,7 +122,7 @@ public class ChannelPoolTest {
   @Test
   public void testShutdown() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    new ChannelPool(factory, 1).shutdown();
+    new ChannelPool(null, factory).shutdown();
     for (ManagedChannel managedChannel : factory.channels) {
       verify(managedChannel, times(1)).shutdown();
     }
@@ -129,7 +131,7 @@ public class ChannelPoolTest {
   @Test
   public void testShutdownNow() throws IOException {
     MockChannelFactory factory = new MockChannelFactory();
-    new ChannelPool(factory, 1).shutdownNow();
+    new ChannelPool(null, factory).shutdownNow();
     for (ManagedChannel managedChannel : factory.channels) {
       verify(managedChannel, times(1)).shutdownNow();
     }
@@ -138,7 +140,8 @@ public class ChannelPoolTest {
   @Test
   public void testAwaitTermination() throws IOException, InterruptedException {
     MockChannelFactory factory = new MockChannelFactory();
-    ChannelPool pool = new ChannelPool(factory, 5);
+    ChannelPool pool = new ChannelPool(null, factory);
+    pool.ensureChannelCount(5);
     for (ManagedChannel managedChannel : factory.channels) {
       when(managedChannel.isTerminated()).thenReturn(true);
     }

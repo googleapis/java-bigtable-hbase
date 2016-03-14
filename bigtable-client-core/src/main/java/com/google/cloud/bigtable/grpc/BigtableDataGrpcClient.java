@@ -21,6 +21,7 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.ClientCalls;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -127,6 +128,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private final ExecutorService executorService;
   private final RetryOptions retryOptions;
+  private final BigtableOptions bigtableOptions;
   private final BigtableResultScannerFactory streamingScannerFactory =
       new BigtableResultScannerFactory() {
         @Override
@@ -159,6 +161,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       BigtableAsyncUtilities asyncUtilities) {
     this.channelPool = channelPool;
     this.executorService = executorService;
+    this.bigtableOptions = bigtableOptions;
     this.retryOptions = bigtableOptions.getRetryOptions();
     this.asyncUtilities = asyncUtilities;
 
@@ -184,6 +187,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request) {
+    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return performRetryingAsyncRpc(request, mutateRowRpc, IS_RETRYABLE_MUTATION, null);
   }
 
@@ -194,6 +198,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ListenableFuture<MutateRowsResponse> mutateRowsAsync(MutateRowsRequest request) {
+    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return performRetryingAsyncRpc(request, mutateRowsRpc, ARE_RETRYABLE_MUTATIONS, null);
   }
 
@@ -206,6 +211,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request) {
+    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return performRetryingAsyncRpc(request, checkAndMutateRpc, IS_RETRYABLE_CHECK_AND_MUTATE, null);
   }
 
@@ -278,6 +284,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ListenableFuture<Row> readModifyWriteRowAsync(ReadModifyWriteRowRequest request) {
+    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return readWriteModifyRpc.call(request, null);
   }
 
@@ -295,6 +302,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request) {
+    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return performRetryingAsyncRpc(request, readRowsAsync, IS_RETRYABLE_READ_ROW, null);
   }
 
@@ -380,5 +388,13 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         }
       }
     };
+  }
+
+  private void expandPoolIfNecessary(int channelCount) {
+    try {
+      this.channelPool.ensureChannelCount(channelCount);
+    } catch (IOException e) {
+      LOG.info("Could not expand the channel pool.", e);
+    }
   }
 }
