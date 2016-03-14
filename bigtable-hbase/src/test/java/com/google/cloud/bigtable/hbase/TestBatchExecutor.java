@@ -33,7 +33,9 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.collect.ImmutableList;
@@ -76,6 +78,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Tests {@link BatchExecutor}
@@ -119,6 +122,8 @@ public class TestBatchExecutor {
   @Mock
   private AsyncExecutor mockAsyncExecutor;
   @Mock
+  private BigtableDataClient mockClient;
+  @Mock
   private ListenableFuture mockFuture;
 
   private HBaseRequestAdapter requestAdapter =
@@ -136,6 +141,7 @@ public class TestBatchExecutor {
     when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
+    when(mockAsyncExecutor.getClient()).thenReturn(mockClient);
     doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
@@ -228,36 +234,45 @@ public class TestBatchExecutor {
   @Test
   public void testBatchBulkGets() throws Exception {
     // Test 10 gets, but return only 9 to test the row not found case.
-    List<Get> gets = new ArrayList<>(10);
-    List<Row> responses = new ArrayList<>(9);
+    final List<Get> gets = new ArrayList<>(10);
 
     gets.add(new Get(Bytes.toBytes("key0")));
     for (int i = 1; i < 10; i++) {
       byte[] row_key = randomBytes(8);
       gets.add(new Get(row_key));
-      ByteString key = BigtableZeroCopyByteStringUtil.wrap(row_key);
-      ByteString cellValue = ByteString.copyFrom(randomBytes(8));
-      com.google.bigtable.v1.Cell cell = Cell.newBuilder()
-          .setTimestampMicros(System.nanoTime() / 1000)
-          .setValue(cellValue)
-          .build();
-      Family family =
-          Family.newBuilder()
-              .setName("family")
-              .addColumns(Column.newBuilder().addCells(cell))
-              .build();
-      responses.add(Row.newBuilder().setKey(key).addFamilies(family).build());
     }
-    when(mockFuture.get()).thenReturn(responses);
+    ResultScanner<Row> mockScanner = Mockito.mock(ResultScanner.class);
+    when(mockClient.readRows(any(ReadRowsRequest.class))).thenReturn(mockScanner);
+    final AtomicInteger counter = new AtomicInteger();
+    when(mockScanner.next()).then(new Answer<Row>() {
+      @Override
+      public Row answer(InvocationOnMock invocation) throws Throwable {
+        int current = counter.incrementAndGet();
+        if (current == 10) {
+          return null;
+        }
+        ByteString key = BigtableZeroCopyByteStringUtil.wrap(gets.get(current).getRow());
+        ByteString cellValue = ByteString.copyFrom(randomBytes(8));
+        com.google.bigtable.v1.Cell cell = Cell.newBuilder()
+            .setTimestampMicros(System.nanoTime() / 1000)
+            .setValue(cellValue)
+            .build();
+        Family family =
+            Family.newBuilder()
+                .setName("family")
+                .addColumns(Column.newBuilder().addCells(cell))
+                .build();
+        return Row.newBuilder().setKey(key).addFamilies(family).build();
+      }
+    });
 
     BatchExecutor underTest =
         createExecutor(new BigtableOptions.Builder().setUseBulkApi(true).build());
     Result[] results = underTest.batch(gets);
-    verify(mockAsyncExecutor, times(1)).readRowsAsync(any(ReadRowsRequest.class));
+    verify(mockClient, times(1)).readRows(any(ReadRowsRequest.class));
     Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
     for (int i = 1; i < results.length; i++) {
-      Result response = Adapters.ROW_ADAPTER.adaptResponse(responses.get(i - 1));
-      Assert.assertTrue(Bytes.equals(response.getRow(), results[i].getRow()));
+      Assert.assertTrue(Bytes.equals(results[i].getRow(), gets.get(i).getRow()));
     }
   }
 
