@@ -108,6 +108,7 @@ public class BulkRead {
           .setTableName(tableName)
           .setFilter(currentFilter)
           .setRowSet(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
+          .setAllowRowInterleaving(true)
           .build());
         while (true) {
           Row row = scanner.next();
@@ -115,14 +116,17 @@ public class BulkRead {
             break;
           }
           Collection<SettableFuture<List<Row>>> rowFutures = futures.get(row.getKey());
-          // TODO: What about missing keys?
-          for (SettableFuture<List<Row>> rowFuture : rowFutures) {
-            rowFuture.set(ImmutableList.of(row));
+          if (rowFutures != null) {
+            // TODO: What about missing keys?
+            for (SettableFuture<List<Row>> rowFuture : rowFutures) {
+              rowFuture.set(ImmutableList.of(row));
+            }
+            futures.removeAll(row.getKey());
+          } else {
+            LOG.warn("Found key: %s, but it was not in the original request.", row.getKey());
           }
-          futures.removeAll(row.getKey());
         }
-        Collection<Entry<ByteString, SettableFuture<List<Row>>>> entries = futures.entries();
-        for (Entry<ByteString, SettableFuture<List<Row>>> entry : entries) {
+        for (Entry<ByteString, SettableFuture<List<Row>>> entry : futures.entries()) {
           entry.getValue().set(ImmutableList.<Row> of());
         }
       } catch (IOException e) {
