@@ -73,7 +73,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
             int size = ACTIVE_BUFFERED_MUTATORS.size();
             new Logger(AbstractBigtableConnection.class).warn(
               "Shutdown is commencing and you have open %d buffered mutators."
-                  + "You need to close() or awaitCompletion() them so that is not lost", size);
+                  + "You need to close() or flush() them so that is not lost", size);
             break;
           }
         }
@@ -99,9 +99,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
-
   private static ResourceLimiter resourceLimiter;
-  private final static Object resourceLimitedLock = new Object();
 
   public AbstractBigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
@@ -136,18 +134,20 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     this.batchPool = pool;
     this.closed = false;
-
     this.session = new BigtableSession(options);
 
-    synchronized (resourceLimitedLock) {
-      if (resourceLimiter == null) {
-        int defaultRpcCount = AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
-        int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
-        long maxMemory = conf.getLong(
-            BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
-            AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT);
-        this.resourceLimiter = new ResourceLimiter(maxMemory, maxInflightRpcs);
-      }
+    initializeResourceLimiter(conf, options);
+  }
+
+  private synchronized static void initializeResourceLimiter(
+      Configuration conf, BigtableOptions options) {
+    if (resourceLimiter == null) {
+      int defaultRpcCount = AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
+      int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
+      long maxMemory = conf.getLong(
+          BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
+          AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT);
+      AbstractBigtableConnection.resourceLimiter = new ResourceLimiter(maxMemory, maxInflightRpcs);
     }
   }
 
