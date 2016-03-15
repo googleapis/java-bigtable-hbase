@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -236,10 +235,11 @@ public class CloudBigtableIO {
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
    * {@link Scan}.
    */
+  @SuppressWarnings("serial")
   static abstract class AbstractSource<ResultOutputType> extends BoundedSource<ResultOutputType> {
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
     protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 4_000;
-    static final long COUNT_MAX_SPLIT_COUNT= 40_000;
+    static final long COUNT_MAX_SPLIT_COUNT= 15_360;
 
     /**
      * Configuration for a Cloud Bigtable connection, a table, and an optional scan.
