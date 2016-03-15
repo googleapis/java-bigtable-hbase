@@ -89,6 +89,9 @@ public  final class MutateRowsResponse extends
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
+   * Depending on how requests are batched during execution, it is possible
+   * for one Entry to fail due to an error with another Entry. In the event
+   * that this occurs, the same error will be reported for both entries.
    * </pre>
    */
   public java.util.List<com.google.rpc.Status> getStatusesList() {
@@ -100,6 +103,9 @@ public  final class MutateRowsResponse extends
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
+   * Depending on how requests are batched during execution, it is possible
+   * for one Entry to fail due to an error with another Entry. In the event
+   * that this occurs, the same error will be reported for both entries.
    * </pre>
    */
   public java.util.List<? extends com.google.rpc.StatusOrBuilder> 
@@ -112,6 +118,9 @@ public  final class MutateRowsResponse extends
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
+   * Depending on how requests are batched during execution, it is possible
+   * for one Entry to fail due to an error with another Entry. In the event
+   * that this occurs, the same error will be reported for both entries.
    * </pre>
    */
   public int getStatusesCount() {
@@ -123,6 +132,9 @@ public  final class MutateRowsResponse extends
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
+   * Depending on how requests are batched during execution, it is possible
+   * for one Entry to fail due to an error with another Entry. In the event
+   * that this occurs, the same error will be reported for both entries.
    * </pre>
    */
   public com.google.rpc.Status getStatuses(int index) {
@@ -134,6 +146,9 @@ public  final class MutateRowsResponse extends
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
+   * Depending on how requests are batched during execution, it is possible
+   * for one Entry to fail due to an error with another Entry. In the event
+   * that this occurs, the same error will be reported for both entries.
    * </pre>
    */
   public com.google.rpc.StatusOrBuilder getStatusesOrBuilder(
@@ -407,6 +422,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public java.util.List<com.google.rpc.Status> getStatusesList() {
@@ -422,6 +440,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public int getStatusesCount() {
@@ -437,6 +458,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public com.google.rpc.Status getStatuses(int index) {
@@ -452,6 +476,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public Builder setStatuses(
@@ -474,6 +501,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public Builder setStatuses(
@@ -493,6 +523,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public Builder addStatuses(com.google.rpc.Status value) {
@@ -514,6 +547,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public Builder addStatuses(
@@ -536,6 +572,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public Builder addStatuses(
@@ -555,6 +594,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public Builder addStatuses(
@@ -574,6 +616,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public Builder addAllStatuses(
@@ -594,6 +639,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public Builder clearStatuses() {
@@ -612,6 +660,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public Builder removeStatuses(int index) {
@@ -630,6 +681,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public com.google.rpc.Status.Builder getStatusesBuilder(
@@ -642,6 +696,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public com.google.rpc.StatusOrBuilder getStatusesOrBuilder(
@@ -657,6 +714,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public java.util.List<? extends com.google.rpc.StatusOrBuilder> 
@@ -673,6 +733,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public com.google.rpc.Status.Builder addStatusesBuilder() {
@@ -685,6 +748,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public com.google.rpc.Status.Builder addStatusesBuilder(
@@ -698,6 +764,9 @@ public  final class MutateRowsResponse extends
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
+     * Depending on how requests are batched during execution, it is possible
+     * for one Entry to fail due to an error with another Entry. In the event
+     * that this occurs, the same error will be reported for both entries.
      * </pre>
      */
     public java.util.List<com.google.rpc.Status.Builder> 

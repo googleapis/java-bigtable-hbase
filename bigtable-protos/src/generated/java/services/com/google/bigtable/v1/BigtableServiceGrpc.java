@@ -224,38 +224,38 @@ public class BigtableServiceGrpc {
     public java.util.Iterator<com.google.bigtable.v1.ReadRowsResponse> readRows(
         com.google.bigtable.v1.ReadRowsRequest request) {
       return blockingServerStreamingCall(
-          getChannel().newCall(METHOD_READ_ROWS, getCallOptions()), request);
+          getChannel(), METHOD_READ_ROWS, getCallOptions(), request);
     }
 
     @java.lang.Override
     public java.util.Iterator<com.google.bigtable.v1.SampleRowKeysResponse> sampleRowKeys(
         com.google.bigtable.v1.SampleRowKeysRequest request) {
       return blockingServerStreamingCall(
-          getChannel().newCall(METHOD_SAMPLE_ROW_KEYS, getCallOptions()), request);
+          getChannel(), METHOD_SAMPLE_ROW_KEYS, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.protobuf.Empty mutateRow(com.google.bigtable.v1.MutateRowRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_MUTATE_ROW, getCallOptions()), request);
+          getChannel(), METHOD_MUTATE_ROW, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.v1.MutateRowsResponse mutateRows(com.google.bigtable.v1.MutateRowsRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_MUTATE_ROWS, getCallOptions()), request);
+          getChannel(), METHOD_MUTATE_ROWS, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.v1.CheckAndMutateRowResponse checkAndMutateRow(com.google.bigtable.v1.CheckAndMutateRowRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_CHECK_AND_MUTATE_ROW, getCallOptions()), request);
+          getChannel(), METHOD_CHECK_AND_MUTATE_ROW, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.v1.Row readModifyWriteRow(com.google.bigtable.v1.ReadModifyWriteRowRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_READ_MODIFY_WRITE_ROW, getCallOptions()), request);
+          getChannel(), METHOD_READ_MODIFY_WRITE_ROW, getCallOptions(), request);
     }
   }
 
@@ -305,86 +305,113 @@ public class BigtableServiceGrpc {
     }
   }
 
+  private static final int METHODID_READ_ROWS = 0;
+  private static final int METHODID_SAMPLE_ROW_KEYS = 1;
+  private static final int METHODID_MUTATE_ROW = 2;
+  private static final int METHODID_MUTATE_ROWS = 3;
+  private static final int METHODID_CHECK_AND_MUTATE_ROW = 4;
+  private static final int METHODID_READ_MODIFY_WRITE_ROW = 5;
+
+  private static class MethodHandlers<Req, Resp> implements
+      io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.ServerStreamingMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.ClientStreamingMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.BidiStreamingMethod<Req, Resp> {
+    private final BigtableService serviceImpl;
+    private final int methodId;
+
+    public MethodHandlers(BigtableService serviceImpl, int methodId) {
+      this.serviceImpl = serviceImpl;
+      this.methodId = methodId;
+    }
+
+    @java.lang.SuppressWarnings("unchecked")
+    public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
+      switch (methodId) {
+        case METHODID_READ_ROWS:
+          serviceImpl.readRows((com.google.bigtable.v1.ReadRowsRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.v1.ReadRowsResponse>) responseObserver);
+          break;
+        case METHODID_SAMPLE_ROW_KEYS:
+          serviceImpl.sampleRowKeys((com.google.bigtable.v1.SampleRowKeysRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.v1.SampleRowKeysResponse>) responseObserver);
+          break;
+        case METHODID_MUTATE_ROW:
+          serviceImpl.mutateRow((com.google.bigtable.v1.MutateRowRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
+          break;
+        case METHODID_MUTATE_ROWS:
+          serviceImpl.mutateRows((com.google.bigtable.v1.MutateRowsRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.v1.MutateRowsResponse>) responseObserver);
+          break;
+        case METHODID_CHECK_AND_MUTATE_ROW:
+          serviceImpl.checkAndMutateRow((com.google.bigtable.v1.CheckAndMutateRowRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.v1.CheckAndMutateRowResponse>) responseObserver);
+          break;
+        case METHODID_READ_MODIFY_WRITE_ROW:
+          serviceImpl.readModifyWriteRow((com.google.bigtable.v1.ReadModifyWriteRowRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.v1.Row>) responseObserver);
+          break;
+        default:
+          throw new AssertionError();
+      }
+    }
+
+    @java.lang.SuppressWarnings("unchecked")
+    public io.grpc.stub.StreamObserver<Req> invoke(
+        io.grpc.stub.StreamObserver<Resp> responseObserver) {
+      switch (methodId) {
+        default:
+          throw new AssertionError();
+      }
+    }
+  }
+
   public static io.grpc.ServerServiceDefinition bindService(
       final BigtableService serviceImpl) {
     return io.grpc.ServerServiceDefinition.builder(SERVICE_NAME)
-      .addMethod(
-        METHOD_READ_ROWS,
-        asyncServerStreamingCall(
-          new io.grpc.stub.ServerCalls.ServerStreamingMethod<
+        .addMethod(
+          METHOD_READ_ROWS,
+          asyncServerStreamingCall(
+            new MethodHandlers<
               com.google.bigtable.v1.ReadRowsRequest,
-              com.google.bigtable.v1.ReadRowsResponse>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.v1.ReadRowsRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.v1.ReadRowsResponse> responseObserver) {
-              serviceImpl.readRows(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_SAMPLE_ROW_KEYS,
-        asyncServerStreamingCall(
-          new io.grpc.stub.ServerCalls.ServerStreamingMethod<
+              com.google.bigtable.v1.ReadRowsResponse>(
+                serviceImpl, METHODID_READ_ROWS)))
+        .addMethod(
+          METHOD_SAMPLE_ROW_KEYS,
+          asyncServerStreamingCall(
+            new MethodHandlers<
               com.google.bigtable.v1.SampleRowKeysRequest,
-              com.google.bigtable.v1.SampleRowKeysResponse>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.v1.SampleRowKeysRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.v1.SampleRowKeysResponse> responseObserver) {
-              serviceImpl.sampleRowKeys(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_MUTATE_ROW,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.v1.SampleRowKeysResponse>(
+                serviceImpl, METHODID_SAMPLE_ROW_KEYS)))
+        .addMethod(
+          METHOD_MUTATE_ROW,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.v1.MutateRowRequest,
-              com.google.protobuf.Empty>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.v1.MutateRowRequest request,
-                io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-              serviceImpl.mutateRow(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_MUTATE_ROWS,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.protobuf.Empty>(
+                serviceImpl, METHODID_MUTATE_ROW)))
+        .addMethod(
+          METHOD_MUTATE_ROWS,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.v1.MutateRowsRequest,
-              com.google.bigtable.v1.MutateRowsResponse>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.v1.MutateRowsRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.v1.MutateRowsResponse> responseObserver) {
-              serviceImpl.mutateRows(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_CHECK_AND_MUTATE_ROW,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.v1.MutateRowsResponse>(
+                serviceImpl, METHODID_MUTATE_ROWS)))
+        .addMethod(
+          METHOD_CHECK_AND_MUTATE_ROW,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.v1.CheckAndMutateRowRequest,
-              com.google.bigtable.v1.CheckAndMutateRowResponse>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.v1.CheckAndMutateRowRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.v1.CheckAndMutateRowResponse> responseObserver) {
-              serviceImpl.checkAndMutateRow(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_READ_MODIFY_WRITE_ROW,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.v1.CheckAndMutateRowResponse>(
+                serviceImpl, METHODID_CHECK_AND_MUTATE_ROW)))
+        .addMethod(
+          METHOD_READ_MODIFY_WRITE_ROW,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.v1.ReadModifyWriteRowRequest,
-              com.google.bigtable.v1.Row>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.v1.ReadModifyWriteRowRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.v1.Row> responseObserver) {
-              serviceImpl.readModifyWriteRow(request, responseObserver);
-            }
-          })).build();
+              com.google.bigtable.v1.Row>(
+                serviceImpl, METHODID_READ_MODIFY_WRITE_ROW)))
+        .build();
   }
 }

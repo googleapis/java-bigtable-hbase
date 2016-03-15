@@ -93,6 +93,15 @@ public class BigtableTableServiceGrpc {
               "google.bigtable.admin.table.v1.BigtableTableService", "DeleteColumnFamily"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
+  @io.grpc.ExperimentalApi
+  public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest,
+      com.google.protobuf.Empty> METHOD_BULK_DELETE_ROWS =
+      io.grpc.MethodDescriptor.create(
+          io.grpc.MethodDescriptor.MethodType.UNARY,
+          generateFullMethodName(
+              "google.bigtable.admin.table.v1.BigtableTableService", "BulkDeleteRows"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
 
   public static BigtableTableServiceStub newStub(io.grpc.Channel channel) {
     return new BigtableTableServiceStub(channel);
@@ -133,6 +142,9 @@ public class BigtableTableServiceGrpc {
 
     public void deleteColumnFamily(com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
+
+    public void bulkDeleteRows(com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
   }
 
   public static interface BigtableTableServiceBlockingClient {
@@ -152,6 +164,8 @@ public class BigtableTableServiceGrpc {
     public com.google.bigtable.admin.table.v1.ColumnFamily updateColumnFamily(com.google.bigtable.admin.table.v1.ColumnFamily request);
 
     public com.google.protobuf.Empty deleteColumnFamily(com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest request);
+
+    public com.google.protobuf.Empty bulkDeleteRows(com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest request);
   }
 
   public static interface BigtableTableServiceFutureClient {
@@ -179,6 +193,9 @@ public class BigtableTableServiceGrpc {
 
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteColumnFamily(
         com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest request);
+
+    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> bulkDeleteRows(
+        com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest request);
   }
 
   public static class BigtableTableServiceStub extends io.grpc.stub.AbstractStub<BigtableTableServiceStub>
@@ -253,6 +270,13 @@ public class BigtableTableServiceGrpc {
       asyncUnaryCall(
           getChannel().newCall(METHOD_DELETE_COLUMN_FAMILY, getCallOptions()), request, responseObserver);
     }
+
+    @java.lang.Override
+    public void bulkDeleteRows(com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(METHOD_BULK_DELETE_ROWS, getCallOptions()), request, responseObserver);
+    }
   }
 
   public static class BigtableTableServiceBlockingStub extends io.grpc.stub.AbstractStub<BigtableTableServiceBlockingStub>
@@ -275,49 +299,55 @@ public class BigtableTableServiceGrpc {
     @java.lang.Override
     public com.google.bigtable.admin.table.v1.Table createTable(com.google.bigtable.admin.table.v1.CreateTableRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_CREATE_TABLE, getCallOptions()), request);
+          getChannel(), METHOD_CREATE_TABLE, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.admin.table.v1.ListTablesResponse listTables(com.google.bigtable.admin.table.v1.ListTablesRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_LIST_TABLES, getCallOptions()), request);
+          getChannel(), METHOD_LIST_TABLES, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.admin.table.v1.Table getTable(com.google.bigtable.admin.table.v1.GetTableRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_GET_TABLE, getCallOptions()), request);
+          getChannel(), METHOD_GET_TABLE, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.protobuf.Empty deleteTable(com.google.bigtable.admin.table.v1.DeleteTableRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_DELETE_TABLE, getCallOptions()), request);
+          getChannel(), METHOD_DELETE_TABLE, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.protobuf.Empty renameTable(com.google.bigtable.admin.table.v1.RenameTableRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_RENAME_TABLE, getCallOptions()), request);
+          getChannel(), METHOD_RENAME_TABLE, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.admin.table.v1.ColumnFamily createColumnFamily(com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_CREATE_COLUMN_FAMILY, getCallOptions()), request);
+          getChannel(), METHOD_CREATE_COLUMN_FAMILY, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.admin.table.v1.ColumnFamily updateColumnFamily(com.google.bigtable.admin.table.v1.ColumnFamily request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_UPDATE_COLUMN_FAMILY, getCallOptions()), request);
+          getChannel(), METHOD_UPDATE_COLUMN_FAMILY, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.protobuf.Empty deleteColumnFamily(com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_DELETE_COLUMN_FAMILY, getCallOptions()), request);
+          getChannel(), METHOD_DELETE_COLUMN_FAMILY, getCallOptions(), request);
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Empty bulkDeleteRows(com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest request) {
+      return blockingUnaryCall(
+          getChannel(), METHOD_BULK_DELETE_ROWS, getCallOptions(), request);
     }
   }
 
@@ -393,114 +423,158 @@ public class BigtableTableServiceGrpc {
       return futureUnaryCall(
           getChannel().newCall(METHOD_DELETE_COLUMN_FAMILY, getCallOptions()), request);
     }
+
+    @java.lang.Override
+    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> bulkDeleteRows(
+        com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(METHOD_BULK_DELETE_ROWS, getCallOptions()), request);
+    }
+  }
+
+  private static final int METHODID_CREATE_TABLE = 0;
+  private static final int METHODID_LIST_TABLES = 1;
+  private static final int METHODID_GET_TABLE = 2;
+  private static final int METHODID_DELETE_TABLE = 3;
+  private static final int METHODID_RENAME_TABLE = 4;
+  private static final int METHODID_CREATE_COLUMN_FAMILY = 5;
+  private static final int METHODID_UPDATE_COLUMN_FAMILY = 6;
+  private static final int METHODID_DELETE_COLUMN_FAMILY = 7;
+  private static final int METHODID_BULK_DELETE_ROWS = 8;
+
+  private static class MethodHandlers<Req, Resp> implements
+      io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.ServerStreamingMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.ClientStreamingMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.BidiStreamingMethod<Req, Resp> {
+    private final BigtableTableService serviceImpl;
+    private final int methodId;
+
+    public MethodHandlers(BigtableTableService serviceImpl, int methodId) {
+      this.serviceImpl = serviceImpl;
+      this.methodId = methodId;
+    }
+
+    @java.lang.SuppressWarnings("unchecked")
+    public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
+      switch (methodId) {
+        case METHODID_CREATE_TABLE:
+          serviceImpl.createTable((com.google.bigtable.admin.table.v1.CreateTableRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.Table>) responseObserver);
+          break;
+        case METHODID_LIST_TABLES:
+          serviceImpl.listTables((com.google.bigtable.admin.table.v1.ListTablesRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ListTablesResponse>) responseObserver);
+          break;
+        case METHODID_GET_TABLE:
+          serviceImpl.getTable((com.google.bigtable.admin.table.v1.GetTableRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.Table>) responseObserver);
+          break;
+        case METHODID_DELETE_TABLE:
+          serviceImpl.deleteTable((com.google.bigtable.admin.table.v1.DeleteTableRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
+          break;
+        case METHODID_RENAME_TABLE:
+          serviceImpl.renameTable((com.google.bigtable.admin.table.v1.RenameTableRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
+          break;
+        case METHODID_CREATE_COLUMN_FAMILY:
+          serviceImpl.createColumnFamily((com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ColumnFamily>) responseObserver);
+          break;
+        case METHODID_UPDATE_COLUMN_FAMILY:
+          serviceImpl.updateColumnFamily((com.google.bigtable.admin.table.v1.ColumnFamily) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ColumnFamily>) responseObserver);
+          break;
+        case METHODID_DELETE_COLUMN_FAMILY:
+          serviceImpl.deleteColumnFamily((com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
+          break;
+        case METHODID_BULK_DELETE_ROWS:
+          serviceImpl.bulkDeleteRows((com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
+          break;
+        default:
+          throw new AssertionError();
+      }
+    }
+
+    @java.lang.SuppressWarnings("unchecked")
+    public io.grpc.stub.StreamObserver<Req> invoke(
+        io.grpc.stub.StreamObserver<Resp> responseObserver) {
+      switch (methodId) {
+        default:
+          throw new AssertionError();
+      }
+    }
   }
 
   public static io.grpc.ServerServiceDefinition bindService(
       final BigtableTableService serviceImpl) {
     return io.grpc.ServerServiceDefinition.builder(SERVICE_NAME)
-      .addMethod(
-        METHOD_CREATE_TABLE,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+        .addMethod(
+          METHOD_CREATE_TABLE,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.table.v1.CreateTableRequest,
-              com.google.bigtable.admin.table.v1.Table>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.table.v1.CreateTableRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.Table> responseObserver) {
-              serviceImpl.createTable(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_LIST_TABLES,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.admin.table.v1.Table>(
+                serviceImpl, METHODID_CREATE_TABLE)))
+        .addMethod(
+          METHOD_LIST_TABLES,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.table.v1.ListTablesRequest,
-              com.google.bigtable.admin.table.v1.ListTablesResponse>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.table.v1.ListTablesRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ListTablesResponse> responseObserver) {
-              serviceImpl.listTables(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_GET_TABLE,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.admin.table.v1.ListTablesResponse>(
+                serviceImpl, METHODID_LIST_TABLES)))
+        .addMethod(
+          METHOD_GET_TABLE,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.table.v1.GetTableRequest,
-              com.google.bigtable.admin.table.v1.Table>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.table.v1.GetTableRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.Table> responseObserver) {
-              serviceImpl.getTable(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_DELETE_TABLE,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.admin.table.v1.Table>(
+                serviceImpl, METHODID_GET_TABLE)))
+        .addMethod(
+          METHOD_DELETE_TABLE,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.table.v1.DeleteTableRequest,
-              com.google.protobuf.Empty>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.table.v1.DeleteTableRequest request,
-                io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-              serviceImpl.deleteTable(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_RENAME_TABLE,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.protobuf.Empty>(
+                serviceImpl, METHODID_DELETE_TABLE)))
+        .addMethod(
+          METHOD_RENAME_TABLE,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.table.v1.RenameTableRequest,
-              com.google.protobuf.Empty>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.table.v1.RenameTableRequest request,
-                io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-              serviceImpl.renameTable(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_CREATE_COLUMN_FAMILY,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.protobuf.Empty>(
+                serviceImpl, METHODID_RENAME_TABLE)))
+        .addMethod(
+          METHOD_CREATE_COLUMN_FAMILY,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest,
-              com.google.bigtable.admin.table.v1.ColumnFamily>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ColumnFamily> responseObserver) {
-              serviceImpl.createColumnFamily(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_UPDATE_COLUMN_FAMILY,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.admin.table.v1.ColumnFamily>(
+                serviceImpl, METHODID_CREATE_COLUMN_FAMILY)))
+        .addMethod(
+          METHOD_UPDATE_COLUMN_FAMILY,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.table.v1.ColumnFamily,
-              com.google.bigtable.admin.table.v1.ColumnFamily>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.table.v1.ColumnFamily request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ColumnFamily> responseObserver) {
-              serviceImpl.updateColumnFamily(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_DELETE_COLUMN_FAMILY,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.admin.table.v1.ColumnFamily>(
+                serviceImpl, METHODID_UPDATE_COLUMN_FAMILY)))
+        .addMethod(
+          METHOD_DELETE_COLUMN_FAMILY,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest,
-              com.google.protobuf.Empty>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest request,
-                io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-              serviceImpl.deleteColumnFamily(request, responseObserver);
-            }
-          })).build();
+              com.google.protobuf.Empty>(
+                serviceImpl, METHODID_DELETE_COLUMN_FAMILY)))
+        .addMethod(
+          METHOD_BULK_DELETE_ROWS,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest,
+              com.google.protobuf.Empty>(
+                serviceImpl, METHODID_BULK_DELETE_ROWS)))
+        .build();
   }
 }

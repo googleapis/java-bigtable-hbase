@@ -251,43 +251,43 @@ public class BigtableClusterServiceGrpc {
     @java.lang.Override
     public com.google.bigtable.admin.cluster.v1.ListZonesResponse listZones(com.google.bigtable.admin.cluster.v1.ListZonesRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_LIST_ZONES, getCallOptions()), request);
+          getChannel(), METHOD_LIST_ZONES, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.admin.cluster.v1.Cluster getCluster(com.google.bigtable.admin.cluster.v1.GetClusterRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_GET_CLUSTER, getCallOptions()), request);
+          getChannel(), METHOD_GET_CLUSTER, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.admin.cluster.v1.ListClustersResponse listClusters(com.google.bigtable.admin.cluster.v1.ListClustersRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_LIST_CLUSTERS, getCallOptions()), request);
+          getChannel(), METHOD_LIST_CLUSTERS, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.admin.cluster.v1.Cluster createCluster(com.google.bigtable.admin.cluster.v1.CreateClusterRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_CREATE_CLUSTER, getCallOptions()), request);
+          getChannel(), METHOD_CREATE_CLUSTER, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.bigtable.admin.cluster.v1.Cluster updateCluster(com.google.bigtable.admin.cluster.v1.Cluster request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_UPDATE_CLUSTER, getCallOptions()), request);
+          getChannel(), METHOD_UPDATE_CLUSTER, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.protobuf.Empty deleteCluster(com.google.bigtable.admin.cluster.v1.DeleteClusterRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_DELETE_CLUSTER, getCallOptions()), request);
+          getChannel(), METHOD_DELETE_CLUSTER, getCallOptions(), request);
     }
 
     @java.lang.Override
     public com.google.longrunning.Operation undeleteCluster(com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest request) {
       return blockingUnaryCall(
-          getChannel().newCall(METHOD_UNDELETE_CLUSTER, getCallOptions()), request);
+          getChannel(), METHOD_UNDELETE_CLUSTER, getCallOptions(), request);
     }
   }
 
@@ -358,99 +358,125 @@ public class BigtableClusterServiceGrpc {
     }
   }
 
+  private static final int METHODID_LIST_ZONES = 0;
+  private static final int METHODID_GET_CLUSTER = 1;
+  private static final int METHODID_LIST_CLUSTERS = 2;
+  private static final int METHODID_CREATE_CLUSTER = 3;
+  private static final int METHODID_UPDATE_CLUSTER = 4;
+  private static final int METHODID_DELETE_CLUSTER = 5;
+  private static final int METHODID_UNDELETE_CLUSTER = 6;
+
+  private static class MethodHandlers<Req, Resp> implements
+      io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.ServerStreamingMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.ClientStreamingMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.BidiStreamingMethod<Req, Resp> {
+    private final BigtableClusterService serviceImpl;
+    private final int methodId;
+
+    public MethodHandlers(BigtableClusterService serviceImpl, int methodId) {
+      this.serviceImpl = serviceImpl;
+      this.methodId = methodId;
+    }
+
+    @java.lang.SuppressWarnings("unchecked")
+    public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
+      switch (methodId) {
+        case METHODID_LIST_ZONES:
+          serviceImpl.listZones((com.google.bigtable.admin.cluster.v1.ListZonesRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.ListZonesResponse>) responseObserver);
+          break;
+        case METHODID_GET_CLUSTER:
+          serviceImpl.getCluster((com.google.bigtable.admin.cluster.v1.GetClusterRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster>) responseObserver);
+          break;
+        case METHODID_LIST_CLUSTERS:
+          serviceImpl.listClusters((com.google.bigtable.admin.cluster.v1.ListClustersRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.ListClustersResponse>) responseObserver);
+          break;
+        case METHODID_CREATE_CLUSTER:
+          serviceImpl.createCluster((com.google.bigtable.admin.cluster.v1.CreateClusterRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster>) responseObserver);
+          break;
+        case METHODID_UPDATE_CLUSTER:
+          serviceImpl.updateCluster((com.google.bigtable.admin.cluster.v1.Cluster) request,
+              (io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster>) responseObserver);
+          break;
+        case METHODID_DELETE_CLUSTER:
+          serviceImpl.deleteCluster((com.google.bigtable.admin.cluster.v1.DeleteClusterRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
+          break;
+        case METHODID_UNDELETE_CLUSTER:
+          serviceImpl.undeleteCluster((com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.longrunning.Operation>) responseObserver);
+          break;
+        default:
+          throw new AssertionError();
+      }
+    }
+
+    @java.lang.SuppressWarnings("unchecked")
+    public io.grpc.stub.StreamObserver<Req> invoke(
+        io.grpc.stub.StreamObserver<Resp> responseObserver) {
+      switch (methodId) {
+        default:
+          throw new AssertionError();
+      }
+    }
+  }
+
   public static io.grpc.ServerServiceDefinition bindService(
       final BigtableClusterService serviceImpl) {
     return io.grpc.ServerServiceDefinition.builder(SERVICE_NAME)
-      .addMethod(
-        METHOD_LIST_ZONES,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+        .addMethod(
+          METHOD_LIST_ZONES,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.cluster.v1.ListZonesRequest,
-              com.google.bigtable.admin.cluster.v1.ListZonesResponse>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.cluster.v1.ListZonesRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.ListZonesResponse> responseObserver) {
-              serviceImpl.listZones(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_GET_CLUSTER,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.admin.cluster.v1.ListZonesResponse>(
+                serviceImpl, METHODID_LIST_ZONES)))
+        .addMethod(
+          METHOD_GET_CLUSTER,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.cluster.v1.GetClusterRequest,
-              com.google.bigtable.admin.cluster.v1.Cluster>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.cluster.v1.GetClusterRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster> responseObserver) {
-              serviceImpl.getCluster(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_LIST_CLUSTERS,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.admin.cluster.v1.Cluster>(
+                serviceImpl, METHODID_GET_CLUSTER)))
+        .addMethod(
+          METHOD_LIST_CLUSTERS,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.cluster.v1.ListClustersRequest,
-              com.google.bigtable.admin.cluster.v1.ListClustersResponse>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.cluster.v1.ListClustersRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.ListClustersResponse> responseObserver) {
-              serviceImpl.listClusters(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_CREATE_CLUSTER,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.admin.cluster.v1.ListClustersResponse>(
+                serviceImpl, METHODID_LIST_CLUSTERS)))
+        .addMethod(
+          METHOD_CREATE_CLUSTER,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.cluster.v1.CreateClusterRequest,
-              com.google.bigtable.admin.cluster.v1.Cluster>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.cluster.v1.CreateClusterRequest request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster> responseObserver) {
-              serviceImpl.createCluster(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_UPDATE_CLUSTER,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.admin.cluster.v1.Cluster>(
+                serviceImpl, METHODID_CREATE_CLUSTER)))
+        .addMethod(
+          METHOD_UPDATE_CLUSTER,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.cluster.v1.Cluster,
-              com.google.bigtable.admin.cluster.v1.Cluster>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.cluster.v1.Cluster request,
-                io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster> responseObserver) {
-              serviceImpl.updateCluster(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_DELETE_CLUSTER,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.bigtable.admin.cluster.v1.Cluster>(
+                serviceImpl, METHODID_UPDATE_CLUSTER)))
+        .addMethod(
+          METHOD_DELETE_CLUSTER,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.cluster.v1.DeleteClusterRequest,
-              com.google.protobuf.Empty>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.cluster.v1.DeleteClusterRequest request,
-                io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-              serviceImpl.deleteCluster(request, responseObserver);
-            }
-          }))
-      .addMethod(
-        METHOD_UNDELETE_CLUSTER,
-        asyncUnaryCall(
-          new io.grpc.stub.ServerCalls.UnaryMethod<
+              com.google.protobuf.Empty>(
+                serviceImpl, METHODID_DELETE_CLUSTER)))
+        .addMethod(
+          METHOD_UNDELETE_CLUSTER,
+          asyncUnaryCall(
+            new MethodHandlers<
               com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest,
-              com.google.longrunning.Operation>() {
-            @java.lang.Override
-            public void invoke(
-                com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest request,
-                io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
-              serviceImpl.undeleteCluster(request, responseObserver);
-            }
-          })).build();
+              com.google.longrunning.Operation>(
+                serviceImpl, METHODID_UNDELETE_CLUSTER)))
+        .build();
   }
 }
