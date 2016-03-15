@@ -55,7 +55,8 @@ import com.google.bigtable.v1.MutateRowsResponse.Builder;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
+import com.google.cloud.bigtable.grpc.async.RpcThrottler;
+import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -111,11 +112,11 @@ public class TestBigtableBufferedMutator {
   }
 
   private BigtableBufferedMutator createMutator(Configuration configuration) throws IOException {
-    HeapSizeManager heapSizeManager =
-        new HeapSizeManager(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
-            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT) {
+    RpcThrottler rpcThrottler =
+        new RpcThrottler(new ResourceLimiter(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
+            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT)) {
       @Override
-      public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, Long id) {
+      public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, long id) {
         FutureCallback<T> callback = super.addCallback(future, id);
         futureCallbacks.add(callback);
         return callback;
@@ -137,7 +138,7 @@ public class TestBigtableBufferedMutator {
       configuration,
       options,
       listener,
-      heapSizeManager,
+        rpcThrottler,
       executorService);
   }
 

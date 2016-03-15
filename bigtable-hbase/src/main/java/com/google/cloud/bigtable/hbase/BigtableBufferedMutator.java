@@ -46,7 +46,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
-import com.google.cloud.bigtable.grpc.async.HeapSizeManager;
+import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -115,7 +115,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private final String host;
 
-  private final HeapSizeManager heapSizeManager;
+  private final RpcThrottler rpcThrottler;
   private final AsyncExecutor asyncExecutor;
   private final ExecutorService executorService;
   private final BigtableOptions options;
@@ -168,7 +168,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * @param configuration For Additional configuration. TODO: move this to options
    * @param options BigtableOptions
    * @param listener Handles exceptions. By default, it just throws the exception.
-   * @param heapSizeManager Tracks how much memory is used by the requests and how many outstanding
+   * @param rpcThrottler Tracks how much memory is used by the requests and how many outstanding
    *          operations there are.
    * @param asyncRpcExecutorService Optional performance improvement for adapting hbase objects and
    *          starting the async operations on the BigtableDataClient.
@@ -179,15 +179,15 @@ public class BigtableBufferedMutator implements BufferedMutator {
       Configuration configuration,
       BigtableOptions options,
       BufferedMutator.ExceptionListener listener,
-      HeapSizeManager heapSizeManager,
+      RpcThrottler rpcThrottler,
       ExecutorService asyncRpcExecutorService) {
     this.adapter = adapter;
     this.configuration = configuration;
     this.exceptionListener = listener;
     this.host = options.getDataHost().toString();
-    this.asyncExecutor = new AsyncExecutor(client, heapSizeManager);
+    this.asyncExecutor = new AsyncExecutor(client, rpcThrottler);
     this.options = options;
-    this.heapSizeManager = heapSizeManager;
+    this.rpcThrottler = rpcThrottler;
     this.executorService = asyncRpcExecutorService;
   }
 
@@ -329,7 +329,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
         }
       } else {
         initializeAsyncMutators();
-        long operationId = heapSizeManager.registerOperationWithHeapSize(mutation.heapSize());
+        long operationId = rpcThrottler.registerOperationWithHeapSize(mutation.heapSize());
         operation = new MutationOperation(mutation, operationId);
         if (executorService != null && options.getAsyncMutatorCount() > 0) {
           asyncOperationsQueue.add(operation);

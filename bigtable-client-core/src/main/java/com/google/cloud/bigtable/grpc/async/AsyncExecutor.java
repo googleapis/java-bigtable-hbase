@@ -113,21 +113,21 @@ public class AsyncExecutor {
       };
 
   private final BigtableDataClient client;
-  private final HeapSizeManager sizeManager;
+  private final RpcThrottler sizeManager;
 
-  public AsyncExecutor(BigtableDataClient client, HeapSizeManager heapSizeManager) {
+  public AsyncExecutor(BigtableDataClient client, RpcThrottler rpcThrottler) {
     this.client = client;
-    this.sizeManager = heapSizeManager;
+    this.sizeManager = rpcThrottler;
   }
 
   /**
    * Performs a {@link BigtableDataClient#mutateRowAsync(MutateRowRequest)} on the
    * {@link MutateRowRequest} given an operationId generated from
-   * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
+   * {@link RpcThrottler#registerOperationWithHeapSize(long)}.
    *
    * @param request The {@link MutateRowRequest} to send.
    * @param operationId The Id generated from
-   *          {@link HeapSizeManager#registerOperationWithHeapSize(long)} that will be released when
+   *          {@link RpcThrottler#registerOperationWithHeapSize(long)} that will be released when
    *          the mutate operation is completed.
    *
    * @return a {@link ListenableFuture} which can be listened to for completion events.
@@ -139,11 +139,11 @@ public class AsyncExecutor {
   /**
    * Performs a {@link BigtableDataClient#mutateRowsAsync(MutateRowsRequest)} on the
    * {@link MutateRowsRequest} given an operationId generated from
-   * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
+   * {@link RpcThrottler#registerOperationWithHeapSize(long)}.
    *
    * @param request The {@link MutateRowsRequest} to send.
    * @param operationId The Id generated from
-   *          {@link HeapSizeManager#registerOperationWithHeapSize(long)} that will be released when
+   *          {@link RpcThrottler#registerOperationWithHeapSize(long)} that will be released when
    *          the mutate operation is completed.
    *
    * @return a {@link ListenableFuture} which can be listened to for completion events.
@@ -155,11 +155,11 @@ public class AsyncExecutor {
   /**
    * Performs a {@link BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest)} on the
    * {@link CheckAndMutateRowRequest} given an operationId generated from
-   * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
+   * {@link RpcThrottler#registerOperationWithHeapSize(long)}.
    *
    * @param request The {@link CheckAndMutateRowRequest} to send.
    * @param operationId The Id generated from
-   *          {@link HeapSizeManager#registerOperationWithHeapSize(long)} that will be released when
+   *          {@link RpcThrottler#registerOperationWithHeapSize(long)} that will be released when
    *          the checkAndMutateRow operation is completed.
    *
    * @return a {@link ListenableFuture} which can be listened to for completion events.
@@ -172,11 +172,11 @@ public class AsyncExecutor {
   /**
    * Performs a {@link BigtableDataClient#readModifyWriteRowAsync(ReadModifyWriteRowRequest)} on the
    * {@link ReadModifyWriteRowRequest} given an operationId generated from
-   * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
+   * {@link RpcThrottler#registerOperationWithHeapSize(long)}.
    *
    * @param request The {@link ReadModifyWriteRowRequest} to send.
    * @param operationId The Id generated from
-   *          {@link HeapSizeManager#registerOperationWithHeapSize(long)} that will be released when
+   *          {@link RpcThrottler#registerOperationWithHeapSize(long)} that will be released when
    *          the readModifyWriteRowAsync operation is completed.
    *
    * @return a {@link ListenableFuture} which can be listened to for completion events.
@@ -189,7 +189,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
    * {@link ReadRowsRequest} given an operationId generated from
-   * {@link HeapSizeManager#registerOperationWithHeapSize(long)}.
+   * {@link RpcThrottler#registerOperationWithHeapSize(long)}.
    *
    * @param request The {@link ReadRowsRequest} to send.
    *
@@ -202,7 +202,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link BigtableDataClient#mutateRowAsync(MutateRowRequest)} on the
    * {@link MutateRowRequest}. This method may block if
-   * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
+   * {@link RpcThrottler#registerOperationWithHeapSize(long)} blocks.
    *
    * @param request The {@link MutateRowRequest} to send.
    *
@@ -216,7 +216,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link BigtableDataClient#mutateRowsAsync(MutateRowsRequest)} on the
    * {@link MutateRowsRequest}. This method may block if
-   * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
+   * {@link RpcThrottler#registerOperationWithHeapSize(long)} blocks.
    * @param request The {@link MutateRowRequest} to send.
    * @return a {@link ListenableFuture} which can be listened to for completion events.
    */
@@ -228,7 +228,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link BigtableDataClient#checkAndMutateRowAsync(CheckAndMutateRowRequest)} on the
    * {@link CheckAndMutateRowRequest}. This method may block if
-   * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
+   * {@link RpcThrottler#registerOperationWithHeapSize(long)} blocks.
    *
    * @param request The {@link CheckAndMutateRowRequest} to send.
    *
@@ -242,7 +242,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link BigtableDataClient#readModifyWriteRow(ReadModifyWriteRowRequest)} on the
    * {@link ReadModifyWriteRowRequest}. This method may block if
-   * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
+   * {@link RpcThrottler#registerOperationWithHeapSize(long)} blocks.
    *
    * @param request The {@link ReadModifyWriteRowRequest} to send.
    *
@@ -256,7 +256,7 @@ public class AsyncExecutor {
   /**
    * Performs a {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
    * {@link ReadRowsRequest}. This method may block if
-   * {@link HeapSizeManager#registerOperationWithHeapSize(long)} blocks.
+   * {@link RpcThrottler#registerOperationWithHeapSize(long)} blocks.
    *
    * @param request The {@link ReadRowsRequest} to send.
    *
@@ -288,15 +288,15 @@ public class AsyncExecutor {
   }
 
   /**
-   * Waits until all operations managed by the {@link HeapSizeManager} complete. See
-   * {@link HeapSizeManager#flush()} for more information.
+   * Waits until all operations managed by the {@link RpcThrottler} complete. See
+   * {@link RpcThrottler#awaitCompletion()} for more information.
    *
    * @throws IOException if something goes wrong.
    */
   public void flush() throws IOException {
     LOG.trace("Flushing");
     try {
-      sizeManager.flush();
+      sizeManager.awaitCompletion();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Batch operations were interrupted.");

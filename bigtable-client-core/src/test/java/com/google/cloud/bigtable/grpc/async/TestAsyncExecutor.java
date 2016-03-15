@@ -60,16 +60,16 @@ public class TestAsyncExecutor {
   private ListenableFuture future;
 
   private AsyncExecutor underTest;
-  private HeapSizeManager heapSizeManager;
+  private RpcThrottler rpcThrottler;
   private List<FutureCallback<?>> callbacks;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     callbacks = new ArrayList<>();
-    heapSizeManager = new HeapSizeManager(1000, 10){
+    rpcThrottler = new RpcThrottler(new ResourceLimiter(1000, 10)) {
       @Override
-      public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, Long id) {
+      public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, long id) {
         FutureCallback<T> callback = super.addCallback(future, id);
         synchronized (callbacks) {
           callbacks.add(callback);
@@ -78,7 +78,7 @@ public class TestAsyncExecutor {
       }
     };
 
-    underTest = new AsyncExecutor(client, heapSizeManager);
+    underTest = new AsyncExecutor(client, rpcThrottler);
   }
 
   @Test
@@ -136,7 +136,7 @@ public class TestAsyncExecutor {
   @Test
   /**
    * Tests to make sure that mutateRowAsync will perform a wait() if there is a bigger count of RPCs
-   * than the maximum of the HeapSizeManager.
+   * than the maximum of the RpcThrottler.
    */
   public void testRegisterWaitsAfterCountLimit() throws Exception {
     ExecutorService testExecutor = Executors.newCachedThreadPool();
@@ -168,7 +168,7 @@ public class TestAsyncExecutor {
   @Test
   /**
    * Tests to make sure that mutateRowAsync will perform a wait() if there is a bigger accumulated
-   * serialized size of RPCs than the maximum of the HeapSizeManager.
+   * serialized size of RPCs than the maximum of the RpcThrottler.
    */
   public void testRegisterWaitsAfterSizeLimit() throws Exception {
     ExecutorService testExecutor = Executors.newCachedThreadPool();
