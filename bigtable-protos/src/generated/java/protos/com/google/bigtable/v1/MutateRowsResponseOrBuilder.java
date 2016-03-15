@@ -13,6 +13,9 @@ public interface MutateRowsResponseOrBuilder extends
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
+   * Depending on how requests are batched during execution, it is possible
+   * for one Entry to fail due to an error with another Entry. In the event
+   * that this occurs, the same error will be reported for both entries.
    * </pre>
    */
   java.util.List<com.google.rpc.Status> 
@@ -23,6 +26,9 @@ public interface MutateRowsResponseOrBuilder extends
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
+   * Depending on how requests are batched during execution, it is possible
+   * for one Entry to fail due to an error with another Entry. In the event
+   * that this occurs, the same error will be reported for both entries.
    * </pre>
    */
   com.google.rpc.Status getStatuses(int index);
@@ -32,6 +38,9 @@ public interface MutateRowsResponseOrBuilder extends
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
+   * Depending on how requests are batched during execution, it is possible
+   * for one Entry to fail due to an error with another Entry. In the event
+   * that this occurs, the same error will be reported for both entries.
    * </pre>
    */
   int getStatusesCount();
@@ -41,6 +50,9 @@ public interface MutateRowsResponseOrBuilder extends
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
+   * Depending on how requests are batched during execution, it is possible
+   * for one Entry to fail due to an error with another Entry. In the event
+   * that this occurs, the same error will be reported for both entries.
    * </pre>
    */
   java.util.List<? extends com.google.rpc.StatusOrBuilder> 
@@ -51,6 +63,9 @@ public interface MutateRowsResponseOrBuilder extends
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
+   * Depending on how requests are batched during execution, it is possible
+   * for one Entry to fail due to an error with another Entry. In the event
+   * that this occurs, the same error will be reported for both entries.
    * </pre>
    */
   com.google.rpc.StatusOrBuilder getStatusesOrBuilder(

@@ -24,7 +24,7 @@ public final class BigtableTableServicesProto {
       "able_table_data.proto\032Dgoogle/bigtable/a" +
       "dmin/table/v1/bigtable_table_service_mes" +
       "sages.proto\032\033google/protobuf/empty.proto" +
-      "2\211\013\n\024BigtableTableService\022\244\001\n\013CreateTabl" +
+      "2\276\014\n\024BigtableTableService\022\244\001\n\013CreateTabl" +
       "e\0222.google.bigtable.admin.table.v1.Creat" +
       "eTableRequest\032%.google.bigtable.admin.ta",
       "ble.v1.Table\":\202\323\344\223\0024\"//v1/{name=projects" +
@@ -59,9 +59,13 @@ public final class BigtableTableServicesProto {
       "admin.table.v1.DeleteColumnFamilyRequest",
       "\032\026.google.protobuf.Empty\"J\202\323\344\223\002D*B/v1/{n" +
       "ame=projects/*/zones/*/clusters/*/tables" +
-      "/*/columnFamilies/*}BB\n\"com.google.bigta" +
-      "ble.admin.table.v1B\032BigtableTableService" +
-      "sProtoP\001b\006proto3"
+      "/*/columnFamilies/*}\022\262\001\n\016BulkDeleteRows\022" +
+      "5.google.bigtable.admin.table.v1.BulkDel" +
+      "eteRowsRequest\032\026.google.protobuf.Empty\"Q" +
+      "\202\323\344\223\002K\"F/v1/{table_name=projects/*/zones" +
+      "/*/clusters/*/tables/*}:bulkDeleteRows:\001" +
+      "*BB\n\"com.google.bigtable.admin.table.v1B" +
+      "\032BigtableTableServicesProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

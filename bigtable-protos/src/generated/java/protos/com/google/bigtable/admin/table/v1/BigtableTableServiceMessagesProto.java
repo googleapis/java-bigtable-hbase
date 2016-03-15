@@ -48,6 +48,11 @@ public final class BigtableTableServiceMessagesProto {
   static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_table_v1_DeleteColumnFamilyRequest_fieldAccessorTable;
+  static com.google.protobuf.Descriptors.Descriptor
+    internal_static_google_bigtable_admin_table_v1_BulkDeleteRowsRequest_descriptor;
+  static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_google_bigtable_admin_table_v1_BulkDeleteRowsRequest_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -74,9 +79,12 @@ public final class BigtableTableServiceMessagesProto {
       "\022\014\n\004name\030\001 \001(\t\022\030\n\020column_family_id\030\002 \001(\t" +
       "\022C\n\rcolumn_family\030\003 \001(\0132,.google.bigtabl" +
       "e.admin.table.v1.ColumnFamily\")\n\031DeleteC" +
-      "olumnFamilyRequest\022\014\n\004name\030\001 \001(\tBI\n\"com." +
-      "google.bigtable.admin.table.v1B!Bigtable" +
-      "TableServiceMessagesProtoP\001b\006proto3"
+      "olumnFamilyRequest\022\014\n\004name\030\001 \001(\t\"u\n\025Bulk" +
+      "DeleteRowsRequest\022\022\n\ntable_name\030\001 \001(\t\022\030\n" +
+      "\016row_key_prefix\030\002 \001(\014H\000\022$\n\032delete_all_da",
+      "ta_from_table\030\003 \001(\010H\000B\010\n\006targetBI\n\"com.g" +
+      "oogle.bigtable.admin.table.v1B!BigtableT" +
+      "ableServiceMessagesProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -139,6 +147,12 @@ public final class BigtableTableServiceMessagesProto {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_admin_table_v1_DeleteColumnFamilyRequest_descriptor,
         new java.lang.String[] { "Name", });
+    internal_static_google_bigtable_admin_table_v1_BulkDeleteRowsRequest_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_google_bigtable_admin_table_v1_BulkDeleteRowsRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_google_bigtable_admin_table_v1_BulkDeleteRowsRequest_descriptor,
+        new java.lang.String[] { "TableName", "RowKeyPrefix", "DeleteAllDataFromTable", "Target", });
     com.google.bigtable.admin.table.v1.BigtableTableDataProto.getDescriptor();
   }
 

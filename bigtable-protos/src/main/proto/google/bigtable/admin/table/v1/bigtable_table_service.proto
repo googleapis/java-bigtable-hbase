@@ -71,4 +71,9 @@ service BigtableTableService {
   rpc DeleteColumnFamily(DeleteColumnFamilyRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = { delete: "/v1/{name=projects/*/zones/*/clusters/*/tables/*/columnFamilies/*}" };
   }
+
+  // Delete all rows in a table corresponding to a particular prefix
+  rpc BulkDeleteRows(BulkDeleteRowsRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { post: "/v1/{table_name=projects/*/zones/*/clusters/*/tables/*}:bulkDeleteRows" body: "*" };
+  }
 }
