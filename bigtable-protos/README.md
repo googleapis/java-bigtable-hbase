@@ -67,8 +67,11 @@ there are plenty of answers on StackOverflow
 for protobuf installation requirements.  
 
 Run the following:
-```mvn -P generateProtos package
-mvn -P generateServices package```
+
+```
+mvn -P generateProtos package
+mvn -P generateServices package
+```
 
 # Generating the Python protos
 
