@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest;
 import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
 import com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest;
@@ -61,6 +62,11 @@ public interface BigtableTableAdminClient {
    * Permanently deletes a specified column family and all of its data.
    */
   void deleteColumnFamily(DeleteColumnFamilyRequest request);
+
+  /**
+   * Permanently deletes all rows in a range.
+   */
+  void deleteRowRange(BulkDeleteRowsRequest request);
 
   /**
    * Changes the name of a specified table.

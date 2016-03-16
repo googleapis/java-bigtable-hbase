@@ -55,6 +55,7 @@ import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
+import com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest;
 import com.google.bigtable.admin.table.v1.ColumnFamily;
 import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
@@ -74,6 +75,7 @@ import com.google.cloud.bigtable.hbase.adapters.ColumnFamilyFormatter;
 import com.google.cloud.bigtable.hbase.adapters.TableAdapter;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.google.protobuf.ByteString;
 
 public abstract class AbstractBigtableAdmin implements Admin {
 
@@ -611,25 +613,31 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   @Override
   public void truncateTable(TableName tableName, boolean preserveSplits) throws IOException {
-    byte[][] splitKeys = null;
-    if (preserveSplits) {
-      splitKeys = getSplits(tableName);
+    if (!preserveSplits) {
+      LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
-    HTableDescriptor tableDescriptor = getTableDescriptor(tableName);
-    LOG.info("Deleting table %s for truncation.", tableName);
-    deleteTable(tableName);
-    LOG.info("Recreating table %s for truncation", tableName);
-    createTable(tableDescriptor, splitKeys);
+    issueBulkDelete(tableName, BulkDeleteRowsRequest.newBuilder().setDeleteAllDataFromTable(true));
+    disabledTables.remove(tableName);
   }
 
-  private byte[][] getSplits(TableName tableName) throws IOException {
-    try (RegionLocator regionLocator = connection.getRegionLocator(tableName)) {
-      List<HRegionLocation> allRegionLocations = regionLocator.getAllRegionLocations();
-      byte[][] splits = new byte[allRegionLocations.size() - 1][];
-      for (int i = 0; i < allRegionLocations.size() - 1; i++) {
-        splits[i] = allRegionLocations.get(i).getRegionInfo().getEndKey();
-      }
-      return splits;
+  public void deleteByPrefix(TableName tableName, String prefix) throws IOException {
+    issueBulkDelete(
+        tableName,
+        BulkDeleteRowsRequest.newBuilder()
+            .setDeleteAllDataFromTable(false)
+            .setRowKeyPrefix(ByteString.copyFrom(Bytes.toBytes(prefix))));
+  }
+
+  private void issueBulkDelete(TableName tableName, BulkDeleteRowsRequest.Builder deleteRequest)
+      throws IOException {
+    try {
+      bigtableTableAdminClient.deleteRowRange(
+          deleteRequest
+              .setTableName(options.getClusterName().toTableNameStr(tableName.getNameAsString()))
+              .build());
+    } catch (Throwable throwable) {
+      throw new IOException(
+          String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);
     }
   }
 

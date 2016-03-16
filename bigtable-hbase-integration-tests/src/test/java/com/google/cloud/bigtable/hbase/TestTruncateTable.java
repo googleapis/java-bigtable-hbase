@@ -60,7 +60,10 @@ public class TestTruncateTable extends AbstractTest {
       assertFalse(table.exists(new Get(rowKey)));
     } finally {
       if (admin.tableExists(tableName)) {
-        admin.disableTable(tableName);
+        if (admin.isTableEnabled(tableName)) {
+          // The table may or may not be enabled, depending on the success of truncate table.
+          admin.disableTable(tableName);
+        }
         admin.deleteTable(tableName);
       }
     }
@@ -100,7 +103,10 @@ public class TestTruncateTable extends AbstractTest {
       testSpllits(tableName, splits);
     } finally {
       if (admin.tableExists(tableName)) {
-        admin.disableTable(tableName);
+        if (admin.isTableEnabled(tableName)) {
+          // The table may or may not be enabled, depending on the success of truncate table.
+          admin.disableTable(tableName);
+        }
         admin.deleteTable(tableName);
       }
     }
