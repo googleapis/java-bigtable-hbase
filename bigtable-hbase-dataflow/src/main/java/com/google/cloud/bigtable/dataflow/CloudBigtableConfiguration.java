@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.dataflow;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -112,9 +111,6 @@ public class CloudBigtableConfiguration implements Serializable {
   // Not final due to serialization of CloudBigtableScanConfiguration.
   private Map<String, String> configuration;
 
-  // Transient so we make sure to re-resolve after deserialization
-  private transient Configuration hbaseConfig;
-
   // Used for serialization of CloudBigtableScanConfiguration.
   CloudBigtableConfiguration() {
   }
@@ -179,36 +175,19 @@ public class CloudBigtableConfiguration implements Serializable {
    * Converts the {@link CloudBigtableConfiguration} to an HBase {@link Configuration}.
    * @return The {@link Configuration}.
    */
-  public synchronized Configuration toHBaseConfig() throws IOException {
-    if (hbaseConfig == null) {
-      hbaseConfig = new Configuration(false);
+  public Configuration toHBaseConfig() {
+    Configuration config = new Configuration(false);
 
-      // This setting can potentially decrease performance for large scale writes. However, this
-      // setting prevents problems that occur when streaming Sources, such as PubSub, are used.
-      // To override this behavior, call:
-      //    Builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY,
-      //                              BigtableOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
-      hbaseConfig.set(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, "0");
-      for (Entry<String, String> entry : configuration.entrySet()) {
-        hbaseConfig.set(entry.getKey(), entry.getValue());
-      }
-
-      // TODO Stop caching IP addresses once we have fixed the issue with GRPC
-      // reconnecting to invalid IPv6 addresses after idle connection times out.
-      String dataHost = hbaseConfig.get(BigtableOptionsFactory.BIGTABLE_DATA_HOST_KEY,
-          BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT);
-      InetAddress dataHostAddress = InetAddress.getByName(dataHost);
-      hbaseConfig.set(BigtableOptionsFactory.BIGTABLE_DATA_IP_OVERRIDE_KEY,
-          dataHostAddress.getHostAddress());
-
-      String adminHost = hbaseConfig.get(BigtableOptionsFactory.BIGTABLE_TABLE_ADMIN_HOST_KEY,
-          BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT);
-      InetAddress adminHostAddress = InetAddress.getByName(adminHost);
-      hbaseConfig.set(BigtableOptionsFactory.BIGTABLE_ADMIN_IP_OVERRIDE_KEY,
-          adminHostAddress.getHostAddress());
+    // This setting can potentially decrease performance for large scale writes. However, this
+    // setting prevents problems that occur when streaming Sources, such as PubSub, are used.
+    // To override this behavior, call:
+    //    Builder.withConfiguration(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, 
+    //                              BigtableOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
+    config.set(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, "0");
+    for (Entry<String, String> entry : configuration.entrySet()) {
+      config.set(entry.getKey(), entry.getValue());
     }
-
-    return hbaseConfig;
+    return config;
   }
 
   /**
