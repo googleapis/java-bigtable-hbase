@@ -240,7 +240,7 @@ public class BigtableSession implements Closeable {
       headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
       headerInterceptors = headerInterceptorBuilder.build();
 
-      ChannelPool dataChannel = createChannelPool(options.getDataHost(), options.getDataIpOverride());
+      ChannelPool dataChannel = createChannelPool(options.getDataHost());
 
       BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
@@ -327,8 +327,7 @@ public class BigtableSession implements Closeable {
 
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
-      ManagedChannel channel =
-          createChannelPool(options.getTableAdminHost(), options.getAdminIpOverride());
+      ManagedChannel channel = createChannelPool(options.getTableAdminHost());
       tableAdminClient = new BigtableTableAdminGrpcClient(channel);
     }
     return tableAdminClient;
@@ -336,8 +335,7 @@ public class BigtableSession implements Closeable {
 
   public synchronized BigtableClusterAdminClient getClusterAdminClient() throws IOException {
     if (this.clusterAdminClient == null) {
-      ManagedChannel channel =
-          createChannelPool(options.getClusterAdminHost(), null);
+      ManagedChannel channel = createChannelPool(options.getClusterAdminHost());
       this.clusterAdminClient = new BigtableClusterAdminGrpcClient(channel);
     }
 
@@ -349,12 +347,11 @@ public class BigtableSession implements Closeable {
    * Create a new {@link ChannelPool} of the given size, with auth headers and user agent interceptors.
    * </p>
    */
-  protected ChannelPool createChannelPool(
-      final String hostString, @Nullable final String ipOverride) throws IOException {
+  protected ChannelPool createChannelPool(final String hostString) throws IOException {
     ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
-        return createNettyChannel(hostString, ipOverride);
+        return createNettyChannel(hostString);
       }
     };
     ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory);
@@ -362,25 +359,13 @@ public class BigtableSession implements Closeable {
     return channelPool;
   }
 
-  private InetAddress getAddressFromIp(String hostString, String ipOverride) throws IOException {
-    InetAddress override = InetAddress.getByName(ipOverride);
-    return InetAddress.getByAddress(hostString, override.getAddress());
-  }
-
-  protected ManagedChannel createNettyChannel(
-      final String host, @Nullable final String ipOverride) throws IOException {
+  protected ManagedChannel createNettyChannel(final String host) throws IOException {
+    // TODO Go back to using host names once grpc 0.14.0 is out, which fixes bug
+    // when ipv6 address is available but not reachable.
+    InetAddress address = InetAddress.getByName(host);
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
-    NettyChannelBuilder builder;
-    if (ipOverride == null) {
-      builder = NettyChannelBuilder.forAddress(host, options.getPort());
-    }
-    else {
-      LOG.info("Overriding host %s with ip address %s - this is expected behavior for dataflow",
-          host, ipOverride);
-      InetAddress override = getAddressFromIp(host, ipOverride);
-      builder = NettyChannelBuilder.forAddress(new InetSocketAddress(override, options.getPort()));
-    }
-    return builder
+    return NettyChannelBuilder
+        .forAddress(new InetSocketAddress(address, options.getPort()))
         .maxMessageSize(256 * 1024 * 1024) // 256 MB, server has 256 MB limit.
         .sslContext(createSslContext())
         .eventLoopGroup(sharedPools.getElg())

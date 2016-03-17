@@ -48,7 +48,7 @@ public class TestBigtableOptionsFactory {
   @Before
   public void setup() {
     configuration = new Configuration(false);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_HOST_KEY, TEST_HOST);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(BigtableOptionsFactory.CLUSTER_KEY, TEST_CLUSTER_NAME);
     configuration.set(BigtableOptionsFactory.ZONE_KEY, TEST_ZONE_NAME);
@@ -66,7 +66,7 @@ public class TestBigtableOptionsFactory {
   @Test
   public void testHostIsRequired() throws IOException {
     Configuration configuration = new Configuration(false);
-    configuration.unset(BigtableOptionsFactory.BIGTABLE_DATA_HOST_KEY);
+    configuration.unset(BigtableOptionsFactory.BIGTABLE_HOST_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
     BigtableOptionsFactory.fromConfiguration(configuration);
@@ -92,7 +92,7 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testAdminHostKeyIsUsed() throws IOException {
-    configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_HOST_KEY, TEST_HOST);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.set(BigtableOptionsFactory.BIGTABLE_TABLE_ADMIN_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
@@ -102,7 +102,7 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testOptionsAreConstructedWithValidInput() throws IOException {
-    configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_HOST_KEY, TEST_HOST);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
@@ -114,7 +114,7 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testMinGoodRefreshTime() throws IOException{
-    configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_HOST_KEY, TEST_HOST);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 60000);
@@ -123,7 +123,7 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testBadRefreshTime() throws IOException{
-    configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_HOST_KEY, TEST_HOST);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 59999);
@@ -133,7 +133,7 @@ public class TestBigtableOptionsFactory {
 
   @Test
   public void testZeroRefreshTime() throws IOException{
-    configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_HOST_KEY, TEST_HOST);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 0);

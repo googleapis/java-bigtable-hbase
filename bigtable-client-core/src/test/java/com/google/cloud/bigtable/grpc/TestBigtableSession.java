@@ -40,7 +40,7 @@ public class TestBigtableSession {
           .setZoneId(zoneId)
           .setClusterId(clusterId)
           .setUserAgent(userAgent)
-          .build());
+          .build(), null, null, null);
   }
 
   @Rule
