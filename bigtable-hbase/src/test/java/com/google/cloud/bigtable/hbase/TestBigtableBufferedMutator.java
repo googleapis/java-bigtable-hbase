@@ -90,6 +90,7 @@ public class TestBigtableBufferedMutator {
   private List<Runnable> callbacks = new ArrayList<>();
   @SuppressWarnings("rawtypes")
   private List<FutureCallback> futureCallbacks = new ArrayList<>();
+  private List<SettableFuture<Empty>> retryFutures = new ArrayList<>();
 
   @Before
   public void setUp() {
@@ -201,7 +202,7 @@ public class TestBigtableBufferedMutator {
     config.set(BigtableOptionsFactory.BIGTABLE_USE_BULK_API, "true");
     SettableFuture<MutateRowsResponse> future = SettableFuture.create();
     when(mockClient.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
-    SettableFuture<Empty> retryFuture = SettableFuture.<Empty>create();
+    SettableFuture<Empty> retryFuture = createRetryFuture();
     when(mockClient.addMutationRetry(any(ListenableFuture.class), any(MutateRowRequest.class)))
         .thenReturn(retryFuture);
     final BigtableBufferedMutator underTest = createMutator(config);
@@ -222,7 +223,7 @@ public class TestBigtableBufferedMutator {
       try {
         flushFuture.get(100, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
-        e.printStackTrace();
+        Assert.fail("Didn't flush in time");
       }
       verify(mockClient, times(1)).mutateRowsAsync(any(MutateRowsRequest.class));
     } catch (Exception e) {
@@ -250,7 +251,7 @@ public class TestBigtableBufferedMutator {
           }
         });
     when(mockClient.addMutationRetry(any(ListenableFuture.class), any(MutateRowRequest.class)))
-        .thenReturn(SettableFuture.<Empty> create());
+        .thenReturn(createRetryFuture());
     final BigtableBufferedMutator underTest = createMutator(config);
     try {
       Builder firstResponseBuilder = MutateRowsResponse.newBuilder();
@@ -275,12 +276,19 @@ public class TestBigtableBufferedMutator {
       try {
         flushFuture.get(100, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
+        Assert.fail("Didn't flush in time");
       }
       verify(mockClient, times(2)).mutateRowsAsync(any(MutateRowsRequest.class));
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
     }
+  }
+
+  private SettableFuture<Empty> createRetryFuture() {
+    SettableFuture<Empty> future = SettableFuture.create();
+    retryFutures.add(future);
+    return future;
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -293,5 +301,9 @@ public class TestBigtableBufferedMutator {
       futureCallback.onSuccess(null);
     }
     futureCallbacks.clear();
+    for (SettableFuture<Empty> retryFuture : retryFutures) {
+      retryFuture.set(null);
+    }
+    retryFutures.clear();
   }
 }

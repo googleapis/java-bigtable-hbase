@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -46,6 +47,8 @@ public class RpcThrottler {
   private ReentrantLock lock = new ReentrantLock();
   private Condition flushedCondition = lock.newCondition();
   private Set<Long> outstandingRequests = new HashSet<>();
+  private Set<Long> outstandingRetries = new HashSet<>();
+  private AtomicLong retrySequenceGenerator = new AtomicLong();
   private long lastOperationChange = System.currentTimeMillis();
 
   public RpcThrottler(ResourceLimiter resourceLimiter) {
@@ -65,8 +68,7 @@ public class RpcThrottler {
     lock.lock();
     try {
       outstandingRequests.add(id);
-    }
-    finally {
+    } finally {
       lock.unlock();
     }
     return id;
@@ -81,12 +83,12 @@ public class RpcThrottler {
     FutureCallback<T> callback = new FutureCallback<T>() {
       @Override
       public void onSuccess(T result) {
-        onCompletion(id);
+        onRpcCompletion(id);
       }
 
       @Override
       public void onFailure(Throwable t) {
-        onCompletion(id);
+        onRpcCompletion(id);
       }
     };
     Futures.addCallback(future, callback);
@@ -94,7 +96,39 @@ public class RpcThrottler {
   }
 
   /**
-   * Blocks until all outstanding RPCs have completed
+   * Registers a retrying Future such that, if a retry is necessary, it
+   * will be complete before a call to {@code awaitCompletion} returns.
+   * Retries do not count against any RPC resource limits.
+   */
+  public <T> void registerRetry(ListenableFuture<T> retryFuture) {
+    final long id = retrySequenceGenerator.incrementAndGet();
+
+    lock.lock();
+    try {
+      outstandingRetries.add(id);
+    } finally {
+      lock.unlock();
+    }
+    addRetryCallback(retryFuture, id);
+  }
+
+  private <T> void addRetryCallback(ListenableFuture<T> retryFuture, final long id) {
+    FutureCallback<T> callback = new FutureCallback<T>() {
+      @Override
+      public void onSuccess(T result) {
+        onRetryCompletion(id);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        onRetryCompletion(id);
+      }
+    };
+    Futures.addCallback(retryFuture, callback);
+  }
+
+  /**
+   * Blocks until all outstanding RPCs and retries have completed
    * @throws InterruptedException
    */
   public void awaitCompletion() throws InterruptedException {
@@ -102,7 +136,7 @@ public class RpcThrottler {
 
     lock.lock();
     try {
-      while (outstandingRequests.size() > 0) {
+      while (!isFlushed()) {
         flushedCondition.await(FINISH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
 
         if (!performedWarning
@@ -114,8 +148,7 @@ public class RpcThrottler {
       if (performedWarning) {
         LOG.info("awaitCompletion() completed");
       }
-    }
-    finally {
+    } finally {
       lock.unlock();
     }
   }
@@ -138,21 +171,42 @@ public class RpcThrottler {
    * @return true if there are any outstanding requests being tracked by this throttler
    */
   public boolean hasInflightRequests() {
-    return !outstandingRequests.isEmpty();
+    lock.lock();
+    try {
+      return outstandingRequests.size() > 0;
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  private boolean isFlushed() {
+    return outstandingRequests.isEmpty() && outstandingRetries.isEmpty();
   }
 
   @VisibleForTesting
-  void onCompletion(long id) {
+  void onRpcCompletion(long id) {
     resourceLimiter.markCanBeCompleted(id);
 
     lock.lock();
     try {
       outstandingRequests.remove(id);
-      if (outstandingRequests.isEmpty()) {
+      if (isFlushed()) {
         flushedCondition.signal();
       }
+    } finally {
+      lock.unlock();
     }
-    finally {
+    lastOperationChange = System.currentTimeMillis();
+  }
+
+  private void onRetryCompletion(long id) {
+    lock.lock();
+    try {
+      outstandingRetries.remove(id);
+      if (isFlushed()) {
+        flushedCondition.signal();
+      }
+    } finally {
       lock.unlock();
     }
     lastOperationChange = System.currentTimeMillis();
