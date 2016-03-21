@@ -35,11 +35,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -169,6 +166,14 @@ public class BigtableSession implements Closeable {
         }
       }
     });
+    connectionStartupExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        // The first invocation of BigtableSessionSharedThreadPools.getInstance() is expensive.
+        // Reference it so that it gets constructed asynchronously.
+        BigtableSessionSharedThreadPools.getInstance();
+      }
+    });
     for (final String host : Arrays.asList(BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT,
       BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT,
       BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT)) {
@@ -222,36 +227,35 @@ public class BigtableSession implements Closeable {
     this.options = options;
 
     Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
-    ExecutorService initializerExecutor =
-        Executors.newCachedThreadPool(ThreadPoolUtil.createThreadFactory("BigtableSessionInit"));
 
+    // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
+    // take as long, but still take time. Get the credentials on one thread, and start up the elg
+    // and scheduledRetries thread pools on another thread.
+    CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
+    RetryOptions retryOptions = options.getRetryOptions();
+    CredentialOptions credentialOptions = options.getCredentialOptions();
     try {
-      // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
-      // take as long, but still take time. Get the credentials on one thread, and start up the elg
-      // and scheduledRetries thread pools on another thread.
-      Future<Void> credentialsFuture =
-          initializerExecutor.submit(createCredentialsCallback(headerInterceptorBuilder));
-
-      // Make sure that the credentialsFuture is complete before proceeding. If an exception occurs
-      // in that future, then throw that exception. The completion is important, but the results are
-      // not.
-      get(credentialsFuture, "Could not initialize credentials");
-
-      headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
-      headerInterceptors = headerInterceptorBuilder.build();
-
-      ChannelPool dataChannel = createChannelPool(options.getDataHost());
-
-      BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
-
-      // More often than not, users want the dataClient. Create a new one in the constructor.
-      this.dataClient =
-          new BigtableDataGrpcClient(dataChannel, sharedPools.getBatchThreadPool(), options);
-
-      // Defer the creation of both the tableAdminClient and clusterAdminClient until we need them.
-    } finally {
-      initializerExecutor.shutdown();
+      HeaderInterceptor headerInterceptor =
+          credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
+      if (headerInterceptor != null) {
+        headerInterceptorBuilder.add(headerInterceptor);
+      }
+    } catch (GeneralSecurityException e) {
+      throw new IOException("Could not initialize credentials.", e);
     }
+
+    headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
+    headerInterceptors = headerInterceptorBuilder.build();
+
+    ChannelPool dataChannel = createChannelPool(options.getDataHost());
+
+    BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
+
+    // More often than not, users want the dataClient. Create a new one in the constructor.
+    this.dataClient =
+        new BigtableDataGrpcClient(dataChannel, sharedPools.getBatchThreadPool(), options);
+
+    // Defer the creation of both the tableAdminClient and clusterAdminClient until we need them.
   }
 
   /**
@@ -282,42 +286,6 @@ public class BigtableSession implements Closeable {
       // that wasn't often used. It was shutdown in the close() method. Since it's no longer used,
       // shut it down immediately.
       scheduledRetries.shutdown();
-    }
-  }
-
-  protected Callable<Void>
-      createCredentialsCallback(final Builder<HeaderInterceptor> headerInterceptorBuilder) {
-    return new Callable<Void>() {
-      @Override
-      public Void call() throws IOException {
-        try {
-          CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
-          RetryOptions retryOptions = options.getRetryOptions();
-          CredentialOptions credentialOptions = options.getCredentialOptions();
-          HeaderInterceptor headerInterceptor =
-              credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
-          if (headerInterceptor != null) {
-            headerInterceptorBuilder.add(headerInterceptor);
-          }
-          return null;
-        } catch (GeneralSecurityException e) {
-          throw new IOException("Could not load auth credentials", e);
-        }
-      }
-    };
-  }
-
-  private static <T> T get(Future<T> future, String errorMessage) throws IOException {
-    try {
-      return future.get();
-    } catch (InterruptedException e) {
-      throw new IOException(errorMessage, e);
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof IOException) {
-        throw (IOException) e.getCause();
-      } else {
-        throw new IOException(errorMessage, e);
-      }
     }
   }
 
