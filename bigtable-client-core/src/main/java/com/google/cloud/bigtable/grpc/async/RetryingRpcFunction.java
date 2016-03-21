@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -49,16 +50,22 @@ public class RetryingRpcFunction<RequestT, ResponseT>
 
   private final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   private final RetryOptions retryOptions;
+  private final Predicate<RequestT> isRetryable;
   private final ExecutorService executorService;
   private int failedCount;
   private final CancellationToken cancellationToken;
 
-  public RetryingRpcFunction(RetryOptions retryOptions, RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, ExecutorService executorService,
-      CancellationToken cancellationToken) {
+  public RetryingRpcFunction(
+          RetryOptions retryOptions,
+          RequestT request,
+          BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
+          Predicate<RequestT> isRetryable,
+          ExecutorService executorService,
+          CancellationToken cancellationToken) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
+    this.isRetryable = isRetryable;
     this.executorService = executorService;
     this.cancellationToken = cancellationToken;
   }
@@ -67,7 +74,7 @@ public class RetryingRpcFunction<RequestT, ResponseT>
   public ListenableFuture<ResponseT> apply(StatusRuntimeException statusException) throws Exception {
     final Status status = statusException.getStatus();
     Status.Code code = status.getCode();
-    if (retryOptions.isRetryable(code)) {
+    if (retryOptions.isRetryable(code) && isRetryable.apply(request)) {
       return backOffAndRetry(statusException, status);
     } else {
       return Futures.immediateFailedCheckedFuture(statusException);
