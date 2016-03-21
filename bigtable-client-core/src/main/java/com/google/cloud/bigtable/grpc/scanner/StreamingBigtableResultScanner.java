@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import java.io.IOException;
 
-import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.common.base.Preconditions;
@@ -36,27 +35,6 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
     Preconditions.checkArgument(cancellationToken != null, "cancellationToken cannot be null");
     this.cancellationToken = cancellationToken;
     this.responseQueueReader = responseQueueReader;
-  }
-
-  private void add(ResultQueueEntry<ReadRowsResponse> entry) {
-    try {
-      responseQueueReader.add(entry);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
-    }
-  }
-
-  public void addResult(ReadRowsResponse response) {
-    add(ResultQueueEntry.fromResponse(response));
-  }
-
-  public void setError(Throwable error) {
-    add(ResultQueueEntry.<ReadRowsResponse> fromThrowable(error));
-  }
-
-  public void complete() {
-    add(ResultQueueEntry.<ReadRowsResponse> completionMarker());
   }
 
   @Override
