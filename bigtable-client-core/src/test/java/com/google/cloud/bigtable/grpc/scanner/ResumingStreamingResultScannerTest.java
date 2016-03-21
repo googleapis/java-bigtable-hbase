@@ -45,7 +45,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
 
 import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -133,17 +132,17 @@ public class ResumingStreamingResultScannerTest {
   @Test
   public void testAbortedErrorsResumeWithRowLimit() throws IOException {
     doErrorsResume(
-        new IOExceptionWithStatus("Test", new StatusRuntimeException(Status.ABORTED)), 10);
+        new IOExceptionWithStatus("Test", Status.ABORTED), 10);
   }
 
   @Test
   public void testAbortedErrorsResumeWithTooManyRowsReturned() throws IOException {
     doErrorsResume(
-        new IOExceptionWithStatus("Test", new StatusRuntimeException(Status.ABORTED)), 1);
+        new IOExceptionWithStatus("Test", Status.ABORTED), 1);
   }
 
   private void doErrorsResume(Status status) throws IOException {
-    doErrorsResume(new IOExceptionWithStatus("Test", new StatusRuntimeException(status)));
+    doErrorsResume(new IOExceptionWithStatus("Test", status));
   }
 
   @Test
@@ -297,7 +296,7 @@ public class ResumingStreamingResultScannerTest {
     when(mockScanner.next())
         .thenReturn(row1)
         .thenReturn(row2)
-        .thenThrow(new IOExceptionWithStatus("Test", new StatusRuntimeException(status)));
+        .thenThrow(new IOExceptionWithStatus("Test", status));
 
     assertRowKey("row1", scanner.next());
     assertRowKey("row2", scanner.next());
@@ -326,7 +325,7 @@ public class ResumingStreamingResultScannerTest {
     Row row4 = buildRow("row4");
 
     IOException retryableException =
-        new IOExceptionWithStatus("Test", new StatusRuntimeException(Status.UNAVAILABLE));
+        new IOExceptionWithStatus("Test", Status.UNAVAILABLE);
     IOException timeoutException = new ScanTimeoutException("Test");
 
     ReadRowsRequest.Builder originalRequest = readRowsRequest.toBuilder();

@@ -16,30 +16,28 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
-
 
 /**
  * An IOException that carries a gRPC Status object.
  */
 public class IOExceptionWithStatus extends IOException {
+  private final Status status;
 
-  private static final long serialVersionUID = 8642100644073789860L;
-  private final StatusRuntimeException cause;
-
-  public IOExceptionWithStatus(String message, StatusRuntimeException cause) {
+  public IOExceptionWithStatus(String message, Throwable cause, Status status) {
     super(message, cause);
-    this.cause = cause;
+    this.status = status;
+  }
+
+  public IOExceptionWithStatus(String message, Status status) {
+    this(message, status.asRuntimeException(), status);
   }
 
   /**
    * Status from the provided OperationRuntimeException.
    */
-  // TODO: cause.getStatus() sends JVCM warnings, even though it shouldn't.  The gRPC team
-  // ought to fix that.
   public Status getStatus() {
-    return cause.getStatus();
+    return status;
   }
 }

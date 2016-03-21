@@ -18,9 +18,8 @@ package com.google.cloud.bigtable.grpc.scanner;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 
-import io.grpc.StatusRuntimeException;
+import io.grpc.Status;
 
 import java.io.IOException;
 
@@ -63,15 +62,7 @@ class ResultQueueEntry<T> {
 
   public T getResponseOrThrow() throws IOException {
     if (throwable != null) {
-      if (throwable instanceof StatusRuntimeException) {
-        throw new IOExceptionWithStatus(EXCEPTION_MESSAGE, (StatusRuntimeException) throwable);
-      } else if (throwable instanceof UncheckedExecutionException) {
-        if (throwable.getCause() instanceof StatusRuntimeException) {
-          throw new IOExceptionWithStatus(EXCEPTION_MESSAGE,
-              (StatusRuntimeException) throwable.getCause());
-        }
-      }
-      throw new IOException(EXCEPTION_MESSAGE, throwable);
+      throw new IOExceptionWithStatus(EXCEPTION_MESSAGE, throwable, Status.fromThrowable(throwable));
     } else if (isComplete) {
       throw new IOException("Attempt to interpret a result stream completion marker as a result");
     }
