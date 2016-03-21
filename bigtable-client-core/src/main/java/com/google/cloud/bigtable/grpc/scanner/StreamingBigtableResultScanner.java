@@ -48,15 +48,15 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   }
 
   public void addResult(ReadRowsResponse response) {
-    add(ResultQueueEntry.newResult(response));
+    add(ResultQueueEntry.fromResponse(response));
   }
 
   public void setError(Throwable error) {
-    add(ResultQueueEntry.<ReadRowsResponse> newThrowable(error));
+    add(ResultQueueEntry.<ReadRowsResponse> fromThrowable(error));
   }
 
   public void complete() {
-    add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    add(ResultQueueEntry.<ReadRowsResponse> completionMarker());
   }
 
   @Override

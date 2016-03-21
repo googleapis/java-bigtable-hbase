@@ -29,55 +29,106 @@ import java.io.IOException;
  * a Throwable or a marker indicating end-of-stream.
  * @param <T> The type of messages representing data.
  */
-class ResultQueueEntry<T> {
+abstract class ResultQueueEntry<T> {
 
-  private static final String EXCEPTION_MESSAGE = "Error in response stream";
-  protected final Throwable throwable;
-  protected final T response;
-  protected final boolean isComplete;
-
-  public static <T> ResultQueueEntry<T> newResult(T response) {
+  public static <T> ResultQueueEntry<T> fromResponse(T response) {
     Preconditions.checkArgument(response != null, "Response may not be null");
-    return new ResultQueueEntry<>(null, response, false);
+    return new ResponseResultQueueEntry<T>(response);
   }
 
-  public static <T> ResultQueueEntry<T> newThrowable(Throwable throwable) {
+  public static <T> ResultQueueEntry<T> fromThrowable(Throwable throwable) {
     Preconditions.checkArgument(throwable != null, "Throwable may not be null");
-    return new ResultQueueEntry<>(throwable, null, false);
+    return new ExceptionResultQueueEntry<T>(throwable);
   }
 
-  public static <T> ResultQueueEntry<T> newCompletionMarker() {
-    return new ResultQueueEntry<>(null, null, true);
+  @SuppressWarnings("unchecked")
+  public static <T> ResultQueueEntry<T> completionMarker() {
+    return COMPLETION_ENTRY;
   }
 
-  protected ResultQueueEntry(Throwable throwable, T response, boolean isCompletionMarker) {
-    this.throwable = throwable;
-    this.response = response;
-    this.isComplete = isCompletionMarker;
-  }
+  private static final class ExceptionResultQueueEntry<T> extends ResultQueueEntry<T> {
+    private static final String EXCEPTION_MESSAGE = "Error in response stream";
 
-  public boolean isCompletionMarker() {
-    return isComplete;
-  }
+    private final Throwable throwable;
 
-  public T getResponseOrThrow() throws IOException {
-    if (throwable != null) {
-      throw new IOExceptionWithStatus(EXCEPTION_MESSAGE, throwable, Status.fromThrowable(throwable));
-    } else if (isComplete) {
-      throw new IOException("Attempt to interpret a result stream completion marker as a result");
+    private ExceptionResultQueueEntry(Throwable throwable) {
+      this.throwable = throwable;
     }
-    return response;
-  }
 
-  @Override
-  @SuppressWarnings("rawtypes")
-  public boolean equals(Object obj) {
-    if (!(obj instanceof ResultQueueEntry) || obj == null){
+    @Override
+    public boolean isCompletionMarker() {
       return false;
     }
-    ResultQueueEntry other = (ResultQueueEntry) obj;
-    return Objects.equal(throwable, other.throwable)
-        && Objects.equal(response, other.response)
-        && Objects.equal(isComplete, other.isComplete);
+
+    @Override
+    public T getResponseOrThrow() throws IOException {
+      throw new IOExceptionWithStatus(
+          EXCEPTION_MESSAGE, throwable, Status.fromThrowable(throwable));
+    }
+
+    @Override
+    @SuppressWarnings("rawtypes")
+    public boolean equals(Object obj) {
+      if (!(obj instanceof ExceptionResultQueueEntry) || obj == null){
+        return false;
+      }
+      ExceptionResultQueueEntry other = (ExceptionResultQueueEntry) obj;
+      return Objects.equal(throwable, other.throwable);
+    }
   }
+
+  private static final class ResponseResultQueueEntry<T> extends ResultQueueEntry<T> {
+    private final T response;
+
+    private ResponseResultQueueEntry(T response) {
+      this.response = response;
+    }
+
+    @Override
+    public boolean isCompletionMarker() {
+      return false;
+    }
+
+    @Override
+    public T getResponseOrThrow() throws IOException {
+      return response;
+    }
+
+    @Override
+    @SuppressWarnings("rawtypes")
+    public boolean equals(Object obj) {
+      if (!(obj instanceof ResponseResultQueueEntry) || obj == null){
+        return false;
+      }
+      ResponseResultQueueEntry other = (ResponseResultQueueEntry) obj;
+      return Objects.equal(response, other.response);
+    }
+  }
+
+  @SuppressWarnings("rawtypes")
+  private static final ResultQueueEntry COMPLETION_ENTRY = new ResultQueueEntry(){
+    @Override
+    public boolean isCompletionMarker() {
+      return true;
+    }
+
+    @Override
+    public Object getResponseOrThrow() throws IOException {
+      throw new IOException("Attempt to interpret a result stream completion marker as a result");
+    }
+
+    @Override
+    @SuppressWarnings("rawtypes")
+    public boolean equals(Object obj) {
+      if (!(obj instanceof ResultQueueEntry) || obj == null){
+        return false;
+      }
+      ResultQueueEntry other = (ResultQueueEntry) obj;
+      return isCompletionMarker() == other.isCompletionMarker();
+    }
+  };
+
+  public abstract boolean isCompletionMarker();
+
+  public abstract T getResponseOrThrow() throws IOException;
 }
