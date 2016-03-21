@@ -101,7 +101,7 @@ public class ResponseQueueReaderTest {
       ResponseQueueReader reader,
       ReadRowsResponse... responses) throws InterruptedException {
     for (ReadRowsResponse response : responses) {
-      reader.add(ResultQueueEntry.newResult(response));
+      reader.add(ResultQueueEntry.fromResponse(response));
     }
   }
 
@@ -109,12 +109,12 @@ public class ResponseQueueReaderTest {
       ResponseQueueReader reader,
       Iterable<ReadRowsResponse> responses) throws InterruptedException {
     for (ReadRowsResponse response : responses) {
-      reader.add(ResultQueueEntry.newResult(response));
+      reader.add(ResultQueueEntry.fromResponse(response));
     }
   }
 
   private void addCompletion(ResponseQueueReader reader) throws InterruptedException {
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    reader.add(ResultQueueEntry.<ReadRowsResponse> completionMarker());
   }
 
   static void assertReaderContains(ResponseQueueReader reader, Iterable<Row> rows)
@@ -163,7 +163,7 @@ public class ResponseQueueReaderTest {
     List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", 2);
     final String innerExceptionMessage = "This message is the causedBy message";
     addResponsesToReader(reader, responses);
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newThrowable(new IOException(
+    reader.add(ResultQueueEntry.<ReadRowsResponse> fromThrowable(new IOException(
         innerExceptionMessage)));
 
     assertReaderContains(reader, extractRowsWithKeys(responses));
