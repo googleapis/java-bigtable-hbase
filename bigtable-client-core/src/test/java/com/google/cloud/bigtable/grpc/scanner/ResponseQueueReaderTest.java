@@ -52,6 +52,7 @@ import com.google.bigtable.v1.Column;
 import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.ReadRowsResponse.Chunk;
+import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
 import com.google.bigtable.v1.Row;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
@@ -101,7 +102,7 @@ public class ResponseQueueReaderTest {
       ResponseQueueReader reader,
       ReadRowsResponse... responses) throws InterruptedException {
     for (ReadRowsResponse response : responses) {
-      reader.add(ResultQueueEntry.newResult(response));
+      reader.addResult(response);
     }
   }
 
@@ -109,12 +110,8 @@ public class ResponseQueueReaderTest {
       ResponseQueueReader reader,
       Iterable<ReadRowsResponse> responses) throws InterruptedException {
     for (ReadRowsResponse response : responses) {
-      reader.add(ResultQueueEntry.newResult(response));
+      reader.addResult(response);
     }
-  }
-
-  private void addCompletion(ResponseQueueReader reader) throws InterruptedException {
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
   }
 
   static void assertReaderContains(ResponseQueueReader reader, Iterable<Row> rows)
@@ -149,7 +146,7 @@ public class ResponseQueueReaderTest {
         generateReadRowsResponses("rowKey-%s", 3);
 
     addResponsesToReader(reader, responses);
-    addCompletion(reader);
+    reader.complete();
 
     assertReaderContains(reader, extractRowsWithKeys(responses));
     assertReaderEmpty(reader);
@@ -163,8 +160,7 @@ public class ResponseQueueReaderTest {
     List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", 2);
     final String innerExceptionMessage = "This message is the causedBy message";
     addResponsesToReader(reader, responses);
-    reader.add(ResultQueueEntry.<ReadRowsResponse> newThrowable(new IOException(
-        innerExceptionMessage)));
+    reader.setError(new IOException(innerExceptionMessage));
 
     assertReaderContains(reader, extractRowsWithKeys(responses));
     verify(call, times(0)).request(anyInt());
@@ -188,7 +184,7 @@ public class ResponseQueueReaderTest {
         "rowKey-%s", generatedResponseCount);
     List<Row> rows = Lists.newArrayList(extractRowsWithKeys(responses));
     addResponsesToReader(reader, responses);
-    addCompletion(reader);
+    reader.complete();
 
     Assert.assertEquals(generatedResponseCount + 1, reader.available());
     for (int idx = 0; idx < generatedResponseCount; idx++) {
@@ -215,7 +211,7 @@ public class ResponseQueueReaderTest {
 
     addResponsesToReader(reader, response, response2, response3, response4);
 
-    addCompletion(reader);
+    reader.complete();
 
     Row resultRow = reader.getNextMergedRow();
 
@@ -258,7 +254,7 @@ public class ResponseQueueReaderTest {
 
     addResponsesToReader(reader, response, response2, response3, response4);
 
-    addCompletion(reader);
+    reader.complete();
 
     Row resultRow = reader.getNextMergedRow();
 
@@ -282,7 +278,7 @@ public class ResponseQueueReaderTest {
     ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
     addResponsesToReader(reader, response);
-    addCompletion(reader);
+    reader.complete();
 
     Row resultRow = reader.getNextMergedRow();
     Assert.assertNull(resultRow);
@@ -300,7 +296,7 @@ public class ResponseQueueReaderTest {
     ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
     addResponsesToReader(reader, response);
-    addCompletion(reader);
+    reader.complete();
 
     Row resultRow = reader.getNextMergedRow();
     Assert.assertEquals(1, resultRow.getFamiliesCount());
@@ -314,7 +310,7 @@ public class ResponseQueueReaderTest {
   public void anEmptyStreamDoesNotThrow() throws Exception {
     ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
-    addCompletion(reader);
+    reader.complete();
 
     assertReaderEmpty(reader);
     assertReaderEmpty(reader);
@@ -325,7 +321,7 @@ public class ResponseQueueReaderTest {
   public void readingPastEndReturnsNull() throws Exception {
     ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, 10, 5, call);
 
-    addCompletion(reader);
+    reader.complete();
 
     assertReaderEmpty(reader);
     assertReaderEmpty(reader);
@@ -342,10 +338,9 @@ public class ResponseQueueReaderTest {
     ReadRowsResponse response = createReadRowsResponse(rowKey, contentChunk);
 
     addResponsesToReader(reader, response);
-    addCompletion(reader);
+    reader.complete();
 
-    expectedException.expectMessage("End of stream marker encountered while merging a row.");
-    expectedException.expect(IllegalStateException.class);
+    expectedException.expect(IOExceptionWithStatus.class);
     @SuppressWarnings("unused")
     Row resultRow = reader.getNextMergedRow();
   }
@@ -446,7 +441,7 @@ public class ResponseQueueReaderTest {
       addResponsesToReader(reader, response, commit);
       reader.getNextMergedRow();
     }
-    addCompletion(reader);
-    verify(call, times(20 * 2 * 2 - 1)).request(eq(capacityCap / 2));
+    reader.complete();
+    verify(call, times(20 * 2 * 2)).request(eq(capacityCap / 2));
   }
 }

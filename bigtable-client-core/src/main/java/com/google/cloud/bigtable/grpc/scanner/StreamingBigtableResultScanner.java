@@ -38,25 +38,31 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
     this.responseQueueReader = responseQueueReader;
   }
 
-  private void add(ResultQueueEntry<ReadRowsResponse> entry) {
+  public void addResult(ReadRowsResponse response) {
     try {
-      responseQueueReader.add(entry);
+      responseQueueReader.addResult(response);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
     }
   }
 
-  public void addResult(ReadRowsResponse response) {
-    add(ResultQueueEntry.newResult(response));
-  }
-
   public void setError(Throwable error) {
-    add(ResultQueueEntry.<ReadRowsResponse> newThrowable(error));
+    try {
+      responseQueueReader.setError(error);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
+    }
   }
 
   public void complete() {
-    add(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker());
+    try {
+      responseQueueReader.complete();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
+    }
   }
 
   @Override

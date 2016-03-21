@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -52,7 +51,7 @@ public class StreamingBigtableResultScannerTest {
   public void testAddResult() throws IOException, InterruptedException {
     ReadRowsResponse response = ReadRowsResponse.getDefaultInstance();
     scanner.addResult(response);
-    verify(reader, times(1)).add(eq(ResultQueueEntry.newResult(response)));
+    verify(reader, times(1)).addResult(response);
     scanner.close();
   }
 
@@ -60,14 +59,14 @@ public class StreamingBigtableResultScannerTest {
   public void testSetException() throws IOException, InterruptedException {
     IOException e = new IOException("Some exception");
     scanner.setError(e);
-    verify(reader, times(1)).add(eq(ResultQueueEntry.<ReadRowsResponse> newThrowable(e)));
+    verify(reader, times(1)).setError(e);
     scanner.close();
   }
 
   @Test
   public void testComplete() throws IOException, InterruptedException {
     scanner.complete();
-    verify(reader, times(1)).add(eq(ResultQueueEntry.<ReadRowsResponse> newCompletionMarker()));
+    verify(reader, times(1)).complete();
     scanner.close();
   }
 

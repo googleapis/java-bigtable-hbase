@@ -33,23 +33,25 @@ import com.google.common.base.Preconditions;
  * complete Row objects from the partial ReadRowsResponse objects.
  */
 public class ResponseQueueReader {
-  private final BlockingQueue<ResultQueueEntry<ReadRowsResponse>> resultQueue;
+  private final BlockingQueue<ResultQueueEntry<Row>> resultQueue;
+  private final int thresholdToRequestMore;
+  private final int batchRequestSize;
   private final int readPartialRowTimeoutMillis;
+  private final ClientCall<?, ?> call;
+
   private boolean lastResponseProcessed = false;
   private AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
-  private final int capacityCap;
-  private final int batchRequestSize;
   private AtomicInteger outstandingRequestCount;
-  private final ClientCall<?, ReadRowsResponse> call;
+  private RowMerger rowMerger;
 
   public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap,
-      int outstandingRequestCount, int batchRequestSize, ClientCall<?, ReadRowsResponse> call) {
+      int outstandingRequestCount, int batchRequestSize, ClientCall<?, ?> call) {
     this.resultQueue = new LinkedBlockingQueue<>();
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
-    this.capacityCap = capacityCap;
     this.outstandingRequestCount = new AtomicInteger(outstandingRequestCount);
     this.batchRequestSize = batchRequestSize;
     this.call = call;
+    this.thresholdToRequestMore = capacityCap - batchRequestSize;
   }
 
   /**
@@ -58,51 +60,24 @@ public class ResponseQueueReader {
    * @throws IOException On errors.
    */
   public synchronized Row getNextMergedRow() throws IOException {
-    RowMerger builder = null;
-
-    while (!lastResponseProcessed) {
-      ResultQueueEntry<ReadRowsResponse> queueEntry = getNext();
+    if (!lastResponseProcessed) {
+      ResultQueueEntry<Row> queueEntry = getNext();
 
       if (queueEntry.isCompletionMarker()) {
         lastResponseProcessed = true;
-        break;
-      }
-
-      ReadRowsResponse partialRow = queueEntry.getResponseOrThrow();
-      if (builder == null) {
-        builder = new RowMerger();
-      }
-
-      builder.addPartialRow(partialRow);
-
-      if (builder.isRowCommitted()) {
-        Row builtRow = builder.buildRow();
-        if (builtRow == null) {
-          // This could happen when a row that was scanned was deleted after the scan started.
-          builder = null;
-        } else {
-          return builtRow;
-        }
+      } else {
+        return queueEntry.getResponseOrThrow();
       }
     }
 
-    Preconditions.checkState(builder == null,
-      "End of stream marker encountered while merging a row.");
     Preconditions.checkState(lastResponseProcessed,
-      "Should only exit merge loop with by returning a complete Row or hitting end of stream.");
+        "Should only exit merge loop with by returning a complete Row or hitting end of stream.");
     return null;
   }
 
-  private ResultQueueEntry<ReadRowsResponse> getNext() throws IOException {
-
-    // If there are currently less than or equal to the batch request size, then ask gRPC to
-    // request more results in a batch. Batch requests are more efficient that reading one at
-    // a time.
-    if (!completionMarkerFound.get() && moreCanBeRequested()) {
-      call.request(batchRequestSize);
-      outstandingRequestCount.addAndGet(batchRequestSize);
-    }
-    ResultQueueEntry<ReadRowsResponse> queueEntry;
+  private ResultQueueEntry<Row> getNext() throws IOException {
+    fetchMore();
+    ResultQueueEntry<Row> queueEntry;
     try {
       queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
@@ -112,8 +87,19 @@ public class ResponseQueueReader {
     if (queueEntry == null) {
       throw new ScanTimeoutException("Timeout while merging responses.");
     }
+    fetchMore();
 
     return queueEntry;
+  }
+
+  private void fetchMore() {
+    // If there are currently less than or equal to the batch request size, then ask gRPC to
+    // request more results in a batch. Batch requests are more efficient that reading one at
+    // a time.
+    if (!completionMarkerFound.get() && moreCanBeRequested()) {
+      call.request(batchRequestSize);
+      outstandingRequestCount.addAndGet(batchRequestSize);
+    }
   }
 
   /**
@@ -121,18 +107,41 @@ public class ResponseQueueReader {
    * @return true if a new batch should be requested.
    */
   private boolean moreCanBeRequested() {
-    return outstandingRequestCount.get() + resultQueue.size() <= capacityCap - batchRequestSize;
+    return outstandingRequestCount.get() + resultQueue.size() <= thresholdToRequestMore;
   }
 
   public int available() {
     return resultQueue.size();
   }
 
-  public void add(ResultQueueEntry<ReadRowsResponse> entry) throws InterruptedException {
-    if (entry.isCompletionMarker()) {
-      completionMarkerFound.set(true);
-    }
+  //////////////////   All of the methods below are assumed to be called serially.
+  public void addResult(ReadRowsResponse response) throws InterruptedException {
     outstandingRequestCount.decrementAndGet();
-    resultQueue.put(entry);
+    if (rowMerger == null) {
+      rowMerger = new RowMerger();
+    }
+
+    rowMerger.addPartialRow(response);
+
+    if (rowMerger.isRowCommitted()) {
+      Row row = rowMerger.buildRow();
+      rowMerger = null;
+      if (row != null) {
+        resultQueue.put(ResultQueueEntry.newResult(row));
+      }
+    }
+  }
+
+  public void setError(Throwable error) throws InterruptedException {
+    resultQueue.put(ResultQueueEntry.<Row> newThrowable(error));
+  }
+
+  public void complete() throws InterruptedException {
+    completionMarkerFound.set(true);
+    if (rowMerger != null) {
+      setError(new IllegalStateException("End of stream marker encountered while merging a row."));
+    } else {
+      resultQueue.put(ResultQueueEntry.<Row> newCompletionMarker());
+    }
   }
 }
