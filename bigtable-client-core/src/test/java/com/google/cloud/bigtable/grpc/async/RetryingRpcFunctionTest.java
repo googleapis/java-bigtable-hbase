@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.base.Predicates;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -83,7 +84,7 @@ public class RetryingRpcFunctionTest {
     retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
 
     underTest = new RetryingRpcFunction<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
-        readAsync, MoreExecutors.newDirectExecutorService(), null);
+        readAsync, Predicates.<ReadRowsRequest>alwaysTrue(), MoreExecutors.newDirectExecutorService(), null);
 
     totalSleep = new AtomicLong();
 

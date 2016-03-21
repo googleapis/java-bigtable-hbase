@@ -182,7 +182,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public ListenableFuture<Empty> addMutationRetry(ListenableFuture<Empty> future, MutateRowRequest request) {
-    return asyncUtilities.addRetry(request, mutateRowRpc, future, null, executorService);
+    return asyncUtilities.addRetry(request, mutateRowRpc, future, IS_RETRYABLE_MUTATION, null, executorService);
   }
 
   @Override
@@ -253,8 +253,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private <ReqT, RespT> ListenableFuture<RespT> performRetryingAsyncRpc(ReqT request,
       BigtableAsyncRpc<ReqT, RespT> rpc, Predicate<ReqT> isRetryable,
       CancellationToken cancellationToken) {
-    if (retryOptions.enableRetries() && isRetryable.apply(request)) {
-      return asyncUtilities.performRetryingAsyncRpc(request, rpc, cancellationToken,
+    if (retryOptions.enableRetries()) {
+      return asyncUtilities.performRetryingAsyncRpc(request, rpc, isRetryable, cancellationToken,
         executorService);
     } else {
       if (retryOptions.enableRetries()) {
