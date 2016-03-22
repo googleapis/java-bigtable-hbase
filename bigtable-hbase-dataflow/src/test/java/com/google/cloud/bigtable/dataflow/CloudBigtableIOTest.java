@@ -43,7 +43,6 @@ import org.mockito.MockitoAnnotations;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.AbstractSource;
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO.CoderType;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.SourceWithKeys;
 import com.google.cloud.dataflow.sdk.Pipeline;
@@ -134,10 +133,17 @@ public class CloudBigtableIOTest {
     long boundary = 0;
     for (byte[] currentKey : keys) {
       boundary += tabletSize;
-      sampleRowKeys.add(SampleRowKeysResponse.newBuilder()
-        .setRowKey(ByteString.copyFrom(currentKey))
-        .setOffsetBytes(boundary)
-        .build());
+      try {
+        sampleRowKeys.add(SampleRowKeysResponse.newBuilder()
+          .setRowKey(ByteString.copyFrom(currentKey))
+          .setOffsetBytes(boundary)
+          .build());
+      } catch (NoClassDefFoundError e) {
+        // This could cause some problems for javadoc or cobertura because of the shading magic we
+        // do.
+        e.printStackTrace();
+        return;
+      }
     }
     CloudBigtableScanConfiguration config =
         new CloudBigtableScanConfiguration("project", "zone", "cluster", "table", new Scan());
