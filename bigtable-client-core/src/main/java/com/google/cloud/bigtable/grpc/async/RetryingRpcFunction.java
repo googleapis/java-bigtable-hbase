@@ -100,10 +100,10 @@ public class RetryingRpcFunction<RequestT, ResponseT>
   }
 
   /**
-   * Calls {@link BigtableAsyncRpc#call(Object)} to get a {@link ListenableFuture} and adds this to
-   * that future via {@link Futures#catchingAsync(ListenableFuture, Class, AsyncFunction,
-   * Executor))} so that retries happen correctly.
-   *
+   * Calls {@link BigtableAsyncRpc#call(Object, CancellationToken)} to get a
+   * {@link ListenableFuture} and adds this to that future via
+   * {@link Futures#catchingAsync(ListenableFuture, Class, AsyncFunction, Executor)} so that
+   * retries happen correctly.
    * @return a {@link ListenableFuture} that will retry on exceptions that are deemed retryable.
    */
   public ListenableFuture<ResponseT> callRpcWithRetry() {

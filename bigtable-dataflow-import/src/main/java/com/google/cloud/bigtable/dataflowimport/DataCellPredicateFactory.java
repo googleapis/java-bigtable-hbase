@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
 
 /**
- * Function that creates a {@link Predicate<Cell>}s from a Delete Marker {@code Cell}. The
+ * Function that creates a {@link Predicate}s from a Delete Marker {@code Cell}. The
  * {@code Predicate} returns {@code true} for all cells that should be deleted because of this
  * Delete Marker.
  *
