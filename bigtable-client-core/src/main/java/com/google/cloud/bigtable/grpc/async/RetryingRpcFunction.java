@@ -39,7 +39,7 @@ import io.grpc.StatusRuntimeException;
 public class RetryingRpcFunction<RequestT, ResponseT>
     implements AsyncFunction<StatusRuntimeException, ResponseT> {
 
-  protected final Logger LOG = new Logger(RetryingRpcFunction.class);
+  protected final static Logger LOG = new Logger(RetryingRpcFunction.class);
 
   private final RequestT request;
 
