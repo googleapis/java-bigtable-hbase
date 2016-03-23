@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.grpc.async;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.ReadRowsRequest;
@@ -26,11 +25,9 @@ import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
-import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -55,22 +52,6 @@ public interface BigtableAsyncUtilities {
 
   <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT>
       createAsyncUnaryRpc(MethodDescriptor<RequestT, ResponseT> method);
-
-  <RequestT, ResponseT> ListenableFuture<ResponseT> addRetry(RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> rpc, ListenableFuture<ResponseT> future,
-      Predicate<RequestT> isRetrayble, CancellationToken cancellationToken,
-      ScheduledExecutorService retryExecutorService);
-
-  /**
-   * Performs the rpc with retries.
-   * @param request The request to send.
-   * @param rpc The rpc to perform
-   * @param executorService The ExecutorService on which to run if there is a need for a retry.
-   * @return the ListenableFuture that can be used to track the RPC.
-   */
-  <RequestT, ResponseT> ListenableFuture<ResponseT> performRetryingAsyncRpc(RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> rpc, Predicate<RequestT> isRetryable,
-      CancellationToken cancellationToken, ScheduledExecutorService executorService);
 
   <RequestT, ResponseT> void asyncServerStreamingCall(ClientCall<RequestT, ResponseT> call,
       RequestT request, ClientCall.Listener<ResponseT> listener);
@@ -98,11 +79,9 @@ public interface BigtableAsyncUtilities {
         };
 
     private final Channel channel;
-    private final RetryOptions retryOptions;
 
-    public Default(Channel channel, RetryOptions retryOptions) {
+    public Default(Channel channel) {
       this.channel = channel;
-      this.retryOptions = retryOptions;
     }
 
     @Override
@@ -188,38 +167,5 @@ public interface BigtableAsyncUtilities {
         }, MoreExecutors.directExecutor());
       }
     }
-
-    @Override
-    public <RequestT, ResponseT> ListenableFuture<ResponseT> performRetryingAsyncRpc(
-        RequestT request,
-        BigtableAsyncRpc<RequestT, ResponseT> rpc,
-        Predicate<RequestT> isRetryable,
-        CancellationToken cancellationToken,
-        ScheduledExecutorService retryExecutorService) {
-      if (retryOptions.enableRetries()) {
-        RetryingRpcFunction<RequestT, ResponseT> retryingRpcFunction = new RetryingRpcFunction<>(
-            retryOptions, request, rpc, isRetryable, retryExecutorService, cancellationToken);
-        return retryingRpcFunction.callRpcWithRetry();
-      } else {
-        return rpc.call(request, cancellationToken);
-      }
-    }
-
-    @Override
-    public <RequestT, ResponseT> ListenableFuture<ResponseT> addRetry(
-        RequestT request,
-        BigtableAsyncRpc<RequestT, ResponseT> rpc,
-        ListenableFuture<ResponseT> future,
-        Predicate<RequestT> isRetryable,
-        CancellationToken cancellationToken,
-        ScheduledExecutorService retryExecutorService) {
-      if (retryOptions.enableRetries()) {
-        RetryingRpcFunction<RequestT, ResponseT> retryingRpcFunction = new RetryingRpcFunction<>(
-            retryOptions, request, rpc, isRetryable, retryExecutorService, cancellationToken);
-        return retryingRpcFunction.addRetry(future);
-      } else {
-        return rpc.call(request, cancellationToken);
-      }
-    }
-  };
+  }
 }
