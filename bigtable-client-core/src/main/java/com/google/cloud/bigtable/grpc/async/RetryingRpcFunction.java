@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
@@ -51,7 +51,7 @@ public class RetryingRpcFunction<RequestT, ResponseT>
   private final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   private final RetryOptions retryOptions;
   private final Predicate<RequestT> isRetryable;
-  private final ExecutorService executorService;
+  private final ScheduledExecutorService retryExecutorService;
   private int failedCount;
   private final CancellationToken cancellationToken;
 
@@ -60,13 +60,13 @@ public class RetryingRpcFunction<RequestT, ResponseT>
           RequestT request,
           BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
           Predicate<RequestT> isRetryable,
-          ExecutorService executorService,
+          ScheduledExecutorService retryExecutorService,
           CancellationToken cancellationToken) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
     this.isRetryable = isRetryable;
-    this.executorService = executorService;
+    this.retryExecutorService = retryExecutorService;
     this.cancellationToken = cancellationToken;
   }
 
@@ -81,8 +81,8 @@ public class RetryingRpcFunction<RequestT, ResponseT>
     }
   }
 
-  private ListenableFuture<ResponseT> backOffAndRetry(StatusRuntimeException cause, Status status) throws IOException,
-      BigtableRetriesExhaustedException {
+  private ListenableFuture<ResponseT> backOffAndRetry(StatusRuntimeException cause, Status status)
+      throws IOException, BigtableRetriesExhaustedException {
     if (this.currentBackoff == null) {
       this.currentBackoff = retryOptions.createBackoff();
     }
@@ -111,7 +111,7 @@ public class RetryingRpcFunction<RequestT, ResponseT>
   }
 
   public ListenableFuture<ResponseT> addRetry(final ListenableFuture<ResponseT> future) {
-    return Futures.catchingAsync(future, StatusRuntimeException.class, this, executorService);
+    return Futures.catchingAsync(future, StatusRuntimeException.class, this, retryExecutorService);
   }
 
   public CancellationToken getCancellationToken() {
