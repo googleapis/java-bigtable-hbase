@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.grpc.async;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.ReadRowsRequest;
@@ -57,20 +57,20 @@ public interface BigtableAsyncUtilities {
       createAsyncUnaryRpc(MethodDescriptor<RequestT, ResponseT> method);
 
   <RequestT, ResponseT> ListenableFuture<ResponseT> addRetry(RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> rpc, ListenableFuture<ResponseT> future, Predicate<RequestT> isRetrayble,
-      CancellationToken cancellationToken, ExecutorService executorService);
+      BigtableAsyncRpc<RequestT, ResponseT> rpc, ListenableFuture<ResponseT> future,
+      Predicate<RequestT> isRetrayble, CancellationToken cancellationToken,
+      ScheduledExecutorService retryExecutorService);
 
   /**
    * Performs the rpc with retries.
-   *
    * @param request The request to send.
    * @param rpc The rpc to perform
    * @param executorService The ExecutorService on which to run if there is a need for a retry.
    * @return the ListenableFuture that can be used to track the RPC.
    */
   <RequestT, ResponseT> ListenableFuture<ResponseT> performRetryingAsyncRpc(RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> rpc, Predicate<RequestT> isRetryable  , CancellationToken cancellationToken,
-      ExecutorService executorService);
+      BigtableAsyncRpc<RequestT, ResponseT> rpc, Predicate<RequestT> isRetryable,
+      CancellationToken cancellationToken, ScheduledExecutorService executorService);
 
   <RequestT, ResponseT> void asyncServerStreamingCall(ClientCall<RequestT, ResponseT> call,
       RequestT request, ClientCall.Listener<ResponseT> listener);
@@ -195,10 +195,10 @@ public interface BigtableAsyncUtilities {
         BigtableAsyncRpc<RequestT, ResponseT> rpc,
         Predicate<RequestT> isRetryable,
         CancellationToken cancellationToken,
-        ExecutorService executorService) {
+        ScheduledExecutorService retryExecutorService) {
       if (retryOptions.enableRetries()) {
-        RetryingRpcFunction<RequestT, ResponseT> retryingRpcFunction =
-            new RetryingRpcFunction<>(retryOptions, request, rpc, isRetryable, executorService, cancellationToken);
+        RetryingRpcFunction<RequestT, ResponseT> retryingRpcFunction = new RetryingRpcFunction<>(
+            retryOptions, request, rpc, isRetryable, retryExecutorService, cancellationToken);
         return retryingRpcFunction.callRpcWithRetry();
       } else {
         return rpc.call(request, cancellationToken);
@@ -212,10 +212,10 @@ public interface BigtableAsyncUtilities {
         ListenableFuture<ResponseT> future,
         Predicate<RequestT> isRetryable,
         CancellationToken cancellationToken,
-        ExecutorService executorService) {
+        ScheduledExecutorService retryExecutorService) {
       if (retryOptions.enableRetries()) {
-        RetryingRpcFunction<RequestT, ResponseT> retryingRpcFunction =
-            new RetryingRpcFunction<>(retryOptions, request, rpc, isRetryable, executorService, cancellationToken);
+        RetryingRpcFunction<RequestT, ResponseT> retryingRpcFunction = new RetryingRpcFunction<>(
+            retryOptions, request, rpc, isRetryable, retryExecutorService, cancellationToken);
         return retryingRpcFunction.addRetry(future);
       } else {
         return rpc.call(request, cancellationToken);

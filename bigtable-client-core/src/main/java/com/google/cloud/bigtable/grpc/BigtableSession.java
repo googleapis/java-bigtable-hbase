@@ -75,6 +75,12 @@ public class BigtableSession implements Closeable {
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
 
+  // 256 MB, server has 256 MB limit.
+  private final static int MAX_MESSAGE_SIZE = 1 << 28; 
+
+  // 1 MB -- TODO(sduskis): make this configurable
+  private final static int FLOW_CONTROL_WINDOW = 1 << 20;
+
   @VisibleForTesting
   static final String PROJECT_ID_EMPTY_OR_NULL = "ProjectId must not be empty or null.";
   @VisibleForTesting
@@ -253,7 +259,7 @@ public class BigtableSession implements Closeable {
 
     // More often than not, users want the dataClient. Create a new one in the constructor.
     this.dataClient =
-        new BigtableDataGrpcClient(dataChannel, sharedPools.getBatchThreadPool(), options);
+        new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
 
     // Defer the creation of both the tableAdminClient and clusterAdminClient until we need them.
   }
@@ -262,7 +268,9 @@ public class BigtableSession implements Closeable {
    * Use {@link BigtableSession#BigtableSession(BigtableOptions)} instead;
    */
   @Deprecated
-  public BigtableSession(BigtableOptions options, ExecutorService batchPool) throws IOException {
+  public BigtableSession(
+      BigtableOptions options, @SuppressWarnings("unused") ExecutorService batchPool)
+      throws IOException {
     this(options);
   }
 
@@ -270,9 +278,12 @@ public class BigtableSession implements Closeable {
    * Use {@link BigtableSession#BigtableSession(BigtableOptions)} instead;
    */
   @Deprecated
-  public BigtableSession(BigtableOptions options,
-      @Nullable ExecutorService batchPool, @Nullable EventLoopGroup elg,
-      @Nullable ScheduledExecutorService scheduledRetries) throws IOException {
+  public BigtableSession(
+      BigtableOptions options,
+      @SuppressWarnings("unused") @Nullable ExecutorService batchPool,
+      @Nullable EventLoopGroup elg,
+      @Nullable ScheduledExecutorService scheduledRetries)
+      throws IOException {
     this(options);
     if (elg != null) {
       // There used to be a default EventLoopGroup if the elg is not passed in.
@@ -334,12 +345,12 @@ public class BigtableSession implements Closeable {
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
     return NettyChannelBuilder
         .forAddress(new InetSocketAddress(address, options.getPort()))
-        .maxMessageSize(256 * 1024 * 1024) // 256 MB, server has 256 MB limit.
+        .maxMessageSize(MAX_MESSAGE_SIZE)
         .sslContext(createSslContext())
         .eventLoopGroup(sharedPools.getElg())
         .executor(sharedPools.getBatchThreadPool())
         .negotiationType(NegotiationType.TLS)
-        .flowControlWindow(1 << 20) // 1 MB -- TODO(sduskis): make this configurable
+        .flowControlWindow(FLOW_CONTROL_WINDOW)
         .build();
   }
 

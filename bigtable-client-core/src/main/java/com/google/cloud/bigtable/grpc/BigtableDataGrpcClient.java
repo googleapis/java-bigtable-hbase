@@ -24,8 +24,8 @@ import io.grpc.stub.ClientCalls;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.bigtable.v1.BigtableServiceGrpc;
@@ -60,6 +60,7 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Empty;
 import com.google.protobuf.ServiceException;
 
@@ -126,7 +127,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private final ChannelPool channelPool;
 
-  private final ExecutorService executorService;
+  private final ScheduledExecutorService retryExecutorService;
   private final RetryOptions retryOptions;
   private final BigtableOptions bigtableOptions;
   private final BigtableResultScannerFactory streamingScannerFactory =
@@ -147,20 +148,20 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final BigtableAsyncRpc<CheckAndMutateRowRequest, CheckAndMutateRowResponse> checkAndMutateRpc;
   private final BigtableAsyncRpc<ReadModifyWriteRowRequest, Row> readWriteModifyRpc;
 
-  public BigtableDataGrpcClient(ChannelPool channelPool, ExecutorService executorService,
-      BigtableOptions bigtableOptions) {
-    this(channelPool, executorService, bigtableOptions,
+  public BigtableDataGrpcClient(ChannelPool channelPool,
+      ScheduledExecutorService retryExecutorService, BigtableOptions bigtableOptions) {
+    this(channelPool, retryExecutorService, bigtableOptions,
         new BigtableAsyncUtilities.Default(channelPool, bigtableOptions.getRetryOptions()));
   }
 
   @VisibleForTesting
   BigtableDataGrpcClient(
       ChannelPool channelPool,
-      ExecutorService executorService,
+      ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions,
       BigtableAsyncUtilities asyncUtilities) {
     this.channelPool = channelPool;
-    this.executorService = executorService;
+    this.retryExecutorService = retryExecutorService;
     this.bigtableOptions = bigtableOptions;
     this.retryOptions = bigtableOptions.getRetryOptions();
     this.asyncUtilities = asyncUtilities;
@@ -181,8 +182,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   @Override
-  public ListenableFuture<Empty> addMutationRetry(ListenableFuture<Empty> future, MutateRowRequest request) {
-    return asyncUtilities.addRetry(request, mutateRowRpc, future, IS_RETRYABLE_MUTATION, null, executorService);
+  public ListenableFuture<Empty> addMutationRetry(ListenableFuture<Empty> future,
+      MutateRowRequest request) {
+    return asyncUtilities.addRetry(request, mutateRowRpc, future, IS_RETRYABLE_MUTATION, null,
+      retryExecutorService);
   }
 
   @Override
@@ -255,7 +258,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       CancellationToken cancellationToken) {
     if (retryOptions.enableRetries()) {
       return asyncUtilities.performRetryingAsyncRpc(request, rpc, isRetryable, cancellationToken,
-        executorService);
+        retryExecutorService);
     } else {
       if (retryOptions.enableRetries()) {
         // Do not retry the call despite retries being enabled. The call is not idempontent and
@@ -368,7 +371,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       public void run() {
         readRowsCall.cancel();
       }
-    }, executorService);
+    }, MoreExecutors.directExecutor());
     return cancellationToken;
   }
 
