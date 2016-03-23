@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import java.io.IOException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.api.client.util.BackOff;

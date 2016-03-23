@@ -46,6 +46,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
+import com.google.cloud.bigtable.grpc.async.RetryingRpcFunction;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
@@ -151,7 +152,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   public BigtableDataGrpcClient(ChannelPool channelPool,
       ScheduledExecutorService retryExecutorService, BigtableOptions bigtableOptions) {
     this(channelPool, retryExecutorService, bigtableOptions,
-        new BigtableAsyncUtilities.Default(channelPool, bigtableOptions.getRetryOptions()));
+        new BigtableAsyncUtilities.Default(channelPool));
   }
 
   @VisibleForTesting
@@ -184,8 +185,19 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<Empty> addMutationRetry(ListenableFuture<Empty> future,
       MutateRowRequest request) {
-    return asyncUtilities.addRetry(request, mutateRowRpc, future, IS_RETRYABLE_MUTATION, null,
-      retryExecutorService);
+    if (retryOptions.enableRetries()) {
+      RetryingRpcFunction<MutateRowRequest, Empty> retryingRpcFunction =
+          new RetryingRpcFunction<>(
+              retryOptions,
+              request,
+              mutateRowRpc,
+              IS_RETRYABLE_MUTATION,
+              retryExecutorService,
+              null);
+      return retryingRpcFunction.addRetry(future);
+    } else {
+      return mutateRowRpc.call(request, null);
+    }
   }
 
   @Override
@@ -257,8 +269,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       BigtableAsyncRpc<ReqT, RespT> rpc, Predicate<ReqT> isRetryable,
       CancellationToken cancellationToken) {
     if (retryOptions.enableRetries()) {
-      return asyncUtilities.performRetryingAsyncRpc(request, rpc, isRetryable, cancellationToken,
-        retryExecutorService);
+      RetryingRpcFunction<ReqT, RespT> retryingRpcFunction =
+          new RetryingRpcFunction<>(
+              retryOptions, request, rpc, isRetryable, retryExecutorService, cancellationToken);
+      return retryingRpcFunction.callRpcWithRetry();
     } else {
       if (retryOptions.enableRetries()) {
         // Do not retry the call despite retries being enabled. The call is not idempontent and
