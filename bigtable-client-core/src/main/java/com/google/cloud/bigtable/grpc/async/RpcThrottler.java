@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 
+import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
@@ -35,24 +36,35 @@ import java.util.concurrent.locks.ReentrantLock;
 public class RpcThrottler {
   protected static final Logger LOG = new Logger(RpcThrottler.class);
 
-  private static final long FINISH_WAIT_MILLIS = 250;
+  private static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
 
-  // In awaitCompletion, wait up to this number of milliseconds without any operations completing.  If
+  // In awaitCompletion, wait up to this number of nanoseconds without any operations completing.  If
   // this amount of time goes by without any updates, awaitCompletion will log a warning.  Flush()
   // will still wait to complete.
-  private static final long INTERVAL_NO_SUCCESS_WARNING = 300000;
+  private static final long INTERVAL_NO_SUCCESS_WARNING_NANOS = 300000 * 1000;
 
   private final ResourceLimiter resourceLimiter;
+  private final NanoClock clock;
+  private final long finishWaitMillis;
 
   private ReentrantLock lock = new ReentrantLock();
   private Condition flushedCondition = lock.newCondition();
   private Set<Long> outstandingRequests = new HashSet<>();
   private Set<Long> outstandingRetries = new HashSet<>();
   private AtomicLong retrySequenceGenerator = new AtomicLong();
-  private long lastOperationChange = System.currentTimeMillis();
+  private long noSuccessWarningDeadline;
+  private int noSuccessWarningCount;
 
   public RpcThrottler(ResourceLimiter resourceLimiter) {
+    this(resourceLimiter, NanoClock.SYSTEM, DEFAULT_FINISH_WAIT_MILLIS);
+  }
+
+  @VisibleForTesting
+  RpcThrottler(ResourceLimiter resourceLimiter, NanoClock clock, long finishWaitMillis) {
     this.resourceLimiter = resourceLimiter;
+    this.clock = clock;
+    this.finishWaitMillis = finishWaitMillis;
+    resetNoSuccessWarningDeadline();
   }
 
   /**
@@ -137,11 +149,12 @@ public class RpcThrottler {
     lock.lock();
     try {
       while (!isFlushed()) {
-        flushedCondition.await(FINISH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+        flushedCondition.await(finishWaitMillis, TimeUnit.MILLISECONDS);
 
-        if (!performedWarning
-            && lastOperationChange + INTERVAL_NO_SUCCESS_WARNING < System.currentTimeMillis()) {
-          logNoSuccessWarning();
+        long now = clock.nanoTime();
+        if (now >= noSuccessWarningDeadline) {
+          logNoSuccessWarning(now);
+          resetNoSuccessWarningDeadline();
           performedWarning = true;
         }
       }
@@ -153,11 +166,12 @@ public class RpcThrottler {
     }
   }
 
-  private void logNoSuccessWarning() {
-    long lastUpdated = (System.currentTimeMillis() - lastOperationChange) / 1000;
+  private void logNoSuccessWarning(long now) {
+    long lastUpdated = (now - noSuccessWarningDeadline + INTERVAL_NO_SUCCESS_WARNING_NANOS) / 1000;
     LOG.warn("No operations completed within the last %d seconds. "
-            + "There are still %d operations in progress.", lastUpdated,
-        outstandingRequests.size());
+            + "There are still %d rpcs and %d retries in progress.", lastUpdated,
+        outstandingRequests.size(), outstandingRetries.size());
+    noSuccessWarningCount++;
   }
 
   /**
@@ -184,6 +198,16 @@ public class RpcThrottler {
   }
 
   @VisibleForTesting
+  void resetNoSuccessWarningDeadline() {
+    noSuccessWarningDeadline = clock.nanoTime() + INTERVAL_NO_SUCCESS_WARNING_NANOS;
+  }
+
+  @VisibleForTesting
+  int getNoSuccessWarningCount() {
+    return noSuccessWarningCount;
+  }
+
+  @VisibleForTesting
   void onRpcCompletion(long id) {
     resourceLimiter.markCanBeCompleted(id);
 
@@ -196,7 +220,7 @@ public class RpcThrottler {
     } finally {
       lock.unlock();
     }
-    lastOperationChange = System.currentTimeMillis();
+    resetNoSuccessWarningDeadline();
   }
 
   private void onRetryCompletion(long id) {
@@ -209,6 +233,6 @@ public class RpcThrottler {
     } finally {
       lock.unlock();
     }
-    lastOperationChange = System.currentTimeMillis();
+    resetNoSuccessWarningDeadline();
   }
 }
