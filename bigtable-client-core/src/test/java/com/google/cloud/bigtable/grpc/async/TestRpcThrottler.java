@@ -37,6 +37,7 @@ import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -86,13 +87,13 @@ public class TestRpcThrottler {
       long id = underTest.registerOperationWithHeapSize(5l);
       assertTrue(underTest.hasInflightRequests());
       assertTrue(resourceLimiter.isFull());
-      final AtomicBoolean secondRequestRegistered = new AtomicBoolean();
+      final CountDownLatch secondRequestRegisteredLatch = new CountDownLatch(1);
       pool.submit(new Runnable() {
         @Override
         public void run() {
           try {
             underTest.registerOperationWithHeapSize(5l);
-            secondRequestRegistered.set(true);
+            secondRequestRegisteredLatch.countDown();
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
@@ -100,12 +101,11 @@ public class TestRpcThrottler {
       });
       // Give some time for the Runnable to be executed.
       Thread.sleep(10);
-      assertFalse(secondRequestRegistered.get());
+      assertEquals(1, secondRequestRegisteredLatch.getCount());
       resourceLimiter.markCanBeCompleted(id);
 
-      // Give more time for the Runnable to be executed.
-      Thread.sleep(10);
-      assertTrue(secondRequestRegistered.get());
+      // Now wait for the second request to be registered
+      assertTrue(secondRequestRegisteredLatch.await(1, TimeUnit.MINUTES));
     } finally {
       pool.shutdownNow();
     }
