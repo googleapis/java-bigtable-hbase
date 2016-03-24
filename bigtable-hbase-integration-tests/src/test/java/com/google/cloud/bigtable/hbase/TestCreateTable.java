@@ -28,9 +28,19 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class TestCreateTable extends AbstractTest {
 
@@ -84,7 +94,7 @@ public class TestCreateTable extends AbstractTest {
         "a" + RandomStringUtils.random(10, false, false)
     };
 
-    Admin admin = getConnection().getAdmin();
+    final Admin admin = getConnection().getAdmin();
 
     for (String badName : badNames) {
       boolean failed = false;
@@ -98,27 +108,45 @@ public class TestCreateTable extends AbstractTest {
       Assert.assertTrue("Should fail as table name: '" + badName + "'", failed);
     }
 
-    for(String goodName : goodNames) {
-      TableName tableName = TableName.valueOf(goodName);
-      HTableDescriptor descriptor = new HTableDescriptor(tableName);
-      descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+    List<ListenableFuture<Void>> futures = new ArrayList<>();
+    ListeningExecutorService es = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+    for(final String goodName : goodNames) {
+      Callable<Void> c = new Callable<Void>() {
+        @Override
+        public Void call() throws IOException {
+          createTable(admin, goodName);
+          return null;
+        }
+      };
+      futures.add(es.submit(c));
+    }
+    try {
+      Futures.allAsList(futures);
+    } finally {
+      es.shutdownNow();
+    }
+  }
 
+  private void createTable(Admin admin, String goodName) throws IOException {
+    TableName tableName = TableName.valueOf(goodName);
+    HTableDescriptor descriptor = new HTableDescriptor(tableName);
+    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+
+    try {
+      // TODO(kevinsi): Currently the integration test is shared. We need to make a unique cluster
+      // per test environment for a cleaner testing scenario.
+      if (admin.tableExists(tableName)) {
+        LOG.warn("Not creating the table since it exists: %s", tableName);
+      } else {
+        admin.createTable(descriptor);
+      }
+    } finally {
       try {
-        // TODO(kevinsi): Currently the integration test is shared. We need to make a unique cluster
-        // per test environment for a cleaner testing scenario.
-        if (admin.tableExists(tableName)) {
-          LOG.warn("Not creating the table since it exists: %s", tableName);
-        } else {
-          admin.createTable(descriptor);
-        }
-      } finally {
-        try {
-          admin.disableTable(tableName);
-          admin.deleteTable(tableName);
-        } catch (Throwable t) {
-          // Log the error and ignore it.
-          LOG.warn("Error cleaning up the table", t);
-        }
+        admin.disableTable(tableName);
+        admin.deleteTable(tableName);
+      } catch (Throwable t) {
+        // Log the error and ignore it.
+        LOG.warn("Error cleaning up the table", t);
       }
     }
   }
