@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -35,6 +36,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class TestBasicOps extends AbstractTest {
   /**
@@ -162,8 +167,22 @@ public class TestBasicOps extends AbstractTest {
   @Test
   /** Run a large value ten times for performance logging puproses */
   public void testPutAlmostTooBigValueTenTimes() throws IOException {
-    for (int i = 0; i < 10; i++) {
-      testPutGetDeleteExists(10 << 20, true, true); // 10 MB
+    ExecutorService es = Executors.newCachedThreadPool();
+    try {
+      for (int i = 0; i < 10; i++) {
+        es.submit(new Callable<Void>() {
+          public Void call() throws Exception {
+            testPutGetDeleteExists(10 << 20, true, true); // 10 MB
+            return null;
+          };
+        });
+      }
+    } finally {
+      es.shutdown();
+      try {
+        es.awaitTermination(1, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+      }
     }
   }
 
