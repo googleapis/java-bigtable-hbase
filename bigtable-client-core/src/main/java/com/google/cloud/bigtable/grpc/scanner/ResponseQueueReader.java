@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import io.grpc.ClientCall;
-
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -28,12 +26,15 @@ import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.Row;
 import com.google.common.base.Preconditions;
 
+import io.grpc.ClientCall;
+import io.grpc.stub.StreamObserver;
+
 /**
  * Helper to read a queue of ResultQueueEntries and use the RowMergers to reconstruct
  * complete Row objects from the partial ReadRowsResponse objects.
  */
-public class ResponseQueueReader {
-  private final BlockingQueue<ResultQueueEntry<ReadRowsResponse>> resultQueue;
+public class ResponseQueueReader implements StreamObserver<Row> {
+  private final BlockingQueue<ResultQueueEntry<Row>> resultQueue;
   private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
   private AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
@@ -43,11 +44,12 @@ public class ResponseQueueReader {
   private final ClientCall<?, ReadRowsResponse> call;
 
   public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap,
-      int outstandingRequestCount, int batchRequestSize, ClientCall<?, ReadRowsResponse> call) {
+      AtomicInteger outstandingRequestCount, int batchRequestSize,
+      ClientCall<?, ReadRowsResponse> call) {
     this.resultQueue = new LinkedBlockingQueue<>();
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
     this.capacityCap = capacityCap;
-    this.outstandingRequestCount = new AtomicInteger(outstandingRequestCount);
+    this.outstandingRequestCount = outstandingRequestCount;
     this.batchRequestSize = batchRequestSize;
     this.call = call;
   }
@@ -58,43 +60,22 @@ public class ResponseQueueReader {
    * @throws IOException On errors.
    */
   public synchronized Row getNextMergedRow() throws IOException {
-    RowMerger builder = null;
-
-    while (!lastResponseProcessed) {
-      ResultQueueEntry<ReadRowsResponse> queueEntry = getNext();
+    if (!lastResponseProcessed) {
+      ResultQueueEntry<Row> queueEntry = getNext();
 
       if (queueEntry.isCompletionMarker()) {
         lastResponseProcessed = true;
-        break;
-      }
-
-      ReadRowsResponse partialRow = queueEntry.getResponseOrThrow();
-      if (builder == null) {
-        builder = new RowMerger();
-      }
-
-      builder.addPartialRow(partialRow);
-
-      if (builder.isRowCommitted()) {
-        Row builtRow = builder.buildRow();
-        if (builtRow == null) {
-          // This could happen when a row that was scanned was deleted after the scan started.
-          builder = null;
-        } else {
-          return builtRow;
-        }
+      } else {
+        return queueEntry.getResponseOrThrow();
       }
     }
 
-    Preconditions.checkState(builder == null,
-      "End of stream marker encountered while merging a row.");
     Preconditions.checkState(lastResponseProcessed,
       "Should only exit merge loop with by returning a complete Row or hitting end of stream.");
     return null;
   }
 
-  private ResultQueueEntry<ReadRowsResponse> getNext() throws IOException {
-
+  private ResultQueueEntry<Row> getNext() throws IOException {
     // If there are currently less than or equal to the batch request size, then ask gRPC to
     // request more results in a batch. Batch requests are more efficient that reading one at
     // a time.
@@ -102,7 +83,7 @@ public class ResponseQueueReader {
       call.request(batchRequestSize);
       outstandingRequestCount.addAndGet(batchRequestSize);
     }
-    ResultQueueEntry<ReadRowsResponse> queueEntry;
+    ResultQueueEntry<Row> queueEntry;
     try {
       queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
@@ -128,11 +109,34 @@ public class ResponseQueueReader {
     return resultQueue.size();
   }
 
-  public void add(ResultQueueEntry<ReadRowsResponse> entry) throws InterruptedException {
-    if (entry.isCompletionMarker()) {
-      completionMarkerFound.set(true);
+  @Override
+  public void onNext(Row row) {
+    try {
+      resultQueue.put(ResultQueueEntry.fromResponse(row));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
     }
-    outstandingRequestCount.decrementAndGet();
-    resultQueue.put(entry);
+  }
+
+  @Override
+  public void onError(Throwable t) {
+    try {
+      resultQueue.put(ResultQueueEntry.<Row> fromThrowable(t));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
+    }
+  }
+
+  @Override
+  public void onCompleted() {
+    try {
+      completionMarkerFound.set(true);
+      resultQueue.put(ResultQueueEntry.<Row> completionMarker());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
+    }
   }
 }

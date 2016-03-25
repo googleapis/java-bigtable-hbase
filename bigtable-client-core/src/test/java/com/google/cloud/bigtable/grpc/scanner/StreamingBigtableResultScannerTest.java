@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -28,7 +27,6 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 
 @RunWith(JUnit4.class)
@@ -46,29 +44,6 @@ public class StreamingBigtableResultScannerTest {
   public void setup(){
     MockitoAnnotations.initMocks(this);
     scanner = new StreamingBigtableResultScanner(reader, cancellationToken);
-  }
-
-  @Test
-  public void testAddResult() throws IOException, InterruptedException {
-    ReadRowsResponse response = ReadRowsResponse.getDefaultInstance();
-    scanner.addResult(response);
-    verify(reader, times(1)).add(eq(ResultQueueEntry.fromResponse(response)));
-    scanner.close();
-  }
-
-  @Test
-  public void testSetException() throws IOException, InterruptedException {
-    IOException e = new IOException("Some exception");
-    scanner.setError(e);
-    verify(reader, times(1)).add(eq(ResultQueueEntry.<ReadRowsResponse> fromThrowable(e)));
-    scanner.close();
-  }
-
-  @Test
-  public void testComplete() throws IOException, InterruptedException {
-    scanner.complete();
-    verify(reader, times(1)).add(eq(ResultQueueEntry.<ReadRowsResponse> completionMarker()));
-    scanner.close();
   }
 
   @Test

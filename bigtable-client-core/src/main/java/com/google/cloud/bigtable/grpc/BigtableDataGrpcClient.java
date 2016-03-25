@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.grpc;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
-import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.ClientCalls;
 
@@ -51,6 +50,7 @@ import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
+import com.google.cloud.bigtable.grpc.scanner.ReadRowsResponseListener;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
@@ -275,7 +275,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       return retryingRpcFunction.callRpcWithRetry();
     } else {
       if (retryOptions.enableRetries()) {
-        // Do not retry the call despite retries being enabled. The call is not idempontent and
+        // Do not retry the call despite retries being enabled. The call is not idempotent and
         // retrying it could cause unexpected behavior.
         // Only log for powers of two to avoid spam.
         int count = LOG_COUNT.incrementAndGet();
@@ -354,27 +354,18 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
         channelPool.newCall(BigtableServiceGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
 
-    CancellationToken cancellationToken = createCancellationToken(readRowsCall);
-
     int timeout = retryOptions.getReadPartialRowTimeoutMillis();
+    AtomicInteger outstandingRequestCount = new AtomicInteger(batchRequestSize);
 
     ResponseQueueReader responseQueueReader =
-        new ResponseQueueReader(timeout, streamingBufferSize, batchRequestSize,
+        new ResponseQueueReader(timeout, streamingBufferSize, outstandingRequestCount,
             batchRequestSize, readRowsCall);
+    ReadRowsResponseListener listener =
+        new ReadRowsResponseListener(responseQueueReader, outstandingRequestCount);
+    asyncUtilities.asyncServerStreamingCall(readRowsCall, request, listener);
 
-    StreamingBigtableResultScanner resultScanner =
-        new StreamingBigtableResultScanner(responseQueueReader, cancellationToken);
-
-    asyncUtilities.asyncServerStreamingCall(
-        readRowsCall,
-        request,
-        createClientCallListener(resultScanner));
-
-    if (batchRequestSize > 1) {
-      readRowsCall.request(batchRequestSize - 1);
-    }
-
-    return resultScanner;
+    CancellationToken cancellationToken = createCancellationToken(readRowsCall);
+    return new StreamingBigtableResultScanner(responseQueueReader, cancellationToken);
   }
 
   private CancellationToken createCancellationToken(final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall) {
@@ -387,25 +378,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       }
     }, MoreExecutors.directExecutor());
     return cancellationToken;
-  }
-
-  private ClientCall.Listener<ReadRowsResponse>
-      createClientCallListener(final StreamingBigtableResultScanner resultScanner) {
-    return new ClientCall.Listener<ReadRowsResponse>() {
-      @Override
-      public void onMessage(ReadRowsResponse readRowResponse) {
-        resultScanner.addResult(readRowResponse);
-      }
-
-      @Override
-      public void onClose(Status status, Metadata trailers) {
-        if (status.isOk()) {
-          resultScanner.complete();
-        } else {
-          resultScanner.setError(status.asRuntimeException());
-        }
-      }
-    };
   }
 
   private void expandPoolIfNecessary(int channelCount) {

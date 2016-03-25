@@ -118,7 +118,6 @@ abstract class ResultQueueEntry<T> {
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
     public boolean equals(Object obj) {
       if (!(obj instanceof ResultQueueEntry) || obj == null){
         return false;
