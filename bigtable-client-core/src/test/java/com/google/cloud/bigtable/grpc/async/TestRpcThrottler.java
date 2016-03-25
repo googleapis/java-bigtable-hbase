@@ -20,21 +20,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-import com.google.api.client.util.NanoClock;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.internal.exceptions.ExceptionIncludingMockitoWarnings;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -42,9 +27,22 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import com.google.api.client.util.NanoClock;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 @RunWith(JUnit4.class)
 public class TestRpcThrottler {
@@ -257,7 +255,7 @@ public class TestRpcThrottler {
       }
     });
 
-    long finishWaitTime = 10;
+    long finishWaitTime = 100;
     int iterations = 4;
 
     final ResourceLimiter resourceLimiter = new ResourceLimiter(100l, 100);
@@ -267,28 +265,28 @@ public class TestRpcThrottler {
     underTest.registerRetry(retryFuture);
 
     ExecutorService pool = Executors.newCachedThreadPool();
-    pool.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          underTest.awaitCompletion();
-        } catch (InterruptedException e) {
-          e.printStackTrace();
+    try {
+      pool.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            underTest.awaitCompletion();
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
         }
-      }
-    });
-
-    // Sleep a multiple of the finish wait time to force a few iterations
-    Thread.sleep(finishWaitTime * iterations);
-
-    // Trigger completion
-    retryFuture.set(null);
-
-    pool.shutdown();
-    pool.awaitTermination(100, TimeUnit.MILLISECONDS);
+      });
+      // Sleep a multiple of the finish wait time to force a few iterations
+      Thread.sleep(finishWaitTime * (iterations + 1));
+      // Trigger completion
+      retryFuture.set(null);
+    } finally {
+      pool.shutdown();
+      pool.awaitTermination(100, TimeUnit.MILLISECONDS);
+    }
 
     // The test is non-deterministic due to actual waiting. Allow a margin of error.
     // TODO Refactor to make it deterministic.
-    assertTrue(underTest.getNoSuccessWarningCount() >= iterations -1);
+    assertTrue(underTest.getNoSuccessWarningCount() >= iterations);
   }
 }
