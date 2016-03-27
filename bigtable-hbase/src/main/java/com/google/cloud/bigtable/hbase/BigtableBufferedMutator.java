@@ -40,7 +40,6 @@ import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.MutateRowsResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
@@ -51,7 +50,6 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
 
@@ -128,7 +126,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
    */
   private final AtomicInteger activeMutationWorkers = new AtomicInteger();
 
-  private Object bulkMutationLock = new String("");
   private BulkMutation bulkMutation = null;
 
   /**
@@ -189,6 +186,11 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.options = options;
     this.rpcThrottler = rpcThrottler;
     this.executorService = asyncRpcExecutorService;
+    if (options.useBulkApi()) {
+      String tableName = this.adapter.getBigtableTableName().toString();
+      bulkMutation = new BulkMutation(tableName, asyncExecutor, options.getBulkMaxRowKeyCount(),
+          options.getBulkMaxRequestSize());
+    }
   }
 
   private void initializeAsyncMutators() {
@@ -224,27 +226,11 @@ public class BigtableBufferedMutator implements BufferedMutator {
       initializeAsyncMutators();
     }
     // If there is a bulk mutation in progress, then send it.
-    synchronized (bulkMutationLock) {
-      if (bulkMutation != null) {
-        mutateRowsAsync(bulkMutation);
-        bulkMutation = null;
-      }
+    if (bulkMutation != null) {
+      bulkMutation.flush();
     }
     asyncExecutor.flush();
     handleExceptions();
-  }
-
-  protected void mutateRowsAsync(BulkMutation bulkMutation) {
-    ListenableFuture<MutateRowsResponse> future = null;
-    try {
-      future = asyncExecutor.mutateRowsAsync(bulkMutation.toRequest());
-    } catch (InterruptedException e) {
-      future = Futures.<MutateRowsResponse> immediateFailedFuture(e);
-    } finally {
-      if (future != null) {
-        bulkMutation.addCallback(future);
-      }
-    }
   }
 
   @Override
@@ -307,29 +293,14 @@ public class BigtableBufferedMutator implements BufferedMutator {
       Runnable operation = null;
       if (options.useBulkApi() && (mutation instanceof Put || mutation instanceof Delete)) {
         // TODO: Do this logic asynchronously.
-        synchronized (bulkMutationLock) {
-          if (bulkMutation == null) {
-            bulkMutation = new BulkMutation(this.adapter.getBigtableTableName().toString());
-          }
-          MutateRowRequest request = adapt(mutation);
-          SettableFuture<Empty> future = bulkMutation.add(request);
-          addExceptionCallback(future, mutation);
-          ListenableFuture<Empty> retryingFuture = asyncExecutor.addMutationRetry(future, request);
-
-          // Make sure that flush will not finish until the retries are finished.
-          rpcThrottler.registerRetry(retryingFuture);
-          addExceptionCallback(retryingFuture, mutation);
-          if (bulkMutation.getRowKeyCount() >= options.getBulkMaxRowKeyCount()
-              || bulkMutation.getApproximateByteSize() >= options.getBulkMaxRequestSize()) {
-            mutateRowsAsync(bulkMutation);
-            bulkMutation = null;
-          }
-        }
+        MutateRowRequest request = adapt(mutation);
+        ListenableFuture<Empty> future = bulkMutation.add(request);
+        addExceptionCallback(future, mutation);
       } else {
-        initializeAsyncMutators();
         long operationId = rpcThrottler.registerOperationWithHeapSize(mutation.heapSize());
         operation = new MutationOperation(mutation, operationId);
         if (executorService != null && options.getAsyncMutatorCount() > 0) {
+          initializeAsyncMutators();
           asyncOperationsQueue.add(operation);
         } else {
           operation.run();

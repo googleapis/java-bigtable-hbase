@@ -8,14 +8,22 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import static org.mockito.Mockito.*;
+
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.MutateRowsRequest;
@@ -23,6 +31,7 @@ import com.google.bigtable.v1.MutateRowsRequest.Entry;
 import com.google.bigtable.v1.MutateRowsResponse;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.SetCell;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
@@ -34,6 +43,7 @@ import io.grpc.StatusRuntimeException;
 /**
  * Tests for {@link BulkMutation}
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 @RunWith(JUnit4.class)
 public class TestBulkMutation {
   private final static String TABLE_NAME = "table";
@@ -42,9 +52,41 @@ public class TestBulkMutation {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
+  @Mock
+  private AsyncExecutor asyncExecutor;
+
+  @Mock
+  private RpcThrottler rpcThrottler;
+
+  @Mock
+  private ListenableFuture mockFuture;
+
+  BulkMutation.Batch underTest;
+
+  @Before
+  public void setup() throws InterruptedException {
+    MockitoAnnotations.initMocks(this);
+    when(asyncExecutor.getRpcThrottler()).thenReturn(rpcThrottler);
+    when(asyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(mockFuture);
+    when(asyncExecutor.addMutationRetry(any(ListenableFuture.class), any(MutateRowRequest.class)))
+        .thenAnswer(new Answer<ListenableFuture>() {
+          @Override
+          public ListenableFuture answer(InvocationOnMock invocation) throws Throwable {
+            return invocation.getArgumentAt(0, ListenableFuture.class);
+          }
+        });
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        invocation.getArgumentAt(0, Runnable.class).run();
+        return null;
+      }
+    }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
+    underTest = new BulkMutation.Batch(TABLE_NAME, asyncExecutor, 10000, 10000);
+  }
+
   @Test
   public void testAdd() {
-    BulkMutation underTest = new BulkMutation(TABLE_NAME);
     MutateRowRequest mutateRowRequest = createRequest();
     underTest.add(mutateRowRequest);
     MutateRowsRequest expected = MutateRowsRequest.newBuilder()
@@ -67,26 +109,19 @@ public class TestBulkMutation {
 
   @Test
   public void testCallableSuccess() throws InterruptedException, ExecutionException {
-    BulkMutation underTest = new BulkMutation(TABLE_NAME);
-    SettableFuture<Empty> rowFuture = underTest.add(createRequest());
-    SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();
-    underTest.addCallback(rowsFuture);
-    Assert.assertFalse(rowFuture.isDone());
-    Builder okStatus = Status.newBuilder().setCode(io.grpc.Status.OK.getCode().value());
-    rowsFuture.set(MutateRowsResponse.newBuilder().addStatuses(okStatus).build());
+    ListenableFuture<Empty> rowFuture = underTest.add(createRequest());
+    setResponse(io.grpc.Status.OK);
     Assert.assertTrue(rowFuture.isDone());
     Assert.assertEquals(Empty.getDefaultInstance(), rowFuture.get());
   }
 
   @Test
-  public void testCallableNotOKStatus() throws InterruptedException {
-    BulkMutation underTest = new BulkMutation(TABLE_NAME);
-    SettableFuture<Empty> rowFuture = underTest.add(createRequest());
+  public void testCallableNotOKStatus() throws InterruptedException, ExecutionException {
+    ListenableFuture<Empty> rowFuture = underTest.add(createRequest());
     SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();
     underTest.addCallback(rowsFuture);
     Assert.assertFalse(rowFuture.isDone());
-    Builder okStatus = Status.newBuilder().setCode(io.grpc.Status.NOT_FOUND.getCode().value());
-    rowsFuture.set(MutateRowsResponse.newBuilder().addStatuses(okStatus).build());
+    setResponse(io.grpc.Status.NOT_FOUND);
 
     try {
       rowFuture.get();
@@ -97,15 +132,13 @@ public class TestBulkMutation {
 
   @Test
   public void testCallableTooFewStatuses() throws InterruptedException, ExecutionException {
-    BulkMutation underTest = new BulkMutation(TABLE_NAME);
-    SettableFuture<Empty> rowFuture1 = underTest.add(createRequest());
-    SettableFuture<Empty> rowFuture2 = underTest.add(createRequest());
+    ListenableFuture<Empty> rowFuture1 = underTest.add(createRequest());
+    ListenableFuture<Empty> rowFuture2 = underTest.add(createRequest());
     SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();
     underTest.addCallback(rowsFuture);
     Assert.assertFalse(rowFuture1.isDone());
     Assert.assertFalse(rowFuture2.isDone());
-    Builder okStatus = Status.newBuilder().setCode(io.grpc.Status.OK.getCode().value());
-    rowsFuture.set(MutateRowsResponse.newBuilder().addStatuses(okStatus).build());
+    setResponse(io.grpc.Status.OK);
 
     Assert.assertTrue(rowFuture1.isDone());
     Assert.assertTrue(rowFuture2.isDone());
@@ -121,9 +154,8 @@ public class TestBulkMutation {
 
   @Test
   public void testCallableException() throws InterruptedException {
-    BulkMutation underTest = new BulkMutation(TABLE_NAME);
-    SettableFuture<Empty> rowFuture1 = underTest.add(createRequest());
-    SettableFuture<Empty> rowFuture2 = underTest.add(createRequest());
+    ListenableFuture<Empty> rowFuture1 = underTest.add(createRequest());
+    ListenableFuture<Empty> rowFuture2 = underTest.add(createRequest());
     SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();
     underTest.addCallback(rowsFuture);
     Assert.assertFalse(rowFuture1.isDone());
@@ -139,5 +171,14 @@ public class TestBulkMutation {
     } catch (ExecutionException e) {
       Assert.assertEquals(throwable, e.getCause());
     }
+  }
+
+  private void setResponse(final io.grpc.Status code)
+      throws InterruptedException, ExecutionException {
+    Builder notFound = Status.newBuilder().setCode(code.getCode().value());
+    MutateRowsResponse response =
+        MutateRowsResponse.newBuilder().addStatuses(notFound).build();
+    when(mockFuture.get()).thenReturn(response);
+    underTest.sendRows();
   }
 }
