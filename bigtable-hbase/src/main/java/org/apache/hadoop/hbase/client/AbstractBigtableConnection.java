@@ -32,7 +32,6 @@ import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.base.MoreObjects;
-import com.google.common.util.concurrent.MoreExecutors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -164,15 +163,11 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
     BigtableDataClient client = session.getDataClient();
-    if (pool == null) {
-      pool = BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
-    }
-    BatchExecutor batchExecutor = new BatchExecutor(
-         new AsyncExecutor(client, new RpcThrottler(resourceLimiter)),
-         options,
-         MoreExecutors.listeningDecorator(pool),
-         createAdapter(tableName));
-    return new BigtableTable(this, tableName, options, client, createAdapter(tableName), batchExecutor);
+    RpcThrottler rpcThrottler = new RpcThrottler(resourceLimiter);
+    AsyncExecutor asyncExecutor = new AsyncExecutor(client, rpcThrottler);
+    HBaseRequestAdapter adapter = createAdapter(tableName);
+    BatchExecutor batchExecutor = new BatchExecutor(asyncExecutor, options, adapter);
+    return new BigtableTable(this, tableName, options, client, adapter, batchExecutor);
   }
 
   @Override
