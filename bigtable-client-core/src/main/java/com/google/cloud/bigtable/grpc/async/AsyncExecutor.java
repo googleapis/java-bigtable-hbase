@@ -113,11 +113,11 @@ public class AsyncExecutor {
       };
 
   private final BigtableDataClient client;
-  private final RpcThrottler sizeManager;
+  private final RpcThrottler rpcThrottler;
 
   public AsyncExecutor(BigtableDataClient client, RpcThrottler rpcThrottler) {
     this.client = client;
-    this.sizeManager = rpcThrottler;
+    this.rpcThrottler = rpcThrottler;
   }
 
   /**
@@ -271,7 +271,7 @@ public class AsyncExecutor {
       AsyncCall<RequestT, ResponseT> rpc, RequestT request) throws InterruptedException {
     // Wait until both the memory and rpc count maximum requirements are achieved before getting a
     // unique id used to track this request.
-    long id = sizeManager.registerOperationWithHeapSize(request.getSerializedSize());
+    long id = rpcThrottler.registerOperationWithHeapSize(request.getSerializedSize());
     return call(rpc, request, id);
   }
 
@@ -283,7 +283,7 @@ public class AsyncExecutor {
     } catch (Exception e) {
       future = Futures.immediateFailedFuture(e);
     }
-    sizeManager.addCallback(future, id);
+    rpcThrottler.addCallback(future, id);
     return future;
   }
 
@@ -296,7 +296,7 @@ public class AsyncExecutor {
   public void flush() throws IOException {
     LOG.trace("Flushing");
     try {
-      sizeManager.awaitCompletion();
+      rpcThrottler.awaitCompletion();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Batch operations were interrupted.");
@@ -305,11 +305,11 @@ public class AsyncExecutor {
   }
 
   public boolean hasInflightRequests() {
-    return sizeManager.hasInflightRequests();
+    return rpcThrottler.hasInflightRequests();
   }
 
   public long getMaxHeapSize() {
-    return sizeManager.getMaxHeapSize();
+    return rpcThrottler.getMaxHeapSize();
   }
 
   public BigtableDataClient getClient() {

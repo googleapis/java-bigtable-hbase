@@ -36,19 +36,19 @@ import io.grpc.StatusRuntimeException;
  */
 @RunWith(JUnit4.class)
 public class TestBulkMutation {
-  final static String tableName = "table";
-  final static ByteString qualifier = ByteString.copyFrom("qual".getBytes());
+  private final static String TABLE_NAME = "table";
+  private final static ByteString QUALIFIER = ByteString.copyFrom("qual".getBytes());
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testAdd() {
-    BulkMutation underTest = new BulkMutation(tableName);
+    BulkMutation underTest = new BulkMutation(TABLE_NAME);
     MutateRowRequest mutateRowRequest = createRequest();
     underTest.add(mutateRowRequest);
     MutateRowsRequest expected = MutateRowsRequest.newBuilder()
-        .setTableName(tableName)
+        .setTableName(TABLE_NAME)
         .addEntries(Entry.newBuilder().addMutations(mutateRowRequest.getMutations(0)).build())
         .build();
     Assert.assertEquals(expected, underTest.toRequest());
@@ -60,14 +60,14 @@ public class TestBulkMutation {
         .setSetCell(
             SetCell.newBuilder()
               .setFamilyName("cf1")
-              .setColumnQualifier(qualifier))
+              .setColumnQualifier(QUALIFIER))
             .build())
         .build();
   }
 
   @Test
   public void testCallableSuccess() throws InterruptedException, ExecutionException {
-    BulkMutation underTest = new BulkMutation(tableName);
+    BulkMutation underTest = new BulkMutation(TABLE_NAME);
     SettableFuture<Empty> rowFuture = underTest.add(createRequest());
     SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();
     underTest.addCallback(rowsFuture);
@@ -80,7 +80,7 @@ public class TestBulkMutation {
 
   @Test
   public void testCallableNotOKStatus() throws InterruptedException {
-    BulkMutation underTest = new BulkMutation(tableName);
+    BulkMutation underTest = new BulkMutation(TABLE_NAME);
     SettableFuture<Empty> rowFuture = underTest.add(createRequest());
     SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();
     underTest.addCallback(rowsFuture);
@@ -97,7 +97,7 @@ public class TestBulkMutation {
 
   @Test
   public void testCallableTooFewStatuses() throws InterruptedException, ExecutionException {
-    BulkMutation underTest = new BulkMutation(tableName);
+    BulkMutation underTest = new BulkMutation(TABLE_NAME);
     SettableFuture<Empty> rowFuture1 = underTest.add(createRequest());
     SettableFuture<Empty> rowFuture2 = underTest.add(createRequest());
     SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();
@@ -121,7 +121,7 @@ public class TestBulkMutation {
 
   @Test
   public void testCallableException() throws InterruptedException {
-    BulkMutation underTest = new BulkMutation(tableName);
+    BulkMutation underTest = new BulkMutation(TABLE_NAME);
     SettableFuture<Empty> rowFuture1 = underTest.add(createRequest());
     SettableFuture<Empty> rowFuture2 = underTest.add(createRequest());
     SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();

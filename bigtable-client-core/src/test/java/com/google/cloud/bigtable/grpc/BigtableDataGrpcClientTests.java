@@ -59,6 +59,7 @@ import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Empty;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
@@ -98,16 +99,13 @@ public class BigtableDataGrpcClientTests {
     when(mockAsyncUtilities.createAsyncUnaryRpc(any(MethodDescriptor.class)))
         .thenReturn(mockBigtableRpc);
     when(mockBigtableRpc.call(any(), any(CancellationToken.class))).thenReturn(mockFuture);
-    doAnswer(
-            new Answer<Void>() {
-              @Override
-              public Void answer(InvocationOnMock invocation) throws Throwable {
-                invocation.getArgumentAt(0, Runnable.class).run();
-                return null;
-              }
-            })
-        .when(mockFuture)
-        .addListener(any(Runnable.class), any(Executor.class));
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        invocation.getArgumentAt(0, Runnable.class).run();
+        return null;
+      }
+    }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
 
     underTest =
         new BigtableDataGrpcClient(
@@ -120,6 +118,7 @@ public class BigtableDataGrpcClientTests {
   @Test
   public void testRetyableMutateRow() throws Exception {
     final MutateRowRequest request = MutateRowRequest.getDefaultInstance();
+    when(mockFuture.get()).thenReturn(Empty.getDefaultInstance());
     underTest.mutateRow(request);
     verifyRequestCalled(request);
   }
