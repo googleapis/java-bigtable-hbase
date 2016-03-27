@@ -95,6 +95,7 @@ public class HBaseImportIO {
   /**
    * Returns a {@link BoundedSource} from an HBase Sequence File for an import pipeline.
    */
+  @SuppressWarnings("unchecked")
   public static BoundedSource<
       KV<ImmutableBytesWritable, Result>> createSource(HBaseImportOptions options) {
     // Tell HadoopFileSource not to access the input files before job is staged on the cloud.

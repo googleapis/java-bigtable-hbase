@@ -109,7 +109,7 @@ public class HBaseResultToMutationFnTest {
   @Test
   public void testResultToMutation_emptyCellsWarnOnce() throws Exception {
     DoFnTester<KV<ImmutableBytesWritable, Result>, Mutation> doFnTester = DoFnTester.of(doFn);
-    Result resultWithEmptyCells = Result.create(Collections.EMPTY_LIST);
+    Result resultWithEmptyCells = Result.create(Collections.<Cell> emptyList());
     List<Mutation> outputs = doFnTester.processBatch(
         KV.of(new ImmutableBytesWritable(ROW_KEY), resultWithEmptyCells),
         KV.of(new ImmutableBytesWritable(ROW_KEY_2), resultWithEmptyCells));

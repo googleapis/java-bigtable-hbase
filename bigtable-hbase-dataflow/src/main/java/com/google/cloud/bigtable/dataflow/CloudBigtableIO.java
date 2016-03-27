@@ -48,7 +48,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.v1.BigtableServiceGrpc.BigtableService;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;

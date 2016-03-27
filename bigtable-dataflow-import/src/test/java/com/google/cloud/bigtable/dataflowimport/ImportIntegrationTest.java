@@ -258,7 +258,7 @@ public class ImportIntegrationTest {
         tableId, Bytes.toString(CF))) {
       tableUtils.createEmptyTable();
       doImport(options);
-      assertCellSetsEqual(Collections.EMPTY_SET, tableUtils.readAllCellsFromTable());
+      assertCellSetsEqual(Collections.<Cell> emptySet(), tableUtils.readAllCellsFromTable());
     }
   }
 

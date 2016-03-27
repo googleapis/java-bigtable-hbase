@@ -41,7 +41,6 @@ import java.util.Set;
 public class DataCellPredicateFactoryTest {
   private static final byte[] ROW_KEY = Bytes.toBytes("row_key");
   private static final byte[] COLUMN_FAMILY = Bytes.toBytes("column_family");
-  private static final byte[] ANOTHER_COLUMN_FAMILY = Bytes.toBytes("another_column_family");
   private static final byte[] QUALIFIER = Bytes.toBytes("qualifier");
   private static final byte[] ANOTHER_QUALIFIER = Bytes.toBytes("another_qualifier");
 

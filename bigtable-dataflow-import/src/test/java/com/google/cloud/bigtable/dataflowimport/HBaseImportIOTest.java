@@ -106,6 +106,7 @@ public class HBaseImportIOTest {
         SequenceFileIoUtils.readCellsFromSource(importOptions));
   }
 
+  @SuppressWarnings("rawtypes")
   private Configuration getDeserializerConfigurationFromSource(
       HadoopFileSource<ImmutableBytesWritable, Result> source) throws Exception {
     BoundedReader<KV<ImmutableBytesWritable, Result>> reader = source.createReader(importOptions);
@@ -113,6 +114,7 @@ public class HBaseImportIOTest {
     return ((HadoopFileReader) reader).getDeserializerConfiguration();
   }
 
+  @SuppressWarnings("unchecked")
   private HadoopFileSource<ImmutableBytesWritable, Result> createSourceAndVerifyBasics(
       HBaseImportOptions importOptions) throws Exception {
     when(importOptions.getFilePattern()).thenReturn(FILE_PATTERN);
@@ -129,9 +131,10 @@ public class HBaseImportIOTest {
 
     // Verify the output coder.
     assertTrue(source.getDefaultOutputCoder() instanceof KvCoder);
-    assertTrue(((KvCoder) source.getDefaultOutputCoder()).getKeyCoder() instanceof WritableCoder);
-    assertTrue(
-        ((KvCoder) source.getDefaultOutputCoder()).getValueCoder() instanceof HBaseResultCoder);
+    KvCoder<ImmutableBytesWritable, Result> defaultOutputCoder =
+        (KvCoder<ImmutableBytesWritable, Result>) source.getDefaultOutputCoder();
+    assertTrue(defaultOutputCoder.getKeyCoder() instanceof WritableCoder);
+    assertTrue(defaultOutputCoder.getValueCoder() instanceof HBaseResultCoder);
 
     // Verify the constant serializer properties
     Configuration deserializerConfigs = getDeserializerConfigurationFromSource(source);

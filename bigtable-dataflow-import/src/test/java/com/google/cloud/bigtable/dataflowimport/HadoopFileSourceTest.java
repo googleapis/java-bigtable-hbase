@@ -43,6 +43,7 @@ import java.util.Map;
  * Unit test for changes made to {@link HadoopFileSource} for HBase Sequence File import.
  */
 @RunWith(JUnit4.class)
+@SuppressWarnings("unchecked")
 public class HadoopFileSourceTest {
   private static final String FILE_PATTERN = "file_pattern";
   private static final Class<Writable> KEY_CLASS = Writable.class;
@@ -70,12 +71,15 @@ public class HadoopFileSourceTest {
     verifySourceBasics(source);
     // Verify the output coder.
     assertTrue(source.getDefaultOutputCoder() instanceof KvCoder);
-    assertTrue(((KvCoder) source.getDefaultOutputCoder()).getKeyCoder() instanceof WritableCoder);
-    assertTrue(((KvCoder) source.getDefaultOutputCoder()).getValueCoder() instanceof WritableCoder);
+    final KvCoder<Writable, Text> defaultOutputCoder =
+        (KvCoder<Writable, Text>) source.getDefaultOutputCoder();
+    assertTrue(defaultOutputCoder.getKeyCoder() instanceof WritableCoder);
+    assertTrue(defaultOutputCoder.getValueCoder() instanceof WritableCoder);
     // Verify a reader created by the source.
     BoundedReader<KV<Writable, Text>> reader = source.createReader(importOptions);
     assertTrue(reader instanceof HadoopFileReader);
-    assertNull(((HadoopFileReader) reader).getDeserializerConfiguration().get(SERIALIZER_PROPERTY));
+    assertNull(((HadoopFileReader<Writable, Text>) reader).getDeserializerConfiguration()
+        .get(SERIALIZER_PROPERTY));
   }
 
   /**
@@ -94,7 +98,8 @@ public class HadoopFileSourceTest {
     // Verify a reader created by the source.
     BoundedReader<KV<Writable, Text>> reader = source.createReader(importOptions);
     assertTrue(reader instanceof HadoopFileReader);
-    assertNull(((HadoopFileReader) reader).getDeserializerConfiguration().get(SERIALIZER_PROPERTY));
+    assertNull(((HadoopFileReader<Writable, Text>) reader).getDeserializerConfiguration()
+        .get(SERIALIZER_PROPERTY));
   }
 
   /**
@@ -113,9 +118,9 @@ public class HadoopFileSourceTest {
     // Verify a reader created by the source.
     BoundedReader<KV<Writable, Text>> reader = source.createReader(importOptions);
     assertTrue(reader instanceof HadoopFileReader);
-    assertEquals(
-        ((HadoopFileReader) reader).getDeserializerConfiguration().get(SERIALIZER_PROPERTY),
-        SERIALIZER_VALUE);
+    assertEquals(((HadoopFileReader<Writable, Text>) reader).getDeserializerConfiguration()
+        .get(SERIALIZER_PROPERTY),
+      SERIALIZER_VALUE);
   }
 
   private void verifySourceBasics(HadoopFileSource<Writable, Text> source) throws Exception {
