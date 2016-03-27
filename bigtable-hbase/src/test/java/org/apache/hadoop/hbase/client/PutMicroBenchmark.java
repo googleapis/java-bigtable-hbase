@@ -182,6 +182,7 @@ public class PutMicroBenchmark {
       @Override
       public void halfClose() {}
 
+      @SuppressWarnings("unchecked")
       @Override
       public void sendMessage(RequestT message) {
         responseListener.onMessage((ResponseT) Empty.getDefaultInstance());

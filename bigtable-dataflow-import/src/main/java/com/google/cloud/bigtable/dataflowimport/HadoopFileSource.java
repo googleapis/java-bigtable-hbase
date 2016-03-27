@@ -42,8 +42,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -102,7 +100,6 @@ import javax.annotation.Nullable;
  */
 public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   private static final long serialVersionUID = 0L;
-  private static Logger logger = LoggerFactory.getLogger(HadoopFileSource.class);
 
   // Work-around to suppress confusing warning and stack traces by gcs-connector.
   // See setIsRemoteFileFromLaunchSite() for more information. This variable
@@ -110,7 +107,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   private static boolean isRemoteFileFromLaunchSite;
 
   private final String filepattern;
-  private final Class<? extends FileInputFormat<?, ?>> formatClass;
+  private final Class<? extends FileInputFormat<K, V>> formatClass;
   private final Class<K> keyClass;
   private final Class<V> valueClass;
   private final SerializableSplit serializableSplit;
@@ -137,10 +134,8 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    */
   public static <K, V, T extends FileInputFormat<K, V>> HadoopFileSource<K, V> from(
       String filepattern, Class<T> formatClass, Class<K> keyClass, Class<V> valueClass) {
-    @SuppressWarnings("unchecked")
-    HadoopFileSource<K, V> source = (HadoopFileSource<K, V>)
-        new HadoopFileSource(filepattern, formatClass, keyClass, valueClass);
-    return source;
+    return (HadoopFileSource<K, V>)
+        new HadoopFileSource<K, V>(filepattern, formatClass, keyClass, valueClass);
   }
 
   /**
@@ -153,11 +148,8 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   public static <K, V, T extends FileInputFormat<K, V>> HadoopFileSource<K, V> from(
       String filepattern, Class<T> formatClass, Class<K> keyClass, Class<V> valueClass,
       Coder<KV<K, V>> overrideOutputCoder, Map<String, String> serializationProperties) {
-    @SuppressWarnings("unchecked")
-    HadoopFileSource<K, V> source = (HadoopFileSource<K, V>)
-        new HadoopFileSource(filepattern, formatClass, keyClass, valueClass,
-            null /** serializableSplit **/, overrideOutputCoder, serializationProperties);
-    return source;
+    return new HadoopFileSource<K, V>(filepattern, formatClass, keyClass, valueClass,
+        null /** serializableSplit **/, overrideOutputCoder, serializationProperties);
   }
 
   /**
@@ -183,7 +175,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    * Create a {@code HadoopFileSource} based on a file or a file pattern specification.
    */
   private HadoopFileSource(String filepattern,
-      Class<? extends FileInputFormat<?, ?>> formatClass, Class<K> keyClass,
+      Class<? extends FileInputFormat<K, V>> formatClass, Class<K> keyClass,
       Class<V> valueClass) {
     this(filepattern, formatClass, keyClass, valueClass, null /** serializableSplit**/,
         null /** overrideOutputCoder**/, ImmutableMap.<String, String>of());
@@ -194,7 +186,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    * split up further.
    */
   private HadoopFileSource(String filepattern,
-      Class<? extends FileInputFormat<?, ?>> formatClass, Class<K> keyClass,
+      Class<? extends FileInputFormat<K, V>> formatClass, Class<K> keyClass,
       Class<V> valueClass, SerializableSplit serializableSplit, Coder<KV<K, V>> overrideOutputCoder,
       Map<String, String> serializationProperties) {
     this.filepattern = filepattern;
@@ -253,7 +245,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     }
   }
 
-  private FileInputFormat<?, ?> createFormat(Job job) throws IOException, IllegalAccessException,
+  private FileInputFormat<K, V> createFormat(Job job) throws IOException, IllegalAccessException,
       InstantiationException {
     Path path = new Path(filepattern);
     FileInputFormat.addInputPath(job, path);
@@ -332,7 +324,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     return size;
   }
 
-  private <K, V> List<FileStatus> listStatus(FileInputFormat<K, V> format,
+  private List<FileStatus> listStatus(FileInputFormat<K, V> format,
       JobContext jobContext) throws NoSuchMethodException, InvocationTargetException,
       IllegalAccessException {
     // FileInputFormat#listStatus is protected, so call using reflection
@@ -352,7 +344,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
 
     private final BoundedSource<KV<K, V>> source;
     private final String filepattern;
-    private final Class formatClass;
+    private final Class<? extends FileInputFormat<?, ?>> formatClass;
     private final Map<String, String> serializationProperties;
 
     private FileInputFormat<?, ?> format;

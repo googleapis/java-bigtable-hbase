@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.util.concurrent.MoreExecutors;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;

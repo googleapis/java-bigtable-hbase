@@ -148,7 +148,7 @@ class HBaseResultToMutationFn
   private List<Cell> checkEmptyRow(KV<ImmutableBytesWritable, Result> kv) {
     List<Cell> cells = kv.getValue().listCells();
     if (cells == null) {
-      cells = Collections.EMPTY_LIST;
+      cells = Collections.<Cell> emptyList();
     }
     if (!isEmptyRowWarned && cells.isEmpty()) {
       logger.warn("Encountered empty row. Was input file serialized by HBase 0.94?");
