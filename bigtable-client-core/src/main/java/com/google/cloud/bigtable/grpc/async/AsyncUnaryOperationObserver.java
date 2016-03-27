@@ -29,16 +29,28 @@ import com.google.common.util.concurrent.SettableFuture;
  */
 public class AsyncUnaryOperationObserver<T> extends ClientCall.Listener<T> {
   private final SettableFuture<T> completionFuture = SettableFuture.create();
+  private T value;
 
   @Override
   public void onMessage(T message) {
-    completionFuture.set(message);
+    if (value != null) {
+      throw Status.INTERNAL.withDescription("More than one value received for unary call")
+          .asRuntimeException();
+    }
+    value = message;
   }
 
   @Override
   public void onClose(Status status, Metadata trailers) {
     if (!status.isOk()) {
       completionFuture.setException(status.asRuntimeException());
+    } else if (value == null) {
+      // No value received so mark the future as an error
+      completionFuture.setException(
+          Status.INTERNAL.withDescription("No value received for unary call")
+              .asRuntimeException());
+    } else {
+      completionFuture.set(value);
     }
   }
 
