@@ -40,8 +40,6 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
@@ -62,7 +60,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -77,7 +74,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -130,12 +126,8 @@ public class TestBatchExecutor {
       new HBaseRequestAdapter(new BigtableClusterName("project", "zone", "cluster"),
           TableName.valueOf("table"), new Configuration(false));
 
-  private ListeningExecutorService service;
-
   @Before
   public void setup() throws InterruptedException {
-    service =
-        MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService());
     MockitoAnnotations.initMocks(this);
     when(mockAsyncExecutor.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);
@@ -151,11 +143,6 @@ public class TestBatchExecutor {
     }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
   }
 
-  @After
-  public void tearDown() {
-    service.shutdown();
-    service = null;
-  }
 
   @Test
   public void testGet() throws Exception {
@@ -192,8 +179,6 @@ public class TestBatchExecutor {
 
   @Test
   public void testShutdownService() throws Exception {
-    service.shutdown();
-    service.awaitTermination(1000, TimeUnit.MILLISECONDS);
     try {
       batch(Arrays.asList(randomPut()));
     } catch (RetriesExhaustedWithDetailsException e) {
@@ -285,7 +270,7 @@ public class TestBatchExecutor {
   }
 
   private BatchExecutor createExecutor(BigtableOptions options) {
-    return new BatchExecutor(mockAsyncExecutor, options, service, requestAdapter);
+    return new BatchExecutor(mockAsyncExecutor, options, requestAdapter);
   }
 
   private Result[] batch(final List<? extends org.apache.hadoop.hbase.client.Row> actions)

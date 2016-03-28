@@ -48,7 +48,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
@@ -196,17 +196,14 @@ public class BatchExecutor {
 
   protected final AsyncExecutor asyncExecutor;
   protected final BigtableOptions options;
-  protected final ListeningExecutorService service;
   protected final HBaseRequestAdapter requestAdapter;
 
   public BatchExecutor(
       AsyncExecutor asyncExecutor,
       BigtableOptions options,
-      ListeningExecutorService service,
       HBaseRequestAdapter requestAdapter) {
     this.asyncExecutor = asyncExecutor;
     this.options = options;
-    this.service = service;
     this.requestAdapter = requestAdapter;
   }
 
@@ -231,20 +228,8 @@ public class BatchExecutor {
     RpcResultFutureCallback<T> futureCallback =
         new RpcResultFutureCallback<T>(row, callback, index, results, resultFuture);
     results[index] = null;
-    if (service.isShutdown()) {
-      // If the service is shutdown, that means that the connection is shut down. It also means that
-      // the line:
-      // Futures.addCallback(future, futureCallback, service);
-      // which uses the service will throw a rejected execution exception. In that case, throw an
-      // IOException like HBase does.
-      ListenableFuture<? extends GeneratedMessage> failFuture =
-          Futures.immediateFailedFuture(new IOException(
-              "Cannot perform batch operations when a connection is closed"));
-      Futures.addCallback(failFuture, futureCallback);
-    } else {
-      ListenableFuture<? extends GeneratedMessage> future = issueAsyncRequest(bulkOperation, row);
-      Futures.addCallback(future, futureCallback, service);
-    }
+    ListenableFuture<? extends GeneratedMessage> future = issueAsyncRequest(bulkOperation, row);
+    Futures.addCallback(future, futureCallback);
     return resultFuture;
   }
 
