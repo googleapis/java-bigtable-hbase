@@ -25,11 +25,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -43,7 +44,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -54,9 +54,10 @@ import com.google.bigtable.v1.MutateRowsResponse;
 import com.google.bigtable.v1.MutateRowsResponse.Builder;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
+import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -71,7 +72,8 @@ import com.google.rpc.Status;
 public class TestBigtableBufferedMutator {
 
   private static final byte[] EMPTY_BYTES = new byte[1];
-  private static final Put SIMPLE_PUT = new Put(EMPTY_BYTES).addColumn(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES);
+  private static final Put SIMPLE_PUT =
+new Put(EMPTY_BYTES).addColumn(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES);
   private static final Status OK_STATUS =
       Status.newBuilder().setCode(io.grpc.Status.OK.getCode().value()).build();
 
@@ -87,21 +89,13 @@ public class TestBigtableBufferedMutator {
 
   private ExecutorService executorService;
 
-  private List<Runnable> callbacks = new ArrayList<>();
   @SuppressWarnings("rawtypes")
-  private List<FutureCallback> futureCallbacks = new ArrayList<>();
-  private List<SettableFuture<Empty>> retryFutures = new ArrayList<>();
+  private List<FutureCallback> futureCallbacks;
 
   @Before
   public void setUp() {
+    futureCallbacks = new ArrayList<>();
     MockitoAnnotations.initMocks(this);
-    Mockito.doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        callbacks.add(invocation.getArgumentAt(0, Runnable.class));
-        return null;
-      }
-    }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
   }
 
   @After
@@ -134,13 +128,14 @@ public class TestBigtableBufferedMutator {
 
     executorService = Executors.newCachedThreadPool();
     return new BigtableBufferedMutator(
-      mockClient,
-      adapter,
-      configuration,
-      options,
-      listener,
+        mockClient,
+        adapter,
+        configuration,
+        options,
+        listener,
         rpcThrottler,
-      executorService);
+        executorService,
+        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor());
   }
 
   @Test
@@ -152,11 +147,33 @@ public class TestBigtableBufferedMutator {
   @SuppressWarnings("unchecked")
   @Test
   public void testMutation() throws IOException, InterruptedException {
-    when(mockClient.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);
+    final ReentrantLock lock = new ReentrantLock();
+    final Condition mutateRowAsyncCalled = lock.newCondition();
+    when(mockClient.mutateRowAsync(any(MutateRowRequest.class)))
+        .thenAnswer(
+            new Answer<ListenableFuture<Empty>>() {
+              @Override
+              public ListenableFuture<Empty> answer(InvocationOnMock invocation) throws Throwable {
+                lock.lock();
+                try {
+                  mutateRowAsyncCalled.signalAll();
+                  return mockFuture;
+                } finally {
+                  lock.unlock();
+                }
+              }
+            });
     try (BigtableBufferedMutator underTest = createMutator(new Configuration(false))) {
       underTest.mutate(SIMPLE_PUT);
+      Assert.assertTrue(underTest.hasInflightRequests());
       // Leave some time for the async worker to handle the request.
-      Thread.sleep(100);
+      lock.lock(); 
+      
+      try {
+        mutateRowAsyncCalled.await(100, TimeUnit.SECONDS);
+      } finally {
+        lock.unlock();
+      }
       verify(mockClient, times(1)).mutateRowAsync(any(MutateRowRequest.class));
       Assert.assertTrue(underTest.hasInflightRequests());
       completeCall();
@@ -186,25 +203,21 @@ public class TestBigtableBufferedMutator {
     when(mockClient.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);
     Configuration config = new Configuration(false);
     config.set(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, "0");
-    try (BigtableBufferedMutator underTest = createMutator(config)) {
-      underTest.mutate(SIMPLE_PUT);
-      verify(mockClient, times(1)).mutateRowAsync(any(MutateRowRequest.class));
-      Assert.assertTrue(underTest.hasInflightRequests());
-      completeCall();
-      Assert.assertFalse(underTest.hasInflightRequests());
-    }
+    BigtableBufferedMutator underTest = createMutator(config);
+    underTest.mutate(SIMPLE_PUT);
+    Assert.assertTrue(underTest.hasInflightRequests());
+    verify(mockClient, times(1)).mutateRowAsync(any(MutateRowRequest.class));
+    Assert.assertTrue(underTest.hasInflightRequests());
+    completeCall();
+    Assert.assertFalse(underTest.hasInflightRequests());
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testBulkSingleRequests() throws IOException, InterruptedException {
     Configuration config = new Configuration(false);
     config.set(BigtableOptionsFactory.BIGTABLE_USE_BULK_API, "true");
     SettableFuture<MutateRowsResponse> future = SettableFuture.create();
     when(mockClient.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
-    SettableFuture<Empty> retryFuture = createRetryFuture();
-    when(mockClient.addMutationRetry(any(ListenableFuture.class), any(MutateRowRequest.class)))
-        .thenReturn(retryFuture);
     final BigtableBufferedMutator underTest = createMutator(config);
     try {
       underTest.mutate(SIMPLE_PUT);
@@ -232,7 +245,6 @@ public class TestBigtableBufferedMutator {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testBulkMultipleRequests() throws IOException, InterruptedException {
     Configuration config = new Configuration(false);
@@ -250,8 +262,6 @@ public class TestBigtableBufferedMutator {
             return future;
           }
         });
-    when(mockClient.addMutationRetry(any(ListenableFuture.class), any(MutateRowRequest.class)))
-        .thenReturn(createRetryFuture());
     final BigtableBufferedMutator underTest = createMutator(config);
     try {
       Builder firstResponseBuilder = MutateRowsResponse.newBuilder();
@@ -285,25 +295,11 @@ public class TestBigtableBufferedMutator {
     }
   }
 
-  private SettableFuture<Empty> createRetryFuture() {
-    SettableFuture<Empty> future = SettableFuture.create();
-    retryFutures.add(future);
-    return future;
-  }
-
   @SuppressWarnings({ "rawtypes", "unchecked" })
   private void completeCall() {
-    for (Runnable callback : callbacks) {
-      callback.run();
-    }
-    callbacks.clear();
     for (FutureCallback futureCallback : futureCallbacks) {
       futureCallback.onSuccess(null);
     }
     futureCallbacks.clear();
-    for (SettableFuture<Empty> retryFuture : retryFutures) {
-      retryFuture.set(null);
-    }
-    retryFutures.clear();
   }
 }

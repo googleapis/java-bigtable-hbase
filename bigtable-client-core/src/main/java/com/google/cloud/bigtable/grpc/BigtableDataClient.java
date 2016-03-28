@@ -119,7 +119,4 @@ public interface BigtableDataClient {
    * all reads have completed.
    */
   ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request);
-
-  ListenableFuture<Empty> addMutationRetry(ListenableFuture<Empty> future,
-      MutateRowRequest request);
 }

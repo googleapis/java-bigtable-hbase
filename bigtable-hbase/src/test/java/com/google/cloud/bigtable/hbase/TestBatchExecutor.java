@@ -34,6 +34,7 @@ import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -143,7 +144,6 @@ public class TestBatchExecutor {
     }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
   }
 
-
   @Test
   public void testGet() throws Exception {
     final Row response = Row.getDefaultInstance();
@@ -179,12 +179,13 @@ public class TestBatchExecutor {
 
   @Test
   public void testShutdownService() throws Exception {
+    when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class)))
+        .thenThrow(new IllegalStateException("closed"));
     try {
       batch(Arrays.asList(randomPut()));
     } catch (RetriesExhaustedWithDetailsException e) {
       Assert.assertEquals(1, e.getCauses().size());
       Assert.assertEquals(IOException.class, e.getCause(0).getClass());
-      Assert.assertTrue(e.getCause(0).getMessage().toLowerCase().contains("closed"));
     }
   }
 
@@ -270,7 +271,11 @@ public class TestBatchExecutor {
   }
 
   private BatchExecutor createExecutor(BigtableOptions options) {
-    return new BatchExecutor(mockAsyncExecutor, options, requestAdapter);
+    return new BatchExecutor(
+        mockAsyncExecutor,
+        options,
+        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
+        requestAdapter);
   }
 
   private Result[] batch(final List<? extends org.apache.hadoop.hbase.client.Row> actions)

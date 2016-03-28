@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import static org.mockito.Mockito.when;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +29,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.Nullable;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +43,7 @@ import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -185,9 +188,21 @@ public class TestRpcThrottler {
               registeredEvents.offer(underTest.registerOperationWithHeapSize(1));
 
               // Add a retry for each rpc
+              final long id = underTest.registerRetry();
               SettableFuture<Boolean> future = SettableFuture.create();
+              Futures.addCallback(future, new FutureCallback<Boolean>(){
+
+                @Override
+                public void onSuccess(@Nullable Boolean result) {
+                  underTest.onRetryCompletion(id);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                  
+                }
+              });
               retryFutures.add(future);
-              underTest.registerRetry(future);
             }
 
             // This should block until all RPCs and retries have finished.
@@ -261,8 +276,7 @@ public class TestRpcThrottler {
     final ResourceLimiter resourceLimiter = new ResourceLimiter(100l, 100);
     final RpcThrottler underTest = new RpcThrottler(resourceLimiter, clock, finishWaitTime);
 
-    SettableFuture<Void> retryFuture = SettableFuture.create();
-    underTest.registerRetry(retryFuture);
+    long id = underTest.registerRetry();
 
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
@@ -279,7 +293,7 @@ public class TestRpcThrottler {
       // Sleep a multiple of the finish wait time to force a few iterations
       Thread.sleep(finishWaitTime * (iterations + 1));
       // Trigger completion
-      retryFuture.set(null);
+      underTest.onRetryCompletion(id);
     } finally {
       pool.shutdown();
       pool.awaitTermination(100, TimeUnit.MILLISECONDS);

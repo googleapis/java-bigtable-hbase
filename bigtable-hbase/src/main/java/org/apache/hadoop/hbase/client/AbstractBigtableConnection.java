@@ -166,7 +166,12 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     RpcThrottler rpcThrottler = new RpcThrottler(resourceLimiter);
     AsyncExecutor asyncExecutor = new AsyncExecutor(client, rpcThrottler);
     HBaseRequestAdapter adapter = createAdapter(tableName);
-    BatchExecutor batchExecutor = new BatchExecutor(asyncExecutor, options, adapter);
+    BatchExecutor batchExecutor =
+        new BatchExecutor(
+            asyncExecutor,
+            options,
+            BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
+            adapter);
     return new BigtableTable(this, tableName, options, client, adapter, batchExecutor);
   }
 
@@ -188,7 +193,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         options,
         params.getListener(),
         new RpcThrottler(resourceLimiter),
-        pool) {
+        pool,
+        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor()) {
       @Override
       public void close() throws IOException {
         try {
