@@ -43,10 +43,10 @@ public class TestFuzzyRowFilterAdapter {
   public void fuzzyKeysAreTranslatedToRegularExpressions() throws IOException {
     List<Pair<byte[], byte[]>> testPairs =
         ImmutableList.<Pair<byte[], byte[]>>builder()
-            .add(new Pair<>(new byte[]{0, 0, 0, 0}, Bytes.toBytes("abcd")))
-            .add(new Pair<>(new byte[]{0, 0, 1, 0}, Bytes.toBytes(".fgh")))
-            .add(new Pair<>(new byte[]{1, 1, 1, 1}, Bytes.toBytes("ijkl")))
-        .build();
+            .add(new Pair<>(Bytes.toBytes("abcd"), new byte[] {-1, -1, -1, -1}))
+            .add(new Pair<>(Bytes.toBytes(".fgh"), new byte[] {0, 0, 1, 0}))
+            .add(new Pair<>(Bytes.toBytes("ijkl"), new byte[] {1, 1, 1, 1}))
+            .build();
 
     FuzzyRowFilter filter = new FuzzyRowFilter(testPairs);
     RowFilter adaptedFilter = adapter.adapt(context, filter);
