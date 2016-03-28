@@ -320,4 +320,8 @@ public class AsyncExecutor {
       MutateRowRequest request) {
     return this.client.addMutationRetry(future, request);
   }
+
+  public RpcThrottler getRpcThrottler() {
+    return rpcThrottler;
+  }
 }
