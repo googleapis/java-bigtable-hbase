@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,10 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.lang.reflect.Field;
 import java.util.List;
 
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
-import org.apache.hadoop.hbase.protobuf.generated.FilterProtos;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.BytesBytesPair;
 import org.apache.hadoop.hbase.util.Pair;
 
 import com.google.bigtable.v1.RowFilter;
@@ -42,6 +40,18 @@ public class FuzzyRowFilterAdapter implements TypedFilterAdapter<FuzzyRowFilter>
           .setCellsPerColumnLimitFilter(Integer.MAX_VALUE)
           .build();
 
+  private static Field FUZZY_KEY_DATA_FIELD;
+  private static Exception FUZZY_KEY_DATA_FIELD_EXCEPTION;
+
+  static {
+    try {
+      FUZZY_KEY_DATA_FIELD = FuzzyRowFilter.class.getDeclaredField("fuzzyKeysData");
+      FUZZY_KEY_DATA_FIELD.setAccessible(true);
+    } catch (NoSuchFieldException | SecurityException e) {
+      FUZZY_KEY_DATA_FIELD_EXCEPTION = e;
+    }
+  }
+
   @Override
   public RowFilter adapt(FilterAdapterContext context, FuzzyRowFilter filter) throws IOException {
     Interleave.Builder interleaveBuilder = Interleave.newBuilder();
@@ -57,16 +67,20 @@ public class FuzzyRowFilterAdapter implements TypedFilterAdapter<FuzzyRowFilter>
           createSingleRowFilter(
               pair.getFirst(), pair.getSecond()));
     }
-    return RowFilter.newBuilder().setInterleave(interleaveBuilder).build();
+    if (interleaveBuilder.getFiltersCount() == 1) {
+      return interleaveBuilder.getFilters(0);
+    } else {
+      return RowFilter.newBuilder().setInterleave(interleaveBuilder).build();
+    }
   }
 
-  private static RowFilter createSingleRowFilter(byte[] first, byte[] second) throws IOException {
+  private static RowFilter createSingleRowFilter(byte[] key, byte[] mask) throws IOException {
     ByteArrayOutputStream baos =
-        new ByteArrayOutputStream(first.length * 2);
+        new ByteArrayOutputStream(key.length * 2);
     QuoteMetaOutputStream quotingStream = new QuoteMetaOutputStream(baos);
-    for (int i = 0; i < first.length; i++) {
-      if (first[i] == 0) {
-        quotingStream.write(second[i]);
+    for (int i = 0; i < mask.length; i++) {
+      if (mask[i] == -1) {
+        quotingStream.write(key[i]);
       } else {
         // Write unquoted to match any byte at this position:
         baos.write(ReaderExpressionHelper.ANY_BYTE_BYTES);
@@ -77,20 +91,18 @@ public class FuzzyRowFilterAdapter implements TypedFilterAdapter<FuzzyRowFilter>
     return RowFilter.newBuilder().setRowKeyRegexFilter(quotedValue).build();
   }
 
-  private static List<Pair<byte[], byte[]>> extractFuzzyRowFilterPairs(FuzzyRowFilter filter)
+  @SuppressWarnings("unchecked")
+  static List<Pair<byte[], byte[]>> extractFuzzyRowFilterPairs(FuzzyRowFilter filter)
       throws IOException {
     // TODO: Change FuzzyRowFilter to expose fuzzyKeysData.
-    FilterProtos.FuzzyRowFilter filterProto =
-        FilterProtos.FuzzyRowFilter.parseFrom(filter.toByteArray());
-    List<Pair<byte[], byte[]>> result =
-        new ArrayList<>(filterProto.getFuzzyKeysDataCount());
-    for (BytesBytesPair protoPair : filterProto.getFuzzyKeysDataList()) {
-      result.add(
-          new Pair<>(
-              protoPair.getFirst().toByteArray(),
-              protoPair.getSecond().toByteArray()));
+    if(FUZZY_KEY_DATA_FIELD_EXCEPTION != null) {
+      throw new IOException("Could not read the contents of the FuzzyRowFilter");
     }
-    return result;
+    try {
+      return (List<Pair<byte[], byte[]>>) FUZZY_KEY_DATA_FIELD.get(filter);
+    } catch (IllegalArgumentException | IllegalAccessException e) {
+      throw new IOException("Could not read the contents of the FuzzyRowFilter", e);
+    }
   }
 
   @Override
