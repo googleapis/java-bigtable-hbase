@@ -108,11 +108,11 @@ public class RpcThrottler {
   }
 
   /**
-   * Registers a retrying Future such that, if a retry is necessary, it
+   * Registers a retry, if a retry is necessary, it
    * will be complete before a call to {@code awaitCompletion} returns.
    * Retries do not count against any RPC resource limits.
    */
-  public <T> void registerRetry(ListenableFuture<T> retryFuture) {
+  public <T> long registerRetry() {
     final long id = retrySequenceGenerator.incrementAndGet();
 
     lock.lock();
@@ -121,22 +121,7 @@ public class RpcThrottler {
     } finally {
       lock.unlock();
     }
-    addRetryCallback(retryFuture, id);
-  }
-
-  private <T> void addRetryCallback(ListenableFuture<T> retryFuture, final long id) {
-    FutureCallback<T> callback = new FutureCallback<T>() {
-      @Override
-      public void onSuccess(T result) {
-        onRetryCompletion(id);
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        onRetryCompletion(id);
-      }
-    };
-    Futures.addCallback(retryFuture, callback);
+    return id;
   }
 
   /**
@@ -223,7 +208,7 @@ public class RpcThrottler {
     resetNoSuccessWarningDeadline();
   }
 
-  private void onRetryCompletion(long id) {
+  public void onRetryCompletion(long id) {
     lock.lock();
     try {
       outstandingRetries.remove(id);

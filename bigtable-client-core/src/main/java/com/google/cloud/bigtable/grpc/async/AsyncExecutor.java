@@ -316,11 +316,6 @@ public class AsyncExecutor {
     return client;
   }
 
-  public ListenableFuture<Empty> addMutationRetry(ListenableFuture<Empty> future,
-      MutateRowRequest request) {
-    return this.client.addMutationRetry(future, request);
-  }
-
   public RpcThrottler getRpcThrottler() {
     return rpcThrottler;
   }

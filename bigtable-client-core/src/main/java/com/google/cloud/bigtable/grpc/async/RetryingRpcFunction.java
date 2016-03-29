@@ -111,7 +111,7 @@ public class RetryingRpcFunction<RequestT, ResponseT>
     return addRetry(rpc.call(request, cancellationToken));
   }
 
-  public ListenableFuture<ResponseT> addRetry(final ListenableFuture<ResponseT> future) {
+  private ListenableFuture<ResponseT> addRetry(final ListenableFuture<ResponseT> future) {
     return Futures.catchingAsync(future, StatusRuntimeException.class, this, retryExecutorService);
   }
 

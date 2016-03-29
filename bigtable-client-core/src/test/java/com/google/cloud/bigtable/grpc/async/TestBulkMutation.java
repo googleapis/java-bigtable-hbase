@@ -8,10 +8,22 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,18 +37,20 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.MutateRowsRequest;
 import com.google.bigtable.v1.MutateRowsRequest.Entry;
 import com.google.bigtable.v1.MutateRowsResponse;
 import com.google.bigtable.v1.Mutation;
 import com.google.bigtable.v1.Mutation.SetCell;
+import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.config.RetryOptionsUtil;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import com.google.rpc.Status;
-import com.google.rpc.Status.Builder;
 
 import io.grpc.StatusRuntimeException;
 
@@ -53,28 +67,32 @@ public class TestBulkMutation {
   public ExpectedException expectedException = ExpectedException.none();
 
   @Mock
-  private AsyncExecutor asyncExecutor;
+  AsyncExecutor asyncExecutor;
 
   @Mock
-  private RpcThrottler rpcThrottler;
+  ScheduledExecutorService retryExecutorService;
 
   @Mock
-  private ListenableFuture mockFuture;
+  RpcThrottler rpcThrottler;
 
-  BulkMutation.Batch underTest;
+  @Mock
+  ListenableFuture mockFuture;
+
+  @Mock NanoClock nanoClock;
+
+  RetryOptions retryOptions;
+
+  private AtomicLong retryIdGenerator = new AtomicLong();
+  private BulkMutation.Batch underTest;
 
   @Before
   public void setup() throws InterruptedException {
     MockitoAnnotations.initMocks(this);
-    when(asyncExecutor.getRpcThrottler()).thenReturn(rpcThrottler);
+    retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
+
     when(asyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(mockFuture);
-    when(asyncExecutor.addMutationRetry(any(ListenableFuture.class), any(MutateRowRequest.class)))
-        .thenAnswer(new Answer<ListenableFuture>() {
-          @Override
-          public ListenableFuture answer(InvocationOnMock invocation) throws Throwable {
-            return invocation.getArgumentAt(0, ListenableFuture.class);
-          }
-        });
+    when(asyncExecutor.getRpcThrottler()).thenReturn(rpcThrottler);
+
     doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
@@ -82,21 +100,31 @@ public class TestBulkMutation {
         return null;
       }
     }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
-    underTest = new BulkMutation.Batch(TABLE_NAME, asyncExecutor, 10000, 10000);
+
+    when(rpcThrottler.registerRetry()).then(new Answer<Long>() {
+      @Override
+      public Long answer(InvocationOnMock invocation) throws Throwable {
+        return retryIdGenerator.incrementAndGet();
+      }
+    });
+
+    underTest = new BulkMutation.Batch(TABLE_NAME, asyncExecutor, retryOptions, retryExecutorService,
+      1000, 1000000L);
   }
 
   @Test
   public void testAdd() {
     MutateRowRequest mutateRowRequest = createRequest();
-    underTest.add(mutateRowRequest);
+    BulkMutation.RequestManager requestManager = new BulkMutation.RequestManager(TABLE_NAME);
+    requestManager.add(null, BulkMutation.convert(mutateRowRequest));
     MutateRowsRequest expected = MutateRowsRequest.newBuilder()
         .setTableName(TABLE_NAME)
         .addEntries(Entry.newBuilder().addMutations(mutateRowRequest.getMutations(0)).build())
         .build();
-    Assert.assertEquals(expected, underTest.toRequest());
+    Assert.assertEquals(expected, requestManager.build());
   }
 
-  protected MutateRowRequest createRequest() {
+  protected static MutateRowRequest createRequest() {
     return MutateRowRequest.newBuilder().addMutations(
       Mutation.newBuilder()
         .setSetCell(
@@ -108,26 +136,53 @@ public class TestBulkMutation {
   }
 
   @Test
-  public void testCallableSuccess() throws InterruptedException, ExecutionException {
+  public void testCallableSuccess()
+      throws InterruptedException, ExecutionException, TimeoutException {
     ListenableFuture<Empty> rowFuture = underTest.add(createRequest());
     setResponse(io.grpc.Status.OK);
+    Empty result = rowFuture.get(10, TimeUnit.MILLISECONDS);
     Assert.assertTrue(rowFuture.isDone());
-    Assert.assertEquals(Empty.getDefaultInstance(), rowFuture.get());
+    Assert.assertEquals(Empty.getDefaultInstance(), result);
+    verify(rpcThrottler, times(1)).onRetryCompletion(eq(retryIdGenerator.get()));
   }
 
   @Test
-  public void testCallableNotOKStatus() throws InterruptedException, ExecutionException {
+  public void testCallableNotRetriedStatus()
+      throws InterruptedException, ExecutionException, TimeoutException {
     ListenableFuture<Empty> rowFuture = underTest.add(createRequest());
-    SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();
+    SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse>create();
+    when(nanoClock.nanoTime()).thenReturn(1l);
     underTest.addCallback(rowsFuture);
     Assert.assertFalse(rowFuture.isDone());
     setResponse(io.grpc.Status.NOT_FOUND);
 
     try {
-      rowFuture.get();
-     } catch (ExecutionException e) {
+      rowFuture.get(100, TimeUnit.MILLISECONDS);
+    } catch (ExecutionException e) {
       Assert.assertEquals(StatusRuntimeException.class, e.getCause().getClass());
+      verify(rpcThrottler, times(1)).onRetryCompletion(eq(retryIdGenerator.get()));
     }
+  }
+
+  @Test
+  public void testRetriedStatus() throws InterruptedException, ExecutionException {
+    ListenableFuture<Empty> rowFuture = underTest.add(createRequest());
+    Assert.assertFalse(rowFuture.isDone());
+
+    // Send Deadline exceeded,
+    setResponse(io.grpc.Status.DEADLINE_EXCEEDED);
+    when(nanoClock.nanoTime()).thenReturn(1l);
+
+    // Make sure that the request is scheduled
+    Assert.assertFalse(rowFuture.isDone());
+    verify(retryExecutorService, times(1)).schedule(any(Runnable.class), anyLong(),
+      same(TimeUnit.MILLISECONDS));
+    verify(rpcThrottler, times(0)).onRetryCompletion(eq(retryIdGenerator.get()));
+
+    // Make sure that a second try works.
+    setResponse(io.grpc.Status.OK);
+    Assert.assertTrue(rowFuture.isDone());
+    verify(rpcThrottler, times(1)).onRetryCompletion(eq(retryIdGenerator.get()));
   }
 
   @Test
@@ -138,47 +193,74 @@ public class TestBulkMutation {
     underTest.addCallback(rowsFuture);
     Assert.assertFalse(rowFuture1.isDone());
     Assert.assertFalse(rowFuture2.isDone());
-    setResponse(io.grpc.Status.OK);
 
+    Assert.assertEquals(2, underTest.getRequestCount());
+    // Send only one response - this is poor server behavior.
+    setResponse(io.grpc.Status.OK);
+    when(nanoClock.nanoTime()).thenReturn(0l);
+    Assert.assertEquals(1, underTest.getRequestCount());
+
+    // Make sure that the first request completes, but the second does not.
     Assert.assertTrue(rowFuture1.isDone());
-    Assert.assertTrue(rowFuture2.isDone());
+    Assert.assertFalse(rowFuture2.isDone());
     Assert.assertEquals(Empty.getDefaultInstance(), rowFuture1.get());
-    try {
-      rowFuture2.get();
-     } catch (ExecutionException e) {
-      Assert.assertEquals(StatusRuntimeException.class, e.getCause().getClass());
-      Assert.assertEquals(io.grpc.Status.Code.UNKNOWN,
-        ((StatusRuntimeException) e.getCause()).getStatus().getCode());
-    }
+    verify(retryExecutorService, times(1)).schedule(any(Runnable.class), anyLong(),
+      same(TimeUnit.MILLISECONDS));
+    verify(rpcThrottler, times(0)).onRetryCompletion(eq(retryIdGenerator.get()));
+
+    // Make sure that only the second request was sent.
+    setResponse(io.grpc.Status.OK);
+    Assert.assertEquals(0, underTest.getRequestCount());
+    Assert.assertTrue(rowFuture2.isDone());
+    verify(rpcThrottler, times(1)).onRetryCompletion(eq(retryIdGenerator.get()));
   }
 
   @Test
-  public void testCallableException() throws InterruptedException {
-    ListenableFuture<Empty> rowFuture1 = underTest.add(createRequest());
-    ListenableFuture<Empty> rowFuture2 = underTest.add(createRequest());
-    SettableFuture<MutateRowsResponse> rowsFuture = SettableFuture.<MutateRowsResponse> create();
-    underTest.addCallback(rowsFuture);
-    Assert.assertFalse(rowFuture1.isDone());
-    Assert.assertFalse(rowFuture2.isDone());
-    RuntimeException throwable = new RuntimeException();
-    rowsFuture.setException(throwable);
-    Assert.assertTrue(rowFuture1.isDone());
-    Assert.assertTrue(rowFuture2.isDone());
+  public void testRunOutOfTime() throws InterruptedException, ExecutionException, TimeoutException {
+    ListenableFuture<Empty> rowFuture = underTest.add(createRequest());
 
+    AtomicLong waitedNanos = new AtomicLong();
+    setupScheduler(waitedNanos);
+    setResponse(io.grpc.Status.DEADLINE_EXCEEDED);
     try {
-      rowFuture1.get();
-      Assert.fail("expected an exception");
+      rowFuture.get(1, TimeUnit.MINUTES);
+      Assert.fail("Expected exception");
     } catch (ExecutionException e) {
-      Assert.assertEquals(throwable, e.getCause());
+      Assert.assertEquals(io.grpc.Status.DEADLINE_EXCEEDED.getCode(), io.grpc.Status.fromThrowable(e).getCode());
     }
+    Assert.assertTrue(
+        waitedNanos.get()
+            > TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
+  }
+
+  private void setupScheduler(final AtomicLong waitedNanos) {
+    final long start = System.nanoTime();
+    doAnswer(new Answer<Long>() {
+      @Override
+      public Long answer(InvocationOnMock invocation) throws Throwable {
+        return start + waitedNanos.get();
+      }
+    }).when(nanoClock).nanoTime();
+
+    doAnswer(new Answer<ScheduledFuture<?>>() {
+      @Override
+      public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
+        waitedNanos
+            .addAndGet(TimeUnit.MILLISECONDS.toNanos(invocation.getArgumentAt(1, Long.class)));
+        invocation.getArgumentAt(0, Runnable.class).run();
+        return null;
+      }
+    }).when(retryExecutorService).schedule(any(Runnable.class), anyLong(),
+      same(TimeUnit.MILLISECONDS));
   }
 
   private void setResponse(final io.grpc.Status code)
       throws InterruptedException, ExecutionException {
-    Builder notFound = Status.newBuilder().setCode(code.getCode().value());
-    MutateRowsResponse response =
-        MutateRowsResponse.newBuilder().addStatuses(notFound).build();
-    when(mockFuture.get()).thenReturn(response);
-    underTest.sendRows();
+    when(mockFuture.get())
+        .thenReturn(
+            MutateRowsResponse.newBuilder()
+                .addStatuses(Status.newBuilder().setCode(code.getCode().value()))
+                .build());
+    underTest.run();
   }
 }

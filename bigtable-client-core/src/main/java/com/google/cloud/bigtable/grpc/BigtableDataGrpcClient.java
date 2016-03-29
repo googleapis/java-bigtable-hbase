@@ -183,24 +183,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   @Override
-  public ListenableFuture<Empty> addMutationRetry(ListenableFuture<Empty> future,
-      MutateRowRequest request) {
-    if (retryOptions.enableRetries()) {
-      RetryingRpcFunction<MutateRowRequest, Empty> retryingRpcFunction =
-          new RetryingRpcFunction<>(
-              retryOptions,
-              request,
-              mutateRowRpc,
-              IS_RETRYABLE_MUTATION,
-              retryExecutorService,
-              null);
-      return retryingRpcFunction.addRetry(future);
-    } else {
-      return mutateRowRpc.call(request, null);
-    }
-  }
-
-  @Override
   public ListenableFuture<Empty> mutateRowAsync(MutateRowRequest request) {
     expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return performRetryingAsyncRpc(request, mutateRowRpc, IS_RETRYABLE_MUTATION, null);

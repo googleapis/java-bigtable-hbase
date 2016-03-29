@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,7 +51,6 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessage;
 
 /**
@@ -113,7 +113,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private final String host;
 
-  private final RpcThrottler rpcThrottler;
   private final AsyncExecutor asyncExecutor;
   private final ExecutorService executorService;
   private final BigtableOptions options;
@@ -177,19 +176,25 @@ public class BigtableBufferedMutator implements BufferedMutator {
       BigtableOptions options,
       BufferedMutator.ExceptionListener listener,
       RpcThrottler rpcThrottler,
-      ExecutorService asyncRpcExecutorService) {
+      ExecutorService asyncRpcExecutorService,
+      ScheduledExecutorService retryExecutorService) {
     this.adapter = adapter;
     this.configuration = configuration;
     this.exceptionListener = listener;
     this.host = options.getDataHost().toString();
     this.asyncExecutor = new AsyncExecutor(client, rpcThrottler);
     this.options = options;
-    this.rpcThrottler = rpcThrottler;
     this.executorService = asyncRpcExecutorService;
     if (options.useBulkApi()) {
       String tableName = this.adapter.getBigtableTableName().toString();
-      bulkMutation = new BulkMutation(tableName, asyncExecutor, options.getBulkMaxRowKeyCount(),
-          options.getBulkMaxRequestSize());
+      this.bulkMutation =
+          new BulkMutation(
+              tableName,
+              asyncExecutor,
+              options.getRetryOptions(),
+              retryExecutorService,
+              options.getBulkMaxRowKeyCount(),
+              options.getBulkMaxRequestSize());
     }
   }
 
@@ -293,11 +298,10 @@ public class BigtableBufferedMutator implements BufferedMutator {
       Runnable operation = null;
       if (options.useBulkApi() && (mutation instanceof Put || mutation instanceof Delete)) {
         // TODO: Do this logic asynchronously.
-        MutateRowRequest request = adapt(mutation);
-        ListenableFuture<Empty> future = bulkMutation.add(request);
-        addExceptionCallback(future, mutation);
+        addExceptionCallback(bulkMutation.add(adapt(mutation)), mutation);
       } else {
-        long operationId = rpcThrottler.registerOperationWithHeapSize(mutation.heapSize());
+        long operationId =
+            asyncExecutor.getRpcThrottler().registerOperationWithHeapSize(mutation.heapSize());
         operation = new MutationOperation(mutation, operationId);
         if (executorService != null && options.getAsyncMutatorCount() > 0) {
           initializeAsyncMutators();
@@ -416,6 +420,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   public boolean hasInflightRequests() {
-    return this.asyncExecutor.hasInflightRequests();
+    return this.asyncExecutor.hasInflightRequests()
+        || (bulkMutation != null && !bulkMutation.isFlushed());
   }
 }

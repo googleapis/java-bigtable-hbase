@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.Nullable;
 
@@ -47,7 +48,6 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.GeneratedMessage;
 
@@ -135,12 +135,22 @@ public class BatchExecutor {
     private BulkMutation bulkMutation;
     private BulkRead bulkRead;
 
-    public BulkOperation(AsyncExecutor asyncExecutor, String tableName, BigtableOptions options) {
+    public BulkOperation(
+        AsyncExecutor asyncExecutor,
+        ScheduledExecutorService retryExecutorService,
+        String tableName,
+        BigtableOptions options) {
       this.asyncExecutor = asyncExecutor;
       this.options = options;
       this.bulkRead = new BulkRead(asyncExecutor.getClient(), tableName);
-      this.bulkMutation = new BulkMutation(tableName, asyncExecutor,
-          options.getBulkMaxRowKeyCount(), options.getBulkMaxRequestSize());
+      this.bulkMutation =
+          new BulkMutation(
+              tableName,
+              asyncExecutor,
+              options.getRetryOptions(),
+              retryExecutorService,
+              options.getBulkMaxRowKeyCount(),
+              options.getBulkMaxRequestSize());
     }
 
     public ListenableFuture<? extends GeneratedMessage> mutateRowAsync(MutateRowRequest request)
@@ -161,7 +171,7 @@ public class BatchExecutor {
       }
     }
 
-    public void flush() throws InterruptedException {
+    public void flush() {
       // If there is a bulk mutation in progress, then send it.
       bulkMutation.flush();
       bulkRead.flush();
@@ -170,14 +180,17 @@ public class BatchExecutor {
 
   protected final AsyncExecutor asyncExecutor;
   protected final BigtableOptions options;
+  protected final ScheduledExecutorService retryExecutorService;
   protected final HBaseRequestAdapter requestAdapter;
 
   public BatchExecutor(
       AsyncExecutor asyncExecutor,
       BigtableOptions options,
+      ScheduledExecutorService retryeExecutorService,
       HBaseRequestAdapter requestAdapter) {
     this.asyncExecutor = asyncExecutor;
     this.options = options;
+    this.retryExecutorService = retryeExecutorService;
     this.requestAdapter = requestAdapter;
   }
 
@@ -202,8 +215,7 @@ public class BatchExecutor {
     RpcResultFutureCallback<T> futureCallback =
         new RpcResultFutureCallback<T>(row, callback, index, results, resultFuture);
     results[index] = null;
-    ListenableFuture<? extends GeneratedMessage> future = issueAsyncRequest(bulkOperation, row);
-    Futures.addCallback(future, futureCallback);
+    Futures.addCallback(issueAsyncRequest(bulkOperation, row), futureCallback);
     return resultFuture;
   }
 
@@ -265,9 +277,9 @@ public class BatchExecutor {
   }
 
   private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
-      Object[] results, Batch.Callback<R> callback) throws InterruptedException {
-    BulkOperation bulkOperation = new BulkOperation(this.asyncExecutor,
-        this.requestAdapter.getBigtableTableName().toString(), options);
+      Object[] results, Batch.Callback<R> callback) {
+    BulkOperation bulkOperation = new BulkOperation(asyncExecutor, retryExecutorService,
+        requestAdapter.getBigtableTableName().toString(), options);
     try {
       List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());
       for (int i = 0; i < actions.size(); i++) {
