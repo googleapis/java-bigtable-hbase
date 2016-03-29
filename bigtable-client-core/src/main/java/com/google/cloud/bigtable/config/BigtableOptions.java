@@ -98,6 +98,7 @@ public class BigtableOptions implements Serializable {
     private boolean useBulkApi = false;
     private int bulkMaxRowKeyCount = BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
     private long bulkMaxRequestSize = BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
+    private boolean usePlaintextNegotiation = false;
 
     public Builder() {
     }
@@ -119,6 +120,7 @@ public class BigtableOptions implements Serializable {
       this.useBulkApi = original.useBulkApi;
       this.bulkMaxRowKeyCount = original.bulkMaxRowKeyCount;
       this.bulkMaxRequestSize = original.bulkMaxRequestSize;
+      this.usePlaintextNegotiation = original.usePlaintextNegotiation;
     }
 
     public Builder setTableAdminHost(String tableAdminHost) {
@@ -207,6 +209,11 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
+    public Builder setUsePlaintextNegotiation(boolean usePlaintextNegotiation) {
+      this.usePlaintextNegotiation = usePlaintextNegotiation;
+      return this;
+    }
+
     public BigtableOptions build() {
       return new BigtableOptions(
           clusterAdminHost,
@@ -224,7 +231,8 @@ public class BigtableOptions implements Serializable {
           asyncMutatorCount,
           useBulkApi,
           bulkMaxRowKeyCount,
-          bulkMaxRequestSize);
+          bulkMaxRequestSize,
+          usePlaintextNegotiation);
     }
   }
 
@@ -245,6 +253,7 @@ public class BigtableOptions implements Serializable {
   private final boolean useBulkApi;
   private final int bulkMaxRowKeyCount;
   private final long bulkMaxRequestSize;
+  private final boolean usePlaintextNegotiation;
 
 
   @VisibleForTesting
@@ -266,6 +275,7 @@ public class BigtableOptions implements Serializable {
       useBulkApi = false;
       bulkMaxRowKeyCount = -1;
       bulkMaxRequestSize = -1;
+      usePlaintextNegotiation = false;
   }
 
   private BigtableOptions(
@@ -284,7 +294,8 @@ public class BigtableOptions implements Serializable {
       int asyncMutatorCount,
       boolean useBulkApi,
       int bulkMaxKeyCount,
-      long bulkMaxRequestSize) {
+      long bulkMaxRequestSize,
+      boolean usePlaintextNegotiation) {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
     Preconditions.checkArgument(timeoutMs >= -1,
       "ChannelTimeoutMs has to be positive, or -1 for none.");
@@ -305,6 +316,7 @@ public class BigtableOptions implements Serializable {
     this.useBulkApi = useBulkApi;
     this.bulkMaxRowKeyCount = bulkMaxKeyCount;
     this.bulkMaxRequestSize = bulkMaxRequestSize;
+    this.usePlaintextNegotiation = usePlaintextNegotiation;
 
     if (!Strings.isNullOrEmpty(projectId)
         && !Strings.isNullOrEmpty(zoneId)
@@ -409,6 +421,10 @@ public class BigtableOptions implements Serializable {
     return bulkMaxRequestSize;
   }
 
+  public boolean usePlaintextNegotiation() {
+    return usePlaintextNegotiation;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (obj == null || obj.getClass() != BigtableOptions.class) {
@@ -425,6 +441,7 @@ public class BigtableOptions implements Serializable {
         && (useBulkApi == other.useBulkApi)
         && (bulkMaxRowKeyCount == other.bulkMaxRowKeyCount)
         && (bulkMaxRequestSize == other.bulkMaxRequestSize)
+        && (usePlaintextNegotiation == other.usePlaintextNegotiation)
         && Objects.equal(clusterAdminHost, other.clusterAdminHost)
         && Objects.equal(tableAdminHost, other.tableAdminHost)
         && Objects.equal(dataHost, other.dataHost)
@@ -455,6 +472,7 @@ public class BigtableOptions implements Serializable {
         .add("useBulkApi", useBulkApi)
         .add("bulkMaxKeyCount", bulkMaxRowKeyCount)
         .add("bulkMaxRequestSize", bulkMaxRequestSize)
+        .add("usePlaintextNegotiation", usePlaintextNegotiation)
         .toString();
   }
 

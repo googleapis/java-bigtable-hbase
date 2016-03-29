@@ -27,7 +27,7 @@ limitations under the License.
     </property>
     <property>
         <name>google.bigtable.endpoint.port</name>
-        <value>443</value>
+        <value>${google.bigtable.endpoint.port}</value>
     </property>
     <property>
         <name>google.bigtable.admin.endpoint.host</name>
@@ -52,5 +52,9 @@ limitations under the License.
     <property>
         <name>google.bigtable.use.bulk.api</name>
         <value>${google.bigtable.use.bulk.api}</value>
+    </property>
+    <property>
+        <name>google.bigtable.use.plaintext.negotiation</name>
+        <value>${google.bigtable.use.plaintext.negotiation}</value>
     </property>
 </configuration>

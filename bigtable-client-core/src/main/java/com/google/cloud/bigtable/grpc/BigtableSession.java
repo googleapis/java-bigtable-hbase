@@ -342,6 +342,8 @@ public class BigtableSession implements Closeable {
     // TODO Go back to using host names once grpc 0.14.0 is out, which fixes bug
     // when ipv6 address is available but not reachable.
     InetAddress address = InetAddress.getByName(host);
+    NegotiationType negotiationType = options.usePlaintextNegotiation() ?
+        NegotiationType.PLAINTEXT : NegotiationType.TLS;
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
     return NettyChannelBuilder
         .forAddress(new InetSocketAddress(address, options.getPort()))
@@ -349,7 +351,7 @@ public class BigtableSession implements Closeable {
         .sslContext(createSslContext())
         .eventLoopGroup(sharedPools.getElg())
         .executor(sharedPools.getBatchThreadPool())
-        .negotiationType(NegotiationType.TLS)
+        .negotiationType(negotiationType)
         .flowControlWindow(FLOW_CONTROL_WINDOW)
         .build();
   }
