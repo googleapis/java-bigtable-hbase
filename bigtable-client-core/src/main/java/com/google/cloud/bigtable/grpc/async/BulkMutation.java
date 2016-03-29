@@ -307,7 +307,7 @@ public class BulkMutation {
       ListenableFuture<MutateRowsResponse> future = null;
       try {
         if (retryId == null) {
-          retryId = this.asyncExecutor.getRpcThrottler().registerRetry();
+          retryId = Long.valueOf(this.asyncExecutor.getRpcThrottler().registerRetry());
         }
         future = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
       } catch (InterruptedException e) {
