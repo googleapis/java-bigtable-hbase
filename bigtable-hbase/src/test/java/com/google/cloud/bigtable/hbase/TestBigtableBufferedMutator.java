@@ -73,7 +73,7 @@ public class TestBigtableBufferedMutator {
 
   private static final byte[] EMPTY_BYTES = new byte[1];
   private static final Put SIMPLE_PUT =
-new Put(EMPTY_BYTES).addColumn(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES);
+      new Put(EMPTY_BYTES).addColumn(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES);
   private static final Status OK_STATUS =
       Status.newBuilder().setCode(io.grpc.Status.OK.getCode().value()).build();
 
@@ -163,38 +163,35 @@ new Put(EMPTY_BYTES).addColumn(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES);
                 }
               }
             });
-    try (BigtableBufferedMutator underTest = createMutator(new Configuration(false))) {
-      underTest.mutate(SIMPLE_PUT);
-      Assert.assertTrue(underTest.hasInflightRequests());
-      // Leave some time for the async worker to handle the request.
-      lock.lock(); 
-      
-      try {
-        mutateRowAsyncCalled.await(100, TimeUnit.SECONDS);
-      } finally {
-        lock.unlock();
-      }
-      verify(mockClient, times(1)).mutateRowAsync(any(MutateRowRequest.class));
-      Assert.assertTrue(underTest.hasInflightRequests());
-      completeCall();
-      Assert.assertFalse(underTest.hasInflightRequests());
+    BigtableBufferedMutator underTest = createMutator(new Configuration(false));
+    underTest.mutate(SIMPLE_PUT);
+    Assert.assertTrue(underTest.hasInflightRequests());
+    // Leave some time for the async worker to handle the request.
+    lock.lock();
+    try {
+      mutateRowAsyncCalled.await(100, TimeUnit.SECONDS);
+    } finally {
+      lock.unlock();
     }
+    verify(mockClient, times(1)).mutateRowAsync(any(MutateRowRequest.class));
+    Assert.assertTrue(underTest.hasInflightRequests());
+    completeCall();
+    Assert.assertFalse(underTest.hasInflightRequests());
   }
 
   @Test
   public void testInvalidPut() throws Exception {
     when(mockClient.mutateRowAsync(any(MutateRowRequest.class))).thenThrow(new RuntimeException());
-    try (BigtableBufferedMutator underTest = createMutator(new Configuration(false))) {
-      underTest.mutate(SIMPLE_PUT);
-      // Leave some time for the async worker to handle the request.
-      Thread.sleep(100);
-      verify(listener, times(0)).onException(any(RetriesExhaustedWithDetailsException.class),
-          same(underTest));
-      completeCall();
-      underTest.mutate(SIMPLE_PUT);
-      verify(listener, times(1)).onException(any(RetriesExhaustedWithDetailsException.class),
-          same(underTest));
-    }
+    BigtableBufferedMutator underTest = createMutator(new Configuration(false));
+    underTest.mutate(SIMPLE_PUT);
+    // Leave some time for the async worker to handle the request.
+    Thread.sleep(100);
+    verify(listener, times(0)).onException(any(RetriesExhaustedWithDetailsException.class),
+        same(underTest));
+    completeCall();
+    underTest.mutate(SIMPLE_PUT);
+    verify(listener, times(1)).onException(any(RetriesExhaustedWithDetailsException.class),
+        same(underTest));
   }
 
   @SuppressWarnings("unchecked")
