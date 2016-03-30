@@ -178,6 +178,8 @@ public class TestRpcThrottler {
       final AtomicBoolean allOperationsDone = new AtomicBoolean();
       final LinkedBlockingQueue<Long> registeredEvents = new LinkedBlockingQueue<>();
       final List<SettableFuture<Boolean>> retryFutures = new ArrayList<>();
+      final CountDownLatch retryFuturesLatch = new CountDownLatch(registerCount);
+
       Future<?> writeFuture = pool.submit(new Runnable() {
         @Override
         public void run() {
@@ -201,6 +203,7 @@ public class TestRpcThrottler {
                 }
               });
               retryFutures.add(future);
+              retryFuturesLatch.countDown();
             }
 
             // This should block until all RPCs and retries have finished.
@@ -235,6 +238,9 @@ public class TestRpcThrottler {
 
       // Make sure we read all of the RPCs and complete them.
       readFuture.get(30, TimeUnit.SECONDS);
+
+      // Wait for all retry futures to be collected
+      retryFuturesLatch.await(5, TimeUnit.SECONDS);
 
       // Retries are still outstanding so we'd better not be done.
       assertFalse(allOperationsDone.get());
