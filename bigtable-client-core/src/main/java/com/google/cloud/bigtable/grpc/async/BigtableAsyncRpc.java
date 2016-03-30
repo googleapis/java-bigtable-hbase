@@ -23,4 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
  */
 public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
   ListenableFuture<RESPONSE> call(REQUEST request, CancellationToken cancellationToken);
+
+  boolean isRetryable(REQUEST request);
 }
