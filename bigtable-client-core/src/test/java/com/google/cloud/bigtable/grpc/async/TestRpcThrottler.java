@@ -71,7 +71,6 @@ public class TestRpcThrottler {
     FutureCallback<?> callback = underTest.addCallback(future, id);
     assertTrue(underTest.hasInflightRequests());
     callback.onSuccess(null);
-    Thread.sleep(100);
     assertFalse(underTest.hasInflightRequests());
   }
 
@@ -139,7 +138,6 @@ public class TestRpcThrottler {
           }
         }
       });
-      Thread.sleep(100);
       Future<?> readFuture = pool.submit(new Runnable() {
         @Override
         public void run() {
@@ -151,7 +149,7 @@ public class TestRpcThrottler {
               } else {
                 if (i % 50 == 0) {
                   // Exercise the .offer and the awaitCompletion() in the writeFuture.
-                  Thread.sleep(40);
+                  Thread.sleep(4);
                 }
                 underTest.onRpcCompletion(registeredId);
               }
@@ -217,7 +215,6 @@ public class TestRpcThrottler {
           }
         }
       });
-      Thread.sleep(100);
       Future<?> readFuture = pool.submit(new Runnable() {
         @Override
         public void run() {
@@ -237,10 +234,7 @@ public class TestRpcThrottler {
       });
 
       // Make sure we read all of the RPCs and complete them.
-      // Sleep to give the writeFuture a chance to notice that they are done
-      // (in case there was a bug and it didn't wait for retries)
       readFuture.get(30, TimeUnit.SECONDS);
-      Thread.sleep(100);
 
       // Retries are still outstanding so we'd better not be done.
       assertFalse(allOperationsDone.get());
