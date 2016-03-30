@@ -152,7 +152,8 @@ public class RpcThrottler {
   }
 
   private void logNoSuccessWarning(long now) {
-    long lastUpdated = (now - noSuccessWarningDeadline + INTERVAL_NO_SUCCESS_WARNING_NANOS) / 1000;
+    long lastUpdated = TimeUnit.NANOSECONDS
+        .toSeconds(now - noSuccessWarningDeadline + INTERVAL_NO_SUCCESS_WARNING_NANOS);
     LOG.warn("No operations completed within the last %d seconds. "
             + "There are still %d rpcs and %d retries in progress.", lastUpdated,
         outstandingRequests.size(), outstandingRetries.size());
