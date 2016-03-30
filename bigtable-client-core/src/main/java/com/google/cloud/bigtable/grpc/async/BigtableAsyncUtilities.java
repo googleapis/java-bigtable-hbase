@@ -15,21 +15,11 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-import com.google.bigtable.v1.BigtableServiceGrpc;
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.bigtable.v1.ReadRowsResponse;
-import com.google.bigtable.v1.Row;
-import com.google.bigtable.v1.SampleRowKeysRequest;
-import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
-import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -45,10 +35,9 @@ import io.grpc.MethodDescriptor;
  */
 public interface BigtableAsyncUtilities {
 
-  BigtableAsyncRpc<SampleRowKeysRequest, List<SampleRowKeysResponse>>
-      createSampleRowKeyAsyncReader();
-
-  BigtableAsyncRpc<ReadRowsRequest, List<Row>> createRowKeyAysncReader();
+  <RequestT, ResponseT, OutputT> BigtableAsyncRpc<RequestT, List<OutputT>> createStreamingAsyncRpc(
+      MethodDescriptor<RequestT, ResponseT> method,
+      Function<List<ResponseT>, List<OutputT>> function);
 
   <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT>
       createAsyncUnaryRpc(MethodDescriptor<RequestT, ResponseT> method);
@@ -57,43 +46,10 @@ public interface BigtableAsyncUtilities {
       RequestT request, ClientCall.Listener<ResponseT> listener);
 
   public static class Default implements BigtableAsyncUtilities {
-    private static final Function<List<SampleRowKeysResponse>, List<SampleRowKeysResponse>> IMMUTABLE_LIST_TRANSFORMER =
-        new Function<List<SampleRowKeysResponse>, List<SampleRowKeysResponse>>() {
-          @Override
-          public List<SampleRowKeysResponse> apply(List<SampleRowKeysResponse> list) {
-            return ImmutableList.copyOf(list);
-          }
-        };
-
-    private static Function<List<ReadRowsResponse>, List<Row>> ROW_TRANSFORMER =
-        new Function<List<ReadRowsResponse>, List<Row>>() {
-          @Override
-          public List<Row> apply(List<ReadRowsResponse> responses) {
-            List<Row> result = new ArrayList<>();
-            Iterator<ReadRowsResponse> responseIterator = responses.iterator();
-            while (responseIterator.hasNext()) {
-              result.add(RowMerger.readNextRow(responseIterator));
-            }
-            return result;
-          }
-        };
-
     private final Channel channel;
 
     public Default(Channel channel) {
       this.channel = channel;
-    }
-
-    @Override
-    public BigtableAsyncRpc<SampleRowKeysRequest, List<SampleRowKeysResponse>>
-        createSampleRowKeyAsyncReader() {
-      return createStreamingAsyncRpc(BigtableServiceGrpc.METHOD_SAMPLE_ROW_KEYS,
-        IMMUTABLE_LIST_TRANSFORMER);
-    }
-
-    @Override
-    public BigtableAsyncRpc<ReadRowsRequest, List<Row>> createRowKeyAysncReader() {
-      return createStreamingAsyncRpc(BigtableServiceGrpc.METHOD_READ_ROWS, ROW_TRANSFORMER);
     }
 
     @Override
@@ -116,7 +72,8 @@ public interface BigtableAsyncUtilities {
       };
     }
 
-    private <RequestT, ResponseT, OutputT> BigtableAsyncRpc<RequestT, List<OutputT>>
+    @Override
+    public <RequestT, ResponseT, OutputT> BigtableAsyncRpc<RequestT, List<OutputT>>
         createStreamingAsyncRpc(final MethodDescriptor<RequestT, ResponseT> method,
             final Function<List<ResponseT>, List<OutputT>> function) {
       return new BigtableAsyncRpc<RequestT, List<OutputT>>() {
