@@ -16,13 +16,14 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -40,27 +41,25 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
-import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
-import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
-import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
-import com.google.common.util.concurrent.ListenableFuture;
 
+import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 /**
- * Test for {@link RetryingRpcFunction}
+ * Test for {@link AbstractRetryingRpcListener}
  */
 @RunWith(JUnit4.class)
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class RetryingRpcFunctionTest {
+public class RetryingUnaryRpcListenerTest {
 
-  private RetryingRpcFunction underTest;
+  private RetryingUnaryRpcListener underTest;
 
   @Mock
   private BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readAsync;
@@ -70,31 +69,34 @@ public class RetryingRpcFunctionTest {
 
   @Mock
   private NanoClock nanoClock;
-  @Mock
-  private ListenableFuture mockFuture;
 
   private RetryOptions retryOptions;
 
   AtomicLong totalSleep;
+
+  @Mock
+  private ScheduledExecutorService executorService;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
     retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
 
-    when(readAsync.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);
-    underTest = new RetryingRpcFunction<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
-        readAsync, BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-        null);
+    underTest = new RetryingUnaryRpcListener<>(retryOptions,
+        ReadRowsRequest.getDefaultInstance(), readAsync, executorService);
 
     totalSleep = new AtomicLong();
 
-    underTest.sleeper = new Sleeper() {
+    doAnswer(new Answer<Void>() {
       @Override
-      public void sleep(long ms) throws InterruptedException {
-        totalSleep.addAndGet(ms * 1000000);
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        long value = invocation.getArgumentAt(1, Long.class);
+        TimeUnit timeUnit = invocation.getArgumentAt(2, TimeUnit.class);
+        totalSleep.addAndGet(timeUnit.toNanos(value));
+        new Thread(invocation.getArgumentAt(0, Runnable.class)).start();
+        return null;
       }
-    };
+    }).when(executorService).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
 
     final long start = System.nanoTime();
 
@@ -109,22 +111,23 @@ public class RetryingRpcFunctionTest {
         return start + totalSleep.get();
       }
     });
-
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        invocation.getArgumentAt(0, Runnable.class).run();
-        return null;
-      }
-    }).when(mockFuture).addListener(any(Runnable.class), any(Executor.class));
-    when(readAsync.call(any(ReadRowsRequest.class), any(CancellationToken.class))).thenReturn(mockFuture);
+    when(readAsync.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);
   }
 
   @Test
   public void testOK() throws Exception {
     final ReadRowsResponse result = ReadRowsResponse.getDefaultInstance();
-    when(mockFuture.get()).thenReturn(result);
-    Assert.assertEquals(result, underTest.callRpcWithRetry().get(1, TimeUnit.SECONDS));
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        Listener listener = invocation.getArgumentAt(1, ClientCall.Listener.class);
+        listener.onMessage(result);
+        listener.onClose(Status.OK, null);
+        return null;
+      }
+    }).when(readAsync).call(any(ReadRowsRequest.class), any(ClientCall.Listener.class));
+    underTest.run();
+    Assert.assertEquals(result, underTest.getCompletionFuture().get(1, TimeUnit.SECONDS));
     verify(nanoClock, times(0)).nanoTime();
   }
 
@@ -133,32 +136,45 @@ public class RetryingRpcFunctionTest {
     final ReadRowsResponse result = ReadRowsResponse.getDefaultInstance();
     final Status errorStatus = Status.UNAVAILABLE;
     final AtomicInteger counter = new AtomicInteger(0);
-    when(mockFuture.get()).thenAnswer(new Answer<ReadRowsResponse>() {
+    doAnswer(new Answer<Void>() {
       @Override
-      public ReadRowsResponse answer(InvocationOnMock invocation) throws Throwable {
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        Listener listener = invocation.getArgumentAt(1, ClientCall.Listener.class);
         if (counter.incrementAndGet() < 5){
-          throw errorStatus.asRuntimeException();
+          listener.onClose(errorStatus, null);
+        } else {
+          listener.onMessage(result);
+          listener.onClose(Status.OK, null);
         }
-        return ReadRowsResponse.getDefaultInstance();
+        return null;
       }
-    });
-    Assert.assertEquals(result, underTest.callRpcWithRetry().get(1, TimeUnit.SECONDS));
+    }).when(readAsync).call(any(ReadRowsRequest.class), any(ClientCall.Listener.class));
+    underTest.run();
+
+    Assert.assertEquals(result, underTest.getCompletionFuture().get(1, TimeUnit.HOURS));
     Assert.assertEquals(5, counter.get());
   }
 
   @Test
   public void testCompleteFailure() throws Exception {
-    Status expectedStatus = Status.UNAVAILABLE;
-    when(mockFuture.get()).thenThrow(expectedStatus.asRuntimeException());
+    final Status errorStatus = Status.UNAVAILABLE;
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        invocation.getArgumentAt(1, ClientCall.Listener.class).onClose(errorStatus, null);
+        return null;
+      }
+    }).when(readAsync).call(any(ReadRowsRequest.class), any(ClientCall.Listener.class));
     try {
-      underTest.callRpcWithRetry().get(1, TimeUnit.SECONDS);
+      underTest.run();
+      underTest.getCompletionFuture().get(1, TimeUnit.MINUTES);
       Assert.fail();
     } catch (ExecutionException e) {
       Assert.assertEquals(BigtableRetriesExhaustedException.class, e.getCause().getClass());
       BigtableRetriesExhaustedException retriesExhaustedException =
           (BigtableRetriesExhaustedException) e.getCause();
       StatusRuntimeException sre = (StatusRuntimeException) retriesExhaustedException.getCause();
-      Assert.assertEquals(expectedStatus.getCode(), sre.getStatus().getCode());
+      Assert.assertEquals(errorStatus.getCode(), sre.getStatus().getCode());
       long maxSleep = TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis());
       Assert.assertTrue(
         String.format("Slept only %d seconds", TimeUnit.NANOSECONDS.toSeconds(totalSleep.get())),

@@ -79,7 +79,7 @@ public class ChannelPoolPerf {
         return false;
       }
     };
-    int threads = 100;
+    int threads = 10;
     int concurrent = 400;
     final ChannelPool cp = new ChannelPool(
       Collections.<HeaderInterceptor>emptyList(), new ChannelPool.ChannelFactory() {

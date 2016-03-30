@@ -39,6 +39,7 @@ import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public class PutMicroBenchmark {
     byte[][] values = dataHelper.randomData("testValue-", NUM_CELLS);
 
     Put put = new Put(rowKey);
-    List<QualifierValue> keyValues = new ArrayList<QualifierValue>(100);
+    List<QualifierValue> keyValues = new ArrayList<QualifierValue>(NUM_CELLS);
     for (int i = 0; i < NUM_CELLS; ++i) {
       put.addColumn(COLUMN_FAMILY, quals[i], values[i]);
       keyValues.add(new QualifierValue(quals[i], values[i]));
@@ -85,10 +86,12 @@ public class PutMicroBenchmark {
             BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
             new BigtableOptions.Builder().build());
 
+    channelPool.ensureChannelCount(10);
+
     final MutateRowRequest request = hbaseAdapter.adapt(put);
     client.mutateRow(request);
     client.mutateRow(request);
-    final int count = 10_000_000;
+    final int count = 100_000;
     Runnable r = new Runnable(){
       @Override
       public void run() {
@@ -111,53 +114,55 @@ public class PutMicroBenchmark {
                 count * 1000000000.0 / totalTime));
       }
     };
-    
+
     ExecutorService e = Executors.newCachedThreadPool();
-    for (int i =0;i<10;i++) {
+    for (int i = 0; i < 100; i++) {
       e.execute(r);
     }
     e.shutdown();
     e.awaitTermination(10, TimeUnit.HOURS);
   }
 
+  final static ManagedChannel channel = new ManagedChannel() {
+    @Override
+    public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
+        MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
+      return createNewCall();
+    }
+
+    @Override
+    public String authority() {
+      return null;
+    }
+
+    @Override
+    public ManagedChannel shutdownNow() {
+      return null;
+    }
+
+    @Override
+    public ManagedChannel shutdown() {
+      return null;
+    }
+
+    @Override
+    public boolean isTerminated() {
+      return false;
+    }
+
+    @Override
+    public boolean isShutdown() {
+      return false;
+    }
+
+    @Override
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+      return false;
+    }
+  };
+
   private static ManagedChannel createFakeChannel() {
-    return new ManagedChannel() {
-      @Override
-      public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
-          MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
-        return createNewCall();
-      }
-
-      @Override
-      public String authority() {
-        return null;
-      }
-
-      @Override
-      public ManagedChannel shutdownNow() {
-        return null;
-      }
-
-      @Override
-      public ManagedChannel shutdown() {
-        return null;
-      }
-
-      @Override
-      public boolean isTerminated() {
-        return false;
-      }
-
-      @Override
-      public boolean isShutdown() {
-        return false;
-      }
-
-      @Override
-      public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-        return false;
-      }
-    };
+    return channel;
   }
 
   /**
@@ -180,12 +185,14 @@ public class PutMicroBenchmark {
       public void cancel() {}
 
       @Override
-      public void halfClose() {}
+      public void halfClose() {
+      }
 
-      @SuppressWarnings("unchecked")
       @Override
+      @SuppressWarnings("unchecked")
       public void sendMessage(RequestT message) {
         responseListener.onMessage((ResponseT) Empty.getDefaultInstance());
+        responseListener.onClose(Status.OK, null);
       }
     };
   }
