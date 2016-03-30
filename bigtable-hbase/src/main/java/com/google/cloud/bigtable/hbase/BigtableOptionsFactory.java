@@ -193,7 +193,7 @@ public class BigtableOptionsFactory {
         BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
     bigtableOptionsBuilder.setAsyncMutatorWorkerCount(asyncMutatorCount);
 
-    bigtableOptionsBuilder.setUseBulkApi(configuration.getBoolean(BIGTABLE_USE_BULK_API, false));
+    bigtableOptionsBuilder.setUseBulkApi(configuration.getBoolean(BIGTABLE_USE_BULK_API, true));
     bigtableOptionsBuilder.setBulkMaxRowKeyCount(
         configuration.getInt(
             BIGTABLE_BULK_MAX_ROW_KEY_COUNT,
