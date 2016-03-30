@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -39,8 +40,8 @@ public interface BigtableAsyncUtilities {
       MethodDescriptor<RequestT, ResponseT> method,
       Function<List<ResponseT>, List<OutputT>> function);
 
-  <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT>
-      createAsyncUnaryRpc(MethodDescriptor<RequestT, ResponseT> method);
+  <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncUnaryRpc(
+      MethodDescriptor<RequestT, ResponseT> method, Predicate<RequestT> isRetryable);
 
   <RequestT, ResponseT> void asyncServerStreamingCall(ClientCall<RequestT, ResponseT> call,
       RequestT request, ClientCall.Listener<ResponseT> listener);
@@ -53,12 +54,12 @@ public interface BigtableAsyncUtilities {
     }
 
     @Override
-    public <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT>
-        createAsyncUnaryRpc(final MethodDescriptor<RequestT, ResponseT> method) {
+    public <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncUnaryRpc(
+        final MethodDescriptor<RequestT, ResponseT> method, final Predicate<RequestT> isRetryable) {
       return new BigtableAsyncRpc<RequestT, ResponseT>() {
         @Override
-        public ListenableFuture<ResponseT> call(RequestT request,
-            CancellationToken cancellationToken) {
+        public ListenableFuture<ResponseT> call(
+            RequestT request, CancellationToken cancellationToken) {
           AsyncUnaryOperationObserver<ResponseT> listener = new AsyncUnaryOperationObserver<>();
           ClientCall<RequestT, ResponseT> call = channel.newCall(method, CallOptions.DEFAULT);
           // Initially ask for two responses from flow-control so that if a misbehaving server sends
@@ -69,12 +70,18 @@ public interface BigtableAsyncUtilities {
           addCancellationListener(cancellationToken, call);
           return listener.getCompletionFuture();
         }
+
+        @Override
+        public boolean isRetryable(RequestT request) {
+          return isRetryable.apply(request);
+        }
       };
     }
 
     @Override
-    public <RequestT, ResponseT, OutputT> BigtableAsyncRpc<RequestT, List<OutputT>>
-        createStreamingAsyncRpc(final MethodDescriptor<RequestT, ResponseT> method,
+    public <RequestT, ResponseT, OutputT>
+        BigtableAsyncRpc<RequestT, List<OutputT>> createStreamingAsyncRpc(
+            final MethodDescriptor<RequestT, ResponseT> method,
             final Function<List<ResponseT>, List<OutputT>> function) {
       return new BigtableAsyncRpc<RequestT, List<OutputT>>() {
         @Override
@@ -86,6 +93,11 @@ public interface BigtableAsyncUtilities {
               new CollectingClientCallListener<>(call);
           asyncServerStreamingCall(call, request, responseCollector);
           return Futures.transform(responseCollector.getResponseCompleteFuture(), function);
+        }
+
+        @Override
+        public boolean isRetryable(RequestT request) {
+          return true;
         }
       };
     }

@@ -96,9 +96,10 @@ public class BigtableDataGrpcClientTests {
     BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
     when(mockChannelPool.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(mockClientCall);
-    when(mockAsyncUtilities.createAsyncUnaryRpc(any(MethodDescriptor.class)))
+    when(mockAsyncUtilities.createAsyncUnaryRpc(any(MethodDescriptor.class), any(Predicate.class)))
         .thenReturn(mockBigtableRpc);
     when(mockBigtableRpc.call(any(), any(CancellationToken.class))).thenReturn(mockFuture);
+    when(mockBigtableRpc.isRetryable(any())).thenReturn(true);
     doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {

@@ -26,7 +26,6 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -51,7 +50,6 @@ public class RetryingRpcFunction<RequestT, ResponseT>
 
   private final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   private final RetryOptions retryOptions;
-  private final Predicate<RequestT> isRetryable;
   private final ScheduledExecutorService retryExecutorService;
   private int failedCount;
   private final CancellationToken cancellationToken;
@@ -60,22 +58,21 @@ public class RetryingRpcFunction<RequestT, ResponseT>
           RetryOptions retryOptions,
           RequestT request,
           BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
-          Predicate<RequestT> isRetryable,
           ScheduledExecutorService retryExecutorService,
           CancellationToken cancellationToken) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
-    this.isRetryable = isRetryable;
     this.retryExecutorService = retryExecutorService;
     this.cancellationToken = cancellationToken;
   }
 
   @Override
   public ListenableFuture<ResponseT> apply(StatusRuntimeException statusException) throws Exception {
-    final Status status = statusException.getStatus();
+    Status status = statusException.getStatus();
     Status.Code code = status.getCode();
-    if (retryOptions.isRetryable(code) && isRetryable.apply(request)) {
+    if (retryOptions.isRetryable(code)
+        && rpc.isRetryable(request)) {
       return backOffAndRetry(statusException, status);
     } else {
       return Futures.immediateFailedCheckedFuture(statusException);
@@ -92,11 +89,12 @@ public class RetryingRpcFunction<RequestT, ResponseT>
       throw new BigtableRetriesExhaustedException("Exhausted retries.", cause);
     }
 
-    // TODO: Should this be done via a scheduled executor rather than holding on to a thread?
-    sleep(nextBackOff);
     // A retryable error.
     failedCount += 1;
     LOG.info("Retrying failed call. Failure #%d, got: %s", status.getCause(), failedCount, status);
+
+    // TODO: Should this be done via a scheduled executor rather than holding on to a thread?
+    sleep(nextBackOff);
     return callRpcWithRetry();
   }
 
@@ -108,10 +106,11 @@ public class RetryingRpcFunction<RequestT, ResponseT>
    * @return a {@link ListenableFuture} that will retry on exceptions that are deemed retryable.
    */
   public ListenableFuture<ResponseT> callRpcWithRetry() {
-    return addRetry(rpc.call(request, cancellationToken));
+    ListenableFuture<ResponseT> future = rpc.call(request, cancellationToken);
+    return retryOptions.enableRetries() ? addRetry(future) : future;
   }
 
-  private ListenableFuture<ResponseT> addRetry(final ListenableFuture<ResponseT> future) {
+  private ListenableFuture<ResponseT> addRetry(ListenableFuture<ResponseT> future) {
     return Futures.catchingAsync(future, StatusRuntimeException.class, this, retryExecutorService);
   }
 
