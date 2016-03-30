@@ -121,6 +121,9 @@ public class TestBigtableBufferedMutator {
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project");
     configuration.set(BigtableOptionsFactory.ZONE_KEY, "zone");
     configuration.set(BigtableOptionsFactory.CLUSTER_KEY, "cluster");
+    if (configuration.get(BigtableOptionsFactory.BIGTABLE_USE_BULK_API) == null) {
+      configuration.set(BigtableOptionsFactory.BIGTABLE_USE_BULK_API, "false");
+    }
 
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
     HBaseRequestAdapter adapter = new HBaseRequestAdapter(
@@ -147,32 +150,13 @@ public class TestBigtableBufferedMutator {
   @SuppressWarnings("unchecked")
   @Test
   public void testMutation() throws IOException, InterruptedException {
-    final ReentrantLock lock = new ReentrantLock();
-    final Condition mutateRowAsyncCalled = lock.newCondition();
     when(mockClient.mutateRowAsync(any(MutateRowRequest.class)))
-        .thenAnswer(
-            new Answer<ListenableFuture<Empty>>() {
-              @Override
-              public ListenableFuture<Empty> answer(InvocationOnMock invocation) throws Throwable {
-                lock.lock();
-                try {
-                  mutateRowAsyncCalled.signalAll();
-                  return mockFuture;
-                } finally {
-                  lock.unlock();
-                }
-              }
-            });
+        .thenReturn(mockFuture);
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(SIMPLE_PUT);
     Assert.assertTrue(underTest.hasInflightRequests());
     // Leave some time for the async worker to handle the request.
-    lock.lock();
-    try {
-      mutateRowAsyncCalled.await(100, TimeUnit.SECONDS);
-    } finally {
-      lock.unlock();
-    }
+    Thread.sleep(100);
     verify(mockClient, times(1)).mutateRowAsync(any(MutateRowRequest.class));
     Assert.assertTrue(underTest.hasInflightRequests());
     completeCall();

@@ -71,7 +71,6 @@ public class TestRpcThrottler {
     FutureCallback<?> callback = underTest.addCallback(future, id);
     assertTrue(underTest.hasInflightRequests());
     callback.onSuccess(null);
-    Thread.sleep(100);
     assertFalse(underTest.hasInflightRequests());
   }
 
