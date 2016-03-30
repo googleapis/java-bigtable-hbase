@@ -21,6 +21,8 @@ import io.grpc.Status;
 import io.grpc.stub.ClientCalls;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -54,8 +56,10 @@ import com.google.cloud.bigtable.grpc.scanner.ReadRowsResponseListener;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -117,6 +121,27 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private static final Predicate<ReadRowsRequest> IS_RETRYABLE_READ_ROW =
       Predicates.<ReadRowsRequest> alwaysTrue();
 
+  private static final Function<List<SampleRowKeysResponse>, List<SampleRowKeysResponse>> IMMUTABLE_LIST_TRANSFORMER =
+      new Function<List<SampleRowKeysResponse>, List<SampleRowKeysResponse>>() {
+        @Override
+        public List<SampleRowKeysResponse> apply(List<SampleRowKeysResponse> list) {
+          return ImmutableList.copyOf(list);
+        }
+      };
+
+  private static Function<List<ReadRowsResponse>, List<Row>> ROW_TRANSFORMER =
+      new Function<List<ReadRowsResponse>, List<Row>>() {
+        @Override
+        public List<Row> apply(List<ReadRowsResponse> responses) {
+          List<Row> result = new ArrayList<>();
+          Iterator<ReadRowsResponse> responseIterator = responses.iterator();
+          while (responseIterator.hasNext()) {
+            result.add(RowMerger.readNextRow(responseIterator));
+          }
+          return result;
+        }
+      };
+
   private static final boolean allCellsHaveTimestamps(Iterable<Mutation> mutations) {
     for (Mutation mut : mutations) {
       if (mut.getSetCell().getTimestampMicros() == -1) {
@@ -167,8 +192,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     this.retryOptions = bigtableOptions.getRetryOptions();
     this.asyncUtilities = asyncUtilities;
 
-    this.sampleRowKeysAsync = asyncUtilities.createSampleRowKeyAsyncReader();
-    this.readRowsAsync = asyncUtilities.createRowKeyAysncReader();
+    this.sampleRowKeysAsync = asyncUtilities.createStreamingAsyncRpc(
+      BigtableServiceGrpc.METHOD_SAMPLE_ROW_KEYS, IMMUTABLE_LIST_TRANSFORMER);
+    this.readRowsAsync = asyncUtilities
+        .createStreamingAsyncRpc(BigtableServiceGrpc.METHOD_READ_ROWS, ROW_TRANSFORMER);
     this.mutateRowRpc = asyncUtilities.createAsyncUnaryRpc(BigtableServiceGrpc.METHOD_MUTATE_ROW);
     this.mutateRowsRpc = asyncUtilities.createAsyncUnaryRpc(BigtableServiceGrpc.METHOD_MUTATE_ROWS);
     this.checkAndMutateRpc =
