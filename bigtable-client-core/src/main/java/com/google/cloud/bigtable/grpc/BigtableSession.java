@@ -54,7 +54,6 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
-import com.google.cloud.bigtable.grpc.io.UserAgentInterceptor;
 import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -250,7 +249,6 @@ public class BigtableSession implements Closeable {
       throw new IOException("Could not initialize credentials.", e);
     }
 
-    headerInterceptorBuilder.add(new UserAgentInterceptor(options.getUserAgent()));
     headerInterceptors = headerInterceptorBuilder.build();
 
     ChannelPool dataChannel = createChannelPool(options.getDataHost());
@@ -330,7 +328,7 @@ public class BigtableSession implements Closeable {
     ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
-        return createNettyChannel(hostString);
+        return createNettyChannel(hostString, options);
       }
     };
     ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory);
@@ -338,7 +336,7 @@ public class BigtableSession implements Closeable {
     return channelPool;
   }
 
-  protected ManagedChannel createNettyChannel(final String host) throws IOException {
+  public static ManagedChannel createNettyChannel(final String host, BigtableOptions options) throws IOException {
     // TODO Go back to using host names once grpc 0.14.0 is out, which fixes bug
     // when ipv6 address is available but not reachable.
     InetAddress address = InetAddress.getByName(host);
@@ -352,6 +350,7 @@ public class BigtableSession implements Closeable {
         .eventLoopGroup(sharedPools.getElg())
         .executor(sharedPools.getBatchThreadPool())
         .negotiationType(negotiationType)
+        .userAgent(options.getUserAgent())
         .flowControlWindow(FLOW_CONTROL_WINDOW)
         .build();
   }

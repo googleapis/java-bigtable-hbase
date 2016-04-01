@@ -1,17 +1,10 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2015 Google Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with the License. You may obtain
+ * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable
+ * law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ * for the specific language governing permissions and limitations under the License.
  */
 package org.apache.hadoop.hbase.client;
 
@@ -20,13 +13,15 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
-import com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory;
+import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.protobuf.Empty;
 import com.google.protobuf.ServiceException;
 
@@ -42,6 +37,7 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -51,13 +47,67 @@ import java.util.concurrent.TimeUnit;
 public class PutMicroBenchmark {
   static final int NUM_CELLS = 100;
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
+  final static int PUT_COUNT = 100;
 
-  public static void main(String[] args) throws IOException, ServiceException, InterruptedException {
+  public static void main(String[] args)
+      throws IOException, ServiceException, InterruptedException, GeneralSecurityException {
+    String projectId = args.length > 0 ? args[0] : "project";
+    String zoneId = args.length > 1 ? args[1] : "zone";
+    String clusterId = args.length > 2 ? args[2] : "cluster";
+    String tableId = args.length > 3 ? args[3] : "table";
+
+    ChannelPool cp = getChannelPool(args.length >= 3);
+    MutateRowRequest request = createRequest(projectId, zoneId, clusterId, tableId);
+    run(request, cp);
+  }
+
+  protected static ChannelPool getChannelPool(final boolean useRealConnection)
+      throws IOException, GeneralSecurityException {
+    if (useRealConnection) {
+      return createNettyChannelPool();
+    } else {
+      return new ChannelPool(ImmutableList.<HeaderInterceptor> of(), createFakeChannels());
+    }
+  }
+
+  protected static ChannelPool createNettyChannelPool()
+      throws IOException, GeneralSecurityException {
+    final BigtableOptions options = new BigtableOptions.Builder().setUserAgent("put_microbenchmark").build();
+    return new ChannelPool(getHeaders(options), new ChannelPool.ChannelFactory() {
+      @Override
+      public ManagedChannel create() throws IOException {
+        return BigtableSession.createNettyChannel(options.getDataHost(), options);
+      }
+    });
+  }
+
+  protected static ImmutableList<HeaderInterceptor> getHeaders(BigtableOptions options)
+      throws IOException, GeneralSecurityException {
+    CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
+    HeaderInterceptor headerInterceptor = credentialsCache
+        .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+    Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
+    if (headerInterceptor != null) {
+      headerInterceptorBuilder.add(headerInterceptor);
+    }
+    return headerInterceptorBuilder.build();
+  }
+
+  protected static ChannelPool.ChannelFactory createFakeChannels() {
+    final ManagedChannel channel = createFakeChannel();
+    return new ChannelPool.ChannelFactory() {
+      @Override
+      public ManagedChannel create() throws IOException {
+        return channel;
+      }
+    };
+  }
+
+  protected static MutateRowRequest createRequest(String projectId, String zoneId, String clusterId,
+      String tableId) {
     HBaseRequestAdapter hbaseAdapter =
-        new HBaseRequestAdapter(
-            new BigtableClusterName("proj", "zoneId", "clusterId"),
-            TableName.valueOf("table"),
-            new Configuration(false));
+        new HBaseRequestAdapter(new BigtableClusterName(projectId, zoneId, clusterId),
+            TableName.valueOf(tableId), new Configuration(false));
     DataGenerationHelper dataHelper = new DataGenerationHelper();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = dataHelper.randomData("testQualifier-", NUM_CELLS);
@@ -69,34 +119,20 @@ public class PutMicroBenchmark {
       put.addColumn(COLUMN_FAMILY, quals[i], values[i]);
       keyValues.add(new QualifierValue(quals[i], values[i]));
     }
+    return hbaseAdapter.adapt(put);
+  }
 
-    final ManagedChannel channel = createFakeChannel();
-    ChannelFactory factory =
-        new ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return channel;
-          }
-        };
+  protected static void run(final MutateRowRequest request, ChannelPool cp)
+      throws InterruptedException {
+    final BigtableDataClient client = new BigtableDataGrpcClient(cp,
+        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
+        new BigtableOptions.Builder().build());
 
-    ChannelPool channelPool = new ChannelPool(ImmutableList.<HeaderInterceptor>of(), factory);
-    final BigtableDataClient client =
-        new BigtableDataGrpcClient(
-            channelPool,
-            BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-            new BigtableOptions.Builder().build());
-
-    channelPool.ensureChannelCount(10);
-
-    final MutateRowRequest request = hbaseAdapter.adapt(put);
-    client.mutateRow(request);
-    client.mutateRow(request);
-    final int count = 100_000;
-    Runnable r = new Runnable(){
+    Runnable r = new Runnable() {
       @Override
       public void run() {
         long start = System.nanoTime();
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < PUT_COUNT; i++) {
           try {
             client.mutateRow(request);
           } catch (ServiceException e) {
@@ -105,28 +141,33 @@ public class PutMicroBenchmark {
           }
         }
         long totalTime = System.nanoTime() - start;
-        System.out.println(
-            String.format(
-                "Put %d in %d ms.  %d nanos/put.  %f put/sec",
-                count,
-                totalTime / 1000000,
-                totalTime / count,
-                count * 1000000000.0 / totalTime));
+        System.out.println(String.format("Put %d in %d ms.  %d nanos/put.  %f put/sec", PUT_COUNT,
+          totalTime / 1000000, totalTime / PUT_COUNT, PUT_COUNT * 1000000000.0 / totalTime));
       }
     };
 
-    ExecutorService e = Executors.newCachedThreadPool();
-    for (int i = 0; i < 100; i++) {
+    int roundCount = 20;
+    System.out.println("====== Running serially");
+    for (int i = 0; i < roundCount; i++) {
+      r.run();
+    }
+    System.out.println("====== Running in parallel");
+    ExecutorService e = Executors.newFixedThreadPool(roundCount);
+    for (int i = 0; i < roundCount; i++) {
       e.execute(r);
     }
     e.shutdown();
     e.awaitTermination(10, TimeUnit.HOURS);
+    System.out.println("====== Running serially");
+    for (int i = 0; i < roundCount; i++) {
+      r.run();
+    }
   }
 
   final static ManagedChannel channel = new ManagedChannel() {
     @Override
-    public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
-        MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
+    public <RequestT, ResponseT> ClientCall<RequestT, ResponseT>
+        newCall(MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
       return createNewCall();
     }
 
@@ -179,10 +220,12 @@ public class PutMicroBenchmark {
       }
 
       @Override
-      public void request(int numMessages) {}
+      public void request(int numMessages) {
+      }
 
       @Override
-      public void cancel() {}
+      public void cancel() {
+      }
 
       @Override
       public void halfClose() {
