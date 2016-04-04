@@ -19,7 +19,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.SettableFuture;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -35,12 +34,6 @@ public class RetryingUnaryRpcListener<RequestT, ResponseT>
   private ResponseT value;
 
   public RetryingUnaryRpcListener(RetryOptions retryOptions, RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, ScheduledExecutorService executorService,
-      SettableFuture<ResponseT> completionFuture) {
-    super(retryOptions, request, retryableRpc, executorService, completionFuture);
-  }
-
-  public RetryingUnaryRpcListener(RetryOptions retryOptions, RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
       ScheduledExecutorService executorService) {
     super(retryOptions, request, retryableRpc, executorService);
@@ -49,6 +42,7 @@ public class RetryingUnaryRpcListener<RequestT, ResponseT>
   @Override
   public void onMessage(ResponseT message) {
     value = message;
+    completionFuture.set(value);
   }
 
   @Override
@@ -56,8 +50,6 @@ public class RetryingUnaryRpcListener<RequestT, ResponseT>
     if (value == null) {
       // No value received so mark the future as an error
       completionFuture.setException(NO_VALUE_SET_EXCEPTION);
-    } else {
-      completionFuture.set(value);
     }
   }
 }
