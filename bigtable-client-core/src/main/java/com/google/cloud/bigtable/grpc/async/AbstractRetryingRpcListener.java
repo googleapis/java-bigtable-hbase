@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nullable;
+
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
 import com.google.cloud.bigtable.config.Logger;
@@ -26,8 +28,9 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
@@ -42,39 +45,49 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
   protected final static Logger LOG = new Logger(AbstractRetryingRpcListener.class);
 
-  private final RequestT request;
+
+  protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
+    @Override
+    protected void interruptTask() {
+      if (call != null) {
+        call.cancel();
+      }
+    }
+
+    @Override
+    protected boolean set(@Nullable RespT resp) {
+      return super.set(resp);
+    }
+
+    @Override
+    protected boolean setException(Throwable throwable) {
+      return super.setException(throwable);
+    }
+  }
 
   @VisibleForTesting
   BackOff currentBackoff;
   @VisibleForTesting
   Sleeper sleeper = Sleeper.DEFAULT;
 
-  protected final BigtableAsyncRpc<RequestT, ResponseT> rpc;
-  protected final RetryOptions retryOptions;
-  protected final ScheduledExecutorService retryExecutorService;
-  protected final SettableFuture<ResultT> completionFuture;
+  private final BigtableAsyncRpc<RequestT, ResponseT> rpc;
+  private final RetryOptions retryOptions;
+  private final RequestT request;
+  private final ScheduledExecutorService retryExecutorService;
   private int failedCount;
-  protected ClientCall<RequestT, ResponseT> call;
 
-  public AbstractRetryingRpcListener(
-      RetryOptions retryOptions,
-      RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
-      ScheduledExecutorService executorService) {
-    this(retryOptions, request, retryableRpc, executorService, SettableFuture.<ResultT>create());
-  }
+  protected final GrpcFuture<ResultT> completionFuture = new GrpcFuture<>();
+  protected ClientCall<RequestT, ResponseT> call;
 
   public AbstractRetryingRpcListener(
           RetryOptions retryOptions,
           RequestT request,
           BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
-          ScheduledExecutorService retryExecutorService,
-          SettableFuture<ResultT> completionFuture) {
+          ScheduledExecutorService retryExecutorService) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
     this.retryExecutorService = retryExecutorService;
-    this.completionFuture = completionFuture;
   }
 
   @Override
@@ -124,7 +137,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     return BackOff.STOP;
   }
 
-  public SettableFuture<ResultT> getCompletionFuture() {
+  public ListenableFuture<ResultT> getCompletionFuture() {
     return completionFuture;
   }
 

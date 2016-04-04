@@ -20,7 +20,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.SettableFuture;
 
 public class RetryingCollectingClientCallListener<RequestT, ResponseT>
     extends AbstractRetryingRpcListener<RequestT, ResponseT, List<ResponseT>> {
@@ -33,15 +32,6 @@ public class RetryingCollectingClientCallListener<RequestT, ResponseT>
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
       ScheduledExecutorService executorService) {
     super(retryOptions, request, retryableRpc, executorService);
-  }
-
-  public RetryingCollectingClientCallListener(
-      RetryOptions retryOptions,
-      RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
-      ScheduledExecutorService executorService,
-      SettableFuture<List<ResponseT>> completionFuture) {
-    super(retryOptions, request, retryableRpc, executorService, completionFuture);
   }
 
   @Override
@@ -58,6 +48,6 @@ public class RetryingCollectingClientCallListener<RequestT, ResponseT>
 
   @Override
   protected void onOK() {
-    getCompletionFuture().set(buffer.build());
+    completionFuture.set(buffer.build());
   }
 }
