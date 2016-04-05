@@ -4,11 +4,13 @@ This project is an early release of Cloud Bigtable + Cloud Dataflow integration.
 using the HBase classes for the integration.  There are plans foran additional integration based on
 a new Java oriented API for Cloud Bigtable.
 
+See the [Cloud Bigtable Dataflow Examples Project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/tree/master/java/dataflow-connector-examples) for more information about how to use Dataflow and run the examples.
+
 ## Writing
 A [PTransform](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/transforms/PTransform)
 is a Dataflow construct that operates on distributed input - A [PCollection]https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/values/PCollection.  See the [Reading and Writing Data](https://cloud.google.com/dataflow/model/reading-and-writing-data) section in the Google Dataflow documentation
 
-Here's [an example](https://github.com/GoogleCloudPlatform/cloud-bigtable-client/blob/master/bigtable-hbase-dataflow/src/main/java/com/google/cloud/bigtable/dataflow/example/HelloWorldWrite.java) of the CloudbigtableIO.writeToTable() that writes the words "Hello" and "World" to a Bigtable Table:
+Here's [an example](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/blob/master/java/dataflow-connector-examples/src/main/java/com/google/cloud/bigtable/dataflow/example/HelloWorldWrite.java) of the CloudbigtableIO.writeToTable() that writes the words "Hello" and "World" to a Bigtable Table:
 
 ```java
   // Create a DoFn that creates a Put or Delete.  MUTATION_TRANSFORM is a simplistic example.
@@ -41,15 +43,11 @@ Here's [an example](https://github.com/GoogleCloudPlatform/cloud-bigtable-client
     p.run();
 ```
 
-To run the example via maven, use the following command, with the values in the brackets replaced with your information:
-
-`mvn exec:java -Dexec.mainClass="com.google.cloud.bigtable.dataflow.example.HelloWorldWrite" -Dexec.args="--runner=BlockingDataflowPipelineRunner --project=[project_id] --stagingLocation=gs://[some_bucket] --bigtableProjectId=[project_id] --bigtableClusterId=[cluster_id] --bigtableZoneId=[zone_id] --bigtableTableId=[table_id]" -Dexec.classpathScope="test"`
-
 ## Reading
 
 A [Source](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/io/Source) is a Dataflow construct that can read data for use as part of a Pipeline.  The Bigtable Source is not fully optimized for use in Dataflow, but is (or at least should be) functional for your use.  It will be improved when issue #400 is resolved.
 
-Here's an example that uses the [Source to count the rows](https://github.com/GoogleCloudPlatform/cloud-bigtable-cdf/blob/master/bigtable-dataflow-example/src/main/java/com/google/cloud/dataflow/sdk/io/bigtable/example/SourceRowCount.java) of a Table:
+Here's an example that uses the [Source to count the rows](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/blob/master/java/dataflow-connector-examples/src/main/java/com/google/cloud/bigtable/dataflow/example/SourceRowCount.java) of a Table:
 
 ```java
 
@@ -86,13 +84,6 @@ Here's an example that uses the [Source to count the rows](https://github.com/Go
     // Once this is done, you can get the result file via "gsutil cp <resultLocation>-00000-of-00001"
 ```
 
-This can be run this example with the *com.google.cloud.bigtable.dataflow.example.SourceRowCount*
-class with the following parameters:
+## More Information
 
-`--runner=BlockingDataflowPipelineRunner --project=[project_id] --stagingLocation=gs://[some_bucket] --bigtableProjectId=[project_id] --bigtableClusterId=[cluster_id] --bigtableZoneId=[zone_id] --bigtableTableId=[table_id]"`
-
-This will also require setting a classpath argument for ALPN.
-
-`-Xbootclasspath=-Xbootclasspath/p:{Path to your maven repository}/org/mortbay/jetty/alpn/alpn-boot/{alpn.version}/{alpn.version}.jar`
-
-
+See the [Cloud Bigtable Dataflow Examples Project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/tree/master/java/dataflow-connector-examples) for more information about how to use Dataflow and run the examples.
