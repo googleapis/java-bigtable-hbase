@@ -21,8 +21,8 @@ public final class DayOfWeekProto {
       "pe*\204\001\n\tDayOfWeek\022\033\n\027DAY_OF_WEEK_UNSPECIF" +
       "IED\020\000\022\n\n\006MONDAY\020\001\022\013\n\007TUESDAY\020\002\022\r\n\tWEDNES" +
       "DAY\020\003\022\014\n\010THURSDAY\020\004\022\n\n\006FRIDAY\020\005\022\014\n\010SATUR" +
-      "DAY\020\006\022\n\n\006SUNDAY\020\007B&\n\017com.google.typeB\016Da" +
-      "yOfWeekProtoP\001\240\001\001b\006proto3"
+      "DAY\020\006\022\n\n\006SUNDAY\020\007B,\n\017com.google.typeB\016Da" +
+      "yOfWeekProtoP\001\240\001\001\242\002\003GTPb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

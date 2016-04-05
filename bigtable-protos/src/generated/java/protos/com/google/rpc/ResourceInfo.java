@@ -105,7 +105,7 @@ public  final class ResourceInfo extends
    * <pre>
    * A name for the type of resource being accessed, e.g. "sql table",
    * "cloud storage bucket", "file", "Google calendar"; or the type URL
-   * of the resource: e.g. "https://types.googleapis.com/com.google.Calendar".
+   * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
    * </pre>
    */
   public java.lang.String getResourceType() {
@@ -126,7 +126,7 @@ public  final class ResourceInfo extends
    * <pre>
    * A name for the type of resource being accessed, e.g. "sql table",
    * "cloud storage bucket", "file", "Google calendar"; or the type URL
-   * of the resource: e.g. "https://types.googleapis.com/com.google.Calendar".
+   * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -151,7 +151,7 @@ public  final class ResourceInfo extends
    * <pre>
    * The name of the resource being accessed.  For example, a shared calendar
    * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
-   * error is PERMISSION_DENIED.
+   * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
    * </pre>
    */
   public java.lang.String getResourceName() {
@@ -172,7 +172,7 @@ public  final class ResourceInfo extends
    * <pre>
    * The name of the resource being accessed.  For example, a shared calendar
    * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
-   * error is PERMISSION_DENIED.
+   * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -195,7 +195,7 @@ public  final class ResourceInfo extends
    * <code>optional string owner = 3;</code>
    *
    * <pre>
-   * The owner of the resource.
+   * The owner of the resource (optional).
    * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
    * id&gt;".
    * </pre>
@@ -216,7 +216,7 @@ public  final class ResourceInfo extends
    * <code>optional string owner = 3;</code>
    *
    * <pre>
-   * The owner of the resource.
+   * The owner of the resource (optional).
    * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
    * id&gt;".
    * </pre>
@@ -537,7 +537,7 @@ public  final class ResourceInfo extends
      * <pre>
      * A name for the type of resource being accessed, e.g. "sql table",
      * "cloud storage bucket", "file", "Google calendar"; or the type URL
-     * of the resource: e.g. "https://types.googleapis.com/com.google.Calendar".
+     * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
      * </pre>
      */
     public java.lang.String getResourceType() {
@@ -558,7 +558,7 @@ public  final class ResourceInfo extends
      * <pre>
      * A name for the type of resource being accessed, e.g. "sql table",
      * "cloud storage bucket", "file", "Google calendar"; or the type URL
-     * of the resource: e.g. "https://types.googleapis.com/com.google.Calendar".
+     * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -580,7 +580,7 @@ public  final class ResourceInfo extends
      * <pre>
      * A name for the type of resource being accessed, e.g. "sql table",
      * "cloud storage bucket", "file", "Google calendar"; or the type URL
-     * of the resource: e.g. "https://types.googleapis.com/com.google.Calendar".
+     * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
      * </pre>
      */
     public Builder setResourceType(
@@ -599,7 +599,7 @@ public  final class ResourceInfo extends
      * <pre>
      * A name for the type of resource being accessed, e.g. "sql table",
      * "cloud storage bucket", "file", "Google calendar"; or the type URL
-     * of the resource: e.g. "https://types.googleapis.com/com.google.Calendar".
+     * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
      * </pre>
      */
     public Builder clearResourceType() {
@@ -614,7 +614,7 @@ public  final class ResourceInfo extends
      * <pre>
      * A name for the type of resource being accessed, e.g. "sql table",
      * "cloud storage bucket", "file", "Google calendar"; or the type URL
-     * of the resource: e.g. "https://types.googleapis.com/com.google.Calendar".
+     * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
      * </pre>
      */
     public Builder setResourceTypeBytes(
@@ -636,7 +636,7 @@ public  final class ResourceInfo extends
      * <pre>
      * The name of the resource being accessed.  For example, a shared calendar
      * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
-     * error is PERMISSION_DENIED.
+     * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
      * </pre>
      */
     public java.lang.String getResourceName() {
@@ -657,7 +657,7 @@ public  final class ResourceInfo extends
      * <pre>
      * The name of the resource being accessed.  For example, a shared calendar
      * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
-     * error is PERMISSION_DENIED.
+     * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -679,7 +679,7 @@ public  final class ResourceInfo extends
      * <pre>
      * The name of the resource being accessed.  For example, a shared calendar
      * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
-     * error is PERMISSION_DENIED.
+     * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
      * </pre>
      */
     public Builder setResourceName(
@@ -698,7 +698,7 @@ public  final class ResourceInfo extends
      * <pre>
      * The name of the resource being accessed.  For example, a shared calendar
      * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
-     * error is PERMISSION_DENIED.
+     * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
      * </pre>
      */
     public Builder clearResourceName() {
@@ -713,7 +713,7 @@ public  final class ResourceInfo extends
      * <pre>
      * The name of the resource being accessed.  For example, a shared calendar
      * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
-     * error is PERMISSION_DENIED.
+     * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
      * </pre>
      */
     public Builder setResourceNameBytes(
@@ -733,7 +733,7 @@ public  final class ResourceInfo extends
      * <code>optional string owner = 3;</code>
      *
      * <pre>
-     * The owner of the resource.
+     * The owner of the resource (optional).
      * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
      * id&gt;".
      * </pre>
@@ -754,7 +754,7 @@ public  final class ResourceInfo extends
      * <code>optional string owner = 3;</code>
      *
      * <pre>
-     * The owner of the resource.
+     * The owner of the resource (optional).
      * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
      * id&gt;".
      * </pre>
@@ -776,7 +776,7 @@ public  final class ResourceInfo extends
      * <code>optional string owner = 3;</code>
      *
      * <pre>
-     * The owner of the resource.
+     * The owner of the resource (optional).
      * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
      * id&gt;".
      * </pre>
@@ -795,7 +795,7 @@ public  final class ResourceInfo extends
      * <code>optional string owner = 3;</code>
      *
      * <pre>
-     * The owner of the resource.
+     * The owner of the resource (optional).
      * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
      * id&gt;".
      * </pre>
@@ -810,7 +810,7 @@ public  final class ResourceInfo extends
      * <code>optional string owner = 3;</code>
      *
      * <pre>
-     * The owner of the resource.
+     * The owner of the resource (optional).
      * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
      * id&gt;".
      * </pre>

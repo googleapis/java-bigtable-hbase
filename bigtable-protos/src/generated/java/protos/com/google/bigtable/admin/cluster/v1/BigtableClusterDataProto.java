@@ -31,21 +31,20 @@ public final class BigtableClusterDataProto {
       "ble_cluster_data.proto\022 google.bigtable." +
       "admin.cluster.v1\032\034google/api/annotations" +
       ".proto\032#google/longrunning/operations.pr" +
-      "oto\032\037google/protobuf/timestamp.proto\"\273\001\n" +
-      "\004Zone\022\014\n\004name\030\001 \001(\t\022\024\n\014display_name\030\002 \001(" +
-      "\t\022=\n\006status\030\003 \001(\0162-.google.bigtable.admi" +
-      "n.cluster.v1.Zone.Status\"P\n\006Status\022\013\n\007UN" +
-      "KNOWN\020\000\022\006\n\002OK\020\001\022\027\n\023PLANNED_MAINTENANCE\020\002" +
-      "\022\030\n\024EMERGENCY_MAINENANCE\020\003\"\311\001\n\007Cluster\022\014",
-      "\n\004name\030\001 \001(\t\0228\n\021current_operation\030\003 \001(\0132" +
-      "\035.google.longrunning.Operation\022\024\n\014displa" +
-      "y_name\030\004 \001(\t\022\023\n\013serve_nodes\030\005 \001(\005\022K\n\024def" +
-      "ault_storage_type\030\010 \001(\0162-.google.bigtabl" +
-      "e.admin.cluster.v1.StorageType*H\n\013Storag" +
-      "eType\022\027\n\023STORAGE_UNSPECIFIED\020\000\022\017\n\013STORAG" +
-      "E_SSD\020\001\022\017\n\013STORAGE_HDD\020\002BB\n$com.google.b" +
-      "igtable.admin.cluster.v1B\030BigtableCluste" +
-      "rDataProtoP\001b\006proto3"
+      "oto\"\273\001\n\004Zone\022\014\n\004name\030\001 \001(\t\022\024\n\014display_na" +
+      "me\030\002 \001(\t\022=\n\006status\030\003 \001(\0162-.google.bigtab" +
+      "le.admin.cluster.v1.Zone.Status\"P\n\006Statu" +
+      "s\022\013\n\007UNKNOWN\020\000\022\006\n\002OK\020\001\022\027\n\023PLANNED_MAINTE" +
+      "NANCE\020\002\022\030\n\024EMERGENCY_MAINENANCE\020\003\"\311\001\n\007Cl" +
+      "uster\022\014\n\004name\030\001 \001(\t\0228\n\021current_operation",
+      "\030\003 \001(\0132\035.google.longrunning.Operation\022\024\n" +
+      "\014display_name\030\004 \001(\t\022\023\n\013serve_nodes\030\005 \001(\005" +
+      "\022K\n\024default_storage_type\030\010 \001(\0162-.google." +
+      "bigtable.admin.cluster.v1.StorageType*H\n" +
+      "\013StorageType\022\027\n\023STORAGE_UNSPECIFIED\020\000\022\017\n" +
+      "\013STORAGE_SSD\020\001\022\017\n\013STORAGE_HDD\020\002BB\n$com.g" +
+      "oogle.bigtable.admin.cluster.v1B\030Bigtabl" +
+      "eClusterDataProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -60,7 +59,6 @@ public final class BigtableClusterDataProto {
         new com.google.protobuf.Descriptors.FileDescriptor[] {
           com.google.api.AnnotationsProto.getDescriptor(),
           com.google.longrunning.OperationsProto.getDescriptor(),
-          com.google.protobuf.TimestampProto.getDescriptor(),
         }, assigner);
     internal_static_google_bigtable_admin_cluster_v1_Zone_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -76,7 +74,6 @@ public final class BigtableClusterDataProto {
         new java.lang.String[] { "Name", "CurrentOperation", "DisplayName", "ServeNodes", "DefaultStorageType", });
     com.google.api.AnnotationsProto.getDescriptor();
     com.google.longrunning.OperationsProto.getDescriptor();
-    com.google.protobuf.TimestampProto.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

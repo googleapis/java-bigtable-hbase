@@ -123,7 +123,7 @@ public  final class QuotaFailure extends
      * description to find more about the quota configuration in the service's
      * public documentation, or find the relevant quota limit to adjust through
      * developer console.
-     * For example: "Service disabled" or "Daily Limit for read opetions
+     * For example: "Service disabled" or "Daily Limit for read operations
      * exceeded".
      * </pre>
      */
@@ -136,7 +136,7 @@ public  final class QuotaFailure extends
      * description to find more about the quota configuration in the service's
      * public documentation, or find the relevant quota limit to adjust through
      * developer console.
-     * For example: "Service disabled" or "Daily Limit for read opetions
+     * For example: "Service disabled" or "Daily Limit for read operations
      * exceeded".
      * </pre>
      */
@@ -280,7 +280,7 @@ public  final class QuotaFailure extends
      * description to find more about the quota configuration in the service's
      * public documentation, or find the relevant quota limit to adjust through
      * developer console.
-     * For example: "Service disabled" or "Daily Limit for read opetions
+     * For example: "Service disabled" or "Daily Limit for read operations
      * exceeded".
      * </pre>
      */
@@ -304,7 +304,7 @@ public  final class QuotaFailure extends
      * description to find more about the quota configuration in the service's
      * public documentation, or find the relevant quota limit to adjust through
      * developer console.
-     * For example: "Service disabled" or "Daily Limit for read opetions
+     * For example: "Service disabled" or "Daily Limit for read operations
      * exceeded".
      * </pre>
      */
@@ -654,7 +654,7 @@ public  final class QuotaFailure extends
        * description to find more about the quota configuration in the service's
        * public documentation, or find the relevant quota limit to adjust through
        * developer console.
-       * For example: "Service disabled" or "Daily Limit for read opetions
+       * For example: "Service disabled" or "Daily Limit for read operations
        * exceeded".
        * </pre>
        */
@@ -678,7 +678,7 @@ public  final class QuotaFailure extends
        * description to find more about the quota configuration in the service's
        * public documentation, or find the relevant quota limit to adjust through
        * developer console.
-       * For example: "Service disabled" or "Daily Limit for read opetions
+       * For example: "Service disabled" or "Daily Limit for read operations
        * exceeded".
        * </pre>
        */
@@ -703,7 +703,7 @@ public  final class QuotaFailure extends
        * description to find more about the quota configuration in the service's
        * public documentation, or find the relevant quota limit to adjust through
        * developer console.
-       * For example: "Service disabled" or "Daily Limit for read opetions
+       * For example: "Service disabled" or "Daily Limit for read operations
        * exceeded".
        * </pre>
        */
@@ -725,7 +725,7 @@ public  final class QuotaFailure extends
        * description to find more about the quota configuration in the service's
        * public documentation, or find the relevant quota limit to adjust through
        * developer console.
-       * For example: "Service disabled" or "Daily Limit for read opetions
+       * For example: "Service disabled" or "Daily Limit for read operations
        * exceeded".
        * </pre>
        */
@@ -743,7 +743,7 @@ public  final class QuotaFailure extends
        * description to find more about the quota configuration in the service's
        * public documentation, or find the relevant quota limit to adjust through
        * developer console.
-       * For example: "Service disabled" or "Daily Limit for read opetions
+       * For example: "Service disabled" or "Daily Limit for read operations
        * exceeded".
        * </pre>
        */

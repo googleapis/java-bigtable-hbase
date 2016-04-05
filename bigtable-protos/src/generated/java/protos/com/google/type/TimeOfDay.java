@@ -9,7 +9,7 @@ package com.google.type;
  * <pre>
  * Represents a time of day. The date and time zone are either not significant
  * or are specified elsewhere. An API may chose to allow leap seconds. Related
- * types are [google.type.Date][google.type.Date] and [google.protobuf.Timestamp][google.protobuf.Timestamp].
+ * types are [google.type.Date][google.type.Date] and `google.protobuf.Timestamp`.
  * </pre>
  */
 public  final class TimeOfDay extends
@@ -320,7 +320,7 @@ public  final class TimeOfDay extends
    * <pre>
    * Represents a time of day. The date and time zone are either not significant
    * or are specified elsewhere. An API may chose to allow leap seconds. Related
-   * types are [google.type.Date][google.type.Date] and [google.protobuf.Timestamp][google.protobuf.Timestamp].
+   * types are [google.type.Date][google.type.Date] and `google.protobuf.Timestamp`.
    * </pre>
    */
   public static final class Builder extends

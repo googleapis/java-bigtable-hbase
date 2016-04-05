@@ -24,8 +24,8 @@ public final class DateProto {
     java.lang.String[] descriptorData = {
       "\n\026google/type/date.proto\022\013google.type\"0\n" +
       "\004Date\022\014\n\004year\030\001 \001(\005\022\r\n\005month\030\002 \001(\005\022\013\n\003da" +
-      "y\030\003 \001(\005B!\n\017com.google.typeB\tDateProtoP\001\240" +
-      "\001\001b\006proto3"
+      "y\030\003 \001(\005B\'\n\017com.google.typeB\tDateProtoP\001\240" +
+      "\001\001\242\002\003GTPb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
