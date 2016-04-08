@@ -874,7 +874,7 @@ public class CloudBigtableIO {
       } catch (RetriesExhaustedWithDetailsException exception) {
         exceptionsCounter.addValue((long) exception.getCauses().size());
         logExceptions(context, exception);
-        retrowException(exception);
+        rethrowException(exception);
       } finally {
         // Close the connection to clean up resources.
         super.finishBundle(context);
@@ -995,7 +995,7 @@ public class CloudBigtableIO {
         mutationsCounter.addValue((long) mutationCount);
       } catch (RetriesExhaustedWithDetailsException exception) {
         logExceptions(context, exception);
-        retrowException(exception);
+        rethrowException(exception);
       }
     }
   }

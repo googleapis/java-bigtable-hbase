@@ -74,7 +74,7 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
         exception.getCause(0));
   }
 
-  protected static void retrowException(RetriesExhaustedWithDetailsException exception)
+  protected static void rethrowException(RetriesExhaustedWithDetailsException exception)
       throws Exception {
     if (exception.getCauses().size() == 1) {
       throw (Exception) exception.getCause(0);
