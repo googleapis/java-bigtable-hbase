@@ -13,7 +13,7 @@ package com.google.type;
  * represent a year and month where the day is not significant, e.g. credit card
  * expiration date. The year may be 0 to represent a month and day independent
  * of year, e.g. anniversary date. Related types are [google.type.TimeOfDay][google.type.TimeOfDay]
- * and [google.protobuf.Timestamp][google.protobuf.Timestamp].
+ * and `google.protobuf.Timestamp`.
  * </pre>
  */
 public  final class Date extends
@@ -99,7 +99,7 @@ public  final class Date extends
    * <code>optional int32 year = 1;</code>
    *
    * <pre>
-   * Year of date. Must be from 1 to 9,999, or 0 if specifying a date without
+   * Year of date. Must be from 1 to 9999, or 0 if specifying a date without
    * a year.
    * </pre>
    */
@@ -113,7 +113,7 @@ public  final class Date extends
    * <code>optional int32 month = 2;</code>
    *
    * <pre>
-   * Month of year of date. Must be from 1 to 12.
+   * Month of year. Must be from 1 to 12.
    * </pre>
    */
   public int getMonth() {
@@ -127,7 +127,7 @@ public  final class Date extends
    *
    * <pre>
    * Day of month. Must be from 1 to 31 and valid for the year and month, or 0
-   * if specifying a year/month where the day is not sigificant.
+   * if specifying a year/month where the day is not significant.
    * </pre>
    */
   public int getDay() {
@@ -298,7 +298,7 @@ public  final class Date extends
    * represent a year and month where the day is not significant, e.g. credit card
    * expiration date. The year may be 0 to represent a month and day independent
    * of year, e.g. anniversary date. Related types are [google.type.TimeOfDay][google.type.TimeOfDay]
-   * and [google.protobuf.Timestamp][google.protobuf.Timestamp].
+   * and `google.protobuf.Timestamp`.
    * </pre>
    */
   public static final class Builder extends
@@ -419,7 +419,7 @@ public  final class Date extends
      * <code>optional int32 year = 1;</code>
      *
      * <pre>
-     * Year of date. Must be from 1 to 9,999, or 0 if specifying a date without
+     * Year of date. Must be from 1 to 9999, or 0 if specifying a date without
      * a year.
      * </pre>
      */
@@ -430,7 +430,7 @@ public  final class Date extends
      * <code>optional int32 year = 1;</code>
      *
      * <pre>
-     * Year of date. Must be from 1 to 9,999, or 0 if specifying a date without
+     * Year of date. Must be from 1 to 9999, or 0 if specifying a date without
      * a year.
      * </pre>
      */
@@ -444,7 +444,7 @@ public  final class Date extends
      * <code>optional int32 year = 1;</code>
      *
      * <pre>
-     * Year of date. Must be from 1 to 9,999, or 0 if specifying a date without
+     * Year of date. Must be from 1 to 9999, or 0 if specifying a date without
      * a year.
      * </pre>
      */
@@ -460,7 +460,7 @@ public  final class Date extends
      * <code>optional int32 month = 2;</code>
      *
      * <pre>
-     * Month of year of date. Must be from 1 to 12.
+     * Month of year. Must be from 1 to 12.
      * </pre>
      */
     public int getMonth() {
@@ -470,7 +470,7 @@ public  final class Date extends
      * <code>optional int32 month = 2;</code>
      *
      * <pre>
-     * Month of year of date. Must be from 1 to 12.
+     * Month of year. Must be from 1 to 12.
      * </pre>
      */
     public Builder setMonth(int value) {
@@ -483,7 +483,7 @@ public  final class Date extends
      * <code>optional int32 month = 2;</code>
      *
      * <pre>
-     * Month of year of date. Must be from 1 to 12.
+     * Month of year. Must be from 1 to 12.
      * </pre>
      */
     public Builder clearMonth() {
@@ -499,7 +499,7 @@ public  final class Date extends
      *
      * <pre>
      * Day of month. Must be from 1 to 31 and valid for the year and month, or 0
-     * if specifying a year/month where the day is not sigificant.
+     * if specifying a year/month where the day is not significant.
      * </pre>
      */
     public int getDay() {
@@ -510,7 +510,7 @@ public  final class Date extends
      *
      * <pre>
      * Day of month. Must be from 1 to 31 and valid for the year and month, or 0
-     * if specifying a year/month where the day is not sigificant.
+     * if specifying a year/month where the day is not significant.
      * </pre>
      */
     public Builder setDay(int value) {
@@ -524,7 +524,7 @@ public  final class Date extends
      *
      * <pre>
      * Day of month. Must be from 1 to 31 and valid for the year and month, or 0
-     * if specifying a year/month where the day is not sigificant.
+     * if specifying a year/month where the day is not significant.
      * </pre>
      */
     public Builder clearDay() {

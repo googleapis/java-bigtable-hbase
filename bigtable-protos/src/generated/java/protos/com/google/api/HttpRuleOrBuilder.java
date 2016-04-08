@@ -120,7 +120,7 @@ public interface HttpRuleOrBuilder extends
    * <pre>
    * The name of the request field whose value is mapped to the HTTP body, or
    * `*` for mapping all fields not captured by the path pattern to the HTTP
-   * body.
+   * body. NOTE: the referred field must not be a repeated field.
    * </pre>
    */
   java.lang.String getBody();
@@ -130,7 +130,7 @@ public interface HttpRuleOrBuilder extends
    * <pre>
    * The name of the request field whose value is mapped to the HTTP body, or
    * `*` for mapping all fields not captured by the path pattern to the HTTP
-   * body.
+   * body. NOTE: the referred field must not be a repeated field.
    * </pre>
    */
   com.google.protobuf.ByteString
@@ -140,8 +140,9 @@ public interface HttpRuleOrBuilder extends
    * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    *
    * <pre>
-   * Additional HTTP bindings for the selector. Nested bindings must not
-   * specify a selector and must not contain additional bindings.
+   * Additional HTTP bindings for the selector. Nested bindings must
+   * not contain an `additional_bindings` field themselves (that is,
+   * the nesting may only be one level deep).
    * </pre>
    */
   java.util.List<com.google.api.HttpRule> 
@@ -150,8 +151,9 @@ public interface HttpRuleOrBuilder extends
    * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    *
    * <pre>
-   * Additional HTTP bindings for the selector. Nested bindings must not
-   * specify a selector and must not contain additional bindings.
+   * Additional HTTP bindings for the selector. Nested bindings must
+   * not contain an `additional_bindings` field themselves (that is,
+   * the nesting may only be one level deep).
    * </pre>
    */
   com.google.api.HttpRule getAdditionalBindings(int index);
@@ -159,8 +161,9 @@ public interface HttpRuleOrBuilder extends
    * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    *
    * <pre>
-   * Additional HTTP bindings for the selector. Nested bindings must not
-   * specify a selector and must not contain additional bindings.
+   * Additional HTTP bindings for the selector. Nested bindings must
+   * not contain an `additional_bindings` field themselves (that is,
+   * the nesting may only be one level deep).
    * </pre>
    */
   int getAdditionalBindingsCount();
@@ -168,8 +171,9 @@ public interface HttpRuleOrBuilder extends
    * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    *
    * <pre>
-   * Additional HTTP bindings for the selector. Nested bindings must not
-   * specify a selector and must not contain additional bindings.
+   * Additional HTTP bindings for the selector. Nested bindings must
+   * not contain an `additional_bindings` field themselves (that is,
+   * the nesting may only be one level deep).
    * </pre>
    */
   java.util.List<? extends com.google.api.HttpRuleOrBuilder> 
@@ -178,8 +182,9 @@ public interface HttpRuleOrBuilder extends
    * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    *
    * <pre>
-   * Additional HTTP bindings for the selector. Nested bindings must not
-   * specify a selector and must not contain additional bindings.
+   * Additional HTTP bindings for the selector. Nested bindings must
+   * not contain an `additional_bindings` field themselves (that is,
+   * the nesting may only be one level deep).
    * </pre>
    */
   com.google.api.HttpRuleOrBuilder getAdditionalBindingsOrBuilder(

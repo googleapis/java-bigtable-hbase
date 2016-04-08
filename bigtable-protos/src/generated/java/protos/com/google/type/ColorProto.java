@@ -26,8 +26,8 @@ public final class ColorProto {
       "google/protobuf/wrappers.proto\"]\n\005Color\022" +
       "\013\n\003red\030\001 \001(\002\022\r\n\005green\030\002 \001(\002\022\014\n\004blue\030\003 \001(" +
       "\002\022*\n\005alpha\030\004 \001(\0132\033.google.protobuf.Float" +
-      "ValueB\037\n\017com.google.typeB\nColorProtoP\001b\006" +
-      "proto3"
+      "ValueB%\n\017com.google.typeB\nColorProtoP\001\242\002" +
+      "\003GTPb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

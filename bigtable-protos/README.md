@@ -3,7 +3,7 @@
 ## Purpose
 This project houses the raw .proto files that are used for accessing Google Cloud Bigtable.  This project generates a jar with java artifacts derived from the proto files in this project.  These proto files can also be used to generate other clients.
 
-This project reliese on artifacts from https://github.com/grpc/grpc-java. You can see more about gRPC at https://github.com/grpc/grpc-common.
+This project relies on artifacts from https://github.com/grpc/grpc-java. You can see more about gRPC at https://github.com/grpc/grpc-common.
 
 ## Bigtable proto files
 
@@ -34,15 +34,6 @@ Retrieved from https://github.com/google/googleapis:
 * src/main/proto/google/api/annotations.proto
 * src/main/proto/google/api/http.proto
 * src/main/proto/google/longrunning/operations.proto
-* src/main/proto/google/protobuf/any.proto
-* src/main/proto/google/protobuf/api.proto
-* src/main/proto/google/protobuf/duration.proto
-* src/main/proto/google/protobuf/empty.proto
-* src/main/proto/google/protobuf/field_mask.proto
-* src/main/proto/google/protobuf/source_context.proto
-* src/main/proto/google/protobuf/timestamp.proto
-* src/main/proto/google/protobuf/type.proto
-* src/main/proto/google/protobuf/wrappers.proto
 * src/main/proto/google/rpc/code.proto
 * src/main/proto/google/rpc/error_details.proto
 * src/main/proto/google/rpc/status.proto
@@ -51,20 +42,7 @@ Retrieved from https://github.com/google/googleapis:
 * src/main/proto/google/type/dayofweek.proto
 * src/main/proto/google/type/timeofday.proto
 
-Retrieved from https://github.com/google/protobuf.git
-* src/main/proto/google/protobuf/descriptor.proto
-
 # Generating the java gRPC implementations
-
-The gRPC Java generation process requires protoc 3
-to create the Java artifacts and gradle to drive the process.
-
-Protoc can be installed via the instructions at:
-https://github.com/grpc/grpc-java#build-protobuf.
-Installing it isn't always trivial;
-you may have to Google error messages to understand what to install next;
-there are plenty of answers on StackOverflow
-for protobuf installation requirements.  
 
 Run the following:
 
@@ -75,8 +53,15 @@ mvn -P generateServices package
 
 # Generating the Python protos
 
-Just like with the Java implementation, you'll need protoc version 3 to compile
-these protos (check this with `protoc --version`).
+The gRPC Python generation process requires protoc 3
+
+Protoc can be installed via the instructions at:
+https://github.com/grpc/grpc-java#build-protobuf.
+Installing it isn't always trivial;
+you may have to Google error messages to understand what to install next;
+there are plenty of answers on StackOverflow for protobuf installation requirements.  
+
+Check the installation with the following command: `protoc --version`.
 
 After that, run the following:
 
