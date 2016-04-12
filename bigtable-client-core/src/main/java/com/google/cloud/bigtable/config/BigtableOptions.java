@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.config;
 
 import java.io.Serializable;
-import java.util.concurrent.TimeUnit;
 
 import com.google.api.client.util.Objects;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
@@ -41,8 +40,6 @@ public class BigtableOptions implements Serializable {
   public static final int BIGTABLE_PORT_DEFAULT = 443;
 
   public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = getDefaultDataChannelCount();
-  public static final int BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT =
-      (int) TimeUnit.MILLISECONDS.convert(30, TimeUnit.MINUTES);
   public static final int BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT = 2;
 
   /**
@@ -91,7 +88,6 @@ public class BigtableOptions implements Serializable {
 
     // Performance tuning options.
     private RetryOptions retryOptions = new RetryOptions.Builder().build();
-    private int timeoutMs = BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT;
     private int dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
     private int asyncMutatorCount = BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 
@@ -114,7 +110,6 @@ public class BigtableOptions implements Serializable {
       this.port = original.port;
       this.credentialOptions = original.credentialOptions;
       this.retryOptions = original.retryOptions;
-      this.timeoutMs = original.timeoutMs;
       this.dataChannelCount = original.dataChannelCount;
       this.asyncMutatorCount = original.asyncMutatorCount;
       this.useBulkApi = original.useBulkApi;
@@ -178,11 +173,6 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
-    public Builder setTimeoutMs(int timeoutMs) {
-      this.timeoutMs = timeoutMs;
-      return this;
-    }
-
     public Builder setAsyncMutatorWorkerCount(int asyncMutatorCount) {
       Preconditions.checkArgument(
           asyncMutatorCount >= 0, "asyncMutatorCount must be greater or equal to 0.");
@@ -226,7 +216,6 @@ public class BigtableOptions implements Serializable {
           credentialOptions,
           userAgent,
           retryOptions,
-          timeoutMs,
           dataChannelCount,
           asyncMutatorCount,
           useBulkApi,
@@ -246,7 +235,6 @@ public class BigtableOptions implements Serializable {
   private final CredentialOptions credentialOptions;
   private final String userAgent;
   private final RetryOptions retryOptions;
-  private final int timeoutMs;
   private final int dataChannelCount;
   private final BigtableClusterName clusterName;
   private final int asyncMutatorCount;
@@ -268,7 +256,6 @@ public class BigtableOptions implements Serializable {
       credentialOptions = null;
       userAgent = null;
       retryOptions = null;
-      timeoutMs = 0;
       dataChannelCount = 1;
       clusterName = null;
       asyncMutatorCount = 1;
@@ -289,7 +276,6 @@ public class BigtableOptions implements Serializable {
       CredentialOptions credentialOptions,
       String userAgent,
       RetryOptions retryOptions,
-      int timeoutMs,
       int channelCount,
       int asyncMutatorCount,
       boolean useBulkApi,
@@ -297,8 +283,6 @@ public class BigtableOptions implements Serializable {
       long bulkMaxRequestSize,
       boolean usePlaintextNegotiation) {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
-    Preconditions.checkArgument(timeoutMs >= -1,
-      "ChannelTimeoutMs has to be positive, or -1 for none.");
 
     this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
     this.clusterAdminHost = Preconditions.checkNotNull(clusterAdminHost);
@@ -310,7 +294,6 @@ public class BigtableOptions implements Serializable {
     this.credentialOptions = credentialOptions;
     this.userAgent = userAgent;
     this.retryOptions = retryOptions;
-    this.timeoutMs = timeoutMs;
     this.dataChannelCount = channelCount;
     this.asyncMutatorCount = asyncMutatorCount;
     this.useBulkApi = useBulkApi;
@@ -388,13 +371,6 @@ public class BigtableOptions implements Serializable {
   }
 
   /**
-   * The timeout for a channel.
-   */
-  public long getTimeoutMs() {
-    return timeoutMs;
-  }
-
-  /**
    * The number of data channels to create.
    */
   public int getChannelCount() {
@@ -435,7 +411,6 @@ public class BigtableOptions implements Serializable {
     }
     BigtableOptions other = (BigtableOptions) obj;
     return (port == other.port)
-        && (timeoutMs == other.timeoutMs)
         && (dataChannelCount == other.dataChannelCount)
         && (asyncMutatorCount == other.asyncMutatorCount)
         && (useBulkApi == other.useBulkApi)
@@ -466,7 +441,6 @@ public class BigtableOptions implements Serializable {
         .add("userAgent", userAgent)
         .add("credentialType", credentialOptions.getCredentialType())
         .add("port", port)
-        .add("timeoutMs", timeoutMs)
         .add("dataChannelCount", dataChannelCount)
         .add("asyncMutatorCount", asyncMutatorCount)
         .add("useBulkApi", useBulkApi)
