@@ -113,34 +113,6 @@ public class TestBigtableOptionsFactory {
   }
 
   @Test
-  public void testMinGoodRefreshTime() throws IOException{
-    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
-    configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 60000);
-    BigtableOptionsFactory.fromConfiguration(configuration);
-  }
-
-  @Test
-  public void testBadRefreshTime() throws IOException{
-    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
-    configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 59999);
-    expectedException.expect(IllegalArgumentException.class);
-    BigtableOptionsFactory.fromConfiguration(configuration);
-  }
-
-  @Test
-  public void testZeroRefreshTime() throws IOException{
-    configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABE_USE_SERVICE_ACCOUNTS_KEY, false);
-    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
-    configuration.setLong(BigtableOptionsFactory.BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, 0);
-    BigtableOptionsFactory.fromConfiguration(configuration);
-  }
-
-  @Test
   public void testDefaultRetryOptions() throws IOException {
     RetryOptions retryOptions =
         BigtableOptionsFactory.fromConfiguration(configuration).getRetryOptions();

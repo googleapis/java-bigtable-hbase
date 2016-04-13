@@ -142,12 +142,6 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABLE_DATA_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
 
-  /**
-   * The maximum length of time to keep a Bigtable grpc channel open.
-   */
-  public static final String BIGTABLE_CHANNEL_TIMEOUT_MS_KEY =
-      "google.bigtable.grpc.channel.timeout.ms";
-
   public static final String BIGTABLE_USE_BULK_API =
       "google.bigtable.use.bulk.api";
 
@@ -234,15 +228,6 @@ public class BigtableOptionsFactory {
     int channelCount = configuration.getInt(
         BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
     builder.setDataChannelCount(channelCount);
-
-    int channelTimeout = configuration.getInt(
-        BIGTABLE_CHANNEL_TIMEOUT_MS_KEY, BigtableOptions.BIGTABLE_CHANNEL_TIMEOUT_MS_DEFAULT);
-
-    // Connection refresh takes a couple of seconds. 1 minute is the bare minimum that this should
-    // be allowed to be set at.
-    Preconditions.checkArgument(channelTimeout == 0 || channelTimeout >= 60000,
-      BIGTABLE_CHANNEL_TIMEOUT_MS_KEY + " has to be 0 (no timeout) or 1 minute+ (60000)");
-    builder.setTimeoutMs(channelTimeout);
 
     builder.setUserAgent(BigtableConstants.USER_AGENT);
   }
