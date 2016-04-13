@@ -29,8 +29,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -53,16 +51,15 @@ import com.google.bigtable.v1.MutateRowsRequest;
 import com.google.bigtable.v1.MutateRowsResponse;
 import com.google.bigtable.v1.MutateRowsResponse.Builder;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.Empty;
 import com.google.rpc.Status;
 
 /**
@@ -108,8 +105,8 @@ public class TestBigtableBufferedMutator {
 
   private BigtableBufferedMutator createMutator(Configuration configuration) throws IOException {
     RpcThrottler rpcThrottler =
-        new RpcThrottler(new ResourceLimiter(AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT,
-            AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT)) {
+        new RpcThrottler(new ResourceLimiter(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT,
+          BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT)) {
       @Override
       public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, long id) {
         FutureCallback<T> callback = super.addCallback(future, id);

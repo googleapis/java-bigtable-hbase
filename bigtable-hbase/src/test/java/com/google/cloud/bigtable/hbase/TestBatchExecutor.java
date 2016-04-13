@@ -32,6 +32,7 @@ import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
@@ -252,8 +253,9 @@ public class TestBatchExecutor {
       }
     });
 
-    BatchExecutor underTest =
-        createExecutor(new BigtableOptions.Builder().setUseBulkApi(true).build());
+    BulkOptions bulkOptions = new BulkOptions.Builder().setUseBulkApi(true).build();
+    BigtableOptions options = new BigtableOptions.Builder().setBulkOptions(bulkOptions).build();
+    BatchExecutor underTest = createExecutor(options);
     Result[] results = underTest.batch(gets);
     verify(mockClient, times(1)).readRows(any(ReadRowsRequest.class));
     Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));

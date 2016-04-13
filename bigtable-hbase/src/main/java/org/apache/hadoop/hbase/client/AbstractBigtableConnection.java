@@ -50,15 +50,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractBigtableConnection implements Connection, Closeable {
-  public static final String MAX_INFLIGHT_RPCS_KEY =
-      "google.bigtable.buffered.mutator.max.inflight.rpcs";
-
-  /**
-   * The maximum amount of memory to be used for asynchronous buffered mutator RPCs.
-   */
-  public static final String BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY =
-      "google.bigtable.buffered.mutator.max.memory";
-
   private static final AtomicLong SEQUENCE_GENERATOR = new AtomicLong();
   private static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
       Collections.synchronizedMap(new HashMap<Long, BigtableBufferedMutator>());
@@ -141,11 +132,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private synchronized static void initializeResourceLimiter(
       Configuration conf, BigtableOptions options) {
     if (resourceLimiter == null) {
-      int defaultRpcCount = AsyncExecutor.MAX_INFLIGHT_RPCS_DEFAULT * options.getChannelCount();
-      int maxInflightRpcs = conf.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
-      long maxMemory = conf.getLong(
-          BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
-          AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT);
+      int maxInflightRpcs = options.getBulkOptions().getMaxInflightRpcs();
+      long maxMemory = options.getBulkOptions().getMaxMemory();
       AbstractBigtableConnection.resourceLimiter = new ResourceLimiter(maxMemory, maxInflightRpcs);
     }
   }

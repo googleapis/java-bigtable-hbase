@@ -20,9 +20,10 @@ import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_CLUSTER_
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -151,6 +152,16 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_BULK_MAX_ROW_KEY_COUNT =
       "google.bigtable.bulk.max.row.key.count";
 
+  public static final String MAX_INFLIGHT_RPCS_KEY =
+      "google.bigtable.buffered.mutator.max.inflight.rpcs";
+
+  /**
+   * The maximum amount of memory to be used for asynchronous buffered mutator RPCs.
+   */
+  public static final String BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY =
+      "google.bigtable.buffered.mutator.max.memory";
+
+
   public static final String BIGTABLE_USE_PLAINTEXT_NEGOTIATION =
       "google.bigtable.use.plaintext.negotiation";
 
@@ -182,22 +193,36 @@ public class BigtableOptionsFactory {
     int port = configuration.getInt(BIGTABLE_PORT_KEY, BIGTABLE_PORT_DEFAULT);
     bigtableOptionsBuilder.setPort(port);
     setChannelOptions(bigtableOptionsBuilder, configuration);
-    
+
+    BulkOptions.Builder bulkOptionsBuilder = new BulkOptions.Builder();
+
     int asyncMutatorCount = configuration.getInt(
         BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
-    bigtableOptionsBuilder.setAsyncMutatorWorkerCount(asyncMutatorCount);
+    bulkOptionsBuilder.setAsyncMutatorWorkerCount(asyncMutatorCount);
 
-    bigtableOptionsBuilder.setUseBulkApi(configuration.getBoolean(BIGTABLE_USE_BULK_API, true));
-    bigtableOptionsBuilder.setBulkMaxRowKeyCount(
+    bulkOptionsBuilder.setUseBulkApi(configuration.getBoolean(BIGTABLE_USE_BULK_API, true));
+    bulkOptionsBuilder.setBulkMaxRowKeyCount(
         configuration.getInt(
             BIGTABLE_BULK_MAX_ROW_KEY_COUNT,
-            BigtableOptions.BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT));
-    bigtableOptionsBuilder.setBulkMaxRequestSize(
+            BulkOptions.BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT));
+    bulkOptionsBuilder.setBulkMaxRequestSize(
         configuration.getLong(
             BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES,
-            BigtableOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT));
+            BulkOptions.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT));
+
+    int defaultRpcCount = BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT
+        * bigtableOptionsBuilder.getDataChannelCount();
+    int maxInflightRpcs = configuration.getInt(MAX_INFLIGHT_RPCS_KEY, defaultRpcCount);
+    bulkOptionsBuilder.setMaxInflightRpcs(maxInflightRpcs);
+
+    long maxMemory = configuration.getLong(
+        BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY,
+        BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT);
+    bulkOptionsBuilder.setMaxMemory(maxMemory);
+
+    bigtableOptionsBuilder.setBulkOptions(bulkOptionsBuilder.build());
     bigtableOptionsBuilder.setUsePlaintextNegotiation(
-        configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false));
+      configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false));
 
     return bigtableOptionsBuilder.build();
   }

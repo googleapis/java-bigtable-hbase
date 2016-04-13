@@ -149,13 +149,13 @@ public class BatchExecutor {
               asyncExecutor,
               options.getRetryOptions(),
               retryExecutorService,
-              options.getBulkMaxRowKeyCount(),
-              options.getBulkMaxRequestSize());
+              options.getBulkOptions().getBulkMaxRowKeyCount(),
+              options.getBulkOptions().getBulkMaxRequestSize());
     }
 
     public ListenableFuture<? extends GeneratedMessage> mutateRowAsync(MutateRowRequest request)
         throws InterruptedException {
-      if (!options.useBulkApi()) {
+      if (!options.getBulkOptions().useBulkApi()) {
         return asyncExecutor.mutateRowAsync(request);
       } else {
         return bulkMutation.add(request);
@@ -164,7 +164,7 @@ public class BatchExecutor {
 
     public ListenableFuture<? extends GeneratedMessage> readRowsAsync(ReadRowsRequest request)
         throws InterruptedException {
-      if (!options.useBulkApi()) {
+      if (!options.getBulkOptions().useBulkApi()) {
         return Futures.transform(asyncExecutor.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
       } else {
         return Futures.transform(bulkRead.add(request), ROWS_TO_ROW_CONVERTER);
