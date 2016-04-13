@@ -40,21 +40,6 @@ public class BigtableOptions implements Serializable {
   public static final int BIGTABLE_PORT_DEFAULT = 443;
 
   public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = getDefaultDataChannelCount();
-  public static final int BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT = 2;
-
-  /**
-   * This describes the maximum size a bulk mutation RPC should be before sending it to the server
-   * and starting the next bulk call. Defaults to 1 MB.
-   */
-  public static final long BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT = 1 << 20;
-
-  /**
-   * This describes the maximum number of individual mutation requests to bundle in a single bulk
-   * mutation RPC before sending it to the server and starting the next bulk call.
-   * The server has a maximum of 100,000.  Since RPCs can be retried, we should limit the number of
-   * keys to 100 by default so we don't keep retrying larger batches.
-   */
-  public static final int BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT = 100;
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
 
@@ -89,11 +74,8 @@ public class BigtableOptions implements Serializable {
     // Performance tuning options.
     private RetryOptions retryOptions = new RetryOptions.Builder().build();
     private int dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
-    private int asyncMutatorCount = BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
 
-    private boolean useBulkApi = false;
-    private int bulkMaxRowKeyCount = BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT;
-    private long bulkMaxRequestSize = BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES_DEFAULT;
+    private BulkOptions bulkOptions;
     private boolean usePlaintextNegotiation = false;
 
     public Builder() {
@@ -111,10 +93,7 @@ public class BigtableOptions implements Serializable {
       this.credentialOptions = original.credentialOptions;
       this.retryOptions = original.retryOptions;
       this.dataChannelCount = original.dataChannelCount;
-      this.asyncMutatorCount = original.asyncMutatorCount;
-      this.useBulkApi = original.useBulkApi;
-      this.bulkMaxRowKeyCount = original.bulkMaxRowKeyCount;
-      this.bulkMaxRequestSize = original.bulkMaxRequestSize;
+      this.bulkOptions = original.bulkOptions;
       this.usePlaintextNegotiation = original.usePlaintextNegotiation;
     }
 
@@ -168,34 +147,17 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
+    public int getDataChannelCount() {
+      return dataChannelCount;
+    }
+
     public Builder setRetryOptions(RetryOptions retryOptions) {
       this.retryOptions = retryOptions;
       return this;
     }
 
-    public Builder setAsyncMutatorWorkerCount(int asyncMutatorCount) {
-      Preconditions.checkArgument(
-          asyncMutatorCount >= 0, "asyncMutatorCount must be greater or equal to 0.");
-      this.asyncMutatorCount = asyncMutatorCount;
-      return this;
-    }
-
-    public Builder setUseBulkApi(boolean useBulkApi) {
-      this.useBulkApi = useBulkApi;
-      return this;
-    }
-
-    public Builder setBulkMaxRowKeyCount(int bulkMaxRowKeyCount) {
-      Preconditions.checkArgument(
-        bulkMaxRowKeyCount >= 0, "bulkMaxRowKeyCount must be greater or equal to 0.");
-      this.bulkMaxRowKeyCount = bulkMaxRowKeyCount;
-      return this;
-    }
-
-    public Builder setBulkMaxRequestSize(long bulkMaxRequestSize) {
-      Preconditions.checkArgument(
-        bulkMaxRequestSize >= 0, "bulkMaxRequestSize must be greater or equal to 0.");
-      this.bulkMaxRequestSize = bulkMaxRequestSize;
+    public Builder setBulkOptions(BulkOptions bulkOptions) {
+      this.bulkOptions = bulkOptions;
       return this;
     }
 
@@ -205,6 +167,15 @@ public class BigtableOptions implements Serializable {
     }
 
     public BigtableOptions build() {
+      if (bulkOptions == null) {
+        int maxInflightRpcs =
+            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * dataChannelCount;
+        bulkOptions = new BulkOptions.Builder().setMaxInflightRpcs(maxInflightRpcs).build();
+      } else if (bulkOptions.getMaxInflightRpcs() <= 0) {
+        int maxInflightRpcs =
+            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * dataChannelCount;
+        bulkOptions = bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
+      }
       return new BigtableOptions(
           clusterAdminHost,
           tableAdminHost,
@@ -217,10 +188,7 @@ public class BigtableOptions implements Serializable {
           userAgent,
           retryOptions,
           dataChannelCount,
-          asyncMutatorCount,
-          useBulkApi,
-          bulkMaxRowKeyCount,
-          bulkMaxRequestSize,
+          bulkOptions,
           usePlaintextNegotiation);
     }
   }
@@ -237,10 +205,7 @@ public class BigtableOptions implements Serializable {
   private final RetryOptions retryOptions;
   private final int dataChannelCount;
   private final BigtableClusterName clusterName;
-  private final int asyncMutatorCount;
-  private final boolean useBulkApi;
-  private final int bulkMaxRowKeyCount;
-  private final long bulkMaxRequestSize;
+  private BulkOptions bulkOptions;
   private final boolean usePlaintextNegotiation;
 
 
@@ -258,10 +223,6 @@ public class BigtableOptions implements Serializable {
       retryOptions = null;
       dataChannelCount = 1;
       clusterName = null;
-      asyncMutatorCount = 1;
-      useBulkApi = false;
-      bulkMaxRowKeyCount = -1;
-      bulkMaxRequestSize = -1;
       usePlaintextNegotiation = false;
   }
 
@@ -277,10 +238,7 @@ public class BigtableOptions implements Serializable {
       String userAgent,
       RetryOptions retryOptions,
       int channelCount,
-      int asyncMutatorCount,
-      boolean useBulkApi,
-      int bulkMaxKeyCount,
-      long bulkMaxRequestSize,
+      BulkOptions bulkOptions,
       boolean usePlaintextNegotiation) {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
 
@@ -295,10 +253,7 @@ public class BigtableOptions implements Serializable {
     this.userAgent = userAgent;
     this.retryOptions = retryOptions;
     this.dataChannelCount = channelCount;
-    this.asyncMutatorCount = asyncMutatorCount;
-    this.useBulkApi = useBulkApi;
-    this.bulkMaxRowKeyCount = bulkMaxKeyCount;
-    this.bulkMaxRequestSize = bulkMaxRequestSize;
+    this.bulkOptions = bulkOptions;
     this.usePlaintextNegotiation = usePlaintextNegotiation;
 
     if (!Strings.isNullOrEmpty(projectId)
@@ -381,20 +336,8 @@ public class BigtableOptions implements Serializable {
     return clusterName;
   }
 
-  public int getAsyncMutatorCount() {
-    return asyncMutatorCount;
-  }
-
-  public boolean useBulkApi() {
-    return useBulkApi;
-  }
-
-  public int getBulkMaxRowKeyCount() {
-    return bulkMaxRowKeyCount;
-  }
-
-  public long getBulkMaxRequestSize() {
-    return bulkMaxRequestSize;
+  public BulkOptions getBulkOptions() {
+    return bulkOptions;
   }
 
   public boolean usePlaintextNegotiation() {
@@ -412,10 +355,6 @@ public class BigtableOptions implements Serializable {
     BigtableOptions other = (BigtableOptions) obj;
     return (port == other.port)
         && (dataChannelCount == other.dataChannelCount)
-        && (asyncMutatorCount == other.asyncMutatorCount)
-        && (useBulkApi == other.useBulkApi)
-        && (bulkMaxRowKeyCount == other.bulkMaxRowKeyCount)
-        && (bulkMaxRequestSize == other.bulkMaxRequestSize)
         && (usePlaintextNegotiation == other.usePlaintextNegotiation)
         && Objects.equal(clusterAdminHost, other.clusterAdminHost)
         && Objects.equal(tableAdminHost, other.tableAdminHost)
@@ -425,7 +364,8 @@ public class BigtableOptions implements Serializable {
         && Objects.equal(clusterId, other.clusterId)
         && Objects.equal(userAgent, other.userAgent)
         && Objects.equal(credentialOptions, other.credentialOptions)
-        && Objects.equal(retryOptions, other.retryOptions);
+        && Objects.equal(retryOptions, other.retryOptions)
+        && Objects.equal(bulkOptions, other.bulkOptions);
   }
 
   @Override
@@ -442,10 +382,7 @@ public class BigtableOptions implements Serializable {
         .add("credentialType", credentialOptions.getCredentialType())
         .add("port", port)
         .add("dataChannelCount", dataChannelCount)
-        .add("asyncMutatorCount", asyncMutatorCount)
-        .add("useBulkApi", useBulkApi)
-        .add("bulkMaxKeyCount", bulkMaxRowKeyCount)
-        .add("bulkMaxRequestSize", bulkMaxRequestSize)
+        .add("bulkOptions", bulkOptions)
         .add("usePlaintextNegotiation", usePlaintextNegotiation)
         .toString();
   }

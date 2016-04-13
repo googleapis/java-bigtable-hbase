@@ -40,14 +40,6 @@ import com.google.protobuf.GeneratedMessage;
  */
 public class AsyncExecutor {
 
-  // Default rpc count per channel.
-  public static final int MAX_INFLIGHT_RPCS_DEFAULT = 50;
-
-  // This is the maximum accumulated size of uncompleted requests that we allow before throttling.
-  // Default to 10% of available memory with a max of 1GB.
-  public static final long ASYNC_MUTATOR_MAX_MEMORY_DEFAULT =
-      (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
-
   protected static final Logger LOG = new Logger(AsyncExecutor.class);
 
   protected interface AsyncCall<RequestT, ResponseT> {

@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
@@ -115,7 +116,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   private final AsyncExecutor asyncExecutor;
   private final ExecutorService executorService;
-  private final BigtableOptions options;
+  private final BulkOptions bulkOptions;
 
   private final LinkedBlockingQueue<Runnable> asyncOperationsQueue = new LinkedBlockingQueue<>();
 
@@ -158,6 +159,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   };
 
+
   /**
    * @param client Performs the async operations
    * @param adapter Converts HBase objects to Bigtable protos
@@ -183,9 +185,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.exceptionListener = listener;
     this.host = options.getDataHost().toString();
     this.asyncExecutor = new AsyncExecutor(client, rpcThrottler);
-    this.options = options;
+    this.bulkOptions = options.getBulkOptions();
     this.executorService = asyncRpcExecutorService;
-    if (options.useBulkApi()) {
+    if (bulkOptions.useBulkApi()) {
       String tableName = this.adapter.getBigtableTableName().toString();
       this.bulkMutation =
           new BulkMutation(
@@ -193,15 +195,15 @@ public class BigtableBufferedMutator implements BufferedMutator {
               asyncExecutor,
               options.getRetryOptions(),
               retryExecutorService,
-              options.getBulkMaxRowKeyCount(),
-              options.getBulkMaxRequestSize());
+              bulkOptions.getBulkMaxRowKeyCount(),
+              bulkOptions.getBulkMaxRequestSize());
     }
   }
 
   private void initializeAsyncMutators() {
-    if (executorService != null && activeMutationWorkers.get() < options.getAsyncMutatorCount()) {
+    if (executorService != null && activeMutationWorkers.get() < bulkOptions.getAsyncMutatorCount()) {
       synchronized (activeMutationWorkers) {
-        for (int i = activeMutationWorkers.get(); i < options.getAsyncMutatorCount(); i++) {
+        for (int i = activeMutationWorkers.get(); i < bulkOptions.getAsyncMutatorCount(); i++) {
           executorService.submit(mutationWorker);
         }
       }
@@ -296,14 +298,14 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private void offer(Mutation mutation) throws IOException {
     try {
       Runnable operation = null;
-      if (options.useBulkApi() && (mutation instanceof Put || mutation instanceof Delete)) {
+      if (bulkOptions.useBulkApi() && (mutation instanceof Put || mutation instanceof Delete)) {
         // TODO: Do this logic asynchronously.
         addExceptionCallback(bulkMutation.add(adapt(mutation)), mutation);
       } else {
         long operationId =
             asyncExecutor.getRpcThrottler().registerOperationWithHeapSize(mutation.heapSize());
         operation = new MutationOperation(mutation, operationId);
-        if (executorService != null && options.getAsyncMutatorCount() > 0) {
+        if (executorService != null && bulkOptions.getAsyncMutatorCount() > 0) {
           initializeAsyncMutators();
           asyncOperationsQueue.add(operation);
         } else {

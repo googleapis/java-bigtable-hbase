@@ -51,6 +51,7 @@ import com.google.api.client.util.Preconditions;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
@@ -830,9 +831,8 @@ public class CloudBigtableIO {
         throws IOException {
       if (mutator == null) {
         ExceptionListener listener = createExceptionListener(context);
-        BufferedMutatorParams params =
-            new BufferedMutatorParams(TableName.valueOf(tableName)).writeBufferSize(
-              AsyncExecutor.ASYNC_MUTATOR_MAX_MEMORY_DEFAULT).listener(listener);
+        BufferedMutatorParams params = new BufferedMutatorParams(TableName.valueOf(tableName))
+            .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT).listener(listener);
         mutator = getConnection().getBufferedMutator(params);
       }
       return mutator;
