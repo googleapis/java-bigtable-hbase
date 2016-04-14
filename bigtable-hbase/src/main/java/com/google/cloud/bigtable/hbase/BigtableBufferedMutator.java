@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,10 +43,10 @@ import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
-import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -161,42 +160,31 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
 
   /**
-   * @param client Performs the async operations
    * @param adapter Converts HBase objects to Bigtable protos
    * @param configuration For Additional configuration. TODO: move this to options
-   * @param options BigtableOptions
    * @param listener Handles exceptions. By default, it just throws the exception.
-   * @param rpcThrottler Tracks how much memory is used by the requests and how many outstanding
-   *          operations there are.
+   * @param session a {@link BigtableSession} to get {@link BigtableOptions}, {@link AsyncExecutor}
+   * and {@link BulkMutation} objects from
    * @param asyncRpcExecutorService Optional performance improvement for adapting hbase objects and
-   *          starting the async operations on the BigtableDataClient.
+   * starting the async operations on the BigtableDataClient.
    */
   public BigtableBufferedMutator(
-      BigtableDataClient client,
       HBaseRequestAdapter adapter,
       Configuration configuration,
-      BigtableOptions options,
+      BigtableSession session,
       BufferedMutator.ExceptionListener listener,
-      RpcThrottler rpcThrottler,
-      ExecutorService asyncRpcExecutorService,
-      ScheduledExecutorService retryExecutorService) {
+      ExecutorService asyncRpcExecutorService) {
     this.adapter = adapter;
     this.configuration = configuration;
     this.exceptionListener = listener;
+    BigtableOptions options = session.getOptions();
     this.host = options.getDataHost().toString();
-    this.asyncExecutor = new AsyncExecutor(client, rpcThrottler);
+    this.asyncExecutor = session.createAsyncExecutor();
     this.bulkOptions = options.getBulkOptions();
     this.executorService = asyncRpcExecutorService;
     if (bulkOptions.useBulkApi()) {
-      String tableName = this.adapter.getBigtableTableName().toString();
-      this.bulkMutation =
-          new BulkMutation(
-              tableName,
-              asyncExecutor,
-              options.getRetryOptions(),
-              retryExecutorService,
-              bulkOptions.getBulkMaxRowKeyCount(),
-              bulkOptions.getBulkMaxRequestSize());
+      BigtableTableName tableName = this.adapter.getBigtableTableName();
+      this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
     }
   }
 

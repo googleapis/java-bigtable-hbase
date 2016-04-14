@@ -34,6 +34,7 @@ import com.google.bigtable.v1.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.protobuf.ByteString;
@@ -81,10 +82,13 @@ public class TestBigtableTable {
   private AbstractBigtableConnection mockConnection;
 
   @Mock
+  private BigtableSession mockSession;
+
+  @Mock
   private BigtableDataClient mockClient;
 
   @Mock
-  private BatchExecutor batchExecutor;
+  private BatchExecutor mockBatchExecutor;
 
   @Mock
   private ResultScanner<Row> mockResultScanner;
@@ -113,9 +117,11 @@ public class TestBigtableTable {
     HBaseRequestAdapter hbaseAdapter =
         new HBaseRequestAdapter(options.getClusterName(), tableName, config);
     Mockito.when(mockConnection.getConfiguration()).thenReturn(config);
+    Mockito.when(mockConnection.getSession()).thenReturn(mockSession);
+    Mockito.when(mockSession.getOptions()).thenReturn(options);
+    Mockito.when(mockSession.getDataClient()).thenReturn(mockClient);
     table =
-        new BigtableTable(mockConnection, tableName, options, mockClient, hbaseAdapter,
-            batchExecutor);
+        new BigtableTable(mockConnection, tableName, hbaseAdapter, mockBatchExecutor);
   }
 
   @Test

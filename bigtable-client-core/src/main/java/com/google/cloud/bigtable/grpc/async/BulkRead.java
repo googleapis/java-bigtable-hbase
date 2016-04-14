@@ -27,6 +27,7 @@ import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowSet;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -62,9 +63,9 @@ public class BulkRead {
    */
   private Multimap<ByteString, SettableFuture<List<Row>>> futures;
 
-  public BulkRead(BigtableDataClient client, String tableName) {
+  public BulkRead(BigtableDataClient client, BigtableTableName tableName) {
     this.client = client;
-    this.tableName = tableName;
+    this.tableName = tableName.toString();
   }
 
   /**

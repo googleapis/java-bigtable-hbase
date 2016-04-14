@@ -23,6 +23,7 @@ import com.google.bigtable.v1.MutateRowsRequest.Entry;
 import com.google.bigtable.v1.MutateRowsResponse;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -353,13 +354,13 @@ public class BulkMutation {
   private final long maxRequestSize;
 
   public BulkMutation(
-      String tableName,
+      BigtableTableName tableName,
       AsyncExecutor asyncExecutor,
       RetryOptions retryOptions,
       ScheduledExecutorService retryExecutorService,
       int maxRowKeyCount,
       long maxRequestSize) {
-    this.tableName = tableName;
+    this.tableName = tableName.toString();
     this.asyncExecutor = asyncExecutor;
     this.retryOptions = retryOptions;
     this.retryExecutorService = retryExecutorService;

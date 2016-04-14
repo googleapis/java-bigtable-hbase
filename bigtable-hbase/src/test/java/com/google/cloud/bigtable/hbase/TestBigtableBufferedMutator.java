@@ -1,4 +1,5 @@
 /*
+
  * Copyright 2015 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,7 +54,11 @@ import com.google.bigtable.v1.MutateRowsResponse.Builder;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -75,6 +80,9 @@ public class TestBigtableBufferedMutator {
       Status.newBuilder().setCode(io.grpc.Status.OK.getCode().value()).build();
 
   @Mock
+  private BigtableSession mockSession;
+
+  @Mock
   private BigtableDataClient mockClient;
 
   @SuppressWarnings("rawtypes")
@@ -93,6 +101,40 @@ public class TestBigtableBufferedMutator {
   public void setUp() {
     futureCallbacks = new ArrayList<>();
     MockitoAnnotations.initMocks(this);
+    when(mockSession.createAsyncExecutor())
+        .thenAnswer(
+            new Answer<AsyncExecutor>() {
+              @Override
+              public AsyncExecutor answer(InvocationOnMock invocation) throws Throwable {
+                RpcThrottler rpcThrottler =
+                    new RpcThrottler(new ResourceLimiter(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT,
+                      BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT)) {
+                  @Override
+                  public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, long id) {
+                    FutureCallback<T> callback = super.addCallback(future, id);
+                    futureCallbacks.add(callback);
+                    return callback;
+                  }
+                };
+
+                return new AsyncExecutor(mockClient, rpcThrottler);
+              }
+            });
+    when(mockSession.createBulkMutation(any(BigtableTableName.class), any(AsyncExecutor.class)))
+        .thenAnswer(new Answer<BulkMutation>() {
+
+          @Override
+          public BulkMutation answer(InvocationOnMock invocation) throws Throwable {
+            final BigtableOptions options = mockSession.getOptions();
+            return new BulkMutation(
+                invocation.getArgumentAt(0, BigtableTableName.class),
+                invocation.getArgumentAt(1, AsyncExecutor.class),
+                options.getRetryOptions(),
+                BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
+                options.getBulkOptions().getBulkMaxRowKeyCount(),
+                options.getBulkOptions().getBulkMaxRequestSize());
+          }
+        });
   }
 
   @After
@@ -104,17 +146,6 @@ public class TestBigtableBufferedMutator {
   }
 
   private BigtableBufferedMutator createMutator(Configuration configuration) throws IOException {
-    RpcThrottler rpcThrottler =
-        new RpcThrottler(new ResourceLimiter(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT,
-          BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT)) {
-      @Override
-      public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, long id) {
-        FutureCallback<T> callback = super.addCallback(future, id);
-        futureCallbacks.add(callback);
-        return callback;
-      }
-    };
-
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project");
     configuration.set(BigtableOptionsFactory.ZONE_KEY, "zone");
     configuration.set(BigtableOptionsFactory.CLUSTER_KEY, "cluster");
@@ -127,15 +158,9 @@ public class TestBigtableBufferedMutator {
         options.getClusterName(), TableName.valueOf("TABLE"), configuration);
 
     executorService = Executors.newCachedThreadPool();
+    when(mockSession.getOptions()).thenReturn(options);
     return new BigtableBufferedMutator(
-        mockClient,
-        adapter,
-        configuration,
-        options,
-        listener,
-        rpcThrottler,
-        executorService,
-        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor());
+        adapter, configuration, mockSession, listener, executorService);
   }
 
   @Test
