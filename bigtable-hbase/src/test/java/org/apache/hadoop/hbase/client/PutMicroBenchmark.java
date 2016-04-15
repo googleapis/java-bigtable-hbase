@@ -10,7 +10,6 @@ package org.apache.hadoop.hbase.client;
 
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
@@ -105,9 +104,9 @@ public class PutMicroBenchmark {
 
   protected static MutateRowRequest createRequest(String projectId, String zoneId, String clusterId,
       String tableId) {
-    HBaseRequestAdapter hbaseAdapter =
-        new HBaseRequestAdapter(new BigtableClusterName(projectId, zoneId, clusterId),
-            TableName.valueOf(tableId), new Configuration(false));
+    HBaseRequestAdapter hbaseAdapter = new HBaseRequestAdapter(
+        new BigtableOptions.Builder().build(), TableName.valueOf(tableId),
+        new Configuration(false));
     DataGenerationHelper dataHelper = new DataGenerationHelper();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = dataHelper.randomData("testQualifier-", NUM_CELLS);

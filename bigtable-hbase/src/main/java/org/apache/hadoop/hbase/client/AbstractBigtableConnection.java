@@ -197,7 +197,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   }
 
   private HBaseRequestAdapter createAdapter(TableName tableName) {
-    return new HBaseRequestAdapter(options.getClusterName(), tableName, conf);
+    return new HBaseRequestAdapter(options, tableName, conf);
   }
 
   @Override

@@ -33,9 +33,16 @@ import java.util.Map.Entry;
  */
 public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builder> {
   private final int maxKeyValueSize;
+  private final boolean setClientTimestamp;
 
   public PutAdapter(int maxKeyValueSize) {
     this.maxKeyValueSize = maxKeyValueSize;
+    this.setClientTimestamp = true;
+  }
+
+  public PutAdapter(int maxKeyValueSize, boolean setClientTimestamp) {
+    this.maxKeyValueSize = maxKeyValueSize;
+    this.setClientTimestamp = setClientTimestamp;
   }
 
   @Override
@@ -49,7 +56,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
 
     // Bigtable uses a 1ms granularity. Use this timestamp if the Put does not have one specified to
     // make mutations idempotent.
-    long currentTimestampMicros = System.currentTimeMillis() * 1000;
+    long currentTimestampMicros = setClientTimestamp ? System.currentTimeMillis() * 1000 : -1;
 
     for (Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
       ByteString familyString = ByteString.copyFrom(entry.getKey());

@@ -98,6 +98,16 @@ public class BigtableOptionsFactory {
   public static final String ENABLE_GRPC_RETRIES_KEY = "google.bigtable.grpc.retry.enable";
 
   /**
+   * By default, the hbase client will set the timestamp on the client side before sending a Put if
+   * it's not set already. That's done to ensure that only a single cell is written for the put if
+   * retries occur. Retries aren't common, and writing multiple cells isn't a problem in many cases.
+   * Sometimes, setting the server timestamp is beneficial. If you want the server-side time stamp,
+   * set this to true.
+   */
+  public static final String ALLOW_NO_TIMESTAMP_RETRIES_KEY =
+      "google.bigtable.alllow.no.timestamp.retries";
+
+  /**
    * Key to set to a comma separated list of grpc codes to retry. See {@link Status.Code} for more
    * information.
    */
@@ -299,6 +309,11 @@ public class BigtableOptionsFactory {
         ENABLE_GRPC_RETRIES_KEY, RetryOptions.DEFAULT_ENABLE_GRPC_RETRIES);
     LOG.debug("gRPC retries enabled: %s", enableRetries);
     retryOptionsBuilder.setEnableRetries(enableRetries);
+
+    boolean allowRetriesWithoutTimestamp = configuration.getBoolean(
+        ALLOW_NO_TIMESTAMP_RETRIES_KEY, false);
+    LOG.debug("allow retries without timestamp: %s", enableRetries);
+    retryOptionsBuilder.setAllowRetriesWithoutTimestamp(allowRetriesWithoutTimestamp);
 
     String retryCodes = configuration.get(ADDITIONAL_RETRY_CODES, "");
     String codes[] = retryCodes.split(",");

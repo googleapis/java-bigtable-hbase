@@ -190,17 +190,28 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
             BigtableServiceGrpc.METHOD_READ_ROWS);
     this.mutateRowRpc =
         asyncUtilities.createAsyncUnaryRpc(
-            BigtableServiceGrpc.METHOD_MUTATE_ROW, IS_RETRYABLE_MUTATION);
+            BigtableServiceGrpc.METHOD_MUTATE_ROW,
+            getMutationRetryableFunction(IS_RETRYABLE_MUTATION));
     this.mutateRowsRpc =
         asyncUtilities.createAsyncUnaryRpc(
-            BigtableServiceGrpc.METHOD_MUTATE_ROWS, ARE_RETRYABLE_MUTATIONS);
+            BigtableServiceGrpc.METHOD_MUTATE_ROWS,
+            getMutationRetryableFunction(ARE_RETRYABLE_MUTATIONS));
     this.checkAndMutateRpc =
         asyncUtilities.createAsyncUnaryRpc(
-            BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW, IS_RETRYABLE_CHECK_AND_MUTATE);
+            BigtableServiceGrpc.METHOD_CHECK_AND_MUTATE_ROW,
+            getMutationRetryableFunction(IS_RETRYABLE_CHECK_AND_MUTATE));
     this.readWriteModifyRpc =
         asyncUtilities.createAsyncUnaryRpc(
             BigtableServiceGrpc.METHOD_READ_MODIFY_WRITE_ROW,
-            Predicates.<ReadModifyWriteRowRequest>alwaysFalse());
+            Predicates.<ReadModifyWriteRowRequest> alwaysFalse());
+  }
+
+  private <T> Predicate<T> getMutationRetryableFunction(Predicate<T> isRetryableMutation) {
+    if (retryOptions.allowRetriesWithoutTimestamp()) {
+      return Predicates.<T> alwaysTrue();
+    } else {
+      return isRetryableMutation;
+    }
   }
 
   @Override
@@ -261,7 +272,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return Futures.transform(getStreamingFuture(request, readRowsAsync), ROW_TRANSFORMER);
   }
 
-  // Helper methods 
+  // Helper methods
 
   protected <ReqT, RespT> ListenableFuture<List<RespT>> getStreamingFuture(ReqT request,
       final BigtableAsyncRpc<ReqT, RespT> rpc) {
@@ -310,7 +321,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   // Scanner methods
-  
+
   @Override
   public ResultScanner<Row> readRows(ReadRowsRequest request) {
     // Delegate all resumable operations to the scanner. It will request a non-resumable
