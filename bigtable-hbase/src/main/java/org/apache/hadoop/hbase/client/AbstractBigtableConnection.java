@@ -18,13 +18,9 @@ package org.apache.hadoop.hbase.client;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.RpcThrottler;
-import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -35,6 +31,7 @@ import com.google.common.base.MoreObjects;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.security.User;
 
 import java.io.Closeable;
@@ -89,7 +86,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
-  private static ResourceLimiter resourceLimiter;
 
   public AbstractBigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
@@ -125,17 +121,6 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     this.batchPool = pool;
     this.closed = false;
     this.session = new BigtableSession(options);
-
-    initializeResourceLimiter(conf, options);
-  }
-
-  private synchronized static void initializeResourceLimiter(
-      Configuration conf, BigtableOptions options) {
-    if (resourceLimiter == null) {
-      int maxInflightRpcs = options.getBulkOptions().getMaxInflightRpcs();
-      long maxMemory = options.getBulkOptions().getMaxMemory();
-      AbstractBigtableConnection.resourceLimiter = new ResourceLimiter(maxMemory, maxInflightRpcs);
-    }
   }
 
   @Override
@@ -150,17 +135,9 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    BigtableDataClient client = session.getDataClient();
-    RpcThrottler rpcThrottler = new RpcThrottler(resourceLimiter);
-    AsyncExecutor asyncExecutor = new AsyncExecutor(client, rpcThrottler);
     HBaseRequestAdapter adapter = createAdapter(tableName);
-    BatchExecutor batchExecutor =
-        new BatchExecutor(
-            asyncExecutor,
-            options,
-            BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-            adapter);
-    return new BigtableTable(this, tableName, options, client, adapter, batchExecutor);
+    BatchExecutor batchExecutor = new BatchExecutor(session, adapter);
+    return new BigtableTable(this, tableName, adapter, batchExecutor);
   }
 
   @Override
@@ -174,24 +151,19 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     ExecutorService pool = batchPool != null ? batchPool
         : BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
-    BigtableBufferedMutator bigtableBufferedMutator = new BigtableBufferedMutator(
-        session.getDataClient(),
-        createAdapter(tableName),
-        conf,
-        options,
-        params.getListener(),
-        new RpcThrottler(resourceLimiter),
-        pool,
-        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor()) {
-      @Override
-      public void close() throws IOException {
-        try {
-          super.close();
-        } finally {
-          ACTIVE_BUFFERED_MUTATORS.remove(id);
-        }
-      }
-    };
+    HBaseRequestAdapter adapter = createAdapter(tableName);
+    ExceptionListener listener = params.getListener();
+    BigtableBufferedMutator bigtableBufferedMutator =
+        new BigtableBufferedMutator(adapter, conf, session, listener, pool) {
+          @Override
+          public void close() throws IOException {
+            try {
+              super.close();
+            } finally {
+              ACTIVE_BUFFERED_MUTATORS.remove(id);
+            }
+          }
+        };
     ACTIVE_BUFFERED_MUTATORS.put(id, bigtableBufferedMutator);
     return bigtableBufferedMutator;
   }

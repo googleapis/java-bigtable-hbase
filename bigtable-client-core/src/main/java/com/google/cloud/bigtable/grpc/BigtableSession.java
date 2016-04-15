@@ -51,6 +51,10 @@ import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.async.BulkMutation;
+import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
+import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
@@ -73,9 +77,10 @@ public class BigtableSession implements Closeable {
 
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
+  private static ResourceLimiter resourceLimiter;
 
   // 256 MB, server has 256 MB limit.
-  private final static int MAX_MESSAGE_SIZE = 1 << 28; 
+  private final static int MAX_MESSAGE_SIZE = 1 << 28;
 
   // 1 MB -- TODO(sduskis): make this configurable
   private final static int FLOW_CONTROL_WINDOW = 1 << 20;
@@ -198,6 +203,14 @@ public class BigtableSession implements Closeable {
     connectionStartupExecutor.shutdown();
   }
 
+  private synchronized static void initializeResourceLimiter(BigtableOptions options) {
+    if (resourceLimiter == null) {
+      int maxInflightRpcs = options.getBulkOptions().getMaxInflightRpcs();
+      long maxMemory = options.getBulkOptions().getMaxMemory();
+      resourceLimiter = new ResourceLimiter(maxMemory, maxInflightRpcs);
+    }
+  }
+
   private BigtableDataClient dataClient;
   private BigtableTableAdminClient tableAdminClient;
   private BigtableClusterAdminClient clusterAdminClient;
@@ -260,6 +273,8 @@ public class BigtableSession implements Closeable {
         new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
 
     // Defer the creation of both the tableAdminClient and clusterAdminClient until we need them.
+
+    initializeResourceLimiter(options);
   }
 
   /**
@@ -300,6 +315,20 @@ public class BigtableSession implements Closeable {
 
   public BigtableDataClient getDataClient() {
     return dataClient;
+  }
+
+  public AsyncExecutor createAsyncExecutor() {
+    return new AsyncExecutor(dataClient, new RpcThrottler(resourceLimiter));
+  }
+
+  public BulkMutation createBulkMutation(BigtableTableName tableName, AsyncExecutor asyncExecutor) {
+    return new BulkMutation(
+        tableName,
+        asyncExecutor,
+        options.getRetryOptions(),
+        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
+        options.getBulkOptions().getBulkMaxRowKeyCount(),
+        options.getBulkOptions().getBulkMaxRequestSize());
   }
 
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
@@ -390,5 +419,9 @@ public class BigtableSession implements Closeable {
       }
     }
     managedChannels.clear();
+  }
+
+  public BigtableOptions getOptions() {
+    return this.options;
   }
 }

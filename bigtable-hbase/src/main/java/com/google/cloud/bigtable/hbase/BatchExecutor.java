@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.Nullable;
 
@@ -39,6 +38,8 @@ import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
@@ -136,21 +137,13 @@ public class BatchExecutor {
     private BulkRead bulkRead;
 
     public BulkOperation(
+        BigtableSession session,
         AsyncExecutor asyncExecutor,
-        ScheduledExecutorService retryExecutorService,
-        String tableName,
-        BigtableOptions options) {
+        BigtableTableName tableName) {
       this.asyncExecutor = asyncExecutor;
-      this.options = options;
-      this.bulkRead = new BulkRead(asyncExecutor.getClient(), tableName);
-      this.bulkMutation =
-          new BulkMutation(
-              tableName,
-              asyncExecutor,
-              options.getRetryOptions(),
-              retryExecutorService,
-              options.getBulkOptions().getBulkMaxRowKeyCount(),
-              options.getBulkOptions().getBulkMaxRequestSize());
+      this.options = session.getOptions();
+      this.bulkRead = new BulkRead(session.getDataClient(), tableName);
+      this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
     }
 
     public ListenableFuture<? extends GeneratedMessage> mutateRowAsync(MutateRowRequest request)
@@ -178,19 +171,15 @@ public class BatchExecutor {
     }
   }
 
+  protected final BigtableSession session;
   protected final AsyncExecutor asyncExecutor;
   protected final BigtableOptions options;
-  protected final ScheduledExecutorService retryExecutorService;
   protected final HBaseRequestAdapter requestAdapter;
 
-  public BatchExecutor(
-      AsyncExecutor asyncExecutor,
-      BigtableOptions options,
-      ScheduledExecutorService retryeExecutorService,
-      HBaseRequestAdapter requestAdapter) {
-    this.asyncExecutor = asyncExecutor;
-    this.options = options;
-    this.retryExecutorService = retryeExecutorService;
+  public BatchExecutor(BigtableSession session, HBaseRequestAdapter requestAdapter) {
+    this.session = session;
+    this.asyncExecutor = session.createAsyncExecutor();
+    this.options = session.getOptions();
     this.requestAdapter = requestAdapter;
   }
 
@@ -278,8 +267,8 @@ public class BatchExecutor {
 
   private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) {
-    BulkOperation bulkOperation = new BulkOperation(asyncExecutor, retryExecutorService,
-        requestAdapter.getBigtableTableName().toString(), options);
+    BulkOperation bulkOperation = new BulkOperation(session, asyncExecutor,
+        requestAdapter.getBigtableTableName());
     try {
       List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());
       for (int i = 0; i < actions.size(); i++) {

@@ -35,8 +35,11 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -117,10 +120,16 @@ public class TestBatchExecutor {
       }
     };
   }
+
+  @Mock
+  private BigtableSession mockBigtableSession;
+
   @Mock
   private AsyncExecutor mockAsyncExecutor;
+
   @Mock
   private BigtableDataClient mockClient;
+
   @Mock
   private ListenableFuture mockFuture;
 
@@ -136,6 +145,23 @@ public class TestBatchExecutor {
     when(mockAsyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.getClient()).thenReturn(mockClient);
+    when(mockBigtableSession.createAsyncExecutor()).thenReturn(mockAsyncExecutor);
+    when(mockBigtableSession.createBulkMutation(any(BigtableTableName.class),
+      any(AsyncExecutor.class))).thenAnswer(new Answer<BulkMutation>() {
+        @Override
+        public BulkMutation answer(InvocationOnMock invocation) throws Throwable {
+          BigtableOptions options = mockBigtableSession.getOptions();
+          BulkOptions bulkOptions = options.getBulkOptions();
+          return new BulkMutation(
+            invocation.getArgumentAt(0, BigtableTableName.class),
+            invocation.getArgumentAt(1, AsyncExecutor.class),
+            options.getRetryOptions(),
+            BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
+            bulkOptions.getBulkMaxRowKeyCount(),
+            bulkOptions.getBulkMaxRequestSize());
+        }
+      });
+    when(mockBigtableSession.getDataClient()).thenReturn(mockClient);
     doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
@@ -273,11 +299,8 @@ public class TestBatchExecutor {
   }
 
   private BatchExecutor createExecutor(BigtableOptions options) {
-    return new BatchExecutor(
-        mockAsyncExecutor,
-        options,
-        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-        requestAdapter);
+    when(mockBigtableSession.getOptions()).thenReturn(options);
+    return new BatchExecutor(mockBigtableSession, requestAdapter);
   }
 
   private Result[] batch(final List<? extends org.apache.hadoop.hbase.client.Row> actions)
