@@ -153,8 +153,7 @@ public class TestPutAdapter {
     byte[] value1 = dataHelper.randomData("v1");
     long startTimeMillis = System.currentTimeMillis();
 
-    Put hbasePut = new Put(row);
-    hbasePut.addColumn(family1, qualifier1, value1);
+    Put hbasePut = new Put(row).addColumn(family1, qualifier1, value1);
 
     MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
     Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
@@ -169,6 +168,32 @@ public class TestPutAdapter {
     Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
     Assert.assertTrue(startTimeMillis * 1000 <= setCell.getTimestampMicros());
     Assert.assertTrue(setCell.getTimestampMicros() <= System.currentTimeMillis() * 1000);
+    Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
+  }
+
+  @Test
+  public void testUnsetTimestampsAreNotPopulated() {
+    PutAdapter adapter = new PutAdapter(-1, false);
+
+    byte[] row = dataHelper.randomData("rk-");
+    byte[] family1 = dataHelper.randomData("f1");
+    byte[] qualifier1 = dataHelper.randomData("qual1");
+    byte[] value1 = dataHelper.randomData("v1");
+
+    Put hbasePut = new Put(row).addColumn(family1, qualifier1, value1);
+
+    MutateRowRequest.Builder rowMutationBuilder = adapter.adapt(hbasePut);
+    Assert.assertArrayEquals(row, rowMutationBuilder.getRowKey().toByteArray());
+
+    Assert.assertEquals(1, rowMutationBuilder.getMutationsCount());
+    Mutation mutation = rowMutationBuilder.getMutations(0);
+
+    Assert.assertEquals(MutationCase.SET_CELL, mutation.getMutationCase());
+    SetCell setCell = mutation.getSetCell();
+
+    Assert.assertArrayEquals(family1, setCell.getFamilyNameBytes().toByteArray());
+    Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
+    Assert.assertEquals(-1, setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
   }
 

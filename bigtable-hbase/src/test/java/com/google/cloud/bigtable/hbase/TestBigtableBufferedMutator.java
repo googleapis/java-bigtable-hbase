@@ -154,8 +154,8 @@ public class TestBigtableBufferedMutator {
     }
 
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
-    HBaseRequestAdapter adapter = new HBaseRequestAdapter(
-        options.getClusterName(), TableName.valueOf("TABLE"), configuration);
+    HBaseRequestAdapter adapter =
+        new HBaseRequestAdapter(options, TableName.valueOf("TABLE"), configuration);
 
     executorService = Executors.newCachedThreadPool();
     when(mockSession.getOptions()).thenReturn(options);

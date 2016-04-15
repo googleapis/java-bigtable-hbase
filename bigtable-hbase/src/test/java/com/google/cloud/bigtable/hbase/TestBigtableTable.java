@@ -115,7 +115,7 @@ public class TestBigtableTable {
     Configuration config = new Configuration(false);
     TableName tableName = TableName.valueOf(TEST_TABLE);
     HBaseRequestAdapter hbaseAdapter =
-        new HBaseRequestAdapter(options.getClusterName(), tableName, config);
+        new HBaseRequestAdapter(options, tableName, config);
     Mockito.when(mockConnection.getConfiguration()).thenReturn(config);
     Mockito.when(mockConnection.getSession()).thenReturn(mockSession);
     Mockito.when(mockSession.getOptions()).thenReturn(options);

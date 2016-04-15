@@ -33,7 +33,6 @@ import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
@@ -133,12 +132,17 @@ public class TestBatchExecutor {
   @Mock
   private ListenableFuture mockFuture;
 
-  private HBaseRequestAdapter requestAdapter =
-      new HBaseRequestAdapter(new BigtableClusterName("project", "zone", "cluster"),
-          TableName.valueOf("table"), new Configuration(false));
-
+  private HBaseRequestAdapter requestAdapter;
   @Before
   public void setup() throws InterruptedException {
+    BigtableOptions options = new BigtableOptions.Builder()
+        .setProjectId("projectId")
+        .setZoneId("zone")
+        .setClusterId("clusterId")
+        .build();
+    requestAdapter =
+        new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
+
     MockitoAnnotations.initMocks(this);
     when(mockAsyncExecutor.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);

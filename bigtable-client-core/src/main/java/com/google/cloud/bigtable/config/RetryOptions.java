@@ -89,6 +89,7 @@ public class RetryOptions implements Serializable {
     private int readPartialRowTimeoutMillis = DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
     private int maxScanTimeoutRetries = DEFAULT_MAX_SCAN_TIMEOUT_RETRIES;
     private Set<Status.Code> statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
+    private boolean allowRetriesWithoutTimestamp;
 
     /**
      * Enable or disable retries.
@@ -173,11 +174,21 @@ public class RetryOptions implements Serializable {
     }
 
     /**
+     * Perform retries even if a Put (or other Mutations) don't have a time stamp set and set the
+     * timestamp to the server time.
+     */
+    public Builder setAllowRetriesWithoutTimestamp(boolean allowRetriesWithoutTimestamp) {
+      this.allowRetriesWithoutTimestamp = allowRetriesWithoutTimestamp;
+      return this;
+    }
+
+    /**
      * Construct a new RetryOptions object.
      */
     public RetryOptions build() {
       return new RetryOptions(
           enableRetries,
+          allowRetriesWithoutTimestamp,
           initialBackoffMillis,
           backoffMultiplier,
           maxElaspedBackoffMillis,
@@ -190,6 +201,7 @@ public class RetryOptions implements Serializable {
   }
 
   private final boolean retriesEnabled;
+  private final boolean allowRetriesWithoutTimestamp;
   private final int initialBackoffMillis;
   private final int maxElaspedBackoffMillis;
   private final double backoffMultiplier;
@@ -199,9 +211,9 @@ public class RetryOptions implements Serializable {
   private final int maxScanTimeoutRetries;
   private final ImmutableSet<Code> statusToRetryOn;
 
-
   public RetryOptions(
       boolean retriesEnabled,
+      boolean allowRetriesWithoutTimestamp,
       int initialBackoffMillis,
       double backoffMultiplier,
       int maxElaspedBackoffMillis,
@@ -211,6 +223,7 @@ public class RetryOptions implements Serializable {
       int maxScanTimeoutRetries,
       ImmutableSet<Code> statusToRetryOn) {
     this.retriesEnabled = retriesEnabled;
+    this.allowRetriesWithoutTimestamp = allowRetriesWithoutTimestamp;
     this.initialBackoffMillis = initialBackoffMillis;
     this.maxElaspedBackoffMillis = maxElaspedBackoffMillis;
     this.backoffMultiplier = backoffMultiplier;
@@ -247,6 +260,13 @@ public class RetryOptions implements Serializable {
    */
   public boolean enableRetries() {
     return retriesEnabled;
+  }
+
+  /**
+   * Should retries be allowed even if a timestamp isn't set?
+   */
+  public boolean allowRetriesWithoutTimestamp() {
+    return allowRetriesWithoutTimestamp;
   }
 
   /**
@@ -314,6 +334,7 @@ public class RetryOptions implements Serializable {
     RetryOptions other = (RetryOptions) obj;
 
     return retriesEnabled == other.retriesEnabled
+        && allowRetriesWithoutTimestamp == other.allowRetriesWithoutTimestamp
         && Objects.equal(statusToRetryOn, other.statusToRetryOn)
         && initialBackoffMillis == other.initialBackoffMillis
         && maxElaspedBackoffMillis == other.maxElaspedBackoffMillis

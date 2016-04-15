@@ -25,6 +25,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -89,30 +91,39 @@ public class BigtableDataGrpcClientTests {
   @Mock
   BigtableAsyncRpc mockBigtableRpc;
 
-  private BigtableDataGrpcClient underTest;
+  Map<String, Predicate> predicates;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    RetryOptions retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
-    BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
     when(mockChannelPool.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(mockClientCall);
 
+    predicates = new HashMap<>();
     when(mockAsyncUtilities.createAsyncUnaryRpc(any(MethodDescriptor.class), any(Predicate.class)))
-        .thenReturn(mockBigtableRpc);
+        .thenAnswer(new Answer<BigtableAsyncRpc>() {
+          @Override
+          public BigtableAsyncRpc answer(InvocationOnMock invocation) throws Throwable {
+            String fullMethodName = invocation.getArgumentAt(0, MethodDescriptor.class).getFullMethodName();
+            predicates.put(fullMethodName, invocation.getArgumentAt(1, Predicate.class));
+            return mockBigtableRpc;
+          }
+        });
+  }
 
-    underTest =
-        new BigtableDataGrpcClient(mockChannelPool, executorService, options, mockAsyncUtilities);
+  protected BigtableDataGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
+    RetryOptions retryOptions =
+        RetryOptionsUtil.createTestRetryOptions(nanoClock, allowRetriesWithoutTimestamp);
+    BigtableOptions options = new BigtableOptions.Builder().setRetryOptions(retryOptions).build();
+    return new BigtableDataGrpcClient(mockChannelPool, executorService, options,
+        mockAsyncUtilities);
   }
 
   @Test
   public void testRetyableMutateRow() throws Exception {
     MutateRowRequest request = MutateRowRequest.getDefaultInstance();
-
     setResponse(Empty.getDefaultInstance());
-
-    underTest.mutateRow(request);
+    createClient(false).mutateRow(request);
     verifyRequestCalled(request);
   }
 
@@ -120,7 +131,7 @@ public class BigtableDataGrpcClientTests {
   public void testRetyableMutateRowAsync() throws InterruptedException, ExecutionException {
     MutateRowRequest request = MutateRowRequest.getDefaultInstance();
     when(mockFuture.get()).thenReturn(MutateRowsResponse.getDefaultInstance());
-    underTest.mutateRowAsync(request);
+    createClient(false).mutateRowAsync(request);
     verifyRequestCalled(request);
   }
 
@@ -128,28 +139,36 @@ public class BigtableDataGrpcClientTests {
   public void testRetyableCheckAndMutateRow() throws Exception {
     CheckAndMutateRowRequest request = CheckAndMutateRowRequest.getDefaultInstance();
     setResponse(CheckAndMutateRowResponse.getDefaultInstance());
-    underTest.checkAndMutateRow(request);
+    createClient(false).checkAndMutateRow(request);
     verifyRequestCalled(request);
   }
 
   @Test
   public void testRetyableCheckAndMutateRowAsync() {
     CheckAndMutateRowRequest request = CheckAndMutateRowRequest.getDefaultInstance();
-    underTest.checkAndMutateRowAsync(request);
+    createClient(false).checkAndMutateRowAsync(request);
     verifyRequestCalled(request);
   }
 
   @Test
   public void testMutateRowPredicate() {
-    Predicate<MutateRowRequest> predicate = BigtableDataGrpcClient.IS_RETRYABLE_MUTATION;
-    assertFalse(predicate.apply(null));
+    Predicate<MutateRowRequest> defaultPredicate = BigtableDataGrpcClient.IS_RETRYABLE_MUTATION;
+    createClient(true);
+    Predicate<MutateRowRequest> allowNoTimestampsPredicate =
+        predicates.get(BigtableServiceGrpc.METHOD_MUTATE_ROW.getFullMethodName());
 
-    MutateRowRequest.Builder request = MutateRowRequest.newBuilder();
-    assertTrue(predicate.apply(request.build()));
+    assertFalse(defaultPredicate.apply(null));
+    assertTrue(allowNoTimestampsPredicate.apply(null));
 
-    request.addMutations(
-        Mutation.newBuilder().setSetCell(SetCell.newBuilder().setTimestampMicros(-1)));
-    assertFalse(predicate.apply(request.build()));
+    MutateRowRequest noDataRequest = MutateRowRequest.getDefaultInstance();
+    assertTrue(defaultPredicate.apply(noDataRequest));
+    assertTrue(allowNoTimestampsPredicate.apply(noDataRequest));
+
+    MutateRowRequest requestWithCells = MutateRowRequest.newBuilder()
+        .addMutations(Mutation.newBuilder().setSetCell(SetCell.newBuilder().setTimestampMicros(-1)))
+        .build();
+    assertFalse(defaultPredicate.apply(requestWithCells));
+    assertTrue(allowNoTimestampsPredicate.apply(requestWithCells));
   }
 
   @Test
@@ -188,7 +207,7 @@ public class BigtableDataGrpcClientTests {
   public void testSingleRowRead() {
     ReadRowsRequest request =
         ReadRowsRequest.newBuilder().setRowKey(ByteString.copyFrom(new byte[0])).build();
-    underTest.readRows(request);
+    createClient(false).readRows(request);
     verify(mockChannelPool, times(1)).newCall(eq(BigtableServiceGrpc.METHOD_READ_ROWS),
       same(CallOptions.DEFAULT));
   }
@@ -197,7 +216,7 @@ public class BigtableDataGrpcClientTests {
   public void testMultiRowRead() {
     ReadRowsRequest request =
         ReadRowsRequest.newBuilder().setRowRange(RowRange.getDefaultInstance()).build();
-    underTest.readRows(request);
+    createClient(false).readRows(request);
     verify(mockChannelPool, times(1)).newCall(eq(BigtableServiceGrpc.METHOD_READ_ROWS),
       same(CallOptions.DEFAULT));
   }
@@ -206,7 +225,7 @@ public class BigtableDataGrpcClientTests {
     doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        invocation.getArgumentAt(2, ClientCall.Listener.class).onMessage(response);
+        invocation.getArgumentAt(1, ClientCall.Listener.class).onMessage(response);
         return null;
       }
     }).when(mockBigtableRpc).call(any(Object.class),

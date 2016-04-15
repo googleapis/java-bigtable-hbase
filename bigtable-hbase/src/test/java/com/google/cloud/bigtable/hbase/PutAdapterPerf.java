@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.bigtable.v1.BigtableServiceGrpc;
 import com.google.bigtable.v1.MutateRowRequest;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 
@@ -38,7 +38,7 @@ public class PutAdapterPerf {
     put.addColumn(Bytes.toBytes("Family1"), Bytes.toBytes("Qaulifier"), value);
 
     HBaseRequestAdapter adapter =
-        new HBaseRequestAdapter(new BigtableClusterName("project", "zoneId", "clusterId"),
+        new HBaseRequestAdapter(new BigtableOptions.Builder().build(),
             TableName.valueOf("tableName"), new Configuration());
     for (int i = 0; i < 10; i++) {
       putAdapterPerf(adapter, put);

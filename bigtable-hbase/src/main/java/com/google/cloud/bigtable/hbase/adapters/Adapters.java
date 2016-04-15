@@ -19,6 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Increment;
 
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 
 /**
@@ -46,8 +47,9 @@ public final class Adapters {
       new UnsupportedOperationAdapter<Append>("append"));
   }
 
-  public static PutAdapter createPutAdapter(Configuration config) {
-    return new PutAdapter(config.getInt("hbase.client.keyvalue.maxsize", -1));
+  public static PutAdapter createPutAdapter(Configuration config, BigtableOptions options) {
+    boolean setClientTimestamp = !options.getRetryOptions().allowRetriesWithoutTimestamp();
+    return new PutAdapter(config.getInt("hbase.client.keyvalue.maxsize", -1), setClientTimestamp);
   }
 
   private Adapters() {
