@@ -213,7 +213,6 @@ public class BigtableSession implements Closeable {
 
   private BigtableDataClient dataClient;
   private BigtableTableAdminClient tableAdminClient;
-  private BigtableClusterAdminClient clusterAdminClient;
 
   private final BigtableOptions options;
   private final List<ManagedChannel> managedChannels = Collections
@@ -272,7 +271,7 @@ public class BigtableSession implements Closeable {
     this.dataClient =
         new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
 
-    // Defer the creation of both the tableAdminClient and clusterAdminClient until we need them.
+    // Defer the creation of both the tableAdminClient until we need them.
 
     initializeResourceLimiter(options);
   }
@@ -337,15 +336,6 @@ public class BigtableSession implements Closeable {
       tableAdminClient = new BigtableTableAdminGrpcClient(channel);
     }
     return tableAdminClient;
-  }
-
-  public synchronized BigtableClusterAdminClient getClusterAdminClient() throws IOException {
-    if (this.clusterAdminClient == null) {
-      ManagedChannel channel = createChannelPool(options.getClusterAdminHost());
-      this.clusterAdminClient = new BigtableClusterAdminGrpcClient(channel);
-    }
-
-    return clusterAdminClient;
   }
 
   /**
