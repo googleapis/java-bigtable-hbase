@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc;
 import io.grpc.Channel;
 
 import com.google.bigtable.admin.table.v1.BigtableTableServiceGrpc;
+import com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest;
 import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
 import com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest;
@@ -62,6 +63,11 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   @Override
   public void deleteTable(DeleteTableRequest request) {
     blockingStub.deleteTable(request);
+  }
+
+  @Override
+  public void deleteRowRange(BulkDeleteRowsRequest request) {
+    blockingStub.bulkDeleteRows(request);
   }
 
   @Override
