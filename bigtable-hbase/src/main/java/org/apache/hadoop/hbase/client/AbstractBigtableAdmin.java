@@ -631,7 +631,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private void issueBulkDelete(TableName tableName, BulkDeleteRowsRequest.Builder deleteRequest)
       throws IOException {
     try {
-      bigtableTableAdminClient.deleteRowRange(
+      bigtableTableAdminClient.bulkDeleteRows(
           deleteRequest
               .setTableName(options.getClusterName().toTableNameStr(tableName.getNameAsString()))
               .build());

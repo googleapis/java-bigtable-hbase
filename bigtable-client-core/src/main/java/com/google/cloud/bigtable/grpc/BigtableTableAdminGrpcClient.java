@@ -66,7 +66,7 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   }
 
   @Override
-  public void deleteRowRange(BulkDeleteRowsRequest request) {
+  public void bulkDeleteRows(BulkDeleteRowsRequest request) {
     blockingStub.bulkDeleteRows(request);
   }
 
