@@ -53,6 +53,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
+import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
@@ -328,6 +329,10 @@ public class BigtableSession implements Closeable {
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
         options.getBulkOptions().getBulkMaxRowKeyCount(),
         options.getBulkOptions().getBulkMaxRequestSize());
+  }
+
+  public BulkRead createBulkRead(BigtableTableName tableName) {
+    return new BulkRead(dataClient, tableName);
   }
 
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {

@@ -142,7 +142,7 @@ public class BatchExecutor {
         BigtableTableName tableName) {
       this.asyncExecutor = asyncExecutor;
       this.options = session.getOptions();
-      this.bulkRead = new BulkRead(session.getDataClient(), tableName);
+      this.bulkRead = session.createBulkRead(tableName);
       this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
     }
 
