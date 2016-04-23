@@ -39,6 +39,7 @@ import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
+import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -165,6 +166,13 @@ public class TestBatchExecutor {
             bulkOptions.getBulkMaxRequestSize());
         }
       });
+    when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).
+    thenAnswer(new Answer<BulkRead>() {
+      @Override
+      public BulkRead answer(InvocationOnMock invocationOnMock) throws Throwable {
+        return new BulkRead(mockClient, invocationOnMock.getArgumentAt(0, BigtableTableName.class));
+      }
+    });
     when(mockBigtableSession.getDataClient()).thenReturn(mockClient);
     doAnswer(new Answer<Void>() {
       @Override
