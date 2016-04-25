@@ -66,7 +66,7 @@ public interface BigtableTableAdminClient {
   /**
    * Permanently deletes all rows in a range.
    */
-  void deleteRowRange(BulkDeleteRowsRequest request);
+  void bulkDeleteRows(BulkDeleteRowsRequest request);
 
   /**
    * Changes the name of a specified table.
