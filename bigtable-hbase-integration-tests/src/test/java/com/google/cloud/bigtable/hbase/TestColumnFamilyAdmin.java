@@ -95,6 +95,28 @@ public class TestColumnFamilyAdmin extends AbstractTest {
     Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
   }
 
+  @Test
+  public void testModifyColumnFamily() throws IOException {
+    HColumnDescriptor newColumn = new HColumnDescriptor("MODIFY_COLUMN");
+    newColumn.setMaxVersions(2);
+    admin.addColumn(tableName, newColumn);
+
+    HTableDescriptor expectedDescriptor = new HTableDescriptor(descriptor);
+    expectedDescriptor.addFamily(newColumn);
+
+    HTableDescriptor retrievedDescriptor = admin.getTableDescriptor(tableName);
+    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
+
+    newColumn.setMaxVersions(100);
+    admin.modifyColumn(tableName, newColumn);
+
+    expectedDescriptor = new HTableDescriptor(descriptor);
+    expectedDescriptor.addFamily(newColumn);
+
+    retrievedDescriptor = admin.getTableDescriptor(tableName);
+    Assert.assertEquals(expectedDescriptor, retrievedDescriptor);
+
+  }
 
   @Test
   public void testRemoveColumn() throws IOException {

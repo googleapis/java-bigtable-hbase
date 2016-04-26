@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest;
+import com.google.bigtable.admin.table.v1.ColumnFamily;
 import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
 import com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest;
@@ -52,6 +53,11 @@ public interface BigtableTableAdminClient {
    * Creates a new column family within a specified table.
    */
   void createColumnFamily(CreateColumnFamilyRequest request);
+
+  /**
+   * Updates a column family within a specified table.
+   */
+  void updateColumnFamily(ColumnFamily request);
 
   /**
    * Permanently deletes a specified table and all of its data.
