@@ -515,6 +515,32 @@ public abstract class AbstractBigtableAdmin implements Admin {
     addColumn(TableName.valueOf(tableName), column);
   }
 
+
+  /**
+   * Modify an existing column family on a table. Asynchronous operation.
+   * @param tableName name of table
+   * @param descriptor new column descriptor to use
+   * @throws IOException if a remote or network exception occurs
+   */
+  public void modifyColumn(final String tableName, HColumnDescriptor descriptor)
+      throws IOException {
+    modifyColumn(TableName.valueOf(tableName), descriptor);
+  }
+
+  @Override
+  public void modifyColumn(TableName tableName, HColumnDescriptor column) throws IOException {
+    String columnFamilyName =
+        ColumnFamilyFormatter.from(tableName, options).formatForBigtable(column.getNameAsString());
+    ColumnFamily.Builder columnFamily = columnDescriptorAdapter.adapt(column).setName(columnFamilyName);
+
+    try {
+      bigtableTableAdminClient.updateColumnFamily(columnFamily.build());
+    } catch (Throwable throwable) {
+      throw new IOException(String.format("Failed to add column '%s' to table '%s'",
+        column.getNameAsString(), tableName.getNameAsString()), throwable);
+    }
+  }
+
   @Override
   public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
     ColumnFamilyFormatter formatter = ColumnFamilyFormatter.from(tableName, options);
@@ -662,11 +688,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   public Pair<Integer, Integer> getAlterStatus(String tableName) throws IOException {
     return getAlterStatus(TableName.valueOf(tableName));
-  }
-
-  @Override
-  public void modifyColumn(TableName tableName, HColumnDescriptor descriptor) throws IOException {
-    throw new UnsupportedOperationException("modifyColumn");  // TODO
   }
 
   @Override
