@@ -646,12 +646,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
     disabledTables.remove(tableName);
   }
 
-  public void deleteByPrefix(TableName tableName, String prefix) throws IOException {
+  public void deleteRowRangeByPrefix(TableName tableName, byte[] prefix) throws IOException {
     issueBulkDelete(
         tableName,
         BulkDeleteRowsRequest.newBuilder()
             .setDeleteAllDataFromTable(false)
-            .setRowKeyPrefix(ByteString.copyFrom(Bytes.toBytes(prefix))));
+            .setRowKeyPrefix(ByteString.copyFrom(prefix)));
   }
 
   private void issueBulkDelete(TableName tableName, BulkDeleteRowsRequest.Builder deleteRequest)
