@@ -25,7 +25,6 @@ import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractFuture;
@@ -33,6 +32,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -143,7 +143,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
   /**
    * Calls
-   * {@link BigtableAsyncRpc#call(Channel, Object, io.grpc.ClientCall.Listener, CancellationToken)}
+   * {@link BigtableAsyncRpc#call(Object, Listener)} ()}
    * with this as the listener so that retries happen correctly.
    */
   @Override
