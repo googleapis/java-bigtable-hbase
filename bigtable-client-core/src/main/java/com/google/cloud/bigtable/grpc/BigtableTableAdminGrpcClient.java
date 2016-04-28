@@ -27,7 +27,6 @@ import com.google.bigtable.admin.table.v1.DeleteTableRequest;
 import com.google.bigtable.admin.table.v1.GetTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
 import com.google.bigtable.admin.table.v1.ListTablesResponse;
-import com.google.bigtable.admin.table.v1.RenameTableRequest;
 import com.google.bigtable.admin.table.v1.Table;
 
 /**
@@ -79,10 +78,5 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   @Override
   public void deleteColumnFamily(DeleteColumnFamilyRequest request) {
     blockingStub.deleteColumnFamily(request);
-  }
-
-  @Override
-  public void renameTable(RenameTableRequest request) {
-    blockingStub.renameTable(request);
   }
 }

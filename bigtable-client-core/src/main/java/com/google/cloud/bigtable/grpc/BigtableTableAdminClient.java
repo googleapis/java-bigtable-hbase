@@ -24,7 +24,6 @@ import com.google.bigtable.admin.table.v1.DeleteTableRequest;
 import com.google.bigtable.admin.table.v1.GetTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
 import com.google.bigtable.admin.table.v1.ListTablesResponse;
-import com.google.bigtable.admin.table.v1.RenameTableRequest;
 import com.google.bigtable.admin.table.v1.Table;
 
 /**
@@ -73,10 +72,4 @@ public interface BigtableTableAdminClient {
    * Permanently deletes all rows in a range.
    */
   void bulkDeleteRows(BulkDeleteRowsRequest request);
-
-  /**
-   * Changes the name of a specified table.
-   * Cannot be used to move tables between clusters, zones, or projects.
-   */
-  void renameTable(RenameTableRequest request);
 }
