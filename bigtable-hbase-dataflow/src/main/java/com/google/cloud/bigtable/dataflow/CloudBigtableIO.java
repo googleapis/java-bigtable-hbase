@@ -129,7 +129,7 @@ import com.google.common.annotations.VisibleForTesting;
  * Pipeline p = Pipeline.create(options);
  * PCollection<Mutation> mutationCollection = ...;
  * mutationCollection.apply(
- *   CloudBigtableIO.writeTo(
+ *   CloudBigtableIO.writeToTable(
  *      new CloudBigtableScanConfiguration.Builder()
  *          .withProjectId("project-id")
  *          .withZoneId("zone-id")
