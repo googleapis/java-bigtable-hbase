@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +33,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.bigtable.admin.table.v1.ColumnFamily;
+import com.google.bigtable.admin.table.v1.GcRule;
+import com.google.bigtable.admin.table.v1.GcRule.Intersection;
+import com.google.bigtable.admin.table.v1.GcRule.Union;
+import com.google.protobuf.Duration;
 
 /**
  * Tests for {@link ColumnDescriptorAdapter}.
@@ -98,7 +103,7 @@ public class TestColumnDescriptorAdapter {
 
     ColumnFamily.Builder result = adapter.adapt(descriptor)
         .clearName()
-        .clearGcExpression();
+        .clearGcRule();
 
     Assert.assertArrayEquals(
         new byte[0],
@@ -113,11 +118,42 @@ public class TestColumnDescriptorAdapter {
   }
 
   @Test
-  public void ttlIsPreservedInGcExpression() {
+  public void ttlIsPreservedInGcRule() {
     // TTL of 1 day (in seconds):
-    descriptor.setTimeToLive(86400);
+    int ttl = 86400;
+    descriptor.setTimeToLive(ttl);
     ColumnFamily.Builder result = adapter.adapt(descriptor);
-    Assert.assertEquals("(age() > 86400000000) || (version() > 1)", result.getGcExpression());
+    Assert.assertEquals(createMaxVersionsAndTtl(1, ttl), result.getGcRule());
+  }
+
+  private GcRule createMinMaxRule(int minVersions, int ttl, int maxVersions) {
+    return createUnion(
+        createIntersection(createMaxAgeRule(ttl), createMaxVersionsRule(minVersions)),
+        createMaxVersionsRule(maxVersions));
+  }
+
+  private static GcRule createMaxVersionsAndTtl(int maxVersions, int ttl) {
+    return createUnion(createMaxAgeRule(ttl), createMaxVersionsRule(maxVersions));
+  }
+
+  private static GcRule createUnion(GcRule... rules) {
+    return GcRule.newBuilder()
+        .setUnion(Union.newBuilder().addAllRules(Arrays.asList(rules)))
+        .build();
+  }
+
+  private static GcRule createIntersection(GcRule... rules) {
+    return GcRule.newBuilder()
+        .setIntersection(Intersection.newBuilder().addAllRules(Arrays.asList(rules)))
+        .build();
+  }
+
+  private static GcRule createMaxAgeRule(int ttl) {
+    return GcRule.newBuilder().setMaxAge(Duration.newBuilder().setSeconds(ttl)).build();
+  }
+
+  private static GcRule createMaxVersionsRule(int maxVersions) {
+    return GcRule.newBuilder().setMaxNumVersions(maxVersions).build();
   }
 
   @Test
@@ -133,7 +169,7 @@ public class TestColumnDescriptorAdapter {
   public void maxVersionsIsPreservedInGcExpression() {
     descriptor.setMaxVersions(10);
     ColumnFamily.Builder result = adapter.adapt(descriptor);
-    Assert.assertEquals("(version() > 10)", result.getGcExpression());
+    Assert.assertEquals(createMaxVersionsRule(10), result.getGcRule());
   }
 
   @Test
@@ -149,9 +185,7 @@ public class TestColumnDescriptorAdapter {
     descriptor.setMinVersions(10);
     descriptor.setTimeToLive(86400); // 1 day in seconds
     ColumnFamily.Builder result = adapter.adapt(descriptor);
-    Assert.assertEquals(
-        "(age() > 86400000000 && version() > 10) || (version() > 20)",
-        result.getGcExpression());
+    Assert.assertEquals(createMinMaxRule(10, 86400, 20), result.getGcRule());
   }
 
   @Test
@@ -193,6 +227,6 @@ public class TestColumnDescriptorAdapter {
   public void testBlankExpression(){
     HColumnDescriptor descriptor = adapter.adapt("family", asColumnFamily(""));
     Assert.assertEquals(Integer.MAX_VALUE, descriptor.getMaxVersions());
-    Assert.assertEquals("", ColumnDescriptorAdapter.buildGarbageCollectionExpression(descriptor));
+    Assert.assertEquals(null, ColumnDescriptorAdapter.buildGarbageCollectionExpression(descriptor));
   }
 }

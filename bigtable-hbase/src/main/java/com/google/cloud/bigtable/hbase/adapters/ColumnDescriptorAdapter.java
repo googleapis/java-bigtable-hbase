@@ -17,12 +17,17 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.api.client.util.Strings;
 import com.google.bigtable.admin.table.v1.ColumnFamily;
+import com.google.bigtable.admin.table.v1.GcRule;
+import com.google.bigtable.admin.table.v1.GcRule.Intersection;
+import com.google.bigtable.admin.table.v1.GcRule.Intersection.Builder;
+import com.google.bigtable.admin.table.v1.GcRule.Union;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.protobuf.Duration;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -148,33 +153,49 @@ public class ColumnDescriptorAdapter {
   /**
    * Construct an Bigtable GC expression from the given column descriptor.
    */
-  public static String buildGarbageCollectionExpression(HColumnDescriptor columnDescriptor) {
+  public static GcRule buildGarbageCollectionExpression(HColumnDescriptor columnDescriptor) {
     int maxVersions = columnDescriptor.getMaxVersions();
     int minVersions = columnDescriptor.getMinVersions();
     int ttlSeconds = columnDescriptor.getTimeToLive();
-    long bigtableTtl = BigtableConstants.BIGTABLE_TIMEUNIT.convert(ttlSeconds, TimeUnit.SECONDS);
 
     Preconditions.checkState(minVersions < maxVersions,
         "HColumnDescriptor min versions must be less than max versions.");
 
-    StringBuilder buffer = new StringBuilder();
-    if (ttlSeconds != HColumnDescriptor.DEFAULT_TTL) {
-      // minVersions only comes into play with a TTL:
-      if (minVersions != HColumnDescriptor.DEFAULT_MIN_VERSIONS) {
-        buffer.append(String.format("(age() > %s && version() > %s)", bigtableTtl, minVersions));
+    if (ttlSeconds == HColumnDescriptor.DEFAULT_TTL) {
+      if (maxVersions == Integer.MAX_VALUE) {
+        return null;
       } else {
-        buffer.append(String.format("(age() > %s)", bigtableTtl));
+        return createMaxVersionsRule(maxVersions);
       }
     }
-    // Since the HBase version default is 1, which may or may not be the same as Bigtable
-    if (buffer.length() != 0) {
-      buffer.append(" || ");
-    }
-    if (maxVersions != Integer.MAX_VALUE) {
-      buffer.append(String.format("(version() > %s)", maxVersions));
-    }
 
-    return buffer.toString();
+    // minVersions only comes into play with a TTL:
+    GcRule ageRule =
+        GcRule.newBuilder().setMaxAge(Duration.newBuilder().setSeconds(ttlSeconds)).build();
+    if (minVersions != HColumnDescriptor.DEFAULT_MIN_VERSIONS) {
+      // The logic here is: only delete a cell if:
+      //  1) the age is older than :ttlSeconds AND 
+      //  2) the cell's relative version number is greater than :minVersions
+      // 
+      // Bigtable's nomenclature for this is:
+      // Intersection (AND)
+      //    - maxAge = :HBase_ttlSeconds
+      //    - maxVersions = :HBase_minVersion
+      GcRule minVersionRule = createMaxVersionsRule(minVersions);
+      Builder ageAndMin = Intersection.newBuilder().addRules(ageRule).addRules(minVersionRule);
+      ageRule = GcRule.newBuilder().setIntersection(ageAndMin).build();
+    }
+    if (maxVersions == Integer.MAX_VALUE) {
+      return ageRule;
+    } else {
+      GcRule maxVersionsRule = createMaxVersionsRule(maxVersions);
+      Union ageAndMax = Union.newBuilder().addRules(ageRule).addRules(maxVersionsRule).build();
+      return GcRule.newBuilder().setUnion(ageAndMax).build();
+    }
+  }
+
+  private static GcRule createMaxVersionsRule(int maxVersions) {
+    return GcRule.newBuilder().setMaxNumVersions(maxVersions).build();
   }
 
   static Splitter gcExpressionOrSplitter = Splitter.on("|").trimResults().omitEmptyStrings();
@@ -277,9 +298,9 @@ public class ColumnDescriptorAdapter {
     throwIfRequestingUnsupportedFeatures(columnDescriptor);
 
     ColumnFamily.Builder resultBuilder = ColumnFamily.newBuilder();
-    String gcExpression = buildGarbageCollectionExpression(columnDescriptor);
-    if (!Strings.isNullOrEmpty(gcExpression)) {
-      resultBuilder.setGcExpression(gcExpression);
+    GcRule gcRule = buildGarbageCollectionExpression(columnDescriptor);
+    if (gcRule != null) {
+      resultBuilder.setGcRule(gcRule);
     }
     return resultBuilder;
   }
