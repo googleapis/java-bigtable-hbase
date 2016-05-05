@@ -844,42 +844,6 @@
       ]
     },
     {
-      "name": "invalid - commit after reset",
-      "chunks": [
-        "reset_row: true\n",
-        "commit_row: true\n"
-      ],
-      "results": [
-        {
-          "rk": "",
-          "fm": "",
-          "qual": "",
-          "ts": 0,
-          "value": "",
-          "label": "",
-          "error": true
-        }
-      ]
-    },
-    {
-      "name": "invalid - reset after commit",
-      "chunks": [
-        "commit_row: true\n",
-        "reset_row: true\n"
-      ],
-      "results": [
-        {
-          "rk": "",
-          "fm": "",
-          "qual": "",
-          "ts": 0,
-          "value": "",
-          "label": "",
-          "error": true
-        }
-      ]
-    },
-    {
       "name": "invalid - bad reset, no commit",
       "chunks": [
         "reset_row: true\n",
@@ -1114,7 +1078,7 @@
           "qual": "C",
           "ts": 100,
           "value": "value-VAL_1",
-          "label": "L",
+          "label": "",
           "error": false
         }
       ]
