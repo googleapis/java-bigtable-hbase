@@ -27,13 +27,14 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 
 @RunWith(JUnit4.class)
 public class StreamingBigtableResultScannerTest {
 
   @Mock
-  ResponseQueueReader reader;
+  ResponseQueueReader<Row> reader;
 
   @Mock
   CancellationToken cancellationToken;

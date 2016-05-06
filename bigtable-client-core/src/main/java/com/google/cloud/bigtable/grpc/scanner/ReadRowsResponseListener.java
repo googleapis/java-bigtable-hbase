@@ -30,46 +30,26 @@ import io.grpc.stub.StreamObserver;
  * {@link Row} {@link StreamObserver}.
  */
 public class ReadRowsResponseListener extends ClientCall.Listener<ReadRowsResponse> {
-  private final StreamObserver<Row> observer;
-
   private RowMerger builder;
   private AtomicInteger outstandingRequestCount;
 
   public ReadRowsResponseListener(StreamObserver<Row> observer, AtomicInteger outstandingRequestCount) {
-    this.observer = observer;
     this.outstandingRequestCount = outstandingRequestCount;
+    this.builder = new RowMerger(observer);
   }
 
   @Override
   public void onMessage(ReadRowsResponse response) {
-    if (builder == null) {
-      builder = new RowMerger();
-    }
-
-    builder.addPartialRow(response);
+    builder.onNext(response);
     outstandingRequestCount.decrementAndGet();
-    if (builder.isRowCommitted()) {
-      Row builtRow = builder.buildRow();
-      builder = null;
-      if (builtRow == null) {
-        // This could happen when a row that was scanned was deleted after the scan started.
-      } else {
-        observer.onNext(builtRow);
-      }
-    }
   }
 
   @Override
   public void onClose(Status status, Metadata trailers) {
     if (status.isOk()) {
-      if (builder != null) {
-        observer.onError(
-            new IllegalStateException("End of stream marker encountered while merging a row."));
-      } else {
-        observer.onCompleted();
-      }
+      builder.onCompleted();
     } else {
-      observer.onError(status.asRuntimeException());
+      builder.onError(status.asRuntimeException());
     }
   }
 }

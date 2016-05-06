@@ -27,10 +27,10 @@ import com.google.common.base.Preconditions;
 public class StreamingBigtableResultScanner extends AbstractBigtableResultScanner {
 
   private final CancellationToken cancellationToken;
-  private final ResponseQueueReader responseQueueReader;
+  private final ResponseQueueReader<Row> responseQueueReader;
 
   public StreamingBigtableResultScanner(
-      ResponseQueueReader responseQueueReader,
+      ResponseQueueReader<Row> responseQueueReader,
       CancellationToken cancellationToken) {
     Preconditions.checkArgument(cancellationToken != null, "cancellationToken cannot be null");
     this.cancellationToken = cancellationToken;

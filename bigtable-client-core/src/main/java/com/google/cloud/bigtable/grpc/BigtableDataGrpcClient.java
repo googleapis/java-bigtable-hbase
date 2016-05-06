@@ -20,8 +20,6 @@ import io.grpc.ClientCall;
 import io.grpc.Status;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -131,12 +129,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       new Function<List<ReadRowsResponse>, List<Row>>() {
         @Override
         public List<Row> apply(List<ReadRowsResponse> responses) {
-          List<Row> result = new ArrayList<>();
-          Iterator<ReadRowsResponse> responseIterator = responses.iterator();
-          while (responseIterator.hasNext()) {
-            result.add(RowMerger.readNextRow(responseIterator));
-          }
-          return result;
+          return RowMerger.toRows(responses);
         }
       };
 
@@ -356,9 +349,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     int timeout = retryOptions.getReadPartialRowTimeoutMillis();
     AtomicInteger outstandingRequestCount = new AtomicInteger(batchRequestSize);
 
-    ResponseQueueReader responseQueueReader =
-        new ResponseQueueReader(timeout, streamingBufferSize, outstandingRequestCount,
-            batchRequestSize, readRowsCall);
+    ResponseQueueReader<Row> responseQueueReader = new ResponseQueueReader<>(timeout,
+        streamingBufferSize, outstandingRequestCount, batchRequestSize, readRowsCall);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(responseQueueReader, outstandingRequestCount);
     asyncUtilities.asyncServerStreamingCall(readRowsCall, request, listener);
@@ -367,7 +359,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return new StreamingBigtableResultScanner(responseQueueReader, cancellationToken);
   }
 
-  private CancellationToken createCancellationToken(final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall) {
+  private CancellationToken
+      createCancellationToken(final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall) {
     // If the scanner is closed before we're done streaming, we want to cancel the RPC.
     CancellationToken cancellationToken = new CancellationToken();
     cancellationToken.addListener(new Runnable() {

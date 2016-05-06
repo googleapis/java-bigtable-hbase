@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.bigtable.v1.ReadRowsResponse;
-import com.google.bigtable.v1.Row;
 import com.google.common.base.Preconditions;
 
 import io.grpc.ClientCall;
@@ -33,8 +32,8 @@ import io.grpc.stub.StreamObserver;
  * Helper to read a queue of ResultQueueEntries and use the RowMergers to reconstruct
  * complete Row objects from the partial ReadRowsResponse objects.
  */
-public class ResponseQueueReader implements StreamObserver<Row> {
-  private final BlockingQueue<ResultQueueEntry<Row>> resultQueue;
+public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT> {
+  private final BlockingQueue<ResultQueueEntry<ResponseT>> resultQueue;
   private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
   private AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
@@ -59,9 +58,9 @@ public class ResponseQueueReader implements StreamObserver<Row> {
    * @return null if end-of-stream, otherwise a complete Row.
    * @throws IOException On errors.
    */
-  public synchronized Row getNextMergedRow() throws IOException {
+  public synchronized ResponseT getNextMergedRow() throws IOException {
     if (!lastResponseProcessed) {
-      ResultQueueEntry<Row> queueEntry = getNext();
+      ResultQueueEntry<ResponseT> queueEntry = getNext();
 
       if (queueEntry.isCompletionMarker()) {
         lastResponseProcessed = true;
@@ -75,7 +74,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
     return null;
   }
 
-  private ResultQueueEntry<Row> getNext() throws IOException {
+  private ResultQueueEntry<ResponseT> getNext() throws IOException {
     // If there are currently less than or equal to the batch request size, then ask gRPC to
     // request more results in a batch. Batch requests are more efficient that reading one at
     // a time.
@@ -83,7 +82,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
       call.request(batchRequestSize);
       outstandingRequestCount.addAndGet(batchRequestSize);
     }
-    ResultQueueEntry<Row> queueEntry;
+    ResultQueueEntry<ResponseT> queueEntry;
     try {
       queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
@@ -110,7 +109,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   }
 
   @Override
-  public void onNext(Row row) {
+  public void onNext(ResponseT row) {
     try {
       resultQueue.put(ResultQueueEntry.fromResponse(row));
     } catch (InterruptedException e) {
@@ -122,7 +121,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   @Override
   public void onError(Throwable t) {
     try {
-      resultQueue.put(ResultQueueEntry.<Row> fromThrowable(t));
+      resultQueue.put(ResultQueueEntry.<ResponseT> fromThrowable(t));
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
@@ -133,7 +132,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   public void onCompleted() {
     try {
       completionMarkerFound.set(true);
-      resultQueue.put(ResultQueueEntry.<Row> completionMarker());
+      resultQueue.put(ResultQueueEntry.<ResponseT> completionMarker());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
