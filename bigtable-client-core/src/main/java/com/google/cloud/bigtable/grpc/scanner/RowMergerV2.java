@@ -66,10 +66,14 @@ import java.util.TreeMap;
  */
 public class RowMergerV2 implements StreamObserver<ReadRowsResponse> {
 
-  /** 
-   * 
+  /**
+   * Encapsulates validation for different states based on the stream of the {@link CellChunk}.
    */
   private enum RowMergerState {
+
+    /**
+     * A new {@link CellChunk} represents a completely new {@link Row}.
+     */
     NewRow {
       @Override
       void handleLastScannedRowKey(ByteString lastScannedRowKey) {
@@ -104,6 +108,9 @@ public class RowMergerV2 implements StreamObserver<ReadRowsResponse> {
       }
     },
 
+    /**
+     * A new {@link CellChunk} represents a new {@link Cell} in a {@link Row}.
+     */
     RowInProgress {
       @Override
       void handleLastScannedRowKey(ByteString lastScannedRowKey) {
@@ -146,6 +153,9 @@ public class RowMergerV2 implements StreamObserver<ReadRowsResponse> {
       }
     },
 
+    /**
+     * A new {@link CellChunk} represents a portion of the value in a {@link Cell} in a {@link Row}.
+     */
     CellInProgress {
       @Override
       void handleLastScannedRowKey(ByteString lastScannedRowKey) {
@@ -241,6 +251,11 @@ public class RowMergerV2 implements StreamObserver<ReadRowsResponse> {
     }
   }
 
+  /**
+   * A CellIdentifier represents the matadata for a Cell. The information in this class can be
+   * collected from a variety of {@link CellChunk}, for example the rowKey will be expressed only
+   * in the first {@link CellChunk}, and family will be present only when a family changes.
+   */
   private static class CellIdentifier {
     final ByteString rowKey;
     final String family;
@@ -292,7 +307,7 @@ public class RowMergerV2 implements StreamObserver<ReadRowsResponse> {
           Objects.equal(family, other.family) &&
           Objects.equal(qualifier, other.qualifier);
     }
-    
+
     @Override
     public boolean equals(Object obj) {
       if (obj == this) {
@@ -306,8 +321,11 @@ public class RowMergerV2 implements StreamObserver<ReadRowsResponse> {
           && timestampMicros == other.timestampMicros
           && Objects.equal(labels, other.labels);
     }
-}
+  }
 
+  /**
+   * This 
+   */
   private static final class RowInProgress {
     private final FamilyBuilderManager families = new FamilyBuilderManager();
 
@@ -413,7 +431,7 @@ public class RowMergerV2 implements StreamObserver<ReadRowsResponse> {
     for (ReadRowsResponse.CellChunk chunk : readRowsResponse.getChunksList()) {
       try {
         state.validateChunk(rowInProgress, previousKey, chunk);
-      } catch(RuntimeException e) {
+      } catch(Exception e) {
         onError(e);
         return;
       }
