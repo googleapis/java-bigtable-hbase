@@ -17,10 +17,9 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.RowFilter;
-import com.google.cloud.bigtable.hbase.adapters.DefaultReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable;
-
+import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
+import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;

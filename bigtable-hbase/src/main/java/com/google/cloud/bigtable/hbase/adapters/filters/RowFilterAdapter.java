@@ -25,7 +25,7 @@ import org.apache.hadoop.hbase.filter.RegexStringComparator;
 
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Builder;
-import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 

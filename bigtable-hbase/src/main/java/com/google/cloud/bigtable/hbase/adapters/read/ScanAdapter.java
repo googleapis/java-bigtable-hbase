@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters;
+package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.bigtable.v1.ReadRowsRequest.Builder;
@@ -24,7 +24,6 @@ import com.google.bigtable.v1.RowRange;
 import com.google.bigtable.v1.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
-import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Optional;

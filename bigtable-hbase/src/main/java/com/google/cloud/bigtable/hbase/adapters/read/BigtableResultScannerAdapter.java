@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters;
+package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.api.client.util.Throwables;
 import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;

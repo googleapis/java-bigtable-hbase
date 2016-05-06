@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.bigtable.v1.RowFilter;
-import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 

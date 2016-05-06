@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import static com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper.quoteRegularExpression;
+import static com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.quoteRegularExpression;
 
 import java.io.IOException;
 
