@@ -47,33 +47,31 @@ public class RowMergerPerf {
 
   private static List<ReadRowsResponse> createResponses() {
     List<ReadRowsResponse> responses = new ArrayList<>(1);
-    for (int i = 0; i < 1; i++) {
-      String rowKey = String.format("rowKey-%s", i);
-      byte[] value = RandomStringUtils.randomAlphanumeric(10000).getBytes();
-      Preconditions.checkArgument(!Strings.isNullOrEmpty("Family1"),
-        "Family name may not be null or empty");
+    String rowKey = String.format("rowKey-0");
+    byte[] value = RandomStringUtils.randomAlphanumeric(10000).getBytes();
+    Preconditions.checkArgument(!Strings.isNullOrEmpty("Family1"),
+      "Family name may not be null or empty");
 
-      Family.Builder familyBuilder = Family.newBuilder().setName("Family1");
+    Family.Builder familyBuilder = Family.newBuilder().setName("Family1");
 
-      Column.Builder columnBuilder = Column.newBuilder();
-      columnBuilder.setQualifier(ByteString.copyFromUtf8("Qaulifier"));
+    Column.Builder columnBuilder = Column.newBuilder();
+    columnBuilder.setQualifier(ByteString.copyFromUtf8("Qaulifier"));
 
-      if (value != null) {
-        Cell.Builder cellBuilder = Cell.newBuilder();
-        cellBuilder.setTimestampMicros(0L);
-        cellBuilder.setValue(ByteString.copyFrom(value));
-        columnBuilder.addCells(cellBuilder);
-      }
-      familyBuilder.addColumns(columnBuilder);
-      Chunk contentChunk = Chunk.newBuilder().setRowContents(familyBuilder).build();
-      Chunk rowCompleteChunk = Chunk.newBuilder().setCommitRow(true).build();
-
-      ReadRowsResponse response =
-          ReadRowsResponse.newBuilder().addChunks(contentChunk).addChunks(rowCompleteChunk)
-              .setRowKey(ByteString.copyFromUtf8(rowKey)).build();
-
-      responses.add(response);
+    if (value != null) {
+      Cell.Builder cellBuilder = Cell.newBuilder();
+      cellBuilder.setTimestampMicros(0L);
+      cellBuilder.setValue(ByteString.copyFrom(value));
+      columnBuilder.addCells(cellBuilder);
     }
+    familyBuilder.addColumns(columnBuilder);
+    Chunk contentChunk = Chunk.newBuilder().setRowContents(familyBuilder).build();
+    Chunk rowCompleteChunk = Chunk.newBuilder().setCommitRow(true).build();
+
+    ReadRowsResponse response =
+        ReadRowsResponse.newBuilder().addChunks(contentChunk).addChunks(rowCompleteChunk)
+            .setRowKey(ByteString.copyFromUtf8(rowKey)).build();
+
+    responses.add(response);
     return responses;
   }
 
@@ -81,13 +79,13 @@ public class RowMergerPerf {
 
   private static void rowMergerPerf(List<ReadRowsResponse> responses) {
     RowAdapter adapter = Adapters.ROW_ADAPTER;
-    adapter.adaptResponse(RowMerger.readNextRow(responses.iterator()));
+    adapter.adaptResponse(RowMerger.toRows(responses).get(0));
 
     System.out.println("Size: " + responses.get(0).getSerializedSize());
     {
       long start = System.nanoTime();
       for (int i = 0; i < count; i++) {
-        RowMerger.readNextRow(responses.iterator());
+        RowMerger.toRows(responses);
       }
       long time = System.nanoTime() - start;
       System.out.println(
@@ -97,7 +95,7 @@ public class RowMergerPerf {
     {
       long start = System.nanoTime();
       for (int i = 0; i < count; i++) {
-        adapter.adaptResponse(RowMerger.readNextRow(responses.iterator()));
+        adapter.adaptResponse(RowMerger.toRows(responses).get(0));
       }
       long time = System.nanoTime() - start;
       System.out.println(

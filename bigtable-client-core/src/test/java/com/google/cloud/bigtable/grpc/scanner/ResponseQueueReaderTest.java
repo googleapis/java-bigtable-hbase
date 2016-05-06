@@ -119,7 +119,7 @@ public class ResponseQueueReaderTest {
     listener.onClose(Status.OK, new Metadata());
   }
 
-  static void assertReaderContains(ResponseQueueReader reader, Iterable<Row> rows)
+  static void assertReaderContains(ResponseQueueReader<Row> reader, Iterable<Row> rows)
       throws Exception {
     Iterator<Row> iterator = rows.iterator();
     while (iterator.hasNext()) {
@@ -127,7 +127,7 @@ public class ResponseQueueReaderTest {
     }
   }
 
-  static void assertReaderEmpty(ResponseQueueReader reader) throws Exception {
+  static void assertReaderEmpty(ResponseQueueReader<Row> reader) throws Exception {
     Assert.assertNull(reader.getNextMergedRow());
   }
 
@@ -146,7 +146,7 @@ public class ResponseQueueReaderTest {
   @Test
   public void resultsAreReadable() throws Exception {
     AtomicInteger outstandingRequestCount = new AtomicInteger(10);
-    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, outstandingRequestCount, 5, call);
+    ResponseQueueReader<Row> reader = new ResponseQueueReader<>(defaultTimeout, 10, outstandingRequestCount, 5, call);
     ReadRowsResponseListener listener = new ReadRowsResponseListener(reader, outstandingRequestCount);
 
     List<ReadRowsResponse> responses =
@@ -163,7 +163,7 @@ public class ResponseQueueReaderTest {
   @Test
   public void throwablesAreThrownWhenRead() throws Exception {
     AtomicInteger outstandingRequestCount = new AtomicInteger(10);
-    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, 10, outstandingRequestCount, 5, call);
+    ResponseQueueReader<Row> reader = new ResponseQueueReader<>(defaultTimeout, 10, outstandingRequestCount, 5, call);
     ReadRowsResponseListener listener = new ReadRowsResponseListener(reader, outstandingRequestCount);
 
     List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", 2);
@@ -186,7 +186,7 @@ public class ResponseQueueReaderTest {
   public void multipleResponsesAreReturnedAtOnce() throws Exception {
     int generatedResponseCount = 3;
     AtomicInteger outstandingRequestCount = new AtomicInteger(generatedResponseCount * 2);
-    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, generatedResponseCount * 2,
+    ResponseQueueReader<Row> reader = new ResponseQueueReader<>(defaultTimeout, generatedResponseCount * 2,
         outstandingRequestCount, generatedResponseCount, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);
@@ -219,8 +219,8 @@ public class ResponseQueueReaderTest {
     ReadRowsResponse response4 = createReadRowsResponse(rowKey, ROW_COMPLETE_CHUNK);
 
     AtomicInteger outstandingRequestCount = new AtomicInteger(8);
-    ResponseQueueReader reader =
-        new ResponseQueueReader(defaultTimeout, 8, outstandingRequestCount, 4, call);
+    ResponseQueueReader<Row> reader =
+        new ResponseQueueReader<>(defaultTimeout, 8, outstandingRequestCount, 4, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);
 
@@ -266,8 +266,8 @@ public class ResponseQueueReaderTest {
     ReadRowsResponse response4 = createReadRowsResponse(rowKey, ROW_COMPLETE_CHUNK);
 
     AtomicInteger outstandingRequestCount = new AtomicInteger(6);
-    ResponseQueueReader reader =
-        new ResponseQueueReader(defaultTimeout, 6, outstandingRequestCount, 3, call);
+    ResponseQueueReader<Row> reader =
+        new ResponseQueueReader<>(defaultTimeout, 6, outstandingRequestCount, 3, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);
 
@@ -295,8 +295,8 @@ public class ResponseQueueReaderTest {
     ReadRowsResponse response = createReadRowsResponse(rowKey, ROW_COMPLETE_CHUNK);
 
     AtomicInteger outstandingRequestCount = new AtomicInteger(10);
-    ResponseQueueReader reader =
-        new ResponseQueueReader(defaultTimeout, 10, outstandingRequestCount, 5, call);
+    ResponseQueueReader<Row> reader =
+        new ResponseQueueReader<>(defaultTimeout, 10, outstandingRequestCount, 5, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);
 
@@ -317,8 +317,8 @@ public class ResponseQueueReaderTest {
     ReadRowsResponse response = createReadRowsResponse(rowKey, chunk1, ROW_COMPLETE_CHUNK);
 
     AtomicInteger outstandingRequestCount = new AtomicInteger(10);
-    ResponseQueueReader reader =
-        new ResponseQueueReader(defaultTimeout, 10, outstandingRequestCount, 5, call);
+    ResponseQueueReader<Row> reader =
+        new ResponseQueueReader<>(defaultTimeout, 10, outstandingRequestCount, 5, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);
 
@@ -336,8 +336,8 @@ public class ResponseQueueReaderTest {
   @Test
   public void anEmptyStreamDoesNotThrow() throws Exception {
     AtomicInteger outstandingRequestCount = new AtomicInteger(10);
-    ResponseQueueReader reader =
-        new ResponseQueueReader(defaultTimeout, 10, outstandingRequestCount, 5, call);
+    ResponseQueueReader<Row> reader =
+        new ResponseQueueReader<>(defaultTimeout, 10, outstandingRequestCount, 5, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);
 
@@ -351,8 +351,8 @@ public class ResponseQueueReaderTest {
   @Test
   public void readingPastEndReturnsNull() throws Exception {
     AtomicInteger outstandingRequestCount = new AtomicInteger(10);
-    ResponseQueueReader reader =
-        new ResponseQueueReader(defaultTimeout, 10, outstandingRequestCount, 5, call);
+    ResponseQueueReader<Row> reader =
+        new ResponseQueueReader<>(defaultTimeout, 10, outstandingRequestCount, 5, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);
 
@@ -367,8 +367,8 @@ public class ResponseQueueReaderTest {
   @Test
   public void endOfStreamMidRowThrows() throws Exception {
     AtomicInteger outstandingRequestCount = new AtomicInteger(10);
-    ResponseQueueReader reader =
-        new ResponseQueueReader(defaultTimeout, 10, outstandingRequestCount, 5, call);
+    ResponseQueueReader<Row> reader =
+        new ResponseQueueReader<>(defaultTimeout, 10, outstandingRequestCount, 5, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);
 
@@ -388,8 +388,8 @@ public class ResponseQueueReaderTest {
   @Test
   public void readTimeoutOnPartialRows() throws Exception {
     AtomicInteger outstandingRequestCount = new AtomicInteger(10);
-    ResponseQueueReader reader =
-        new ResponseQueueReader(defaultTimeout, 10, outstandingRequestCount, 5, call);
+    ResponseQueueReader<Row> reader =
+        new ResponseQueueReader<>(defaultTimeout, 10, outstandingRequestCount, 5, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);
 
@@ -416,8 +416,8 @@ public class ResponseQueueReaderTest {
       @Override
       public void run() {
         AtomicInteger outstandingRequestCount = new AtomicInteger(10);
-        ResponseQueueReader reader =
-            new ResponseQueueReader(defaultTimeout, 10, outstandingRequestCount, 5, call);
+        ResponseQueueReader<?> reader =
+            new ResponseQueueReader<>(defaultTimeout, 10, outstandingRequestCount, 5, call);
         try {
           barrier.await();
         } catch (InterruptedException | BrokenBarrierException e) {
@@ -461,8 +461,8 @@ public class ResponseQueueReaderTest {
     final int queueDepth = 10;
 
     AtomicInteger outstandingRequestCount = new AtomicInteger(10);
-    ResponseQueueReader reader =
-        new ResponseQueueReader(defaultTimeout, 10, outstandingRequestCount, 5, call);
+    ResponseQueueReader<Row> reader =
+        new ResponseQueueReader<>(defaultTimeout, 10, outstandingRequestCount, 5, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);
     List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", queueDepth);
@@ -483,7 +483,7 @@ public class ResponseQueueReaderTest {
   public void alwaysHaveaRequest() throws Exception {
     int capacityCap = 30;
     AtomicInteger outstandingRequestCount = new AtomicInteger(capacityCap);
-    ResponseQueueReader reader = new ResponseQueueReader(defaultTimeout, capacityCap,
+    ResponseQueueReader<Row> reader = new ResponseQueueReader<>(defaultTimeout, capacityCap,
         outstandingRequestCount, capacityCap / 2, call);
     ReadRowsResponseListener listener =
         new ReadRowsResponseListener(reader, outstandingRequestCount);

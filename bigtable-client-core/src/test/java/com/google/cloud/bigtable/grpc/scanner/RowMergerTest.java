@@ -21,9 +21,7 @@ import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.generateRe
 import static com.google.cloud.bigtable.grpc.scanner.ReadRowTestUtils.randomBytes;
 import static com.google.cloud.bigtable.grpc.scanner.RowMatcher.matchesRow;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Assert;
@@ -55,26 +53,16 @@ public class RowMergerTest {
   @Test
   public void resultsAreReadable() {
     List<ReadRowsResponse> responses = generateReadRowsResponses("rowKey-%s", 3);
-    List<Row> rows = new ArrayList<>();
-    Iterator<ReadRowsResponse> iterator = responses.iterator();
-    while (iterator.hasNext()) {
-      rows.add(RowMerger.readNextRow(iterator));
-    }
+    List<Row> rows = RowMerger.toRows(responses);
     Assert.assertEquals(responses.size(), rows.size());
     for (int i = 0; i < responses.size(); i++) {
       Assert.assertEquals(responses.get(i).getRowKey(), rows.get(i).getKey());
     }
   }
 
-  private Iterator<ReadRowsResponse> getIterator(ReadRowsResponse ... responses) {
-    return Arrays.asList(responses).iterator();
-  }
-
   private void matchResponses(ReadRowsResponse[] responses, RowMatcher[] expectedRows) {
-    Iterator<ReadRowsResponse> iterator = getIterator(responses);
     int i = 0;
-    while (iterator.hasNext()) {
-      Row row = RowMerger.readNextRow(iterator);
+    for(Row row : RowMerger.toRows(Arrays.asList(responses))) {
       if(row != null) {
         Assert.assertFalse("Responses not completely consumed by expected rows", i >= expectedRows.length);
         Assert.assertThat("Expected row does not match!", row, expectedRows[i]);
@@ -205,8 +193,7 @@ public class RowMergerTest {
 
     expectedException.expectMessage("End of stream marker encountered while merging a row.");
     expectedException.expect(IllegalStateException.class);
-    @SuppressWarnings("unused")
-    Row resultRow = RowMerger.readNextRow(getIterator(response));
+    RowMerger.toRows(Arrays.asList(response));
   }
 
   @Test
@@ -217,9 +204,6 @@ public class RowMergerTest {
 
     expectedException.expectMessage("End of stream marker encountered while merging a row.");
     expectedException.expect(IllegalStateException.class);
-    final Iterator<ReadRowsResponse> iterator = getIterator(response, response2);
-    @SuppressWarnings("unused")
-    Row resultRow = RowMerger.readNextRow(iterator);
-    resultRow = RowMerger.readNextRow(iterator);
+    RowMerger.toRows(Arrays.asList(response, response2));
   }
 }

@@ -15,18 +15,19 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-
-import javax.annotation.Nullable;
 
 import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.ReadRowsResponse.Chunk;
-import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
+
+import io.grpc.stub.StreamObserver;
 
 /**
  * <p>Builds a complete Row from partial ReadRowsResponse objects. This class
@@ -46,74 +47,95 @@ import com.google.protobuf.ByteString;
  *
  * <p> {@link RowMerger#readNextRow(Iterator)} will essentially perform the code above.</p>
  */
-public class RowMerger {
+public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
-  /**
-   * Reads the next {@link Row} from the responseIterator.
-   */
-  public static Row readNextRow(Iterator<ReadRowsResponse> responseIterator) {
-    while (true) {
-      Preconditions.checkState(responseIterator.hasNext(),
-        "End of stream marker encountered while merging a row.");
-
-      RowMerger rowMerger = new RowMerger();
-      while (responseIterator.hasNext() && !rowMerger.isRowCommitted()) {
-        rowMerger.addPartialRow(responseIterator.next());
+  public static List<Row> toRows(Iterable<ReadRowsResponse> responses) {
+    final ArrayList<Row> result = new ArrayList<>();
+    RowMerger rowMerger = new RowMerger(new StreamObserver<Row>() {
+      @Override
+      public void onNext(Row value) {
+        result.add(value);
       }
 
-      Preconditions.checkState(rowMerger.isRowCommitted(),
-        "End of stream marker encountered while merging a row.");
-
-      Row builtRow = rowMerger.buildRow();
-      // builtRow could be null if the row was deleted after the scan started.
-      if (builtRow != null) {
-        return builtRow;
-      } else if (!responseIterator.hasNext()) {
-        return null;
+      @Override
+      public void onError(Throwable t) {
+        if (t instanceof RuntimeException) {
+          throw (RuntimeException) t;
+        } else {
+          throw new IllegalStateException(t);
+        }
       }
+
+      @Override
+      public void onCompleted() {
+      }
+    });
+    for (ReadRowsResponse response : responses) {
+      rowMerger.onNext(response);
     }
+    rowMerger.onCompleted();
+    return result;
+  }
+
+  private final StreamObserver<Row> observer;
+
+  public RowMerger(StreamObserver<Row> observer) {
+    this.observer = observer;
   }
 
   private final Map<String, Family.Builder> familyMap = new HashMap<>();
-  private boolean committed = false;
   private ByteString currentRowKey;
 
   /**
    * Add a partial row response to this builder.
    */
-  public void addPartialRow(ReadRowsResponse partialRow) {
-    Preconditions.checkState(
-        currentRowKey == null || currentRowKey.equals(partialRow.getRowKey()),
-        "Interleaved ReadRowResponse messages are not supported.");
-
-    if (currentRowKey == null) {
-      currentRowKey = partialRow.getRowKey();
+  @Override
+  public void onNext(ReadRowsResponse partialRow) {
+    if (currentRowKey != null && !currentRowKey.equals(partialRow.getRowKey())){
+      onError(new IllegalStateException("Interleaved ReadRowResponse messages are not supported."));
     }
 
     for (Chunk chunk : partialRow.getChunksList()) {
-      Preconditions.checkState(!committed, "Encountered chunk after row commit.");
+      if (currentRowKey == null) {
+        currentRowKey = partialRow.getRowKey();
+      }
       switch (chunk.getChunkCase()) {
         case ROW_CONTENTS:
           merge(familyMap, chunk.getRowContents());
           break;
         case RESET_ROW:
-          familyMap.clear();
+          clear();
           break;
         case COMMIT_ROW:
-          committed = true;
+          emitRow();
+          clear();
           break;
         default:
-          throw new IllegalStateException(String.format("Unknown ChunkCase encountered %s",
-            chunk.getChunkCase()));
+          onError(new IllegalStateException(String.format("Unknown ChunkCase encountered %s",
+            chunk.getChunkCase())));
       }
     }
   }
 
-  /**
-   * Indicate whether a Chunk of type COMMIT_ROW been encountered.
-   */
-  public boolean isRowCommitted() {
-    return committed;
+  protected void clear() {
+    familyMap.clear();
+    currentRowKey = null;
+  }
+
+  @Override
+  public void onError(Throwable t) {
+    clear();
+    observer.onError(t);
+  }
+
+  @Override
+  public void onCompleted() {
+    if (!familyMap.isEmpty()) {
+      onError(
+          new IllegalStateException("End of stream marker encountered while merging a row."));
+    } else {
+      observer.onCompleted();
+    }
   }
 
   /**
@@ -124,21 +146,18 @@ public class RowMerger {
    *         return null
    * @throws IllegalStateException if the last Chunk was not a COMMIT_ROW.
    */
-  public @Nullable Row buildRow() {
-    Preconditions.checkState(committed,
-        "Cannot build a Row object if we have not yet encountered a COMMIT_ROW chunk.");
+  private void emitRow() {
     if (familyMap.isEmpty()) {
       // A chunk of a row could be partially read, but then deleted by a different operation.
       // It would result in a sequence like: [ROW_CONTENTS, ROW_CONTENTS, RESET_ROW, COMMIT_ROW].
-      // Return null in that case.
-      return null;
+      return;
     }
     Row.Builder currentRowBuilder = Row.newBuilder();
     currentRowBuilder.setKey(currentRowKey);
     for (Family.Builder builder : familyMap.values()) {
       currentRowBuilder.addFamilies(builder.build());
     }
-    return currentRowBuilder.build();
+    observer.onNext(currentRowBuilder.build());
   }
 
   // Merge newRowContents into the map of family builders, creating one if necessary.
