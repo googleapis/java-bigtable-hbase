@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters;
+package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
+
+import org.apache.hadoop.hbase.client.Operation;
 
 /**
- * Default implementation of {@link ReadHooks}.
+ * Interface used for Scan and Get operation adapters.
  */
-public class DefaultReadHooks implements ReadHooks {
-  private Function<ReadRowsRequest, ReadRowsRequest> preSendHook = Functions.identity();
-  @Override
-  public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
-    preSendHook = Functions.compose(newHook, preSendHook);
-  }
-
-  @Override
-  public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
-    return preSendHook.apply(readRowsRequest);
-  }
+public interface ReadOperationAdapter<T extends Operation> {
+  ReadRowsRequest.Builder adapt(T request, ReadHooks readHooks);
 }

@@ -25,8 +25,8 @@ import org.apache.hadoop.hbase.util.Pair;
 
 import com.google.bigtable.v1.RowFilter;
 import com.google.bigtable.v1.RowFilter.Interleave;
-import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
-import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper.QuoteMetaOutputStream;
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.QuoteMetaOutputStream;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;

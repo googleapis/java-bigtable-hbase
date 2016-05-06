@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters;
+package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.same;
@@ -25,6 +25,8 @@ import com.google.bigtable.v1.Cell;
 import com.google.bigtable.v1.Column;
 import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
+import com.google.cloud.bigtable.hbase.adapters.filters.BigtableWhileMatchResultScannerAdapter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Result;

@@ -22,7 +22,7 @@ import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.bigtable.v1.ReadRowsResponse.Chunk;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.RowAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;

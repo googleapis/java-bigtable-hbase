@@ -20,7 +20,12 @@ import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Increment;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.hbase.adapters.filters.BigtableWhileMatchResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.BigtableResultScannerAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
 
 /**
  * Manages all Adapters

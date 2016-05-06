@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters;
+package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.common.base.Function;
+import com.google.common.base.Functions;
 
 /**
- * Hooks for modifying a ReadRowsRequest before being sent to Cloud Bigtable.
- *
- * Note that it is expected that this will be extended to include post-read
- * hooks to transform Rows when appropriate.
+ * Default implementation of {@link ReadHooks}.
  */
-public interface ReadHooks {
+public class DefaultReadHooks implements ReadHooks {
+  private Function<ReadRowsRequest, ReadRowsRequest> preSendHook = Functions.identity();
+  @Override
+  public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
+    preSendHook = Functions.compose(newHook, preSendHook);
+  }
 
-  /**
-   * Add a Function that will modify the ReadRowsRequest before it is sent to Cloud Bigtable.
-   */
-  void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook);
-
-  /**
-   * Apply all pre-send hooks to the given request.
-   */
-  ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest);
+  @Override
+  public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
+    return preSendHook.apply(readRowsRequest);
+  }
 }

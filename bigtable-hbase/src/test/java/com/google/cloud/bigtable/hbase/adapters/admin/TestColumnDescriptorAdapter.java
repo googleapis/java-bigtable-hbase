@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters;
+package com.google.cloud.bigtable.hbase.adapters.admin;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -36,6 +36,7 @@ import com.google.bigtable.admin.table.v1.ColumnFamily;
 import com.google.bigtable.admin.table.v1.GcRule;
 import com.google.bigtable.admin.table.v1.GcRule.Intersection;
 import com.google.bigtable.admin.table.v1.GcRule.Union;
+import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.protobuf.Duration;
 
 /**

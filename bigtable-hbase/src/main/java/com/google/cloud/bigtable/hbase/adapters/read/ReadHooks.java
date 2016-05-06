@@ -13,15 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters;
+package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.bigtable.v1.ReadRowsRequest;
-
-import org.apache.hadoop.hbase.client.Operation;
+import com.google.common.base.Function;
 
 /**
- * Interface used for Scan and Get operation adapters.
+ * Hooks for modifying a ReadRowsRequest before being sent to Cloud Bigtable.
+ *
+ * Note that it is expected that this will be extended to include post-read
+ * hooks to transform Rows when appropriate.
  */
-public interface ReadOperationAdapter<T extends Operation> {
-  ReadRowsRequest.Builder adapt(T request, ReadHooks readHooks);
+public interface ReadHooks {
+
+  /**
+   * Add a Function that will modify the ReadRowsRequest before it is sent to Cloud Bigtable.
+   */
+  void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook);
+
+  /**
+   * Apply all pre-send hooks to the given request.
+   */
+  ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest);
 }

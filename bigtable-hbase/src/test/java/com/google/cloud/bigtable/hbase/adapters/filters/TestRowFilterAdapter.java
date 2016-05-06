@@ -30,7 +30,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.bigtable.v1.RowFilter;
-import com.google.cloud.bigtable.hbase.adapters.ReaderExpressionHelper;
+import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)

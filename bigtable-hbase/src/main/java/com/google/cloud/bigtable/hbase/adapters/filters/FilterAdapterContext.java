@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.cloud.bigtable.hbase.adapters.ReadHooks;
+import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;

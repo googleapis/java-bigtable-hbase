@@ -30,6 +30,8 @@ import com.google.bigtable.v1.ReadModifyWriteRowRequest;
 import com.google.bigtable.v1.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
+import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 
  /**
  * Adapts HBase Deletes, Gets, Scans, Puts, RowMutations, Appends and Increments to Bigtable requests.
