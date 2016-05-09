@@ -19,6 +19,7 @@ import java.io.Serializable;
 
 import com.google.api.client.util.Objects;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -59,6 +60,8 @@ public class BigtableOptions implements Serializable {
     private String zoneId;
     private String clusterId;
     private String userAgent;
+
+    private String instanceId;
 
     // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
     private String dataHost = BIGTABLE_DATA_HOST_DEFAULT;
@@ -132,6 +135,11 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
+    public Builder setInstanceId(String instanceId) {
+      this.instanceId = instanceId;
+      return this;
+    }
+
     public Builder setCredentialOptions(CredentialOptions credentialOptions) {
       this.credentialOptions = credentialOptions;
       return this;
@@ -184,6 +192,7 @@ public class BigtableOptions implements Serializable {
           projectId,
           zoneId,
           clusterId,
+          instanceId,
           credentialOptions,
           userAgent,
           retryOptions,
@@ -200,11 +209,13 @@ public class BigtableOptions implements Serializable {
   private final String projectId;
   private final String zoneId;
   private final String clusterId;
+  private final String instanceId;
   private final CredentialOptions credentialOptions;
   private final String userAgent;
   private final RetryOptions retryOptions;
   private final int dataChannelCount;
   private final BigtableClusterName clusterName;
+  private final BigtableInstanceName instanceName;
   private BulkOptions bulkOptions;
   private final boolean usePlaintextNegotiation;
 
@@ -218,11 +229,13 @@ public class BigtableOptions implements Serializable {
       projectId = null;
       zoneId = null;
       clusterId = null;
+      instanceId = null;
       credentialOptions = null;
       userAgent = null;
       retryOptions = null;
       dataChannelCount = 1;
       clusterName = null;
+      instanceName = null;
       usePlaintextNegotiation = false;
   }
 
@@ -234,6 +247,7 @@ public class BigtableOptions implements Serializable {
       String projectId,
       String zoneId,
       String clusterId,
+      String instanceId,
       CredentialOptions credentialOptions,
       String userAgent,
       RetryOptions retryOptions,
@@ -249,6 +263,7 @@ public class BigtableOptions implements Serializable {
     this.projectId = projectId;
     this.zoneId = zoneId;
     this.clusterId = clusterId;
+    this.instanceId = instanceId;
     this.credentialOptions = credentialOptions;
     this.userAgent = userAgent;
     this.retryOptions = retryOptions;
@@ -262,6 +277,13 @@ public class BigtableOptions implements Serializable {
       this.clusterName = new BigtableClusterName(getProjectId(), getZoneId(), getClusterId());
     } else {
       this.clusterName = null;
+    }
+
+    if (!Strings.isNullOrEmpty(projectId)
+        && !Strings.isNullOrEmpty(instanceId)) {
+      this.instanceName = new BigtableInstanceName(getProjectId(), getInstanceId());
+    } else {
+      this.instanceName = null;
     }
 
     LOG.debug("Connection Configuration: projectId: %s, zoneId: %s, clusterId: %s, data host %s, "
@@ -296,6 +318,10 @@ public class BigtableOptions implements Serializable {
 
   public String getClusterAdminHost() {
     return clusterAdminHost;
+  }
+
+  public String getInstanceId() {
+    return instanceId;
   }
 
   public int getPort() {
@@ -334,6 +360,10 @@ public class BigtableOptions implements Serializable {
 
   public BigtableClusterName getClusterName() {
     return clusterName;
+  }
+
+  public BigtableInstanceName getInstanceName() {
+    return instanceName;
   }
 
   public BulkOptions getBulkOptions() {
