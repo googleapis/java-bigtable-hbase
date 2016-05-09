@@ -70,20 +70,29 @@
       ]
     },
     {
-      "name": "invalid - bare commit implies ts=0",
+      "name": "bare commit implies ts=0",
       "chunks": [
         "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"value-VAL\"\ncommit_row: false\n",
         "commit_row: true\n"
       ],
       "results": [
         {
-          "rk": "",
-          "fm": "",
-          "qual": "",
+          "rk": "RK",
+          "fm": "A",
+          "qual": "C",
+          "ts": 100,
+          "value": "value-VAL",
+          "label": "",
+          "error": false
+        },
+        {
+          "rk": "RK",
+          "fm": "A",
+          "qual": "C",
           "ts": 0,
           "value": "",
           "label": "",
-          "error": true
+          "error": false
         }
       ]
     },
@@ -247,7 +256,7 @@
       ]
     },
     {
-      "name": "invalid - decreasing timestamp",
+      "name": "split cell, bare commit",
       "chunks": [
         "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
         "value: \"alue-VAL\"\ncommit_row: false\n",
@@ -255,13 +264,22 @@
       ],
       "results": [
         {
-          "rk": "",
-          "fm": "",
-          "qual": "",
+          "rk": "RK",
+          "fm": "A",
+          "qual": "C",
+          "ts": 100,
+          "value": "value-VAL",
+          "label": "",
+          "error": false
+        },
+        {
+          "rk": "RK",
+          "fm": "A",
+          "qual": "C",
           "ts": 0,
           "value": "",
           "label": "",
-          "error": true
+          "error": false
         }
       ]
     },
@@ -284,7 +302,7 @@
       ]
     },
     {
-      "name": "several splits",
+      "name": "split four ways",
       "chunks": [
         "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nlabels: \"L\"\nvalue: \"v\"\nvalue_size: 10\ncommit_row: false\n",
         "value: \"a\"\nvalue_size: 10\ncommit_row: false\n",
@@ -1116,6 +1134,43 @@
           "value": "",
           "label": "",
           "error": true
+        }
+      ]
+    },
+    {
+      "name": "empty cell chunk",
+      "chunks": [
+        "row_key: \"RK\"\nfamily_name: \u003c\n  value: \"A\"\n\u003e\nqualifier: \u003c\n  value: \"C\"\n\u003e\ntimestamp_micros: 100\nvalue: \"value-VAL\"\ncommit_row: false\n",
+        "commit_row: false\n",
+        "commit_row: true\n"
+      ],
+      "results": [
+        {
+          "rk": "RK",
+          "fm": "A",
+          "qual": "C",
+          "ts": 100,
+          "value": "value-VAL",
+          "label": "",
+          "error": false
+        },
+        {
+          "rk": "RK",
+          "fm": "A",
+          "qual": "C",
+          "ts": 0,
+          "value": "",
+          "label": "",
+          "error": false
+        },
+        {
+          "rk": "RK",
+          "fm": "A",
+          "qual": "C",
+          "ts": 0,
+          "value": "",
+          "label": "",
+          "error": false
         }
       ]
     }

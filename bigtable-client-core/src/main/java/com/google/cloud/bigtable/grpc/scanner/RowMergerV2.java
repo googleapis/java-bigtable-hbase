@@ -133,15 +133,7 @@ public class RowMergerV2 implements StreamObserver<ReadRowsResponse> {
           ByteString newRowKey = newChunk.getRowKey();
           Preconditions.checkState(newRowKey.isEmpty() || newRowKey.equals(rowInProgess.getRowKey()),
             "A commit is required between row keys");
-          CellIdentifier previousId = rowInProgess.currentId;
           rowInProgess.updateCurrentKey(newChunk);
-          Preconditions.checkState(
-              !previousId.equals(rowInProgess.currentId), "The cell key was not updated");
-          if (previousId.sameKeyFamilyAndQualifier(rowInProgess.currentId)) {
-            Preconditions.checkState(
-                previousId.timestampMicros < rowInProgess.currentId.timestampMicros,
-                "new timestamps must be higher");
-          }
           Preconditions.checkArgument(newChunk.getValueSize() == 0 || !isCommit(newChunk),
             "A row cannot be have a value size and be a commit row: " + newChunk);
         }
