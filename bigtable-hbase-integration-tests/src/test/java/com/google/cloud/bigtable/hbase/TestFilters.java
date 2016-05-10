@@ -1695,9 +1695,9 @@ public class TestFilters extends AbstractTest {
     byte[] value = Bytes.toBytes("Important data goes here");
 
     // 'bad' comes before 'fuzzy' alphabetically and 'other' comes after 'fuzzy'.
-    byte[] missKey1 = dataHelper.randomData("", "-bad-row-suffix");
-    byte[] missKey2 = dataHelper.randomData("", "-fuzzy-bad-row-suffix");
-    byte[] missKey3 = dataHelper.randomData("", "-other-row-suffix");
+    byte[] missKey1 = dataHelper.randomData("a", "-bad-row-suffix");
+    byte[] missKey2 = dataHelper.randomData("b", "-fuzzy-bad-row-suffix");
+    byte[] missKey3 = dataHelper.randomData("c", "-other-row-suffix");
 
     // dataHelper.randomData() adds 8 random characters between the prefix and suffix
     byte[] hitKey1 = dataHelper.randomData("a", rowSuffix);
@@ -1705,15 +1705,16 @@ public class TestFilters extends AbstractTest {
     byte[] hitKey3 = dataHelper.randomData("c", rowSuffix);
     byte[] hitKey4 = dataHelper.randomData("d", rowSuffix);
     StringBuilder filterString = new StringBuilder();
-    int size = 8 + rowSuffix.length();
+    final int prefixSize = 9;
+    int size = prefixSize + rowSuffix.length();
     byte[] filterBytes = new byte[size];
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < prefixSize; i++) {
       filterString.append("\\x00");
       filterBytes[i] = 1;
     }
     filterString.append(rowSuffix);
     for (int i = 0; i < rowSuffix.length(); i++) {
-      filterBytes[i + 8] = 0;
+      filterBytes[i + prefixSize] = 0;
     }
     FuzzyRowFilter fuzzyFilter = new FuzzyRowFilter(
       Arrays.asList(
