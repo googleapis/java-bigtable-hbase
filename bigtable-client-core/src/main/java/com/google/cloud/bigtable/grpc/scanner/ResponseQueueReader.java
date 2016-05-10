@@ -31,9 +31,9 @@ import io.grpc.stub.StreamObserver;
  */
 public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT> {
   protected final BlockingQueue<ResultQueueEntry<ResponseT>> resultQueue;
+  protected AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
   private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
-  private AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
 
   public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap) {
     this.resultQueue = new LinkedBlockingQueue<>(capacityCap);
