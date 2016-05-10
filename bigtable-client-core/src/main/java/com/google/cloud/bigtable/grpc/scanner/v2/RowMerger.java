@@ -60,12 +60,39 @@ import java.util.TreeMap;
  * rm.onComplete();
  * </pre>
  * <p>
- * When a complete row is found, {@link StreamObserver#onNext(Row)} will be called.
+ * When a complete row is found, {@link StreamObserver#onNext(Object)} will be called.
  * {@link StreamObserver#onError(Throwable)} will be called for
  * </p>
  */
 public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
+  public static List<Row> toRows(Iterable<ReadRowsResponse> responses) {
+    final ArrayList<Row> result = new ArrayList<>();
+    RowMerger rowMerger = new RowMerger(new StreamObserver<Row>() {
+      @Override
+      public void onNext(Row value) {
+        result.add(value);
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        if (t instanceof RuntimeException) {
+          throw (RuntimeException) t;
+        } else {
+          throw new IllegalStateException(t);
+        }
+      }
+
+      @Override
+      public void onCompleted() {
+      }
+    });
+    for (ReadRowsResponse response : responses) {
+      rowMerger.onNext(response);
+    }
+    rowMerger.onCompleted();
+    return result;
+  }
   /**
    * Encapsulates validation for different states based on the stream of the {@link CellChunk}.
    */
