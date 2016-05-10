@@ -17,39 +17,37 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.bigtable.v1.ReadRowsResponse;
-import com.google.bigtable.v1.Row;
-
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 /**
- * A {@link io.grpc.ClientCall.Listener} that translates between a {@link ReadRowsResponse} and a
- * {@link Row} {@link StreamObserver}.
+ * A {@link io.grpc.ClientCall.Listener} that wraps a {@link StreamObserver} and decrements
+ * outstandingRequestCount when a message is received.
  */
-public class ReadRowsResponseListener extends ClientCall.Listener<ReadRowsResponse> {
-  private RowMerger builder;
+public class OutstandingRequestCountListener<ResponseT> extends ClientCall.Listener<ResponseT> {
+  private StreamObserver<ResponseT> observer;
   private AtomicInteger outstandingRequestCount;
 
-  public ReadRowsResponseListener(StreamObserver<Row> observer, AtomicInteger outstandingRequestCount) {
+  public OutstandingRequestCountListener(StreamObserver<ResponseT> observer,
+      AtomicInteger outstandingRequestCount) {
     this.outstandingRequestCount = outstandingRequestCount;
-    this.builder = new RowMerger(observer);
+    this.observer = observer;
   }
 
   @Override
-  public void onMessage(ReadRowsResponse response) {
-    builder.onNext(response);
+  public void onMessage(ResponseT response) {
     outstandingRequestCount.decrementAndGet();
+    observer.onNext(response);
   }
 
   @Override
   public void onClose(Status status, Metadata trailers) {
     if (status.isOk()) {
-      builder.onCompleted();
+      observer.onCompleted();
     } else {
-      builder.onError(status.asRuntimeException());
+      observer.onError(status.asRuntimeException());
     }
   }
 }

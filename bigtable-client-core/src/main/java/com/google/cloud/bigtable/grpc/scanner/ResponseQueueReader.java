@@ -20,12 +20,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.bigtable.v1.ReadRowsResponse;
 import com.google.common.base.Preconditions;
 
-import io.grpc.ClientCall;
 import io.grpc.stub.StreamObserver;
 
 /**
@@ -33,24 +30,14 @@ import io.grpc.stub.StreamObserver;
  * complete Row objects from the partial ReadRowsResponse objects.
  */
 public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT> {
-  private final BlockingQueue<ResultQueueEntry<ResponseT>> resultQueue;
+  protected final BlockingQueue<ResultQueueEntry<ResponseT>> resultQueue;
   private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
   private AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
-  private final int capacityCap;
-  private final int batchRequestSize;
-  private AtomicInteger outstandingRequestCount;
-  private final ClientCall<?, ReadRowsResponse> call;
 
-  public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap,
-      AtomicInteger outstandingRequestCount, int batchRequestSize,
-      ClientCall<?, ReadRowsResponse> call) {
-    this.resultQueue = new LinkedBlockingQueue<>();
+  public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap) {
+    this.resultQueue = new LinkedBlockingQueue<>(capacityCap);
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
-    this.capacityCap = capacityCap;
-    this.outstandingRequestCount = outstandingRequestCount;
-    this.batchRequestSize = batchRequestSize;
-    this.call = call;
   }
 
   /**
@@ -74,14 +61,7 @@ public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT>
     return null;
   }
 
-  private ResultQueueEntry<ResponseT> getNext() throws IOException {
-    // If there are currently less than or equal to the batch request size, then ask gRPC to
-    // request more results in a batch. Batch requests are more efficient that reading one at
-    // a time.
-    if (!completionMarkerFound.get() && moreCanBeRequested()) {
-      call.request(batchRequestSize);
-      outstandingRequestCount.addAndGet(batchRequestSize);
-    }
+  protected ResultQueueEntry<ResponseT> getNext() throws IOException {
     ResultQueueEntry<ResponseT> queueEntry;
     try {
       queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
@@ -94,14 +74,6 @@ public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT>
     }
 
     return queueEntry;
-  }
-
-  /**
-   * Calculates whether or not a new batch should be requested.
-   * @return true if a new batch should be requested.
-   */
-  private boolean moreCanBeRequested() {
-    return outstandingRequestCount.get() + resultQueue.size() <= capacityCap - batchRequestSize;
   }
 
   public int available() {
