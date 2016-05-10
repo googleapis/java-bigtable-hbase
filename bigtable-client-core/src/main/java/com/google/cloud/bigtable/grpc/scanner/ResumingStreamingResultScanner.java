@@ -100,7 +100,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     return previous.concat(NEXT_ROW_SUFFIX);
   }
 
-  private final BigtableResultScannerFactory scannerFactory;
+  private final BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory;
   private final ReadRowsRequest originalRequest;
   private final RetryOptions retryOptions;
   private final RequestRestarter restarter;
@@ -118,7 +118,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   public ResumingStreamingResultScanner(
     RetryOptions retryOptions,
     ReadRowsRequest originalRequest,
-    BigtableResultScannerFactory scannerFactory) {
+    BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory) {
     this(retryOptions, originalRequest, scannerFactory, LOG);
   }
 
@@ -126,7 +126,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   ResumingStreamingResultScanner(
       RetryOptions retryOptions,
       ReadRowsRequest originalRequest,
-      BigtableResultScannerFactory scannerFactory,
+      BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory,
       Logger logger) {
     this.originalRequest = originalRequest;
     this.scannerFactory = scannerFactory;
