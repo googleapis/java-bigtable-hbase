@@ -1700,8 +1700,10 @@ public class TestFilters extends AbstractTest {
     byte[] missKey3 = dataHelper.randomData("", "-other-row-suffix");
 
     // dataHelper.randomData() adds 8 random characters between the prefix and suffix
-    byte[] hitKey1 = dataHelper.randomData("", rowSuffix);
-    byte[] hitKey2 = dataHelper.randomData("", rowSuffix);
+    byte[] hitKey1 = dataHelper.randomData("a", rowSuffix);
+    byte[] hitKey2 = dataHelper.randomData("b", rowSuffix);
+    byte[] hitKey3 = dataHelper.randomData("c", rowSuffix);
+    byte[] hitKey4 = dataHelper.randomData("d", rowSuffix);
     StringBuilder filterString = new StringBuilder();
     int size = 8 + rowSuffix.length();
     byte[] filterBytes = new byte[size];
@@ -1719,28 +1721,12 @@ public class TestFilters extends AbstractTest {
          Bytes.toBytesBinary(filterString.toString()),
          filterBytes)));
 
-    // The tests leave a lot of gunk in the tables.  Make sure that the row is the right length.
-    ByteArrayComparable sizeComparable =
-        new RegexStringComparator(String.format(".{%d,}+", size));
-//    Filter sizeFilter = new RowFilter(CompareFilter.CompareOp.EQUAL, sizeComparable);
-
-//    FilterList filters = new FilterList(sizeFilter, fuzzyFilter);
-
-//    Assert.assertEquals(
-//      ReturnCode.SEEK_NEXT_USING_HINT,
-//      filters.filterKeyValue(KeyValueUtil.createFirstOnRow(new byte[0])));
-//    Assert.assertEquals(
-//        ReturnCode.INCLUDE, filters.filterKeyValue(KeyValueUtil.createFirstOnRow(hitKey1)));
-//    Assert.assertEquals(
-//        ReturnCode.SEEK_NEXT_USING_HINT,
-//        filters.filterKeyValue(KeyValueUtil.createFirstOnRow(missKey1)));
-
     Scan scan = new Scan();
     scan.setFilter(fuzzyFilter);
 
     Table table = getTable();
     List<Put> puts = new ArrayList<>();
-    for (byte[] key : Arrays.asList(missKey1, missKey2, missKey3, hitKey1, hitKey2)) {
+    for (byte[] key : Arrays.asList(missKey1, missKey2, missKey3, hitKey1, hitKey2, hitKey3, hitKey4)) {
       puts.add(new Put(key).addColumn(COLUMN_FAMILY, qualA, value));
     }
     table.put(puts);
@@ -1748,6 +1734,8 @@ public class TestFilters extends AbstractTest {
     try (ResultScanner scanner = table.getScanner(scan)) {
       assertNextEquals(scanner, hitKey1);
       assertNextEquals(scanner, hitKey2);
+      assertNextEquals(scanner, hitKey3);
+      assertNextEquals(scanner, hitKey4);
       Assert.assertNull(scanner.next());
     }
   }
