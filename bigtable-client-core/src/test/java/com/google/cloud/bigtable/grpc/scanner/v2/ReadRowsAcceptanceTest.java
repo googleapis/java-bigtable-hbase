@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.scanner;
+package com.google.cloud.bigtable.grpc.scanner.v2;
 
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
+import com.google.cloud.bigtable.grpc.scanner.v2.RowMerger;
 import com.google.bigtable.v2.Row;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.MoreObjects;
@@ -182,7 +183,7 @@ public class ReadRowsAcceptanceTest {
   }
 
   private void addResponses(List<Row> responses, List<Throwable> exceptions) throws IOException {
-    RowMergerV2 rowMerger = createRowMerger(responses, exceptions);
+    RowMerger rowMerger = createRowMerger(responses, exceptions);
     ReadRowsResponse.Builder responseBuilder = ReadRowsResponse.newBuilder();
     for (String chunkStr : testCase.chunks) {
       CellChunk.Builder ccBuilder = CellChunk.newBuilder();
@@ -195,9 +196,9 @@ public class ReadRowsAcceptanceTest {
     }
   }
 
-  private static RowMergerV2 createRowMerger(
+  private static RowMerger createRowMerger(
       final List<Row> responses, final List<Throwable> exceptions) {
-    return new RowMergerV2(
+    return new RowMerger(
         new StreamObserver<Row>() {
 
           @Override

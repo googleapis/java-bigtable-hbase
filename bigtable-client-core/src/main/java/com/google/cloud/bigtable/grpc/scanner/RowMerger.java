@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +44,7 @@ import io.grpc.stub.StreamObserver;
  * Row r = rm.buildRow();
  * </pre>
  *
- * <p> {@link RowMerger#readNextRow(Iterator)} will essentially perform the code above.</p>
+ * <p> {@link RowMerger#toRows(Iterable)} will essentially perform the code above.</p>
  */
 public class RowMerger implements StreamObserver<ReadRowsResponse> {
 

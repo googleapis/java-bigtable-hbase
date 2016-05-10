@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.scanner;
+package com.google.cloud.bigtable.grpc.scanner.v2;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
@@ -24,6 +24,7 @@ import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
+import com.google.cloud.bigtable.grpc.scanner.v2.RowMerger;
 import com.google.bigtable.v2.Row;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;
@@ -41,7 +42,7 @@ import io.grpc.stub.StreamObserver;
 import java.util.Arrays;
 
 @RunWith(JUnit4.class)
-public class RowMergerV2Test {
+public class RowMergerTest {
 
   @Mock
   StreamObserver<Row> observer;
@@ -55,7 +56,7 @@ public class RowMergerV2Test {
   public void testOneCellRow() {
     CellChunk cellChunk1 = createCell("row_key1", "family", "qualifier", "value", 1, true);
     CellChunk cellChunk2 = createCell("row_key2", "family", "qualifier", "value", 1, true);
-    RowMergerV2 underTest = new RowMergerV2(observer);
+    RowMerger underTest = new RowMerger(observer);
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk1).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
     verify(observer, times(1)).onNext(eq(toRow(cellChunk1)));
@@ -67,7 +68,7 @@ public class RowMergerV2Test {
     CellChunk cellChunk1 = createCell("row_key1", "family", "qualifier", "value", 1, false);
     CellChunk cellChunk2 = createCell(null, null, "qualifier2", "value2", 1, false);
     CellChunk cellChunk3 = createCell(null, null, null, "value3", 2, true);
-    RowMergerV2 underTest = new RowMergerV2(observer);
+    RowMerger underTest = new RowMerger(observer);
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk1).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk3).build());
@@ -94,7 +95,7 @@ public class RowMergerV2Test {
             .setValueSize("value".length())
             .build();
     CellChunk cellChunk2 = createCell(null, null, null, "alue", 1, true);
-    RowMergerV2 underTest = new RowMergerV2(observer);
+    RowMerger underTest = new RowMerger(observer);
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk1).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
     
@@ -121,7 +122,7 @@ public class RowMergerV2Test {
   public void testSimpleReset() {
     CellChunk cellChunk1 = createCell("row_key1", "family", "qualifier", "value", 1, false);
     CellChunk cellChunk2 = createCell("row_key2", "family", "qualifier", "value", 1, true);
-    RowMergerV2 underTest = new RowMergerV2(observer);
+    RowMerger underTest = new RowMerger(observer);
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk1).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(CellChunk.newBuilder().setResetRow(true)).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
