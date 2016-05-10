@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.scanner;
+package com.google.cloud.bigtable.grpc.scanner.v2;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.primitives.UnsignedBytes;
@@ -64,7 +64,7 @@ import java.util.TreeMap;
  * {@link StreamObserver#onError(Throwable)} will be called for
  * </p>
  */
-public class RowMergerV2 implements StreamObserver<ReadRowsResponse> {
+public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
   /**
    * Encapsulates validation for different states based on the stream of the {@link CellChunk}.
@@ -407,7 +407,7 @@ public class RowMergerV2 implements StreamObserver<ReadRowsResponse> {
   private RowInProgress rowInProgress;
   private boolean complete;
 
-  public RowMergerV2(StreamObserver<Row> observer) {
+  public RowMerger(StreamObserver<Row> observer) {
     this.observer = observer;
   }
 
