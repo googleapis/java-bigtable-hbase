@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
+import com.google.protobuf.ByteString;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
@@ -1745,10 +1746,7 @@ public class TestFilters extends AbstractTest {
       throws IOException {
     Result current = scanner.next();
     Assert.assertNotNull(current);
-    Assert.assertEquals(
-        String.format("Expected '%s' but got '%s'", Bytes.toString(expectedKey),
-            Bytes.toString(current.getRow())),
-        expectedKey, current.getRow());
+    Assert.assertEquals(Bytes.toString(expectedKey),  Bytes.toString(current.getRow()));
   }
 
   @Test
