@@ -27,7 +27,6 @@ import io.grpc.ClientCall;
  * complete Row objects from the partial ReadRowsResponse objects.
  */
 public class RequestCountManagingResponseQueueReader<ResponseT> extends ResponseQueueReader<ResponseT> {
-  private AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
   private final int capacityCap;
   private final int batchRequestSize;
   private AtomicInteger outstandingRequestCount;
