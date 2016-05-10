@@ -15,7 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
+import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
@@ -43,6 +44,7 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.NullComparator;
@@ -59,6 +61,7 @@ import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -80,7 +83,7 @@ public class TestFilters extends AbstractTest {
     // Initialize data
     int numColumns = 20;
     int numColumnsToFilter = 10;
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = new byte[numColumns][];
     byte[][][] values = new byte[2][][];
@@ -112,6 +115,10 @@ public class TestFilters extends AbstractTest {
     table.close();
   }
 
+  private Table getTable() throws IOException {
+    return getConnection().getTable(TABLE_NAME);
+  }
+
   /**
    * Requirement 9.2 - ColumnPaginationFilter - same as ColumnCountGetFilter, but with an offset
    * too; offset can be a # of cols, or can be a particular qualifier byte[] value (inclusive)
@@ -122,7 +129,7 @@ public class TestFilters extends AbstractTest {
     int numColumns = 20;
     int numColumnsToFilter = 8;
     int offset = 5;
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = new byte[numColumns][];
     byte[][][] values = new byte[2][][];
@@ -160,7 +167,7 @@ public class TestFilters extends AbstractTest {
   @Test
   @Category(KnownGap.class)
   public void testColumnPaginationFilter_StartingAtParticularQualifier() throws Exception {
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testrow-");
     Put put = new Put(rowKey);
     byte[] value = Bytes.toBytes("someval");
@@ -195,7 +202,7 @@ public class TestFilters extends AbstractTest {
     int numColumns = 20;
     int numColumnsToFilter = 8;
     int offset = 5;
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     String rowPrefix = "testColumnFilterScan" + RandomStringUtils.randomAlphanumeric(5);
     String endRowKey = "testColumnFilterScan" + "zzzzzzz";
     byte[][] rowKeys = dataHelper.randomData(rowPrefix + "-", numRows);
@@ -240,7 +247,7 @@ public class TestFilters extends AbstractTest {
     int numGoodCols = 5;
     int numBadCols = 20;
     String goodColPrefix = "bueno";
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numBadCols; ++i) {
@@ -274,7 +281,7 @@ public class TestFilters extends AbstractTest {
   @Test
   public void testColumnRangeFilter() throws Exception {
     // Initialize
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     put.addColumn(COLUMN_FAMILY, Bytes.toBytes("A"), Bytes.toBytes("someval"));
@@ -331,7 +338,7 @@ public class TestFilters extends AbstractTest {
   @Category(KnownGap.class)
   public void testRowFilterBinaryComparator() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     String rowKeyPrefix = "testRowFilter-" + RandomStringUtils.randomAlphabetic(10);
     byte[] rowKey1 = Bytes.toBytes(rowKeyPrefix + "A");
     byte[] rowKey2 = Bytes.toBytes(rowKeyPrefix + "AA");
@@ -396,7 +403,7 @@ public class TestFilters extends AbstractTest {
   @Test
   public void testRowFilterBinaryComparator_Equals() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     String rowKeyPrefix = "testRowFilter-" + RandomStringUtils.randomAlphabetic(10);
     byte[] rowKey1 = Bytes.toBytes(rowKeyPrefix + "A");
     byte[] rowKey2 = Bytes.toBytes(rowKeyPrefix + "AA");
@@ -428,7 +435,7 @@ public class TestFilters extends AbstractTest {
   @Category(KnownGap.class)
   public void testRowFilterBinaryPrefixComparator() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     String rowKeyPrefix = "testRowFilter-" + RandomStringUtils.randomAlphabetic(10);
     byte[] rowA = Bytes.toBytes(rowKeyPrefix + "A");
     byte[] rowAA = Bytes.toBytes(rowKeyPrefix + "AA");
@@ -513,7 +520,7 @@ public class TestFilters extends AbstractTest {
   @Category(KnownGap.class)
   public void testRowFilterBitComparatorXOR() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] row0000 = Bytes.fromHex("00");
     byte[] row0101 = Bytes.fromHex("55");
     byte[] row1010 = Bytes.fromHex("aa");
@@ -593,7 +600,7 @@ public class TestFilters extends AbstractTest {
   @Category(KnownGap.class)
   public void testRowFilterBitComparatorAND() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] row0000 = Bytes.fromHex("00");
     byte[] row0101 = Bytes.fromHex("55");
     byte[] row1010 = Bytes.fromHex("aa");
@@ -673,7 +680,7 @@ public class TestFilters extends AbstractTest {
   @Category(KnownGap.class)
   public void testRowFilterBitComparatorOR() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] row0000 = Bytes.fromHex("00");
     byte[] row0101 = Bytes.fromHex("55");
     byte[] row1010 = Bytes.fromHex("aa");
@@ -752,7 +759,7 @@ public class TestFilters extends AbstractTest {
   @Category(KnownGap.class)
   public void testRowFilterNullComparator() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     String rowKeyPrefix = "testRowFilter-" + RandomStringUtils.randomAlphabetic(10);
     byte[] rowKeyA = Bytes.toBytes(rowKeyPrefix + "A");
     byte[] rowKeyB = Bytes.toBytes(rowKeyPrefix + "B");
@@ -814,7 +821,7 @@ public class TestFilters extends AbstractTest {
   @Category(KnownGap.class)
   public void testRowFilterSubstringComparator() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowab = Bytes.toBytes("ab");  // Substring match, but out of row range
     byte[] rowA = Bytes.toBytes("A");
     byte[] rowAB= Bytes.toBytes("AB");
@@ -894,7 +901,7 @@ public class TestFilters extends AbstractTest {
   @Category(KnownGap.class)
   public void testRowFilterRegexStringComparator() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] row0 = Bytes.toBytes("0");  // Substring match, but out of row range
     byte[] rowGoodIP1 = Bytes.toBytes("192.168.2.13");
     byte[] rowGoodIP2 = Bytes.toBytes("8.8.8.8");
@@ -982,7 +989,7 @@ public class TestFilters extends AbstractTest {
   @Test
   public void testRowFilterRegexStringComparator_Equals() throws Exception {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] row0 = Bytes.toBytes("0");  // Substring match, but out of row range
     byte[] rowGoodIP1 = Bytes.toBytes("192.168.2.13");
     byte[] rowGoodIP2 = Bytes.toBytes("8.8.8.8");
@@ -1025,7 +1032,7 @@ public class TestFilters extends AbstractTest {
   @Category(KnownGap.class)
   public void testDeterministRowRegexFilter() throws IOException {
     // Initialize data
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] row0 = Bytes.toBytes("0");  // Substring match, but out of row range
     byte[] rowGoodIP1 = Bytes.toBytes("192.168.2.13");
     byte[] rowGoodIP2 = Bytes.toBytes("8.8.8.8");
@@ -1108,7 +1115,7 @@ public class TestFilters extends AbstractTest {
     byte[] valueA = dataHelper.randomData("ValueA{");
     byte[] valueB = dataHelper.randomData("ValueB}");
     byte[] valueC = dataHelper.randomData("ValueC@");
-    try (Table table = getConnection().getTable(TABLE_NAME)) {
+    try (Table table = getTable()) {
       table.put(Arrays.asList(
         new Put(rowKeyA).addColumn(COLUMN_FAMILY, qual, valueA),
         new Put(rowKeyB).addColumn(COLUMN_FAMILY, qual, valueB),
@@ -1262,7 +1269,7 @@ public class TestFilters extends AbstractTest {
     int numGoodCols = 5;
     int numBadCols = 20;
     String goodValue = "includeThisValue";
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numBadCols; ++i) {
@@ -1295,7 +1302,7 @@ public class TestFilters extends AbstractTest {
     // Initialize
     int numCols = 5;
     String columnValue = "includeThisValue";
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numCols; ++i) {
@@ -1318,7 +1325,7 @@ public class TestFilters extends AbstractTest {
     // Initialize
     int numCols = 5;
     String goodValue = "includeThisValue";
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numCols; ++i) {
@@ -1346,7 +1353,7 @@ public class TestFilters extends AbstractTest {
   public void testMultipleColumnPrefixes() throws IOException {
     // Initialize
     String goodValue = "includeThisValue";
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     put.addColumn(COLUMN_FAMILY, dataHelper.randomData("a-"), Bytes.toBytes(goodValue));
@@ -1381,7 +1388,7 @@ public class TestFilters extends AbstractTest {
     // Initialize
     int numCols = 5;
     String goodValue = "includeThisValue";
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testRow-");
     Put put = new Put(rowKey);
     for (int i = 0; i < numCols; ++i) {
@@ -1425,7 +1432,7 @@ public class TestFilters extends AbstractTest {
     byte[] value1_2 = dataHelper.randomData("val1.2");
     byte[] value2_1 = dataHelper.randomData("val2.1");
 
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     Put put = new Put(rowKey1);
     put.addColumn(COLUMN_FAMILY, qualifier1, value1_1);
     put.addColumn(COLUMN_FAMILY, qualifier2, value2_1);
@@ -1492,7 +1499,7 @@ public class TestFilters extends AbstractTest {
     byte[][] rowKeys = dataHelper.randomData("trandA", 100);
     byte[] qualifier = dataHelper.randomData("trandq-");
     byte[] value = dataHelper.randomData("value-");
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
 
     List<Put> puts = new ArrayList<>();
     for (byte[] rowKey : rowKeys) {
@@ -1522,7 +1529,7 @@ public class TestFilters extends AbstractTest {
     byte[] value1_1 = dataHelper.randomData("val1.1");
     byte[] value2_1 = dataHelper.randomData("val2.1");
 
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     Put put = new Put(rowKey1);
     put.addColumn(COLUMN_FAMILY, qualifier1, value1_1);
     put.addColumn(COLUMN_FAMILY, qualifier2, value2_1);
@@ -1562,7 +1569,7 @@ public class TestFilters extends AbstractTest {
           new Put(rowKey)
               .addColumn(COLUMN_FAMILY, Bytes.toBytes("q1"), Bytes.toBytes("val1")));
     }
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     table.put(puts);
 
     PrefixFilter filter = new PrefixFilter(Bytes.toBytes(prefix));
@@ -1587,7 +1594,7 @@ public class TestFilters extends AbstractTest {
     byte[] qualBValue = dataHelper.randomData("qualB-value");
     byte[] qualC = dataHelper.randomData("qualC");
     byte[] qualCValue = dataHelper.randomData("qualC-value");
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     Put put = new Put(rowKey);
     put.addColumn(COLUMN_FAMILY, qualA, qualAValue);
     put.addColumn(COLUMN_FAMILY, qualB, qualBValue);
@@ -1648,7 +1655,7 @@ public class TestFilters extends AbstractTest {
     byte[][] rowKeys = dataHelper.randomData("pageFilter-", 100);
     byte[] qualA = dataHelper.randomData("qualA");
     byte[] value = Bytes.toBytes("Important data goes here");
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     for (byte[] rowKey : rowKeys) {
       Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qualA, value);
       table.put(put);
@@ -1670,6 +1677,89 @@ public class TestFilters extends AbstractTest {
     try (ResultScanner scanner = table.getScanner(scan)) {
       Assert.assertEquals(20,  Iterators.size(scanner.iterator()));
     }
+  }
+
+  /**
+   * Test {@link FuzzyRowFilter} to make sure that a String that matches the following regex is
+   * matched:
+   * '.{8}-fuzzy-row-suffix'
+   */
+  @Test
+  public void testFuzzyRowFilter() throws IOException {
+    if (!IntegrationTests.isBigtable()) {
+      // HBase doesn't seem to work as expected.  Test to make sure that bigtable does the right thing.
+      return;
+    }
+    final String rowSuffix = "-fuzzy-row-suffix";
+    final byte[] qualA = dataHelper.randomData("qualA");
+    byte[] value = Bytes.toBytes("Important data goes here");
+
+    // 'bad' comes before 'fuzzy' alphabetically and 'other' comes after 'fuzzy'.
+    byte[] missKey1 = dataHelper.randomData("", "-bad-row-suffix");
+    byte[] missKey2 = dataHelper.randomData("", "-fuzzy-bad-row-suffix");
+    byte[] missKey3 = dataHelper.randomData("", "-other-row-suffix");
+
+    // dataHelper.randomData() adds 8 random characters between the prefix and suffix
+    byte[] hitKey1 = dataHelper.randomData("", rowSuffix);
+    byte[] hitKey2 = dataHelper.randomData("", rowSuffix);
+    StringBuilder filterString = new StringBuilder();
+    int size = 8 + rowSuffix.length();
+    byte[] filterBytes = new byte[size];
+    for (int i = 0; i < 8; i++) {
+      filterString.append("\\x00");
+      filterBytes[i] = 1;
+    }
+    filterString.append(rowSuffix);
+    for (int i = 0; i < rowSuffix.length(); i++) {
+      filterBytes[i + 8] = 0;
+    }
+    FuzzyRowFilter fuzzyFilter = new FuzzyRowFilter(
+      Arrays.asList(
+       new Pair<byte[], byte[]>(
+         Bytes.toBytesBinary(filterString.toString()),
+         filterBytes)));
+
+    // The tests leave a lot of gunk in the tables.  Make sure that the row is the right length.
+    ByteArrayComparable sizeComparable =
+        new RegexStringComparator(String.format(".{%d,}+", size));
+//    Filter sizeFilter = new RowFilter(CompareFilter.CompareOp.EQUAL, sizeComparable);
+
+//    FilterList filters = new FilterList(sizeFilter, fuzzyFilter);
+
+//    Assert.assertEquals(
+//      ReturnCode.SEEK_NEXT_USING_HINT,
+//      filters.filterKeyValue(KeyValueUtil.createFirstOnRow(new byte[0])));
+//    Assert.assertEquals(
+//        ReturnCode.INCLUDE, filters.filterKeyValue(KeyValueUtil.createFirstOnRow(hitKey1)));
+//    Assert.assertEquals(
+//        ReturnCode.SEEK_NEXT_USING_HINT,
+//        filters.filterKeyValue(KeyValueUtil.createFirstOnRow(missKey1)));
+
+    Scan scan = new Scan();
+    scan.setFilter(fuzzyFilter);
+
+    Table table = getTable();
+    List<Put> puts = new ArrayList<>();
+    for (byte[] key : Arrays.asList(missKey1, missKey2, missKey3, hitKey1, hitKey2)) {
+      puts.add(new Put(key).addColumn(COLUMN_FAMILY, qualA, value));
+    }
+    table.put(puts);
+
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      assertNextEquals(scanner, hitKey1);
+      assertNextEquals(scanner, hitKey2);
+      Assert.assertNull(scanner.next());
+    }
+  }
+
+  private static void assertNextEquals(ResultScanner scanner, byte expectedKey[])
+      throws IOException {
+    Result current = scanner.next();
+    Assert.assertNotNull(current);
+    Assert.assertEquals(
+        String.format("Expected '%s' but got '%s'", Bytes.toString(expectedKey),
+            Bytes.toString(current.getRow())),
+        expectedKey, current.getRow());
   }
 
   @Test
@@ -1706,7 +1796,7 @@ public class TestFilters extends AbstractTest {
 
   private Table addDataForTesting(String rowKeyPrefix, byte[] qualA)
       throws IOException {
-    Table table = getConnection().getTable(TABLE_NAME);
+    Table table = getTable();
     List<Put> puts = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       String indexStr = String.valueOf(i);
