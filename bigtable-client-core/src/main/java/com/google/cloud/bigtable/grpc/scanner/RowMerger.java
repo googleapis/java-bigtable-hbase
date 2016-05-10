@@ -140,10 +140,8 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   /**
    * Construct a row from previously seen partial rows. This method may only be invoked when
    * isRowCommitted returns true indicating a COMMIT_ROW chunk has been encountered without a
-   * RESET_ROW.
-   * @return a Row if there was a Chunk with ROW_CONTENTS without a subsequent RESET_ROW. Otherwise,
-   *         return null
-   * @throws IllegalStateException if the last Chunk was not a COMMIT_ROW.
+   * RESET_ROW. Calls {@link StreamObserver#onNext(Object)} a Row if there was a Chunk with
+   * ROW_CONTENTS without a subsequent RESET_ROW. Otherwise, return null
    */
   private void emitRow() {
     if (familyMap.isEmpty()) {

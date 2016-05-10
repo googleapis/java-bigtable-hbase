@@ -16,24 +16,26 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
 
 import io.grpc.ClientCall;
 
 /**
- * Helper to read a queue of ResultQueueEntries and use the RowMergers to reconstruct
- * complete Row objects from the partial ReadRowsResponse objects.
+ * An extension of {@link ResponseQueueReader} that will request more rows in batch.
  */
-public class RequestCountManagingResponseQueueReader<ResponseT> extends ResponseQueueReader<ResponseT> {
+public class RequestCountManagingResponseQueueReader<ResponseT>
+    extends ResponseQueueReader<ResponseT> {
   private final int capacityCap;
   private final int batchRequestSize;
   private AtomicInteger outstandingRequestCount;
   private final ClientCall<?, ?> call;
 
-  public RequestCountManagingResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap,
-      AtomicInteger outstandingRequestCount, int batchRequestSize, ClientCall<?, ?> call) {
+  public RequestCountManagingResponseQueueReader(
+      int readPartialRowTimeoutMillis,
+      int capacityCap,
+      AtomicInteger outstandingRequestCount,
+      int batchRequestSize,
+      ClientCall<?, ?> call) {
     super(readPartialRowTimeoutMillis, capacityCap);
     this.capacityCap = capacityCap;
     this.outstandingRequestCount = outstandingRequestCount;
@@ -41,6 +43,7 @@ public class RequestCountManagingResponseQueueReader<ResponseT> extends Response
     this.call = call;
   }
 
+  @Override
   protected ResultQueueEntry<ResponseT> getNext() throws IOException {
     // If there are currently less than or equal to the batch request size, then ask gRPC to
     // request more results in a batch. Batch requests are more efficient that reading one at
@@ -49,7 +52,6 @@ public class RequestCountManagingResponseQueueReader<ResponseT> extends Response
       call.request(batchRequestSize);
       outstandingRequestCount.addAndGet(batchRequestSize);
     }
-
     return super.getNext();
   }
 
