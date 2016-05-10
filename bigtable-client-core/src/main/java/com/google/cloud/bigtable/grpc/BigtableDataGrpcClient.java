@@ -50,7 +50,8 @@ import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
-import com.google.cloud.bigtable.grpc.scanner.ReadRowsResponseListener;
+import com.google.cloud.bigtable.grpc.scanner.OutstandingRequestCountListener;
+import com.google.cloud.bigtable.grpc.scanner.RequestCountManagingResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
@@ -349,14 +350,16 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     int timeout = retryOptions.getReadPartialRowTimeoutMillis();
     AtomicInteger outstandingRequestCount = new AtomicInteger(batchRequestSize);
 
-    ResponseQueueReader<Row> responseQueueReader = new ResponseQueueReader<>(timeout,
-        streamingBufferSize, outstandingRequestCount, batchRequestSize, readRowsCall);
-    ReadRowsResponseListener listener =
-        new ReadRowsResponseListener(responseQueueReader, outstandingRequestCount);
+    ResponseQueueReader<Row> responseQueueReader = new RequestCountManagingResponseQueueReader<>(
+        timeout, streamingBufferSize, outstandingRequestCount, batchRequestSize, readRowsCall);
+
+    RowMerger rowMerger = new RowMerger(responseQueueReader);
+    ClientCall.Listener<ReadRowsResponse> listener =
+        new OutstandingRequestCountListener<ReadRowsResponse>(rowMerger, outstandingRequestCount);
     asyncUtilities.asyncServerStreamingCall(readRowsCall, request, listener);
 
-    CancellationToken cancellationToken = createCancellationToken(readRowsCall);
-    return new StreamingBigtableResultScanner(responseQueueReader, cancellationToken);
+    return new StreamingBigtableResultScanner(responseQueueReader,
+        createCancellationToken(readRowsCall));
   }
 
   private CancellationToken
