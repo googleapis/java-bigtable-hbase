@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnit4.class)
@@ -37,7 +38,7 @@ public class TestPutAdapter {
   protected final DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   @Test
-  public void testSingleCellIsConverted() {
+  public void testSingleCellIsConverted() throws IOException {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family = dataHelper.randomData("f");
     byte[] qualifier = dataHelper.randomData("qual");
@@ -62,10 +63,19 @@ public class TestPutAdapter {
         TimeUnit.MILLISECONDS.toMicros(timestamp),
         setCell.getTimestampMicros());
     Assert.assertArrayEquals(value, setCell.getValue().toByteArray());
+
+    testTwoWay(hbasePut, adapter);
+  }
+
+  private void testTwoWay(Put put, PutAdapter adapter) throws IOException {
+    MutateRowRequest firstAdapt = adapter.adapt(put).build();
+    // mutation -> put -> mutation;
+    MutateRowRequest secondAdapt = adapter.adapt(adapter.adapt(firstAdapt)).build();
+    Assert.assertEquals(firstAdapt, secondAdapt);
   }
 
   @Test
-  public void testMultipleCellsInOneFamilyAreConverted() {
+  public void testMultipleCellsInOneFamilyAreConverted() throws IOException {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
@@ -102,10 +112,12 @@ public class TestPutAdapter {
         TimeUnit.MILLISECONDS.toMicros(timestamp2),
         setCell2.getTimestampMicros());
     Assert.assertArrayEquals(value2, setCell2.getValue().toByteArray());
+
+    testTwoWay(hbasePut, adapter);
   }
 
   @Test
-  public void testMultipleCellsInMultipleFamiliesAreConverted() {
+  public void testMultipleCellsInMultipleFamiliesAreConverted() throws IOException {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family1 = dataHelper.randomData("f1");
     byte[] family2 = dataHelper.randomData("f2");
@@ -143,10 +155,12 @@ public class TestPutAdapter {
         TimeUnit.MILLISECONDS.toMicros(timestamp2),
         setCell2.getTimestampMicros());
     Assert.assertArrayEquals(value2, setCell2.getValue().toByteArray());
+
+    testTwoWay(hbasePut, adapter);
   }
 
   @Test
-  public void testUnsetTimestampsArePopulated() {
+  public void testUnsetTimestampsArePopulated() throws IOException {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family1 = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
@@ -169,10 +183,12 @@ public class TestPutAdapter {
     Assert.assertTrue(startTimeMillis * 1000 <= setCell.getTimestampMicros());
     Assert.assertTrue(setCell.getTimestampMicros() <= System.currentTimeMillis() * 1000);
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
+
+    testTwoWay(hbasePut, adapter);
   }
 
   @Test
-  public void testUnsetTimestampsAreNotPopulated() {
+  public void testUnsetTimestampsAreNotPopulated() throws IOException {
     PutAdapter adapter = new PutAdapter(-1, false);
 
     byte[] row = dataHelper.randomData("rk-");
@@ -195,6 +211,8 @@ public class TestPutAdapter {
     Assert.assertArrayEquals(qualifier1, setCell.getColumnQualifier().toByteArray());
     Assert.assertEquals(-1, setCell.getTimestampMicros());
     Assert.assertArrayEquals(value1, setCell.getValue().toByteArray());
+
+    testTwoWay(hbasePut, adapter);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -205,7 +223,7 @@ public class TestPutAdapter {
   }
 
   @Test
-  public void testRetry(){
+  public void testRetry() throws IOException{
     byte[] row = dataHelper.randomData("rk-");
     byte[] family1 = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
@@ -218,5 +236,6 @@ public class TestPutAdapter {
 
     // Is the Put retryable?
     Assert.assertTrue(BigtableDataGrpcClient.IS_RETRYABLE_MUTATION.apply(request));
+    testTwoWay(hbasePut, adapter);
   }
 }

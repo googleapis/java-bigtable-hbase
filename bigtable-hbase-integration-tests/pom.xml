@@ -89,6 +89,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                                     </systemPropertyVariables>
+                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -107,8 +108,7 @@ limitations under the License.
                 <dependency>
                     <groupId>io.netty</groupId>
                     <artifactId>netty-tcnative-boringssl-static</artifactId>
-                    <version>1.1.33.Fork13</version>
-                    <classifier>${os.detected.classifier}</classifier>
+                    <version>1.1.33.Fork16</version>
                 </dependency>
             </dependencies>
             <build>
@@ -139,6 +139,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                                     </systemPropertyVariables>
+                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -194,6 +195,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                                     </systemPropertyVariables>
+                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -363,14 +365,6 @@ limitations under the License.
         </dependency>
     </dependencies>
     <build>
-        <extensions>
-            <!-- Use os-maven-plugin to initialize the "os.detected" properties -->
-            <extension>
-                <groupId>kr.motd.maven</groupId>
-                <artifactId>os-maven-plugin</artifactId>
-                <version>1.4.1.Final</version>
-            </extension>
-        </extensions>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

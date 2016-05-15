@@ -179,8 +179,7 @@ public class CloudBigtableIOIntegrationTest {
   }
 
   private void checkTableRowCountViaDataflowResultReader(TableName tableName, int rowCount) throws Exception {
-    CloudBigtableScanConfiguration configuration = new CloudBigtableScanConfiguration(projectId,
-        zoneId, clusterId, tableName.getNameAsString(), new Scan());
+    CloudBigtableScanConfiguration configuration = createConfig(tableName);
     BoundedSource<Result> source = CloudBigtableIO.read(configuration);
     List<? extends BoundedSource<Result>> splits = source.splitIntoBundles(1 << 20, null);
     int count = 0;
@@ -193,6 +192,11 @@ public class CloudBigtableIOIntegrationTest {
       }
     }
     Assert.assertEquals(rowCount, count);
+  }
+
+  protected CloudBigtableScanConfiguration createConfig(TableName tableName) {
+    return new CloudBigtableScanConfiguration.Builder().withProjectId(projectId).withZoneId(zoneId)
+        .withClusterId(clusterId).withTableId(tableName.getNameAsString()).build();
   }
 
   @Test
@@ -210,8 +214,7 @@ public class CloudBigtableIOIntegrationTest {
   }
 
   private void checkTableRowCountViaDataflowResultArrayReader(TableName tableName, int rowCount) throws Exception {
-    CloudBigtableScanConfiguration configuration = new CloudBigtableScanConfiguration(projectId,
-        zoneId, clusterId, tableName.getNameAsString(), new Scan());
+    CloudBigtableScanConfiguration configuration = createConfig(tableName);
     int batchCount = 10;
     BoundedSource<Result[]> source = CloudBigtableIO.readBulk(configuration, batchCount);
      List<? extends BoundedSource<Result[]>> splits = source.splitIntoBundles(1 << 20, null);
@@ -245,9 +248,7 @@ public class CloudBigtableIOIntegrationTest {
       LOG.info("getSampleKeys() in testEstimatedAndSplitForSmallTable()");
 
       try {
-        CloudBigtableScanConfiguration config =
-            new CloudBigtableScanConfiguration(projectId, zoneId, clusterId,
-                tableName.getQualifierAsString(), new Scan());
+        CloudBigtableScanConfiguration config = createConfig(tableName);
         CloudBigtableIO.Source<Result> source = (Source<Result>) CloudBigtableIO.read(config);
         List<SampleRowKeysResponse> sampleRowKeys = source.getSampleRowKeys();
         LOG.info("Creating BoundedSource in testEstimatedAndSplitForSmallTable()");
@@ -289,9 +290,7 @@ public class CloudBigtableIOIntegrationTest {
 
       try {
         LOG.info("Getting Source in testEstimatedAndSplitForLargeTable()");
-        CloudBigtableScanConfiguration config =
-            new CloudBigtableScanConfiguration(projectId, zoneId, clusterId,
-                tableName.getQualifierAsString(), new Scan());
+        CloudBigtableScanConfiguration config = createConfig(tableName);
         CloudBigtableIO.Source<Result> source = (Source<Result>) CloudBigtableIO.read(config);
         List<SampleRowKeysResponse> sampleRowKeys = source.getSampleRowKeys();
         LOG.info("Getting estimated size in testEstimatedAndSplitForLargeTable()");

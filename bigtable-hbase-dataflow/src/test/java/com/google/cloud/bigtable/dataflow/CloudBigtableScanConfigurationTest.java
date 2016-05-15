@@ -19,10 +19,9 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.bigtable.v1.RowRange;
 import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration;
 import com.google.cloud.dataflow.sdk.util.SerializableUtils;
-
-import java.util.Collections;
 
 /**
  * Tests for {@link CloudBigtableScanConfiguration}.
@@ -53,24 +52,18 @@ public class CloudBigtableScanConfigurationTest {
     Assert.assertEquals(ZONE, serialized.getZoneId());
     Assert.assertEquals(CLUSTER, serialized.getClusterId());
     Assert.assertEquals(TABLE, serialized.getTableId());
-    Scan scan = serialized.getScan();
-    Assert.assertArrayEquals(START_ROW, scan.getStartRow());
-    Assert.assertArrayEquals(STOP_ROW, scan.getStopRow());
+    final RowRange rowRange = serialized.getReadRowsRequest().getRowRange();
+    Assert.assertArrayEquals(START_ROW, rowRange.getStartKey().toByteArray());
+    Assert.assertArrayEquals(STOP_ROW, rowRange.getEndKey().toByteArray());
   }
 
   @Test
   public void testEquals() {
     Scan scan1 = new Scan();
     Scan scan2 = new Scan(START_ROW, STOP_ROW);
-    CloudBigtableScanConfiguration underTest1 =
-        new CloudBigtableScanConfiguration(PROJECT, ZONE, CLUSTER, TABLE, scan1,
-            Collections.<String, String> emptyMap());
-    CloudBigtableScanConfiguration underTest2 =
-        new CloudBigtableScanConfiguration(PROJECT, ZONE, CLUSTER, TABLE, scan1,
-            Collections.<String, String> emptyMap());
-    CloudBigtableScanConfiguration underTest3 =
-        new CloudBigtableScanConfiguration(PROJECT, ZONE, CLUSTER, TABLE, scan2,
-            Collections.<String, String> emptyMap());
+    CloudBigtableScanConfiguration underTest1 = createConfig(scan1);
+    CloudBigtableScanConfiguration underTest2 = createConfig(scan1);
+    CloudBigtableScanConfiguration underTest3 = createConfig(scan2);
 
     // Test CloudBigtableScanConfigurations that should be equal.
     Assert.assertEquals(underTest1, underTest2);
@@ -79,11 +72,19 @@ public class CloudBigtableScanConfigurationTest {
     Assert.assertNotEquals(underTest1, underTest3);
   }
 
+  protected CloudBigtableScanConfiguration createConfig(Scan scan) {
+    return new CloudBigtableScanConfiguration.Builder()
+        .withProjectId(PROJECT)
+        .withZoneId(ZONE)
+        .withClusterId(CLUSTER)
+        .withTableId(TABLE)
+        .withScan(scan)
+        .build();
+  }
+
   @Test
   public void testToBuilder() {
-    CloudBigtableScanConfiguration underTest =
-        new CloudBigtableScanConfiguration(PROJECT, ZONE, CLUSTER, TABLE, new Scan(START_ROW,
-            STOP_ROW), Collections.<String, String> emptyMap());
+    CloudBigtableScanConfiguration underTest = createConfig(new Scan(START_ROW, STOP_ROW));
     CloudBigtableScanConfiguration copy = underTest.toBuilder().build();
     Assert.assertNotSame(underTest, copy);
     Assert.assertEquals(underTest, copy);

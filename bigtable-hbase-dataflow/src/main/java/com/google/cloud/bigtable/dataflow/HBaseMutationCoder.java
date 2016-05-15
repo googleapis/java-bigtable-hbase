@@ -23,12 +23,14 @@ import java.io.Serializable;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutationProto;
-import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutationProto.MutationType;
 
+import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v1.Mutation.MutationCase;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
+import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 /**
@@ -41,31 +43,35 @@ import com.google.cloud.dataflow.sdk.coders.CoderException;
 public class HBaseMutationCoder extends AtomicCoder<Mutation> implements Serializable {
 
   private static final long serialVersionUID = -3853654063196018580L;
+  private static final PutAdapter PUT_ADAPTER = new PutAdapter(Integer.MAX_VALUE);
 
   @Override
-  public void encode(Mutation mutation, OutputStream outStream,
-      com.google.cloud.dataflow.sdk.coders.Coder.Context context) throws CoderException,
-      IOException {
-    MutationType type = getType(mutation);
-    MutationProto proto = ProtobufUtil.toMutation(type, mutation);
-    proto.writeDelimitedTo(outStream);
-  }
-
-  @Override
-  public Mutation decode(InputStream inStream,
-      com.google.cloud.dataflow.sdk.coders.Coder.Context context) throws CoderException,
-      IOException {
-    return ProtobufUtil.toMutation(MutationProto.parseDelimitedFrom(inStream));
-  }
-
-  private static MutationType getType(Mutation mutation) {
+  public void encode(Mutation mutation, OutputStream outStream, Coder.Context context)
+      throws CoderException, IOException {
+    MutateRowRequest request;
     if (mutation instanceof Put) {
-      return MutationType.PUT;
+      request = PUT_ADAPTER.adapt((Put) mutation).build();
     } else if (mutation instanceof Delete) {
-      return MutationType.DELETE;
+      request = Adapters.DELETE_ADAPTER.adapt((Delete) mutation).build();
     } else {
       // Increment and Append are not idempotent.  They should not be used in distributed jobs.
       throw new IllegalArgumentException("Only Put and Delete are supported");
+    }
+    request.writeDelimitedTo(outStream);
+  }
+
+  @Override
+  public Mutation decode(InputStream inStream, Coder.Context context)
+      throws CoderException, IOException {
+    MutateRowRequest request = MutateRowRequest.parseDelimitedFrom(inStream);
+    if (request.getMutationsCount() == 0) {
+      // Increment and Append are not idempotent.  They should not be used in distributed jobs.
+      throw new IllegalArgumentException("Invalid MutateRowRequest");
+    }
+    if(request.getMutations(0).getMutationCase() == MutationCase.SET_CELL) {
+      return PUT_ADAPTER.adapt(request);
+    } else {
+      return Adapters.DELETE_ADAPTER.adapt(request);
     }
   }
 }
