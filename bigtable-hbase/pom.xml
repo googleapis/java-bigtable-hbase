@@ -73,14 +73,4 @@ limitations under the License.
             <artifactId>commons-lang</artifactId>
         </dependency>
     </dependencies>
-    <build>
-        <extensions>
-            <!-- Use os-maven-plugin to initialize the "os.detected" properties -->
-            <extension>
-                <groupId>kr.motd.maven</groupId>
-                <artifactId>os-maven-plugin</artifactId>
-                <version>1.4.1.Final</version>
-            </extension>
-        </extensions>
-    </build>
 </project>

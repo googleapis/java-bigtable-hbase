@@ -22,11 +22,15 @@ import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -78,5 +82,26 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
     }
 
     return Result.create(hbaseCells.toArray(new org.apache.hadoop.hbase.Cell[hbaseCells.size()]));
+  }
+
+  public Row adaptRow(Result result) {
+    Row.Builder rowBuilder =
+        Row.newBuilder().setKey(BigtableZeroCopyByteStringUtil.wrap(result.getRow()));
+    for (Entry<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> familyEntry : result
+        .getMap().entrySet()) {
+      Family.Builder familyBuilder =
+          rowBuilder.addFamiliesBuilder().setName(Bytes.toString(familyEntry.getKey()));
+      for (Entry<byte[], NavigableMap<Long, byte[]>> columnEntry : familyEntry.getValue()
+          .entrySet()) {
+        ByteString qualifier = BigtableZeroCopyByteStringUtil.wrap(columnEntry.getKey());
+        Column.Builder columnBuilder = familyBuilder.addColumnsBuilder().setQualifier(qualifier);
+        for (Entry<Long, byte[]> cellData : columnEntry.getValue().entrySet()) {
+          columnBuilder.addCellsBuilder()
+              .setTimestampMicros(cellData.getKey().longValue() * TIME_CONVERSION_UNIT)
+              .setValue(BigtableZeroCopyByteStringUtil.wrap(cellData.getValue()));
+        }
+      }
+    }
+    return rowBuilder.build();
   }
 }

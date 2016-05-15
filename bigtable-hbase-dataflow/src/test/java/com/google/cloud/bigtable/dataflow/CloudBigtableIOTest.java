@@ -30,7 +30,6 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,7 +42,6 @@ import org.mockito.MockitoAnnotations;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.AbstractSource;
-import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.SourceWithKeys;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.CannotProvideCoderException;
@@ -106,11 +104,7 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testSourceToString() throws Exception {
-    CloudBigtableIO.Source<Result> source =
-        (Source<Result>)
-            CloudBigtableIO.read(
-                new CloudBigtableScanConfiguration(
-                    "project", "zoneId", "clusterId", "tableId", new Scan()));
+    CloudBigtableIO.Source<Result> source = createSource();
     byte[] startKey = "abc d".getBytes();
     byte[] stopKey = "def g".getBytes();
     BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
@@ -121,6 +115,11 @@ public class CloudBigtableIOTest {
     sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
     assertEquals("Split start: '\\x00\\x01\\x02\\x03\\x04\\x05', end: 'hello', size: 10",
         sourceWithKeys.toString());
+  }
+
+  protected CloudBigtableScanConfiguration createConfig() {
+    return new CloudBigtableScanConfiguration.Builder().withProjectId("project")
+        .withZoneId("zoneId").withClusterId("clusterId").withTableId("tableId").build();
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -145,9 +144,7 @@ public class CloudBigtableIOTest {
         return;
       }
     }
-    CloudBigtableScanConfiguration config =
-        new CloudBigtableScanConfiguration("project", "zone", "cluster", "table", new Scan());
-    CloudBigtableIO.Source source = (Source) CloudBigtableIO.read(config);
+    CloudBigtableIO.Source source = createSource();
     source.setSampleRowKeys(sampleRowKeys);
     List<CloudBigtableIO.SourceWithKeys> splits = source.getSplits(20000);
     Assert.assertTrue(splits.size() <= CloudBigtableIO.AbstractSource.COUNT_MAX_SPLIT_COUNT);
@@ -164,5 +161,9 @@ public class CloudBigtableIOTest {
       last = current;
     }
     // check first and last
+  }
+
+  protected CloudBigtableIO.Source<Result> createSource() {
+    return (CloudBigtableIO.Source<Result>) CloudBigtableIO.read(createConfig());
   }
 }
