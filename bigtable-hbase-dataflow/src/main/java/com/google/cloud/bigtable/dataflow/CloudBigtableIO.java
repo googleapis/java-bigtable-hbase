@@ -55,7 +55,6 @@ import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase1_0.BigtableConnection;
 import com.google.cloud.dataflow.sdk.Pipeline;
@@ -270,10 +269,9 @@ public class CloudBigtableIO {
     protected List<SourceWithKeys<ResultOutputType>> getSplits(long desiredBundleSizeBytes) throws Exception {
       desiredBundleSizeBytes = Math.max(getEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
         desiredBundleSizeBytes);
-      Scan scan = configuration.getScan();
-      byte[] scanStartKey = scan.getStartRow();
+      byte[] scanStartKey = configuration.getStartRow();
 
-      byte[] scanEndKey = scan.getStopRow();
+      byte[] scanEndKey = configuration.getStopRow();
       List<SourceWithKeys<ResultOutputType>> splits = new ArrayList<>();
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
@@ -402,9 +400,8 @@ public class CloudBigtableIO {
     public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
       long totalEstimatedSizeBytes = 0;
 
-      Scan scan = configuration.getScan();
-      byte[] scanStartKey = scan.getStartRow();
-      byte[] scanEndKey = scan.getStopRow();
+      byte[] scanStartKey = configuration.getStartRow();
+      byte[] scanEndKey = configuration.getStopRow();
 
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
@@ -550,9 +547,8 @@ public class CloudBigtableIO {
     public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
       long totalEstimatedSizeBytes = 0;
 
-      Scan scan = configuration.getScan();
-      byte[] scanStartKey = scan.getStartRow();
-      byte[] scanEndKey = scan.getStopRow();
+      byte[] scanStartKey = configuration.getStartRow();
+      byte[] scanEndKey = configuration.getStopRow();
 
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
@@ -605,10 +601,9 @@ public class CloudBigtableIO {
         ScanIterator<ResultOutputType> scanIterator,
         long estimatedSize) {
       super(configuration, coderType, scanIterator);
-      Scan scan = configuration.getScan();
 
-      byte[] startRow = scan.getStartRow();
-      byte[] stopRow = scan.getStopRow();
+      byte[] startRow = configuration.getStartRow();
+      byte[] stopRow = configuration.getStopRow();
       if (stopRow.length > 0) {
         if (Bytes.compareTo(startRow, stopRow) >= 0) {
           throw new IllegalArgumentException(String.format(
@@ -657,28 +652,26 @@ public class CloudBigtableIO {
     @Override
     public List<? extends BoundedSource<ResultOutputType>> splitIntoBundles(long desiredBundleSizeBytes,
         PipelineOptions options) throws Exception {
-      Scan scan = configuration.getScan();
-      List<? extends BoundedSource<ResultOutputType>> newSplits =
-          split(estimatedSize, desiredBundleSizeBytes, scan.getStartRow(), scan.getStopRow());
+      List<? extends BoundedSource<ResultOutputType>> newSplits = split(estimatedSize,
+        desiredBundleSizeBytes, configuration.getStartRow(), configuration.getStopRow());
       SOURCE_LOG.trace("Splitting split {} into {}", this, newSplits);
       return newSplits;
     }
 
     public byte[] getStartRow() {
-      return configuration.getScan().getStartRow();
+      return configuration.getStartRow();
     }
 
     public byte[] getStopRow() {
-      return configuration.getScan().getStopRow();
+      return configuration.getStopRow();
     }
 
     @Override
     public String toString() {
-      Scan scan = configuration.getScan();
       return String.format(
           "Split start: '%s', end: '%s', size: %d",
-          Bytes.toStringBinary(scan.getStartRow()),
-          Bytes.toStringBinary(scan.getStopRow()),
+          Bytes.toStringBinary(configuration.getStartRow()),
+          Bytes.toStringBinary(configuration.getStopRow()),
           estimatedSize);
     }
   }
@@ -768,12 +761,10 @@ public class CloudBigtableIO {
 
     @Override
     public String toString() {
-      byte[] startRow = config.getScan().getStartRow();
-      byte[] stopRow = config.getScan().getStopRow();
       return String.format(
           "Reader for: ['%s' - '%s']",
-          Bytes.toStringBinary(startRow),
-          Bytes.toStringBinary(stopRow));
+          Bytes.toStringBinary(config.getStartRow()),
+          Bytes.toStringBinary(config.getStopRow()));
     }
   }
 

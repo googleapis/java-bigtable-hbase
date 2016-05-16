@@ -30,7 +30,6 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
@@ -68,6 +67,13 @@ public class CloudBigtableIOTest {
 
   private CoderRegistry registry = new CoderRegistry();
 
+  private CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
+      .withProjectId("project")
+      .withZoneId("zone")
+      .withClusterId("cluster")
+      .withTableId("table")
+      .build();
+
   @SuppressWarnings("unchecked")
   @Before
   public void setup(){
@@ -76,6 +82,7 @@ public class CloudBigtableIOTest {
     when(underTest.getCoderRegistry()).thenReturn(registry);
     when(cbtOptions.as(any(Class.class))).thenReturn(cbtOptions);
     CloudBigtableIO.initializeForWrite(underTest);
+
   }
 
   private void checkRegistry(Class<? extends Mutation> mutationClass)
@@ -106,11 +113,7 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testSourceToString() throws Exception {
-    CloudBigtableIO.Source<Result> source =
-        (Source<Result>)
-            CloudBigtableIO.read(
-                new CloudBigtableScanConfiguration(
-                    "project", "zoneId", "clusterId", "tableId", new Scan()));
+    CloudBigtableIO.Source<Result> source = (Source<Result>) CloudBigtableIO.read(config);
     byte[] startKey = "abc d".getBytes();
     byte[] stopKey = "def g".getBytes();
     BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
@@ -145,8 +148,6 @@ public class CloudBigtableIOTest {
         return;
       }
     }
-    CloudBigtableScanConfiguration config =
-        new CloudBigtableScanConfiguration("project", "zone", "cluster", "table", new Scan());
     CloudBigtableIO.Source source = (Source) CloudBigtableIO.read(config);
     source.setSampleRowKeys(sampleRowKeys);
     List<CloudBigtableIO.SourceWithKeys> splits = source.getSplits(20000);

@@ -19,17 +19,14 @@ package com.google.cloud.bigtable.dataflow;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
-import java.util.Collections;
-
-import org.junit.Assert;
-
-import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
 import org.apache.hadoop.conf.Configuration;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
 /**
  * Tests for {@link CloudBigtableTableConfiguration}.
@@ -42,11 +39,19 @@ public class CloudBigtableTableConfigurationTest {
   private static final String ZONE = "some-zone-1a";
   private static final String TABLE = "some-zone-1a";
 
+  protected static CloudBigtableTableConfiguration buildConfiguration() {
+    return configure(new CloudBigtableTableConfiguration.Builder().withTableId(TABLE)).build();
+  }
+
+  protected static <ConfigurationBuilder extends CloudBigtableConfiguration.Builder>
+      ConfigurationBuilder configure(ConfigurationBuilder builder) {
+    builder.withProjectId(PROJECT).withZoneId(ZONE).withClusterId(CLUSTER);
+    return builder;
+  }
+
   @Test
   public void testHBaseConfig() throws IOException {
-    CloudBigtableTableConfiguration underTest =
-        new CloudBigtableTableConfiguration(PROJECT, ZONE, CLUSTER, TABLE,
-            Collections.<String, String> emptyMap());
+    CloudBigtableTableConfiguration underTest = buildConfiguration();
 
     Configuration config = underTest.toHBaseConfig();
 
@@ -58,21 +63,14 @@ public class CloudBigtableTableConfigurationTest {
 
   @Test
   public void testEquals() {
-    CloudBigtableTableConfiguration underTest1 =
-        new CloudBigtableTableConfiguration(PROJECT, ZONE, CLUSTER, TABLE,
-            Collections.<String, String> emptyMap());
-    CloudBigtableTableConfiguration underTest2 =
-        new CloudBigtableTableConfiguration(PROJECT, ZONE, CLUSTER, TABLE,
-            Collections.<String, String> emptyMap());
+    CloudBigtableTableConfiguration underTest1 = buildConfiguration();
+    CloudBigtableTableConfiguration underTest2 = buildConfiguration();
     CloudBigtableTableConfiguration underTest3 =
-        new CloudBigtableTableConfiguration(PROJECT, ZONE, CLUSTER, TABLE,
-            Collections.singletonMap("somekey", "somevalue"));
+        underTest1.toBuilder().withConfiguration("somekey", "somevalue").build();
     CloudBigtableTableConfiguration underTest4 =
-        new CloudBigtableTableConfiguration("other_project", ZONE, CLUSTER, TABLE,
-            Collections.<String, String> emptyMap());
+        underTest1.toBuilder().withProjectId("other_project").build();
     CloudBigtableConfiguration underTest5 =
-        new CloudBigtableConfiguration(PROJECT, ZONE, CLUSTER,
-            Collections.<String, String> emptyMap());
+        configure(new CloudBigtableConfiguration.Builder()).build();
 
     // Test CloudBigtableTableConfiguration that should be equal.
     Assert.assertEquals(underTest1, underTest2);
@@ -94,8 +92,7 @@ public class CloudBigtableTableConfigurationTest {
   @Test
   public void testToBuilder(){
     CloudBigtableTableConfiguration underTest =
-        new CloudBigtableTableConfiguration(PROJECT, ZONE, CLUSTER, TABLE,
-            Collections.singletonMap("somekey", "somevalue"));
+        buildConfiguration().toBuilder().withConfiguration("somekey", "somevalue").build();
     CloudBigtableTableConfiguration copy = underTest.toBuilder().build();
     Assert.assertNotSame(underTest, copy);
     Assert.assertEquals(underTest, copy);
