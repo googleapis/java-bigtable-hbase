@@ -51,7 +51,12 @@ public class TestRowAdapter {
     Row row = Row.newBuilder()
         .setKey(ByteString.copyFromUtf8("key"))
         .build();
-    assertEquals(0, instance.adaptResponse(row).rawCells().length);
+    Result result = instance.adaptResponse(row);
+    assertEquals(0, result.rawCells().length);
+
+    // The rowKey is defined based on the cells, and in this case there are no cells, so there isn't
+    // a key.
+    assertEquals(Row.getDefaultInstance(), instance.adaptToRow(result));
   }
 
   @Test
@@ -126,6 +131,39 @@ public class TestRowAdapter {
         result.getColumnCells(family2.getBytes(), qualifier2);
     assertEquals(1, cells4.size());
     assertEquals(Bytes.toString(value5), Bytes.toString(CellUtil.cloneValue(cells4.get(0))));
+
+    // The duplicate row and label cells have been removed. The timestamp micros get converted to
+    // millisecond accuracy.
+    Row expected = Row.newBuilder()
+        .setKey(ByteString.copyFromUtf8("key"))
+        .addFamilies(Family.newBuilder()
+            .setName(family1)
+            .addColumns(Column.newBuilder()
+                .setQualifier(ByteString.copyFrom(qualifier1))
+                .addCells(Cell.newBuilder() // First cell.
+                    .setTimestampMicros(54000L)
+                    .setValue(ByteString.copyFrom(value1)))
+                .addCells(Cell.newBuilder() // Same family, same column, but different timestamps.
+                  .setTimestampMicros(12000L)
+                  .setValue(ByteString.copyFrom(value2))))
+            .addColumns(Column.newBuilder()
+                .setQualifier(ByteString.copyFrom(qualifier2))
+                .addCells(Cell.newBuilder() // Same family, same timestamp, but different column.
+                    .setTimestampMicros(54000L)
+                    .setValue(ByteString.copyFrom(value3)))))
+        .addFamilies(Family.newBuilder()
+            .setName(family2)
+            .addColumns(Column.newBuilder()
+                .setQualifier(ByteString.copyFrom(qualifier1))
+                .addCells(Cell.newBuilder() // Same column, same timestamp, but different family.
+                    .setTimestampMicros(54000L)
+                    .setValue(ByteString.copyFrom(value4))))
+            .addColumns(Column.newBuilder()
+                .setQualifier(ByteString.copyFrom(qualifier2))
+                .addCells(Cell.newBuilder() // Same timestamp, but different family and column.
+                    .setTimestampMicros(54000L)
+                    .setValue(ByteString.copyFrom(value5)))))
+        .build();
+    assertEquals(expected, instance.adaptToRow(result));
   }
 }
-
