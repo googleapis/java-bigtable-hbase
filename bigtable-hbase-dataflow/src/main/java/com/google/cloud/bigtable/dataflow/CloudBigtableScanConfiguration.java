@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -58,12 +57,23 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    */
   public static CloudBigtableScanConfiguration fromCBTOptions(CloudBigtableOptions options,
       Scan scan) {
-    return new CloudBigtableScanConfiguration(
-        options.getBigtableProjectId(),
-        options.getBigtableZoneId(),
-        options.getBigtableClusterId(),
-        options.getBigtableTableId(),
-        scan);
+    CloudBigtableScanConfiguration.Builder builder = new CloudBigtableScanConfiguration.Builder();
+    copyOptions(options, builder);
+    return builder.withScan(scan).build();
+  }
+
+  /**
+   * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration}
+   * that will perform the specified {@link Scan} on the table.
+   * @param options The {@link CloudBigtableOptions} object.
+   * @param scan The {@link Scan} to add to the configuration.
+   * @return The new {@link CloudBigtableScanConfiguration}.
+   */
+  public static CloudBigtableScanConfiguration fromConfig(CloudBigtableTableConfiguration config,
+      Scan scan) {
+    CloudBigtableScanConfiguration.Builder builder = new CloudBigtableScanConfiguration.Builder();
+    config.copyConfig(builder);
+    return builder.withScan(scan).build();
   }
 
   /**
@@ -73,15 +83,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     protected Scan scan = new Scan();
 
     public Builder() {
-    }
-
-    public Builder(CloudBigtableTableConfiguration config) {
-    	this(config.getConfiguration());
-    	withTableId(config.getTableId());
-    }
-
-    protected Builder(Map<String, String> configuration) {
-      super(configuration);
     }
 
     /**
@@ -148,7 +149,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public CloudBigtableScanConfiguration build() {
-      return new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, scan, additionalConfiguration);
+      return new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, scan,
+          additionalConfiguration);
     }
   }
 
@@ -202,21 +204,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, zone, cluster
-   * ID, table ID and {@link Scan}.
-   *
-   * @param projectId The project ID for the cluster.
-   * @param zoneId The zone where the cluster is located.
-   * @param clusterId The cluster ID for the cluster.
-   * @param tableId The table to connect to in the cluster.
-   * @param scan The {@link Scan} that will be used to filter the table.
-   */
-  public CloudBigtableScanConfiguration(String projectId, String zoneId, String clusterId,
-      String tableId, Scan scan) {
-    this(projectId, zoneId, clusterId, tableId, scan, Collections.<String, String> emptyMap());
-  }
-
-  /**
-   * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, zone, cluster
    * ID, table ID, {@link Scan} and additional connection configuration.
    *
    * @param projectId The project ID for the cluster.
@@ -226,7 +213,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @param scan The {@link Scan} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  public CloudBigtableScanConfiguration(String projectId, String zoneId, String clusterId,
+  protected CloudBigtableScanConfiguration(String projectId, String zoneId, String clusterId,
       String tableId, Scan scan, Map<String, String> additionalConfiguration) {
     super(projectId, zoneId, clusterId, tableId, additionalConfiguration);
     this.serializableScan = new SerializableScan(scan);
@@ -240,6 +227,20 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     return serializableScan.scan;
   }
 
+  /**
+   * @return The start row for this configuration.
+   */
+  public byte[] getStartRow() {
+    return getScan().getStartRow();
+  }
+
+  /**
+   * @return The stop row for this configuration.
+   */
+  public byte[] getStopRow() {
+    return getScan().getStopRow();
+  }
+
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj)
@@ -249,8 +250,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   @Override
   public Builder toBuilder() {
-    return new Builder(getConfiguration())
-        .withTableId(tableId)
-        .withScan(serializableScan.scan);
+    Builder builder = new Builder();
+    copyConfig(builder);
+    return builder;
+  }
+
+  public void copyConfig(Builder builder) {
+    super.copyConfig(builder);
+    builder.withScan(getScan());
   }
 }

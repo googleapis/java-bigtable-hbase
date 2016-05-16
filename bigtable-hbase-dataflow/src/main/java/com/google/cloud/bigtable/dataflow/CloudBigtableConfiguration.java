@@ -49,7 +49,7 @@ public class CloudBigtableConfiguration implements Serializable {
     public Builder() {
     }
 
-    protected Builder(Map<String, String> configuration) {
+    protected void copyFrom(Map<String, String> configuration) {
       this.additionalConfiguration.putAll(configuration);
 
       this.projectId = this.additionalConfiguration.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
@@ -195,7 +195,9 @@ public class CloudBigtableConfiguration implements Serializable {
    * @return A new {@link Builder}.
    */
   public Builder toBuilder() {
-    return new Builder(getConfiguration());
+    Builder builder = new Builder();
+    copyConfig(builder);
+    return builder;
   }
 
   /**
@@ -217,5 +219,9 @@ public class CloudBigtableConfiguration implements Serializable {
     }
     CloudBigtableConfiguration other = (CloudBigtableConfiguration) obj;
     return Objects.equals(configuration, other.configuration);
+  }
+
+  public void copyConfig(Builder builder) {
+    builder.copyFrom(configuration);
   }
 }

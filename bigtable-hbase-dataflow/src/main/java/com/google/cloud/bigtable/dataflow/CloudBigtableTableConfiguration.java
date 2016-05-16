@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -46,12 +45,18 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
             + "Set the parameters to the same value for optimal performance.",
         options.getBigtableZoneId(), options.getZone()));
     }
-    return new CloudBigtableTableConfiguration(
-        options.getBigtableProjectId(),
-        options.getBigtableZoneId(),
-        options.getBigtableClusterId(),
-        options.getBigtableTableId(),
-        Collections.<String, String> emptyMap());
+    CloudBigtableTableConfiguration.Builder builder = new CloudBigtableTableConfiguration.Builder();
+    copyOptions(options, builder);
+    return builder.build();
+  }
+
+  protected static void copyOptions(CloudBigtableOptions options,
+      CloudBigtableTableConfiguration.Builder builder) {
+    builder
+        .withProjectId(options.getBigtableProjectId())
+        .withZoneId(options.getBigtableZoneId())
+        .withClusterId(options.getBigtableClusterId())
+        .withTableId(options.getBigtableTableId());
   }
 
   /**
@@ -61,10 +66,6 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     protected String tableId;
 
     public Builder() {
-    }
-
-    protected Builder(Map<String, String> configuration) {
-      super(configuration);
     }
 
     /**
@@ -166,8 +167,14 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
 
   @Override
   public Builder toBuilder() {
-    return new Builder(getConfiguration())
-        .withTableId(tableId);
+    Builder builder = new Builder();
+    copyConfig(builder);
+    return builder;
+  }
+
+  public void copyConfig(Builder builder) {
+    super.copyConfig(builder);
+    builder.tableId = tableId;
   }
 
   @Override
