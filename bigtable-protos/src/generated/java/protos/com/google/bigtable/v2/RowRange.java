@@ -171,7 +171,7 @@ public  final class RowRange extends
    * <code>optional bytes start_key_open = 2;</code>
    *
    * <pre>
-   * Used when giving an exclusive upper bound for the range.
+   * Used when giving an exclusive lower bound for the range.
    * </pre>
    */
   public com.google.protobuf.ByteString getStartKeyOpen() {
@@ -567,7 +567,7 @@ public  final class RowRange extends
      * <code>optional bytes start_key_open = 2;</code>
      *
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an exclusive lower bound for the range.
      * </pre>
      */
     public com.google.protobuf.ByteString getStartKeyOpen() {
@@ -580,7 +580,7 @@ public  final class RowRange extends
      * <code>optional bytes start_key_open = 2;</code>
      *
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an exclusive lower bound for the range.
      * </pre>
      */
     public Builder setStartKeyOpen(com.google.protobuf.ByteString value) {
@@ -596,7 +596,7 @@ public  final class RowRange extends
      * <code>optional bytes start_key_open = 2;</code>
      *
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an exclusive lower bound for the range.
      * </pre>
      */
     public Builder clearStartKeyOpen() {

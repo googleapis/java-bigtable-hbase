@@ -8,66 +8,46 @@ public interface MutateRowsResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    *
    * <pre>
-   * The results for each Entry from the request, presented in the order
-   * in which the entries were originally given.
-   * Depending on how requests are batched during execution, it is possible
-   * for one Entry to fail due to an error with another Entry. In the event
-   * that this occurs, the same error will be reported for both entries.
+   * One or more results for Entries from the batch request.
    * </pre>
    */
-  java.util.List<com.google.rpc.Status> 
-      getStatusesList();
+  java.util.List<com.google.bigtable.v2.MutateRowsResponse.Entry> 
+      getEntriesList();
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    *
    * <pre>
-   * The results for each Entry from the request, presented in the order
-   * in which the entries were originally given.
-   * Depending on how requests are batched during execution, it is possible
-   * for one Entry to fail due to an error with another Entry. In the event
-   * that this occurs, the same error will be reported for both entries.
+   * One or more results for Entries from the batch request.
    * </pre>
    */
-  com.google.rpc.Status getStatuses(int index);
+  com.google.bigtable.v2.MutateRowsResponse.Entry getEntries(int index);
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    *
    * <pre>
-   * The results for each Entry from the request, presented in the order
-   * in which the entries were originally given.
-   * Depending on how requests are batched during execution, it is possible
-   * for one Entry to fail due to an error with another Entry. In the event
-   * that this occurs, the same error will be reported for both entries.
+   * One or more results for Entries from the batch request.
    * </pre>
    */
-  int getStatusesCount();
+  int getEntriesCount();
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    *
    * <pre>
-   * The results for each Entry from the request, presented in the order
-   * in which the entries were originally given.
-   * Depending on how requests are batched during execution, it is possible
-   * for one Entry to fail due to an error with another Entry. In the event
-   * that this occurs, the same error will be reported for both entries.
+   * One or more results for Entries from the batch request.
    * </pre>
    */
-  java.util.List<? extends com.google.rpc.StatusOrBuilder> 
-      getStatusesOrBuilderList();
+  java.util.List<? extends com.google.bigtable.v2.MutateRowsResponse.EntryOrBuilder> 
+      getEntriesOrBuilderList();
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    *
    * <pre>
-   * The results for each Entry from the request, presented in the order
-   * in which the entries were originally given.
-   * Depending on how requests are batched during execution, it is possible
-   * for one Entry to fail due to an error with another Entry. In the event
-   * that this occurs, the same error will be reported for both entries.
+   * One or more results for Entries from the batch request.
    * </pre>
    */
-  com.google.rpc.StatusOrBuilder getStatusesOrBuilder(
+  com.google.bigtable.v2.MutateRowsResponse.EntryOrBuilder getEntriesOrBuilder(
       int index);
 }

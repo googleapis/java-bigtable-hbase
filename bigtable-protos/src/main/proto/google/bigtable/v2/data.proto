@@ -1,4 +1,4 @@
-// Copyright (c) 2015, Google Inc.
+// Copyright 2016 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ message RowRange {
     // Used when giving an inclusive lower bound for the range.
     bytes start_key_closed = 1;
 
-    // Used when giving an exclusive upper bound for the range.
+    // Used when giving an exclusive lower bound for the range.
     bytes start_key_open = 2;
   }
 
