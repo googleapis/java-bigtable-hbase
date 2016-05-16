@@ -3,7 +3,6 @@ package com.google.cloud.bigtable.dataflow;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -90,8 +89,12 @@ public class CloudBigtableIOIntegrationTest {
   }
 
   private static CloudBigtableTableConfiguration createTableConfig(String tableId) {
-    return new CloudBigtableTableConfiguration(projectId,
-        zoneId, clusterId, tableId, Collections.<String, String>emptyMap());
+    return new CloudBigtableTableConfiguration.Builder()
+        .withProjectId(projectId)
+        .withZoneId(zoneId)
+        .withClusterId(clusterId)
+        .withTableId(tableId)
+        .build();
   }
 
   @Test

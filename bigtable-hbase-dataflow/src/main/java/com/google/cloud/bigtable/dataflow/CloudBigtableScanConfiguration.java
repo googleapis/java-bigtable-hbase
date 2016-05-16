@@ -240,6 +240,20 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     return serializableScan.scan;
   }
 
+  /**
+   * @return The start row for this configuration.
+   */
+  public byte[] getStartRow() {
+    return getScan().getStartRow();
+  }
+
+  /**
+   * @return The stop row for this configuration.
+   */
+  public byte[] getStopRow() {
+    return getScan().getStopRow();
+  }
+
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj)

@@ -106,7 +106,7 @@ public class CloudBigtableConfiguration implements Serializable {
     public CloudBigtableConfiguration build() {
       return new CloudBigtableConfiguration(projectId, zoneId, clusterId, additionalConfiguration);
     }
-}
+  }
 
   // Not final due to serialization of CloudBigtableScanConfiguration.
   private Map<String, String> configuration;
