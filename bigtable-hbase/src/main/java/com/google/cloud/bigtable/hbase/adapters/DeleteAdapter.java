@@ -17,10 +17,11 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 import com.google.bigtable.v1.MutateRowRequest;
 import com.google.bigtable.v1.Mutation;
-import com.google.bigtable.v1.Mutation.Builder;
-import com.google.bigtable.v1.Mutation.DeleteFromFamily;
+import com.google.bigtable.v1.Mutation.DeleteFromColumn;
 import com.google.bigtable.v1.Mutation.DeleteFromRow;
+import com.google.bigtable.v1.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -85,23 +86,18 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
     }
   }
 
-  static Mutation.DeleteFromColumn.Builder addDeleteFromColumnMods(
-      MutateRowRequest.Builder result, ByteString familyByteString, Cell cell) {
-    Mutation.Builder modBuilder = result.addMutationsBuilder();
-    Mutation.DeleteFromColumn.Builder deleteBuilder =
-        modBuilder.getDeleteFromColumnBuilder();
+  static Mutation.DeleteFromColumn.Builder addDeleteFromColumnMods(MutateRowRequest.Builder result,
+      ByteString familyByteString, Cell cell) {
 
     ByteString cellQualifierByteString = ByteString.copyFrom(
         cell.getQualifierArray(),
         cell.getQualifierOffset(),
         cell.getQualifierLength());
 
-    deleteBuilder.setFamilyNameBytes(familyByteString);
-    deleteBuilder.setColumnQualifier(cellQualifierByteString);
-
-    long startTimestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
-        cell.getTimestamp(),
-        BigtableConstants.HBASE_TIMEUNIT);
+    Mutation.DeleteFromColumn.Builder deleteBuilder =
+        result.addMutationsBuilder().getDeleteFromColumnBuilder()
+            .setFamilyNameBytes(familyByteString)
+            .setColumnQualifier(cellQualifierByteString);
 
     long endTimestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
         cell.getTimestamp() + 1,
@@ -109,8 +105,13 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
 
     if (isPointDelete(cell)) {
       // Delete a single cell
-      deleteBuilder.getTimeRangeBuilder().setStartTimestampMicros(startTimestamp);
-      deleteBuilder.getTimeRangeBuilder().setEndTimestampMicros(endTimestamp);
+      long startTimestamp = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
+        cell.getTimestamp(),
+        BigtableConstants.HBASE_TIMEUNIT);
+
+      deleteBuilder.getTimeRangeBuilder()
+          .setStartTimestampMicros(startTimestamp)
+          .setEndTimestampMicros(endTimestamp);
     } else {
       // Delete all cells before a timestamp
       if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
@@ -120,18 +121,10 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
     return deleteBuilder;
   }
 
-  static Mutation.DeleteFromFamily.Builder addDeleteFromFamilyMods(
-      MutateRowRequest.Builder result, ByteString familyByteString) {
-    Builder modBuilder = result.addMutationsBuilder();
-    DeleteFromFamily.Builder deleteBuilder = modBuilder.getDeleteFromFamilyBuilder();
-    deleteBuilder.setFamilyNameBytes(familyByteString);
-    return deleteBuilder;
-  }
-
   @Override
   public MutateRowRequest.Builder adapt(Delete operation) {
-    MutateRowRequest.Builder result = MutateRowRequest.newBuilder();
-    result.setRowKey(ByteString.copyFrom(operation.getRow()));
+    MutateRowRequest.Builder result = MutateRowRequest.newBuilder()
+        .setRowKey(ByteString.copyFrom(operation.getRow()));
 
     if (operation.getFamilyCellMap().isEmpty()) {
       throwIfUnsupportedDeleteRow(operation);
@@ -151,7 +144,8 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
           } else if (isFamilyDelete(cell)) {
             throwIfUnsupportedDeleteFamily(cell);
 
-            addDeleteFromFamilyMods(result, familyByteString);
+            result.addMutationsBuilder().getDeleteFromFamilyBuilder()
+                .setFamilyNameBytes(familyByteString);
           } else if (isFamilyVersionDelete(cell)) {
             throwOnUnsupportedDeleteFamilyVersion(cell);
           } else {
@@ -162,4 +156,51 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
     }
     return result;
   }
+
+
+  public Delete adapt(MutateRowRequest request) {
+    Delete delete = new Delete(request.getRowKey().toByteArray());
+
+    boolean isDeleteRow = false;
+    for (Mutation mutation : request.getMutationsList()) {
+      switch (mutation.getMutationCase()) {
+      case DELETE_FROM_COLUMN: {
+        DeleteFromColumn deleteFromColumn = mutation.getDeleteFromColumn();
+        long timestamp;
+        TimestampRange timeRange = deleteFromColumn.getTimeRange();
+        if (timeRange.getStartTimestampMicros() == 0) {
+          timestamp = BigtableConstants.HBASE_TIMEUNIT.convert(timeRange.getEndTimestampMicros(),
+            BigtableConstants.BIGTABLE_TIMEUNIT) - 1;
+          delete.addColumns(getBytes(deleteFromColumn.getFamilyNameBytes()),
+            getBytes(deleteFromColumn.getColumnQualifier()), timestamp);
+        } else {
+          timestamp = BigtableConstants.HBASE_TIMEUNIT.convert(timeRange.getStartTimestampMicros(),
+            BigtableConstants.BIGTABLE_TIMEUNIT);
+          delete.addColumn(getBytes(deleteFromColumn.getFamilyNameBytes()),
+            getBytes(deleteFromColumn.getColumnQualifier()), timestamp);
+        }
+
+        break;
+      }
+      case DELETE_FROM_FAMILY:
+        delete.addFamily(getBytes(mutation.getDeleteFromFamily().getFamilyNameBytes()));
+        break;
+      case DELETE_FROM_ROW:
+        isDeleteRow = true;
+        break;
+      default:
+        throw new IllegalArgumentException("DeleteAdapter does not support " + mutation.getMutationCase() + ".");
+      }
+    }
+    if (isDeleteRow && !delete.getFamilyCellMap().isEmpty()) {
+      throw new IllegalArgumentException(
+          "DeleteAdapter does not support DELETE_FROM_ROW with other operations.");
+    }
+    return delete;
+  }
+
+  private static byte[] getBytes(ByteString bs) {
+    return BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(bs);
+  }
+
 }

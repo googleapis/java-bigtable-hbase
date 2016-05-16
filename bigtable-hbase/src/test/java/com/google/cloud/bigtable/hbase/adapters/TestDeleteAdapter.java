@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.hbase.client.Delete;
@@ -43,7 +44,7 @@ public class TestDeleteAdapter {
   protected DataGenerationHelper randomHelper = new DataGenerationHelper();
 
   @Test
-  public void testFullRowDelete() {
+  public void testFullRowDelete() throws IOException {
     byte[] rowKey = randomHelper.randomData("rk1-");
     Delete delete = new Delete(rowKey);
     MutateRowRequest.Builder rowMutation = deleteAdapter.adapt(delete);
@@ -54,6 +55,8 @@ public class TestDeleteAdapter {
     Mutation.MutationCase mutationCase = rowMutation.getMutations(0).getMutationCase();
 
     Assert.assertEquals(MutationCase.DELETE_FROM_ROW, mutationCase);
+
+    testTwoWayAdapt(delete, deleteAdapter);
   }
 
   @Test
@@ -68,7 +71,7 @@ public class TestDeleteAdapter {
   }
 
   @Test
-  public void testColumnFamilyDelete() {
+  public void testColumnFamilyDelete() throws IOException {
     byte[] rowKey = randomHelper.randomData("rk1-");
     byte[] family = randomHelper.randomData("family1-");
     Delete delete = new Delete(rowKey);
@@ -85,6 +88,8 @@ public class TestDeleteAdapter {
     Mutation.DeleteFromFamily deleteFromFamily =
         rowMutation.getMutations(0).getDeleteFromFamily();
     Assert.assertArrayEquals(family, deleteFromFamily.getFamilyNameBytes().toByteArray());
+
+    testTwoWayAdapt(delete, deleteAdapter);
   }
 
   @Test
@@ -100,7 +105,7 @@ public class TestDeleteAdapter {
   }
 
   @Test
-  public void testDeleteColumnAtTimestamp() {
+  public void testDeleteColumnAtTimestamp() throws IOException {
     byte[] rowKey = randomHelper.randomData("rk1-");
     byte[] family = randomHelper.randomData("family1-");
     byte[] qualifier = randomHelper.randomData("qualifier");
@@ -128,6 +133,8 @@ public class TestDeleteAdapter {
     TimestampRange timeStampRange = deleteFromColumn.getTimeRange();
     Assert.assertEquals(bigtableStartTimestamp, timeStampRange.getStartTimestampMicros());
     Assert.assertEquals(bigtableEndTimestamp, timeStampRange.getEndTimestampMicros());
+
+    testTwoWayAdapt(delete, deleteAdapter);
   }
 
   @Test
@@ -146,7 +153,7 @@ public class TestDeleteAdapter {
   }
 
   @Test
-  public void testDeleteColumnBeforeTimestamp() {
+  public void testDeleteColumnBeforeTimestamp() throws IOException {
     byte[] rowKey = randomHelper.randomData("rk1-");
     byte[] family = randomHelper.randomData("family1-");
     byte[] qualifier = randomHelper.randomData("qualifier");
@@ -170,6 +177,8 @@ public class TestDeleteAdapter {
     TimestampRange timeRange = deleteFromColumn.getTimeRange();
     Assert.assertEquals(0L, timeRange.getStartTimestampMicros());
     Assert.assertEquals(bigtableTimestamp, timeRange.getEndTimestampMicros());
+
+    testTwoWayAdapt(delete, deleteAdapter);
   }
 
   @Test
@@ -186,5 +195,19 @@ public class TestDeleteAdapter {
     expectedException.expectMessage("Cannot perform column family deletion at timestamp");
 
     deleteAdapter.adapt(delete);
+  }
+
+  /**
+   * Convert the {@link Delete} to a {@link Mutation}, back to a {@link Delete}, back to
+   * {@link Mutation}. Compare the two mutations for equality. This ensures that the adapt
+   * process is idempotent.
+   */
+  private void testTwoWayAdapt(Delete delete, DeleteAdapter adapter) throws IOException {
+    // delete -> mutation
+    MutateRowRequest firstAdapt = adapter.adapt(delete).build();
+    // mutation -> delete -> mutation;
+    MutateRowRequest secondAdapt = adapter.adapt(adapter.adapt(firstAdapt)).build();
+    // The round trips
+    Assert.assertEquals(firstAdapt, secondAdapt);
   }
 }
