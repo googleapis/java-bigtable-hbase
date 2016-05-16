@@ -89,6 +89,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                                     </systemPropertyVariables>
+                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -139,6 +140,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                                     </systemPropertyVariables>
+                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -194,6 +196,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                                     </systemPropertyVariables>
+                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -234,6 +237,7 @@ limitations under the License.
                                         <include>**/IntegrationTests.java</include>
                                     </includes>
                                     <reportNameSuffix>local-mini-cluster</reportNameSuffix>
+                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
@@ -287,6 +291,7 @@ limitations under the License.
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
                                     </systemPropertyVariables>
+                                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                                 </configuration>
                             </execution>
                         </executions>
