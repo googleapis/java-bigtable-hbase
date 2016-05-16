@@ -1,4 +1,4 @@
-// Copyright (c) 2015, Google Inc.
+// Copyright 2016 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ service Bigtable {
   //
   // Caution: This rpc is experimental. The details can change and the rpc
   // may or may not be active.
-  rpc MutateRows(MutateRowsRequest) returns (MutateRowsResponse) {
+  rpc MutateRows(MutateRowsRequest) returns (stream MutateRowsResponse) {
     option (google.api.http) = { post: "/v2/{table_name=projects/*/instances/*/tables/*}:mutateRows" body: "*" };
   }
 
@@ -262,12 +262,20 @@ message MutateRowsRequest {
 
 // Response message for BigtableService.MutateRows.
 message MutateRowsResponse {
-  // The results for each Entry from the request, presented in the order
-  // in which the entries were originally given.
-  // Depending on how requests are batched during execution, it is possible
-  // for one Entry to fail due to an error with another Entry. In the event
-  // that this occurs, the same error will be reported for both entries.
-  repeated google.rpc.Status statuses = 1;
+  message Entry {
+    // The index into the original request's `entries` list of the Entry
+    // for which a result is being reported.
+    int64 index = 1;
+
+    // The result of the request Entry identified by `index`.
+    // Depending on how requests are batched during execution, it is possible
+    // for one Entry to fail due to an error with another Entry. In the event
+    // that this occurs, the same error will be reported for both entries.
+    google.rpc.Status status = 2;
+  }
+
+  // One or more results for Entries from the batch request.
+  repeated Entry entries = 1;
 }
 
 // Request message for Bigtable.CheckAndMutateRow.
