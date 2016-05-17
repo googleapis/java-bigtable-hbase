@@ -38,12 +38,11 @@ public class HBaseResultCoderTest {
   }
 
   private Result createResult() {
-    KeyValue kv =
-        new KeyValue("key".getBytes(), "family".getBytes(), "qualifier".getBytes(),
-            System.currentTimeMillis(), "value".getBytes());
-    return Result.create(new Cell[] { kv });
+    return Result.create(new Cell[] { new KeyValue("key".getBytes(), "family".getBytes(),
+        "qualifier".getBytes(), System.currentTimeMillis(), "value".getBytes()) });
   }
 
+  @Test
   public void ensureDeterministic() throws Exception {
     Assert.assertArrayEquals(CoderTestUtil.encode(underTest, original),
       CoderTestUtil.encode(underTest, original));

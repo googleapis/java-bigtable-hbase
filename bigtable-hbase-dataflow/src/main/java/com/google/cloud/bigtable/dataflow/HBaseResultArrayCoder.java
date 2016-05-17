@@ -15,21 +15,22 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
+import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 /**
- * A {@link Coder} that serializes and deserializes the {@link Result} array using
- * {@link ProtobufUtil}.
+ * A {@link Coder} that serializes and deserializes the {@link Result} array.
  */
 public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
 
@@ -44,10 +45,11 @@ public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
   @Override
   public Result[] decode(InputStream inputStream, Coder.Context context)
       throws CoderException, IOException {
-    ScanResponse response = ScanResponse.parseDelimitedFrom(inputStream);
-    Result[] results = new Result[response.getResultsCount()];
-    for (int i = 0; i < results.length; i++) {
-      results[i] = ProtobufUtil.toResult(response.getResults(i));
+    ObjectInputStream ois = new ObjectInputStream(inputStream);
+    int resultCount = ois.readInt();
+    Result[] results = new Result[resultCount];
+    for (int i = 0; i < resultCount; i++) {
+      results[i] = Adapters.ROW_ADAPTER.adaptResponse(Row.parseDelimitedFrom(inputStream));
     }
     return results;
   }
@@ -55,11 +57,11 @@ public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
   @Override
   public void encode(Result[] results, OutputStream outputStream, Coder.Context context)
       throws CoderException, IOException {
-    ScanResponse.Builder scanResponseBuilder = ScanResponse.newBuilder();
+    ObjectOutputStream oos = new ObjectOutputStream(outputStream);
+    oos.writeInt(results.length);
+    oos.flush();
     for (Result result : results) {
-      scanResponseBuilder.addResults(ProtobufUtil.toResult(result));
+      Adapters.ROW_ADAPTER.adaptToRow(result).writeDelimitedTo(outputStream);
     }
-    scanResponseBuilder.build().writeDelimitedTo(outputStream);
   }
-
 }

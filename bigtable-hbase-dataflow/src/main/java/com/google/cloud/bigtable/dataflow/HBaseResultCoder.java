@@ -15,13 +15,13 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
+import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,8 +29,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 
 /**
- * A {@link Coder} that serializes and deserializes the {@link Result} objects using {@link
- * ProtobufUtil}.
+ * A {@link Coder} that serializes and deserializes the {@link Result}.
  */
 public class HBaseResultCoder extends AtomicCoder<Result> implements Serializable {
 
@@ -45,12 +44,12 @@ public class HBaseResultCoder extends AtomicCoder<Result> implements Serializabl
   @Override
   public Result decode(InputStream inputStream, Coder.Context context)
       throws CoderException, IOException {
-    return ProtobufUtil.toResult(ClientProtos.Result.parseDelimitedFrom(inputStream));
+    return Adapters.ROW_ADAPTER.adaptResponse(Row.parseDelimitedFrom(inputStream));
   }
 
   @Override
   public void encode(Result value, OutputStream outputStream, Coder.Context context)
       throws CoderException, IOException {
-    ProtobufUtil.toResult(value).writeDelimitedTo(outputStream);
+    Adapters.ROW_ADAPTER.adaptToRow(value).writeDelimitedTo(outputStream);
   }
 }
