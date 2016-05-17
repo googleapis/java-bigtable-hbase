@@ -40,7 +40,6 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
@@ -48,6 +47,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
+import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.bigtable.v1.Row;
 import com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -55,8 +57,9 @@ import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase1_0.BigtableConnection;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
@@ -170,7 +173,7 @@ public class CloudBigtableIO {
     /**
      * Get the next unit of work.
      */
-    ResultOutputType next(ResultScanner resultScanner) throws IOException;
+    ResultOutputType next(ResultScanner<Row> resultScanner) throws IOException;
 
     /**
      * Is the work complete? Checks for null in the case of {@link Result}, or empty in the case of
@@ -178,6 +181,9 @@ public class CloudBigtableIO {
      */
     boolean isCompletionMarker(ResultOutputType result);
 
+    /**
+     * This is used to figure out how many results were read.  This is more useful for {@link Result}[].
+     */
     long getRowCount(ResultOutputType current);
   }
 
@@ -188,8 +194,9 @@ public class CloudBigtableIO {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Result next(ResultScanner resultScanner) throws IOException {
-      return resultScanner.next();
+    public Result next(ResultScanner<Row> resultScanner) throws IOException {
+      Row row = resultScanner.next();
+      return row == null ? null : Adapters.ROW_ADAPTER.adaptResponse(row);
     }
 
     @Override
@@ -215,8 +222,13 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Result[] next(ResultScanner resultScanner) throws IOException {
-      return resultScanner.next(arraySize);
+    public Result[] next(ResultScanner<Row> resultScanner) throws IOException {
+      Row[] next = resultScanner.next(arraySize);
+      Result[] results = new Result[next.length];
+      for (int i = 0; i < next.length; i++) {
+        results[i] = Adapters.ROW_ADAPTER.adaptResponse(next[i]);
+      }
+      return results;
     }
 
     @Override
@@ -270,7 +282,6 @@ public class CloudBigtableIO {
       desiredBundleSizeBytes = Math.max(getEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
         desiredBundleSizeBytes);
       byte[] scanStartKey = configuration.getStartRow();
-
       byte[] scanEndKey = configuration.getStopRow();
       List<SourceWithKeys<ResultOutputType>> splits = new ArrayList<>();
       byte[] startKey = HConstants.EMPTY_START_ROW;
@@ -573,10 +584,10 @@ public class CloudBigtableIO {
 
   private static CloudBigtableScanConfiguration augmentConfiguration(
       CloudBigtableScanConfiguration configuration, byte[] startKey, byte[] stopKey) throws IOException {
-    Scan scan = new Scan(configuration.getScan());
-    scan.setStartRow(startKey);
-    scan.setStopRow(stopKey);
-    return configuration.toBuilder().withScan(scan).build();
+    ReadRowsRequest.Builder builder = configuration.getRequest().toBuilder();
+    builder.getRowRangeBuilder().setStartKey(BigtableZeroCopyByteStringUtil.wrap(startKey))
+        .setEndKey(BigtableZeroCopyByteStringUtil.wrap(stopKey));
+    return configuration.toBuilder().withRequest(builder.build()).build();
   }
 
   /**
@@ -685,9 +696,8 @@ public class CloudBigtableIO {
     private final CloudBigtableScanConfiguration config;
     private final ScanIterator<Results> scanIterator;
 
-    private volatile Connection connection;
-    private volatile ResultScanner scanner;
-    private volatile Table table;
+    private volatile BigtableSession session;
+    private volatile ResultScanner<Row> scanner;
     private volatile Results current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
@@ -720,9 +730,8 @@ public class CloudBigtableIO {
       long connectionStart = System.currentTimeMillis();
       Configuration hbaseConfig = config.toHBaseConfig();
       hbaseConfig.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-      connection = new BigtableConnection(hbaseConfig);
-      table = connection.getTable(TableName.valueOf(config.getTableId()));
-      scanner = table.getScanner(config.getScan());
+      session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(hbaseConfig));
+      scanner = session.getDataClient().readRows(config.getRequest());
       workStart = System.currentTimeMillis();
       READER_LOG.info("{} Starting work. Creating Scanner took: {} ms.",
         this,
@@ -736,8 +745,7 @@ public class CloudBigtableIO {
     @Override
     public void close() throws IOException {
       scanner.close();
-      table.close();
-      connection.close();
+      session.close();
       long totalOps = rowsRead.get();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;
       long operationsPerSecond = totalOps * 1000 / elapsedTimeMs;
