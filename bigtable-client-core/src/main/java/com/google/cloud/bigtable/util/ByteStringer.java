@@ -17,7 +17,7 @@ public class ByteStringer {
    */
   private static boolean USE_ZEROCOPYBYTESTRING = true;
 
-  // Can I classload HBaseZeroCopyByteString without IllegalAccessError?
+  // Can I classload BigtableZeroCopyByteStringUtil without IllegalAccessError?
   // If we can, use it passing ByteStrings to pb else use native ByteString though more costly
   // because it makes a copy of the passed in array.
   static {
