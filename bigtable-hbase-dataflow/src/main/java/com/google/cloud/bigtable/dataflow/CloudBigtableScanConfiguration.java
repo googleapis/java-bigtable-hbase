@@ -15,17 +15,14 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
+import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
-import org.apache.hadoop.hbase.util.Base64;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
@@ -65,7 +62,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   /**
    * Converts a {@link CloudBigtableOptions} object to a {@link CloudBigtableScanConfiguration}
    * that will perform the specified {@link Scan} on the table.
-   * @param options The {@link CloudBigtableOptions} object.
+   * @param config The {@link CloudBigtableTableConfiguration} object.
    * @param scan The {@link Scan} to add to the configuration.
    * @return The new {@link CloudBigtableScanConfiguration}.
    */
@@ -81,6 +78,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
     protected Scan scan = new Scan();
+    private ReadRowsRequest request;
 
     public Builder() {
     }
@@ -92,6 +90,18 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     public Builder withScan(Scan scan) {
       this.scan = scan;
+      this.request = null;
+      return this;
+    }
+
+    /**
+     * Specifies the {@link ReadRowsRequest} that will be used to filter the table.
+     * @param request The {@link ReadRowsRequest} to add to the configuration.
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
+    public Builder withRequest(ReadRowsRequest request) {
+      this.request = request;
+      this.scan = null;
       return this;
     }
 
@@ -149,58 +159,18 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public CloudBigtableScanConfiguration build() {
-      return new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, scan,
+      if (request == null) {
+        ReadHooks readHooks = new DefaultReadHooks();
+        ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
+        builder.setTableName(new BigtableClusterName(projectId, zoneId, clusterId).toTableNameStr(tableId));
+        request = readHooks.applyPreSendHook(builder.build());
+      }
+      return new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, request,
           additionalConfiguration);
     }
   }
 
-  /**
-   * HBase's {@link Scan} does not implement {@link Serializable}.  This class provides a wrapper
-   * around {@link Scan} to properly serialize it.
-   */
-  private static class SerializableScan implements Serializable {
-    private static final long serialVersionUID = 1998373680347356757L;
-    private transient Scan scan;
-
-    public SerializableScan(Scan scan) {
-      this.scan = scan;
-    }
-
-    private void writeObject(ObjectOutputStream out) throws IOException {
-      out.writeObject(toEncodedString());
-    }
-
-    private String toEncodedString() throws IOException {
-      return Base64.encodeBytes(ProtobufUtil.toScan(scan).toByteArray());
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-      this.scan = toScan((String) in.readObject());
-    }
-
-    private static Scan toScan(String scanStr) throws IOException {
-      try {
-        return ProtobufUtil.toScan(ClientProtos.Scan.parseFrom(Base64.decode(scanStr)));
-      } catch (InvalidProtocolBufferException ipbe) {
-        throw new IOException("Could not deserialize the Scan.", ipbe);
-      }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (!(obj instanceof SerializableScan)) {
-        return false;
-      }
-      SerializableScan other = (SerializableScan) obj;
-      try {
-        return toEncodedString().equals(other.toEncodedString());
-      } catch (IOException e) {
-        throw new RuntimeException("Could not check SerializableScan equality", e);
-      }
-    }
-  }
-
-  private SerializableScan serializableScan;
+  private final ReadRowsRequest request;
 
   /**
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, zone, cluster
@@ -210,42 +180,42 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @param zoneId The zone where the cluster is located.
    * @param clusterId The cluster ID for the cluster.
    * @param tableId The table to connect to in the cluster.
-   * @param scan The {@link Scan} that will be used to filter the table.
+   * @param request The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
   protected CloudBigtableScanConfiguration(String projectId, String zoneId, String clusterId,
-      String tableId, Scan scan, Map<String, String> additionalConfiguration) {
+      String tableId, ReadRowsRequest request, Map<String, String> additionalConfiguration) {
     super(projectId, zoneId, clusterId, tableId, additionalConfiguration);
-    this.serializableScan = new SerializableScan(scan);
+    this.request = request;
   }
 
   /**
    * Gets the {@link Scan} used to filter the table.
    * @return The {@link Scan}.
    */
-  public Scan getScan() {
-    return serializableScan.scan;
+  public ReadRowsRequest getRequest() {
+    return request;
   }
 
   /**
    * @return The start row for this configuration.
    */
   public byte[] getStartRow() {
-    return getScan().getStartRow();
+    return request.getRowRange().getStartKey().toByteArray();
   }
 
   /**
    * @return The stop row for this configuration.
    */
   public byte[] getStopRow() {
-    return getScan().getStopRow();
+    return request.getRowRange().getEndKey().toByteArray();
   }
 
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj)
         && Objects
-            .equals(serializableScan, ((CloudBigtableScanConfiguration) obj).serializableScan);
+            .equals(request, ((CloudBigtableScanConfiguration) obj).request);
   }
 
   @Override
@@ -257,6 +227,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   public void copyConfig(Builder builder) {
     super.copyConfig(builder);
-    builder.withScan(getScan());
+    builder.withRequest(request);
   }
 }

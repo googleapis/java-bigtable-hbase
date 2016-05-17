@@ -187,11 +187,12 @@ public class CloudBigtableIOIntegrationTest {
     List<? extends BoundedSource<Result>> splits = source.splitIntoBundles(1 << 20, null);
     int count = 0;
     for (BoundedSource<Result> sourceWithKeys : splits) {
-      BoundedReader<Result> reader = sourceWithKeys.createReader(null);
-      reader.start();
-      while (reader.getCurrent() != null) {
-        count++;
-        reader.advance();
+      try (BoundedReader<Result> reader = sourceWithKeys.createReader(null)) {
+        reader.start();
+        while (reader.getCurrent() != null) {
+          count++;
+          reader.advance();
+        }
       }
     }
     Assert.assertEquals(rowCount, count);
@@ -218,13 +219,14 @@ public class CloudBigtableIOIntegrationTest {
     int count = 0;
     int maxBatch = 0;
     for (BoundedSource<Result[]> sourceWithKeys : splits) {
-      BoundedReader<Result[]> reader = sourceWithKeys.createReader(null);
-      reader.start();
-      while (reader.getCurrent().length != 0) {
-        int length = reader.getCurrent().length;
-        count += length;
-        maxBatch = Math.max(maxBatch, length);
-        reader.advance();
+      try (BoundedReader<Result[]> reader = sourceWithKeys.createReader(null)) {
+        reader.start();
+        while (reader.getCurrent().length != 0) {
+          int length = reader.getCurrent().length;
+          count += length;
+          maxBatch = Math.max(maxBatch, length);
+          reader.advance();
+        }
       }
     }
     Assert.assertEquals(rowCount, count);
