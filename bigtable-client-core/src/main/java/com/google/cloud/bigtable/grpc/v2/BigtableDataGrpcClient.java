@@ -219,13 +219,13 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   @Override
-  public MutateRowsResponse mutateRows(MutateRowsRequest request) throws ServiceException {
-    return getBlockingUnaryResult(request, mutateRowsRpc);
+  public List<MutateRowsResponse> mutateRows(MutateRowsRequest request) throws ServiceException {
+    return getBlockingStreamingResult(request, mutateRowsRpc);
   }
 
   @Override
-  public ListenableFuture<MutateRowsResponse> mutateRowsAsync(MutateRowsRequest request) {
-    return getUnaryFuture(request, mutateRowsRpc);
+  public ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request) {
+    return getStreamingFuture(request, mutateRowsRpc);
   }
 
   @Override
