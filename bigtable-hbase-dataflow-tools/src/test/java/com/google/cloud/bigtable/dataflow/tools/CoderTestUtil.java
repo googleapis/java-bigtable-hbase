@@ -13,30 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.dataflow.tools;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import com.google.cloud.dataflow.sdk.coders.Coder;
-import com.google.cloud.dataflow.sdk.coders.CoderException;
-
 /**
- * Simple tool to help with testing coders
+ * Simple tool to help with testing {@link BigtableConverter}s.
  */
 public class CoderTestUtil {
 
-  public static <T> T encodeAndDecode(Coder<T> coder, T original) throws CoderException,
-      IOException {
-    ByteArrayInputStream bais = new ByteArrayInputStream(encode(coder, original));
-    return coder.decode(bais, null);
+  public static <T> T encodeAndDecode(BigtableConverter<T> converter, T original)
+      throws IOException {
+    ByteArrayInputStream bais = new ByteArrayInputStream(encode(converter, original));
+    return converter.decode(bais);
   }
 
-  public static <T> byte[] encode(Coder<T> coder, T original) throws CoderException, IOException {
+  public static <T> byte[] encode(BigtableConverter<T> coder, T original) throws IOException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    coder.encode(original, bos, null);
+    coder.encode(original, bos);
     return bos.toByteArray();
   }
-
 }

@@ -20,7 +20,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-import com.google.cloud.bigtable.dataflow.HBaseResultCoder;
+import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseResultConverter;
+import com.google.cloud.bigtable.dataflow.BigtableConverterCoder;
 import com.google.cloud.bigtable.dataflowimport.HadoopFileSource.HadoopFileReader;
 import com.google.cloud.bigtable.dataflowimport.testing.SequenceFileIoUtils;
 import com.google.cloud.dataflow.sdk.coders.KvCoder;
@@ -134,7 +135,10 @@ public class HBaseImportIOTest {
     KvCoder<ImmutableBytesWritable, Result> defaultOutputCoder =
         (KvCoder<ImmutableBytesWritable, Result>) source.getDefaultOutputCoder();
     assertTrue(defaultOutputCoder.getKeyCoder() instanceof WritableCoder);
-    assertTrue(defaultOutputCoder.getValueCoder() instanceof HBaseResultCoder);
+    assertTrue(defaultOutputCoder.getValueCoder() instanceof BigtableConverterCoder);
+    @SuppressWarnings("rawtypes")
+    BigtableConverterCoder coder = (BigtableConverterCoder) defaultOutputCoder.getValueCoder();
+    assertTrue(coder.getConverter() instanceof HBaseResultConverter);
 
     // Verify the constant serializer properties
     Configuration deserializerConfigs = getDeserializerConfigurationFromSource(source);

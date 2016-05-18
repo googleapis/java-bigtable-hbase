@@ -47,19 +47,21 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
+import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
+import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
+import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseMutationConverter;
+import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseResultArrayConverter;
+import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseResultConverter;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.ReadRowsRequest;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.Row;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.SampleRowKeysRequest;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.bigtable.v1.Row;
-import com.google.bigtable.v1.SampleRowKeysRequest;
-import com.google.bigtable.v1.SampleRowKeysResponse;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.BulkOptions;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
@@ -149,14 +151,23 @@ public class CloudBigtableIO {
     RESULT_ARRAY;
   }
 
+  private static BigtableConverterCoder<Result> RESULT_CODER =
+      new BigtableConverterCoder<>(new HBaseResultConverter());
+  private static BigtableConverterCoder<Result[]> RESULT_ARRAY_CODER =
+      new BigtableConverterCoder<>(new HBaseResultArrayConverter());
+
+  @SuppressWarnings("rawtypes")
+  private static BigtableConverterCoder HBASE_MUTATION_CODER =
+      new BigtableConverterCoder<>(new HBaseMutationConverter());
+
   @SuppressWarnings("rawtypes")
   public static Coder getCoder(CoderType type) {
     switch (type) {
       case RESULT:
-        return HBaseResultCoder.getInstance();
+        return RESULT_CODER;
 
       case RESULT_ARRAY:
-        return HBaseResultArrayCoder.getInstance();
+        return RESULT_ARRAY_CODER;
 
       default:
         throw new IllegalArgumentException("Can't get a coder for type: " + type.name());
@@ -785,19 +796,18 @@ public class CloudBigtableIO {
    *
    * @return The {@link Pipeline} for chaining convenience.
    */
-  @SuppressWarnings({"rawtypes", "unchecked"})
+  @SuppressWarnings("unchecked")
   public static Pipeline initializeForWrite(Pipeline p) {
     // This enables the serialization of various Mutation types in the pipeline.
     CoderRegistry registry = p.getCoderRegistry();
-    Coder coder = new HBaseMutationCoder();
 
     // MutationCoder only supports Puts and Deletes. It will throw exceptions for Increment
     // and Append since they are not idempotent. Put is logically idempotent if the column family
     // has a single version(); multiple versions are fine for most cases.  If it's not, add
     // a timestamp to the Put to make it fully idempotent.
-    registry.registerCoder(Put.class, coder);
-    registry.registerCoder(Delete.class, coder);
-    registry.registerCoder(Mutation.class, coder);
+    registry.registerCoder(Put.class, HBASE_MUTATION_CODER);
+    registry.registerCoder(Delete.class, HBASE_MUTATION_CODER);
+    registry.registerCoder(Mutation.class, HBASE_MUTATION_CODER);
 
     return p;
   }

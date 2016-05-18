@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.dataflow.tools;
 
 import static org.apache.hadoop.hbase.util.Bytes.toBytes;
 
@@ -24,25 +24,22 @@ import org.apache.hadoop.hbase.client.Put;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.cloud.dataflow.sdk.coders.CoderException;
-
 /**
  * Tests for {@link HBaseMutationCoder}.
  */
 public class HBaseMutationCoderTest {
 
-  private HBaseMutationCoder underTest = new HBaseMutationCoder();
+  private HBaseMutationConverter underTest = new HBaseMutationConverter();
 
   @Test
-  public void testPut() throws CoderException, IOException {
+  public void testPut() throws IOException {
     Put original = new Put(toBytes("key")).addColumn(toBytes("family"), toBytes("column"), toBytes("value"));
     Assert.assertEquals(0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
   }
 
   @Test
-  public void testDelete() throws CoderException, IOException {
+  public void testDelete() throws IOException {
     Delete original = new Delete(toBytes("key"));
     Assert.assertEquals(0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
   }
 }
-

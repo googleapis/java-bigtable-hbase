@@ -15,13 +15,14 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 
 import org.apache.hadoop.hbase.client.Scan;
+
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableClusterName;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.DefaultReadHooks;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.ReadHooks;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.ReadRowsRequest;
 
 import java.util.Map;
 import java.util.Objects;
