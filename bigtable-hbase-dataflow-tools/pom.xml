@@ -20,22 +20,17 @@ limitations under the License.
     </parent>
 
     <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-dataflow</artifactId>
+    <artifactId>bigtable-hbase-dataflow-tools</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-       This project contains artifacts that provide Cloud Bigtable client readers and writers in Google Cloud Dataflow.
+       This project contains artifacts that provide utility functions for Cloud Bigtable client readers and writers in Google Cloud Dataflow. Dataflow includes a different version of the cloud bigtable client, resulting in a need to have a separation of concerns and an abstraction. More importantly, there is a need for shading and renaming of packages so that Dataflow nad bigtable-hbase-dataflow's two sets of shading (needed for a variety of reasons) don't clash with each other.  This submodule does package renaming which is needed for bigtable-hbase-dataflow and alleviates some issues related to developing that module.
     </description>
 
     <dependencies>
         <dependency>
-            <groupId>com.google.cloud.dataflow</groupId>
-            <artifactId>google-cloud-dataflow-java-sdk-all</artifactId>
-            <version>1.5.1</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
-            <artifactId>bigtable-hbase-dataflow-tools</artifactId>
+            <artifactId>bigtable-hbase-1.0</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -64,56 +59,6 @@ limitations under the License.
         </dependency>
     </dependencies>
     <profiles>
-        <profile>
-            <id>bigtableDataflowIntegrationTest</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.mortbay.jetty.alpn</groupId>
-                    <artifactId>alpn-boot</artifactId>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>api-integration-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>none</phase>
-                            </execution>
-                            <execution>
-                                <id>api-gap-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <phase>integration-test</phase>
-                                <configuration>
-                                    <!-- ALPN is needed for SSL engine rewrites -->
-                                    <!-- to enable netty logging, include:
-                                    -Djava.util.logging.config.file=src/test/resources/logging.properties
-                                    -->
-                                    <argLine>
-                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
-                                    </argLine>
-                                    <forkCount>1</forkCount>
-                                    <includes>
-                                        <include>**/CloudBigtableIOIntegrationTest.java</include>
-                                    </includes>
-                                    <reportNameSuffix>bigtable-server</reportNameSuffix>
-                                    <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
         <profile>
             <id>release</id>
             <build>
@@ -165,11 +110,47 @@ limitations under the License.
                         <configuration>
                             <shadedArtifactAttached>false</shadedArtifactAttached>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <shadeTestJar>true</shadeTestJar>
                             <artifactSet>
                                 <includes>
-                                    <include>${project.groupId}:bigtable-hbase-dataflow-tools</include>
+                                    <include>${project.groupId}:bigtable-hbase-1.0</include>
                                 </includes>
                             </artifactSet>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google.cloud.bigtable</pattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.cloud</shadedPattern>
+                                    <excludes>
+                                        <exclude>com.google.cloud.bigtable.hbase1_0.BigtableConnection*</exclude>
+                                        <exclude>com.google.cloud.bigtable.dataflow.*</exclude>
+                                        <exclude>com.google.cloud.bigtable.hbase.*</exclude>
+                                    </excludes>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.bigtable.v1</pattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.bigtable.v1</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.bigtable.v2</pattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.bigtable.v2</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.bigtable.admin</pattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.bigtable.admin</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.type</pattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.type</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.longrunning</pattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.longrunning</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.rpc</pattern>
+                                    <shadedPattern>com.google.bigtable.repackaged.com.google.com.google.rpc</shadedPattern>
+                                </relocation>
+                            </relocations>
                         </configuration>
                     </execution>
                 </executions>

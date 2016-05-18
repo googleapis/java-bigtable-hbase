@@ -13,43 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.dataflow;
-
-import com.google.bigtable.v1.Row;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
-import com.google.cloud.dataflow.sdk.coders.Coder;
-import com.google.cloud.dataflow.sdk.coders.CoderException;
-
-import org.apache.hadoop.hbase.client.Result;
+package com.google.cloud.bigtable.dataflow.tools;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
+
+import org.apache.hadoop.hbase.client.Result;
+
+import com.google.bigtable.v1.Row;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 
 /**
- * A {@link Coder} that serializes and deserializes the {@link Result}.
+ * A {@link BigtableConverter} that serializes and deserializes the {@link Result}.
  */
-public class HBaseResultCoder extends AtomicCoder<Result> implements Serializable {
+public class HBaseResultConverter implements BigtableConverter<Result> {
 
   private static final long serialVersionUID = -4975428837770254686L;
 
-  private static final HBaseResultCoder INSTANCE = new HBaseResultCoder();
+  private static final HBaseResultConverter INSTANCE = new HBaseResultConverter();
 
-  public static HBaseResultCoder getInstance() {
+  public static HBaseResultConverter getInstance() {
     return INSTANCE;
   }
 
   @Override
-  public Result decode(InputStream inputStream, Coder.Context context)
-      throws CoderException, IOException {
+  public Result decode(InputStream inputStream)
+      throws IOException {
     return Adapters.ROW_ADAPTER.adaptResponse(Row.parseDelimitedFrom(inputStream));
   }
 
   @Override
-  public void encode(Result value, OutputStream outputStream, Coder.Context context)
-      throws CoderException, IOException {
+  public void encode(Result value, OutputStream outputStream)
+      throws IOException {
     Adapters.ROW_ADAPTER.adaptToRow(value).writeDelimitedTo(outputStream);
   }
 }

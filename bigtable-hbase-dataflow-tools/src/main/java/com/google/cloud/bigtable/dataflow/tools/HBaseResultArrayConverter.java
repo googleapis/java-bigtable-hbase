@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.dataflow;
+package com.google.cloud.bigtable.dataflow.tools;
 
 import com.google.bigtable.v1.Row;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
-import com.google.cloud.dataflow.sdk.coders.Coder;
-import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 import org.apache.hadoop.hbase.client.Result;
 
@@ -30,21 +27,21 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 /**
- * A {@link Coder} that serializes and deserializes the {@link Result} array.
+ * A {@link BigtableConverter} that serializes and deserializes the {@link Result} array.
  */
-public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
+public class HBaseResultArrayConverter implements BigtableConverter<Result[]>{
 
-  private static final HBaseResultArrayCoder INSTANCE = new HBaseResultArrayCoder();
+  private static final HBaseResultArrayConverter INSTANCE = new HBaseResultArrayConverter();
 
-  public static HBaseResultArrayCoder getInstance() {
+  public static HBaseResultArrayConverter getInstance() {
     return INSTANCE;
   }
 
   private static final long serialVersionUID = -4975428837770254686L;
 
   @Override
-  public Result[] decode(InputStream inputStream, Coder.Context context)
-      throws CoderException, IOException {
+  public Result[] decode(InputStream inputStream)
+      throws IOException {
     ObjectInputStream ois = new ObjectInputStream(inputStream);
     int resultCount = ois.readInt();
     Result[] results = new Result[resultCount];
@@ -55,8 +52,8 @@ public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
   }
 
   @Override
-  public void encode(Result[] results, OutputStream outputStream, Coder.Context context)
-      throws CoderException, IOException {
+  public void encode(Result[] results, OutputStream outputStream)
+      throws IOException {
     ObjectOutputStream oos = new ObjectOutputStream(outputStream);
     oos.writeInt(results.length);
     oos.flush();
