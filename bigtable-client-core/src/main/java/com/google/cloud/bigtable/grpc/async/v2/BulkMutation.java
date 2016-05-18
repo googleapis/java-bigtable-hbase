@@ -165,7 +165,7 @@ public class BulkMutation {
 
             @Override
             public void onFailure(Throwable t) {
-              perfromFullRetry(new AtomicReference<Long>(), t);
+              performFullRetry(new AtomicReference<Long>(), t);
             }
           });
     }
@@ -178,7 +178,8 @@ public class BulkMutation {
       }
 
       if (result == null || result.isEmpty()) {
-        perfromFullRetry(backoffTime, new IllegalStateException("MutateRowResponse result or statuses"));
+        performFullRetry(
+            backoffTime, new IllegalStateException("No MutateRowResponses were found."));
         return;
       }
 
@@ -188,7 +189,8 @@ public class BulkMutation {
       }
 
       if (entries.isEmpty()) {
-        perfromFullRetry(backoffTime, new IllegalStateException("MutateRowResponse result or statuses"));
+        performFullRetry(
+            backoffTime, new IllegalStateException("No MutateRowsResponses entries were found."));
         return;
       }
 
@@ -203,11 +205,11 @@ public class BulkMutation {
         LOG.error(
           "Unexpected Exception occurred. Treating this issue as a temporary issue and retrying.",
           e);
-        perfromFullRetry(backoffTime, e);
+        performFullRetry(backoffTime, e);
       }
     }
 
-    private void perfromFullRetry(AtomicReference<Long> backOffTime, Throwable t) {
+    private void performFullRetry(AtomicReference<Long> backOffTime, Throwable t) {
       getCurrentBackoff(backOffTime);
       if (backOffTime.get() == BackOff.STOP) {
         setFailure(new BigtableRetriesExhaustedException("Exhausted retries.", t));

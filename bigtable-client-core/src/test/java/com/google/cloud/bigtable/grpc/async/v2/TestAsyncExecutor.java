@@ -148,20 +148,20 @@ public class TestAsyncExecutor {
       for (int i = 0; i < 10; i++) {
         underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
       }
-      final AtomicBoolean eleventRpcInvoked = new AtomicBoolean(false);
+      final AtomicBoolean eleventhRpcInvoked = new AtomicBoolean(false);
       testExecutor.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-          eleventRpcInvoked.set(true);
+          eleventhRpcInvoked.set(true);
           return null;
         }
       });
       Thread.sleep(50);
-      Assert.assertFalse(eleventRpcInvoked.get());
+      Assert.assertFalse(eleventhRpcInvoked.get());
       completeCall();
       Thread.sleep(50);
-      Assert.assertTrue(eleventRpcInvoked.get());
+      Assert.assertTrue(eleventhRpcInvoked.get());
     } finally {
       testExecutor.shutdownNow();
     }

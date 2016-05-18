@@ -146,20 +146,20 @@ public class TestAsyncExecutor {
       for (int i = 0; i < 10; i++) {
         underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
       }
-      final AtomicBoolean eleventRpcInvoked = new AtomicBoolean(false);
+      final AtomicBoolean eleventhRpcInvoked = new AtomicBoolean(false);
       testExecutor.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-          eleventRpcInvoked.set(true);
+          eleventhRpcInvoked.set(true);
           return null;
         }
       });
       Thread.sleep(50);
-      Assert.assertFalse(eleventRpcInvoked.get());
+      Assert.assertFalse(eleventhRpcInvoked.get());
       completeCall();
       Thread.sleep(50);
-      Assert.assertTrue(eleventRpcInvoked.get());
+      Assert.assertTrue(eleventhRpcInvoked.get());
     } finally {
       testExecutor.shutdownNow();
     }
@@ -177,13 +177,11 @@ public class TestAsyncExecutor {
       // Send a huge request to block further RPCs.
       underTest.mutateRowAsync(MutateRowRequest.newBuilder()
           .setRowKey(ByteString.copyFrom(new byte[1000])).build());
-      final AtomicBoolean newRpcInvoked = new AtomicBoolean(false);
-      Future<Void> future = testExecutor.submit(new Callable<Void>() {
+      Future<Boolean> future = testExecutor.submit(new Callable<Boolean>() {
         @Override
-        public Void call() throws Exception {
+        public Boolean call() throws Exception {
           underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-          newRpcInvoked.set(true);
-          return null;
+          return true;
         }
       });
       try {
@@ -193,8 +191,7 @@ public class TestAsyncExecutor {
         // Expected Exception.
       }
       completeCall();
-      future.get(50, TimeUnit.MILLISECONDS);
-      Assert.assertTrue(newRpcInvoked.get());
+      Assert.assertTrue(future.get(50, TimeUnit.MILLISECONDS));
     } finally {
       testExecutor.shutdownNow();
     }

@@ -38,7 +38,7 @@ import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 import java.util.ArrayList;
- import java.util.Iterator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -163,11 +163,10 @@ public class BulkMutation {
 
             @Override
             public void onFailure(Throwable t) {
-              perfromFullRetry(new AtomicReference<Long>(), t);
+              performFullRetry(new AtomicReference<Long>(), t);
             }
           });
     }
-
 
     synchronized void handleResult(MutateRowsResponse result) {
       AtomicReference<Long> backoffTime = new AtomicReference<>();
@@ -179,7 +178,7 @@ public class BulkMutation {
       if (result == null
           || result.getStatusesList() == null
           || result.getStatusesList().isEmpty()) {
-        perfromFullRetry(backoffTime, new IllegalStateException("empty result or statuses"));
+        performFullRetry(backoffTime, new IllegalStateException("empty result or statuses"));
         return;
       }
 
@@ -198,11 +197,11 @@ public class BulkMutation {
         LOG.error(
           "Unexpected Exception occurred. Treating this issue as a temporary issue and retrying.",
           e);
-        perfromFullRetry(backoffTime, e);
+        performFullRetry(backoffTime, e);
       }
     }
 
-    private void perfromFullRetry(AtomicReference<Long> backOffTime, Throwable t) {
+    private void performFullRetry(AtomicReference<Long> backOffTime, Throwable t) {
       getCurrentBackoff(backOffTime);
       if (backOffTime.get() == BackOff.STOP) {
         setFailure(new BigtableRetriesExhaustedException("Exhausted retries.", t));
