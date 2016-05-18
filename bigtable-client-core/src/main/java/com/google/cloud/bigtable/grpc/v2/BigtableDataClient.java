@@ -53,21 +53,17 @@ public interface BigtableDataClient {
   ListenableFuture<MutateRowResponse> mutateRowAsync(MutateRowRequest request);
 
   /**
-   * Mutates multiple rows in a batch. Each individual row is mutated
-   * atomically as in MutateRow, but the entire batch is not executed
-   * atomically. 
+   * Mutates multiple rows in a batch. Each individual row is mutated atomically as in MutateRow,
+   * but the entire batch is not executed atomically.
    */
-  MutateRowsResponse mutateRows(MutateRowsRequest request) throws ServiceException;
+  List<MutateRowsResponse> mutateRows(MutateRowsRequest request) throws ServiceException;
 
   /**
-   * Mutates multiple rows in a batch. Each individual row is mutated
-   * atomically as in MutateRow, but the entire batch is not executed
-   * atomically.
-   * 
-   * @return a {@link ListenableFuture} that will finish when
-   * the mutations have all been completed.
+   * Mutates multiple rows in a batch. Each individual row is mutated atomically as in MutateRow,
+   * but the entire batch is not executed atomically.
+   * @return a {@link ListenableFuture} that will finish when the mutations have all been completed.
    */
-  ListenableFuture<MutateRowsResponse> mutateRowsAsync(MutateRowsRequest request);
+  ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request);
 
   /**
    * Mutate a row atomically dependent on a precondition.

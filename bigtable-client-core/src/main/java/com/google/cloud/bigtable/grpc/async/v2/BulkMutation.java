@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.async;
+package com.google.cloud.bigtable.grpc.async.v2;
+
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.api.client.util.BackOff;
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.MutateRowsRequest;
-import com.google.bigtable.v1.MutateRowsRequest.Entry;
-import com.google.bigtable.v1.MutateRowsResponse;
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowResponse;
+import com.google.bigtable.v2.MutateRowsRequest;
+import com.google.bigtable.v2.MutateRowsResponse;
+import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
@@ -30,7 +32,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.Any;
-import com.google.protobuf.Empty;
 import com.google.rpc.Status;
 
 import io.grpc.Status.Code;
@@ -38,8 +39,9 @@ import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,7 +70,7 @@ public class BulkMutation {
   }
 
   @VisibleForTesting
-  static Entry convert(MutateRowRequest request) {
+  static MutateRowsRequest.Entry convert(MutateRowRequest request) {
     return MutateRowsRequest.Entry.newBuilder()
             .setRowKey(request.getRowKey())
             .addAllMutations(request.getMutationsList())
@@ -77,7 +79,7 @@ public class BulkMutation {
 
   @VisibleForTesting
   static class RequestManager {
-    private final List<SettableFuture<Empty>> futures = new ArrayList<>();
+    private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
     private final MutateRowsRequest.Builder builder;
     private MutateRowsRequest request;
     private long approximateByteSize = 0l;
@@ -87,7 +89,7 @@ public class BulkMutation {
       this.approximateByteSize = tableName.length() + 2;
     }
 
-    void add(SettableFuture<Empty> future, MutateRowsRequest.Entry entry) {
+    void add(SettableFuture<MutateRowResponse> future, MutateRowsRequest.Entry entry) {
       futures.add(future);
       builder.addEntries(entry);
       approximateByteSize += entry.getSerializedSize();
@@ -136,8 +138,8 @@ public class BulkMutation {
      *         returns from the server. See {@link #addCallback(ListenableFuture)} for
      *         more information about how the SettableFuture is set.
      */
-    ListenableFuture<Empty> add(MutateRowRequest request) {
-      SettableFuture<Empty> future = SettableFuture.create();
+    ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
+      SettableFuture<MutateRowResponse> future = SettableFuture.create();
       currentRequestManager.add(future, convert(request));
       return future;
     }
@@ -152,12 +154,12 @@ public class BulkMutation {
      * {@link BulkMutation#add(MutateRowRequest)} when the provided {@link ListenableFuture} for the
      * {@link MutateRowsResponse} is complete.
      */
-    void addCallback(ListenableFuture<MutateRowsResponse> bulkFuture) {
+    void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture) {
       Futures.addCallback(
           bulkFuture,
-          new FutureCallback<MutateRowsResponse>() {
+          new FutureCallback<List<MutateRowsResponse>>() {
             @Override
-            public void onSuccess(MutateRowsResponse result) {
+            public void onSuccess(List<MutateRowsResponse> result) {
               handleResult(result);
             }
 
@@ -168,30 +170,36 @@ public class BulkMutation {
           });
     }
 
-    synchronized void handleResult(MutateRowsResponse result) {
+    synchronized void handleResult(List<MutateRowsResponse> result) {
       AtomicReference<Long> backoffTime = new AtomicReference<>();
       if (this.currentRequestManager == null) {
         LOG.warn("Got duplicate responses for bulk mutation.");
         return;
       }
 
-      if (result == null
-          || result.getStatusesList() == null
-          || result.getStatusesList().isEmpty()) {
-        performFullRetry(backoffTime, new IllegalStateException("empty result or statuses"));
+      if (result == null || result.isEmpty()) {
+        performFullRetry(
+            backoffTime, new IllegalStateException("No MutateRowResponses were found."));
+        return;
+      }
+
+      List<MutateRowsResponse.Entry> entries = new ArrayList<>();
+      for (MutateRowsResponse response : result) {
+        entries.addAll(response.getEntriesList());
+      }
+
+      if (entries.isEmpty()) {
+        performFullRetry(
+            backoffTime, new IllegalStateException("No MutateRowsResponses entries were found."));
         return;
       }
 
       try {
-        Iterator<Status> statuses = result.getStatusesList().iterator();
-        Iterator<SettableFuture<Empty>> futures = currentRequestManager.futures.iterator();
-
         String tableName = currentRequestManager.request.getTableName();
         RequestManager retryRequestManager = new RequestManager(tableName);
 
-        int processedCount = handleResponses(backoffTime, statuses, futures, retryRequestManager);
-        handleExtraFutures(backoffTime, futures, processedCount, retryRequestManager);
-        handleExtraStatuses(statuses);
+        int processedCount = handleResponses(backoffTime, entries, retryRequestManager);
+        handleExtraFutures(backoffTime, processedCount, retryRequestManager, entries);
         completeOrRetry(backoffTime, retryRequestManager);
       } catch (RuntimeException e) {
         LOG.error(
@@ -230,14 +238,20 @@ public class BulkMutation {
       return backOffTime.get();
     }
 
-    private int handleResponses(AtomicReference<Long> backoffTime, Iterator<Status> statuses,
-        Iterator<SettableFuture<Empty>> futures, RequestManager retryRequestManager) {
+    private int handleResponses(AtomicReference<Long> backoffTime,
+        Iterable<MutateRowsResponse.Entry> entries, RequestManager retryRequestManager) {
       int count = 0;
-      while (futures.hasNext() && statuses.hasNext()) {
-        SettableFuture<Empty> future = futures.next();
-        Status status = statuses.next();
+      for (MutateRowsResponse.Entry entry : entries) {
+        Status status = entry.getStatus();
+        int index = (int) entry.getIndex();
+        if (index >= currentRequestManager.futures.size()) {
+          LOG.error("Got %extra status: %s", entry);
+          break;
+        }
+        SettableFuture<MutateRowResponse> future = currentRequestManager.futures.get(index);
+
         if (status.getCode() == io.grpc.Status.Code.OK.value()) {
-          future.set(Empty.getDefaultInstance());
+          future.set(MutateRowResponse.getDefaultInstance());
         } else if (!isRetryable(status) || getCurrentBackoff(backoffTime) == BackOff.STOP) {
           future.setException(toException(status));
         } else {
@@ -248,38 +262,35 @@ public class BulkMutation {
       return count;
     }
 
-    private void handleExtraFutures(AtomicReference<Long> backoffTime, Iterator<SettableFuture<Empty>> futures,
-        int processedCount, RequestManager retryRequestManager) {
-      if (!futures.hasNext()) {
-        return;
-      }
+    private void handleExtraFutures(AtomicReference<Long> backoffTime, int processedCount,
+        RequestManager retryRequestManager, List<Entry> entries) {
+      Set<Integer> indexes = new HashSet<>();
+      indexes.addAll(getIndexes(entries));
       long missingEntriesCount = 0;
       getCurrentBackoff(backoffTime);
-      while (futures.hasNext()) {
-        if (backoffTime.get() == BackOff.STOP) {
-          futures.next().setException(MISSING_ENTRY_EXCEPTION);
-        } else {
-          retryRequestManager.add(futures.next(),
-            this.currentRequestManager.request.getEntries(processedCount));
+      for (int i = 0; i < currentRequestManager.futures.size(); i++) {
+        // If the indexes do not contain this future, then there's a problem.
+        if (!indexes.remove(i)) {
+          missingEntriesCount++;
+          if (backoffTime.get() == BackOff.STOP) {
+            currentRequestManager.futures.get(i).setException(MISSING_ENTRY_EXCEPTION);
+          } else {
+            retryRequestManager.add(currentRequestManager.futures.get(i),
+              this.currentRequestManager.request.getEntries(processedCount));
+          }
         }
-        processedCount++;
-        missingEntriesCount++;
       }
       String handling =
           backoffTime.get() == BackOff.STOP ? "Setting exceptions on the futures" : "Retrying";
       LOG.error("Missing %d responses for bulkWrite. %s.", missingEntriesCount, handling);
     }
 
-    private void handleExtraStatuses(Iterator<Status> statuses) {
-      if (!statuses.hasNext()) {
-        return;
+    private List<Integer> getIndexes(List<Entry> entries) {
+      List<Integer> indexes = new ArrayList<>(entries.size());
+      for (Entry entry : entries) {
+        indexes.add((int) entry.getIndex());
       }
-      int extraStatusCount = 0;
-      while(statuses.hasNext()) {
-        extraStatusCount++;
-        LOG.error("Got %extra status: %s", statuses.next());
-      }
-      LOG.error("Got %d extra statuses", extraStatusCount);
+      return indexes;
     }
 
     private void completeOrRetry(AtomicReference<Long> backoffTime, RequestManager retryRequestManager) {
@@ -304,14 +315,14 @@ public class BulkMutation {
 
     @Override
     public synchronized void run() {
-      ListenableFuture<MutateRowsResponse> future = null;
+      ListenableFuture<List<MutateRowsResponse>> future = null;
       try {
         if (retryId == null) {
           retryId = Long.valueOf(this.asyncExecutor.getRpcThrottler().registerRetry());
         }
         future = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
       } catch (InterruptedException e) {
-        future = Futures.<MutateRowsResponse> immediateFailedFuture(e);
+        future = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
         addCallback(future);
       }
@@ -324,7 +335,7 @@ public class BulkMutation {
      */
     private void setFailure(Throwable t) {
       try {
-        for (SettableFuture<Empty> future : currentRequestManager.futures) {
+        for (SettableFuture<MutateRowResponse> future : currentRequestManager.futures) {
           future.setException(t);
         }
       } finally {
@@ -376,7 +387,7 @@ public class BulkMutation {
    *         returns from the server. See {@link Batch#addCallback(ListenableFuture)} for
    *         more information about how the SettableFuture is set.
    */
-  public synchronized ListenableFuture<Empty> add(MutateRowRequest request) {
+  public synchronized ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
     if (currentBatch == null) {
       currentBatch =
           new Batch(
@@ -388,7 +399,7 @@ public class BulkMutation {
               maxRequestSize);
     }
 
-    ListenableFuture<Empty> future = currentBatch.add(request);
+    ListenableFuture<MutateRowResponse> future = currentBatch.add(request);
     if (currentBatch.isFull()) {
       currentBatch.run();
       currentBatch = null;

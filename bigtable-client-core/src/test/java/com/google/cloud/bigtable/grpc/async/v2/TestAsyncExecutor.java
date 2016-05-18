@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.async;
+package com.google.cloud.bigtable.grpc.async.v2;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -36,11 +36,13 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.google.bigtable.v1.CheckAndMutateRowRequest;
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.ReadModifyWriteRowRequest;
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.bigtable.v2.CheckAndMutateRowRequest;
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.ReadModifyWriteRowRequest;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
+import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -177,11 +179,13 @@ public class TestAsyncExecutor {
       // Send a huge request to block further RPCs.
       underTest.mutateRowAsync(MutateRowRequest.newBuilder()
           .setRowKey(ByteString.copyFrom(new byte[1000])).build());
-      Future<Boolean> future = testExecutor.submit(new Callable<Boolean>() {
+      final AtomicBoolean newRpcInvoked = new AtomicBoolean(false);
+      Future<Void> future = testExecutor.submit(new Callable<Void>() {
         @Override
-        public Boolean call() throws Exception {
+        public Void call() throws Exception {
           underTest.mutateRowAsync(MutateRowRequest.getDefaultInstance());
-          return true;
+          newRpcInvoked.set(true);
+          return null;
         }
       });
       try {
@@ -191,7 +195,8 @@ public class TestAsyncExecutor {
         // Expected Exception.
       }
       completeCall();
-      Assert.assertTrue(future.get(50, TimeUnit.MILLISECONDS));
+      future.get(50, TimeUnit.MILLISECONDS);
+      Assert.assertTrue(newRpcInvoked.get());
     } finally {
       testExecutor.shutdownNow();
     }
