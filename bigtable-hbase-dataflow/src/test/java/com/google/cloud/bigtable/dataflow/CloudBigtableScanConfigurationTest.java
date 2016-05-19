@@ -28,8 +28,7 @@ import com.google.cloud.dataflow.sdk.util.SerializableUtils;
 public class CloudBigtableScanConfigurationTest {
 
   public static final String PROJECT = "project";
-  public static final String ZONE = "zone";
-  public static final String CLUSTER = "cluster";
+  public static final String INSTANCE = "instance";
   public static final String TABLE = "table";
 
   public static final byte[] START_ROW = "aa".getBytes();
@@ -37,8 +36,7 @@ public class CloudBigtableScanConfigurationTest {
 
   private static final CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
       .withProjectId(PROJECT)
-      .withZoneId(ZONE)
-      .withClusterId(CLUSTER)
+      .withInstanceId(INSTANCE)
       .withTableId(TABLE)
       .withScan(new Scan(START_ROW, STOP_ROW))
       .build();
@@ -48,8 +46,7 @@ public class CloudBigtableScanConfigurationTest {
     CloudBigtableScanConfiguration serialized = SerializableUtils.ensureSerializable(config);
 
     Assert.assertEquals(PROJECT, serialized.getProjectId());
-    Assert.assertEquals(ZONE, serialized.getZoneId());
-    Assert.assertEquals(CLUSTER, serialized.getClusterId());
+    Assert.assertEquals(INSTANCE, serialized.getInstanceId());
     Assert.assertEquals(TABLE, serialized.getTableId());
     Assert.assertArrayEquals(START_ROW, serialized.getStartRow());
     Assert.assertArrayEquals(STOP_ROW, serialized.getStopRow());

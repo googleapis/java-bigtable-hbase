@@ -35,8 +35,7 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 public class CloudBigtableTableConfigurationTest {
 
   private static final String PROJECT = "my_project";
-  private static final String CLUSTER = "cluster";
-  private static final String ZONE = "some-zone-1a";
+  private static final String INSTANCE = "instance";
   private static final String TABLE = "some-zone-1a";
 
   protected static CloudBigtableTableConfiguration buildConfiguration() {
@@ -45,7 +44,7 @@ public class CloudBigtableTableConfigurationTest {
 
   protected static <ConfigurationBuilder extends CloudBigtableConfiguration.Builder>
       ConfigurationBuilder configure(ConfigurationBuilder builder) {
-    builder.withProjectId(PROJECT).withZoneId(ZONE).withClusterId(CLUSTER);
+    builder.withProjectId(PROJECT).withInstanceId(INSTANCE);
     return builder;
   }
 
@@ -56,8 +55,7 @@ public class CloudBigtableTableConfigurationTest {
     Configuration config = underTest.toHBaseConfig();
 
     assertEquals(PROJECT, config.get(BigtableOptionsFactory.PROJECT_ID_KEY));
-    assertEquals(ZONE, config.get(BigtableOptionsFactory.ZONE_KEY));
-    assertEquals(CLUSTER, config.get(BigtableOptionsFactory.CLUSTER_KEY));
+    assertEquals(INSTANCE, config.get(BigtableOptionsFactory.INSTANCE_ID_KEY));
     assertEquals(TABLE, underTest.getTableId());
   }
 

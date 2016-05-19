@@ -8,10 +8,10 @@
  */
 package org.apache.hadoop.hbase.client;
 
-import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
-import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;

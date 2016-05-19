@@ -25,10 +25,10 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.bigtable.v1.Cell;
-import com.google.bigtable.v1.Column;
-import com.google.bigtable.v1.Family;
-import com.google.bigtable.v1.Row;
+import com.google.bigtable.v2.Cell;
+import com.google.bigtable.v2.Column;
+import com.google.bigtable.v2.Family;
+import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.util.ByteStringer;

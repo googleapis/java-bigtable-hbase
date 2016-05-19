@@ -126,11 +126,8 @@ public class ImportIntegrationTest {
     commonOptions.setBigtableProjectId(projectId);
     commonOptions.setProject(projectId); // Use Bigtable project as dataflow project.
     commonOptions.setBigtableClusterId(
-        checkNotNull(System.getProperty(BigtableOptionsFactory.CLUSTER_KEY),
-            "Required property missing: " + BigtableOptionsFactory.CLUSTER_KEY));
-    commonOptions.setBigtableZoneId(
-        checkNotNull(System.getProperty(BigtableOptionsFactory.ZONE_KEY),
-            "Required property missing: " + BigtableOptionsFactory.ZONE_KEY));
+        checkNotNull(System.getProperty(BigtableOptionsFactory.INSTANCE_ID_KEY),
+            "Required property missing: " + BigtableOptionsFactory.INSTANCE_ID_KEY));
     commonOptions.setStagingLocation(
         checkNotNull(System.getProperty(GOOGLE_DATAFLOW_STAGING_LOCATION),
             "Required property missing: " + GOOGLE_DATAFLOW_STAGING_LOCATION));
@@ -359,7 +356,7 @@ public class ImportIntegrationTest {
    *<p>First, run the following commands in HBase shell:
    * <pre>
    *   create 'integration-test', { NAME => 'column_family', VERSIONS=>5}
-   *   put 'integration-test', 'row_key_1', 'column_family:col1', 'v1', 1
+   *   put 'integration-test', 'row_key_1', 'column_family:col1', 'v2', 1
    *   put 'integration-test', 'row_key_1', 'column_family:col1', 'v2', 2
    *   put 'integration-test', 'row_key_2', 'column_family:col2', 'v3', 1
    *   put 'integration-test', 'row_key_2', 'column_family:col2', 'v4', 3
@@ -376,7 +373,7 @@ public class ImportIntegrationTest {
     final byte[] col1 = Bytes.toBytes("col1");
     final byte[] col2 = Bytes.toBytes("col2");
     Set<? extends Cell> keyValues = Sets.newHashSet(
-        new KeyValue(rowKey1, CF, col1, 1L, Bytes.toBytes("v1")),
+        new KeyValue(rowKey1, CF, col1, 1L, Bytes.toBytes("v2")),
         new KeyValue(rowKey1, CF, col1, 2L, Bytes.toBytes("v2")),
         new KeyValue(rowKey2, CF, col2, 1L, Bytes.toBytes("v3")),
         new KeyValue(rowKey2, CF, col2, 3L, Bytes.toBytes("v4")));

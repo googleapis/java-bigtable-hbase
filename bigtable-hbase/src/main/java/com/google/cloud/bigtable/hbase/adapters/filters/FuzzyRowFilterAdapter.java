@@ -23,8 +23,8 @@ import java.util.List;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.util.Pair;
 
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Interleave;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.QuoteMetaOutputStream;
 import com.google.cloud.bigtable.util.ByteStringer;

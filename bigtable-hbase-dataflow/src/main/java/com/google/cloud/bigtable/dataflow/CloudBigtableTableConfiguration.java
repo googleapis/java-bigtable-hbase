@@ -33,18 +33,6 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
    * @return The new {@link CloudBigtableTableConfiguration}.
    */
   public static CloudBigtableTableConfiguration fromCBTOptions(CloudBigtableOptions options){
-    // NOTE: This runs on the client, and they may not have slf4j set up.  They should know about the performance
-    // impact of their configuration.
-    if (options.getZone() == null) {
-      System.out.println(String.format(
-        "WARNING: Set the --zone parameter to %s (--bigtableZoneId)) for optimal performance",
-        options.getBigtableZoneId()));
-    } else if (!options.getZone().equals(options.getBigtableZoneId())) {
-      System.out.println(String.format(
-        "WARNING: The Bigtable zone(--bigtableZoneId) is: %s. The Dataflow zone (--zone) is set to %s."
-            + "Set the parameters to the same value for optimal performance.",
-        options.getBigtableZoneId(), options.getZone()));
-    }
     CloudBigtableTableConfiguration.Builder builder = new CloudBigtableTableConfiguration.Builder();
     copyOptions(options, builder);
     return builder.build();
@@ -54,8 +42,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
       CloudBigtableTableConfiguration.Builder builder) {
     builder
         .withProjectId(options.getBigtableProjectId())
-        .withZoneId(options.getBigtableZoneId())
-        .withClusterId(options.getBigtableClusterId())
+        .withInstanceId(options.getBigtableInstanceId())
         .withTableId(options.getBigtableTableId());
   }
 
@@ -93,24 +80,12 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     /**
      * {@inheritDoc}
      * 
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withZoneId(String)} so that it
+     * Overrides {@link CloudBigtableScanConfiguration.Builder#withInstanceId(String)} so that it
      * returns {@link CloudBigtableScanConfiguration.Builder}.
      */
     @Override
-    public Builder withZoneId(String zoneId) {
-      super.withZoneId(zoneId);
-      return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * Overrides {@link CloudBigtableScanConfiguration.Builder#withClusterId(String)} so that it
-     * returns {@link CloudBigtableScanConfiguration.Builder}.
-     */
-    @Override
-    public Builder withClusterId(String clusterId) {
-      super.withClusterId(clusterId);
+    public Builder withInstanceId(String instanceId) {
+      super.withInstanceId(instanceId);
       return this;
     }
 
@@ -132,7 +107,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      */
     @Override
     public CloudBigtableTableConfiguration build() {
-      return new CloudBigtableTableConfiguration(projectId, zoneId, clusterId, tableId,
+      return new CloudBigtableTableConfiguration(projectId, instanceId, tableId,
           additionalConfiguration);
     }
   }
@@ -145,15 +120,14 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
 
   /**
    * Creates a {@link CloudBigtableTableConfiguration} using the specified configuration.
-   * @param projectId The project ID for the cluster.
-   * @param zoneId The zone where the cluster is located.
-   * @param clusterId The cluster ID for the cluster.
+   * @param projectId The project ID for the instance.
+   * @param zoneId The instance ID
    * @param tableId The table to connect to in the cluster.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  public CloudBigtableTableConfiguration(String projectId, String zoneId, String clusterId,
+  public CloudBigtableTableConfiguration(String projectId, String instanceId,
       String tableId, Map<String, String> additionalConfiguration) {
-    super(projectId, zoneId, clusterId, additionalConfiguration);
+    super(projectId, instanceId, additionalConfiguration);
     this.tableId = tableId;
   }
 

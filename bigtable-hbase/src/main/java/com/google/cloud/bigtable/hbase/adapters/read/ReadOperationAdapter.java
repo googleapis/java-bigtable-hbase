@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.bigtable.v2.ReadRowsRequest;
 
 import org.apache.hadoop.hbase.client.Operation;
 

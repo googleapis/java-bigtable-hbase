@@ -10,7 +10,7 @@ package com.google.bigtable.v2;
  * Specifies a contiguous range of columns within a single column family.
  * The range spans from &lt;column_family&gt;:&lt;start_qualifier&gt; to
  * &lt;column_family&gt;:&lt;end_qualifier&gt;, where both bounds can be either inclusive or
- * exclusive.
+ * Open.
  * </pre>
  */
 public  final class ColumnRange extends
@@ -223,7 +223,7 @@ public  final class ColumnRange extends
    * <code>optional bytes start_qualifier_open = 3;</code>
    *
    * <pre>
-   * Used when giving an exclusive lower bound for the range.
+   * Used when giving an Open lower bound for the range.
    * </pre>
    */
   public com.google.protobuf.ByteString getStartQualifierOpen() {
@@ -253,7 +253,7 @@ public  final class ColumnRange extends
    * <code>optional bytes end_qualifier_open = 5;</code>
    *
    * <pre>
-   * Used when giving an exclusive upper bound for the range.
+   * Used when giving an Open upper bound for the range.
    * </pre>
    */
   public com.google.protobuf.ByteString getEndQualifierOpen() {
@@ -407,7 +407,7 @@ public  final class ColumnRange extends
    * Specifies a contiguous range of columns within a single column family.
    * The range spans from &lt;column_family&gt;:&lt;start_qualifier&gt; to
    * &lt;column_family&gt;:&lt;end_qualifier&gt;, where both bounds can be either inclusive or
-   * exclusive.
+   * Open.
    * </pre>
    */
   public static final class Builder extends
@@ -724,7 +724,7 @@ public  final class ColumnRange extends
      * <code>optional bytes start_qualifier_open = 3;</code>
      *
      * <pre>
-     * Used when giving an exclusive lower bound for the range.
+     * Used when giving an Open lower bound for the range.
      * </pre>
      */
     public com.google.protobuf.ByteString getStartQualifierOpen() {
@@ -737,7 +737,7 @@ public  final class ColumnRange extends
      * <code>optional bytes start_qualifier_open = 3;</code>
      *
      * <pre>
-     * Used when giving an exclusive lower bound for the range.
+     * Used when giving an Open lower bound for the range.
      * </pre>
      */
     public Builder setStartQualifierOpen(com.google.protobuf.ByteString value) {
@@ -753,7 +753,7 @@ public  final class ColumnRange extends
      * <code>optional bytes start_qualifier_open = 3;</code>
      *
      * <pre>
-     * Used when giving an exclusive lower bound for the range.
+     * Used when giving an Open lower bound for the range.
      * </pre>
      */
     public Builder clearStartQualifierOpen() {
@@ -814,7 +814,7 @@ public  final class ColumnRange extends
      * <code>optional bytes end_qualifier_open = 5;</code>
      *
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an Open upper bound for the range.
      * </pre>
      */
     public com.google.protobuf.ByteString getEndQualifierOpen() {
@@ -827,7 +827,7 @@ public  final class ColumnRange extends
      * <code>optional bytes end_qualifier_open = 5;</code>
      *
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an Open upper bound for the range.
      * </pre>
      */
     public Builder setEndQualifierOpen(com.google.protobuf.ByteString value) {
@@ -843,7 +843,7 @@ public  final class ColumnRange extends
      * <code>optional bytes end_qualifier_open = 5;</code>
      *
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an Open upper bound for the range.
      * </pre>
      */
     public Builder clearEndQualifierOpen() {

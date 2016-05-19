@@ -20,7 +20,7 @@ public interface TimestampRangeOrBuilder extends
    * <code>optional int64 end_timestamp_micros = 2;</code>
    *
    * <pre>
-   * Exclusive upper bound. If left empty, interpreted as infinity.
+   * Open upper bound. If left empty, interpreted as infinity.
    * </pre>
    */
   long getEndTimestampMicros();

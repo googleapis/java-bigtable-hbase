@@ -55,24 +55,23 @@ import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest;
-import com.google.bigtable.admin.table.v1.ColumnFamily;
-import com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest;
-import com.google.bigtable.admin.table.v1.CreateTableRequest;
-import com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest;
-import com.google.bigtable.admin.table.v1.DeleteTableRequest;
-import com.google.bigtable.admin.table.v1.DeleteTableRequest.Builder;
-import com.google.bigtable.admin.table.v1.GetTableRequest;
-import com.google.bigtable.admin.table.v1.ListTablesRequest;
-import com.google.bigtable.admin.table.v1.ListTablesResponse;
-import com.google.bigtable.admin.table.v1.Table;
+import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.CreateTableRequest.Split;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
+import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
+import com.google.bigtable.admin.v2.DropRowRangeRequest;
+import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.ListTablesRequest;
+import com.google.bigtable.admin.v2.ListTablesResponse;
+import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
-import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnFamilyFormatter;
-import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.v2.BigtableTableAdminClient;
+import com.google.cloud.bigtable.hbase.adapters.admin.v2.ColumnDescriptorAdapter;
+import com.google.cloud.bigtable.hbase.adapters.admin.v2.TableAdapter;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.protobuf.ByteString;
@@ -94,7 +93,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final AbstractBigtableConnection connection;
   private final BigtableTableAdminClient bigtableTableAdminClient;
 
-  private BigtableClusterName bigtableClusterName;
+  private BigtableInstanceName bigtableInstanceName;
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
   private final TableAdapter tableAdapter;
 
@@ -110,7 +109,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     this.connection = connection;
     this.bigtableTableAdminClient = bigtableTableAdminClient;
     this.disabledTables = disabledTables;
-    this.bigtableClusterName = options.getClusterName();
+    this.bigtableInstanceName = options.getInstanceName();
     this.tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
   }
 
@@ -218,7 +217,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private ListTablesResponse requestTableList() throws IOException {
     try {
       ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-      builder.setName(bigtableClusterName.toString());
+      builder.setName(bigtableInstanceName.toString());
       return bigtableTableAdminClient.listTables(builder.build());
     } catch (Throwable throwable) {
       throw new IOException("Failed to listTables", throwable);
@@ -235,7 +234,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       String bigtableFullTableName = tablesList.get(i).getName();
 
       // Strip out the Bigtable info.
-      String name = bigtableClusterName.toTableId(bigtableFullTableName);
+      String name = bigtableInstanceName.toTableId(bigtableFullTableName);
 
       result[i] = TableName.valueOf(name);
     }
@@ -249,7 +248,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       return null;
     }
 
-    String bigtableTableName = bigtableClusterName.toTableNameStr(tableName.getNameAsString());
+    String bigtableTableName = toBigtableName(tableName);
     GetTableRequest request = GetTableRequest.newBuilder().setName(bigtableTableName).build();
 
     try {
@@ -311,12 +310,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    builder.setName(bigtableClusterName.toString());
+    builder.setName(bigtableInstanceName.toString());
     builder.setTableId(desc.getTableName().getQualifierAsString());
     builder.setTable(tableAdapter.adapt(desc));
     if (splitKeys != null) {
       for (byte[] splitKey : splitKeys) {
-        builder.addInitialSplitKeys(Bytes.toString(splitKey));
+        builder.addInitialSplits(Split.newBuilder().setKey(ByteString.copyFrom(splitKey)).build());
       }
     }
     try {
@@ -339,7 +338,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void deleteTable(TableName tableName) throws IOException {
     Builder deleteBuilder = DeleteTableRequest.newBuilder();
-    deleteBuilder.setName(bigtableClusterName.toTableNameStr(tableName.getNameAsString()));
+    deleteBuilder.setName(toBigtableName(tableName));
     try {
       bigtableTableAdminClient.deleteTable(deleteBuilder.build());
     } catch (Throwable throwable) {
@@ -485,24 +484,42 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
-    ColumnFamily.Builder columnFamily =
-        columnDescriptorAdapter.adapt(column);
+    String columnName = column.getNameAsString();
+    Modification.Builder modification = Modification.newBuilder().setId(columnName)
+        .setCreate(columnDescriptorAdapter.adapt(column).build());
+    modifyColumn(tableName, columnName, "add", modification);
+  }
 
-    CreateColumnFamilyRequest.Builder createColumnFamilyBuilder =
-        CreateColumnFamilyRequest.newBuilder()
-            .setColumnFamilyId(column.getNameAsString())
-            .setColumnFamily(columnFamily);
 
-    createColumnFamilyBuilder.setName(bigtableClusterName.toTableNameStr(
-      tableName.getNameAsString()));
+  @Override
+  public void modifyColumn(TableName tableName, HColumnDescriptor column) throws IOException {
+    String columnName = column.getNameAsString();
+    Modification.Builder modification = Modification.newBuilder().setId(columnName)
+        .setUpdate(columnDescriptorAdapter.adapt(column).build());
+    modifyColumn(tableName, columnName, "update", modification);
+  }
+
+  @Override
+  public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
+    final String columnNameStr = Bytes.toString(columnName);
+    Modification.Builder modification = Modification.newBuilder().setId(columnNameStr)
+        .setDrop(true);
+    modifyColumn(tableName, columnNameStr, "update", modification);
+  }
+
+  protected void modifyColumn(TableName tableName, String columnName,
+      String modificationType, Modification.Builder modification) throws IOException {
+    ModifyColumnFamiliesRequest.Builder modifyColumnBuilder = ModifyColumnFamiliesRequest
+        .newBuilder().addModifications(modification).setName(toBigtableName(tableName));
 
     try {
-      bigtableTableAdminClient.createColumnFamily(createColumnFamilyBuilder.build());
+      bigtableTableAdminClient.modifyColumnFamily(modifyColumnBuilder.build());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format(
-              "Failed to add column '%s' to table '%s'",
-              column.getNameAsString(),
+              "Failed to %d column '%s' in table '%s'",
+              modificationType,
+              columnName,
               tableName.getNameAsString()),
           throwable);
     }
@@ -515,7 +532,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
     addColumn(TableName.valueOf(tableName), column);
   }
 
-
   /**
    * Modify an existing column family on a table. Asynchronous operation.
    * @param tableName name of table
@@ -525,37 +541,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void modifyColumn(final String tableName, HColumnDescriptor descriptor)
       throws IOException {
     modifyColumn(TableName.valueOf(tableName), descriptor);
-  }
-
-  @Override
-  public void modifyColumn(TableName tableName, HColumnDescriptor column) throws IOException {
-    String columnFamilyName =
-        ColumnFamilyFormatter.from(tableName, options).formatForBigtable(column.getNameAsString());
-    ColumnFamily.Builder columnFamily = columnDescriptorAdapter.adapt(column).setName(columnFamilyName);
-
-    try {
-      bigtableTableAdminClient.updateColumnFamily(columnFamily.build());
-    } catch (Throwable throwable) {
-      throw new IOException(String.format("Failed to add column '%s' to table '%s'",
-        column.getNameAsString(), tableName.getNameAsString()), throwable);
-    }
-  }
-
-  @Override
-  public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
-    ColumnFamilyFormatter formatter = ColumnFamilyFormatter.from(tableName, options);
-    String bigtableColumnName = formatter.formatForBigtable(Bytes.toString(columnName));
-    try {
-      bigtableTableAdminClient.deleteColumnFamily(
-          DeleteColumnFamilyRequest.newBuilder().setName(bigtableColumnName).build());
-    } catch (Throwable throwable) {
-      throw new IOException(
-          String.format(
-              "Failed to delete column '%s' from table '%s'",
-              Bytes.toString(columnName),
-              tableName.getNameAsString()),
-          throwable);
-    }
   }
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
@@ -613,9 +598,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(getClass())
-        .add("zone", options.getZoneId())
         .add("project", options.getProjectId())
-        .add("cluster", options.getClusterId())
+        .add("instance", options.getInstanceId())
         .add("adminHost", options.getTableAdminHost())
         .toString();
   }
@@ -642,29 +626,31 @@ public abstract class AbstractBigtableAdmin implements Admin {
     if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
-    issueBulkDelete(tableName, BulkDeleteRowsRequest.newBuilder().setDeleteAllDataFromTable(true));
+    issueBulkDelete(tableName, DropRowRangeRequest.newBuilder().setDeleteAllDataFromTable(true));
     disabledTables.remove(tableName);
   }
 
   public void deleteRowRangeByPrefix(TableName tableName, byte[] prefix) throws IOException {
     issueBulkDelete(
         tableName,
-        BulkDeleteRowsRequest.newBuilder()
+        DropRowRangeRequest.newBuilder()
             .setDeleteAllDataFromTable(false)
             .setRowKeyPrefix(ByteString.copyFrom(prefix)));
   }
 
-  private void issueBulkDelete(TableName tableName, BulkDeleteRowsRequest.Builder deleteRequest)
+  private void issueBulkDelete(TableName tableName, DropRowRangeRequest.Builder deleteRequest)
       throws IOException {
     try {
-      bigtableTableAdminClient.bulkDeleteRows(
-          deleteRequest
-              .setTableName(bigtableClusterName.toTableNameStr(tableName.getNameAsString()))
-              .build());
+      bigtableTableAdminClient
+          .dropRowRange(deleteRequest.setName(toBigtableName(tableName)).build());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);
     }
+  }
+
+  protected String toBigtableName(TableName tableName) {
+    return bigtableInstanceName.toTableNameStr(tableName.getNameAsString());
   }
 
   @Override

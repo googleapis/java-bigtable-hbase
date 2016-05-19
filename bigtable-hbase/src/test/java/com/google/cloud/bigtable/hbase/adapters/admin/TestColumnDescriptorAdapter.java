@@ -32,11 +32,11 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.admin.table.v1.ColumnFamily;
-import com.google.bigtable.admin.table.v1.GcRule;
-import com.google.bigtable.admin.table.v1.GcRule.Intersection;
-import com.google.bigtable.admin.table.v1.GcRule.Union;
-import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
+import com.google.bigtable.admin.v2.ColumnFamily;
+import com.google.bigtable.admin.v2.GcRule;
+import com.google.bigtable.admin.v2.GcRule.Intersection;
+import com.google.bigtable.admin.v2.GcRule.Union;
+import com.google.cloud.bigtable.hbase.adapters.admin.v2.ColumnDescriptorAdapter;
 import com.google.protobuf.Duration;
 
 /**
@@ -103,19 +103,11 @@ public class TestColumnDescriptorAdapter {
     descriptor.setInMemory(true);
 
     ColumnFamily.Builder result = adapter.adapt(descriptor)
-        .clearName()
         .clearGcRule();
 
     Assert.assertArrayEquals(
         new byte[0],
         result.build().toByteArray());
-  }
-
-  @Test
-  @Ignore("The name of the column family is in a higher level object like Table or the create column request")
-  public void columnFamilyNameIsPreserved() {
-    String adapted = adapter.adapt(descriptor).getName();
-    Assert.assertTrue(adapted.endsWith(descriptor.getNameAsString()));
   }
 
   @Test

@@ -25,11 +25,11 @@ import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import com.google.bigtable.v1.SampleRowKeysRequest;
-import com.google.bigtable.v1.SampleRowKeysResponse;
+import com.google.bigtable.v2.SampleRowKeysRequest;
+import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.common.collect.ImmutableList;
@@ -50,7 +50,7 @@ public class BigtableRegionLocator implements RegionLocator {
   public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableDataClient client) {
     this.tableName = tableName;
     this.client = client;
-    this.bigtableTableName = options.getClusterName().toTableName(tableName.getNameAsString());
+    this.bigtableTableName = options.getInstanceName().toTableName(tableName.getNameAsString());
     ServerName serverName = ServerName.valueOf(options.getDataHost(), options.getPort(), 0);
     this.adapter = new SampledRowKeysAdapter(tableName, serverName);
   }

@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Interleave;
-import com.google.bigtable.v1.TimestampRange;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 
 import org.apache.hadoop.hbase.filter.TimestampsFilter;

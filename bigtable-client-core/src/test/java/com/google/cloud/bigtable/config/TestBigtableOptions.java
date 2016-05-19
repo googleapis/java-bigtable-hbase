@@ -9,7 +9,7 @@
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KId, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -30,29 +30,25 @@ public class TestBigtableOptions {
   public void testEquals() {
     BigtableOptions options1 = new BigtableOptions.Builder()
         .setProjectId("project")
-        .setZoneId("zone")
-        .setClusterId("cluster")
+        .setInstanceId("intance")
         .setUserAgent("foo")
         .setCredentialOptions(CredentialOptions.nullCredential())
         .build();
     BigtableOptions options2 = new BigtableOptions.Builder()
         .setProjectId("project")
-        .setZoneId("zone")
-        .setClusterId("cluster")
+        .setInstanceId("intance")
         .setUserAgent("foo")
         .setCredentialOptions(CredentialOptions.nullCredential())
         .build();
     BigtableOptions options3 = new BigtableOptions.Builder()
         .setProjectId("project")
-        .setZoneId("zone")
-        .setClusterId("cluster")
+        .setInstanceId("intance")
         .setUserAgent("foo1")
         .setCredentialOptions(CredentialOptions.nullCredential())
         .build();
     BigtableOptions options4 = new BigtableOptions.Builder()
         .setProjectId("project")
-        .setZoneId("zone")
-        .setClusterId("cluster")
+        .setInstanceId("intance")
         .setUserAgent("foo1")
         .setCredentialOptions(CredentialOptions.defaultCredentials())
         .build();
@@ -66,8 +62,7 @@ public class TestBigtableOptions {
   public void testSerialization() throws IOException, ClassNotFoundException {
     BigtableOptions options = new BigtableOptions.Builder()
         .setProjectId("project")
-        .setZoneId("zone")
-        .setClusterId("cluster")
+        .setInstanceId("intance")
         .setUserAgent("foo")
         .build();
     ByteArrayOutputStream bos = new ByteArrayOutputStream();

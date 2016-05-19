@@ -97,7 +97,7 @@ public class TestIncrement extends AbstractTest {
   }
 
   /**
-   * Requirement 6.2 - Specify a timerange (min ts, inclusive + max ts, exclusive). This will create
+   * Requirement 6.2 - Specify a timerange (min ts, inclusive + max ts, Open). This will create
    * a new value that is an increment of the first value within this range, and will otherwise
    * create a new value.
    * Note: This is pretty weird.  Not sure who would use it, or if we need to support it.
@@ -120,7 +120,7 @@ public class TestIncrement extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[] qual = dataHelper.randomData("qual-");
 
-    // Put and increment in range.  Test min is inclusive, max is exclusive.
+    // Put and increment in range.  Test min is inclusive, max is Open.
     Put put = new Put(rowKey).addColumn(COLUMN_FAMILY, qual, 101L, Bytes.toBytes(101L))
       .addColumn(COLUMN_FAMILY, qual, 102L, Bytes.toBytes(102L))
       .addColumn(COLUMN_FAMILY, qual, 103L, Bytes.toBytes(103L));

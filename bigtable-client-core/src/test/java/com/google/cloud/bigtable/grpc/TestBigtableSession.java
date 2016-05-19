@@ -28,17 +28,15 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 public class TestBigtableSession {
 
   private static final String PROJECT_ID = "project_id";
-  private static final String ZONE_ID = "zone_id";
-  private static final String CLUSTER_ID = "cluster_id";
+  private static final String INSTANCE_ID = "zone_id";
   private static final String USER_AGENT = "user_agent";
 
-  private static void createSession(
-      String projectId, String zoneId, String clusterId, String userAgent) throws IOException {
+  private static void createSession(String projectId, String instanceId, String userAgent)
+      throws IOException {
     BigtableSession ignored =
         new BigtableSession(new BigtableOptions.Builder()
           .setProjectId(projectId)
-          .setZoneId(zoneId)
-          .setClusterId(clusterId)
+          .setInstanceId(instanceId)
           .setUserAgent(userAgent)
           .build());
   }
@@ -50,27 +48,20 @@ public class TestBigtableSession {
   public void testNoProjectIdBigtableOptions() throws IOException {
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage(BigtableSession.PROJECT_ID_EMPTY_OR_NULL);
-    createSession(null, ZONE_ID, CLUSTER_ID, USER_AGENT);
+    createSession(null, INSTANCE_ID, USER_AGENT);
   }
 
   @Test
-  public void testNoZoneIdBigtableOptions() throws IOException {
+  public void testNoInstanceIdBigtableOptions() throws IOException {
     expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(BigtableSession.ZONE_ID_EMPTY_OR_NULL);
-    createSession(PROJECT_ID, null, CLUSTER_ID, USER_AGENT);
-  }
-
-  @Test
-  public void testNoClusterIdBigtableOptions() throws IOException {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(BigtableSession.CLUSTER_ID_EMPTY_OR_NULL);
-    createSession(PROJECT_ID, ZONE_ID, null, USER_AGENT);
+    expectedException.expectMessage(BigtableSession.INSTANCE_ID_EMPTY_OR_NULL);
+    createSession(PROJECT_ID, null, USER_AGENT);
   }
 
   @Test
   public void testNoUserAgentBigtableOptions() throws IOException {
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage(BigtableSession.USER_AGENT_EMPTY_OR_NULL);
-    createSession(PROJECT_ID, ZONE_ID, CLUSTER_ID, null);
+    createSession(PROJECT_ID, INSTANCE_ID, null);
   }
 }

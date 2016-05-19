@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
 
 import org.apache.hadoop.hbase.filter.ColumnCountGetFilter;
 

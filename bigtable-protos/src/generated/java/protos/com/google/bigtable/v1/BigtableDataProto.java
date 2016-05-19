@@ -125,14 +125,14 @@ public final class BigtableDataProto {
       "\030\001 \003(\014\0220\n\nrow_ranges\030\002 \003(\0132\034.google.bigt" +
       "able.v1.RowRange\"\326\001\n\013ColumnRange\022\023\n\013fami" +
       "ly_name\030\001 \001(\t\022#\n\031start_qualifier_inclusi" +
-      "ve\030\002 \001(\014H\000\022#\n\031start_qualifier_exclusive\030" +
+      "ve\030\002 \001(\014H\000\022#\n\031start_qualifier_Open\030" +
       "\003 \001(\014H\000\022!\n\027end_qualifier_inclusive\030\004 \001(\014" +
-      "H\001\022!\n\027end_qualifier_exclusive\030\005 \001(\014H\001B\021\n" +
+      "H\001\022!\n\027end_qualifier_Open\030\005 \001(\014H\001B\021\n" +
       "\017start_qualifierB\017\n\rend_qualifier\"N\n\016Tim" +
       "estampRange\022\036\n\026start_timestamp_micros\030\001 " +
       "\001(\003\022\034\n\024end_timestamp_micros\030\002 \001(\003\"\250\001\n\nVa" +
       "lueRange\022\037\n\025start_value_inclusive\030\001 \001(\014H",
-      "\000\022\037\n\025start_value_exclusive\030\002 \001(\014H\000\022\035\n\023en" +
+      "\000\022\037\n\025start_value_Open\030\002 \001(\014H\000\022\035\n\023en" +
       "d_value_inclusive\030\003 \001(\014H\001\022\035\n\023end_value_e" +
       "xclusive\030\004 \001(\014H\001B\r\n\013start_valueB\013\n\tend_v" +
       "alue\"\337\010\n\tRowFilter\0224\n\005chain\030\001 \001(\0132#.goog" +
@@ -237,7 +237,7 @@ public final class BigtableDataProto {
     internal_static_google_bigtable_v1_ColumnRange_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_v1_ColumnRange_descriptor,
-        new java.lang.String[] { "FamilyName", "StartQualifierInclusive", "StartQualifierExclusive", "EndQualifierInclusive", "EndQualifierExclusive", "StartQualifier", "EndQualifier", });
+        new java.lang.String[] { "FamilyName", "StartQualifierInclusive", "StartQualifierOpen", "EndQualifierInclusive", "EndQualifierOpen", "StartQualifier", "EndQualifier", });
     internal_static_google_bigtable_v1_TimestampRange_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_google_bigtable_v1_TimestampRange_fieldAccessorTable = new
@@ -249,7 +249,7 @@ public final class BigtableDataProto {
     internal_static_google_bigtable_v1_ValueRange_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_v1_ValueRange_descriptor,
-        new java.lang.String[] { "StartValueInclusive", "StartValueExclusive", "EndValueInclusive", "EndValueExclusive", "StartValue", "EndValue", });
+        new java.lang.String[] { "StartValueInclusive", "StartValueOpen", "EndValueInclusive", "EndValueOpen", "StartValue", "EndValue", });
     internal_static_google_bigtable_v1_RowFilter_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_google_bigtable_v1_RowFilter_fieldAccessorTable = new

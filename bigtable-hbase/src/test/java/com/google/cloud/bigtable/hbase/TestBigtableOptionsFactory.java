@@ -38,8 +38,7 @@ public class TestBigtableOptionsFactory {
   public static final String TEST_HOST = "localhost";
   public static final int TEST_PORT = 80;
   public static final String TEST_PROJECT_ID = "project-foo";
-  public static final String TEST_ZONE_NAME = "test-zone";
-  public static final String TEST_CLUSTER_NAME = "test-cluster";
+  public static final String TEST_INSTANCE_ID = "test-instance";
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -50,8 +49,7 @@ public class TestBigtableOptionsFactory {
     configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, TEST_HOST);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
-    configuration.set(BigtableOptionsFactory.CLUSTER_KEY, TEST_CLUSTER_NAME);
-    configuration.set(BigtableOptionsFactory.ZONE_KEY, TEST_ZONE_NAME);
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
   }
 
   @Test
@@ -75,16 +73,7 @@ public class TestBigtableOptionsFactory {
   @Test
   public void testClusterIsRequired() throws IOException {
     Configuration configuration = new Configuration(false);
-    configuration.unset(BigtableOptionsFactory.CLUSTER_KEY);
-
-    expectedException.expect(IllegalArgumentException.class);
-    BigtableOptionsFactory.fromConfiguration(configuration);
-  }
-
-  @Test
-  public void testZoneIsRequired() throws IOException {
-    Configuration configuration = new Configuration(false);
-    configuration.unset(BigtableOptionsFactory.ZONE_KEY);
+    configuration.unset(BigtableOptionsFactory.INSTANCE_ID_KEY);
 
     expectedException.expect(IllegalArgumentException.class);
     BigtableOptionsFactory.fromConfiguration(configuration);
@@ -108,8 +97,7 @@ public class TestBigtableOptionsFactory {
     BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
     Assert.assertEquals(TEST_HOST, options.getDataHost());
     Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
-    Assert.assertEquals(TEST_CLUSTER_NAME, options.getClusterId());
-    Assert.assertEquals(TEST_ZONE_NAME, options.getZoneId());
+    Assert.assertEquals(TEST_INSTANCE_ID, options.getInstanceId());
   }
 
   @Test

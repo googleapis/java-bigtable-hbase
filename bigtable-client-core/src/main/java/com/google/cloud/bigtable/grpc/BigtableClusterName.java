@@ -28,7 +28,7 @@ import com.google.common.base.Preconditions;
 public class BigtableClusterName implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  public static final String BIGTABLE_V1_CLUSTER_FMT = "projects/%s/zones/%s/clusters/%s";
+  public static final String BIGTABLE_v2_CLUSTER_FMT = "projects/%s/zones/%s/clusters/%s";
   public static final String TABLE_SEPARATOR = "tables";
 
   private final String clusterName;
@@ -37,7 +37,7 @@ public class BigtableClusterName implements Serializable {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId), "projectId must be supplied");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(zoneId), "zoneId must be supplied");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(clusterId), "clusterId must be supplied");
-    this.clusterName = String.format(BIGTABLE_V1_CLUSTER_FMT, projectId, zoneId, clusterId);
+    this.clusterName = String.format(BIGTABLE_v2_CLUSTER_FMT, projectId, zoneId, clusterId);
   }
 
   /**

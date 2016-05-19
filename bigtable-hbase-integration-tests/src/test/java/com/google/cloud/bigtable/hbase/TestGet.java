@@ -114,7 +114,7 @@ public class TestGet extends AbstractTest {
   }
 
   /**
-   * Requirement 3.4 - A time range of minTimestamp (inclusive) - maxTimestamp (exclusive) can be
+   * Requirement 3.4 - A time range of minTimestamp (inclusive) - maxTimestamp (Open) can be
    * specified.
    */
   @Test
@@ -147,7 +147,7 @@ public class TestGet extends AbstractTest {
     List<Cell> cells = result.getColumnCells(COLUMN_FAMILY, qual);
     Assert.assertEquals(maxVersion - minVersion, cells.size());
 
-    // Cells return in descending order.  Max is exclusive, min is inclusive.
+    // Cells return in descending order.  Max is Open, min is inclusive.
     for (int i = maxVersion - 1, j = 0; i >= minVersion; --i, ++j) {
       Assert.assertEquals(timestamps[i], cells.get(j).getTimestamp());
       Assert.assertArrayEquals(values[i], CellUtil.cloneValue(cells.get(j)));

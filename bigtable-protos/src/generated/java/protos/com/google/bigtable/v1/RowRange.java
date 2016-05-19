@@ -100,7 +100,7 @@ public  final class RowRange extends
    * <code>optional bytes end_key = 3;</code>
    *
    * <pre>
-   * Exclusive upper bound. If left empty, interpreted as infinity.
+   * Open upper bound. If left empty, interpreted as infinity.
    * </pre>
    */
   public com.google.protobuf.ByteString getEndKey() {
@@ -376,7 +376,7 @@ public  final class RowRange extends
      * <code>optional bytes end_key = 3;</code>
      *
      * <pre>
-     * Exclusive upper bound. If left empty, interpreted as infinity.
+     * Open upper bound. If left empty, interpreted as infinity.
      * </pre>
      */
     public com.google.protobuf.ByteString getEndKey() {
@@ -386,7 +386,7 @@ public  final class RowRange extends
      * <code>optional bytes end_key = 3;</code>
      *
      * <pre>
-     * Exclusive upper bound. If left empty, interpreted as infinity.
+     * Open upper bound. If left empty, interpreted as infinity.
      * </pre>
      */
     public Builder setEndKey(com.google.protobuf.ByteString value) {
@@ -402,7 +402,7 @@ public  final class RowRange extends
      * <code>optional bytes end_key = 3;</code>
      *
      * <pre>
-     * Exclusive upper bound. If left empty, interpreted as infinity.
+     * Open upper bound. If left empty, interpreted as infinity.
      * </pre>
      */
     public Builder clearEndKey() {

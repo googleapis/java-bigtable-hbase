@@ -49,15 +49,16 @@ import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.v2.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.ReadRowsRequest;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.Row;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.SampleRowKeysRequest;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowRange;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
@@ -418,7 +419,7 @@ public class CloudBigtableIO {
         BigtableOptions bigtableOptions = configuration.toBigtableOptions();
         try (BigtableSession session = new BigtableSession(bigtableOptions)) {
           BigtableTableName tableName =
-              bigtableOptions.getClusterName().toTableName(configuration.getTableId());
+              bigtableOptions.getInstanceName().toTableName(configuration.getTableId());
           SampleRowKeysRequest request =
               SampleRowKeysRequest.newBuilder().setTableName(tableName.toString()).build();
           sampleRowKeys = session.getDataClient().sampleRowKeys(request);
@@ -635,8 +636,9 @@ public class CloudBigtableIO {
   private static CloudBigtableScanConfiguration augmentConfiguration(
       CloudBigtableScanConfiguration configuration, byte[] startKey, byte[] stopKey) {
     ReadRowsRequest.Builder builder = configuration.getRequest().toBuilder();
-    builder.getRowRangeBuilder().setStartKey(BigtableZeroCopyByteStringUtil.wrap(startKey))
-        .setEndKey(BigtableZeroCopyByteStringUtil.wrap(stopKey));
+    builder.getRowsBuilder().setRowRanges(0, RowRange.newBuilder()
+        .setStartKeyClosed(BigtableZeroCopyByteStringUtil.wrap(startKey))
+        .setEndKeyOpen(BigtableZeroCopyByteStringUtil.wrap(stopKey)));
     return configuration.toBuilder().withRequest(builder.build()).build();
   }
 
@@ -1206,7 +1208,6 @@ public class CloudBigtableIO {
 
   private static void validateConfig(CloudBigtableConfiguration configuration) {
     checkNotNullOrEmpty(configuration.getProjectId(), "projectId");
-    checkNotNullOrEmpty(configuration.getZoneId(), "zoneId");
-    checkNotNullOrEmpty(configuration.getClusterId(), "clusterId");
+    checkNotNullOrEmpty(configuration.getInstanceId(), "instanceId");
   }
 }

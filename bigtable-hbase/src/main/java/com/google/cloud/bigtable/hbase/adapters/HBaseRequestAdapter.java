@@ -25,9 +25,9 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.ReadModifyWriteRowRequest;
-import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.ReadModifyWriteRowRequest;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
@@ -47,7 +47,7 @@ public class HBaseRequestAdapter {
 
   public HBaseRequestAdapter(BigtableOptions options, TableName tableName, Configuration config) {
     this.tableName = tableName;
-    this.bigtableTableName = options.getClusterName().toTableName(tableName.getQualifierAsString());
+    this.bigtableTableName = options.getInstanceName().toTableName(tableName.getQualifierAsString());
     this.putAdapter = Adapters.createPutAdapter(config, options);
     this.mutationAdapter = Adapters.createMutationsAdapter(putAdapter);
     this.rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);

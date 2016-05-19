@@ -94,7 +94,7 @@ public  final class ValueRange extends
   public enum StartValueCase
       implements com.google.protobuf.Internal.EnumLite {
     START_VALUE_INCLUSIVE(1),
-    START_VALUE_EXCLUSIVE(2),
+    START_VALUE_Open(2),
     STARTVALUE_NOT_SET(0);
     private int value = 0;
     private StartValueCase(int value) {
@@ -103,7 +103,7 @@ public  final class ValueRange extends
     public static StartValueCase valueOf(int value) {
       switch (value) {
         case 1: return START_VALUE_INCLUSIVE;
-        case 2: return START_VALUE_EXCLUSIVE;
+        case 2: return START_VALUE_Open;
         case 0: return STARTVALUE_NOT_SET;
         default: throw new java.lang.IllegalArgumentException(
           "Value is undefined for this oneof enum.");
@@ -125,7 +125,7 @@ public  final class ValueRange extends
   public enum EndValueCase
       implements com.google.protobuf.Internal.EnumLite {
     END_VALUE_INCLUSIVE(3),
-    END_VALUE_EXCLUSIVE(4),
+    END_VALUE_Open(4),
     ENDVALUE_NOT_SET(0);
     private int value = 0;
     private EndValueCase(int value) {
@@ -134,7 +134,7 @@ public  final class ValueRange extends
     public static EndValueCase valueOf(int value) {
       switch (value) {
         case 3: return END_VALUE_INCLUSIVE;
-        case 4: return END_VALUE_EXCLUSIVE;
+        case 4: return END_VALUE_Open;
         case 0: return ENDVALUE_NOT_SET;
         default: throw new java.lang.IllegalArgumentException(
           "Value is undefined for this oneof enum.");
@@ -166,15 +166,15 @@ public  final class ValueRange extends
     return com.google.protobuf.ByteString.EMPTY;
   }
 
-  public static final int START_VALUE_EXCLUSIVE_FIELD_NUMBER = 2;
+  public static final int START_VALUE_Open_FIELD_NUMBER = 2;
   /**
-   * <code>optional bytes start_value_exclusive = 2;</code>
+   * <code>optional bytes start_value_Open = 2;</code>
    *
    * <pre>
-   * Used when giving an exclusive lower bound for the range.
+   * Used when giving an Open lower bound for the range.
    * </pre>
    */
-  public com.google.protobuf.ByteString getStartValueExclusive() {
+  public com.google.protobuf.ByteString getStartValueOpen() {
     if (startValueCase_ == 2) {
       return (com.google.protobuf.ByteString) startValue_;
     }
@@ -196,15 +196,15 @@ public  final class ValueRange extends
     return com.google.protobuf.ByteString.EMPTY;
   }
 
-  public static final int END_VALUE_EXCLUSIVE_FIELD_NUMBER = 4;
+  public static final int END_VALUE_Open_FIELD_NUMBER = 4;
   /**
-   * <code>optional bytes end_value_exclusive = 4;</code>
+   * <code>optional bytes end_value_Open = 4;</code>
    *
    * <pre>
-   * Used when giving an exclusive upper bound for the range.
+   * Used when giving an Open upper bound for the range.
    * </pre>
    */
-  public com.google.protobuf.ByteString getEndValueExclusive() {
+  public com.google.protobuf.ByteString getEndValueOpen() {
     if (endValueCase_ == 4) {
       return (com.google.protobuf.ByteString) endValue_;
     }
@@ -441,8 +441,8 @@ public  final class ValueRange extends
           setStartValueInclusive(other.getStartValueInclusive());
           break;
         }
-        case START_VALUE_EXCLUSIVE: {
-          setStartValueExclusive(other.getStartValueExclusive());
+        case START_VALUE_Open: {
+          setStartValueOpen(other.getStartValueOpen());
           break;
         }
         case STARTVALUE_NOT_SET: {
@@ -454,8 +454,8 @@ public  final class ValueRange extends
           setEndValueInclusive(other.getEndValueInclusive());
           break;
         }
-        case END_VALUE_EXCLUSIVE: {
-          setEndValueExclusive(other.getEndValueExclusive());
+        case END_VALUE_Open: {
+          setEndValueOpen(other.getEndValueOpen());
           break;
         }
         case ENDVALUE_NOT_SET: {
@@ -564,26 +564,26 @@ public  final class ValueRange extends
     }
 
     /**
-     * <code>optional bytes start_value_exclusive = 2;</code>
+     * <code>optional bytes start_value_Open = 2;</code>
      *
      * <pre>
-     * Used when giving an exclusive lower bound for the range.
+     * Used when giving an Open lower bound for the range.
      * </pre>
      */
-    public com.google.protobuf.ByteString getStartValueExclusive() {
+    public com.google.protobuf.ByteString getStartValueOpen() {
       if (startValueCase_ == 2) {
         return (com.google.protobuf.ByteString) startValue_;
       }
       return com.google.protobuf.ByteString.EMPTY;
     }
     /**
-     * <code>optional bytes start_value_exclusive = 2;</code>
+     * <code>optional bytes start_value_Open = 2;</code>
      *
      * <pre>
-     * Used when giving an exclusive lower bound for the range.
+     * Used when giving an Open lower bound for the range.
      * </pre>
      */
-    public Builder setStartValueExclusive(com.google.protobuf.ByteString value) {
+    public Builder setStartValueOpen(com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
@@ -593,13 +593,13 @@ public  final class ValueRange extends
       return this;
     }
     /**
-     * <code>optional bytes start_value_exclusive = 2;</code>
+     * <code>optional bytes start_value_Open = 2;</code>
      *
      * <pre>
-     * Used when giving an exclusive lower bound for the range.
+     * Used when giving an Open lower bound for the range.
      * </pre>
      */
-    public Builder clearStartValueExclusive() {
+    public Builder clearStartValueOpen() {
       if (startValueCase_ == 2) {
         startValueCase_ = 0;
         startValue_ = null;
@@ -654,26 +654,26 @@ public  final class ValueRange extends
     }
 
     /**
-     * <code>optional bytes end_value_exclusive = 4;</code>
+     * <code>optional bytes end_value_Open = 4;</code>
      *
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an Open upper bound for the range.
      * </pre>
      */
-    public com.google.protobuf.ByteString getEndValueExclusive() {
+    public com.google.protobuf.ByteString getEndValueOpen() {
       if (endValueCase_ == 4) {
         return (com.google.protobuf.ByteString) endValue_;
       }
       return com.google.protobuf.ByteString.EMPTY;
     }
     /**
-     * <code>optional bytes end_value_exclusive = 4;</code>
+     * <code>optional bytes end_value_Open = 4;</code>
      *
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an Open upper bound for the range.
      * </pre>
      */
-    public Builder setEndValueExclusive(com.google.protobuf.ByteString value) {
+    public Builder setEndValueOpen(com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
@@ -683,13 +683,13 @@ public  final class ValueRange extends
       return this;
     }
     /**
-     * <code>optional bytes end_value_exclusive = 4;</code>
+     * <code>optional bytes end_value_Open = 4;</code>
      *
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an Open upper bound for the range.
      * </pre>
      */
-    public Builder clearEndValueExclusive() {
+    public Builder clearEndValueOpen() {
       if (endValueCase_ == 4) {
         endValueCase_ = 0;
         endValue_ = null;

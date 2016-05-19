@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowRequest;
 
 import org.apache.hadoop.hbase.client.Operation;
 

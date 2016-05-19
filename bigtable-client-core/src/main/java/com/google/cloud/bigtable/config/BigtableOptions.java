@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.config;
 import java.io.Serializable;
 
 import com.google.api.client.util.Objects;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
@@ -57,8 +56,6 @@ public class BigtableOptions implements Serializable {
   public static class Builder {
     // Configuration that a user is required to set.
     private String projectId;
-    private String zoneId;
-    private String clusterId;
     private String userAgent;
 
     private String instanceId;
@@ -86,8 +83,7 @@ public class BigtableOptions implements Serializable {
 
     private Builder(BigtableOptions original) {
       this.projectId = original.projectId;
-      this.zoneId = original.zoneId;
-      this.clusterId = original.clusterId;
+      this.instanceId = original.instanceId;
       this.userAgent = original.userAgent;
       this.dataHost = original.dataHost;
       this.tableAdminHost = original.tableAdminHost;
@@ -122,16 +118,6 @@ public class BigtableOptions implements Serializable {
 
     public Builder setProjectId(String projectId) {
       this.projectId = projectId;
-      return this;
-    }
-
-    public Builder setZoneId(String zoneId) {
-      this.zoneId = zoneId;
-      return this;
-    }
-
-    public Builder setClusterId(String clusterId) {
-      this.clusterId = clusterId;
       return this;
     }
 
@@ -190,8 +176,6 @@ public class BigtableOptions implements Serializable {
           dataHost,
           port,
           projectId,
-          zoneId,
-          clusterId,
           instanceId,
           credentialOptions,
           userAgent,
@@ -207,14 +191,11 @@ public class BigtableOptions implements Serializable {
   private final String dataHost;
   private final int port;
   private final String projectId;
-  private final String zoneId;
-  private final String clusterId;
   private final String instanceId;
   private final CredentialOptions credentialOptions;
   private final String userAgent;
   private final RetryOptions retryOptions;
   private final int dataChannelCount;
-  private final BigtableClusterName clusterName;
   private final BigtableInstanceName instanceName;
   private BulkOptions bulkOptions;
   private final boolean usePlaintextNegotiation;
@@ -227,14 +208,11 @@ public class BigtableOptions implements Serializable {
       dataHost = null;
       port = 0;
       projectId = null;
-      zoneId = null;
-      clusterId = null;
       instanceId = null;
       credentialOptions = null;
       userAgent = null;
       retryOptions = null;
       dataChannelCount = 1;
-      clusterName = null;
       instanceName = null;
       usePlaintextNegotiation = false;
   }
@@ -245,8 +223,6 @@ public class BigtableOptions implements Serializable {
       String dataHost,
       int port,
       String projectId,
-      String zoneId,
-      String clusterId,
       String instanceId,
       CredentialOptions credentialOptions,
       String userAgent,
@@ -261,8 +237,6 @@ public class BigtableOptions implements Serializable {
     this.dataHost = Preconditions.checkNotNull(dataHost);
     this.port = port;
     this.projectId = projectId;
-    this.zoneId = zoneId;
-    this.clusterId = clusterId;
     this.instanceId = instanceId;
     this.credentialOptions = credentialOptions;
     this.userAgent = userAgent;
@@ -272,25 +246,16 @@ public class BigtableOptions implements Serializable {
     this.usePlaintextNegotiation = usePlaintextNegotiation;
 
     if (!Strings.isNullOrEmpty(projectId)
-        && !Strings.isNullOrEmpty(zoneId)
-        && !Strings.isNullOrEmpty(clusterId)) {
-      this.clusterName = new BigtableClusterName(getProjectId(), getZoneId(), getClusterId());
-    } else {
-      this.clusterName = null;
-    }
-
-    if (!Strings.isNullOrEmpty(projectId)
         && !Strings.isNullOrEmpty(instanceId)) {
       this.instanceName = new BigtableInstanceName(getProjectId(), getInstanceId());
     } else {
       this.instanceName = null;
     }
 
-    LOG.debug("Connection Configuration: projectId: %s, zoneId: %s, clusterId: %s, data host %s, "
+    LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
         + "table admin host %s, cluster admin host %s.",
         projectId,
-        zoneId,
-        clusterId,
+        instanceId,
         dataHost,
         tableAdminHost,
         clusterAdminHost);
@@ -298,14 +263,6 @@ public class BigtableOptions implements Serializable {
 
   public String getProjectId() {
     return projectId;
-  }
-
-  public String getZoneId() {
-    return zoneId;
-  }
-
-  public String getClusterId() {
-    return clusterId;
   }
 
   public String getDataHost() {
@@ -358,10 +315,6 @@ public class BigtableOptions implements Serializable {
     return dataChannelCount;
   }
 
-  public BigtableClusterName getClusterName() {
-    return clusterName;
-  }
-
   public BigtableInstanceName getInstanceName() {
     return instanceName;
   }
@@ -390,8 +343,7 @@ public class BigtableOptions implements Serializable {
         && Objects.equal(tableAdminHost, other.tableAdminHost)
         && Objects.equal(dataHost, other.dataHost)
         && Objects.equal(projectId, other.projectId)
-        && Objects.equal(zoneId, other.zoneId)
-        && Objects.equal(clusterId, other.clusterId)
+        && Objects.equal(instanceId, other.instanceId)
         && Objects.equal(userAgent, other.userAgent)
         && Objects.equal(credentialOptions, other.credentialOptions)
         && Objects.equal(retryOptions, other.retryOptions)
@@ -406,8 +358,7 @@ public class BigtableOptions implements Serializable {
         .add("tableAdminHost", tableAdminHost)
         .add("clusterAdminHost", clusterAdminHost)
         .add("projectId", projectId)
-        .add("zoneId", zoneId)
-        .add("clusterId", clusterId)
+        .add("instanceId", instanceId)
         .add("userAgent", userAgent)
         .add("credentialType", credentialOptions.getCredentialType())
         .add("port", port)
