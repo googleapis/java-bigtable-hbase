@@ -61,7 +61,7 @@ public class BigtableConfiguration {
     try {
       return CONNECTION_CLASS.getConstructor(Configuration.class).newInstance(conf);
     } catch (Exception e) {
-      throw new IllegalStateException("Could not find an apporpriate constructor for "
+      throw new IllegalStateException("Could not find an appropriate constructor for "
           + CONNECTION_CLASS.getCanonicalName(), e);
     }
   }
