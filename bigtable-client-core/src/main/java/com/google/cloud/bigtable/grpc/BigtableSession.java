@@ -230,7 +230,7 @@ public class BigtableSession implements Closeable {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(options.getUserAgent()), USER_AGENT_EMPTY_OR_NULL);
     LOG.info(
-        "Opening connection for projectId %s, instanceId %s, clusterId %s, "
+        "Opening connection for projectId %s, instanceId %s, "
         + "on data host %s, table admin host %s.",
         options.getProjectId(), options.getInstanceId(), options.getDataHost(),
         options.getTableAdminHost());
