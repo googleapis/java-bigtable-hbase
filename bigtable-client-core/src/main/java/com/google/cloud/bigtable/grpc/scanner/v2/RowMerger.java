@@ -52,12 +52,12 @@ import java.util.TreeMap;
  * </p>
  * 
  * <pre>
- * {@link StreamObserver}<{@link Row}> observer = ...;
- * RowMergerV2 rm = new RowMergerV2(observer);
+ * {@link StreamObserver}&lt;{@link Row}&gt; observer = ...;
+ * RowMerger rowMerger = new RowMerger(observer);
  * ...
- * rm.onNext(...);
+ * rowMerger.onNext(...);
  * ..
- * rm.onComplete();
+ * rowMerger.onComplete();
  * </pre>
  * <p>
  * When a complete row is found, {@link StreamObserver#onNext(Object)} will be called.
