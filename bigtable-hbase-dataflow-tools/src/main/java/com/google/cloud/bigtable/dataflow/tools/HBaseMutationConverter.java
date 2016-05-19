@@ -33,7 +33,7 @@ import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
  * Deletes to be processed on another Dataflow machine. This class handles the serialization and
  * deserialization of the Puts and Deletes.
  *
- * See {@link CloudBigtableIO#initializeForWrite(Pipeline)}.
+ * <p> See CloudBigtableIO#initializeForWrite(Pipeline).
  */
 public class HBaseMutationConverter implements BigtableConverter<Mutation> {
 

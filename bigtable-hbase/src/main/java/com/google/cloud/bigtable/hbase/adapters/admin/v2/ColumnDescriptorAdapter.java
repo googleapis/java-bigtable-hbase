@@ -300,7 +300,7 @@ public class ColumnDescriptorAdapter {
 
   /**
    * Convert a Bigtable {@link ColumnFamily} to an HBase {@link HColumnDescriptor}.
-   * See {@link #convertGarbageCollectionRule(String, HColumnDescriptor)} for more info.
+   * See {@link #convertGarbageCollectionRule(GcRule, HColumnDescriptor)} for more info.
    */
   public HColumnDescriptor adapt(String familyName, ColumnFamily columnFamily) {
     HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(familyName);
