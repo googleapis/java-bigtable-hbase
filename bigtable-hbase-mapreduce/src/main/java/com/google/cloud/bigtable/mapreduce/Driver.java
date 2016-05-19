@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.mapreduce;
 
-import org.apache.hadoop.hbase.mapreduce.Export;
 import org.apache.hadoop.util.ProgramDriver;
 
 /**
