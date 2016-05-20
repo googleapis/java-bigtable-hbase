@@ -30,6 +30,10 @@ public class BigtableConverterCoder<T> extends AtomicCoder<T> {
 
   private BigtableConverter<T> converter;
 
+  // The default constructor is required for serialization.
+  BigtableConverterCoder() {
+  }
+
   public BigtableConverterCoder(BigtableConverter<T> converter) {
     this.converter = converter;
   }
