@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.client.coprocessor.Batch;
 
 import com.google.api.client.util.Preconditions;
 import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -109,6 +110,9 @@ public class BatchExecutor {
         Result result = Result.EMPTY_RESULT;
         if (message instanceof com.google.bigtable.v2.Row) {
           result = Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v2.Row) message);
+        } else if (message instanceof ReadModifyWriteRowResponse) {
+          result =
+              Adapters.ROW_ADAPTER.adaptResponse(((ReadModifyWriteRowResponse) message).getRow());
         }
         resultsArray[index] = result;
         resultFuture.set(result);
