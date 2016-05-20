@@ -34,15 +34,15 @@ public final class InstanceProto {
       "\001(\t\022\024\n\014display_name\030\002 \001(\t\0227\n\005state\030\003 \001(\016" +
       "2(.google.bigtable.admin.v2.Instance.Sta" +
       "te\"5\n\005State\022\023\n\017STATE_NOT_KNOWN\020\000\022\t\n\005READ" +
-      "Y\020\001\022\014\n\010CREATING\020\002\"\200\002\n\007Cluster\022\014\n\004name\030\001 " +
+      "Y\020\001\022\014\n\010CREATING\020\002\"\216\002\n\007Cluster\022\014\n\004name\030\001 " +
       "\001(\t\022\020\n\010location\030\002 \001(\t\0226\n\005state\030\003 \001(\0162\'.g" +
       "oogle.bigtable.admin.v2.Cluster.State\022\023\n",
       "\013serve_nodes\030\004 \001(\005\022C\n\024default_storage_ty" +
       "pe\030\005 \001(\0162%.google.bigtable.admin.v2.Stor" +
-      "ageType\"C\n\005State\022\023\n\017STATE_NOT_KNOWN\020\000\022\t\n" +
-      "\005READY\020\001\022\014\n\010CREATING\020\002\022\014\n\010RESIZING\020\003B/\n\034" +
-      "com.google.bigtable.admin.v2B\rInstancePr" +
-      "otoP\001b\006proto3"
+      "ageType\"Q\n\005State\022\023\n\017STATE_NOT_KNOWN\020\000\022\t\n" +
+      "\005READY\020\001\022\014\n\010CREATING\020\002\022\014\n\010RESIZING\020\003\022\014\n\010" +
+      "DISABLED\020\004B/\n\034com.google.bigtable.admin." +
+      "v2B\rInstanceProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

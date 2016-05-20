@@ -3,15 +3,15 @@
 
 package com.google.bigtable.admin.v2;
 
-public interface BulkDeleteRowsRequestOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:google.bigtable.admin.v2.BulkDeleteRowsRequest)
+public interface DropRowRangeRequestOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:google.bigtable.admin.v2.DropRowRangeRequest)
     com.google.protobuf.MessageOrBuilder {
 
   /**
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * The unique name of the table on which to perform the bulk delete.
+   * The unique name of the table on which to drop a range of rows.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    */
@@ -20,7 +20,7 @@ public interface BulkDeleteRowsRequestOrBuilder extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * The unique name of the table on which to perform the bulk delete.
+   * The unique name of the table on which to drop a range of rows.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
    */
@@ -46,5 +46,5 @@ public interface BulkDeleteRowsRequestOrBuilder extends
    */
   boolean getDeleteAllDataFromTable();
 
-  public com.google.bigtable.admin.v2.BulkDeleteRowsRequest.TargetCase getTargetCase();
+  public com.google.bigtable.admin.v2.DropRowRangeRequest.TargetCase getTargetCase();
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2015, Google Inc.
+// Copyright 2016 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -75,14 +75,14 @@ service BigtableTableAdmin {
     option (google.api.http) = { post: "/v2/{name=projects/*/instances/*/tables/*}:modifyColumnFamilies" body: "*" };
   }
 
-  // Permanently bulk delete a row range from a specified table. The request can
+  // Permanently drop/delete a row range from a specified table. The request can
   // specify whether to delete all rows in a table, or only those that match a
   // particular prefix.
   //
   // Caution: This rpc is experimental. The details can change and the rpc
   // may or may not be active.
-  rpc BulkDeleteRows(BulkDeleteRowsRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = { post: "/v2/{name=projects/*/instances/*/tables/*}:bulkDeleteRows" body: "*" };
+  rpc DropRowRange(DropRowRangeRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { post: "/v2/{name=projects/*/instances/*/tables/*}:dropRowRange" body: "*" };
   }
 }
 
@@ -123,9 +123,9 @@ message CreateTableRequest {
   repeated Split initial_splits = 4;
 }
 
-// Request message for [google.bigtable.admin.v2.BigtableTableAdmin.BulkDeleteRows][google.bigtable.admin.v2.BigtableTableAdmin.BulkDeleteRows]
-message BulkDeleteRowsRequest {
-  // The unique name of the table on which to perform the bulk delete.
+// Request message for [google.bigtable.admin.v2.BigtableTableAdmin.DropRowRange][google.bigtable.admin.v2.BigtableTableAdmin.DropRowRange]
+message DropRowRangeRequest {
+  // The unique name of the table on which to drop a range of rows.
   // Values are of the form projects/<project>/instances/<instance>/tables/<table>
   string name = 1;
 

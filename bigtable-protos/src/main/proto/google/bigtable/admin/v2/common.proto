@@ -1,4 +1,4 @@
-// Copyright (c) 2015, Google Inc.
+// Copyright 2016 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,24 +23,6 @@ option java_multiple_files = true;
 option java_outer_classname = "CommonProto";
 option java_package = "com.google.bigtable.admin.v2";
 
-
-// Used to track progress of a change in long-running operation metadata.
-message Progress {
-  // Generally left at zero, but may be different in cases where we're
-  // tracking progress from a higher start to a lower target
-  // (e.g. shrinking a cluster) or starting from a non-zero baseline
-  // (e.g. growing a cluster that already had some nodes).
-  int64 start = 1;
-
-  google.protobuf.Timestamp start_time = 2;
-
-  int64 current = 3;
-
-  // An estimate of the target state, which may change over time.
-  int64 target = 4;
-
-  google.protobuf.Timestamp finish_time = 5;
-}
 
 enum StorageType {
   STORAGE_TYPE_UNSPECIFIED = 0;

@@ -55,12 +55,12 @@ import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import com.google.bigtable.admin.v2.BulkDeleteRowsRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest.Split;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest.Builder;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListTablesRequest;
@@ -626,23 +626,23 @@ public abstract class AbstractBigtableAdminV2 implements Admin {
     if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
-    issueBulkDelete(tableName, BulkDeleteRowsRequest.newBuilder().setDeleteAllDataFromTable(true));
+    issueBulkDelete(tableName, DropRowRangeRequest.newBuilder().setDeleteAllDataFromTable(true));
     disabledTables.remove(tableName);
   }
 
   public void deleteRowRangeByPrefix(TableName tableName, byte[] prefix) throws IOException {
     issueBulkDelete(
         tableName,
-        BulkDeleteRowsRequest.newBuilder()
+        DropRowRangeRequest.newBuilder()
             .setDeleteAllDataFromTable(false)
             .setRowKeyPrefix(ByteString.copyFrom(prefix)));
   }
 
-  private void issueBulkDelete(TableName tableName, BulkDeleteRowsRequest.Builder deleteRequest)
+  private void issueBulkDelete(TableName tableName, DropRowRangeRequest.Builder deleteRequest)
       throws IOException {
     try {
       bigtableTableAdminClient
-          .bulkDeleteRows(deleteRequest.setName(toBigtableName(tableName)).build());
+          .dropRowRange(deleteRequest.setName(toBigtableName(tableName)).build());
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);

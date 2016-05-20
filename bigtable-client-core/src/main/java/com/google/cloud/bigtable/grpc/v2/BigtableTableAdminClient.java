@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc.v2;
 
-import com.google.bigtable.admin.v2.BulkDeleteRowsRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
@@ -60,5 +60,5 @@ public interface BigtableTableAdminClient {
   /**
    * Permanently deletes all rows in a range.
    */
-  void bulkDeleteRows(BulkDeleteRowsRequest request);
+  void dropRowRange(DropRowRangeRequest request);
 }

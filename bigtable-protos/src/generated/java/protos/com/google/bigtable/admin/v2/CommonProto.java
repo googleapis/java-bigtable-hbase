@@ -8,11 +8,6 @@ public final class CommonProto {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
-  static com.google.protobuf.Descriptors.Descriptor
-    internal_static_google_bigtable_admin_v2_Progress_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_google_bigtable_admin_v2_Progress_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -25,14 +20,10 @@ public final class CommonProto {
       "\n%google/bigtable/admin/v2/common.proto\022" +
       "\030google.bigtable.admin.v2\032\034google/api/an" +
       "notations.proto\032\037google/protobuf/timesta" +
-      "mp.proto\"\233\001\n\010Progress\022\r\n\005start\030\001 \001(\003\022.\n\n" +
-      "start_time\030\002 \001(\0132\032.google.protobuf.Times" +
-      "tamp\022\017\n\007current\030\003 \001(\003\022\016\n\006target\030\004 \001(\003\022/\n" +
-      "\013finish_time\030\005 \001(\0132\032.google.protobuf.Tim" +
-      "estamp*=\n\013StorageType\022\034\n\030STORAGE_TYPE_UN" +
-      "SPECIFIED\020\000\022\007\n\003SSD\020\001\022\007\n\003HDD\020\002B-\n\034com.goo" +
-      "gle.bigtable.admin.v2B\013CommonProtoP\001b\006pr",
-      "oto3"
+      "mp.proto*=\n\013StorageType\022\034\n\030STORAGE_TYPE_" +
+      "UNSPECIFIED\020\000\022\007\n\003SSD\020\001\022\007\n\003HDD\020\002B-\n\034com.g" +
+      "oogle.bigtable.admin.v2B\013CommonProtoP\001b\006" +
+      "proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -48,12 +39,6 @@ public final class CommonProto {
           com.google.api.AnnotationsProto.getDescriptor(),
           com.google.protobuf.TimestampProto.getDescriptor(),
         }, assigner);
-    internal_static_google_bigtable_admin_v2_Progress_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_google_bigtable_admin_v2_Progress_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_google_bigtable_admin_v2_Progress_descriptor,
-        new java.lang.String[] { "Start", "StartTime", "Current", "Target", "FinishTime", });
     com.google.api.AnnotationsProto.getDescriptor();
     com.google.protobuf.TimestampProto.getDescriptor();
   }
