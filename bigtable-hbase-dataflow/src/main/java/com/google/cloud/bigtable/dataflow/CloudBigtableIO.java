@@ -202,7 +202,13 @@ public class CloudBigtableIO {
      */
     long getRowCount(ResultOutputType result);
 
-    ByteString getKey(ResultOutputType result);
+    /**
+     * Get the key to use for liquid shading. This key will be used to determine the percentage of
+     * rows read from the range. That percentage will be used to calculate how much of the key range
+     * can be split off to another worker. For individual {@link Result} it will be the result's
+     * key. For an array of results, we should use the key from the last result.
+     */
+    ByteString getLatestKey(ResultOutputType result);
   }
 
   /**
@@ -228,7 +234,7 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public ByteString getKey(Result result) {
+    public ByteString getLatestKey(Result result) {
       return result == null ? null : ByteString.copyFrom(result.getRow());
     }
   };
@@ -264,9 +270,16 @@ public class CloudBigtableIO {
       return result == null ? 0 : result.length;
     }
 
+    /**
+     * Get the key to use for liquid shading. This key will be used to determine the percentage of
+     * rows read from the range. That percentage will be used to calculate how much of the key range
+     * can be split off to another worker. For an array of results, we should use the key from the
+     * last result.
+     */
     @Override
-    public ByteString getKey(Result[] result) {
-      return isCompletionMarker(result) ? null : ByteString.copyFrom(result[result.length - 1].getRow());
+    public ByteString getLatestKey(Result[] result) {
+      return isCompletionMarker(result) ? null
+          : ByteString.copyFrom(result[result.length - 1].getRow());
     }
   }
 
@@ -763,7 +776,7 @@ public class CloudBigtableIO {
       rowsRead.addAndGet(scanIterator.getRowCount(current));
       boolean isComplete = !scanIterator.isCompletionMarker(current);
       if (!isComplete) {
-        rangeTracker.tryReturnRecordAt(true, ByteKey.of(scanIterator.getKey(current)));
+        rangeTracker.tryReturnRecordAt(true, ByteKey.of(scanIterator.getLatestKey(current)));
       }
       return isComplete;
     }
