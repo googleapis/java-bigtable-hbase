@@ -774,11 +774,11 @@ public class CloudBigtableIO {
     public boolean advance() throws IOException {
       current = scanIterator.next(scanner);
       rowsRead.addAndGet(scanIterator.getRowCount(current));
-      boolean isComplete = !scanIterator.isCompletionMarker(current);
+      boolean isComplete = scanIterator.isCompletionMarker(current);
       if (!isComplete) {
         rangeTracker.tryReturnRecordAt(true, ByteKey.of(scanIterator.getLatestKey(current)));
       }
-      return isComplete;
+      return !isComplete;
     }
 
     /**
