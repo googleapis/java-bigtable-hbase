@@ -828,11 +828,20 @@ public class CloudBigtableIO {
     }
 
     @Override
+    /**
+     * What percentage of the range is complete? This is the best guess based on the lexicographical
+     * ordering of the Reader's key range.
+     */
     public final Double getFractionConsumed() {
       return rangeTracker.getFractionConsumed();
     }
 
     @Override
+    /**
+     * Attempt to split the work by some percent of the ByteKeyRange based on a lexicographical
+     * split (and not statistics about the underlying table, which would be better, but that
+     * information does not exist).
+     */
     public final synchronized BoundedSource<Results> splitAtFraction(double fraction) {
       ByteKeyRange originalRange = source.getRange();
       ByteKey splitKey;
