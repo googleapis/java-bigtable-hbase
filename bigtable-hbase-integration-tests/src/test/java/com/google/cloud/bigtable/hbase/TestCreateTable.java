@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class TestCreateTable extends AbstractTest {
 
@@ -47,7 +48,7 @@ public class TestCreateTable extends AbstractTest {
   /**
    * Requirement 1.8 - Table names must match [_a-zA-Z0-9][-_.a-zA-Z0-9]*
    */
-  @Test
+  @Test(timeout = 1000l * 60 * 4)
   public void testTableNames() throws IOException {
     String shouldTest = System.getProperty("bigtable.test.create.table", "true");
     if (!"true".equals(shouldTest)) {
@@ -119,7 +120,11 @@ public class TestCreateTable extends AbstractTest {
       futures.add(es.submit(c));
     }
     try {
-      Futures.allAsList(futures);
+      try {
+        Futures.allAsList(futures).get(3, TimeUnit.MINUTES);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     } finally {
       es.shutdownNow();
     }

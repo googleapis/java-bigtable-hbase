@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
@@ -78,6 +79,9 @@ public class IntegrationTests {
   private static HBaseTestingUtility testingUtility;
   private static Connection connection;
   private static Configuration configuration;
+
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(60 * 5); // 5 minutes for all tests
 
   static {
     TABLE_NAME = newTestTableName();
