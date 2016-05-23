@@ -546,6 +546,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     ColumnFamilyFormatter formatter = ColumnFamilyFormatter.from(tableName, options);
     String bigtableColumnName = formatter.formatForBigtable(Bytes.toString(columnName));
     try {
+      LOG.info("Deleting column family: " + bigtableColumnName);
       bigtableTableAdminClient.deleteColumnFamily(
           DeleteColumnFamilyRequest.newBuilder().setName(bigtableColumnName).build());
     } catch (Throwable throwable) {
