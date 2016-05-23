@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.cloud.bigtable.dataflow.tools;
+package com.google.cloud.bigtable.dataflow.coders;
 
 import static org.apache.hadoop.hbase.util.Bytes.toBytes;
 
@@ -29,7 +29,7 @@ import org.junit.Test;
  */
 public class HBaseMutationCoderTest {
 
-  private HBaseMutationConverter underTest = new HBaseMutationConverter();
+  private HBaseMutationCoder underTest = new HBaseMutationCoder();
 
   @Test
   public void testPut() throws IOException {

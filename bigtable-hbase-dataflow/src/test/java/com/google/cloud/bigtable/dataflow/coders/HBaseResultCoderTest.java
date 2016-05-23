@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.cloud.bigtable.dataflow.tools;
+package com.google.cloud.bigtable.dataflow.coders;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
@@ -22,19 +22,19 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Tests for {@link HBaseResultArrayCoder}
+ * Tests for {@link HBaseResultCoder}
  */
-public class HBaseResultArrayCoderTest {
+public class HBaseResultCoderTest {
 
-  private HBaseResultArrayConverter underTest = new HBaseResultArrayConverter();
+  private HBaseResultCoder underTest = new HBaseResultCoder();
 
-  private Result[] original = new Result[]{createResult()};
+  private Result original = createResult();
 
   @Test
   public void testRoundTrip() throws Exception {
-    Result[] copy = CoderTestUtil.encodeAndDecode(underTest, original);
+    Result copy = CoderTestUtil.encodeAndDecode(underTest, original);
     // This method throws an exception if the values are not equal.
-    Result.compareResults(original[0], copy[0]);
+    Result.compareResults(original, copy);
   }
 
   private Result createResult() {
@@ -48,4 +48,3 @@ public class HBaseResultArrayCoderTest {
       CoderTestUtil.encode(underTest, original));
   }
 }
-

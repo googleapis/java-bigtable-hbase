@@ -21,10 +21,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.BigtableConverter;
-import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseMutationConverter;
-import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseResultArrayConverter;
-import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseResultConverter;
+import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
+import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
+import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
+import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.util.SerializableUtils;
 
 /**
@@ -34,14 +34,14 @@ import com.google.cloud.dataflow.sdk.util.SerializableUtils;
 @RunWith(JUnit4.class)
 public class SerializableTest {
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings("rawtypes")
   @Test
   public void testHBaseConvertersAreSerializable() {
-    for (BigtableConverter converter : Arrays.asList(
-          new HBaseMutationConverter(),
-          new HBaseResultConverter(),
-          new HBaseResultArrayConverter())) {
-      SerializableUtils.ensureSerializable(new BigtableConverterCoder<>(converter));
+    for (AtomicCoder coder : Arrays.asList(
+          new HBaseMutationCoder(),
+          new HBaseResultCoder(),
+          new HBaseResultArrayCoder())) {
+      SerializableUtils.ensureSerializable(coder);
     }
   }
 
