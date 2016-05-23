@@ -1,4 +1,4 @@
-// Copyright (c) 2015, Google Inc.
+// Copyright 2016 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import "google/bigtable/admin/v2/common.proto";
 import "google/bigtable/admin/v2/instance.proto";
 import "google/longrunning/operations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option java_multiple_files = true;
 option java_outer_classname = "BigtableInstanceAdminProto";
@@ -135,7 +136,14 @@ message GetInstanceRequest {
 message ListInstancesRequest {
   string name = 1;
 
-  string page_token = 2;
+  // Locations from which Instance information could not be retrieved,
+  // due to an outage or some other transient condition.
+  // Instances whose Clusters are all in one of the failed locations
+  // may be missing from 'instances', and Instances with at least one
+  // Cluster in a failed location may only have partial information returned.
+  repeated string failed_locations = 2;
+
+  string page_token = 3;
 }
 
 // Response message for BigtableInstanceAdmin.ListInstances.
@@ -178,7 +186,13 @@ message ListClustersRequest {
 message ListClustersResponse {
   repeated Cluster clusters = 1;
 
-  string next_page_token = 2;
+  // Locations from which Cluster information could not be retrieved,
+  // due to an outage or some other transient condition.
+  // Clusters from these locations may be missing from 'clusters',
+  // or may only have partial information returned.
+  repeated string failed_locations = 2;
+
+  string next_page_token = 3;
 }
 
 // Request message for BigtableInstanceAdmin.DeleteCluster.
@@ -186,20 +200,14 @@ message DeleteClusterRequest {
   string name = 1;
 }
 
-message InstanceOperationMetadata {
-  string name = 1;
+// The metadata for the Operation returned by CreateInstance.
+message CreateInstanceMetadata {
+  // The request that prompted the initiation of this CreateInstance operation.
+  CreateInstanceRequest original_request = 1;
 
-  repeated ClusterOperationMetadata clusters = 2;
-}
+  // The time at which the original request was received.
+  google.protobuf.Timestamp request_time = 2;
 
-message ClusterOperationMetadata {
-  string name = 1;
-
-  // Present if the operation involves the copying of table data
-  // into the cluster.
-  Progress tables_copied = 2;
-
-  // Present if the operation involves (de)allocating serve nodes
-  // in the cluster.
-  Progress serve_nodes_allocated = 3;
+  // The time at which the operation failed or was completed successfully.
+  google.protobuf.Timestamp finish_time = 3;
 }

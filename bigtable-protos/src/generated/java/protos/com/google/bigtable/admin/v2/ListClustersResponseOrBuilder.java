@@ -32,11 +32,58 @@ public interface ListClustersResponseOrBuilder extends
       int index);
 
   /**
-   * <code>optional string next_page_token = 2;</code>
+   * <code>repeated string failed_locations = 2;</code>
+   *
+   * <pre>
+   * Locations from which Cluster information could not be retrieved,
+   * due to an outage or some other transient condition.
+   * Clusters from these locations may be missing from 'clusters',
+   * or may only have partial information returned.
+   * </pre>
+   */
+  com.google.protobuf.ProtocolStringList
+      getFailedLocationsList();
+  /**
+   * <code>repeated string failed_locations = 2;</code>
+   *
+   * <pre>
+   * Locations from which Cluster information could not be retrieved,
+   * due to an outage or some other transient condition.
+   * Clusters from these locations may be missing from 'clusters',
+   * or may only have partial information returned.
+   * </pre>
+   */
+  int getFailedLocationsCount();
+  /**
+   * <code>repeated string failed_locations = 2;</code>
+   *
+   * <pre>
+   * Locations from which Cluster information could not be retrieved,
+   * due to an outage or some other transient condition.
+   * Clusters from these locations may be missing from 'clusters',
+   * or may only have partial information returned.
+   * </pre>
+   */
+  java.lang.String getFailedLocations(int index);
+  /**
+   * <code>repeated string failed_locations = 2;</code>
+   *
+   * <pre>
+   * Locations from which Cluster information could not be retrieved,
+   * due to an outage or some other transient condition.
+   * Clusters from these locations may be missing from 'clusters',
+   * or may only have partial information returned.
+   * </pre>
+   */
+  com.google.protobuf.ByteString
+      getFailedLocationsBytes(int index);
+
+  /**
+   * <code>optional string next_page_token = 3;</code>
    */
   java.lang.String getNextPageToken();
   /**
-   * <code>optional string next_page_token = 2;</code>
+   * <code>optional string next_page_token = 3;</code>
    */
   com.google.protobuf.ByteString
       getNextPageTokenBytes();

@@ -15,17 +15,17 @@
  */
 package com.google.cloud.bigtable.grpc.v2;
 
-import io.grpc.Channel;
-
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
-import com.google.bigtable.admin.v2.BulkDeleteRowsRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.Table;
+
+import io.grpc.Channel;
 
 /**
  * A gRPC client for accessing the Bigtable Table Admin API.
@@ -64,8 +64,7 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   }
 
   @Override
-  public void bulkDeleteRows(BulkDeleteRowsRequest request) {
-    blockingStub.bulkDeleteRows(request);
+  public void dropRowRange(DropRowRangeRequest request) {
+    blockingStub.dropRowRange(request);
   }
-
 }

@@ -125,6 +125,15 @@ public  final class Cluster extends
      * <code>RESIZING = 3;</code>
      */
     RESIZING(3, 3),
+    /**
+     * <code>DISABLED = 4;</code>
+     *
+     * <pre>
+     * The cluster has no backing nodes.  The data (tables) still
+     * exist, but no operations can be performed on the cluster.
+     * </pre>
+     */
+    DISABLED(4, 4),
     UNRECOGNIZED(-1, -1),
     ;
 
@@ -149,6 +158,15 @@ public  final class Cluster extends
      * <code>RESIZING = 3;</code>
      */
     public static final int RESIZING_VALUE = 3;
+    /**
+     * <code>DISABLED = 4;</code>
+     *
+     * <pre>
+     * The cluster has no backing nodes.  The data (tables) still
+     * exist, but no operations can be performed on the cluster.
+     * </pre>
+     */
+    public static final int DISABLED_VALUE = 4;
 
 
     public final int getNumber() {
@@ -165,6 +183,7 @@ public  final class Cluster extends
         case 1: return READY;
         case 2: return CREATING;
         case 3: return RESIZING;
+        case 4: return DISABLED;
         default: return null;
       }
     }

@@ -64,15 +64,10 @@ public final class BigtableInstanceAdminProto {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_DeleteClusterRequest_fieldAccessorTable;
   static com.google.protobuf.Descriptors.Descriptor
-    internal_static_google_bigtable_admin_v2_InstanceOperationMetadata_descriptor;
+    internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_descriptor;
   static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_google_bigtable_admin_v2_InstanceOperationMetadata_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
-    internal_static_google_bigtable_admin_v2_ClusterOperationMetadata_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_google_bigtable_admin_v2_ClusterOperationMetadata_fieldAccessorTable;
+      internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -88,75 +83,75 @@ public final class BigtableInstanceAdminProto {
       "/bigtable/admin/v2/common.proto\032\'google/" +
       "bigtable/admin/v2/instance.proto\032#google" +
       "/longrunning/operations.proto\032\033google/pr" +
-      "otobuf/empty.proto\"\225\002\n\025CreateInstanceReq" +
-      "uest\022\014\n\004name\030\001 \001(\t\022\023\n\013instance_id\030\002 \001(\t\022" +
-      "4\n\010instance\030\003 \001(\0132\".google.bigtable.admi" +
-      "n.v2.Instance\022O\n\010clusters\030\004 \003(\0132=.google",
-      ".bigtable.admin.v2.CreateInstanceRequest" +
-      ".ClustersEntry\032R\n\rClustersEntry\022\013\n\003key\030\001" +
-      " \001(\t\0220\n\005value\030\002 \001(\0132!.google.bigtable.ad" +
-      "min.v2.Cluster:\0028\001\"\"\n\022GetInstanceRequest" +
-      "\022\014\n\004name\030\001 \001(\t\"8\n\024ListInstancesRequest\022\014" +
-      "\n\004name\030\001 \001(\t\022\022\n\npage_token\030\002 \001(\t\"g\n\025List" +
-      "InstancesResponse\0225\n\tinstances\030\001 \003(\0132\".g" +
-      "oogle.bigtable.admin.v2.Instance\022\027\n\017next" +
-      "_page_token\030\002 \001(\t\"%\n\025DeleteInstanceReque" +
-      "st\022\014\n\004name\030\001 \001(\t\"l\n\024CreateClusterRequest",
-      "\022\014\n\004name\030\001 \001(\t\022\022\n\ncluster_id\030\002 \001(\t\0222\n\007cl" +
-      "uster\030\003 \001(\0132!.google.bigtable.admin.v2.C" +
-      "luster\"!\n\021GetClusterRequest\022\014\n\004name\030\001 \001(" +
-      "\t\"7\n\023ListClustersRequest\022\014\n\004name\030\001 \001(\t\022\022" +
-      "\n\npage_token\030\002 \001(\t\"d\n\024ListClustersRespon" +
-      "se\0223\n\010clusters\030\001 \003(\0132!.google.bigtable.a" +
-      "dmin.v2.Cluster\022\027\n\017next_page_token\030\002 \001(\t" +
-      "\"$\n\024DeleteClusterRequest\022\014\n\004name\030\001 \001(\t\"o" +
-      "\n\031InstanceOperationMetadata\022\014\n\004name\030\001 \001(" +
-      "\t\022D\n\010clusters\030\002 \003(\01322.google.bigtable.ad",
-      "min.v2.ClusterOperationMetadata\"\246\001\n\030Clus" +
-      "terOperationMetadata\022\014\n\004name\030\001 \001(\t\0229\n\rta" +
-      "bles_copied\030\002 \001(\0132\".google.bigtable.admi" +
-      "n.v2.Progress\022A\n\025serve_nodes_allocated\030\003" +
-      " \001(\0132\".google.bigtable.admin.v2.Progress" +
-      "2\323\013\n\025BigtableInstanceAdmin\022\214\001\n\016CreateIns" +
-      "tance\022/.google.bigtable.admin.v2.CreateI" +
-      "nstanceRequest\032\035.google.longrunning.Oper" +
-      "ation\"*\202\323\344\223\002$\"\037/v2/{name=projects/*}/ins" +
-      "tances:\001*\022\212\001\n\013GetInstance\022,.google.bigta",
-      "ble.admin.v2.GetInstanceRequest\032\".google" +
-      ".bigtable.admin.v2.Instance\")\202\323\344\223\002#\022!/v2" +
-      "/{name=projects/*/instances/*}\022\231\001\n\rListI" +
-      "nstances\022..google.bigtable.admin.v2.List" +
-      "InstancesRequest\032/.google.bigtable.admin" +
-      ".v2.ListInstancesResponse\"\'\202\323\344\223\002!\022\037/v2/{" +
-      "name=projects/*}/instances\022\206\001\n\016UpdateIns" +
-      "tance\022\".google.bigtable.admin.v2.Instanc" +
-      "e\032\".google.bigtable.admin.v2.Instance\",\202" +
-      "\323\344\223\002&\032!/v2/{name=projects/*/instances/*}",
-      ":\001*\022\204\001\n\016DeleteInstance\022/.google.bigtable" +
-      ".admin.v2.DeleteInstanceRequest\032\026.google" +
-      ".protobuf.Empty\")\202\323\344\223\002#*!/v2/{name=proje" +
-      "cts/*/instances/*}\022\233\001\n\rCreateCluster\022..g" +
-      "oogle.bigtable.admin.v2.CreateClusterReq" +
-      "uest\032\035.google.longrunning.Operation\";\202\323\344" +
-      "\223\0025\"*/v2/{name=projects/*/instances/*}/c" +
-      "lusters:\007cluster\022\222\001\n\nGetCluster\022+.google" +
-      ".bigtable.admin.v2.GetClusterRequest\032!.g" +
-      "oogle.bigtable.admin.v2.Cluster\"4\202\323\344\223\002.\022",
-      ",/v2/{name=projects/*/instances/*/cluste" +
-      "rs/*}\022\241\001\n\014ListClusters\022-.google.bigtable" +
-      ".admin.v2.ListClustersRequest\032..google.b" +
-      "igtable.admin.v2.ListClustersResponse\"2\202" +
-      "\323\344\223\002,\022*/v2/{name=projects/*/instances/*}" +
-      "/clusters\022\212\001\n\rUpdateCluster\022!.google.big" +
-      "table.admin.v2.Cluster\032\035.google.longrunn" +
-      "ing.Operation\"7\202\323\344\223\0021\032,/v2/{name=project" +
-      "s/*/instances/*/clusters/*}:\001*\022\215\001\n\rDelet" +
-      "eCluster\022..google.bigtable.admin.v2.Dele",
-      "teClusterRequest\032\026.google.protobuf.Empty" +
-      "\"4\202\323\344\223\002.*,/v2/{name=projects/*/instances" +
-      "/*/clusters/*}B<\n\034com.google.bigtable.ad" +
-      "min.v2B\032BigtableInstanceAdminProtoP\001b\006pr" +
-      "oto3"
+      "otobuf/empty.proto\032\037google/protobuf/time" +
+      "stamp.proto\"\225\002\n\025CreateInstanceRequest\022\014\n" +
+      "\004name\030\001 \001(\t\022\023\n\013instance_id\030\002 \001(\t\0224\n\010inst" +
+      "ance\030\003 \001(\0132\".google.bigtable.admin.v2.In",
+      "stance\022O\n\010clusters\030\004 \003(\0132=.google.bigtab" +
+      "le.admin.v2.CreateInstanceRequest.Cluste" +
+      "rsEntry\032R\n\rClustersEntry\022\013\n\003key\030\001 \001(\t\0220\n" +
+      "\005value\030\002 \001(\0132!.google.bigtable.admin.v2." +
+      "Cluster:\0028\001\"\"\n\022GetInstanceRequest\022\014\n\004nam" +
+      "e\030\001 \001(\t\"R\n\024ListInstancesRequest\022\014\n\004name\030" +
+      "\001 \001(\t\022\030\n\020failed_locations\030\002 \003(\t\022\022\n\npage_" +
+      "token\030\003 \001(\t\"g\n\025ListInstancesResponse\0225\n\t" +
+      "instances\030\001 \003(\0132\".google.bigtable.admin." +
+      "v2.Instance\022\027\n\017next_page_token\030\002 \001(\t\"%\n\025",
+      "DeleteInstanceRequest\022\014\n\004name\030\001 \001(\t\"l\n\024C" +
+      "reateClusterRequest\022\014\n\004name\030\001 \001(\t\022\022\n\nclu" +
+      "ster_id\030\002 \001(\t\0222\n\007cluster\030\003 \001(\0132!.google." +
+      "bigtable.admin.v2.Cluster\"!\n\021GetClusterR" +
+      "equest\022\014\n\004name\030\001 \001(\t\"7\n\023ListClustersRequ" +
+      "est\022\014\n\004name\030\001 \001(\t\022\022\n\npage_token\030\002 \001(\t\"~\n" +
+      "\024ListClustersResponse\0223\n\010clusters\030\001 \003(\0132" +
+      "!.google.bigtable.admin.v2.Cluster\022\030\n\020fa" +
+      "iled_locations\030\002 \003(\t\022\027\n\017next_page_token\030" +
+      "\003 \001(\t\"$\n\024DeleteClusterRequest\022\014\n\004name\030\001 ",
+      "\001(\t\"\306\001\n\026CreateInstanceMetadata\022I\n\020origin" +
+      "al_request\030\001 \001(\0132/.google.bigtable.admin" +
+      ".v2.CreateInstanceRequest\0220\n\014request_tim" +
+      "e\030\002 \001(\0132\032.google.protobuf.Timestamp\022/\n\013f" +
+      "inish_time\030\003 \001(\0132\032.google.protobuf.Times" +
+      "tamp2\323\013\n\025BigtableInstanceAdmin\022\214\001\n\016Creat" +
+      "eInstance\022/.google.bigtable.admin.v2.Cre" +
+      "ateInstanceRequest\032\035.google.longrunning." +
+      "Operation\"*\202\323\344\223\002$\"\037/v2/{name=projects/*}" +
+      "/instances:\001*\022\212\001\n\013GetInstance\022,.google.b",
+      "igtable.admin.v2.GetInstanceRequest\032\".go" +
+      "ogle.bigtable.admin.v2.Instance\")\202\323\344\223\002#\022" +
+      "!/v2/{name=projects/*/instances/*}\022\231\001\n\rL" +
+      "istInstances\022..google.bigtable.admin.v2." +
+      "ListInstancesRequest\032/.google.bigtable.a" +
+      "dmin.v2.ListInstancesResponse\"\'\202\323\344\223\002!\022\037/" +
+      "v2/{name=projects/*}/instances\022\206\001\n\016Updat" +
+      "eInstance\022\".google.bigtable.admin.v2.Ins" +
+      "tance\032\".google.bigtable.admin.v2.Instanc" +
+      "e\",\202\323\344\223\002&\032!/v2/{name=projects/*/instance",
+      "s/*}:\001*\022\204\001\n\016DeleteInstance\022/.google.bigt" +
+      "able.admin.v2.DeleteInstanceRequest\032\026.go" +
+      "ogle.protobuf.Empty\")\202\323\344\223\002#*!/v2/{name=p" +
+      "rojects/*/instances/*}\022\233\001\n\rCreateCluster" +
+      "\022..google.bigtable.admin.v2.CreateCluste" +
+      "rRequest\032\035.google.longrunning.Operation\"" +
+      ";\202\323\344\223\0025\"*/v2/{name=projects/*/instances/" +
+      "*}/clusters:\007cluster\022\222\001\n\nGetCluster\022+.go" +
+      "ogle.bigtable.admin.v2.GetClusterRequest" +
+      "\032!.google.bigtable.admin.v2.Cluster\"4\202\323\344",
+      "\223\002.\022,/v2/{name=projects/*/instances/*/cl" +
+      "usters/*}\022\241\001\n\014ListClusters\022-.google.bigt" +
+      "able.admin.v2.ListClustersRequest\032..goog" +
+      "le.bigtable.admin.v2.ListClustersRespons" +
+      "e\"2\202\323\344\223\002,\022*/v2/{name=projects/*/instance" +
+      "s/*}/clusters\022\212\001\n\rUpdateCluster\022!.google" +
+      ".bigtable.admin.v2.Cluster\032\035.google.long" +
+      "running.Operation\"7\202\323\344\223\0021\032,/v2/{name=pro" +
+      "jects/*/instances/*/clusters/*}:\001*\022\215\001\n\rD" +
+      "eleteCluster\022..google.bigtable.admin.v2.",
+      "DeleteClusterRequest\032\026.google.protobuf.E" +
+      "mpty\"4\202\323\344\223\002.*,/v2/{name=projects/*/insta" +
+      "nces/*/clusters/*}B<\n\034com.google.bigtabl" +
+      "e.admin.v2B\032BigtableInstanceAdminProtoP\001" +
+      "b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -174,6 +169,7 @@ public final class BigtableInstanceAdminProto {
           com.google.bigtable.admin.v2.InstanceProto.getDescriptor(),
           com.google.longrunning.OperationsProto.getDescriptor(),
           com.google.protobuf.EmptyProto.getDescriptor(),
+          com.google.protobuf.TimestampProto.getDescriptor(),
         }, assigner);
     internal_static_google_bigtable_admin_v2_CreateInstanceRequest_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -198,7 +194,7 @@ public final class BigtableInstanceAdminProto {
     internal_static_google_bigtable_admin_v2_ListInstancesRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_ListInstancesRequest_descriptor,
-        new java.lang.String[] { "Name", "PageToken", });
+        new java.lang.String[] { "Name", "FailedLocations", "PageToken", });
     internal_static_google_bigtable_admin_v2_ListInstancesResponse_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_google_bigtable_admin_v2_ListInstancesResponse_fieldAccessorTable = new
@@ -234,25 +230,19 @@ public final class BigtableInstanceAdminProto {
     internal_static_google_bigtable_admin_v2_ListClustersResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_ListClustersResponse_descriptor,
-        new java.lang.String[] { "Clusters", "NextPageToken", });
+        new java.lang.String[] { "Clusters", "FailedLocations", "NextPageToken", });
     internal_static_google_bigtable_admin_v2_DeleteClusterRequest_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_google_bigtable_admin_v2_DeleteClusterRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_DeleteClusterRequest_descriptor,
         new java.lang.String[] { "Name", });
-    internal_static_google_bigtable_admin_v2_InstanceOperationMetadata_descriptor =
+    internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_descriptor =
       getDescriptor().getMessageTypes().get(10);
-    internal_static_google_bigtable_admin_v2_InstanceOperationMetadata_fieldAccessorTable = new
+    internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_google_bigtable_admin_v2_InstanceOperationMetadata_descriptor,
-        new java.lang.String[] { "Name", "Clusters", });
-    internal_static_google_bigtable_admin_v2_ClusterOperationMetadata_descriptor =
-      getDescriptor().getMessageTypes().get(11);
-    internal_static_google_bigtable_admin_v2_ClusterOperationMetadata_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_google_bigtable_admin_v2_ClusterOperationMetadata_descriptor,
-        new java.lang.String[] { "Name", "TablesCopied", "ServeNodesAllocated", });
+        internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_descriptor,
+        new java.lang.String[] { "OriginalRequest", "RequestTime", "FinishTime", });
     com.google.protobuf.ExtensionRegistry registry =
         com.google.protobuf.ExtensionRegistry.newInstance();
     registry.add(com.google.api.AnnotationsProto.http);
@@ -263,6 +253,7 @@ public final class BigtableInstanceAdminProto {
     com.google.bigtable.admin.v2.InstanceProto.getDescriptor();
     com.google.longrunning.OperationsProto.getDescriptor();
     com.google.protobuf.EmptyProto.getDescriptor();
+    com.google.protobuf.TimestampProto.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

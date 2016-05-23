@@ -18,11 +18,62 @@ public interface ListInstancesRequestOrBuilder extends
       getNameBytes();
 
   /**
-   * <code>optional string page_token = 2;</code>
+   * <code>repeated string failed_locations = 2;</code>
+   *
+   * <pre>
+   * Locations from which Instance information could not be retrieved,
+   * due to an outage or some other transient condition.
+   * Instances whose Clusters are all in one of the failed locations
+   * may be missing from 'instances', and Instances with at least one
+   * Cluster in a failed location may only have partial information returned.
+   * </pre>
+   */
+  com.google.protobuf.ProtocolStringList
+      getFailedLocationsList();
+  /**
+   * <code>repeated string failed_locations = 2;</code>
+   *
+   * <pre>
+   * Locations from which Instance information could not be retrieved,
+   * due to an outage or some other transient condition.
+   * Instances whose Clusters are all in one of the failed locations
+   * may be missing from 'instances', and Instances with at least one
+   * Cluster in a failed location may only have partial information returned.
+   * </pre>
+   */
+  int getFailedLocationsCount();
+  /**
+   * <code>repeated string failed_locations = 2;</code>
+   *
+   * <pre>
+   * Locations from which Instance information could not be retrieved,
+   * due to an outage or some other transient condition.
+   * Instances whose Clusters are all in one of the failed locations
+   * may be missing from 'instances', and Instances with at least one
+   * Cluster in a failed location may only have partial information returned.
+   * </pre>
+   */
+  java.lang.String getFailedLocations(int index);
+  /**
+   * <code>repeated string failed_locations = 2;</code>
+   *
+   * <pre>
+   * Locations from which Instance information could not be retrieved,
+   * due to an outage or some other transient condition.
+   * Instances whose Clusters are all in one of the failed locations
+   * may be missing from 'instances', and Instances with at least one
+   * Cluster in a failed location may only have partial information returned.
+   * </pre>
+   */
+  com.google.protobuf.ByteString
+      getFailedLocationsBytes(int index);
+
+  /**
+   * <code>optional string page_token = 3;</code>
    */
   java.lang.String getPageToken();
   /**
-   * <code>optional string page_token = 2;</code>
+   * <code>optional string page_token = 3;</code>
    */
   com.google.protobuf.ByteString
       getPageTokenBytes();

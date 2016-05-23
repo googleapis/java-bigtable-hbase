@@ -67,13 +67,13 @@ public class BigtableTableAdminGrpc {
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Table.getDefaultInstance()));
   @io.grpc.ExperimentalApi
-  public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.BulkDeleteRowsRequest,
-      com.google.protobuf.Empty> METHOD_BULK_DELETE_ROWS =
+  public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.DropRowRangeRequest,
+      com.google.protobuf.Empty> METHOD_DROP_ROW_RANGE =
       io.grpc.MethodDescriptor.create(
           io.grpc.MethodDescriptor.MethodType.UNARY,
           generateFullMethodName(
-              "google.bigtable.admin.v2.BigtableTableAdmin", "BulkDeleteRows"),
-          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.BulkDeleteRowsRequest.getDefaultInstance()),
+              "google.bigtable.admin.v2.BigtableTableAdmin", "DropRowRange"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.DropRowRangeRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
 
   public static BigtableTableAdminStub newStub(io.grpc.Channel channel) {
@@ -107,7 +107,7 @@ public class BigtableTableAdminGrpc {
     public void modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver);
 
-    public void bulkDeleteRows(com.google.bigtable.admin.v2.BulkDeleteRowsRequest request,
+    public void dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
   }
 
@@ -123,7 +123,7 @@ public class BigtableTableAdminGrpc {
 
     public com.google.bigtable.admin.v2.Table modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request);
 
-    public com.google.protobuf.Empty bulkDeleteRows(com.google.bigtable.admin.v2.BulkDeleteRowsRequest request);
+    public com.google.protobuf.Empty dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request);
   }
 
   public static interface BigtableTableAdminFutureClient {
@@ -143,8 +143,8 @@ public class BigtableTableAdminGrpc {
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> modifyColumnFamilies(
         com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request);
 
-    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> bulkDeleteRows(
-        com.google.bigtable.admin.v2.BulkDeleteRowsRequest request);
+    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> dropRowRange(
+        com.google.bigtable.admin.v2.DropRowRangeRequest request);
   }
 
   public static class BigtableTableAdminStub extends io.grpc.stub.AbstractStub<BigtableTableAdminStub>
@@ -200,10 +200,10 @@ public class BigtableTableAdminGrpc {
     }
 
     @java.lang.Override
-    public void bulkDeleteRows(com.google.bigtable.admin.v2.BulkDeleteRowsRequest request,
+    public void dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
-          getChannel().newCall(METHOD_BULK_DELETE_ROWS, getCallOptions()), request, responseObserver);
+          getChannel().newCall(METHOD_DROP_ROW_RANGE, getCallOptions()), request, responseObserver);
     }
   }
 
@@ -255,9 +255,9 @@ public class BigtableTableAdminGrpc {
     }
 
     @java.lang.Override
-    public com.google.protobuf.Empty bulkDeleteRows(com.google.bigtable.admin.v2.BulkDeleteRowsRequest request) {
+    public com.google.protobuf.Empty dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request) {
       return blockingUnaryCall(
-          getChannel(), METHOD_BULK_DELETE_ROWS, getCallOptions(), request);
+          getChannel(), METHOD_DROP_ROW_RANGE, getCallOptions(), request);
     }
   }
 
@@ -314,10 +314,10 @@ public class BigtableTableAdminGrpc {
     }
 
     @java.lang.Override
-    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> bulkDeleteRows(
-        com.google.bigtable.admin.v2.BulkDeleteRowsRequest request) {
+    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> dropRowRange(
+        com.google.bigtable.admin.v2.DropRowRangeRequest request) {
       return futureUnaryCall(
-          getChannel().newCall(METHOD_BULK_DELETE_ROWS, getCallOptions()), request);
+          getChannel().newCall(METHOD_DROP_ROW_RANGE, getCallOptions()), request);
     }
   }
 
@@ -326,7 +326,7 @@ public class BigtableTableAdminGrpc {
   private static final int METHODID_GET_TABLE = 2;
   private static final int METHODID_DELETE_TABLE = 3;
   private static final int METHODID_MODIFY_COLUMN_FAMILIES = 4;
-  private static final int METHODID_BULK_DELETE_ROWS = 5;
+  private static final int METHODID_DROP_ROW_RANGE = 5;
 
   private static class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -364,8 +364,8 @@ public class BigtableTableAdminGrpc {
           serviceImpl.modifyColumnFamilies((com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest) request,
               (io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table>) responseObserver);
           break;
-        case METHODID_BULK_DELETE_ROWS:
-          serviceImpl.bulkDeleteRows((com.google.bigtable.admin.v2.BulkDeleteRowsRequest) request,
+        case METHODID_DROP_ROW_RANGE:
+          serviceImpl.dropRowRange((com.google.bigtable.admin.v2.DropRowRangeRequest) request,
               (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
           break;
         default:
@@ -422,12 +422,12 @@ public class BigtableTableAdminGrpc {
               com.google.bigtable.admin.v2.Table>(
                 serviceImpl, METHODID_MODIFY_COLUMN_FAMILIES)))
         .addMethod(
-          METHOD_BULK_DELETE_ROWS,
+          METHOD_DROP_ROW_RANGE,
           asyncUnaryCall(
             new MethodHandlers<
-              com.google.bigtable.admin.v2.BulkDeleteRowsRequest,
+              com.google.bigtable.admin.v2.DropRowRangeRequest,
               com.google.protobuf.Empty>(
-                serviceImpl, METHODID_BULK_DELETE_ROWS)))
+                serviceImpl, METHODID_DROP_ROW_RANGE)))
         .build();
   }
 }

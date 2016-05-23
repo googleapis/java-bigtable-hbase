@@ -1,4 +1,4 @@
-// Copyright (c) 2015, Google Inc.
+// Copyright 2016 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,6 +55,10 @@ message Cluster {
     CREATING = 2;
 
     RESIZING = 3;
+
+    // The cluster has no backing nodes.  The data (tables) still
+    // exist, but no operations can be performed on the cluster.
+    DISABLED = 4;
   }
 
   // @OutputOnly
