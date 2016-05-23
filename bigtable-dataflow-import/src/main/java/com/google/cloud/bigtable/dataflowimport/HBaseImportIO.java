@@ -15,8 +15,7 @@
  */
 package com.google.cloud.bigtable.dataflowimport;
 
-import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseResultConverter;
-import com.google.cloud.bigtable.dataflow.BigtableConverterCoder;
+import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
 import com.google.cloud.dataflow.sdk.coders.KvCoder;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner;
@@ -111,7 +110,7 @@ public class HBaseImportIO {
         ImmutableBytesWritable.class,
         Result.class,
       KvCoder.of(new WritableCoder<>(ImmutableBytesWritable.class),
-        new BigtableConverterCoder<>(new HBaseResultConverter())),
+        new HBaseResultCoder()),
         createSerializationProperties(options));
   }
 

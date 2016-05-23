@@ -49,9 +49,6 @@ import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
-import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseMutationConverter;
-import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseResultArrayConverter;
-import com.google.bigtable.repackaged.com.google.cloud.dataflow.tools.HBaseResultConverter;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
@@ -62,8 +59,12 @@ import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.Row;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.SampleRowKeysResponse;
 import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
+import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
+import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.dataflow.sdk.Pipeline;
+import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
@@ -156,14 +157,11 @@ public class CloudBigtableIO {
     RESULT_ARRAY;
   }
 
-  private static BigtableConverterCoder<Result> RESULT_CODER =
-      new BigtableConverterCoder<>(new HBaseResultConverter());
-  private static BigtableConverterCoder<Result[]> RESULT_ARRAY_CODER =
-      new BigtableConverterCoder<>(new HBaseResultArrayConverter());
+  private static AtomicCoder<Result> RESULT_CODER = new HBaseResultCoder();
+  private static AtomicCoder<Result[]> RESULT_ARRAY_CODER = new HBaseResultArrayCoder();
 
   @SuppressWarnings("rawtypes")
-  private static BigtableConverterCoder HBASE_MUTATION_CODER =
-      new BigtableConverterCoder<>(new HBaseMutationConverter());
+  private static AtomicCoder HBASE_MUTATION_CODER = new HBaseMutationCoder();
 
   @SuppressWarnings("rawtypes")
   public static Coder getCoder(CoderType type) {

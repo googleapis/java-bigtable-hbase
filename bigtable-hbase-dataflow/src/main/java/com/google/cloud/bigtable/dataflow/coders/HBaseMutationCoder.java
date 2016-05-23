@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.dataflow.tools;
+package com.google.cloud.bigtable.dataflow.coders;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,10 +23,13 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.Mutation.MutationCase;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.PutAdapter;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.Mutation.MutationCase;
+import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
+import com.google.cloud.dataflow.sdk.coders.Coder;
+import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 /**
  * When Dataflow notices a slowdown in executing Puts and Deletes, it will send those Puts and
@@ -35,33 +38,35 @@ import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
  *
  * <p> See CloudBigtableIO#initializeForWrite(Pipeline).
  */
-public class HBaseMutationConverter implements BigtableConverter<Mutation> {
+public class HBaseMutationCoder extends AtomicCoder<Mutation> {
 
   private static final long serialVersionUID = -3853654063196018580L;
   private static final PutAdapter PUT_ADAPTER = new PutAdapter(Integer.MAX_VALUE);
 
   @Override
-  public void encode(Mutation mutation, OutputStream outStream) throws IOException {
+  public void encode(Mutation mutation, OutputStream outStream, Coder.Context context)
+      throws CoderException, IOException {
     MutateRowRequest request;
     if (mutation instanceof Put) {
       request = PUT_ADAPTER.adapt((Put) mutation).build();
     } else if (mutation instanceof Delete) {
       request = Adapters.DELETE_ADAPTER.adapt((Delete) mutation).build();
     } else {
-      // Increment and Append are not idempotent.  They should not be used in distributed jobs.
+      // Increment and Append are not idempotent. They should not be used in distributed jobs.
       throw new IllegalArgumentException("Only Put and Delete are supported");
     }
     request.writeDelimitedTo(outStream);
   }
 
   @Override
-  public Mutation decode(InputStream inStream) throws IOException {
+  public Mutation decode(InputStream inStream, Coder.Context context)
+      throws CoderException, IOException {
     MutateRowRequest request = MutateRowRequest.parseDelimitedFrom(inStream);
     if (request.getMutationsCount() == 0) {
-      // Increment and Append are not idempotent.  They should not be used in distributed jobs.
+      // Increment and Append are not idempotent. They should not be used in distributed jobs.
       throw new IllegalArgumentException("Invalid MutateRowRequest");
     }
-    if(request.getMutations(0).getMutationCase() == MutationCase.SET_CELL) {
+    if (request.getMutations(0).getMutationCase() == MutationCase.SET_CELL) {
       return PUT_ADAPTER.adapt(request);
     } else {
       return Adapters.DELETE_ADAPTER.adapt(request);
