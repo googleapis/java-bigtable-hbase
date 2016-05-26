@@ -98,26 +98,26 @@ public class TestCreateTable extends AbstractTest {
     for (String badName : badNames) {
       boolean failed = false;
       try {
-        HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(badName));
-        descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-        admin.createTable(descriptor);
+        admin.createTable(new HTableDescriptor(TableName.valueOf(badName))
+            .addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
       } catch (IllegalArgumentException e) {
         failed = true;
       }
       Assert.assertTrue("Should fail as table name: '" + badName + "'", failed);
     }
 
+    final TableName[] tableNames = admin.listTableNames();
+
     List<ListenableFuture<Void>> futures = new ArrayList<>();
     ListeningExecutorService es = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     for(final String goodName : goodNames) {
-      Callable<Void> c = new Callable<Void>() {
+      futures.add(es.submit(new Callable<Void>() {
         @Override
         public Void call() throws IOException {
-          createTable(admin, goodName);
+          createTable(admin, goodName, tableNames);
           return null;
         }
-      };
-      futures.add(es.submit(c));
+      }));
     }
     try {
       try {
@@ -130,28 +130,38 @@ public class TestCreateTable extends AbstractTest {
     }
   }
 
-  private void createTable(Admin admin, String goodName) throws IOException {
+  private void createTable(Admin admin, String goodName, TableName[] tableNames) throws IOException {
+    LOG.info("Try create table for: %s", goodName);
     TableName tableName = TableName.valueOf(goodName);
-    HTableDescriptor descriptor = new HTableDescriptor(tableName);
-    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+    HTableDescriptor descriptor = new HTableDescriptor(tableName)
+        .addFamily(new HColumnDescriptor(COLUMN_FAMILY));
 
     try {
-      // TODO(kevinsi): Currently the integration test is shared. We need to make a unique cluster
-      // per test environment for a cleaner testing scenario.
-      if (admin.tableExists(tableName)) {
+      if (contains(tableNames, tableName)) {
         LOG.warn("Not creating the table since it exists: %s", tableName);
       } else {
+        LOG.info("Do create table for: %s", goodName);
         admin.createTable(descriptor);
       }
     } finally {
       try {
         admin.disableTable(tableName);
+        LOG.info("Do delete table for: %s", goodName);
         admin.deleteTable(tableName);
       } catch (Throwable t) {
         // Log the error and ignore it.
         LOG.warn("Error cleaning up the table", t);
       }
     }
+  }
+
+  private boolean contains(TableName[] tableNames, TableName tableNameTocheck) {
+    for (TableName tableName : tableNames) {
+      if (tableName.equals(tableNameTocheck)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Test
