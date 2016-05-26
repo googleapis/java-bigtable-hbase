@@ -342,6 +342,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         new StreamObserverAdapter<>(readRowsCall, rowMerger);
     asyncUtilities.asyncServerStreamingCall(readRowsCall, request, listener);
 
+    if (request.getRows().getRowKeysCount() > 1 || request.getRows().getRowRangesCount() > 0) {
+      readRowsCall.request(4);
+    }
+
     CancellationToken cancellationToken = createCancellationToken(readRowsCall);
     return new StreamingBigtableResultScanner(responseQueueReader, cancellationToken);
   }
