@@ -93,6 +93,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     rowMerger.onCompleted();
     return result;
   }
+
   /**
    * Encapsulates validation for different states based on the stream of the {@link CellChunk}.
    */
@@ -108,8 +109,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       }
 
       @Override
-          void validateChunk(RowInProgress rowInProgess, ByteString previousKey,
-              CellChunk newChunk) {
+      void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
         Preconditions.checkArgument(rowInProgess == null, "A new row cannot have existing state.");
         Preconditions.checkArgument(newChunk.getRowStatusCase() != RowStatusCase.RESET_ROW,
           "A new row cannot be reset.");
@@ -126,7 +126,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       }
 
       @Override
-      void handleOnComplete(StreamObserver<Row> observer) {
+          void handleOnComplete(StreamObserver<Row> observer) {
         observer.onCompleted();
       }
     },
