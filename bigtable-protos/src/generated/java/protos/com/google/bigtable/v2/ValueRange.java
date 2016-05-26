@@ -171,7 +171,7 @@ public  final class ValueRange extends
    * <code>optional bytes start_value_open = 2;</code>
    *
    * <pre>
-   * Used when giving an Open lower bound for the range.
+   * Used when giving an exclusive lower bound for the range.
    * </pre>
    */
   public com.google.protobuf.ByteString getStartValueOpen() {
@@ -201,7 +201,7 @@ public  final class ValueRange extends
    * <code>optional bytes end_value_open = 4;</code>
    *
    * <pre>
-   * Used when giving an Open upper bound for the range.
+   * Used when giving an exclusive upper bound for the range.
    * </pre>
    */
   public com.google.protobuf.ByteString getEndValueOpen() {
@@ -567,7 +567,7 @@ public  final class ValueRange extends
      * <code>optional bytes start_value_open = 2;</code>
      *
      * <pre>
-     * Used when giving an Open lower bound for the range.
+     * Used when giving an exclusive lower bound for the range.
      * </pre>
      */
     public com.google.protobuf.ByteString getStartValueOpen() {
@@ -580,7 +580,7 @@ public  final class ValueRange extends
      * <code>optional bytes start_value_open = 2;</code>
      *
      * <pre>
-     * Used when giving an Open lower bound for the range.
+     * Used when giving an exclusive lower bound for the range.
      * </pre>
      */
     public Builder setStartValueOpen(com.google.protobuf.ByteString value) {
@@ -596,7 +596,7 @@ public  final class ValueRange extends
      * <code>optional bytes start_value_open = 2;</code>
      *
      * <pre>
-     * Used when giving an Open lower bound for the range.
+     * Used when giving an exclusive lower bound for the range.
      * </pre>
      */
     public Builder clearStartValueOpen() {
@@ -657,7 +657,7 @@ public  final class ValueRange extends
      * <code>optional bytes end_value_open = 4;</code>
      *
      * <pre>
-     * Used when giving an Open upper bound for the range.
+     * Used when giving an exclusive upper bound for the range.
      * </pre>
      */
     public com.google.protobuf.ByteString getEndValueOpen() {
@@ -670,7 +670,7 @@ public  final class ValueRange extends
      * <code>optional bytes end_value_open = 4;</code>
      *
      * <pre>
-     * Used when giving an Open upper bound for the range.
+     * Used when giving an exclusive upper bound for the range.
      * </pre>
      */
     public Builder setEndValueOpen(com.google.protobuf.ByteString value) {
@@ -686,7 +686,7 @@ public  final class ValueRange extends
      * <code>optional bytes end_value_open = 4;</code>
      *
      * <pre>
-     * Used when giving an Open upper bound for the range.
+     * Used when giving an exclusive upper bound for the range.
      * </pre>
      */
     public Builder clearEndValueOpen() {

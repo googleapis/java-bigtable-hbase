@@ -35,13 +35,13 @@ public interface ColumnRangeOrBuilder extends
   com.google.protobuf.ByteString getStartQualifierInclusive();
 
   /**
-   * <code>optional bytes start_qualifier_Open = 3;</code>
+   * <code>optional bytes start_qualifier_exclusive = 3;</code>
    *
    * <pre>
-   * Used when giving an Open lower bound for the range.
+   * Used when giving an exclusive lower bound for the range.
    * </pre>
    */
-  com.google.protobuf.ByteString getStartQualifierOpen();
+  com.google.protobuf.ByteString getStartQualifierExclusive();
 
   /**
    * <code>optional bytes end_qualifier_inclusive = 4;</code>
@@ -53,13 +53,13 @@ public interface ColumnRangeOrBuilder extends
   com.google.protobuf.ByteString getEndQualifierInclusive();
 
   /**
-   * <code>optional bytes end_qualifier_Open = 5;</code>
+   * <code>optional bytes end_qualifier_exclusive = 5;</code>
    *
    * <pre>
-   * Used when giving an Open upper bound for the range.
+   * Used when giving an exclusive upper bound for the range.
    * </pre>
    */
-  com.google.protobuf.ByteString getEndQualifierOpen();
+  com.google.protobuf.ByteString getEndQualifierExclusive();
 
   public com.google.bigtable.v1.ColumnRange.StartQualifierCase getStartQualifierCase();
 

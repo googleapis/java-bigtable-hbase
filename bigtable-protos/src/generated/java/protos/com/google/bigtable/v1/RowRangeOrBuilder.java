@@ -20,7 +20,7 @@ public interface RowRangeOrBuilder extends
    * <code>optional bytes end_key = 3;</code>
    *
    * <pre>
-   * Open upper bound. If left empty, interpreted as infinity.
+   * Exclusive upper bound. If left empty, interpreted as infinity.
    * </pre>
    */
   com.google.protobuf.ByteString getEndKey();

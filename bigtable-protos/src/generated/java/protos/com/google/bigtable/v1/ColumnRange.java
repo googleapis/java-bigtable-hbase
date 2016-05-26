@@ -10,7 +10,7 @@ package com.google.bigtable.v1;
  * Specifies a contiguous range of columns within a single column family.
  * The range spans from &lt;column_family&gt;:&lt;start_qualifier&gt; to
  * &lt;column_family&gt;:&lt;end_qualifier&gt;, where both bounds can be either inclusive or
- * Open.
+ * exclusive.
  * </pre>
  */
 public  final class ColumnRange extends
@@ -104,7 +104,7 @@ public  final class ColumnRange extends
   public enum StartQualifierCase
       implements com.google.protobuf.Internal.EnumLite {
     START_QUALIFIER_INCLUSIVE(2),
-    START_QUALIFIER_Open(3),
+    START_QUALIFIER_EXCLUSIVE(3),
     STARTQUALIFIER_NOT_SET(0);
     private int value = 0;
     private StartQualifierCase(int value) {
@@ -113,7 +113,7 @@ public  final class ColumnRange extends
     public static StartQualifierCase valueOf(int value) {
       switch (value) {
         case 2: return START_QUALIFIER_INCLUSIVE;
-        case 3: return START_QUALIFIER_Open;
+        case 3: return START_QUALIFIER_EXCLUSIVE;
         case 0: return STARTQUALIFIER_NOT_SET;
         default: throw new java.lang.IllegalArgumentException(
           "Value is undefined for this oneof enum.");
@@ -135,7 +135,7 @@ public  final class ColumnRange extends
   public enum EndQualifierCase
       implements com.google.protobuf.Internal.EnumLite {
     END_QUALIFIER_INCLUSIVE(4),
-    END_QUALIFIER_Open(5),
+    END_QUALIFIER_EXCLUSIVE(5),
     ENDQUALIFIER_NOT_SET(0);
     private int value = 0;
     private EndQualifierCase(int value) {
@@ -144,7 +144,7 @@ public  final class ColumnRange extends
     public static EndQualifierCase valueOf(int value) {
       switch (value) {
         case 4: return END_QUALIFIER_INCLUSIVE;
-        case 5: return END_QUALIFIER_Open;
+        case 5: return END_QUALIFIER_EXCLUSIVE;
         case 0: return ENDQUALIFIER_NOT_SET;
         default: throw new java.lang.IllegalArgumentException(
           "Value is undefined for this oneof enum.");
@@ -218,15 +218,15 @@ public  final class ColumnRange extends
     return com.google.protobuf.ByteString.EMPTY;
   }
 
-  public static final int START_QUALIFIER_Open_FIELD_NUMBER = 3;
+  public static final int START_QUALIFIER_EXCLUSIVE_FIELD_NUMBER = 3;
   /**
-   * <code>optional bytes start_qualifier_Open = 3;</code>
+   * <code>optional bytes start_qualifier_exclusive = 3;</code>
    *
    * <pre>
-   * Used when giving an Open lower bound for the range.
+   * Used when giving an exclusive lower bound for the range.
    * </pre>
    */
-  public com.google.protobuf.ByteString getStartQualifierOpen() {
+  public com.google.protobuf.ByteString getStartQualifierExclusive() {
     if (startQualifierCase_ == 3) {
       return (com.google.protobuf.ByteString) startQualifier_;
     }
@@ -248,15 +248,15 @@ public  final class ColumnRange extends
     return com.google.protobuf.ByteString.EMPTY;
   }
 
-  public static final int END_QUALIFIER_Open_FIELD_NUMBER = 5;
+  public static final int END_QUALIFIER_EXCLUSIVE_FIELD_NUMBER = 5;
   /**
-   * <code>optional bytes end_qualifier_Open = 5;</code>
+   * <code>optional bytes end_qualifier_exclusive = 5;</code>
    *
    * <pre>
-   * Used when giving an Open upper bound for the range.
+   * Used when giving an exclusive upper bound for the range.
    * </pre>
    */
-  public com.google.protobuf.ByteString getEndQualifierOpen() {
+  public com.google.protobuf.ByteString getEndQualifierExclusive() {
     if (endQualifierCase_ == 5) {
       return (com.google.protobuf.ByteString) endQualifier_;
     }
@@ -407,7 +407,7 @@ public  final class ColumnRange extends
    * Specifies a contiguous range of columns within a single column family.
    * The range spans from &lt;column_family&gt;:&lt;start_qualifier&gt; to
    * &lt;column_family&gt;:&lt;end_qualifier&gt;, where both bounds can be either inclusive or
-   * Open.
+   * exclusive.
    * </pre>
    */
   public static final class Builder extends
@@ -509,8 +509,8 @@ public  final class ColumnRange extends
           setStartQualifierInclusive(other.getStartQualifierInclusive());
           break;
         }
-        case START_QUALIFIER_Open: {
-          setStartQualifierOpen(other.getStartQualifierOpen());
+        case START_QUALIFIER_EXCLUSIVE: {
+          setStartQualifierExclusive(other.getStartQualifierExclusive());
           break;
         }
         case STARTQUALIFIER_NOT_SET: {
@@ -522,8 +522,8 @@ public  final class ColumnRange extends
           setEndQualifierInclusive(other.getEndQualifierInclusive());
           break;
         }
-        case END_QUALIFIER_Open: {
-          setEndQualifierOpen(other.getEndQualifierOpen());
+        case END_QUALIFIER_EXCLUSIVE: {
+          setEndQualifierExclusive(other.getEndQualifierExclusive());
           break;
         }
         case ENDQUALIFIER_NOT_SET: {
@@ -721,26 +721,26 @@ public  final class ColumnRange extends
     }
 
     /**
-     * <code>optional bytes start_qualifier_Open = 3;</code>
+     * <code>optional bytes start_qualifier_exclusive = 3;</code>
      *
      * <pre>
-     * Used when giving an Open lower bound for the range.
+     * Used when giving an exclusive lower bound for the range.
      * </pre>
      */
-    public com.google.protobuf.ByteString getStartQualifierOpen() {
+    public com.google.protobuf.ByteString getStartQualifierExclusive() {
       if (startQualifierCase_ == 3) {
         return (com.google.protobuf.ByteString) startQualifier_;
       }
       return com.google.protobuf.ByteString.EMPTY;
     }
     /**
-     * <code>optional bytes start_qualifier_Open = 3;</code>
+     * <code>optional bytes start_qualifier_exclusive = 3;</code>
      *
      * <pre>
-     * Used when giving an Open lower bound for the range.
+     * Used when giving an exclusive lower bound for the range.
      * </pre>
      */
-    public Builder setStartQualifierOpen(com.google.protobuf.ByteString value) {
+    public Builder setStartQualifierExclusive(com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
@@ -750,13 +750,13 @@ public  final class ColumnRange extends
       return this;
     }
     /**
-     * <code>optional bytes start_qualifier_Open = 3;</code>
+     * <code>optional bytes start_qualifier_exclusive = 3;</code>
      *
      * <pre>
-     * Used when giving an Open lower bound for the range.
+     * Used when giving an exclusive lower bound for the range.
      * </pre>
      */
-    public Builder clearStartQualifierOpen() {
+    public Builder clearStartQualifierExclusive() {
       if (startQualifierCase_ == 3) {
         startQualifierCase_ = 0;
         startQualifier_ = null;
@@ -811,26 +811,26 @@ public  final class ColumnRange extends
     }
 
     /**
-     * <code>optional bytes end_qualifier_Open = 5;</code>
+     * <code>optional bytes end_qualifier_exclusive = 5;</code>
      *
      * <pre>
-     * Used when giving an Open upper bound for the range.
+     * Used when giving an exclusive upper bound for the range.
      * </pre>
      */
-    public com.google.protobuf.ByteString getEndQualifierOpen() {
+    public com.google.protobuf.ByteString getEndQualifierExclusive() {
       if (endQualifierCase_ == 5) {
         return (com.google.protobuf.ByteString) endQualifier_;
       }
       return com.google.protobuf.ByteString.EMPTY;
     }
     /**
-     * <code>optional bytes end_qualifier_Open = 5;</code>
+     * <code>optional bytes end_qualifier_exclusive = 5;</code>
      *
      * <pre>
-     * Used when giving an Open upper bound for the range.
+     * Used when giving an exclusive upper bound for the range.
      * </pre>
      */
-    public Builder setEndQualifierOpen(com.google.protobuf.ByteString value) {
+    public Builder setEndQualifierExclusive(com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
@@ -840,13 +840,13 @@ public  final class ColumnRange extends
       return this;
     }
     /**
-     * <code>optional bytes end_qualifier_Open = 5;</code>
+     * <code>optional bytes end_qualifier_exclusive = 5;</code>
      *
      * <pre>
-     * Used when giving an Open upper bound for the range.
+     * Used when giving an exclusive upper bound for the range.
      * </pre>
      */
-    public Builder clearEndQualifierOpen() {
+    public Builder clearEndQualifierExclusive() {
       if (endQualifierCase_ == 5) {
         endQualifierCase_ = 0;
         endQualifier_ = null;

@@ -17,13 +17,13 @@ public interface ValueRangeOrBuilder extends
   com.google.protobuf.ByteString getStartValueInclusive();
 
   /**
-   * <code>optional bytes start_value_Open = 2;</code>
+   * <code>optional bytes start_value_exclusive = 2;</code>
    *
    * <pre>
-   * Used when giving an Open lower bound for the range.
+   * Used when giving an exclusive lower bound for the range.
    * </pre>
    */
-  com.google.protobuf.ByteString getStartValueOpen();
+  com.google.protobuf.ByteString getStartValueExclusive();
 
   /**
    * <code>optional bytes end_value_inclusive = 3;</code>
@@ -35,13 +35,13 @@ public interface ValueRangeOrBuilder extends
   com.google.protobuf.ByteString getEndValueInclusive();
 
   /**
-   * <code>optional bytes end_value_Open = 4;</code>
+   * <code>optional bytes end_value_exclusive = 4;</code>
    *
    * <pre>
-   * Used when giving an Open upper bound for the range.
+   * Used when giving an exclusive upper bound for the range.
    * </pre>
    */
-  com.google.protobuf.ByteString getEndValueOpen();
+  com.google.protobuf.ByteString getEndValueExclusive();
 
   public com.google.bigtable.v1.ValueRange.StartValueCase getStartValueCase();
 
