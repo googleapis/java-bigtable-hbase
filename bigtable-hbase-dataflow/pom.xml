@@ -62,16 +62,14 @@ limitations under the License.
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
         </dependency>
+       <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-tcnative-boringssl-static</artifactId>
+        </dependency>
     </dependencies>
     <profiles>
         <profile>
             <id>bigtableDataflowIntegrationTest</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.mortbay.jetty.alpn</groupId>
-                    <artifactId>alpn-boot</artifactId>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -92,13 +90,9 @@ limitations under the License.
                                 </goals>
                                 <phase>integration-test</phase>
                                 <configuration>
-                                    <!-- ALPN is needed for SSL engine rewrites -->
                                     <!-- to enable netty logging, include:
                                     -Djava.util.logging.config.file=src/test/resources/logging.properties
                                     -->
-                                    <argLine>
-                                        -Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar
-                                    </argLine>
                                     <forkCount>1</forkCount>
                                     <includes>
                                         <include>**/CloudBigtableIOIntegrationTest.java</include>
