@@ -61,10 +61,10 @@ limitations under the License.
         <compat.module>hbase-hadoop2-compat</compat.module>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
-        <protobuff-java.version>3.0.0-beta-2</protobuff-java.version>
-        <grpc.version>0.14.0</grpc.version>
+        <protobuff-java.version>3.0.0-beta-1</protobuff-java.version>
+        <grpc.version>0.13.1</grpc.version>
         <google.api.client.version>1.21.0</google.api.client.version>
-        <netty.version>4.1.0.CR7</netty.version>
+        <netty.version>4.1.0.CR1</netty.version>
         <guava.version>19.0</guava.version>
         <google.auth.library.version>0.4.0</google.auth.library.version>
         <google.http.client.version>1.21.0</google.http.client.version>
@@ -541,7 +541,8 @@ limitations under the License.
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-tcnative-boringssl-static</artifactId>
-                <version>1.1.33.Fork16</version>
+                <version>1.1.33.Fork13</version>
+                <classifier>${os.detected.classifier}</classifier>
                 <scope>test</scope>
             </dependency>
         </dependencies>
@@ -567,6 +568,14 @@ limitations under the License.
     </issueManagement>
 
     <build>
+       <extensions>
+            <!-- Use os-maven-plugin to initialize the "os.detected" properties -->
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.4.1.Final</version>
+            </extension>
+        </extensions>
         <testResources>
             <testResource>
                 <directory>src/test/resources</directory>
