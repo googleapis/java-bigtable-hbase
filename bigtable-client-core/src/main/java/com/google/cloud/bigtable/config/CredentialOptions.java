@@ -17,9 +17,9 @@ package com.google.cloud.bigtable.config;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.Objects;
 
 import com.google.auth.Credentials;
-import com.google.common.base.Objects;
 
 /**
  * <p>
@@ -113,6 +113,7 @@ public class CredentialOptions implements Serializable {
    * A CredentialOptions defined by a serviceAccount and a p12 key file.
    */
   public static class P12CredentialOptions extends CredentialOptions {
+    private static final long serialVersionUID = 596647835888116163L;
     private final String serviceAccount;
     private final String keyFile;
 
@@ -144,8 +145,8 @@ public class CredentialOptions implements Serializable {
         return false;
       }
       P12CredentialOptions other = (P12CredentialOptions) obj;
-      return Objects.equal(keyFile, other.keyFile)
-          && Objects.equal(serviceAccount, other.serviceAccount);
+      return Objects.equals(keyFile, other.keyFile)
+          && Objects.equals(serviceAccount, other.serviceAccount);
     }
   }
 
@@ -153,6 +154,7 @@ public class CredentialOptions implements Serializable {
    * A CredentialOption that supplies the Credentials directly.
    */
   public static class UserSuppliedCredentialOptions extends CredentialOptions {
+    private static final long serialVersionUID = -7167146778823641468L;
     private final Credentials credential;
 
     public UserSuppliedCredentialOptions(Credentials credential) {
@@ -170,7 +172,7 @@ public class CredentialOptions implements Serializable {
         return false;
       }
       UserSuppliedCredentialOptions other = (UserSuppliedCredentialOptions) obj;
-      return Objects.equal(credential, other.credential);
+      return Objects.equals(credential, other.credential);
     }
   }
 
@@ -179,6 +181,7 @@ public class CredentialOptions implements Serializable {
    * environment property.
    */
   public static class JsonCredentialsOptions extends CredentialOptions {
+    private static final long serialVersionUID = -7868808741264867962L;
     private final InputStream inputStream;
     private Credentials cachedCredentials;
 
@@ -205,7 +208,7 @@ public class CredentialOptions implements Serializable {
         return false;
       }
       JsonCredentialsOptions other = (JsonCredentialsOptions) obj;
-      return Objects.equal(cachedCredentials, other.cachedCredentials);
+      return Objects.equals(cachedCredentials, other.cachedCredentials);
     }
   }
 

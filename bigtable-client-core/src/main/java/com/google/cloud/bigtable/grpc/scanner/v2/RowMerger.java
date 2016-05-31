@@ -25,7 +25,6 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
 import com.google.bigtable.v2.Row;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.protobuf.ByteString;
@@ -38,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.TreeMap;
 
 /**
@@ -321,9 +321,9 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     
     public boolean sameKeyFamilyAndQualifier(CellIdentifier other) {
       Preconditions.checkState(other != null);
-      return Objects.equal(rowKey, other.rowKey) &&
-          Objects.equal(family, other.family) &&
-          Objects.equal(qualifier, other.qualifier);
+      return Objects.equals(rowKey, other.rowKey) &&
+          Objects.equals(family, other.family) &&
+          Objects.equals(qualifier, other.qualifier);
     }
 
     @Override
@@ -337,7 +337,12 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       CellIdentifier other = (CellIdentifier) obj;
       return sameKeyFamilyAndQualifier(other)
           && timestampMicros == other.timestampMicros
-          && Objects.equal(labels, other.labels);
+          && Objects.equals(labels, other.labels);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(rowKey, family, qualifier, timestampMicros, labels);
     }
   }
 
