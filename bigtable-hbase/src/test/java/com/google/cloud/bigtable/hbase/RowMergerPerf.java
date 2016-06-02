@@ -15,7 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.v1.Cell;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.commons.lang.RandomStringUtils;
+
 import com.google.bigtable.v1.Column;
 import com.google.bigtable.v1.Family;
 import com.google.bigtable.v1.ReadRowsResponse;
@@ -23,14 +27,7 @@ import com.google.bigtable.v1.ReadRowsResponse.Chunk;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
-
-import org.apache.commons.lang.RandomStringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Simple microbenchmark for {@link RowMerger}
@@ -38,41 +35,26 @@ import java.util.List;
 public class RowMergerPerf {
 
   public static void main(String[] args) {
-
+    final List<ReadRowsResponse> responses = createResponses();
     for (int i = 0; i < 10; i++) {
-      List<ReadRowsResponse> responses = createResponses();
       rowMergerPerf(responses);
     }
   }
 
+  // TODO: test with more cells
   private static List<ReadRowsResponse> createResponses() {
-    List<ReadRowsResponse> responses = new ArrayList<>(1);
-    String rowKey = String.format("rowKey-0");
-    byte[] value = RandomStringUtils.randomAlphanumeric(10000).getBytes();
-    Preconditions.checkArgument(!Strings.isNullOrEmpty("Family1"),
-      "Family name may not be null or empty");
-
     Family.Builder familyBuilder = Family.newBuilder().setName("Family1");
+    Column.Builder columnBuilder =
+        familyBuilder.addColumnsBuilder()
+        .setQualifier(ByteString.copyFromUtf8("Qualifier"));
+    columnBuilder.addCellsBuilder()
+        .setTimestampMicros(0L)
+        .setValue(ByteString.copyFrom(RandomStringUtils.randomAlphanumeric(10000).getBytes()));
 
-    Column.Builder columnBuilder = Column.newBuilder();
-    columnBuilder.setQualifier(ByteString.copyFromUtf8("Qaulifier"));
-
-    if (value != null) {
-      Cell.Builder cellBuilder = Cell.newBuilder();
-      cellBuilder.setTimestampMicros(0L);
-      cellBuilder.setValue(ByteString.copyFrom(value));
-      columnBuilder.addCells(cellBuilder);
-    }
-    familyBuilder.addColumns(columnBuilder);
-    Chunk contentChunk = Chunk.newBuilder().setRowContents(familyBuilder).build();
-    Chunk rowCompleteChunk = Chunk.newBuilder().setCommitRow(true).build();
-
-    ReadRowsResponse response =
-        ReadRowsResponse.newBuilder().addChunks(contentChunk).addChunks(rowCompleteChunk)
-            .setRowKey(ByteString.copyFromUtf8(rowKey)).build();
-
-    responses.add(response);
-    return responses;
+    return Arrays.asList(ReadRowsResponse.newBuilder()
+        .addChunks(Chunk.newBuilder().setRowContents(familyBuilder))
+        .addChunks(Chunk.newBuilder().setCommitRow(true))
+        .setRowKey(ByteString.copyFromUtf8("rowKey-0")).build());
   }
 
   static int count = 5000000;
