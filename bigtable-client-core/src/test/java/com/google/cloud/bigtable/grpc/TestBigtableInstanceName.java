@@ -24,84 +24,77 @@ import org.junit.runners.JUnit4;
 
 import com.google.bigtable.admin.table.v1.CreateTableRequest;
 import com.google.bigtable.admin.table.v1.ListTablesRequest;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 
 @RunWith(JUnit4.class)
-public class TestBigtableClusterName {
+public class TestBigtableInstanceName {
 
-  public static BigtableClusterName bigtableClusterName = new BigtableClusterName(
-      "some-project", "some-zone", "some-cluster");
-  private String clusterName = "projects/some-project/zones/some-zone/clusters/some-cluster";
+  public static BigtableInstanceName bigtableInstanceName =
+      new BigtableInstanceName("some-project", "some-instance");
+  private String instanceName = "projects/some-project/instances/some-instance";
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testFormat() {
-    Assert.assertEquals(clusterName, bigtableClusterName.toString());
+    Assert.assertEquals(instanceName, bigtableInstanceName.toString());
   }
 
   @Test
   public void testListTablesRequest() {
     ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-    builder.setName(bigtableClusterName.toString());
-    Assert.assertEquals(clusterName, builder.getName());
+    builder.setName(bigtableInstanceName.toString());
+    Assert.assertEquals(instanceName, builder.getName());
   }
 
   @Test
   public void testCreateTablesRequest() {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    builder.setName(bigtableClusterName.toString());
-    Assert.assertEquals(clusterName, builder.getName());
+    builder.setName(bigtableInstanceName.toString());
+    Assert.assertEquals(instanceName, builder.getName());
   }
 
   @Test
   public void testGoodTableQualifier() {
-    bigtableClusterName.toTableId(clusterName + "/" + BigtableClusterName.TABLE_SEPARATOR
-        + "/foo");
+    bigtableInstanceName
+        .toTableId(instanceName + "/" + BigtableInstanceName.TABLE_SEPARATOR + "/foo");
   }
 
   @Test
   public void testNullQualifier() {
     expectedException.expect(NullPointerException.class);
-    bigtableClusterName.toTableId(null);
+    bigtableInstanceName.toTableId(null);
   }
 
   @Test
   public void testBadQualifier() {
     expectedException.expect(IllegalStateException.class);
-    bigtableClusterName.toTableId(clusterName.replace("some-cluster", "another-cluster")
-        + "/" + BigtableClusterName.TABLE_SEPARATOR + "/foo");
+    bigtableInstanceName.toTableId(instanceName.replace("some-instance", "another-instance") + "/"
+        + BigtableInstanceName.TABLE_SEPARATOR + "/foo");
   }
 
   @Test
   public void testBlankTableName() {
     expectedException.expect(IllegalStateException.class);
-    bigtableClusterName.toTableId(clusterName + "/" + BigtableClusterName.TABLE_SEPARATOR
-        + "/");
+    bigtableInstanceName.toTableId(instanceName + "/" + BigtableInstanceName.TABLE_SEPARATOR + "/");
   }
 
   @Test
   public void testNoTableName() {
     expectedException.expect(IllegalStateException.class);
-    bigtableClusterName.toTableId(clusterName + "/" + BigtableClusterName.TABLE_SEPARATOR);
-  }
-
-  @Test
-  public void testNoZoneName() {
-    expectedException.expect(IllegalArgumentException.class);
-    new BigtableClusterName("projectId", "", "cluster");
+    bigtableInstanceName.toTableId(instanceName + "/" + BigtableInstanceName.TABLE_SEPARATOR);
   }
 
   @Test
   public void testNoProjectName() {
     expectedException.expect(IllegalArgumentException.class);
-    new BigtableClusterName("", "zone", "cluster");
+    new BigtableInstanceName("", "instance");
   }
 
   @Test
-  public void testNoClusterName() {
+  public void testNoInstanceName() {
     expectedException.expect(IllegalArgumentException.class);
-    new BigtableClusterName("project", "zone", "");
+    new BigtableInstanceName("project", "");
   }
 }
