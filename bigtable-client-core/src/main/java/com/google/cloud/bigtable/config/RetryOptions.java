@@ -20,12 +20,12 @@ import io.grpc.Status.Code;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.client.util.Objects;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 
@@ -335,7 +335,7 @@ public class RetryOptions implements Serializable {
 
     return retriesEnabled == other.retriesEnabled
         && allowRetriesWithoutTimestamp == other.allowRetriesWithoutTimestamp
-        && Objects.equal(statusToRetryOn, other.statusToRetryOn)
+        && Objects.equals(statusToRetryOn, other.statusToRetryOn)
         && initialBackoffMillis == other.initialBackoffMillis
         && maxElaspedBackoffMillis == other.maxElaspedBackoffMillis
         && backoffMultiplier == other.backoffMultiplier

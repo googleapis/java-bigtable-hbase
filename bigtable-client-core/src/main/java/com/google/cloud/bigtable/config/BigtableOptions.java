@@ -16,8 +16,8 @@
 package com.google.cloud.bigtable.config;
 
 import java.io.Serializable;
+import java.util.Objects;
 
-import com.google.api.client.util.Objects;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
@@ -339,15 +339,15 @@ public class BigtableOptions implements Serializable {
     return (port == other.port)
         && (dataChannelCount == other.dataChannelCount)
         && (usePlaintextNegotiation == other.usePlaintextNegotiation)
-        && Objects.equal(clusterAdminHost, other.clusterAdminHost)
-        && Objects.equal(tableAdminHost, other.tableAdminHost)
-        && Objects.equal(dataHost, other.dataHost)
-        && Objects.equal(projectId, other.projectId)
-        && Objects.equal(instanceId, other.instanceId)
-        && Objects.equal(userAgent, other.userAgent)
-        && Objects.equal(credentialOptions, other.credentialOptions)
-        && Objects.equal(retryOptions, other.retryOptions)
-        && Objects.equal(bulkOptions, other.bulkOptions);
+        && Objects.equals(clusterAdminHost, other.clusterAdminHost)
+        && Objects.equals(tableAdminHost, other.tableAdminHost)
+        && Objects.equals(dataHost, other.dataHost)
+        && Objects.equals(projectId, other.projectId)
+        && Objects.equals(instanceId, other.instanceId)
+        && Objects.equals(userAgent, other.userAgent)
+        && Objects.equals(credentialOptions, other.credentialOptions)
+        && Objects.equals(retryOptions, other.retryOptions)
+        && Objects.equals(bulkOptions, other.bulkOptions);
   }
 
   @Override

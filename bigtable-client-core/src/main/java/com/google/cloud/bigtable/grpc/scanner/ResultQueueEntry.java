@@ -16,12 +16,12 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 import io.grpc.Status;
 
 import java.io.IOException;
+import java.util.Objects;
 
 
 /**
@@ -73,7 +73,7 @@ abstract class ResultQueueEntry<T> {
         return false;
       }
       ExceptionResultQueueEntry other = (ExceptionResultQueueEntry) obj;
-      return Objects.equal(throwable, other.throwable);
+      return Objects.equals(throwable, other.throwable);
     }
   }
 
@@ -101,7 +101,7 @@ abstract class ResultQueueEntry<T> {
         return false;
       }
       ResponseResultQueueEntry other = (ResponseResultQueueEntry) obj;
-      return Objects.equal(response, other.response);
+      return Objects.equals(response, other.response);
     }
   }
 
