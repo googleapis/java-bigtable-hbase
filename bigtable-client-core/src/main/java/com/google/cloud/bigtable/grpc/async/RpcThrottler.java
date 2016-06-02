@@ -41,7 +41,7 @@ public class RpcThrottler {
   // In awaitCompletion, wait up to this number of nanoseconds without any operations completing.  If
   // this amount of time goes by without any updates, awaitCompletion will log a warning.  Flush()
   // will still wait to complete.
-  private static final long INTERVAL_NO_SUCCESS_WARNING_NANOS = 300000 * 1000;
+  private static final long INTERVAL_NO_SUCCESS_WARNING_NANOS = TimeUnit.SECONDS.toNanos(30);
 
   private final ResourceLimiter resourceLimiter;
   private final NanoClock clock;
@@ -52,7 +52,7 @@ public class RpcThrottler {
   private Set<Long> outstandingRequests = new HashSet<>();
   private Set<Long> outstandingRetries = new HashSet<>();
   private AtomicLong retrySequenceGenerator = new AtomicLong();
-  private long noSuccessWarningDeadline;
+  private long noSuccessWarningDeadlineNanos;
   private int noSuccessWarningCount;
 
   public RpcThrottler(ResourceLimiter resourceLimiter) {
@@ -137,7 +137,7 @@ public class RpcThrottler {
         flushedCondition.await(finishWaitMillis, TimeUnit.MILLISECONDS);
 
         long now = clock.nanoTime();
-        if (now >= noSuccessWarningDeadline) {
+        if (now >= noSuccessWarningDeadlineNanos) {
           logNoSuccessWarning(now);
           resetNoSuccessWarningDeadline();
           performedWarning = true;
@@ -152,8 +152,8 @@ public class RpcThrottler {
   }
 
   private void logNoSuccessWarning(long now) {
-    long lastUpdated = TimeUnit.NANOSECONDS
-        .toSeconds(now - noSuccessWarningDeadline + INTERVAL_NO_SUCCESS_WARNING_NANOS);
+    long lastUpdateNanos = now - noSuccessWarningDeadlineNanos + INTERVAL_NO_SUCCESS_WARNING_NANOS;
+    long lastUpdated = TimeUnit.NANOSECONDS.toSeconds(lastUpdateNanos);
     LOG.warn("No operations completed within the last %d seconds. "
             + "There are still %d rpcs and %d retries in progress.", lastUpdated,
         outstandingRequests.size(), outstandingRetries.size());
@@ -185,7 +185,7 @@ public class RpcThrottler {
 
   @VisibleForTesting
   void resetNoSuccessWarningDeadline() {
-    noSuccessWarningDeadline = clock.nanoTime() + INTERVAL_NO_SUCCESS_WARNING_NANOS;
+    noSuccessWarningDeadlineNanos = clock.nanoTime() + INTERVAL_NO_SUCCESS_WARNING_NANOS;
   }
 
   @VisibleForTesting
