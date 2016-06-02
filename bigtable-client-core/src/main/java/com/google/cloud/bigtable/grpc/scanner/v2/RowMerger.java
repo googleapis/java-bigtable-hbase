@@ -16,10 +16,8 @@
 package com.google.cloud.bigtable.grpc.scanner.v2;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.primitives.UnsignedBytes;
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Column.Builder;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
@@ -114,10 +112,11 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           "A new row cannot have existing state: %s", newChunk);
         Preconditions.checkArgument(newChunk.getRowStatusCase() != RowStatusCase.RESET_ROW,
           "A new row cannot be reset: %s", newChunk);
-        Preconditions.checkArgument(!newChunk.getRowKey().isEmpty(), "A row key must be set: %s",
-          newChunk);
         Preconditions.checkArgument(newChunk.hasFamilyName(), "A family must be set: %s", newChunk);
-        Preconditions.checkState(previousKey == null || !newChunk.getRowKey().equals(previousKey),
+        final ByteString rowKey = newChunk.getRowKey();
+        Preconditions.checkArgument(!rowKey.isEmpty(), "A row key must be set: %s",
+          newChunk);
+        Preconditions.checkState(previousKey == null || !rowKey.equals(previousKey),
           "A commit happened but the same key followed: %s", newChunk);
 
         Preconditions.checkArgument(newChunk.hasQualifier(), "A column qualifier must be set: %s",
@@ -149,13 +148,13 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           Preconditions.checkArgument(newChunk.hasQualifier(), "A qualifier must be specified: %s",
             newChunk);
         }
+        ByteString newRowKey = newChunk.getRowKey();
         if (isReset(newChunk)) {
           Preconditions.checkState(
-            newChunk.getRowKey().isEmpty() && !newChunk.hasFamilyName() && !newChunk.hasQualifier()
+            newRowKey.isEmpty() && !newChunk.hasFamilyName() && !newChunk.hasQualifier()
                 && newChunk.getValue().isEmpty() && newChunk.getTimestampMicros() == 0,
             "A reset should have no data");
         } else {
-          ByteString newRowKey = newChunk.getRowKey();
           Preconditions.checkState(
             newRowKey.isEmpty() || newRowKey.equals(rowInProgess.getRowKey()),
             "A commit is required between row keys: %s", newChunk);
@@ -222,25 +221,18 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       columnBuilder.addCells(cell);
     }
 
-    public List<Family> getFamilies() {
-      ArrayList<Family> families = new ArrayList<>();
+    public Row.Builder addFamiliesTo(Row.Builder rowBuilder) {
       CellKey previousKey = null;
       Family.Builder currentFamilyBuilder = null;
-      for (Entry<CellKey, Builder> entry : columnBuilders.entrySet()) {
+      for (Entry<CellKey, Column.Builder> entry : columnBuilders.entrySet()) {
         CellKey currentKey = entry.getKey();
         if (previousKey == null || !previousKey.family.equals(currentKey.family)) {
-          if (currentFamilyBuilder != null) {
-            families.add(currentFamilyBuilder.build());
-          }
-          currentFamilyBuilder = Family.newBuilder().setName(currentKey.family);
+          currentFamilyBuilder = rowBuilder.addFamiliesBuilder().setName(currentKey.family);
         }
         currentFamilyBuilder.addColumns(entry.getValue());
         previousKey = currentKey;
       }
-      if (currentFamilyBuilder != null) {
-        families.add(currentFamilyBuilder.build());
-      }
-      return families;
+      return rowBuilder;
     }
   }
 
@@ -259,8 +251,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       if (comp != 0) {
         return comp;
       }
-      return UnsignedBytes.lexicographicalComparator().compare(qualifier.toByteArray(),
-        o.qualifier.toByteArray());
+      return qualifier.asReadOnlyByteBuffer().compareTo(o.qualifier.asReadOnlyByteBuffer());
     }
 
     @Override
@@ -318,13 +309,6 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     CellIdentifier nextKeyForTimestamp(CellChunk chunk) {
       return new CellIdentifier(rowKey, family, qualifier, chunk);
     }
-    
-    public boolean sameKeyFamilyAndQualifier(CellIdentifier other) {
-      Preconditions.checkState(other != null);
-      return Objects.equals(rowKey, other.rowKey) &&
-          Objects.equals(family, other.family) &&
-          Objects.equals(qualifier, other.qualifier);
-    }
 
     @Override
     public boolean equals(Object obj) {
@@ -335,7 +319,9 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         return false;
       }
       CellIdentifier other = (CellIdentifier) obj;
-      return sameKeyFamilyAndQualifier(other)
+      return Objects.equals(rowKey, other.rowKey)
+          && Objects.equals(family, other.family)
+          && Objects.equals(qualifier, other.qualifier)
           && timestampMicros == other.timestampMicros
           && Objects.equals(labels, other.labels);
     }
@@ -354,7 +340,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
     // cell in progress info
     private CellIdentifier currentId;
-    private CellChunk firstMultiChunkCell;
+    private Cell.Builder cellBuilderInProgress;
     private ByteArrayOutputStream outputStream;
 
     void addFullChunk(ReadRowsResponse.CellChunk chunk) {
@@ -369,14 +355,10 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
     public void completeMultiChunkCell() {
       Preconditions.checkArgument(hasChunkInProgess());
-      addCell(
-          Cell.newBuilder()
-              .setTimestampMicros(firstMultiChunkCell.getTimestampMicros())
-              .addAllLabels(firstMultiChunkCell.getLabelsList())
-              .setValue(BigtableZeroCopyByteStringUtil.wrap(outputStream.toByteArray()))
-              .build());
+      ByteString value = BigtableZeroCopyByteStringUtil.wrap(outputStream.toByteArray());
+      addCell(cellBuilderInProgress.setValue(value).build());
       outputStream = null;
-      firstMultiChunkCell = null;
+      cellBuilderInProgress = null;
     }
 
     private void addCell(Cell cell) {
@@ -399,7 +381,8 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     }
 
     private boolean isNewRowKey(ReadRowsResponse.CellChunk chunk) {
-      return !chunk.getRowKey().isEmpty() && !chunk.getRowKey().equals(currentId.rowKey);
+      ByteString rowKey = chunk.getRowKey();
+      return !rowKey.isEmpty() && !rowKey.equals(currentId.rowKey);
     }
 
     public boolean hasChunkInProgess() {
@@ -409,13 +392,17 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     void addPartialCellChunk(ReadRowsResponse.CellChunk chunk) throws IOException {
       if (outputStream == null) {
         outputStream = new ByteArrayOutputStream(chunk.getValueSize());
-        firstMultiChunkCell = chunk;
+        cellBuilderInProgress = Cell.newBuilder()
+            .setTimestampMicros(chunk.getTimestampMicros())
+            .addAllLabels(chunk.getLabelsList());
       }
       chunk.getValue().writeTo(outputStream);
     }
 
     public Row createRow() {
-      return Row.newBuilder().setKey(getRowKey()).addAllFamilies(families.getFamilies()).build();
+      Row.Builder rowBuilder = Row.newBuilder().setKey(getRowKey());
+      families.addFamiliesTo(rowBuilder);
+      return rowBuilder.build();
     }
 
     public ByteString getRowKey() {
@@ -448,8 +435,9 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       onError(new IllegalStateException("Adding partialRow after completion"));
       return;
     }
-    if (!readRowsResponse.getLastScannedRowKey().isEmpty()) {
-      state.handleLastScannedRowKey(readRowsResponse.getLastScannedRowKey());
+    ByteString lastScannedRowKey = readRowsResponse.getLastScannedRowKey();
+    if (!lastScannedRowKey.isEmpty()) {
+      state.handleLastScannedRowKey(lastScannedRowKey);
     }
     for (ReadRowsResponse.CellChunk chunk : readRowsResponse.getChunksList()) {
       try {
@@ -485,7 +473,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           previousKey = rowInProgress.getRowKey();
           rowInProgress = null;
           state = RowMergerState.NewRow;
-        } 
+        }
       } catch(IOException e) {
         onError(e);
       }
