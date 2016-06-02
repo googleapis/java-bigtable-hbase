@@ -28,7 +28,6 @@ import io.netty.handler.ssl.SslContextBuilder;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -363,12 +362,11 @@ public class BigtableSession implements Closeable {
   public static ManagedChannel createNettyChannel(final String host, BigtableOptions options) throws IOException {
     // TODO Go back to using host names once grpc 0.14.0 is out, which fixes bug
     // when ipv6 address is available but not reachable.
-    InetAddress address = InetAddress.getByName(host);
     NegotiationType negotiationType = options.usePlaintextNegotiation() ?
         NegotiationType.PLAINTEXT : NegotiationType.TLS;
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
     return NettyChannelBuilder
-        .forAddress(new InetSocketAddress(address, options.getPort()))
+        .forAddress(host,  options.getPort())
         .maxMessageSize(MAX_MESSAGE_SIZE)
         .sslContext(createSslContext())
         .eventLoopGroup(sharedPools.getElg())
