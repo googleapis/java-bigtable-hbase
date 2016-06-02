@@ -36,7 +36,7 @@ public class BigtableInstanceName implements Serializable {
   public BigtableInstanceName(String projectId, String instanceId) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId), "projectId must be supplied");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(instanceId), "instanceId must be supplied");
-    this.instanceName = String.format(BIGTABLE_V2_INSTANCE_FMT, instanceId);
+    this.instanceName = String.format(BIGTABLE_V2_INSTANCE_FMT, projectId, instanceId);
   }
 
   /**
