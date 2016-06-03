@@ -53,6 +53,7 @@ public class RpcThrottler {
   private Set<Long> outstandingRetries = new HashSet<>();
   private AtomicLong retrySequenceGenerator = new AtomicLong();
   private long noSuccessWarningDeadlineNanos;
+  private long lastOperationNanos;
   private int noSuccessWarningCount;
 
   public RpcThrottler(ResourceLimiter resourceLimiter) {
@@ -64,7 +65,7 @@ public class RpcThrottler {
     this.resourceLimiter = resourceLimiter;
     this.clock = clock;
     this.finishWaitMillis = finishWaitMillis;
-    resetNoSuccessWarningDeadline();
+    resetNoSuccessWarningDeadline(true);
   }
 
   /**
@@ -139,7 +140,7 @@ public class RpcThrottler {
         long now = clock.nanoTime();
         if (now >= noSuccessWarningDeadlineNanos) {
           logNoSuccessWarning(now);
-          resetNoSuccessWarningDeadline();
+          resetNoSuccessWarningDeadline(false);
           performedWarning = true;
         }
       }
@@ -152,8 +153,8 @@ public class RpcThrottler {
   }
 
   private void logNoSuccessWarning(long now) {
-    long lastUpdateNanos = now - noSuccessWarningDeadlineNanos + INTERVAL_NO_SUCCESS_WARNING_NANOS;
-    long lastUpdated = TimeUnit.NANOSECONDS.toSeconds(lastUpdateNanos);
+    long updatedDurationNanons = now - lastOperationNanos;
+    long lastUpdated = TimeUnit.NANOSECONDS.toSeconds(updatedDurationNanons);
     LOG.warn("No operations completed within the last %d seconds. "
             + "There are still %d rpcs and %d retries in progress.", lastUpdated,
         outstandingRequests.size(), outstandingRetries.size());
@@ -184,8 +185,12 @@ public class RpcThrottler {
   }
 
   @VisibleForTesting
-  void resetNoSuccessWarningDeadline() {
-    noSuccessWarningDeadlineNanos = clock.nanoTime() + INTERVAL_NO_SUCCESS_WARNING_NANOS;
+  void resetNoSuccessWarningDeadline(boolean setLastOperationTime) {
+    long now = clock.nanoTime();
+    noSuccessWarningDeadlineNanos = now + INTERVAL_NO_SUCCESS_WARNING_NANOS;
+    if (setLastOperationTime) {
+      this.lastOperationNanos = now;
+    }
   }
 
   @VisibleForTesting
@@ -206,7 +211,7 @@ public class RpcThrottler {
     } finally {
       lock.unlock();
     }
-    resetNoSuccessWarningDeadline();
+    resetNoSuccessWarningDeadline(true);
   }
 
   public void onRetryCompletion(long id) {
@@ -219,6 +224,6 @@ public class RpcThrottler {
     } finally {
       lock.unlock();
     }
-    resetNoSuccessWarningDeadline();
+    resetNoSuccessWarningDeadline(true);
   }
 }
