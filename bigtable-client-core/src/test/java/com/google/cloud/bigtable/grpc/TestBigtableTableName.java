@@ -20,15 +20,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
-
 @RunWith(JUnit4.class)
 public class TestBigtableTableName {
 
   @Test
   public void testGoodHBaseName() {
-    BigtableClusterName bigtableClusterName =
-        new BigtableClusterName("some-project", "some-zone", "some-cluster");
+    BigtableInstanceName bigtableClusterName =
+        new BigtableInstanceName("some-project", "some-instance");
     String bigtableTableName = bigtableClusterName.toTableNameStr("some-table");
     String tableId = bigtableClusterName.toTableId(bigtableTableName);
 
