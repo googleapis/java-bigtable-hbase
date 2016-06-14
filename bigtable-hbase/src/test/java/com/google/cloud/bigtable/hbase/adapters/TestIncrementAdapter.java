@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v1.ReadModifyWriteRowRequest;
-import com.google.bigtable.v1.ReadModifyWriteRule;
+import com.google.bigtable.v2.ReadModifyWriteRowRequest;
+import com.google.bigtable.v2.ReadModifyWriteRule;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
 

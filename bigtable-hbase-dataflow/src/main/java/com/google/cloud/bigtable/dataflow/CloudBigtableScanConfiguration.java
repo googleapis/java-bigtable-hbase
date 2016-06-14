@@ -18,11 +18,11 @@ package com.google.cloud.bigtable.dataflow;
 
 import org.apache.hadoop.hbase.client.Scan;
 
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableClusterName;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableInstanceName;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.DefaultReadHooks;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.ReadHooks;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.ReadRowsRequest;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
 
 import java.util.Map;
 import java.util.Objects;
@@ -119,17 +119,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * {@inheritDoc}
      */
     @Override
-    public Builder withZoneId(String zoneId) {
-      super.withZoneId(zoneId);
-      return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Builder withClusterId(String clusterId) {
-      super.withClusterId(clusterId);
+    public Builder withInstanceId(String instanceId) {
+      super.withInstanceId(instanceId);
       return this;
     }
 
@@ -163,10 +154,10 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       if (request == null) {
         ReadHooks readHooks = new DefaultReadHooks();
         ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-        builder.setTableName(new BigtableClusterName(projectId, zoneId, clusterId).toTableNameStr(tableId));
+        builder.setTableName(new BigtableInstanceName(projectId, instanceId).toTableNameStr(tableId));
         request = readHooks.applyPreSendHook(builder.build());
       }
-      return new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, request,
+      return new CloudBigtableScanConfiguration(projectId, instanceId, tableId, request,
           additionalConfiguration);
     }
   }
@@ -174,19 +165,18 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   private final ReadRowsRequest request;
 
   /**
-   * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, zone, cluster
+   * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance
    * ID, table ID, {@link Scan} and additional connection configuration.
    *
-   * @param projectId The project ID for the cluster.
-   * @param zoneId The zone where the cluster is located.
-   * @param clusterId The cluster ID for the cluster.
+   * @param projectId The project ID for the instance.
+   * @param instanceId The instance ID.
    * @param tableId The table to connect to in the cluster.
    * @param request The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  protected CloudBigtableScanConfiguration(String projectId, String zoneId, String clusterId,
+  protected CloudBigtableScanConfiguration(String projectId, String instanceId,
       String tableId, ReadRowsRequest request, Map<String, String> additionalConfiguration) {
-    super(projectId, zoneId, clusterId, tableId, additionalConfiguration);
+    super(projectId, instanceId, tableId, additionalConfiguration);
     this.request = request;
   }
 
@@ -202,14 +192,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @return The start row for this configuration.
    */
   public byte[] getStartRow() {
-    return request.getRowRange().getStartKey().toByteArray();
+    return request.getRows().getRowRanges(0).getStartKeyClosed().toByteArray();
   }
 
   /**
    * @return The stop row for this configuration.
    */
   public byte[] getStopRow() {
-    return request.getRowRange().getEndKey().toByteArray();
+    return request.getRows().getRowRanges(0).getEndKeyOpen().toByteArray();
   }
 
   @Override

@@ -53,7 +53,7 @@ public class CloudBigtableConnectionPool {
    * @throws IOException
    */
   public Connection getConnection(Configuration config) throws IOException {
-    String key = BigtableOptionsFactory.fromConfiguration(config).getClusterName().toString();
+    String key = BigtableOptionsFactory.fromConfiguration(config).getInstanceName().toString();
     return getConnection(config, key);
   }
 

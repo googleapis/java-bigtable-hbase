@@ -131,7 +131,7 @@ public class BulkMutation {
 
     /**
      * Adds a {@link MutateRowRequest} to the
-     * {@link com.google.bigtable.v1.MutateRowsRequest.Builder}. NOTE: Users have to make sure that
+     * {@link com.google.bigtable.v2.MutateRowsRequest.Builder}. NOTE: Users have to make sure that
      * this gets called in a thread safe way.
      * @param request The {@link MutateRowRequest} to add
      * @return a {@link SettableFuture} that will be populated when the {@link MutateRowsResponse}
@@ -276,13 +276,15 @@ public class BulkMutation {
             currentRequestManager.futures.get(i).setException(MISSING_ENTRY_EXCEPTION);
           } else {
             retryRequestManager.add(currentRequestManager.futures.get(i),
-              this.currentRequestManager.request.getEntries(processedCount));
+              this.currentRequestManager.request.getEntries(i));
           }
         }
       }
-      String handling =
-          backoffTime.get() == BackOff.STOP ? "Setting exceptions on the futures" : "Retrying";
-      LOG.error("Missing %d responses for bulkWrite. %s.", missingEntriesCount, handling);
+      if (missingEntriesCount > 0) {
+        String handling =
+            backoffTime.get() == BackOff.STOP ? "Setting exceptions on the futures" : "Retrying";
+        LOG.error("Missing %d responses for bulkWrite. %s.", missingEntriesCount, handling);
+      }
     }
 
     private List<Integer> getIndexes(List<Entry> entries) {
@@ -320,7 +322,8 @@ public class BulkMutation {
         if (retryId == null) {
           retryId = Long.valueOf(this.asyncExecutor.getRpcThrottler().registerRetry());
         }
-        future = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
+        MutateRowsRequest request = currentRequestManager.build();
+        future = asyncExecutor.mutateRowsAsync(request);
       } catch (InterruptedException e) {
         future = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
@@ -380,7 +383,7 @@ public class BulkMutation {
 
   /**
    * Adds a {@link MutateRowRequest} to the
-   * {@link com.google.bigtable.v1.MutateRowsRequest.Builder}. NOTE: Users have to make sure that
+   * {@link com.google.bigtable.v2.MutateRowsRequest.Builder}. NOTE: Users have to make sure that
    * this gets called in a thread safe way.
    * @param request The {@link MutateRowRequest} to add
    * @return a {@link SettableFuture} that will be populated when the {@link MutateRowsResponse}

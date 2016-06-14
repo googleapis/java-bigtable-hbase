@@ -130,8 +130,7 @@ public class BigtableTableUtils implements AutoCloseable {
     public static BigtableTableUtilsFactory from(HBaseImportOptions options) throws IOException {
       return new BigtableTableUtilsFactory(BigtableConfiguration.connect(
           options.getBigtableProjectId(),
-          options.getBigtableZoneId(),
-          options.getBigtableClusterId()));
+          options.getBigtableInstanceId()));
     }
   }
 }

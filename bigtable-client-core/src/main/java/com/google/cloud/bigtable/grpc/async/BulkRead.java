@@ -21,12 +21,12 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.bigtable.v1.Row;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowSet;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.Row;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.collect.HashMultimap;
@@ -79,7 +79,8 @@ public class BulkRead {
    */
   public ListenableFuture<List<Row>> add(ReadRowsRequest request) throws InterruptedException {
     Preconditions.checkNotNull(request);
-    ByteString rowKey = request.getRowKey();
+    Preconditions.checkArgument(request.getRows().getRowKeysCount() == 1);
+    ByteString rowKey = request.getRows().getRowKeysList().get(0);
     Preconditions.checkArgument(!rowKey.equals(ByteString.EMPTY));
 
     RowFilter filter = request.getFilter();
@@ -108,8 +109,7 @@ public class BulkRead {
         ResultScanner<Row> scanner = client.readRows(ReadRowsRequest.newBuilder()
           .setTableName(tableName)
           .setFilter(currentFilter)
-          .setRowSet(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
-          .setAllowRowInterleaving(true)
+          .setRows(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
           .build());
         while (true) {
           Row row = scanner.next();

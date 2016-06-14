@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
-import com.google.bigtable.v1.RowFilter.Interleave;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
@@ -68,7 +68,7 @@ public class TestGetAdapter {
   public void rowKeyIsSetInRequest() throws IOException {
     Get get = makeValidGet(dataHelper.randomData("rk1"));
     ReadRowsRequest.Builder rowRequestBuilder = getAdapter.adapt(get, throwingReadHooks);
-    ByteString adaptedRowKey = rowRequestBuilder.getRowKey();
+    ByteString adaptedRowKey = rowRequestBuilder.getRows().getRowKeys(0);
     Assert.assertEquals(
         new String(get.getRow(), StandardCharsets.UTF_8),
         adaptedRowKey.toStringUtf8());

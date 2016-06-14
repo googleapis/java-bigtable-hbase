@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.Mutation;
-import com.google.bigtable.v1.Mutation.MutationCase;
-import com.google.bigtable.v1.Mutation.SetCell;
-import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.Mutation;
+import com.google.bigtable.v2.Mutation.MutationCase;
+import com.google.bigtable.v2.Mutation.SetCell;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 
 import org.apache.hadoop.hbase.client.Put;

@@ -52,15 +52,16 @@ import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
-import com.google.bigtable.v1.CheckAndMutateRowRequest;
-import com.google.bigtable.v1.CheckAndMutateRowResponse;
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.Mutation;
-import com.google.bigtable.v1.ReadModifyWriteRowRequest;
-import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.bigtable.v2.CheckAndMutateRowRequest;
+import com.google.bigtable.v2.CheckAndMutateRowResponse;
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.Mutation;
+import com.google.bigtable.v2.ReadModifyWriteRowRequest;
+import com.google.bigtable.v2.ReadModifyWriteRowResponse;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataClient;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
@@ -198,7 +199,7 @@ public class BigtableTable implements Table {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
-    try (com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
+    try (com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v2.Row> scanner =
         client.readRows(hbaseAdapter.adapt(get))) {
       return Adapters.ROW_ADAPTER.adaptResponse(scanner.next());
     } catch (Throwable t) {
@@ -210,7 +211,7 @@ public class BigtableTable implements Table {
   public ResultScanner getScanner(Scan scan) throws IOException {
     try {
       LOG.trace("getScanner(Scan)");
-      com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v1.Row> scanner =
+      com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v2.Row> scanner =
           client.readRows(hbaseAdapter.adapt(scan));
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner);
@@ -395,11 +396,11 @@ public class BigtableTable implements Table {
 
     ReadModifyWriteRowRequest request = hbaseAdapter.adapt(append);
     try {
-      com.google.bigtable.v1.Row response = client.readModifyWriteRow(request);
+      ReadModifyWriteRowResponse response = client.readModifyWriteRow(request);
       // The bigtable API will always return the mutated results. In order to maintain
       // compatibility, simply return null when results were not requested.
       if (append.isReturnResults()) {
-        return Adapters.ROW_ADAPTER.adaptResponse(response);
+        return Adapters.ROW_ADAPTER.adaptResponse(response.getRow());
       } else {
         return null;
       }
@@ -414,7 +415,7 @@ public class BigtableTable implements Table {
 
     ReadModifyWriteRowRequest request = hbaseAdapter.adapt(increment);
     try {
-      return Adapters.ROW_ADAPTER.adaptResponse(client.readModifyWriteRow(request));
+      return Adapters.ROW_ADAPTER.adaptResponse(client.readModifyWriteRow(request).getRow());
     } catch (Throwable t) {
       throw logAndCreateIOException("increment", increment.getRow(), t);
     }
@@ -523,8 +524,7 @@ public class BigtableTable implements Table {
     return MoreObjects.toStringHelper(BigtableTable.class)
         .add("hashCode", "0x" + Integer.toHexString(hashCode()))
         .add("project", options.getProjectId())
-        .add("zone", options.getZoneId())
-        .add("cluster", options.getClusterId())
+        .add("instance", options.getInstanceId())
         .add("table", tableName.getNameAsString())
         .add("host", options.getDataHost())
         .toString();
@@ -549,7 +549,7 @@ public class BigtableTable implements Table {
       CompareFilter.CompareOp compareOp,
       byte[] value,
       byte[] actionRow,
-      List<com.google.bigtable.v1.Mutation> mutations) throws IOException {
+      List<com.google.bigtable.v2.Mutation> mutations) throws IOException {
 
     if (!Arrays.equals(actionRow, row)) {
       // The following odd exception message is for compatibility with HBase.

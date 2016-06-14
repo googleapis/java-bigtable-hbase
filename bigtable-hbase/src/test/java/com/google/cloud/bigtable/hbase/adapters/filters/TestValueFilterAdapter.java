@@ -30,9 +30,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Interleave;
-import com.google.bigtable.v1.ValueRange;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.bigtable.v2.ValueRange;
 import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
@@ -66,7 +66,7 @@ public class TestValueFilterAdapter {
         RowFilter.newBuilder()
             .setValueRangeFilter(
                 ValueRange.newBuilder()
-                    .setEndValueExclusive(
+                    .setEndValueOpen(
                         ByteString.copyFrom(FOO_BYTES))).build());
   }
 
@@ -78,7 +78,7 @@ public class TestValueFilterAdapter {
         RowFilter.newBuilder()
             .setValueRangeFilter(
                 ValueRange.newBuilder()
-                    .setEndValueInclusive(
+                    .setEndValueClosed(
                         ByteString.copyFrom(FOO_BYTES))).build());
   }
 
@@ -100,7 +100,7 @@ public class TestValueFilterAdapter {
         RowFilter.newBuilder()
             .setValueRangeFilter(
                 ValueRange.newBuilder()
-                    .setStartValueExclusive(
+                    .setStartValueOpen(
                         ByteString.copyFrom(FOO_BYTES))).build());
   }
 
@@ -112,7 +112,7 @@ public class TestValueFilterAdapter {
         RowFilter.newBuilder()
             .setValueRangeFilter(
                 ValueRange.newBuilder()
-                    .setStartValueInclusive(
+                    .setStartValueClosed(
                         ByteString.copyFrom(FOO_BYTES))).build());
   }
 
@@ -128,13 +128,13 @@ public class TestValueFilterAdapter {
                         RowFilter.newBuilder()
                             .setValueRangeFilter(
                                 ValueRange.newBuilder()
-                                    .setEndValueExclusive(
+                                    .setEndValueOpen(
                                         ByteString.copyFrom(FOO_BYTES))))
                     .addFilters(
                         RowFilter.newBuilder()
                             .setValueRangeFilter(
                                 ValueRange.newBuilder()
-                                    .setStartValueExclusive(
+                                    .setStartValueOpen(
                                         ByteString.copyFrom(FOO_BYTES)))))
             .build());
  }

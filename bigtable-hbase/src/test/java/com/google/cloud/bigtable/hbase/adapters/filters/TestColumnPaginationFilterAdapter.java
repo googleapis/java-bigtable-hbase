@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.ColumnRange;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
+import com.google.bigtable.v2.ColumnRange;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.protobuf.ByteString;
 
 
@@ -92,7 +92,7 @@ public class TestColumnPaginationFilterAdapter {
                             .setColumnRangeFilter(
                                 ColumnRange.newBuilder()
                                     .setFamilyName("f1")
-                                    .setStartQualifierInclusive(
+                                    .setStartQualifierClosed(
                                         ByteString.copyFromUtf8("q1"))))
                     .addFilters(
                         RowFilter.newBuilder()

@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Interleave;
-import com.google.bigtable.v1.ValueRange;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.bigtable.v2.ValueRange;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
@@ -68,9 +68,9 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
     ByteString value = ByteString.copyFrom(comparator.getValue());
     switch (compareOp) {
       case LESS:
-        return createRowFilter(ValueRange.newBuilder().setEndValueExclusive(value));
+        return createRowFilter(ValueRange.newBuilder().setEndValueOpen(value));
       case LESS_OR_EQUAL:
-        return createRowFilter(ValueRange.newBuilder().setEndValueInclusive(value));
+        return createRowFilter(ValueRange.newBuilder().setEndValueClosed(value));
       case EQUAL:
         byte[] quotedBytes = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
         return RowFilter.newBuilder()
@@ -82,14 +82,14 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
             .setInterleave(
                 Interleave.newBuilder()
                     .addFilters(
-                        createRowFilter(ValueRange.newBuilder().setEndValueExclusive(value)))
+                        createRowFilter(ValueRange.newBuilder().setEndValueOpen(value)))
                     .addFilters(
-                        createRowFilter(ValueRange.newBuilder().setStartValueExclusive(value))))
+                        createRowFilter(ValueRange.newBuilder().setStartValueOpen(value))))
                 .build();
       case GREATER_OR_EQUAL:
-        return createRowFilter(ValueRange.newBuilder().setStartValueInclusive(value));
+        return createRowFilter(ValueRange.newBuilder().setStartValueClosed(value));
       case GREATER:
-        return createRowFilter(ValueRange.newBuilder().setStartValueExclusive(value));
+        return createRowFilter(ValueRange.newBuilder().setStartValueOpen(value));
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,
         // include an always-match filter.

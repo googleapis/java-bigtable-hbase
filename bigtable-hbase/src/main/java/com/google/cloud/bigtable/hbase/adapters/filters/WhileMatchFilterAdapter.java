@@ -18,9 +18,9 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
-import com.google.bigtable.v1.RowFilter.Interleave;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 

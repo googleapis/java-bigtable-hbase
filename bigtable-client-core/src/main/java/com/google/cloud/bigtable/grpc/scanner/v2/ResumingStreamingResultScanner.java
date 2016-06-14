@@ -172,7 +172,9 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     }
 
 
-    ReadRowsRequest.Builder newRequest = ReadRowsRequest.newBuilder().setRows(filterRows());
+    ReadRowsRequest.Builder newRequest = ReadRowsRequest.newBuilder()
+        .setRows(filterRows())
+        .setTableName(originalRequest.getTableName());
 
     if (originalRequest.hasFilter()) {
       newRequest.setFilter(originalRequest.getFilter());

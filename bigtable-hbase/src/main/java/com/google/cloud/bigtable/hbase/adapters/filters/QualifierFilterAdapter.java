@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.ColumnRange;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Interleave;
+import com.google.bigtable.v2.ColumnRange;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
@@ -71,14 +71,14 @@ public class QualifierFilterAdapter implements TypedFilterAdapter<QualifierFilte
             .setColumnRangeFilter(
                 ColumnRange.newBuilder()
                     .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setEndQualifierExclusive(quotedValue))
+                    .setEndQualifierOpen(quotedValue))
             .build();
       case LESS_OR_EQUAL:
         return RowFilter.newBuilder()
             .setColumnRangeFilter(
                 ColumnRange.newBuilder()
                     .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setEndQualifierInclusive(quotedValue))
+                    .setEndQualifierClosed(quotedValue))
             .build();
       case EQUAL:
         return RowFilter.newBuilder()
@@ -95,27 +95,27 @@ public class QualifierFilterAdapter implements TypedFilterAdapter<QualifierFilte
                             .setColumnRangeFilter(
                                 ColumnRange.newBuilder()
                                     .setFamilyName(familyName)
-                                    .setEndQualifierExclusive(quotedValue)))
+                                    .setEndQualifierOpen(quotedValue)))
                     .addFilters(
                         RowFilter.newBuilder()
                             .setColumnRangeFilter(
                                 ColumnRange.newBuilder()
                                     .setFamilyName(familyName)
-                                    .setStartQualifierExclusive(quotedValue))))
+                                    .setStartQualifierOpen(quotedValue))))
             .build();
       case GREATER_OR_EQUAL:
         return RowFilter.newBuilder()
             .setColumnRangeFilter(
                 ColumnRange.newBuilder()
                     .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setStartQualifierInclusive(quotedValue))
+                    .setStartQualifierClosed(quotedValue))
             .build();
       case GREATER:
         return RowFilter.newBuilder()
             .setColumnRangeFilter(
                 ColumnRange.newBuilder()
                     .setFamilyName(FilterAdapterHelper.getSingleFamilyName(context))
-                    .setStartQualifierExclusive(quotedValue))
+                    .setStartQualifierOpen(quotedValue))
             .build();
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,

@@ -50,14 +50,18 @@ import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.BulkMutation;
+import com.google.cloud.bigtable.grpc.async.v2.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.async.v2.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataGrpcClient;
+import com.google.cloud.bigtable.grpc.v2.BigtableTableAdminClient;
+import com.google.cloud.bigtable.grpc.v2.BigtableTableAdminGrpcClient;
 import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -88,9 +92,7 @@ public class BigtableSession implements Closeable {
   @VisibleForTesting
   static final String PROJECT_ID_EMPTY_OR_NULL = "ProjectId must not be empty or null.";
   @VisibleForTesting
-  static final String ZONE_ID_EMPTY_OR_NULL = "ZoneId must not be empty or null.";
-  @VisibleForTesting
-  static final String CLUSTER_ID_EMPTY_OR_NULL = "ClusterId must not be empty or null.";
+  static final String INSTANCE_ID_EMPTY_OR_NULL = "InstanceId must not be empty or null.";
   @VisibleForTesting
   static final String USER_AGENT_EMPTY_OR_NULL = "UserAgent must not be empty or null";
 
@@ -223,15 +225,13 @@ public class BigtableSession implements Closeable {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(options.getProjectId()), PROJECT_ID_EMPTY_OR_NULL);
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(options.getZoneId()), ZONE_ID_EMPTY_OR_NULL);
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(options.getClusterId()), CLUSTER_ID_EMPTY_OR_NULL);
+        !Strings.isNullOrEmpty(options.getInstanceId()), INSTANCE_ID_EMPTY_OR_NULL);
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(options.getUserAgent()), USER_AGENT_EMPTY_OR_NULL);
     LOG.info(
-        "Opening connection for projectId %s, zoneId %s, clusterId %s, "
+        "Opening connection for projectId %s, instanceId %s, "
         + "on data host %s, table admin host %s.",
-        options.getProjectId(), options.getZoneId(), options.getClusterId(), options.getDataHost(),
+        options.getProjectId(), options.getInstanceId(), options.getDataHost(),
         options.getTableAdminHost());
     if (!isAlpnProviderEnabled()) {
       LOG.error(

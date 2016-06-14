@@ -42,12 +42,8 @@ limitations under the License.
         <value>${google.bigtable.project.id}</value>
     </property>
     <property>
-        <name>google.bigtable.zone.name</name>
-        <value>${google.bigtable.zone.name}</value>
-    </property>
-    <property>
-        <name>google.bigtable.cluster.name</name>
-        <value>${google.bigtable.cluster.name}</value>
+        <name>google.bigtable.instance.id</name>
+        <value>${google.bigtable.instance.id}</value>
     </property>
     <property>
         <name>google.bigtable.use.bulk.api</name>

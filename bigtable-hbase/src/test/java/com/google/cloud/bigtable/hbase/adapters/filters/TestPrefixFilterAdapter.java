@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 
-import com.google.bigtable.v1.RowFilter;
+import com.google.bigtable.v2.RowFilter;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;

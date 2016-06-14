@@ -52,8 +52,7 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
 
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
-  public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
-  public static final String ZONE_KEY = "google.bigtable.zone.name";
+  public static final String INSTANCE_ID_KEY = "google.bigtable.instance.id";
 
   /**
    * Key to set to enable service accounts to be used, either metadata server-based or P12-based.
@@ -187,8 +186,7 @@ public class BigtableOptionsFactory {
     BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
-    bigtableOptionsBuilder.setZoneId(getValue(configuration, ZONE_KEY, "Zone"));
-    bigtableOptionsBuilder.setClusterId(getValue(configuration, CLUSTER_KEY, "Cluster"));
+    bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
 
     bigtableOptionsBuilder.setDataHost(
         getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));

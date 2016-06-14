@@ -23,17 +23,17 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.bigtable.v1.Cell;
-import com.google.bigtable.v1.Column;
-import com.google.bigtable.v1.Family;
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.bigtable.v1.Row;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
+import com.google.bigtable.v2.Cell;
+import com.google.bigtable.v2.Column;
+import com.google.bigtable.v2.Family;
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.Row;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -75,8 +75,7 @@ public class TestBigtableTable {
 
   public static final String TEST_PROJECT = "testproject";
   public static final String TEST_TABLE = "testtable";
-  public static final String TEST_CLUSTER = "testcluster";
-  public static final String TEST_ZONE = "testzone";
+  public static final String TEST_INSTANCE = "testinstance";
 
   @Mock
   private AbstractBigtableConnection mockConnection;
@@ -105,8 +104,7 @@ public class TestBigtableTable {
         .setDataHost("localhost")
         .setPort(0)
         .setProjectId(TEST_PROJECT)
-        .setClusterId(TEST_CLUSTER)
-        .setZoneId(TEST_ZONE)
+        .setInstanceId(TEST_INSTANCE)
         .setRetryOptions(new RetryOptions.Builder().setEnableRetries(false).build())
         .setCredentialOptions(null)
         .setUserAgent("testAgent")
@@ -133,7 +131,7 @@ public class TestBigtableTable {
     Mockito.verify(mockClient).mutateRow(argument.capture());
 
     Assert.assertEquals(
-        "projects/testproject/zones/testzone/clusters/testcluster/tables/testtable",
+        "projects/testproject/instances/testinstance/tables/testtable",
         argument.getValue().getTableName());
   }
 
@@ -173,7 +171,7 @@ public class TestBigtableTable {
     Mockito.verify(mockClient).readRows(argument.capture());
 
     Assert.assertEquals(
-        "projects/testproject/zones/testzone/clusters/testcluster/tables/testtable",
+        "projects/testproject/instances/testinstance/tables/testtable",
         argument.getValue().getTableName());
     Chain expectedColumnSpecFilter =
         Chain.newBuilder()

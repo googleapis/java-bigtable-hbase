@@ -20,7 +20,6 @@ import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
-import com.google.protobuf.ByteString;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;

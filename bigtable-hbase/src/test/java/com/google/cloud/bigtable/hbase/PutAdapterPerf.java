@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.v1.BigtableServiceGrpc;
-import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v2.BigtableGrpc;
+import com.google.bigtable.v2.MutateRowRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.PutAdapter;
@@ -65,7 +65,7 @@ public class PutAdapterPerf {
       long start = System.nanoTime();
       for (int i = 0; i < count; i++) {
         MutateRowRequest adapted = adapter.adapt(put);
-        BigtableServiceGrpc.METHOD_MUTATE_ROW.streamRequest(adapted);
+        BigtableGrpc.METHOD_MUTATE_ROW.streamRequest(adapted);
       }
       long time = System.nanoTime() - start;
       System.out.println(
@@ -78,7 +78,7 @@ public class PutAdapterPerf {
       for (int i = 0; i < count; i++) {
         MutateRowRequest adapted = adapter.adapt(put);
         adapted.getSerializedSize();
-        BigtableServiceGrpc.METHOD_MUTATE_ROW.streamRequest(adapted);
+        BigtableGrpc.METHOD_MUTATE_ROW.streamRequest(adapted);
       }
       long time = System.nanoTime() - start;
       System.out.println(

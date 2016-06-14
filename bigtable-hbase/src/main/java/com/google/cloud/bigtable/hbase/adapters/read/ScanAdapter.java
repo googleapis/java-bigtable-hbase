@@ -15,13 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.bigtable.v1.ReadRowsRequest.Builder;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
-import com.google.bigtable.v1.RowFilter.Interleave;
-import com.google.bigtable.v1.RowRange;
-import com.google.bigtable.v1.TimestampRange;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.ReadRowsRequest.Builder;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
+import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.bigtable.v2.RowRange;
+import com.google.bigtable.v2.RowSet;
+import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
@@ -94,10 +95,11 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
     return ReadRowsRequest.newBuilder()
         .setFilter(filter)
-        .setRowRange(
-            RowRange.newBuilder()
-                .setStartKey(ByteString.copyFrom(scan.getStartRow()))
-                .setEndKey(ByteString.copyFrom(scan.getStopRow())));
+        .setRows(RowSet.newBuilder()
+            .addRowRanges(
+              RowRange.newBuilder()
+                  .setStartKeyClosed(ByteString.copyFrom(scan.getStartRow()))
+                  .setEndKeyOpen(ByteString.copyFrom(scan.getStopRow()))));
   }
 
   private static byte[] quoteRegex(byte[] unquoted)  {
