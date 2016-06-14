@@ -30,25 +30,25 @@ public class TestBigtableOptions {
   public void testEquals() {
     BigtableOptions options1 = new BigtableOptions.Builder()
         .setProjectId("project")
-        .setInstanceId("intance")
+        .setInstanceId("instance")
         .setUserAgent("foo")
         .setCredentialOptions(CredentialOptions.nullCredential())
         .build();
     BigtableOptions options2 = new BigtableOptions.Builder()
         .setProjectId("project")
-        .setInstanceId("intance")
+        .setInstanceId("instance")
         .setUserAgent("foo")
         .setCredentialOptions(CredentialOptions.nullCredential())
         .build();
     BigtableOptions options3 = new BigtableOptions.Builder()
         .setProjectId("project")
-        .setInstanceId("intance")
+        .setInstanceId("instance")
         .setUserAgent("foo1")
         .setCredentialOptions(CredentialOptions.nullCredential())
         .build();
     BigtableOptions options4 = new BigtableOptions.Builder()
         .setProjectId("project")
-        .setInstanceId("intance")
+        .setInstanceId("instance")
         .setUserAgent("foo1")
         .setCredentialOptions(CredentialOptions.defaultCredentials())
         .build();
@@ -62,7 +62,7 @@ public class TestBigtableOptions {
   public void testSerialization() throws IOException, ClassNotFoundException {
     BigtableOptions options = new BigtableOptions.Builder()
         .setProjectId("project")
-        .setInstanceId("intance")
+        .setInstanceId("instance")
         .setUserAgent("foo")
         .build();
     ByteArrayOutputStream bos = new ByteArrayOutputStream();

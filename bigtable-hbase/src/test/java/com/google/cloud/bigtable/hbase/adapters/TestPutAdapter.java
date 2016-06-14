@@ -42,7 +42,7 @@ public class TestPutAdapter {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family = dataHelper.randomData("f");
     byte[] qualifier = dataHelper.randomData("qual");
-    byte[] value = dataHelper.randomData("v2");
+    byte[] value = dataHelper.randomData("v1");
     long timestamp = 2L;
 
     Put hbasePut = new Put(row);
@@ -80,7 +80,7 @@ public class TestPutAdapter {
     byte[] family = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
     byte[] qualifier2 = dataHelper.randomData("qual2");
-    byte[] value1 = dataHelper.randomData("v2");
+    byte[] value1 = dataHelper.randomData("v1");
     byte[] value2 = dataHelper.randomData("v2");
     long timestamp1 = 1L;
     long timestamp2 = 2L;
@@ -123,8 +123,8 @@ public class TestPutAdapter {
     byte[] family2 = dataHelper.randomData("f2");
     byte[] qualifier1 = dataHelper.randomData("qual1");
     byte[] qualifier2 = dataHelper.randomData("qual2");
-    byte[] value1 = dataHelper.randomData("v2");
-    byte[] value2 = dataHelper.randomData("v2");
+    byte[] value1 = dataHelper.randomData("v1");
+    byte[] value2 = dataHelper.randomData("v1");
     long timestamp1 = 1L;
     long timestamp2 = 2L;
 
@@ -164,7 +164,7 @@ public class TestPutAdapter {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family1 = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
-    byte[] value1 = dataHelper.randomData("v2");
+    byte[] value1 = dataHelper.randomData("v1");
     long startTimeMillis = System.currentTimeMillis();
 
     Put hbasePut = new Put(row).addColumn(family1, qualifier1, value1);
@@ -194,7 +194,7 @@ public class TestPutAdapter {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family1 = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
-    byte[] value1 = dataHelper.randomData("v2");
+    byte[] value1 = dataHelper.randomData("v1");
 
     Put hbasePut = new Put(row).addColumn(family1, qualifier1, value1);
 
@@ -227,7 +227,7 @@ public class TestPutAdapter {
     byte[] row = dataHelper.randomData("rk-");
     byte[] family1 = dataHelper.randomData("f1");
     byte[] qualifier1 = dataHelper.randomData("qual1");
-    byte[] value1 = dataHelper.randomData("v2");
+    byte[] value1 = dataHelper.randomData("v1");
 
     Put hbasePut = new Put(row, System.currentTimeMillis());
     hbasePut.addColumn(family1, qualifier1, value1);

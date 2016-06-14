@@ -20,7 +20,6 @@ import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
-import com.google.protobuf.ByteString;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
@@ -277,7 +276,7 @@ public class TestFilters extends AbstractTest {
    * Requirement 9.4 - ColumnRangeFilter - select keys with columns between minColumn and maxColumn
    *
    * Insert 5 cols: A, AA, B, BB, C, CC.  Test filtering on these columns with different
-   * combinations of start/end keys being inclusive/Open.
+   * combinations of start/end keys being inclusive/exclusive.
    */
   @Test
   public void testColumnRangeFilter() throws Exception {
@@ -293,14 +292,14 @@ public class TestFilters extends AbstractTest {
     put.addColumn(COLUMN_FAMILY, Bytes.toBytes("CC"), Bytes.toBytes("someval"));
     table.put(put);
 
-    // Filter for "B" Open, "C" Open
+    // Filter for "B" exclusive, "C" exclusive
     Filter filter = new ColumnRangeFilter(Bytes.toBytes("B"), false, Bytes.toBytes("C"), false);
     Get get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
     Result result = table.get(get);
     Assert.assertEquals("Should only return \"BB\"", 1, result.size());
     Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
 
-    // Filter for "B" Open, "C" inclusive
+    // Filter for "B" exclusive, "C" inclusive
     filter = new ColumnRangeFilter(Bytes.toBytes("B"), false, Bytes.toBytes("C"), true);
     get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
     result = table.get(get);
@@ -308,7 +307,7 @@ public class TestFilters extends AbstractTest {
     Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
     Assert.assertEquals("C", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[1])));
 
-    // Filter for "B" inclusive, "C" Open
+    // Filter for "B" inclusive, "C" exclusive
     filter = new ColumnRangeFilter(Bytes.toBytes("B"), true, Bytes.toBytes("C"), false);
     get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
     result = table.get(get);
