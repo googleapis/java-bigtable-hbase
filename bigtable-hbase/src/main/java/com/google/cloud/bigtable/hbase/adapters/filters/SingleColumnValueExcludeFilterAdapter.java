@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.ColumnRange;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
-import com.google.bigtable.v1.RowFilter.Interleave;
+import com.google.bigtable.v2.ColumnRange;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.client.Scan;
@@ -70,13 +70,13 @@ public class SingleColumnValueExcludeFilterAdapter
                         .setColumnRangeFilter(
                             ColumnRange.newBuilder()
                                 .setFamilyName(family)
-                                .setEndQualifierExclusive(qualifier)))
+                                .setEndQualifierOpen(qualifier)))
                 .addFilters(
                     RowFilter.newBuilder()
                         .setColumnRangeFilter(
                             ColumnRange.newBuilder()
                                 .setFamilyName(family)
-                                .setStartQualifierExclusive(qualifier))))
+                                .setStartQualifierOpen(qualifier))))
         .build();
   }
 

@@ -17,10 +17,10 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import static org.junit.Assert.*;
 
-import com.google.bigtable.v1.Cell;
-import com.google.bigtable.v1.Column;
-import com.google.bigtable.v1.Family;
-import com.google.bigtable.v1.Row;
+import com.google.bigtable.v2.Cell;
+import com.google.bigtable.v2.Column;
+import com.google.bigtable.v2.Family;
+import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
 import com.google.protobuf.ByteString;
 

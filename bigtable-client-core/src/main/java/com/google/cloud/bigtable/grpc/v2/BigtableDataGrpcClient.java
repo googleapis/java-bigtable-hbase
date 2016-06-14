@@ -341,7 +341,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     ClientCall.Listener<ReadRowsResponse> listener =
         new StreamObserverAdapter<>(readRowsCall, rowMerger);
     asyncUtilities.asyncServerStreamingCall(readRowsCall, request, listener);
-
     CancellationToken cancellationToken = createCancellationToken(readRowsCall);
     return new StreamingBigtableResultScanner(responseQueueReader, cancellationToken);
   }

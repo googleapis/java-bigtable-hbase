@@ -23,22 +23,22 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.bigtable.v1.Cell;
-import com.google.bigtable.v1.Column;
-import com.google.bigtable.v1.Family;
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.MutateRowsRequest;
-import com.google.bigtable.v1.ReadModifyWriteRowRequest;
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.bigtable.v1.Row;
+import com.google.bigtable.v2.Cell;
+import com.google.bigtable.v2.Column;
+import com.google.bigtable.v2.Family;
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowsRequest;
+import com.google.bigtable.v2.ReadModifyWriteRowRequest;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
-import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.v2.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.BulkMutation;
+import com.google.cloud.bigtable.grpc.async.v2.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.async.v2.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -138,8 +138,7 @@ public class TestBatchExecutor {
   public void setup() throws InterruptedException {
     BigtableOptions options = new BigtableOptions.Builder()
         .setProjectId("projectId")
-        .setZoneId("zone")
-        .setClusterId("clusterId")
+        .setInstanceId("instanceId")
         .build();
     requestAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
@@ -278,7 +277,7 @@ public class TestBatchExecutor {
         }
         ByteString key = BigtableZeroCopyByteStringUtil.wrap(gets.get(current).getRow());
         ByteString cellValue = ByteString.copyFrom(randomBytes(8));
-        com.google.bigtable.v1.Cell cell = Cell.newBuilder()
+        com.google.bigtable.v2.Cell cell = Cell.newBuilder()
             .setTimestampMicros(System.nanoTime() / 1000)
             .setValue(cellValue)
             .build();

@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.ColumnRange;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
+import com.google.bigtable.v2.ColumnRange;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
@@ -48,7 +48,7 @@ public class ColumnPaginationFilterAdapter implements TypedFilterAdapter<ColumnP
               .setColumnRangeFilter(
                   ColumnRange.newBuilder()
                       .setFamilyName(Bytes.toString(family))
-                      .setStartQualifierInclusive(
+                      .setStartQualifierClosed(
                           ByteString.copyFrom(filter.getColumnOffset()))));
     } else if (filter.getOffset() > 0) {
       // Include starting at an integer offset up to limit cells.

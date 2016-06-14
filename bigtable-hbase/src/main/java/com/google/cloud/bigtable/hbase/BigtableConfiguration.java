@@ -44,16 +44,15 @@ public class BigtableConfiguration {
     return null;
   }
 
-  public static Configuration configure(String projectId, String zoneName, String clusterName) {
+  public static Configuration configure(String projectId, String instanceId) {
     Configuration config = new Configuration(false);
     config.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
-    config.set(BigtableOptionsFactory.ZONE_KEY, zoneName);
-    config.set(BigtableOptionsFactory.CLUSTER_KEY, clusterName);
+    config.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
     return config;
   }
 
-  public static Connection connect(String projectId, String zoneName, String clusterName) {
-    return connect(configure(projectId, zoneName, clusterName));
+  public static Connection connect(String projectId, String instanceId) {
+    return connect(configure(projectId, instanceId));
   }
 
   public static Connection connect(Configuration conf) {

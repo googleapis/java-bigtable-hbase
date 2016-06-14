@@ -30,9 +30,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.v1.ColumnRange;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Interleave;
+import com.google.bigtable.v2.ColumnRange;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.protobuf.ByteString;
 
 /**
@@ -69,7 +69,7 @@ public class TestQualifierFilterAdapter {
             .setColumnRangeFilter(
                 ColumnRange.newBuilder()
                     .setFamilyName(FAMILY_NAME)
-                    .setEndQualifierExclusive(FOO_BYTESTRING))
+                    .setEndQualifierOpen(FOO_BYTESTRING))
             .build());
   }
 
@@ -82,7 +82,7 @@ public class TestQualifierFilterAdapter {
             .setColumnRangeFilter(
                 ColumnRange.newBuilder()
                     .setFamilyName(FAMILY_NAME)
-                    .setEndQualifierInclusive(FOO_BYTESTRING))
+                    .setEndQualifierClosed(FOO_BYTESTRING))
             .build());
   }
 
@@ -105,7 +105,7 @@ public class TestQualifierFilterAdapter {
             .setColumnRangeFilter(
                 ColumnRange.newBuilder()
                     .setFamilyName(FAMILY_NAME)
-                    .setStartQualifierExclusive(FOO_BYTESTRING))
+                    .setStartQualifierOpen(FOO_BYTESTRING))
             .build());
   }
 
@@ -118,7 +118,7 @@ public class TestQualifierFilterAdapter {
             .setColumnRangeFilter(
                 ColumnRange.newBuilder()
                     .setFamilyName(FAMILY_NAME)
-                    .setStartQualifierInclusive(FOO_BYTESTRING))
+                    .setStartQualifierClosed(FOO_BYTESTRING))
             .build());
   }
 
@@ -135,13 +135,13 @@ public class TestQualifierFilterAdapter {
                             .setColumnRangeFilter(
                                 ColumnRange.newBuilder()
                                     .setFamilyName(FAMILY_NAME)
-                                    .setEndQualifierExclusive(FOO_BYTESTRING)))
+                                    .setEndQualifierOpen(FOO_BYTESTRING)))
                     .addFilters(
                         RowFilter.newBuilder()
                             .setColumnRangeFilter(
                                 ColumnRange.newBuilder()
                                     .setFamilyName(FAMILY_NAME)
-                                    .setStartQualifierExclusive(FOO_BYTESTRING))))
+                                    .setStartQualifierOpen(FOO_BYTESTRING))))
             .build());
   }
 

@@ -34,14 +34,15 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.ReadRowsRequest;
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.ReadModifyWriteRowResponse;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
-import com.google.cloud.bigtable.grpc.async.BulkMutation;
+import com.google.cloud.bigtable.grpc.async.v2.AsyncExecutor;
+import com.google.cloud.bigtable.grpc.async.v2.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -64,10 +65,10 @@ public class BatchExecutor {
    */
   public static final byte[] NO_REGION = new byte[0];
 
-  private static final Function<List<com.google.bigtable.v1.Row>, com.google.bigtable.v1.Row> ROWS_TO_ROW_CONVERTER =
-      new Function<List<com.google.bigtable.v1.Row>, com.google.bigtable.v1.Row>() {
+  private static final Function<List<com.google.bigtable.v2.Row>, com.google.bigtable.v2.Row> ROWS_TO_ROW_CONVERTER =
+      new Function<List<com.google.bigtable.v2.Row>, com.google.bigtable.v2.Row>() {
         @Override
-        public com.google.bigtable.v1.Row apply(List<com.google.bigtable.v1.Row> rows) {
+        public com.google.bigtable.v2.Row apply(List<com.google.bigtable.v2.Row> rows) {
           if (rows.isEmpty()) {
             return null;
           } else {
@@ -107,8 +108,11 @@ public class BatchExecutor {
     public final void onSuccess(GeneratedMessage message) {
       try {
         Result result = Result.EMPTY_RESULT;
-        if (message instanceof com.google.bigtable.v1.Row) {
-          result = Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v1.Row) message);
+        if (message instanceof com.google.bigtable.v2.Row) {
+          result = Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v2.Row) message);
+        } else if (message instanceof ReadModifyWriteRowResponse) {
+          result =
+              Adapters.ROW_ADAPTER.adaptResponse(((ReadModifyWriteRowResponse) message).getRow());
         }
         resultsArray[index] = result;
         resultFuture.set(result);

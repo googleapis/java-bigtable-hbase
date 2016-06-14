@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.RowFilter;
+import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.common.base.Optional;
 

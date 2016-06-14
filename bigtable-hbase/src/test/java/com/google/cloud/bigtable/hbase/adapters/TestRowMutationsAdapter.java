@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 
-import com.google.bigtable.v1.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowRequest;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;

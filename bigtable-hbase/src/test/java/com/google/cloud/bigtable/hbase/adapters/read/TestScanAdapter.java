@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.bigtable.v1.ReadRowsRequest.TargetCase;
-import com.google.bigtable.v1.RowFilter;
-import com.google.bigtable.v1.RowFilter.Chain;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
+import com.google.bigtable.v2.RowRange;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
@@ -59,9 +59,9 @@ public class TestScanAdapter {
     scan.setStartRow(startKey);
     scan.setStopRow(stopKey);
     ReadRowsRequest.Builder request = scanAdapter.adapt(scan, throwingReadHooks);
-    Assert.assertEquals(TargetCase.ROW_RANGE, request.getTargetCase());
-    Assert.assertArrayEquals(startKey, request.getRowRange().getStartKey().toByteArray());
-    Assert.assertArrayEquals(stopKey, request.getRowRange().getEndKey().toByteArray());
+    RowRange range = request.getRows().getRowRanges(0);
+    Assert.assertArrayEquals(startKey, range.getStartKeyClosed().toByteArray());
+    Assert.assertArrayEquals(stopKey, range.getEndKeyOpen().toByteArray());
   }
 
   @Test

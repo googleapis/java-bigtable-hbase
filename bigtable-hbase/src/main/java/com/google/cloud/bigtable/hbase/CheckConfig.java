@@ -56,8 +56,7 @@ public class CheckConfig {
 
     System.out.println(String.format("User Agent: %s", options.getUserAgent()));
     System.out.println(String.format("Project ID: %s", options.getProjectId()));
-    System.out.println(String.format("Cluster Id: %s", options.getClusterId()));
-    System.out.println(String.format("ZoneId: %s", options.getZoneId()));
+    System.out.println(String.format("Instance Id: %s", options.getInstanceId()));
     System.out.println(String.format("Cluster admin host: %s", options.getClusterAdminHost()));
     System.out.println(String.format("Table admin host: %s", options.getTableAdminHost()));
     System.out.println(String.format("Data host: %s", options.getDataHost()));
@@ -95,7 +94,7 @@ public class CheckConfig {
     System.out.println("Opening table admin connection...");
     try (Connection conn = ConnectionFactory.createConnection(fullConfiguration)) {
       try (Admin admin = conn.getAdmin()) {
-        System.out.println(String.format("Tables in cluster %s:", options.getClusterId()));
+        System.out.println(String.format("Tables in cluster %s:", options.getInstanceId()));
         TableName[] tableNames = admin.listTableNames();
         if (tableNames.length == 0) {
           System.out.println("No tables found.");

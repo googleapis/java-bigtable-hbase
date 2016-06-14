@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v1.MutateRowRequest;
-import com.google.bigtable.v1.Mutation;
-import com.google.bigtable.v1.Mutation.DeleteFromColumn;
-import com.google.bigtable.v1.Mutation.DeleteFromRow;
-import com.google.bigtable.v1.TimestampRange;
+import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.Mutation;
+import com.google.bigtable.v2.Mutation.DeleteFromColumn;
+import com.google.bigtable.v2.Mutation.DeleteFromRow;
+import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.protobuf.ByteString;

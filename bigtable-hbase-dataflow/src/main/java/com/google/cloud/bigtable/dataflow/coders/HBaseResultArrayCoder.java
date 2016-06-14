@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.dataflow.coders;
 
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v1.Row;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
 

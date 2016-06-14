@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.v1.RowFilter;
+import com.google.bigtable.v2.RowFilter;
 
 @RunWith(JUnit4.class)
 public class TestColumnRangeFilterAdapter {
@@ -54,7 +54,7 @@ public class TestColumnRangeFilterAdapter {
         Bytes.toString(
             rowFilter
                 .getColumnRangeFilter()
-                .getStartQualifierInclusive()
+                .getStartQualifierClosed()
                 .toByteArray()));
 
     Assert.assertEquals(
@@ -62,7 +62,7 @@ public class TestColumnRangeFilterAdapter {
         Bytes.toString(
             rowFilter
                 .getColumnRangeFilter()
-                .getEndQualifierExclusive()
+                .getEndQualifierOpen()
                 .toByteArray()));
   }
 }

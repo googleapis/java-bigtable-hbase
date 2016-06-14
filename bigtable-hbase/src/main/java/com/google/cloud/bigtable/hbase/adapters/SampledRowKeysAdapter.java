@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v1.SampleRowKeysResponse;
+import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.Logger;
 
 import org.apache.hadoop.hbase.HConstants;

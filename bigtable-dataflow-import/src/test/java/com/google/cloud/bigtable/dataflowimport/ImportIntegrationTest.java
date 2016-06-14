@@ -126,11 +126,8 @@ public class ImportIntegrationTest {
     commonOptions.setBigtableProjectId(projectId);
     commonOptions.setProject(projectId); // Use Bigtable project as dataflow project.
     commonOptions.setBigtableClusterId(
-        checkNotNull(System.getProperty(BigtableOptionsFactory.CLUSTER_KEY),
-            "Required property missing: " + BigtableOptionsFactory.CLUSTER_KEY));
-    commonOptions.setBigtableZoneId(
-        checkNotNull(System.getProperty(BigtableOptionsFactory.ZONE_KEY),
-            "Required property missing: " + BigtableOptionsFactory.ZONE_KEY));
+        checkNotNull(System.getProperty(BigtableOptionsFactory.INSTANCE_ID_KEY),
+            "Required property missing: " + BigtableOptionsFactory.INSTANCE_ID_KEY));
     commonOptions.setStagingLocation(
         checkNotNull(System.getProperty(GOOGLE_DATAFLOW_STAGING_LOCATION),
             "Required property missing: " + GOOGLE_DATAFLOW_STAGING_LOCATION));

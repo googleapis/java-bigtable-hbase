@@ -38,38 +38,31 @@ import org.junit.runners.JUnit4;
 public class CloudBigtableConfigurationTest {
 
   private static final String PROJECT = "my_project";
-  private static final String CLUSTER = "cluster";
-  private static final String ZONE = "some-zone-1a";
+  private static final String INSTANCE = "instance";
 
   @Test
   public void testHBaseConfig() throws IOException {
     CloudBigtableConfiguration underTest =
-        new CloudBigtableConfiguration(PROJECT, ZONE, CLUSTER,
+        new CloudBigtableConfiguration(PROJECT, INSTANCE,
             Collections.<String, String> emptyMap());
 
     Configuration config = underTest.toHBaseConfig();
 
     assertEquals(PROJECT, config.get(BigtableOptionsFactory.PROJECT_ID_KEY));
-    assertEquals(ZONE, config.get(BigtableOptionsFactory.ZONE_KEY));
-    assertEquals(CLUSTER, config.get(BigtableOptionsFactory.CLUSTER_KEY));
+    assertEquals(INSTANCE, config.get(BigtableOptionsFactory.INSTANCE_ID_KEY));
   }
 
   @Test
   public void testEquals() {
     CloudBigtableConfiguration underTest1 =
-        new CloudBigtableConfiguration(PROJECT, ZONE, CLUSTER,
-            Collections.<String, String> emptyMap());
+        new CloudBigtableConfiguration(PROJECT, INSTANCE, Collections.<String, String> emptyMap());
     CloudBigtableConfiguration underTest2 =
-        new CloudBigtableConfiguration(PROJECT, ZONE, CLUSTER,
-            Collections.<String, String> emptyMap());
-    CloudBigtableConfiguration underTest3 =
-        new CloudBigtableConfiguration(PROJECT, ZONE, CLUSTER,
-            Collections.singletonMap("somekey", "somevalue"));
-    CloudBigtableConfiguration underTest4 =
-        new CloudBigtableConfiguration("other_project", ZONE, CLUSTER,
-            Collections.<String, String> emptyMap());
-    CloudBigtableConfiguration underTest5 =
-      new CloudBigtableConfiguration(PROJECT, ZONE, CLUSTER,
+        new CloudBigtableConfiguration(PROJECT, INSTANCE, Collections.<String, String> emptyMap());
+    CloudBigtableConfiguration underTest3 = new CloudBigtableConfiguration(PROJECT, INSTANCE,
+        Collections.singletonMap("somekey", "somevalue"));
+    CloudBigtableConfiguration underTest4 = new CloudBigtableConfiguration("other_project",
+        INSTANCE, Collections.<String, String> emptyMap());
+    CloudBigtableConfiguration underTest5 = new CloudBigtableConfiguration(PROJECT, INSTANCE,
         Collections.singletonMap("somekey", "somevalue"));
 
     // Test CloudBigtableConfiguration that should be equal.
@@ -88,7 +81,7 @@ public class CloudBigtableConfigurationTest {
   @Test
   public void testToBuilder() {
     CloudBigtableConfiguration underTest =
-        new CloudBigtableConfiguration(PROJECT, ZONE, CLUSTER, Collections.singletonMap("somekey",
+        new CloudBigtableConfiguration(PROJECT, INSTANCE, Collections.singletonMap("somekey",
           "somevalue"));
     CloudBigtableConfiguration copy = underTest.toBuilder().build();
     Assert.assertNotSame(underTest, copy);

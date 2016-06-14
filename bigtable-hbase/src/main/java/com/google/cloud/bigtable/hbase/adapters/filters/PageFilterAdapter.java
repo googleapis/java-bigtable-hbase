@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
-import com.google.bigtable.v1.ReadRowsRequest;
-import com.google.bigtable.v1.RowFilter;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.RowFilter;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 
@@ -42,7 +42,7 @@ public class PageFilterAdapter implements TypedFilterAdapter<PageFilter> {
     context.getReadHooks().composePreSendHook(new Function<ReadRowsRequest, ReadRowsRequest>() {
       @Override
       public ReadRowsRequest apply(ReadRowsRequest request) {
-        return request.toBuilder().setNumRowsLimit(pageSize).build();
+        return request.toBuilder().setRowsLimit(pageSize).build();
       }
     });
     // This filter cannot be translated to a RowFilter, all logic is done as a read hook.
