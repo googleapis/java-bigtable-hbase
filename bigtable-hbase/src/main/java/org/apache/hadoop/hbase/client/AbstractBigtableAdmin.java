@@ -504,7 +504,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     final String columnNameStr = Bytes.toString(columnName);
     Modification.Builder modification = Modification.newBuilder().setId(columnNameStr)
         .setDrop(true);
-    modifyColumn(tableName, columnNameStr, "update", modification);
+    modifyColumn(tableName, columnNameStr, "delete", modification);
   }
 
   protected void modifyColumn(TableName tableName, String columnName,

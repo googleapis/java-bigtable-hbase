@@ -28,7 +28,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 public class TestBigtableSession {
 
   private static final String PROJECT_ID = "project_id";
-  private static final String INSTANCE_ID = "zone_id";
+  private static final String INSTANCE_ID = "instance_id";
   private static final String USER_AGENT = "user_agent";
 
   private static void createSession(String projectId, String instanceId, String userAgent)
