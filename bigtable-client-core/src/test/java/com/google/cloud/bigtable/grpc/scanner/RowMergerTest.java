@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.scanner.v2;
+package com.google.cloud.bigtable.grpc.scanner;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
@@ -24,7 +24,7 @@ import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
-import com.google.cloud.bigtable.grpc.scanner.v2.RowMerger;
+import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.bigtable.v2.Row;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;

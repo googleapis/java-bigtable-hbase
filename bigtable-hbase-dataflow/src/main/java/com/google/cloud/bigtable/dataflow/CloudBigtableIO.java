@@ -49,7 +49,7 @@ import com.google.api.client.util.Lists;
 import com.google.api.client.util.Preconditions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
 import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.v2.BigtableDataClient;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
@@ -369,7 +369,7 @@ public class CloudBigtableIO {
     }
 
     private List<SourceWithKeys<ResultOutputType>>
-        reduceSplits(List<SourceWithKeys<ResultOutputType>> splits) throws IOException {
+        reduceSplits(List<SourceWithKeys<ResultOutputType>> splits) {
       if (splits.size() < COUNT_MAX_SPLIT_COUNT) {
         return splits;
       }
@@ -888,7 +888,7 @@ public class CloudBigtableIO {
   /**
    * Initializes the coders for the Cloud Bigtable Write {@link PTransform}. Sets up {@link Coder}s
    * required to serialize HBase {@link Put}, {@link Delete}, and {@link Mutation} objects. See
-   * {@link HBaseMutationConverter} for additional implementation details.
+   * {@link HBaseMutationCoder} for additional implementation details.
    *
    * @return The {@link Pipeline} for chaining convenience.
    */

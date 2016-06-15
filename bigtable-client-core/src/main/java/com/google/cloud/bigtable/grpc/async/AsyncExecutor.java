@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.async.v2;
+package com.google.cloud.bigtable.grpc.async;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,8 +29,7 @@ import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.async.RpcThrottler;
-import com.google.cloud.bigtable.grpc.v2.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.GeneratedMessage;

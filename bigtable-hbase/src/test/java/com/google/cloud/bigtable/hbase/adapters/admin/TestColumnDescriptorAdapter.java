@@ -35,7 +35,6 @@ import com.google.bigtable.admin.v2.ColumnFamily;
 import com.google.bigtable.admin.v2.GcRule;
 import com.google.bigtable.admin.v2.GcRule.Intersection;
 import com.google.bigtable.admin.v2.GcRule.Union;
-import com.google.cloud.bigtable.hbase.adapters.admin.v2.ColumnDescriptorAdapter;
 import com.google.protobuf.Duration;
 
 /**

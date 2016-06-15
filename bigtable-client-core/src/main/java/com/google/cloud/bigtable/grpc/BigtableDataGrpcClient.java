@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.v2;
+package com.google.cloud.bigtable.grpc;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
@@ -54,10 +54,10 @@ import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
-import com.google.cloud.bigtable.grpc.scanner.v2.ResumingStreamingResultScanner;
-import com.google.cloud.bigtable.grpc.scanner.v2.RowMerger;
-import com.google.cloud.bigtable.grpc.scanner.v2.StreamObserverAdapter;
-import com.google.cloud.bigtable.grpc.scanner.v2.StreamingBigtableResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
+import com.google.cloud.bigtable.grpc.scanner.RowMerger;
+import com.google.cloud.bigtable.grpc.scanner.StreamObserverAdapter;
+import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
