@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.scanner.v2;
+package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
-import com.google.cloud.bigtable.grpc.scanner.v2.RowMerger;
+import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.bigtable.v2.Row;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.MoreObjects;

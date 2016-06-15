@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.scanner.v2;
+package com.google.cloud.bigtable.grpc.scanner;
 
 import java.io.IOException;
 
 import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
-import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
-import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.base.Preconditions;
 
 /**

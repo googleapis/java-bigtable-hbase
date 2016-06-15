@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.scanner.v2;
+package com.google.cloud.bigtable.grpc.scanner;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -28,10 +28,6 @@ import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
-import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
-import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
-import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
-import com.google.cloud.bigtable.grpc.scanner.ScanTimeoutException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 

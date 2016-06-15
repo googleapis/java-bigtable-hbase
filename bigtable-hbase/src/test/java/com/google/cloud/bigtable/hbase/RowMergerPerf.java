@@ -1,4 +1,4 @@
-package com.google.cloud.bigtable.hbase.v2;
+package com.google.cloud.bigtable.hbase;
 
 import java.util.Arrays;
 import java.util.List;
@@ -8,7 +8,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
-import com.google.cloud.bigtable.grpc.scanner.v2.RowMerger;
+import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
 import com.google.protobuf.ByteString;

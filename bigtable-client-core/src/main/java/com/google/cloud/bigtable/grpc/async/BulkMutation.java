@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.async.v2;
+package com.google.cloud.bigtable.grpc.async;
 
 
 import com.google.common.annotations.VisibleForTesting;
@@ -198,8 +198,8 @@ public class BulkMutation {
         String tableName = currentRequestManager.request.getTableName();
         RequestManager retryRequestManager = new RequestManager(tableName);
 
-        int processedCount = handleResponses(backoffTime, entries, retryRequestManager);
-        handleExtraFutures(backoffTime, processedCount, retryRequestManager, entries);
+        handleResponses(backoffTime, entries, retryRequestManager);
+        handleExtraFutures(backoffTime, retryRequestManager, entries);
         completeOrRetry(backoffTime, retryRequestManager);
       } catch (RuntimeException e) {
         LOG.error(
@@ -238,7 +238,7 @@ public class BulkMutation {
       return backOffTime.get();
     }
 
-    private int handleResponses(AtomicReference<Long> backoffTime,
+    private void handleResponses(AtomicReference<Long> backoffTime,
         Iterable<MutateRowsResponse.Entry> entries, RequestManager retryRequestManager) {
       int count = 0;
       for (MutateRowsResponse.Entry entry : entries) {
@@ -259,11 +259,10 @@ public class BulkMutation {
         }
         count++;
       }
-      return count;
     }
 
-    private void handleExtraFutures(AtomicReference<Long> backoffTime, int processedCount,
-        RequestManager retryRequestManager, List<Entry> entries) {
+    private void handleExtraFutures(AtomicReference<Long> backoffTime, RequestManager retryRequestManager,
+        List<Entry> entries) {
       Set<Integer> indexes = new HashSet<>();
       indexes.addAll(getIndexes(entries));
       long missingEntriesCount = 0;

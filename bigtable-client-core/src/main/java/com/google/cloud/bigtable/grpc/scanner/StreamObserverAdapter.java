@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.scanner.v2;
+package com.google.cloud.bigtable.grpc.scanner;
 
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
