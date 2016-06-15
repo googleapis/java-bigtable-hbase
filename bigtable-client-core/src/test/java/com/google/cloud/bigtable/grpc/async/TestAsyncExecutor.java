@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.grpc.async.v2;
+package com.google.cloud.bigtable.grpc.async;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -40,7 +40,8 @@ import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.cloud.bigtable.grpc.v2.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.common.util.concurrent.FutureCallback;
