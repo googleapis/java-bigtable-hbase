@@ -39,8 +39,7 @@ limitations under the License.
     </licenses>
 
     <modules>
-        <module>bigtable-protos</module>
-        <module>bigtable-client-core</module>
+        <module>bigtable-client-core-parent</module>
         <module>bigtable-hbase</module>
         <module>bigtable-hbase-1.0</module>
         <module>bigtable-hbase-integration-tests</module>
