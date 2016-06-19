@@ -15,50 +15,28 @@ limitations under the License.
 
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
-        <artifactId>bigtable-client</artifactId>
+        <artifactId>bigtable-dataflow-parent</artifactId>
         <version>0.9.0-SNAPSHOT</version>
     </parent>
 
     <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-dataflow-import</artifactId>
+    <artifactId>bigtable-hbase-dataflow</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-       This project contains artifacts that import HBase Sequence Files into Google Cloud Bigtable using Google Cloud Dataflow.
+       This project contains artifacts that provide Cloud Bigtable client readers and writers in Google Cloud Dataflow.
     </description>
-
-    <properties>
-        <gcsconnector.version>1.4.3-hadoop2</gcsconnector.version>
-        <!-- A guava version that is compatible with both gcs-connector and hadoop2. This overrides
-            guava version specification in parent project. -->
-        <guava.version>15.0</guava.version>
-    </properties>
 
     <dependencies>
         <dependency>
+            <groupId>com.google.cloud.dataflow</groupId>
+            <artifactId>google-cloud-dataflow-java-sdk-all</artifactId>
+            <version>1.5.1</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
-            <artifactId>bigtable-hbase-dataflow</artifactId>
+            <artifactId>bigtable-hbase-dataflow-tools</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <!-- Keeping guava dependency here so that third party code using this package
-                 does not have to declare it-->
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
-        </dependency>
-        <dependency>
-            <!-- hbase-server jar provides Deserializer for the Result class. It also pulls in
-                 necessary hadoop jars. -->
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <version>${hbase.version}</version>
-        </dependency>
-        <dependency>
-            <!-- For accessing gs buckets from the hadoop SequenceFile reader. -->
-            <groupId>com.google.cloud.bigdataoss</groupId>
-            <artifactId>gcs-connector</artifactId>
-            <version>${gcsconnector.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -69,20 +47,30 @@ limitations under the License.
             <artifactId>mockito-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <scope>test</scope>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+        </dependency>
+       <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <scope>test</scope>
             <classifier>${os.detected.classifier}</classifier>
         </dependency>
     </dependencies>
     <profiles>
         <profile>
-            <id>sequencefileIntegrationTest</id>
+            <id>bigtableDataflowIntegrationTest</id>
             <build>
                 <plugins>
                     <plugin>
@@ -90,7 +78,14 @@ limitations under the License.
                         <artifactId>maven-surefire-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>import-e2e-test</id>
+                                <id>api-integration-test</id>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <phase>none</phase>
+                            </execution>
+                            <execution>
+                                <id>api-gap-test</id>
                                 <goals>
                                     <goal>test</goal>
                                 </goals>
@@ -101,12 +96,8 @@ limitations under the License.
                                     -->
                                     <forkCount>1</forkCount>
                                     <includes>
-                                        <include>**/*IntegrationTest.java</include>
+                                        <include>**/CloudBigtableIOIntegrationTest.java</include>
                                     </includes>
-                                    <!-- Use Isolated Classloader so that dataflow can find all files
-                                         that must be staged.
-                                    -->
-                                    <useSystemClassLoader>false</useSystemClassLoader>
                                     <reportNameSuffix>bigtable-server</reportNameSuffix>
                                     <systemPropertyVariables>
                                         <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
@@ -157,6 +148,27 @@ limitations under the License.
     </profiles>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <artifactSet>
+                                <includes>
+                                    <include>${project.groupId}:bigtable-hbase-dataflow-tools</include>
+                                </includes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-eclipse-plugin</artifactId>
