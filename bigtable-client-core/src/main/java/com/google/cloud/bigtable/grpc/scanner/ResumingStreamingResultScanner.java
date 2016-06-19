@@ -174,6 +174,12 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   }
 
   private void handleScanTimeout(ScanTimeoutException rte) throws IOException {
+    try {
+      currentDelegate.close();
+    } catch (IOException ioe) {
+      logger.warn("Error closing scanner before reissuing request: ", ioe);
+    }
+
     logger.info("The client could not get a response in %d ms. Retrying the scan.",
       retryOptions.getReadPartialRowTimeoutMillis());
 
@@ -196,6 +202,12 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   }
 
   private void handleIOException(IOExceptionWithStatus ioe) throws IOException {
+    try {
+      currentDelegate.close();
+    } catch (IOException e) {
+      logger.warn("Error closing scanner before reissuing request: ", e);
+    }
+
     Status.Code code = ioe.getStatus().getCode();
     if (retryOptions.isRetryable(code)) {
       logger.info("Reissuing scan after receiving error with status: %s.", ioe, code.name());
@@ -225,12 +237,6 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   }
 
   private void reissueRequest() {
-    try {
-      currentDelegate.close();
-    } catch (IOException ioe) {
-      logger.warn("Error closing scanner before reissuing request: ", ioe);
-    }
-
     ReadRowsRequest.Builder newRequest = originalRequest.toBuilder();
     restarter.updateRequest(newRequest);
 
