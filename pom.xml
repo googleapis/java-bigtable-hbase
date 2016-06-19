@@ -39,17 +39,9 @@ limitations under the License.
     </licenses>
 
     <modules>
-        <module>bigtable-protos</module>
-        <module>bigtable-client-core</module>
-        <module>bigtable-hbase</module>
-        <module>bigtable-hbase-1.0</module>
-        <module>bigtable-hbase-integration-tests</module>
-        <module>bigtable-hbase-1.1</module>
-        <module>bigtable-hbase-1.2</module>
-        <module>bigtable-hbase-mapreduce</module>
-        <module>bigtable-hbase-dataflow-tools</module>
-        <module>bigtable-hbase-dataflow</module>
-        <module>bigtable-dataflow-import</module>
+        <module>bigtable-client-core-parent</module>
+        <module>bigtable-hbase-parent</module>
+        <module>bigtable-dataflow-parent</module>
     </modules>
 
     <properties>
