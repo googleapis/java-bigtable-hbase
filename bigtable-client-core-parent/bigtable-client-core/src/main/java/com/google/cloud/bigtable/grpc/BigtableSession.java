@@ -183,8 +183,7 @@ public class BigtableSession implements Closeable {
       }
     });
     for (final String host : Arrays.asList(BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT,
-      BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT,
-      BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT)) {
+      BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT)) {
       connectionStartupExecutor.execute(new Runnable() {
         @Override
         public void run() {

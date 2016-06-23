@@ -64,7 +64,7 @@ public class BulkMutation {
         .fromCodeValue(status.getCode())
         .withDescription(status.getMessage());
     for (Any detail : status.getDetailsList()) {
-      grpcStatus.augmentDescription(detail.toString());
+      grpcStatus = grpcStatus.augmentDescription(detail.toString());
     }
     return grpcStatus.asRuntimeException();
   }
@@ -138,6 +138,7 @@ public class BulkMutation {
      *         returns from the server. See {@link #addCallback(ListenableFuture)} for
      *         more information about how the SettableFuture is set.
      */
+    @VisibleForTesting
     ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
       SettableFuture<MutateRowResponse> future = SettableFuture.create();
       currentRequestManager.add(future, convert(request));
@@ -170,29 +171,28 @@ public class BulkMutation {
           });
     }
 
-    synchronized void handleResult(List<MutateRowsResponse> result) {
-      AtomicReference<Long> backoffTime = new AtomicReference<>();
+    synchronized void handleResult(List<MutateRowsResponse> results) {
       if (this.currentRequestManager == null) {
         LOG.warn("Got duplicate responses for bulk mutation.");
         return;
       }
 
-      if (result == null || result.isEmpty()) {
-        performFullRetry(
-            backoffTime, new IllegalStateException("No MutateRowResponses were found."));
+      if (results == null || results.isEmpty()) {
+        performFullRetry(new IllegalStateException("No MutateRowResponses were found."));
         return;
       }
 
       List<MutateRowsResponse.Entry> entries = new ArrayList<>();
-      for (MutateRowsResponse response : result) {
+      for (MutateRowsResponse response : results) {
         entries.addAll(response.getEntriesList());
       }
 
       if (entries.isEmpty()) {
-        performFullRetry(
-            backoffTime, new IllegalStateException("No MutateRowsResponses entries were found."));
+        performFullRetry(new IllegalStateException("No MutateRowsResponses entries were found."));
         return;
       }
+
+      AtomicReference<Long> backoffTime = new AtomicReference<>();
 
       try {
         String tableName = currentRequestManager.request.getTableName();
@@ -209,14 +209,18 @@ public class BulkMutation {
       }
     }
 
-    private void performFullRetry(AtomicReference<Long> backOffTime, Throwable t) {
-      getCurrentBackoff(backOffTime);
-      if (backOffTime.get() == BackOff.STOP) {
+    private void performFullRetry(Throwable t) {
+      performFullRetry(new AtomicReference<Long>(), t);
+    }
+
+    private void performFullRetry(AtomicReference<Long> backoff, Throwable t) {
+      Long backoffMs = getCurrentBackoff(backoff);
+      if (backoffMs == BackOff.STOP) {
         setFailure(new BigtableRetriesExhaustedException("Exhausted retries.", t));
       } else {
         LOG.info("Retrying failed call. Failure #%d, got: %s", t, failedCount++,
           io.grpc.Status.fromThrowable(t));
-        retryExecutorService.schedule(this, backOffTime.get(), TimeUnit.MILLISECONDS);
+        retryExecutorService.schedule(this, backoffMs, TimeUnit.MILLISECONDS);
       }
     }
 
@@ -240,24 +244,24 @@ public class BulkMutation {
 
     private void handleResponses(AtomicReference<Long> backoffTime,
         Iterable<MutateRowsResponse.Entry> entries, RequestManager retryRequestManager) {
-      int count = 0;
       for (MutateRowsResponse.Entry entry : entries) {
-        Status status = entry.getStatus();
         int index = (int) entry.getIndex();
         if (index >= currentRequestManager.futures.size()) {
-          LOG.error("Got %extra status: %s", entry);
+          LOG.error("Got extra status: %s", entry);
           break;
         }
+
         SettableFuture<MutateRowResponse> future = currentRequestManager.futures.get(index);
 
-        if (status.getCode() == io.grpc.Status.Code.OK.value()) {
+        Status status = entry.getStatus();
+        int statusCode = status.getCode();
+        if (statusCode == io.grpc.Status.Code.OK.value()) {
           future.set(MutateRowResponse.getDefaultInstance());
-        } else if (!isRetryable(status) || getCurrentBackoff(backoffTime) == BackOff.STOP) {
+        } else if (!isRetryable(statusCode) || getCurrentBackoff(backoffTime) == BackOff.STOP) {
           future.setException(toException(status));
         } else {
-          retryRequestManager.add(future, this.currentRequestManager.request.getEntries(count));
+          retryRequestManager.add(future, currentRequestManager.request.getEntries(index));
         }
-        count++;
       }
     }
 
@@ -308,8 +312,7 @@ public class BulkMutation {
       }
     }
 
-    private boolean isRetryable(Status status) {
-      int codeId = status.getCode();
+    protected boolean isRetryable(int codeId) {
       Code code = io.grpc.Status.fromCodeValue(codeId).getCode();
       return retryOptions.isRetryable(code);
     }
@@ -331,9 +334,8 @@ public class BulkMutation {
     }
 
     /**
-     *       // This would have happened after all retries are exhausted on the MutateRowsRequest.
-      // Don't retry individual mutations.
-     * @param t
+     * This would have happened after all retries are exhausted on the MutateRowsRequest. Don't
+     * retry individual mutations.
      */
     private void setFailure(Throwable t) {
       try {
