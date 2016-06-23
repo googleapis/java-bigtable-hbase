@@ -33,9 +33,9 @@ public class BigtableOptions implements Serializable {
   private static final long serialVersionUID = 1L;
 
   public static final String BIGTABLE_TABLE_ADMIN_HOST_DEFAULT =
-      "bigtabletableadmin.googleapis.com";
+      "bigtableadmin.googleapis.com";
   public static final String BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT =
-      "bigtableclusteradmin.googleapis.com";
+      "bigtableadmin.googleapis.com";
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
   public static final int BIGTABLE_PORT_DEFAULT = 443;
 

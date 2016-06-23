@@ -66,7 +66,7 @@ limitations under the License.
         <google.bigtable.cluster.name>cluster</google.bigtable.cluster.name>
         <google.bigtable.zone.name>us-central1-b</google.bigtable.zone.name>
         <google.bigtable.endpoint.host>bigtable.googleapis.com</google.bigtable.endpoint.host>
-        <google.bigtable.admin.endpoint.host>bigtabletableadmin.googleapis.com</google.bigtable.admin.endpoint.host>
+        <google.bigtable.admin.endpoint.host>bigtableadmin.googleapis.com</google.bigtable.admin.endpoint.host>
         <google.bigtable.cluster.admin.endpoint.host>bigtableclusteradmin.googleapis.com</google.bigtable.cluster.admin.endpoint.host>
     </properties>
 
