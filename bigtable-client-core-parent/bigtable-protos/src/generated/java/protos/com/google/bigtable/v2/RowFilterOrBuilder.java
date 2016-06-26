@@ -72,14 +72,14 @@ public interface RowFilterOrBuilder extends
    * Hook for introspection into the RowFilter. Outputs all cells directly to
    * the output of the read rather than to any parent filter. Consider the
    * following example:
-   * Chain(
-   *   FamilyRegex("A"),
-   *   Interleave(
-   *     All(),
-   *     Chain(Label("foo"), Sink())
-   *   ),
-   *   QualifierRegex("B")
-   * )
+   *     Chain(
+   *       FamilyRegex("A"),
+   *       Interleave(
+   *         All(),
+   *         Chain(Label("foo"), Sink())
+   *       ),
+   *       QualifierRegex("B")
+   *     )
    *                         A,A,1,w
    *                         A,B,2,x
    *                         B,B,4,z
@@ -114,14 +114,14 @@ public interface RowFilterOrBuilder extends
    *                         A,B,2,x               // could be switched
    * Despite being excluded by the qualifier filter, a copy of every cell
    * that reaches the sink is present in the final result.
-   * As with an [Interleave][google.bigtable.v1.RowFilter.Interleave],
+   * As with an [Interleave][google.bigtable.v2.RowFilter.Interleave],
    * duplicate cells are possible, and appear in an unspecified mutual order.
    * In this case we have a duplicate with column "A:B" and timestamp 2,
    * because one copy passed through the all filter while the other was
    * passed through the label and sink. Note that one copy has label "foo",
    * while the other does not.
    * Cannot be used within the `predicate_filter`, `true_filter`, or
-   * `false_filter` of a [Condition][google.bigtable.v1.RowFilter.Condition].
+   * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
    * </pre>
    */
   boolean getSink();
@@ -153,9 +153,9 @@ public interface RowFilterOrBuilder extends
    * Matches only cells from rows whose keys satisfy the given RE2 regex. In
    * other words, passes through the entire row when the key matches, and
    * otherwise produces an empty row.
-   * Note that, since row keys can contain arbitrary bytes, the '&#92;C' escape
-   * sequence must be used if a true wildcard is desired. The '.' character
-   * will not match the new line character '&#92;n', which may be present in a
+   * Note that, since row keys can contain arbitrary bytes, the `&#92;C` escape
+   * sequence must be used if a true wildcard is desired. The `.` character
+   * will not match the new line character `&#92;n`, which may be present in a
    * binary key.
    * </pre>
    */
@@ -176,10 +176,10 @@ public interface RowFilterOrBuilder extends
    *
    * <pre>
    * Matches only cells from columns whose families satisfy the given RE2
-   * regex. For technical reasons, the regex must not contain the ':'
+   * regex. For technical reasons, the regex must not contain the `:`
    * character, even if it is not being used as a literal.
    * Note that, since column families cannot contain the new line character
-   * '&#92;n', it is sufficient to use '.' as a full wildcard when matching
+   * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
    * column family names.
    * </pre>
    */
@@ -189,10 +189,10 @@ public interface RowFilterOrBuilder extends
    *
    * <pre>
    * Matches only cells from columns whose families satisfy the given RE2
-   * regex. For technical reasons, the regex must not contain the ':'
+   * regex. For technical reasons, the regex must not contain the `:`
    * character, even if it is not being used as a literal.
    * Note that, since column families cannot contain the new line character
-   * '&#92;n', it is sufficient to use '.' as a full wildcard when matching
+   * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
    * column family names.
    * </pre>
    */
@@ -205,9 +205,9 @@ public interface RowFilterOrBuilder extends
    * <pre>
    * Matches only cells from columns whose qualifiers satisfy the given RE2
    * regex.
-   * Note that, since column qualifiers can contain arbitrary bytes, the '&#92;C'
-   * escape sequence must be used if a true wildcard is desired. The '.'
-   * character will not match the new line character '&#92;n', which may be
+   * Note that, since column qualifiers can contain arbitrary bytes, the `&#92;C`
+   * escape sequence must be used if a true wildcard is desired. The `.`
+   * character will not match the new line character `&#92;n`, which may be
    * present in a binary qualifier.
    * </pre>
    */
@@ -252,9 +252,9 @@ public interface RowFilterOrBuilder extends
    *
    * <pre>
    * Matches only cells with values that satisfy the given regular expression.
-   * Note that, since cell values can contain arbitrary bytes, the '&#92;C' escape
-   * sequence must be used if a true wildcard is desired. The '.' character
-   * will not match the new line character '&#92;n', which may be present in a
+   * Note that, since cell values can contain arbitrary bytes, the `&#92;C` escape
+   * sequence must be used if a true wildcard is desired. The `.` character
+   * will not match the new line character `&#92;n`, which may be present in a
    * binary value.
    * </pre>
    */
@@ -304,9 +304,9 @@ public interface RowFilterOrBuilder extends
    *
    * <pre>
    * Matches only the most recent N cells within each column. For example,
-   * if N=2, this filter would match column "foo:bar" at timestamps 10 and 9,
-   * skip all earlier cells in "foo:bar", and then begin matching again in
-   * column "foo:bar2".
+   * if N=2, this filter would match column `foo:bar` at timestamps 10 and 9,
+   * skip all earlier cells in `foo:bar`, and then begin matching again in
+   * column `foo:bar2`.
    * If duplicate cells are present, as is possible when using an Interleave,
    * each copy of the cell is counted separately.
    * </pre>
@@ -330,13 +330,13 @@ public interface RowFilterOrBuilder extends
    * the client to determine which results were produced from which part of
    * the filter.
    * Values must be at most 15 characters in length, and match the RE2
-   * pattern [a-z0-9&#92;&#92;-]+
+   * pattern `[a-z0-9&#92;&#92;-]+`
    * Due to a technical limitation, it is not currently possible to apply
    * multiple labels to a cell. As a result, a Chain may have no more than
-   * one sub-filter which contains a apply_label_transformer. It is okay for
-   * an Interleave to contain multiple apply_label_transformers, as they will
-   * be applied to separate copies of the input. This may be relaxed in the
-   * future.
+   * one sub-filter which contains a `apply_label_transformer`. It is okay for
+   * an Interleave to contain multiple `apply_label_transformers`, as they
+   * will be applied to separate copies of the input. This may be relaxed in
+   * the future.
    * </pre>
    */
   java.lang.String getApplyLabelTransformer();
@@ -348,13 +348,13 @@ public interface RowFilterOrBuilder extends
    * the client to determine which results were produced from which part of
    * the filter.
    * Values must be at most 15 characters in length, and match the RE2
-   * pattern [a-z0-9&#92;&#92;-]+
+   * pattern `[a-z0-9&#92;&#92;-]+`
    * Due to a technical limitation, it is not currently possible to apply
    * multiple labels to a cell. As a result, a Chain may have no more than
-   * one sub-filter which contains a apply_label_transformer. It is okay for
-   * an Interleave to contain multiple apply_label_transformers, as they will
-   * be applied to separate copies of the input. This may be relaxed in the
-   * future.
+   * one sub-filter which contains a `apply_label_transformer`. It is okay for
+   * an Interleave to contain multiple `apply_label_transformers`, as they
+   * will be applied to separate copies of the input. This may be relaxed in
+   * the future.
    * </pre>
    */
   com.google.protobuf.ByteString

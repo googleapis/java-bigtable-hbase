@@ -148,6 +148,12 @@ public  final class ListTablesResponse extends
   private volatile java.lang.Object nextPageToken_;
   /**
    * <code>optional string next_page_token = 2;</code>
+   *
+   * <pre>
+   * Set if not all tables could be returned in a single response.
+   * Pass this value to `page_token` in another request to get the next
+   * page of results.
+   * </pre>
    */
   public java.lang.String getNextPageToken() {
     java.lang.Object ref = nextPageToken_;
@@ -163,6 +169,12 @@ public  final class ListTablesResponse extends
   }
   /**
    * <code>optional string next_page_token = 2;</code>
+   *
+   * <pre>
+   * Set if not all tables could be returned in a single response.
+   * Pass this value to `page_token` in another request to get the next
+   * page of results.
+   * </pre>
    */
   public com.google.protobuf.ByteString
       getNextPageTokenBytes() {
@@ -756,6 +768,12 @@ public  final class ListTablesResponse extends
     private java.lang.Object nextPageToken_ = "";
     /**
      * <code>optional string next_page_token = 2;</code>
+     *
+     * <pre>
+     * Set if not all tables could be returned in a single response.
+     * Pass this value to `page_token` in another request to get the next
+     * page of results.
+     * </pre>
      */
     public java.lang.String getNextPageToken() {
       java.lang.Object ref = nextPageToken_;
@@ -771,6 +789,12 @@ public  final class ListTablesResponse extends
     }
     /**
      * <code>optional string next_page_token = 2;</code>
+     *
+     * <pre>
+     * Set if not all tables could be returned in a single response.
+     * Pass this value to `page_token` in another request to get the next
+     * page of results.
+     * </pre>
      */
     public com.google.protobuf.ByteString
         getNextPageTokenBytes() {
@@ -787,6 +811,12 @@ public  final class ListTablesResponse extends
     }
     /**
      * <code>optional string next_page_token = 2;</code>
+     *
+     * <pre>
+     * Set if not all tables could be returned in a single response.
+     * Pass this value to `page_token` in another request to get the next
+     * page of results.
+     * </pre>
      */
     public Builder setNextPageToken(
         java.lang.String value) {
@@ -800,6 +830,12 @@ public  final class ListTablesResponse extends
     }
     /**
      * <code>optional string next_page_token = 2;</code>
+     *
+     * <pre>
+     * Set if not all tables could be returned in a single response.
+     * Pass this value to `page_token` in another request to get the next
+     * page of results.
+     * </pre>
      */
     public Builder clearNextPageToken() {
       
@@ -809,6 +845,12 @@ public  final class ListTablesResponse extends
     }
     /**
      * <code>optional string next_page_token = 2;</code>
+     *
+     * <pre>
+     * Set if not all tables could be returned in a single response.
+     * Pass this value to `page_token` in another request to get the next
+     * page of results.
+     * </pre>
      */
     public Builder setNextPageTokenBytes(
         com.google.protobuf.ByteString value) {

@@ -9,10 +9,20 @@ public interface DeleteClusterRequestOrBuilder extends
 
   /**
    * <code>optional string name = 1;</code>
+   *
+   * <pre>
+   * The unique name of the cluster to be deleted. Values are of the form
+   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;
+   * </pre>
    */
   java.lang.String getName();
   /**
    * <code>optional string name = 1;</code>
+   *
+   * <pre>
+   * The unique name of the cluster to be deleted. Values are of the form
+   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;
+   * </pre>
    */
   com.google.protobuf.ByteString
       getNameBytes();

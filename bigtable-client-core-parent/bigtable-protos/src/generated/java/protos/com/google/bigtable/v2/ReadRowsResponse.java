@@ -112,7 +112,7 @@ public  final class ReadRowsResponse extends
      * family as the previous CellChunk.  The empty string can occur as a
      * column family name in a response so clients must check
      * explicitly for the presence of this message, not just for
-     * family_name.value being non-empty.
+     * `family_name.value` being non-empty.
      * </pre>
      */
     boolean hasFamilyName();
@@ -125,7 +125,7 @@ public  final class ReadRowsResponse extends
      * family as the previous CellChunk.  The empty string can occur as a
      * column family name in a response so clients must check
      * explicitly for the presence of this message, not just for
-     * family_name.value being non-empty.
+     * `family_name.value` being non-empty.
      * </pre>
      */
     com.google.protobuf.StringValue getFamilyName();
@@ -138,7 +138,7 @@ public  final class ReadRowsResponse extends
      * family as the previous CellChunk.  The empty string can occur as a
      * column family name in a response so clients must check
      * explicitly for the presence of this message, not just for
-     * family_name.value being non-empty.
+     * `family_name.value` being non-empty.
      * </pre>
      */
     com.google.protobuf.StringValueOrBuilder getFamilyNameOrBuilder();
@@ -151,7 +151,7 @@ public  final class ReadRowsResponse extends
      * is not present, this CellChunk is a continuation of the same column
      * as the previous CellChunk.  Column qualifiers may be empty so
      * clients must check for the presence of this message, not just
-     * for qualifier.value being non-empty.
+     * for `qualifier.value` being non-empty.
      * </pre>
      */
     boolean hasQualifier();
@@ -163,7 +163,7 @@ public  final class ReadRowsResponse extends
      * is not present, this CellChunk is a continuation of the same column
      * as the previous CellChunk.  Column qualifiers may be empty so
      * clients must check for the presence of this message, not just
-     * for qualifier.value being non-empty.
+     * for `qualifier.value` being non-empty.
      * </pre>
      */
     com.google.protobuf.BytesValue getQualifier();
@@ -175,7 +175,7 @@ public  final class ReadRowsResponse extends
      * is not present, this CellChunk is a continuation of the same column
      * as the previous CellChunk.  Column qualifiers may be empty so
      * clients must check for the presence of this message, not just
-     * for qualifier.value being non-empty.
+     * for `qualifier.value` being non-empty.
      * </pre>
      */
     com.google.protobuf.BytesValueOrBuilder getQualifierOrBuilder();
@@ -187,9 +187,9 @@ public  final class ReadRowsResponse extends
      * The cell's stored timestamp, which also uniquely identifies it
      * within its column.  Values are always expressed in
      * microseconds, but individual tables may set a coarser
-     * "granularity" to further restrict the allowed values. For
+     * granularity to further restrict the allowed values. For
      * example, a table which specifies millisecond granularity will
-     * only allow values of "timestamp_micros" which are multiples of
+     * only allow values of `timestamp_micros` which are multiples of
      * 1000.  Timestamps are only set in the first CellChunk per cell
      * (for cells split into multiple chunks).
      * </pre>
@@ -269,7 +269,7 @@ public  final class ReadRowsResponse extends
      *
      * <pre>
      * Indicates that the client should drop all previous chunks for
-     * "row_key", as it will be re-read from the beginning.
+     * `row_key`, as it will be re-read from the beginning.
      * </pre>
      */
     boolean getResetRow();
@@ -279,7 +279,7 @@ public  final class ReadRowsResponse extends
      *
      * <pre>
      * Indicates that the client can safely process all previous chunks for
-     * "row_key", as its data has been fully read.
+     * `row_key`, as its data has been fully read.
      * </pre>
      */
     boolean getCommitRow();
@@ -485,7 +485,7 @@ public  final class ReadRowsResponse extends
      * family as the previous CellChunk.  The empty string can occur as a
      * column family name in a response so clients must check
      * explicitly for the presence of this message, not just for
-     * family_name.value being non-empty.
+     * `family_name.value` being non-empty.
      * </pre>
      */
     public boolean hasFamilyName() {
@@ -500,7 +500,7 @@ public  final class ReadRowsResponse extends
      * family as the previous CellChunk.  The empty string can occur as a
      * column family name in a response so clients must check
      * explicitly for the presence of this message, not just for
-     * family_name.value being non-empty.
+     * `family_name.value` being non-empty.
      * </pre>
      */
     public com.google.protobuf.StringValue getFamilyName() {
@@ -515,7 +515,7 @@ public  final class ReadRowsResponse extends
      * family as the previous CellChunk.  The empty string can occur as a
      * column family name in a response so clients must check
      * explicitly for the presence of this message, not just for
-     * family_name.value being non-empty.
+     * `family_name.value` being non-empty.
      * </pre>
      */
     public com.google.protobuf.StringValueOrBuilder getFamilyNameOrBuilder() {
@@ -532,7 +532,7 @@ public  final class ReadRowsResponse extends
      * is not present, this CellChunk is a continuation of the same column
      * as the previous CellChunk.  Column qualifiers may be empty so
      * clients must check for the presence of this message, not just
-     * for qualifier.value being non-empty.
+     * for `qualifier.value` being non-empty.
      * </pre>
      */
     public boolean hasQualifier() {
@@ -546,7 +546,7 @@ public  final class ReadRowsResponse extends
      * is not present, this CellChunk is a continuation of the same column
      * as the previous CellChunk.  Column qualifiers may be empty so
      * clients must check for the presence of this message, not just
-     * for qualifier.value being non-empty.
+     * for `qualifier.value` being non-empty.
      * </pre>
      */
     public com.google.protobuf.BytesValue getQualifier() {
@@ -560,7 +560,7 @@ public  final class ReadRowsResponse extends
      * is not present, this CellChunk is a continuation of the same column
      * as the previous CellChunk.  Column qualifiers may be empty so
      * clients must check for the presence of this message, not just
-     * for qualifier.value being non-empty.
+     * for `qualifier.value` being non-empty.
      * </pre>
      */
     public com.google.protobuf.BytesValueOrBuilder getQualifierOrBuilder() {
@@ -576,9 +576,9 @@ public  final class ReadRowsResponse extends
      * The cell's stored timestamp, which also uniquely identifies it
      * within its column.  Values are always expressed in
      * microseconds, but individual tables may set a coarser
-     * "granularity" to further restrict the allowed values. For
+     * granularity to further restrict the allowed values. For
      * example, a table which specifies millisecond granularity will
-     * only allow values of "timestamp_micros" which are multiples of
+     * only allow values of `timestamp_micros` which are multiples of
      * 1000.  Timestamps are only set in the first CellChunk per cell
      * (for cells split into multiple chunks).
      * </pre>
@@ -679,7 +679,7 @@ public  final class ReadRowsResponse extends
      *
      * <pre>
      * Indicates that the client should drop all previous chunks for
-     * "row_key", as it will be re-read from the beginning.
+     * `row_key`, as it will be re-read from the beginning.
      * </pre>
      */
     public boolean getResetRow() {
@@ -695,7 +695,7 @@ public  final class ReadRowsResponse extends
      *
      * <pre>
      * Indicates that the client can safely process all previous chunks for
-     * "row_key", as its data has been fully read.
+     * `row_key`, as its data has been fully read.
      * </pre>
      */
     public boolean getCommitRow() {
@@ -1146,7 +1146,7 @@ public  final class ReadRowsResponse extends
        * family as the previous CellChunk.  The empty string can occur as a
        * column family name in a response so clients must check
        * explicitly for the presence of this message, not just for
-       * family_name.value being non-empty.
+       * `family_name.value` being non-empty.
        * </pre>
        */
       public boolean hasFamilyName() {
@@ -1161,7 +1161,7 @@ public  final class ReadRowsResponse extends
        * family as the previous CellChunk.  The empty string can occur as a
        * column family name in a response so clients must check
        * explicitly for the presence of this message, not just for
-       * family_name.value being non-empty.
+       * `family_name.value` being non-empty.
        * </pre>
        */
       public com.google.protobuf.StringValue getFamilyName() {
@@ -1180,7 +1180,7 @@ public  final class ReadRowsResponse extends
        * family as the previous CellChunk.  The empty string can occur as a
        * column family name in a response so clients must check
        * explicitly for the presence of this message, not just for
-       * family_name.value being non-empty.
+       * `family_name.value` being non-empty.
        * </pre>
        */
       public Builder setFamilyName(com.google.protobuf.StringValue value) {
@@ -1205,7 +1205,7 @@ public  final class ReadRowsResponse extends
        * family as the previous CellChunk.  The empty string can occur as a
        * column family name in a response so clients must check
        * explicitly for the presence of this message, not just for
-       * family_name.value being non-empty.
+       * `family_name.value` being non-empty.
        * </pre>
        */
       public Builder setFamilyName(
@@ -1228,7 +1228,7 @@ public  final class ReadRowsResponse extends
        * family as the previous CellChunk.  The empty string can occur as a
        * column family name in a response so clients must check
        * explicitly for the presence of this message, not just for
-       * family_name.value being non-empty.
+       * `family_name.value` being non-empty.
        * </pre>
        */
       public Builder mergeFamilyName(com.google.protobuf.StringValue value) {
@@ -1255,7 +1255,7 @@ public  final class ReadRowsResponse extends
        * family as the previous CellChunk.  The empty string can occur as a
        * column family name in a response so clients must check
        * explicitly for the presence of this message, not just for
-       * family_name.value being non-empty.
+       * `family_name.value` being non-empty.
        * </pre>
        */
       public Builder clearFamilyName() {
@@ -1278,7 +1278,7 @@ public  final class ReadRowsResponse extends
        * family as the previous CellChunk.  The empty string can occur as a
        * column family name in a response so clients must check
        * explicitly for the presence of this message, not just for
-       * family_name.value being non-empty.
+       * `family_name.value` being non-empty.
        * </pre>
        */
       public com.google.protobuf.StringValue.Builder getFamilyNameBuilder() {
@@ -1295,7 +1295,7 @@ public  final class ReadRowsResponse extends
        * family as the previous CellChunk.  The empty string can occur as a
        * column family name in a response so clients must check
        * explicitly for the presence of this message, not just for
-       * family_name.value being non-empty.
+       * `family_name.value` being non-empty.
        * </pre>
        */
       public com.google.protobuf.StringValueOrBuilder getFamilyNameOrBuilder() {
@@ -1315,7 +1315,7 @@ public  final class ReadRowsResponse extends
        * family as the previous CellChunk.  The empty string can occur as a
        * column family name in a response so clients must check
        * explicitly for the presence of this message, not just for
-       * family_name.value being non-empty.
+       * `family_name.value` being non-empty.
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<
@@ -1343,7 +1343,7 @@ public  final class ReadRowsResponse extends
        * is not present, this CellChunk is a continuation of the same column
        * as the previous CellChunk.  Column qualifiers may be empty so
        * clients must check for the presence of this message, not just
-       * for qualifier.value being non-empty.
+       * for `qualifier.value` being non-empty.
        * </pre>
        */
       public boolean hasQualifier() {
@@ -1357,7 +1357,7 @@ public  final class ReadRowsResponse extends
        * is not present, this CellChunk is a continuation of the same column
        * as the previous CellChunk.  Column qualifiers may be empty so
        * clients must check for the presence of this message, not just
-       * for qualifier.value being non-empty.
+       * for `qualifier.value` being non-empty.
        * </pre>
        */
       public com.google.protobuf.BytesValue getQualifier() {
@@ -1375,7 +1375,7 @@ public  final class ReadRowsResponse extends
        * is not present, this CellChunk is a continuation of the same column
        * as the previous CellChunk.  Column qualifiers may be empty so
        * clients must check for the presence of this message, not just
-       * for qualifier.value being non-empty.
+       * for `qualifier.value` being non-empty.
        * </pre>
        */
       public Builder setQualifier(com.google.protobuf.BytesValue value) {
@@ -1399,7 +1399,7 @@ public  final class ReadRowsResponse extends
        * is not present, this CellChunk is a continuation of the same column
        * as the previous CellChunk.  Column qualifiers may be empty so
        * clients must check for the presence of this message, not just
-       * for qualifier.value being non-empty.
+       * for `qualifier.value` being non-empty.
        * </pre>
        */
       public Builder setQualifier(
@@ -1421,7 +1421,7 @@ public  final class ReadRowsResponse extends
        * is not present, this CellChunk is a continuation of the same column
        * as the previous CellChunk.  Column qualifiers may be empty so
        * clients must check for the presence of this message, not just
-       * for qualifier.value being non-empty.
+       * for `qualifier.value` being non-empty.
        * </pre>
        */
       public Builder mergeQualifier(com.google.protobuf.BytesValue value) {
@@ -1447,7 +1447,7 @@ public  final class ReadRowsResponse extends
        * is not present, this CellChunk is a continuation of the same column
        * as the previous CellChunk.  Column qualifiers may be empty so
        * clients must check for the presence of this message, not just
-       * for qualifier.value being non-empty.
+       * for `qualifier.value` being non-empty.
        * </pre>
        */
       public Builder clearQualifier() {
@@ -1469,7 +1469,7 @@ public  final class ReadRowsResponse extends
        * is not present, this CellChunk is a continuation of the same column
        * as the previous CellChunk.  Column qualifiers may be empty so
        * clients must check for the presence of this message, not just
-       * for qualifier.value being non-empty.
+       * for `qualifier.value` being non-empty.
        * </pre>
        */
       public com.google.protobuf.BytesValue.Builder getQualifierBuilder() {
@@ -1485,7 +1485,7 @@ public  final class ReadRowsResponse extends
        * is not present, this CellChunk is a continuation of the same column
        * as the previous CellChunk.  Column qualifiers may be empty so
        * clients must check for the presence of this message, not just
-       * for qualifier.value being non-empty.
+       * for `qualifier.value` being non-empty.
        * </pre>
        */
       public com.google.protobuf.BytesValueOrBuilder getQualifierOrBuilder() {
@@ -1504,7 +1504,7 @@ public  final class ReadRowsResponse extends
        * is not present, this CellChunk is a continuation of the same column
        * as the previous CellChunk.  Column qualifiers may be empty so
        * clients must check for the presence of this message, not just
-       * for qualifier.value being non-empty.
+       * for `qualifier.value` being non-empty.
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<
@@ -1529,9 +1529,9 @@ public  final class ReadRowsResponse extends
        * The cell's stored timestamp, which also uniquely identifies it
        * within its column.  Values are always expressed in
        * microseconds, but individual tables may set a coarser
-       * "granularity" to further restrict the allowed values. For
+       * granularity to further restrict the allowed values. For
        * example, a table which specifies millisecond granularity will
-       * only allow values of "timestamp_micros" which are multiples of
+       * only allow values of `timestamp_micros` which are multiples of
        * 1000.  Timestamps are only set in the first CellChunk per cell
        * (for cells split into multiple chunks).
        * </pre>
@@ -1546,9 +1546,9 @@ public  final class ReadRowsResponse extends
        * The cell's stored timestamp, which also uniquely identifies it
        * within its column.  Values are always expressed in
        * microseconds, but individual tables may set a coarser
-       * "granularity" to further restrict the allowed values. For
+       * granularity to further restrict the allowed values. For
        * example, a table which specifies millisecond granularity will
-       * only allow values of "timestamp_micros" which are multiples of
+       * only allow values of `timestamp_micros` which are multiples of
        * 1000.  Timestamps are only set in the first CellChunk per cell
        * (for cells split into multiple chunks).
        * </pre>
@@ -1566,9 +1566,9 @@ public  final class ReadRowsResponse extends
        * The cell's stored timestamp, which also uniquely identifies it
        * within its column.  Values are always expressed in
        * microseconds, but individual tables may set a coarser
-       * "granularity" to further restrict the allowed values. For
+       * granularity to further restrict the allowed values. For
        * example, a table which specifies millisecond granularity will
-       * only allow values of "timestamp_micros" which are multiples of
+       * only allow values of `timestamp_micros` which are multiples of
        * 1000.  Timestamps are only set in the first CellChunk per cell
        * (for cells split into multiple chunks).
        * </pre>
@@ -1833,7 +1833,7 @@ public  final class ReadRowsResponse extends
        *
        * <pre>
        * Indicates that the client should drop all previous chunks for
-       * "row_key", as it will be re-read from the beginning.
+       * `row_key`, as it will be re-read from the beginning.
        * </pre>
        */
       public boolean getResetRow() {
@@ -1847,7 +1847,7 @@ public  final class ReadRowsResponse extends
        *
        * <pre>
        * Indicates that the client should drop all previous chunks for
-       * "row_key", as it will be re-read from the beginning.
+       * `row_key`, as it will be re-read from the beginning.
        * </pre>
        */
       public Builder setResetRow(boolean value) {
@@ -1861,7 +1861,7 @@ public  final class ReadRowsResponse extends
        *
        * <pre>
        * Indicates that the client should drop all previous chunks for
-       * "row_key", as it will be re-read from the beginning.
+       * `row_key`, as it will be re-read from the beginning.
        * </pre>
        */
       public Builder clearResetRow() {
@@ -1878,7 +1878,7 @@ public  final class ReadRowsResponse extends
        *
        * <pre>
        * Indicates that the client can safely process all previous chunks for
-       * "row_key", as its data has been fully read.
+       * `row_key`, as its data has been fully read.
        * </pre>
        */
       public boolean getCommitRow() {
@@ -1892,7 +1892,7 @@ public  final class ReadRowsResponse extends
        *
        * <pre>
        * Indicates that the client can safely process all previous chunks for
-       * "row_key", as its data has been fully read.
+       * `row_key`, as its data has been fully read.
        * </pre>
        */
       public Builder setCommitRow(boolean value) {
@@ -1906,7 +1906,7 @@ public  final class ReadRowsResponse extends
        *
        * <pre>
        * Indicates that the client can safely process all previous chunks for
-       * "row_key", as its data has been fully read.
+       * `row_key`, as its data has been fully read.
        * </pre>
        */
       public Builder clearCommitRow() {

@@ -217,7 +217,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private ListTablesResponse requestTableList() throws IOException {
     try {
       ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-      builder.setName(bigtableInstanceName.toString());
+      builder.setParent(bigtableInstanceName.toString());
       return bigtableTableAdminClient.listTables(builder.build());
     } catch (Throwable throwable) {
       throw new IOException("Failed to listTables", throwable);
@@ -310,7 +310,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    builder.setName(bigtableInstanceName.toString());
+    builder.setParent(bigtableInstanceName.toString());
     builder.setTableId(desc.getTableName().getQualifierAsString());
     builder.setTable(tableAdapter.adapt(desc));
     if (splitKeys != null) {

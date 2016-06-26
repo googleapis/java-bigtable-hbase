@@ -8,16 +8,16 @@ public interface ListTablesRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
+   * <code>optional string parent = 1;</code>
    *
    * <pre>
    * The unique name of the instance for which tables should be listed.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    */
-  java.lang.String getName();
+  java.lang.String getParent();
   /**
-   * <code>optional string name = 1;</code>
+   * <code>optional string parent = 1;</code>
    *
    * <pre>
    * The unique name of the instance for which tables should be listed.
@@ -25,7 +25,7 @@ public interface ListTablesRequestOrBuilder extends
    * </pre>
    */
   com.google.protobuf.ByteString
-      getNameBytes();
+      getParentBytes();
 
   /**
    * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
@@ -50,7 +50,7 @@ public interface ListTablesRequestOrBuilder extends
    * <code>optional string page_token = 3;</code>
    *
    * <pre>
-   * Not yet supported.
+   * The value of `next_page_token` returned by a previous call.
    * </pre>
    */
   java.lang.String getPageToken();
@@ -58,7 +58,7 @@ public interface ListTablesRequestOrBuilder extends
    * <code>optional string page_token = 3;</code>
    *
    * <pre>
-   * Not yet supported.
+   * The value of `next_page_token` returned by a previous call.
    * </pre>
    */
   com.google.protobuf.ByteString

@@ -107,9 +107,9 @@ public  final class SampleRowKeysResponse extends
    *
    * <pre>
    * Approximate total storage space used by all rows in the table which precede
-   * "row_key". Buffering the contents of all rows between two subsequent
+   * `row_key`. Buffering the contents of all rows between two subsequent
    * samples would require space roughly equal to the difference in their
-   * "offset_bytes" fields.
+   * `offset_bytes` fields.
    * </pre>
    */
   public long getOffsetBytes() {
@@ -404,9 +404,9 @@ public  final class SampleRowKeysResponse extends
      *
      * <pre>
      * Approximate total storage space used by all rows in the table which precede
-     * "row_key". Buffering the contents of all rows between two subsequent
+     * `row_key`. Buffering the contents of all rows between two subsequent
      * samples would require space roughly equal to the difference in their
-     * "offset_bytes" fields.
+     * `offset_bytes` fields.
      * </pre>
      */
     public long getOffsetBytes() {
@@ -417,9 +417,9 @@ public  final class SampleRowKeysResponse extends
      *
      * <pre>
      * Approximate total storage space used by all rows in the table which precede
-     * "row_key". Buffering the contents of all rows between two subsequent
+     * `row_key`. Buffering the contents of all rows between two subsequent
      * samples would require space roughly equal to the difference in their
-     * "offset_bytes" fields.
+     * `offset_bytes` fields.
      * </pre>
      */
     public Builder setOffsetBytes(long value) {
@@ -433,9 +433,9 @@ public  final class SampleRowKeysResponse extends
      *
      * <pre>
      * Approximate total storage space used by all rows in the table which precede
-     * "row_key". Buffering the contents of all rows between two subsequent
+     * `row_key`. Buffering the contents of all rows between two subsequent
      * samples would require space roughly equal to the difference in their
-     * "offset_bytes" fields.
+     * `offset_bytes` fields.
      * </pre>
      */
     public Builder clearOffsetBytes() {

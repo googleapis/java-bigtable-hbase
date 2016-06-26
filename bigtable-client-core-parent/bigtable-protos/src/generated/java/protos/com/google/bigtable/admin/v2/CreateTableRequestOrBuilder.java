@@ -8,16 +8,16 @@ public interface CreateTableRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
+   * <code>optional string parent = 1;</code>
    *
    * <pre>
    * The unique name of the instance in which to create the table.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    */
-  java.lang.String getName();
+  java.lang.String getParent();
   /**
-   * <code>optional string name = 1;</code>
+   * <code>optional string parent = 1;</code>
    *
    * <pre>
    * The unique name of the instance in which to create the table.
@@ -25,7 +25,7 @@ public interface CreateTableRequestOrBuilder extends
    * </pre>
    */
   com.google.protobuf.ByteString
-      getNameBytes();
+      getParentBytes();
 
   /**
    * <code>optional string table_id = 2;</code>

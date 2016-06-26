@@ -80,6 +80,11 @@ public  final class DeleteInstanceRequest extends
   private volatile java.lang.Object name_;
   /**
    * <code>optional string name = 1;</code>
+   *
+   * <pre>
+   * The unique name of the instance to be deleted.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+   * </pre>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -95,6 +100,11 @@ public  final class DeleteInstanceRequest extends
   }
   /**
    * <code>optional string name = 1;</code>
+   *
+   * <pre>
+   * The unique name of the instance to be deleted.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+   * </pre>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -323,6 +333,11 @@ public  final class DeleteInstanceRequest extends
     private java.lang.Object name_ = "";
     /**
      * <code>optional string name = 1;</code>
+     *
+     * <pre>
+     * The unique name of the instance to be deleted.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+     * </pre>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -338,6 +353,11 @@ public  final class DeleteInstanceRequest extends
     }
     /**
      * <code>optional string name = 1;</code>
+     *
+     * <pre>
+     * The unique name of the instance to be deleted.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+     * </pre>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -354,6 +374,11 @@ public  final class DeleteInstanceRequest extends
     }
     /**
      * <code>optional string name = 1;</code>
+     *
+     * <pre>
+     * The unique name of the instance to be deleted.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+     * </pre>
      */
     public Builder setName(
         java.lang.String value) {
@@ -367,6 +392,11 @@ public  final class DeleteInstanceRequest extends
     }
     /**
      * <code>optional string name = 1;</code>
+     *
+     * <pre>
+     * The unique name of the instance to be deleted.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+     * </pre>
      */
     public Builder clearName() {
       
@@ -376,6 +406,11 @@ public  final class DeleteInstanceRequest extends
     }
     /**
      * <code>optional string name = 1;</code>
+     *
+     * <pre>
+     * The unique name of the instance to be deleted.
+     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+     * </pre>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {

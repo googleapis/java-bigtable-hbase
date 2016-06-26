@@ -9,10 +9,20 @@ public interface DeleteInstanceRequestOrBuilder extends
 
   /**
    * <code>optional string name = 1;</code>
+   *
+   * <pre>
+   * The unique name of the instance to be deleted.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+   * </pre>
    */
   java.lang.String getName();
   /**
    * <code>optional string name = 1;</code>
+   *
+   * <pre>
+   * The unique name of the instance to be deleted.
+   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+   * </pre>
    */
   com.google.protobuf.ByteString
       getNameBytes();

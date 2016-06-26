@@ -13,7 +13,7 @@ public interface ColumnOrBuilder extends
    * <pre>
    * The unique key which identifies this column within its family. This is the
    * same key that's used to identify the column in, for example, a RowFilter
-   * which sets its "column_qualifier_regex_filter" field.
+   * which sets its `column_qualifier_regex_filter` field.
    * May contain any byte string, including the empty string, up to 16kiB in
    * length.
    * </pre>

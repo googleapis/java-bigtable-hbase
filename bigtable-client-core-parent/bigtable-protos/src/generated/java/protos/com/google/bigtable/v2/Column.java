@@ -7,7 +7,8 @@ package com.google.bigtable.v2;
  * Protobuf type {@code google.bigtable.v2.Column}
  *
  * <pre>
- * Specifies (some of) the contents of a single row/column of a table.
+ * Specifies (some of) the contents of a single row/column intersection of a
+ * table.
  * </pre>
  */
 public  final class Column extends
@@ -96,7 +97,7 @@ public  final class Column extends
    * <pre>
    * The unique key which identifies this column within its family. This is the
    * same key that's used to identify the column in, for example, a RowFilter
-   * which sets its "column_qualifier_regex_filter" field.
+   * which sets its `column_qualifier_regex_filter` field.
    * May contain any byte string, including the empty string, up to 16kiB in
    * length.
    * </pre>
@@ -273,7 +274,8 @@ public  final class Column extends
    * Protobuf type {@code google.bigtable.v2.Column}
    *
    * <pre>
-   * Specifies (some of) the contents of a single row/column of a table.
+   * Specifies (some of) the contents of a single row/column intersection of a
+   * table.
    * </pre>
    */
   public static final class Builder extends
@@ -430,7 +432,7 @@ public  final class Column extends
      * <pre>
      * The unique key which identifies this column within its family. This is the
      * same key that's used to identify the column in, for example, a RowFilter
-     * which sets its "column_qualifier_regex_filter" field.
+     * which sets its `column_qualifier_regex_filter` field.
      * May contain any byte string, including the empty string, up to 16kiB in
      * length.
      * </pre>
@@ -444,7 +446,7 @@ public  final class Column extends
      * <pre>
      * The unique key which identifies this column within its family. This is the
      * same key that's used to identify the column in, for example, a RowFilter
-     * which sets its "column_qualifier_regex_filter" field.
+     * which sets its `column_qualifier_regex_filter` field.
      * May contain any byte string, including the empty string, up to 16kiB in
      * length.
      * </pre>
@@ -464,7 +466,7 @@ public  final class Column extends
      * <pre>
      * The unique key which identifies this column within its family. This is the
      * same key that's used to identify the column in, for example, a RowFilter
-     * which sets its "column_qualifier_regex_filter" field.
+     * which sets its `column_qualifier_regex_filter` field.
      * May contain any byte string, including the empty string, up to 16kiB in
      * length.
      * </pre>

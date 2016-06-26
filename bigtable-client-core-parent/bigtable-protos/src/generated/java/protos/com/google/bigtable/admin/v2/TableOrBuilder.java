@@ -32,21 +32,6 @@ public interface TableOrBuilder extends
       getNameBytes();
 
   /**
-   * <code>map&lt;string, .google.bigtable.admin.v2.Table.ClusterState&gt; cluster_states = 2;</code>
-   *
-   * <pre>
-   * Map from cluster ID to per-cluster table state.
-   * If it could not be determined whether or not the table has data in a
-   * particular cluster (for example, if its zone is unavailable), then
-   * there will be an entry for the cluster with UNKNOWN `replication_status`.
-   * Views: REPLICATION_VIEW, FULL
-   * &#64;OutputOnly
-   * </pre>
-   */
-  java.util.Map<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState>
-  getClusterStates();
-
-  /**
    * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
    *
    * <pre>

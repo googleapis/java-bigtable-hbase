@@ -14,9 +14,9 @@ public interface CellOrBuilder extends
    * The cell's stored timestamp, which also uniquely identifies it within
    * its column.
    * Values are always expressed in microseconds, but individual tables may set
-   * a coarser "granularity" to further restrict the allowed values. For
+   * a coarser granularity to further restrict the allowed values. For
    * example, a table which specifies millisecond granularity will only allow
-   * values of "timestamp_micros" which are multiples of 1000.
+   * values of `timestamp_micros` which are multiples of 1000.
    * </pre>
    */
   long getTimestampMicros();
@@ -36,7 +36,7 @@ public interface CellOrBuilder extends
    * <code>repeated string labels = 3;</code>
    *
    * <pre>
-   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
    */
   com.google.protobuf.ProtocolStringList
@@ -45,7 +45,7 @@ public interface CellOrBuilder extends
    * <code>repeated string labels = 3;</code>
    *
    * <pre>
-   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
    */
   int getLabelsCount();
@@ -53,7 +53,7 @@ public interface CellOrBuilder extends
    * <code>repeated string labels = 3;</code>
    *
    * <pre>
-   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
    */
   java.lang.String getLabels(int index);
@@ -61,7 +61,7 @@ public interface CellOrBuilder extends
    * <code>repeated string labels = 3;</code>
    *
    * <pre>
-   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
    */
   com.google.protobuf.ByteString

@@ -29,10 +29,10 @@ public interface MutateRowsRequestOrBuilder extends
    * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
    *
    * <pre>
-   * The row keys/mutations to be applied in bulk.
+   * The row keys and corresponding mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
    * applied in arbitrary order (even between entries for the same row).
-   * At least one entry must be specified, and in total the entries may
+   * At least one entry must be specified, and in total the entries can
    * contain at most 100000 mutations.
    * </pre>
    */
@@ -42,10 +42,10 @@ public interface MutateRowsRequestOrBuilder extends
    * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
    *
    * <pre>
-   * The row keys/mutations to be applied in bulk.
+   * The row keys and corresponding mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
    * applied in arbitrary order (even between entries for the same row).
-   * At least one entry must be specified, and in total the entries may
+   * At least one entry must be specified, and in total the entries can
    * contain at most 100000 mutations.
    * </pre>
    */
@@ -54,10 +54,10 @@ public interface MutateRowsRequestOrBuilder extends
    * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
    *
    * <pre>
-   * The row keys/mutations to be applied in bulk.
+   * The row keys and corresponding mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
    * applied in arbitrary order (even between entries for the same row).
-   * At least one entry must be specified, and in total the entries may
+   * At least one entry must be specified, and in total the entries can
    * contain at most 100000 mutations.
    * </pre>
    */
@@ -66,10 +66,10 @@ public interface MutateRowsRequestOrBuilder extends
    * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
    *
    * <pre>
-   * The row keys/mutations to be applied in bulk.
+   * The row keys and corresponding mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
    * applied in arbitrary order (even between entries for the same row).
-   * At least one entry must be specified, and in total the entries may
+   * At least one entry must be specified, and in total the entries can
    * contain at most 100000 mutations.
    * </pre>
    */
@@ -79,10 +79,10 @@ public interface MutateRowsRequestOrBuilder extends
    * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
    *
    * <pre>
-   * The row keys/mutations to be applied in bulk.
+   * The row keys and corresponding mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
    * applied in arbitrary order (even between entries for the same row).
-   * At least one entry must be specified, and in total the entries may
+   * At least one entry must be specified, and in total the entries can
    * contain at most 100000 mutations.
    * </pre>
    */

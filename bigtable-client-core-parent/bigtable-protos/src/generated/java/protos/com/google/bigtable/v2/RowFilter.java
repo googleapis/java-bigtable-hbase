@@ -18,17 +18,17 @@ package com.google.bigtable.v2;
  * as well as two ways to compose simple filters into more complex ones
  * (chains and interleaves). They work as follows:
  * * True filters alter the input row by excluding some of its cells wholesale
- * from the output row. An example of a true filter is the "value_regex_filter",
+ * from the output row. An example of a true filter is the `value_regex_filter`,
  * which excludes cells whose values don't match the specified pattern. All
  * regex true filters use RE2 syntax (https://github.com/google/re2/wiki/Syntax)
  * in raw byte mode (RE2::Latin1), and are evaluated as full matches. An
- * important point to keep in mind is that RE2(.) is equivalent by default to
- * RE2([^&#92;n]), meaning that it does not match newlines. When attempting to match
- * an arbitrary byte, you should therefore use the escape sequence '&#92;C', which
- * may need to be further escaped as '&#92;&#92;C' in your client language.
+ * important point to keep in mind is that `RE2(.)` is equivalent by default to
+ * `RE2([^&#92;n])`, meaning that it does not match newlines. When attempting to
+ * match an arbitrary byte, you should therefore use the escape sequence `&#92;C`,
+ * which may need to be further escaped as `&#92;&#92;C` in your client language.
  * * Transformers alter the input row by changing the values of some of its
  * cells in the output, without excluding them completely. Currently, the only
- * supported transformer is the "strip_value_transformer", which replaces every
+ * supported transformer is the `strip_value_transformer`, which replaces every
  * cell's value with the empty string.
  * * Chains and interleaves are described in more detail in the
  * RowFilter.Chain and RowFilter.Interleave documentation.
@@ -1114,23 +1114,23 @@ public  final class RowFilter extends
      * If multiple cells are produced with the same column and timestamp,
      * they will all appear in the output row in an unspecified mutual order.
      * Consider the following example, with three filters:
-     *                              input row
-     *                                  |
-     *        -----------------------------------------------------
-     *        |                         |                         |
-     *       f(0)                      f(1)                      f(2)
-     *        |                         |                         |
-     * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-     * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-     *        |                         |                         |
-     *        -----------------------------------------------------
-     *                                  |
-     * 1:                        foo,bar,10,z     // could have switched with #2
-     * 2:                        foo,bar,10,x     // could have switched with #1
-     * 3:                        foo,blah,11,z
-     * 4:                        far,bar,7,a
-     * 5:                        far,blah,5,x     // identical to #6
-     * 6:                        far,blah,5,x     // identical to #5
+     *                                  input row
+     *                                      |
+     *            -----------------------------------------------------
+     *            |                         |                         |
+     *           f(0)                      f(1)                      f(2)
+     *            |                         |                         |
+     *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+     *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+     *            |                         |                         |
+     *            -----------------------------------------------------
+     *                                      |
+     *     1:                      foo,bar,10,z   // could have switched with #2
+     *     2:                      foo,bar,10,x   // could have switched with #1
+     *     3:                      foo,blah,11,z
+     *     4:                      far,bar,7,a
+     *     5:                      far,blah,5,x   // identical to #6
+     *     6:                      far,blah,5,x   // identical to #5
      * All interleaved filters are executed atomically.
      * </pre>
      */
@@ -1145,23 +1145,23 @@ public  final class RowFilter extends
      * If multiple cells are produced with the same column and timestamp,
      * they will all appear in the output row in an unspecified mutual order.
      * Consider the following example, with three filters:
-     *                              input row
-     *                                  |
-     *        -----------------------------------------------------
-     *        |                         |                         |
-     *       f(0)                      f(1)                      f(2)
-     *        |                         |                         |
-     * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-     * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-     *        |                         |                         |
-     *        -----------------------------------------------------
-     *                                  |
-     * 1:                        foo,bar,10,z     // could have switched with #2
-     * 2:                        foo,bar,10,x     // could have switched with #1
-     * 3:                        foo,blah,11,z
-     * 4:                        far,bar,7,a
-     * 5:                        far,blah,5,x     // identical to #6
-     * 6:                        far,blah,5,x     // identical to #5
+     *                                  input row
+     *                                      |
+     *            -----------------------------------------------------
+     *            |                         |                         |
+     *           f(0)                      f(1)                      f(2)
+     *            |                         |                         |
+     *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+     *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+     *            |                         |                         |
+     *            -----------------------------------------------------
+     *                                      |
+     *     1:                      foo,bar,10,z   // could have switched with #2
+     *     2:                      foo,bar,10,x   // could have switched with #1
+     *     3:                      foo,blah,11,z
+     *     4:                      far,bar,7,a
+     *     5:                      far,blah,5,x   // identical to #6
+     *     6:                      far,blah,5,x   // identical to #5
      * All interleaved filters are executed atomically.
      * </pre>
      */
@@ -1175,23 +1175,23 @@ public  final class RowFilter extends
      * If multiple cells are produced with the same column and timestamp,
      * they will all appear in the output row in an unspecified mutual order.
      * Consider the following example, with three filters:
-     *                              input row
-     *                                  |
-     *        -----------------------------------------------------
-     *        |                         |                         |
-     *       f(0)                      f(1)                      f(2)
-     *        |                         |                         |
-     * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-     * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-     *        |                         |                         |
-     *        -----------------------------------------------------
-     *                                  |
-     * 1:                        foo,bar,10,z     // could have switched with #2
-     * 2:                        foo,bar,10,x     // could have switched with #1
-     * 3:                        foo,blah,11,z
-     * 4:                        far,bar,7,a
-     * 5:                        far,blah,5,x     // identical to #6
-     * 6:                        far,blah,5,x     // identical to #5
+     *                                  input row
+     *                                      |
+     *            -----------------------------------------------------
+     *            |                         |                         |
+     *           f(0)                      f(1)                      f(2)
+     *            |                         |                         |
+     *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+     *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+     *            |                         |                         |
+     *            -----------------------------------------------------
+     *                                      |
+     *     1:                      foo,bar,10,z   // could have switched with #2
+     *     2:                      foo,bar,10,x   // could have switched with #1
+     *     3:                      foo,blah,11,z
+     *     4:                      far,bar,7,a
+     *     5:                      far,blah,5,x   // identical to #6
+     *     6:                      far,blah,5,x   // identical to #5
      * All interleaved filters are executed atomically.
      * </pre>
      */
@@ -1205,23 +1205,23 @@ public  final class RowFilter extends
      * If multiple cells are produced with the same column and timestamp,
      * they will all appear in the output row in an unspecified mutual order.
      * Consider the following example, with three filters:
-     *                              input row
-     *                                  |
-     *        -----------------------------------------------------
-     *        |                         |                         |
-     *       f(0)                      f(1)                      f(2)
-     *        |                         |                         |
-     * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-     * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-     *        |                         |                         |
-     *        -----------------------------------------------------
-     *                                  |
-     * 1:                        foo,bar,10,z     // could have switched with #2
-     * 2:                        foo,bar,10,x     // could have switched with #1
-     * 3:                        foo,blah,11,z
-     * 4:                        far,bar,7,a
-     * 5:                        far,blah,5,x     // identical to #6
-     * 6:                        far,blah,5,x     // identical to #5
+     *                                  input row
+     *                                      |
+     *            -----------------------------------------------------
+     *            |                         |                         |
+     *           f(0)                      f(1)                      f(2)
+     *            |                         |                         |
+     *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+     *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+     *            |                         |                         |
+     *            -----------------------------------------------------
+     *                                      |
+     *     1:                      foo,bar,10,z   // could have switched with #2
+     *     2:                      foo,bar,10,x   // could have switched with #1
+     *     3:                      foo,blah,11,z
+     *     4:                      far,bar,7,a
+     *     5:                      far,blah,5,x   // identical to #6
+     *     6:                      far,blah,5,x   // identical to #5
      * All interleaved filters are executed atomically.
      * </pre>
      */
@@ -1236,23 +1236,23 @@ public  final class RowFilter extends
      * If multiple cells are produced with the same column and timestamp,
      * they will all appear in the output row in an unspecified mutual order.
      * Consider the following example, with three filters:
-     *                              input row
-     *                                  |
-     *        -----------------------------------------------------
-     *        |                         |                         |
-     *       f(0)                      f(1)                      f(2)
-     *        |                         |                         |
-     * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-     * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-     *        |                         |                         |
-     *        -----------------------------------------------------
-     *                                  |
-     * 1:                        foo,bar,10,z     // could have switched with #2
-     * 2:                        foo,bar,10,x     // could have switched with #1
-     * 3:                        foo,blah,11,z
-     * 4:                        far,bar,7,a
-     * 5:                        far,blah,5,x     // identical to #6
-     * 6:                        far,blah,5,x     // identical to #5
+     *                                  input row
+     *                                      |
+     *            -----------------------------------------------------
+     *            |                         |                         |
+     *           f(0)                      f(1)                      f(2)
+     *            |                         |                         |
+     *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+     *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+     *            |                         |                         |
+     *            -----------------------------------------------------
+     *                                      |
+     *     1:                      foo,bar,10,z   // could have switched with #2
+     *     2:                      foo,bar,10,x   // could have switched with #1
+     *     3:                      foo,blah,11,z
+     *     4:                      far,bar,7,a
+     *     5:                      far,blah,5,x   // identical to #6
+     *     6:                      far,blah,5,x   // identical to #5
      * All interleaved filters are executed atomically.
      * </pre>
      */
@@ -1349,23 +1349,23 @@ public  final class RowFilter extends
      * If multiple cells are produced with the same column and timestamp,
      * they will all appear in the output row in an unspecified mutual order.
      * Consider the following example, with three filters:
-     *                              input row
-     *                                  |
-     *        -----------------------------------------------------
-     *        |                         |                         |
-     *       f(0)                      f(1)                      f(2)
-     *        |                         |                         |
-     * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-     * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-     *        |                         |                         |
-     *        -----------------------------------------------------
-     *                                  |
-     * 1:                        foo,bar,10,z     // could have switched with #2
-     * 2:                        foo,bar,10,x     // could have switched with #1
-     * 3:                        foo,blah,11,z
-     * 4:                        far,bar,7,a
-     * 5:                        far,blah,5,x     // identical to #6
-     * 6:                        far,blah,5,x     // identical to #5
+     *                                  input row
+     *                                      |
+     *            -----------------------------------------------------
+     *            |                         |                         |
+     *           f(0)                      f(1)                      f(2)
+     *            |                         |                         |
+     *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+     *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+     *            |                         |                         |
+     *            -----------------------------------------------------
+     *                                      |
+     *     1:                      foo,bar,10,z   // could have switched with #2
+     *     2:                      foo,bar,10,x   // could have switched with #1
+     *     3:                      foo,blah,11,z
+     *     4:                      far,bar,7,a
+     *     5:                      far,blah,5,x   // identical to #6
+     *     6:                      far,blah,5,x   // identical to #5
      * All interleaved filters are executed atomically.
      * </pre>
      */
@@ -1381,23 +1381,23 @@ public  final class RowFilter extends
      * If multiple cells are produced with the same column and timestamp,
      * they will all appear in the output row in an unspecified mutual order.
      * Consider the following example, with three filters:
-     *                              input row
-     *                                  |
-     *        -----------------------------------------------------
-     *        |                         |                         |
-     *       f(0)                      f(1)                      f(2)
-     *        |                         |                         |
-     * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-     * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-     *        |                         |                         |
-     *        -----------------------------------------------------
-     *                                  |
-     * 1:                        foo,bar,10,z     // could have switched with #2
-     * 2:                        foo,bar,10,x     // could have switched with #1
-     * 3:                        foo,blah,11,z
-     * 4:                        far,bar,7,a
-     * 5:                        far,blah,5,x     // identical to #6
-     * 6:                        far,blah,5,x     // identical to #5
+     *                                  input row
+     *                                      |
+     *            -----------------------------------------------------
+     *            |                         |                         |
+     *           f(0)                      f(1)                      f(2)
+     *            |                         |                         |
+     *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+     *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+     *            |                         |                         |
+     *            -----------------------------------------------------
+     *                                      |
+     *     1:                      foo,bar,10,z   // could have switched with #2
+     *     2:                      foo,bar,10,x   // could have switched with #1
+     *     3:                      foo,blah,11,z
+     *     4:                      far,bar,7,a
+     *     5:                      far,blah,5,x   // identical to #6
+     *     6:                      far,blah,5,x   // identical to #5
      * All interleaved filters are executed atomically.
      * </pre>
      */
@@ -1414,23 +1414,23 @@ public  final class RowFilter extends
      * If multiple cells are produced with the same column and timestamp,
      * they will all appear in the output row in an unspecified mutual order.
      * Consider the following example, with three filters:
-     *                              input row
-     *                                  |
-     *        -----------------------------------------------------
-     *        |                         |                         |
-     *       f(0)                      f(1)                      f(2)
-     *        |                         |                         |
-     * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-     * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-     *        |                         |                         |
-     *        -----------------------------------------------------
-     *                                  |
-     * 1:                        foo,bar,10,z     // could have switched with #2
-     * 2:                        foo,bar,10,x     // could have switched with #1
-     * 3:                        foo,blah,11,z
-     * 4:                        far,bar,7,a
-     * 5:                        far,blah,5,x     // identical to #6
-     * 6:                        far,blah,5,x     // identical to #5
+     *                                  input row
+     *                                      |
+     *            -----------------------------------------------------
+     *            |                         |                         |
+     *           f(0)                      f(1)                      f(2)
+     *            |                         |                         |
+     *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+     *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+     *            |                         |                         |
+     *            -----------------------------------------------------
+     *                                      |
+     *     1:                      foo,bar,10,z   // could have switched with #2
+     *     2:                      foo,bar,10,x   // could have switched with #1
+     *     3:                      foo,blah,11,z
+     *     4:                      far,bar,7,a
+     *     5:                      far,blah,5,x   // identical to #6
+     *     6:                      far,blah,5,x   // identical to #5
      * All interleaved filters are executed atomically.
      * </pre>
      */
@@ -1446,23 +1446,23 @@ public  final class RowFilter extends
      * If multiple cells are produced with the same column and timestamp,
      * they will all appear in the output row in an unspecified mutual order.
      * Consider the following example, with three filters:
-     *                              input row
-     *                                  |
-     *        -----------------------------------------------------
-     *        |                         |                         |
-     *       f(0)                      f(1)                      f(2)
-     *        |                         |                         |
-     * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-     * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-     *        |                         |                         |
-     *        -----------------------------------------------------
-     *                                  |
-     * 1:                        foo,bar,10,z     // could have switched with #2
-     * 2:                        foo,bar,10,x     // could have switched with #1
-     * 3:                        foo,blah,11,z
-     * 4:                        far,bar,7,a
-     * 5:                        far,blah,5,x     // identical to #6
-     * 6:                        far,blah,5,x     // identical to #5
+     *                                  input row
+     *                                      |
+     *            -----------------------------------------------------
+     *            |                         |                         |
+     *           f(0)                      f(1)                      f(2)
+     *            |                         |                         |
+     *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+     *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+     *            |                         |                         |
+     *            -----------------------------------------------------
+     *                                      |
+     *     1:                      foo,bar,10,z   // could have switched with #2
+     *     2:                      foo,bar,10,x   // could have switched with #1
+     *     3:                      foo,blah,11,z
+     *     4:                      far,bar,7,a
+     *     5:                      far,blah,5,x   // identical to #6
+     *     6:                      far,blah,5,x   // identical to #5
      * All interleaved filters are executed atomically.
      * </pre>
      */
@@ -1478,23 +1478,23 @@ public  final class RowFilter extends
      * If multiple cells are produced with the same column and timestamp,
      * they will all appear in the output row in an unspecified mutual order.
      * Consider the following example, with three filters:
-     *                              input row
-     *                                  |
-     *        -----------------------------------------------------
-     *        |                         |                         |
-     *       f(0)                      f(1)                      f(2)
-     *        |                         |                         |
-     * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-     * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-     *        |                         |                         |
-     *        -----------------------------------------------------
-     *                                  |
-     * 1:                        foo,bar,10,z     // could have switched with #2
-     * 2:                        foo,bar,10,x     // could have switched with #1
-     * 3:                        foo,blah,11,z
-     * 4:                        far,bar,7,a
-     * 5:                        far,blah,5,x     // identical to #6
-     * 6:                        far,blah,5,x     // identical to #5
+     *                                  input row
+     *                                      |
+     *            -----------------------------------------------------
+     *            |                         |                         |
+     *           f(0)                      f(1)                      f(2)
+     *            |                         |                         |
+     *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+     *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+     *            |                         |                         |
+     *            -----------------------------------------------------
+     *                                      |
+     *     1:                      foo,bar,10,z   // could have switched with #2
+     *     2:                      foo,bar,10,x   // could have switched with #1
+     *     3:                      foo,blah,11,z
+     *     4:                      far,bar,7,a
+     *     5:                      far,blah,5,x   // identical to #6
+     *     6:                      far,blah,5,x   // identical to #5
      * All interleaved filters are executed atomically.
      * </pre>
      */
@@ -1773,23 +1773,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -1809,23 +1809,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -1845,23 +1845,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -1881,23 +1881,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -1924,23 +1924,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -1964,23 +1964,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2006,23 +2006,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2049,23 +2049,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2089,23 +2089,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2129,23 +2129,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2170,23 +2170,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2209,23 +2209,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2248,23 +2248,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2281,23 +2281,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2317,23 +2317,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2354,23 +2354,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2387,23 +2387,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2421,23 +2421,23 @@ public  final class RowFilter extends
        * If multiple cells are produced with the same column and timestamp,
        * they will all appear in the output row in an unspecified mutual order.
        * Consider the following example, with three filters:
-       *                              input row
-       *                                  |
-       *        -----------------------------------------------------
-       *        |                         |                         |
-       *       f(0)                      f(1)                      f(2)
-       *        |                         |                         |
-       * 1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
-       * 2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
-       *        |                         |                         |
-       *        -----------------------------------------------------
-       *                                  |
-       * 1:                        foo,bar,10,z     // could have switched with #2
-       * 2:                        foo,bar,10,x     // could have switched with #1
-       * 3:                        foo,blah,11,z
-       * 4:                        far,bar,7,a
-       * 5:                        far,blah,5,x     // identical to #6
-       * 6:                        far,blah,5,x     // identical to #5
+       *                                  input row
+       *                                      |
+       *            -----------------------------------------------------
+       *            |                         |                         |
+       *           f(0)                      f(1)                      f(2)
+       *            |                         |                         |
+       *     1: foo,bar,10,x             foo,bar,10,z              far,bar,7,a
+       *     2: foo,blah,11,z            far,blah,5,x              far,blah,5,x
+       *            |                         |                         |
+       *            -----------------------------------------------------
+       *                                      |
+       *     1:                      foo,bar,10,z   // could have switched with #2
+       *     2:                      foo,bar,10,x   // could have switched with #1
+       *     3:                      foo,blah,11,z
+       *     4:                      far,bar,7,a
+       *     5:                      far,blah,5,x   // identical to #6
+       *     6:                      far,blah,5,x   // identical to #5
        * All interleaved filters are executed atomically.
        * </pre>
        */
@@ -2525,8 +2525,8 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      *
      * <pre>
-     * If "predicate_filter" outputs any cells, then "true_filter" will be
-     * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+     * If `predicate_filter` outputs any cells, then `true_filter` will be
+     * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      */
     boolean hasPredicateFilter();
@@ -2534,8 +2534,8 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      *
      * <pre>
-     * If "predicate_filter" outputs any cells, then "true_filter" will be
-     * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+     * If `predicate_filter` outputs any cells, then `true_filter` will be
+     * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      */
     com.google.bigtable.v2.RowFilter getPredicateFilter();
@@ -2543,8 +2543,8 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      *
      * <pre>
-     * If "predicate_filter" outputs any cells, then "true_filter" will be
-     * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+     * If `predicate_filter` outputs any cells, then `true_filter` will be
+     * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      */
     com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder();
@@ -2553,7 +2553,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" returns any
+     * The filter to apply to the input row if `predicate_filter` returns any
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      */
@@ -2562,7 +2562,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" returns any
+     * The filter to apply to the input row if `predicate_filter` returns any
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      */
@@ -2571,7 +2571,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" returns any
+     * The filter to apply to the input row if `predicate_filter` returns any
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      */
@@ -2581,7 +2581,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" does not
+     * The filter to apply to the input row if `predicate_filter` does not
      * return any results. If not provided, no results will be returned in the
      * false case.
      * </pre>
@@ -2591,7 +2591,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" does not
+     * The filter to apply to the input row if `predicate_filter` does not
      * return any results. If not provided, no results will be returned in the
      * false case.
      * </pre>
@@ -2601,7 +2601,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" does not
+     * The filter to apply to the input row if `predicate_filter` does not
      * return any results. If not provided, no results will be returned in the
      * false case.
      * </pre>
@@ -2724,8 +2724,8 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      *
      * <pre>
-     * If "predicate_filter" outputs any cells, then "true_filter" will be
-     * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+     * If `predicate_filter` outputs any cells, then `true_filter` will be
+     * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      */
     public boolean hasPredicateFilter() {
@@ -2735,8 +2735,8 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      *
      * <pre>
-     * If "predicate_filter" outputs any cells, then "true_filter" will be
-     * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+     * If `predicate_filter` outputs any cells, then `true_filter` will be
+     * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      */
     public com.google.bigtable.v2.RowFilter getPredicateFilter() {
@@ -2746,8 +2746,8 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
      *
      * <pre>
-     * If "predicate_filter" outputs any cells, then "true_filter" will be
-     * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+     * If `predicate_filter` outputs any cells, then `true_filter` will be
+     * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
      * </pre>
      */
     public com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder() {
@@ -2760,7 +2760,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" returns any
+     * The filter to apply to the input row if `predicate_filter` returns any
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      */
@@ -2771,7 +2771,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" returns any
+     * The filter to apply to the input row if `predicate_filter` returns any
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      */
@@ -2782,7 +2782,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" returns any
+     * The filter to apply to the input row if `predicate_filter` returns any
      * results. If not provided, no results will be returned in the true case.
      * </pre>
      */
@@ -2796,7 +2796,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" does not
+     * The filter to apply to the input row if `predicate_filter` does not
      * return any results. If not provided, no results will be returned in the
      * false case.
      * </pre>
@@ -2808,7 +2808,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" does not
+     * The filter to apply to the input row if `predicate_filter` does not
      * return any results. If not provided, no results will be returned in the
      * false case.
      * </pre>
@@ -2820,7 +2820,7 @@ public  final class RowFilter extends
      * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
      *
      * <pre>
-     * The filter to apply to the input row if "predicate_filter" does not
+     * The filter to apply to the input row if `predicate_filter` does not
      * return any results. If not provided, no results will be returned in the
      * false case.
      * </pre>
@@ -3101,8 +3101,8 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        *
        * <pre>
-       * If "predicate_filter" outputs any cells, then "true_filter" will be
-       * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+       * If `predicate_filter` outputs any cells, then `true_filter` will be
+       * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        */
       public boolean hasPredicateFilter() {
@@ -3112,8 +3112,8 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        *
        * <pre>
-       * If "predicate_filter" outputs any cells, then "true_filter" will be
-       * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+       * If `predicate_filter` outputs any cells, then `true_filter` will be
+       * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        */
       public com.google.bigtable.v2.RowFilter getPredicateFilter() {
@@ -3127,8 +3127,8 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        *
        * <pre>
-       * If "predicate_filter" outputs any cells, then "true_filter" will be
-       * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+       * If `predicate_filter` outputs any cells, then `true_filter` will be
+       * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        */
       public Builder setPredicateFilter(com.google.bigtable.v2.RowFilter value) {
@@ -3148,8 +3148,8 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        *
        * <pre>
-       * If "predicate_filter" outputs any cells, then "true_filter" will be
-       * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+       * If `predicate_filter` outputs any cells, then `true_filter` will be
+       * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        */
       public Builder setPredicateFilter(
@@ -3167,8 +3167,8 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        *
        * <pre>
-       * If "predicate_filter" outputs any cells, then "true_filter" will be
-       * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+       * If `predicate_filter` outputs any cells, then `true_filter` will be
+       * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        */
       public Builder mergePredicateFilter(com.google.bigtable.v2.RowFilter value) {
@@ -3190,8 +3190,8 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        *
        * <pre>
-       * If "predicate_filter" outputs any cells, then "true_filter" will be
-       * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+       * If `predicate_filter` outputs any cells, then `true_filter` will be
+       * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        */
       public Builder clearPredicateFilter() {
@@ -3209,8 +3209,8 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        *
        * <pre>
-       * If "predicate_filter" outputs any cells, then "true_filter" will be
-       * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+       * If `predicate_filter` outputs any cells, then `true_filter` will be
+       * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        */
       public com.google.bigtable.v2.RowFilter.Builder getPredicateFilterBuilder() {
@@ -3222,8 +3222,8 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        *
        * <pre>
-       * If "predicate_filter" outputs any cells, then "true_filter" will be
-       * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+       * If `predicate_filter` outputs any cells, then `true_filter` will be
+       * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        */
       public com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder() {
@@ -3238,8 +3238,8 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 1;</code>
        *
        * <pre>
-       * If "predicate_filter" outputs any cells, then "true_filter" will be
-       * evaluated on the input row. Otherwise, "false_filter" will be evaluated.
+       * If `predicate_filter` outputs any cells, then `true_filter` will be
+       * evaluated on the input row. Otherwise, `false_filter` will be evaluated.
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<
@@ -3263,7 +3263,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" returns any
+       * The filter to apply to the input row if `predicate_filter` returns any
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        */
@@ -3274,7 +3274,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" returns any
+       * The filter to apply to the input row if `predicate_filter` returns any
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        */
@@ -3289,7 +3289,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" returns any
+       * The filter to apply to the input row if `predicate_filter` returns any
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        */
@@ -3310,7 +3310,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" returns any
+       * The filter to apply to the input row if `predicate_filter` returns any
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        */
@@ -3329,7 +3329,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" returns any
+       * The filter to apply to the input row if `predicate_filter` returns any
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        */
@@ -3352,7 +3352,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" returns any
+       * The filter to apply to the input row if `predicate_filter` returns any
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        */
@@ -3371,7 +3371,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" returns any
+       * The filter to apply to the input row if `predicate_filter` returns any
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        */
@@ -3384,7 +3384,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" returns any
+       * The filter to apply to the input row if `predicate_filter` returns any
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        */
@@ -3400,7 +3400,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter true_filter = 2;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" returns any
+       * The filter to apply to the input row if `predicate_filter` returns any
        * results. If not provided, no results will be returned in the true case.
        * </pre>
        */
@@ -3425,7 +3425,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" does not
+       * The filter to apply to the input row if `predicate_filter` does not
        * return any results. If not provided, no results will be returned in the
        * false case.
        * </pre>
@@ -3437,7 +3437,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" does not
+       * The filter to apply to the input row if `predicate_filter` does not
        * return any results. If not provided, no results will be returned in the
        * false case.
        * </pre>
@@ -3453,7 +3453,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" does not
+       * The filter to apply to the input row if `predicate_filter` does not
        * return any results. If not provided, no results will be returned in the
        * false case.
        * </pre>
@@ -3475,7 +3475,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" does not
+       * The filter to apply to the input row if `predicate_filter` does not
        * return any results. If not provided, no results will be returned in the
        * false case.
        * </pre>
@@ -3495,7 +3495,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" does not
+       * The filter to apply to the input row if `predicate_filter` does not
        * return any results. If not provided, no results will be returned in the
        * false case.
        * </pre>
@@ -3519,7 +3519,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" does not
+       * The filter to apply to the input row if `predicate_filter` does not
        * return any results. If not provided, no results will be returned in the
        * false case.
        * </pre>
@@ -3539,7 +3539,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" does not
+       * The filter to apply to the input row if `predicate_filter` does not
        * return any results. If not provided, no results will be returned in the
        * false case.
        * </pre>
@@ -3553,7 +3553,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" does not
+       * The filter to apply to the input row if `predicate_filter` does not
        * return any results. If not provided, no results will be returned in the
        * false case.
        * </pre>
@@ -3570,7 +3570,7 @@ public  final class RowFilter extends
        * <code>optional .google.bigtable.v2.RowFilter false_filter = 3;</code>
        *
        * <pre>
-       * The filter to apply to the input row if "predicate_filter" does not
+       * The filter to apply to the input row if `predicate_filter` does not
        * return any results. If not provided, no results will be returned in the
        * false case.
        * </pre>
@@ -3810,14 +3810,14 @@ public  final class RowFilter extends
    * Hook for introspection into the RowFilter. Outputs all cells directly to
    * the output of the read rather than to any parent filter. Consider the
    * following example:
-   * Chain(
-   *   FamilyRegex("A"),
-   *   Interleave(
-   *     All(),
-   *     Chain(Label("foo"), Sink())
-   *   ),
-   *   QualifierRegex("B")
-   * )
+   *     Chain(
+   *       FamilyRegex("A"),
+   *       Interleave(
+   *         All(),
+   *         Chain(Label("foo"), Sink())
+   *       ),
+   *       QualifierRegex("B")
+   *     )
    *                         A,A,1,w
    *                         A,B,2,x
    *                         B,B,4,z
@@ -3852,14 +3852,14 @@ public  final class RowFilter extends
    *                         A,B,2,x               // could be switched
    * Despite being excluded by the qualifier filter, a copy of every cell
    * that reaches the sink is present in the final result.
-   * As with an [Interleave][google.bigtable.v1.RowFilter.Interleave],
+   * As with an [Interleave][google.bigtable.v2.RowFilter.Interleave],
    * duplicate cells are possible, and appear in an unspecified mutual order.
    * In this case we have a duplicate with column "A:B" and timestamp 2,
    * because one copy passed through the all filter while the other was
    * passed through the label and sink. Note that one copy has label "foo",
    * while the other does not.
    * Cannot be used within the `predicate_filter`, `true_filter`, or
-   * `false_filter` of a [Condition][google.bigtable.v1.RowFilter.Condition].
+   * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
    * </pre>
    */
   public boolean getSink() {
@@ -3909,9 +3909,9 @@ public  final class RowFilter extends
    * Matches only cells from rows whose keys satisfy the given RE2 regex. In
    * other words, passes through the entire row when the key matches, and
    * otherwise produces an empty row.
-   * Note that, since row keys can contain arbitrary bytes, the '&#92;C' escape
-   * sequence must be used if a true wildcard is desired. The '.' character
-   * will not match the new line character '&#92;n', which may be present in a
+   * Note that, since row keys can contain arbitrary bytes, the `&#92;C` escape
+   * sequence must be used if a true wildcard is desired. The `.` character
+   * will not match the new line character `&#92;n`, which may be present in a
    * binary key.
    * </pre>
    */
@@ -3944,10 +3944,10 @@ public  final class RowFilter extends
    *
    * <pre>
    * Matches only cells from columns whose families satisfy the given RE2
-   * regex. For technical reasons, the regex must not contain the ':'
+   * regex. For technical reasons, the regex must not contain the `:`
    * character, even if it is not being used as a literal.
    * Note that, since column families cannot contain the new line character
-   * '&#92;n', it is sufficient to use '.' as a full wildcard when matching
+   * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
    * column family names.
    * </pre>
    */
@@ -3973,10 +3973,10 @@ public  final class RowFilter extends
    *
    * <pre>
    * Matches only cells from columns whose families satisfy the given RE2
-   * regex. For technical reasons, the regex must not contain the ':'
+   * regex. For technical reasons, the regex must not contain the `:`
    * character, even if it is not being used as a literal.
    * Note that, since column families cannot contain the new line character
-   * '&#92;n', it is sufficient to use '.' as a full wildcard when matching
+   * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
    * column family names.
    * </pre>
    */
@@ -4006,9 +4006,9 @@ public  final class RowFilter extends
    * <pre>
    * Matches only cells from columns whose qualifiers satisfy the given RE2
    * regex.
-   * Note that, since column qualifiers can contain arbitrary bytes, the '&#92;C'
-   * escape sequence must be used if a true wildcard is desired. The '.'
-   * character will not match the new line character '&#92;n', which may be
+   * Note that, since column qualifiers can contain arbitrary bytes, the `&#92;C`
+   * escape sequence must be used if a true wildcard is desired. The `.`
+   * character will not match the new line character `&#92;n`, which may be
    * present in a binary qualifier.
    * </pre>
    */
@@ -4081,9 +4081,9 @@ public  final class RowFilter extends
    *
    * <pre>
    * Matches only cells with values that satisfy the given regular expression.
-   * Note that, since cell values can contain arbitrary bytes, the '&#92;C' escape
-   * sequence must be used if a true wildcard is desired. The '.' character
-   * will not match the new line character '&#92;n', which may be present in a
+   * Note that, since cell values can contain arbitrary bytes, the `&#92;C` escape
+   * sequence must be used if a true wildcard is desired. The `.` character
+   * will not match the new line character `&#92;n`, which may be present in a
    * binary value.
    * </pre>
    */
@@ -4162,9 +4162,9 @@ public  final class RowFilter extends
    *
    * <pre>
    * Matches only the most recent N cells within each column. For example,
-   * if N=2, this filter would match column "foo:bar" at timestamps 10 and 9,
-   * skip all earlier cells in "foo:bar", and then begin matching again in
-   * column "foo:bar2".
+   * if N=2, this filter would match column `foo:bar` at timestamps 10 and 9,
+   * skip all earlier cells in `foo:bar`, and then begin matching again in
+   * column `foo:bar2`.
    * If duplicate cells are present, as is possible when using an Interleave,
    * each copy of the cell is counted separately.
    * </pre>
@@ -4200,13 +4200,13 @@ public  final class RowFilter extends
    * the client to determine which results were produced from which part of
    * the filter.
    * Values must be at most 15 characters in length, and match the RE2
-   * pattern [a-z0-9&#92;&#92;-]+
+   * pattern `[a-z0-9&#92;&#92;-]+`
    * Due to a technical limitation, it is not currently possible to apply
    * multiple labels to a cell. As a result, a Chain may have no more than
-   * one sub-filter which contains a apply_label_transformer. It is okay for
-   * an Interleave to contain multiple apply_label_transformers, as they will
-   * be applied to separate copies of the input. This may be relaxed in the
-   * future.
+   * one sub-filter which contains a `apply_label_transformer`. It is okay for
+   * an Interleave to contain multiple `apply_label_transformers`, as they
+   * will be applied to separate copies of the input. This may be relaxed in
+   * the future.
    * </pre>
    */
   public java.lang.String getApplyLabelTransformer() {
@@ -4234,13 +4234,13 @@ public  final class RowFilter extends
    * the client to determine which results were produced from which part of
    * the filter.
    * Values must be at most 15 characters in length, and match the RE2
-   * pattern [a-z0-9&#92;&#92;-]+
+   * pattern `[a-z0-9&#92;&#92;-]+`
    * Due to a technical limitation, it is not currently possible to apply
    * multiple labels to a cell. As a result, a Chain may have no more than
-   * one sub-filter which contains a apply_label_transformer. It is okay for
-   * an Interleave to contain multiple apply_label_transformers, as they will
-   * be applied to separate copies of the input. This may be relaxed in the
-   * future.
+   * one sub-filter which contains a `apply_label_transformer`. It is okay for
+   * an Interleave to contain multiple `apply_label_transformers`, as they
+   * will be applied to separate copies of the input. This may be relaxed in
+   * the future.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -4525,17 +4525,17 @@ public  final class RowFilter extends
    * as well as two ways to compose simple filters into more complex ones
    * (chains and interleaves). They work as follows:
    * * True filters alter the input row by excluding some of its cells wholesale
-   * from the output row. An example of a true filter is the "value_regex_filter",
+   * from the output row. An example of a true filter is the `value_regex_filter`,
    * which excludes cells whose values don't match the specified pattern. All
    * regex true filters use RE2 syntax (https://github.com/google/re2/wiki/Syntax)
    * in raw byte mode (RE2::Latin1), and are evaluated as full matches. An
-   * important point to keep in mind is that RE2(.) is equivalent by default to
-   * RE2([^&#92;n]), meaning that it does not match newlines. When attempting to match
-   * an arbitrary byte, you should therefore use the escape sequence '&#92;C', which
-   * may need to be further escaped as '&#92;&#92;C' in your client language.
+   * important point to keep in mind is that `RE2(.)` is equivalent by default to
+   * `RE2([^&#92;n])`, meaning that it does not match newlines. When attempting to
+   * match an arbitrary byte, you should therefore use the escape sequence `&#92;C`,
+   * which may need to be further escaped as `&#92;&#92;C` in your client language.
    * * Transformers alter the input row by changing the values of some of its
    * cells in the output, without excluding them completely. Currently, the only
-   * supported transformer is the "strip_value_transformer", which replaces every
+   * supported transformer is the `strip_value_transformer`, which replaces every
    * cell's value with the empty string.
    * * Chains and interleaves are described in more detail in the
    * RowFilter.Chain and RowFilter.Interleave documentation.
@@ -5341,14 +5341,14 @@ public  final class RowFilter extends
      * Hook for introspection into the RowFilter. Outputs all cells directly to
      * the output of the read rather than to any parent filter. Consider the
      * following example:
-     * Chain(
-     *   FamilyRegex("A"),
-     *   Interleave(
-     *     All(),
-     *     Chain(Label("foo"), Sink())
-     *   ),
-     *   QualifierRegex("B")
-     * )
+     *     Chain(
+     *       FamilyRegex("A"),
+     *       Interleave(
+     *         All(),
+     *         Chain(Label("foo"), Sink())
+     *       ),
+     *       QualifierRegex("B")
+     *     )
      *                         A,A,1,w
      *                         A,B,2,x
      *                         B,B,4,z
@@ -5383,14 +5383,14 @@ public  final class RowFilter extends
      *                         A,B,2,x               // could be switched
      * Despite being excluded by the qualifier filter, a copy of every cell
      * that reaches the sink is present in the final result.
-     * As with an [Interleave][google.bigtable.v1.RowFilter.Interleave],
+     * As with an [Interleave][google.bigtable.v2.RowFilter.Interleave],
      * duplicate cells are possible, and appear in an unspecified mutual order.
      * In this case we have a duplicate with column "A:B" and timestamp 2,
      * because one copy passed through the all filter while the other was
      * passed through the label and sink. Note that one copy has label "foo",
      * while the other does not.
      * Cannot be used within the `predicate_filter`, `true_filter`, or
-     * `false_filter` of a [Condition][google.bigtable.v1.RowFilter.Condition].
+     * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
      * </pre>
      */
     public boolean getSink() {
@@ -5407,14 +5407,14 @@ public  final class RowFilter extends
      * Hook for introspection into the RowFilter. Outputs all cells directly to
      * the output of the read rather than to any parent filter. Consider the
      * following example:
-     * Chain(
-     *   FamilyRegex("A"),
-     *   Interleave(
-     *     All(),
-     *     Chain(Label("foo"), Sink())
-     *   ),
-     *   QualifierRegex("B")
-     * )
+     *     Chain(
+     *       FamilyRegex("A"),
+     *       Interleave(
+     *         All(),
+     *         Chain(Label("foo"), Sink())
+     *       ),
+     *       QualifierRegex("B")
+     *     )
      *                         A,A,1,w
      *                         A,B,2,x
      *                         B,B,4,z
@@ -5449,14 +5449,14 @@ public  final class RowFilter extends
      *                         A,B,2,x               // could be switched
      * Despite being excluded by the qualifier filter, a copy of every cell
      * that reaches the sink is present in the final result.
-     * As with an [Interleave][google.bigtable.v1.RowFilter.Interleave],
+     * As with an [Interleave][google.bigtable.v2.RowFilter.Interleave],
      * duplicate cells are possible, and appear in an unspecified mutual order.
      * In this case we have a duplicate with column "A:B" and timestamp 2,
      * because one copy passed through the all filter while the other was
      * passed through the label and sink. Note that one copy has label "foo",
      * while the other does not.
      * Cannot be used within the `predicate_filter`, `true_filter`, or
-     * `false_filter` of a [Condition][google.bigtable.v1.RowFilter.Condition].
+     * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
      * </pre>
      */
     public Builder setSink(boolean value) {
@@ -5473,14 +5473,14 @@ public  final class RowFilter extends
      * Hook for introspection into the RowFilter. Outputs all cells directly to
      * the output of the read rather than to any parent filter. Consider the
      * following example:
-     * Chain(
-     *   FamilyRegex("A"),
-     *   Interleave(
-     *     All(),
-     *     Chain(Label("foo"), Sink())
-     *   ),
-     *   QualifierRegex("B")
-     * )
+     *     Chain(
+     *       FamilyRegex("A"),
+     *       Interleave(
+     *         All(),
+     *         Chain(Label("foo"), Sink())
+     *       ),
+     *       QualifierRegex("B")
+     *     )
      *                         A,A,1,w
      *                         A,B,2,x
      *                         B,B,4,z
@@ -5515,14 +5515,14 @@ public  final class RowFilter extends
      *                         A,B,2,x               // could be switched
      * Despite being excluded by the qualifier filter, a copy of every cell
      * that reaches the sink is present in the final result.
-     * As with an [Interleave][google.bigtable.v1.RowFilter.Interleave],
+     * As with an [Interleave][google.bigtable.v2.RowFilter.Interleave],
      * duplicate cells are possible, and appear in an unspecified mutual order.
      * In this case we have a duplicate with column "A:B" and timestamp 2,
      * because one copy passed through the all filter while the other was
      * passed through the label and sink. Note that one copy has label "foo",
      * while the other does not.
      * Cannot be used within the `predicate_filter`, `true_filter`, or
-     * `false_filter` of a [Condition][google.bigtable.v1.RowFilter.Condition].
+     * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
      * </pre>
      */
     public Builder clearSink() {
@@ -5631,9 +5631,9 @@ public  final class RowFilter extends
      * Matches only cells from rows whose keys satisfy the given RE2 regex. In
      * other words, passes through the entire row when the key matches, and
      * otherwise produces an empty row.
-     * Note that, since row keys can contain arbitrary bytes, the '&#92;C' escape
-     * sequence must be used if a true wildcard is desired. The '.' character
-     * will not match the new line character '&#92;n', which may be present in a
+     * Note that, since row keys can contain arbitrary bytes, the `&#92;C` escape
+     * sequence must be used if a true wildcard is desired. The `.` character
+     * will not match the new line character `&#92;n`, which may be present in a
      * binary key.
      * </pre>
      */
@@ -5650,9 +5650,9 @@ public  final class RowFilter extends
      * Matches only cells from rows whose keys satisfy the given RE2 regex. In
      * other words, passes through the entire row when the key matches, and
      * otherwise produces an empty row.
-     * Note that, since row keys can contain arbitrary bytes, the '&#92;C' escape
-     * sequence must be used if a true wildcard is desired. The '.' character
-     * will not match the new line character '&#92;n', which may be present in a
+     * Note that, since row keys can contain arbitrary bytes, the `&#92;C` escape
+     * sequence must be used if a true wildcard is desired. The `.` character
+     * will not match the new line character `&#92;n`, which may be present in a
      * binary key.
      * </pre>
      */
@@ -5672,9 +5672,9 @@ public  final class RowFilter extends
      * Matches only cells from rows whose keys satisfy the given RE2 regex. In
      * other words, passes through the entire row when the key matches, and
      * otherwise produces an empty row.
-     * Note that, since row keys can contain arbitrary bytes, the '&#92;C' escape
-     * sequence must be used if a true wildcard is desired. The '.' character
-     * will not match the new line character '&#92;n', which may be present in a
+     * Note that, since row keys can contain arbitrary bytes, the `&#92;C` escape
+     * sequence must be used if a true wildcard is desired. The `.` character
+     * will not match the new line character `&#92;n`, which may be present in a
      * binary key.
      * </pre>
      */
@@ -5737,10 +5737,10 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only cells from columns whose families satisfy the given RE2
-     * regex. For technical reasons, the regex must not contain the ':'
+     * regex. For technical reasons, the regex must not contain the `:`
      * character, even if it is not being used as a literal.
      * Note that, since column families cannot contain the new line character
-     * '&#92;n', it is sufficient to use '.' as a full wildcard when matching
+     * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
      * column family names.
      * </pre>
      */
@@ -5766,10 +5766,10 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only cells from columns whose families satisfy the given RE2
-     * regex. For technical reasons, the regex must not contain the ':'
+     * regex. For technical reasons, the regex must not contain the `:`
      * character, even if it is not being used as a literal.
      * Note that, since column families cannot contain the new line character
-     * '&#92;n', it is sufficient to use '.' as a full wildcard when matching
+     * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
      * column family names.
      * </pre>
      */
@@ -5796,10 +5796,10 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only cells from columns whose families satisfy the given RE2
-     * regex. For technical reasons, the regex must not contain the ':'
+     * regex. For technical reasons, the regex must not contain the `:`
      * character, even if it is not being used as a literal.
      * Note that, since column families cannot contain the new line character
-     * '&#92;n', it is sufficient to use '.' as a full wildcard when matching
+     * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
      * column family names.
      * </pre>
      */
@@ -5818,10 +5818,10 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only cells from columns whose families satisfy the given RE2
-     * regex. For technical reasons, the regex must not contain the ':'
+     * regex. For technical reasons, the regex must not contain the `:`
      * character, even if it is not being used as a literal.
      * Note that, since column families cannot contain the new line character
-     * '&#92;n', it is sufficient to use '.' as a full wildcard when matching
+     * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
      * column family names.
      * </pre>
      */
@@ -5838,10 +5838,10 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only cells from columns whose families satisfy the given RE2
-     * regex. For technical reasons, the regex must not contain the ':'
+     * regex. For technical reasons, the regex must not contain the `:`
      * character, even if it is not being used as a literal.
      * Note that, since column families cannot contain the new line character
-     * '&#92;n', it is sufficient to use '.' as a full wildcard when matching
+     * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
      * column family names.
      * </pre>
      */
@@ -5863,9 +5863,9 @@ public  final class RowFilter extends
      * <pre>
      * Matches only cells from columns whose qualifiers satisfy the given RE2
      * regex.
-     * Note that, since column qualifiers can contain arbitrary bytes, the '&#92;C'
-     * escape sequence must be used if a true wildcard is desired. The '.'
-     * character will not match the new line character '&#92;n', which may be
+     * Note that, since column qualifiers can contain arbitrary bytes, the `&#92;C`
+     * escape sequence must be used if a true wildcard is desired. The `.`
+     * character will not match the new line character `&#92;n`, which may be
      * present in a binary qualifier.
      * </pre>
      */
@@ -5881,9 +5881,9 @@ public  final class RowFilter extends
      * <pre>
      * Matches only cells from columns whose qualifiers satisfy the given RE2
      * regex.
-     * Note that, since column qualifiers can contain arbitrary bytes, the '&#92;C'
-     * escape sequence must be used if a true wildcard is desired. The '.'
-     * character will not match the new line character '&#92;n', which may be
+     * Note that, since column qualifiers can contain arbitrary bytes, the `&#92;C`
+     * escape sequence must be used if a true wildcard is desired. The `.`
+     * character will not match the new line character `&#92;n`, which may be
      * present in a binary qualifier.
      * </pre>
      */
@@ -5902,9 +5902,9 @@ public  final class RowFilter extends
      * <pre>
      * Matches only cells from columns whose qualifiers satisfy the given RE2
      * regex.
-     * Note that, since column qualifiers can contain arbitrary bytes, the '&#92;C'
-     * escape sequence must be used if a true wildcard is desired. The '.'
-     * character will not match the new line character '&#92;n', which may be
+     * Note that, since column qualifiers can contain arbitrary bytes, the `&#92;C`
+     * escape sequence must be used if a true wildcard is desired. The `.`
+     * character will not match the new line character `&#92;n`, which may be
      * present in a binary qualifier.
      * </pre>
      */
@@ -6246,9 +6246,9 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only cells with values that satisfy the given regular expression.
-     * Note that, since cell values can contain arbitrary bytes, the '&#92;C' escape
-     * sequence must be used if a true wildcard is desired. The '.' character
-     * will not match the new line character '&#92;n', which may be present in a
+     * Note that, since cell values can contain arbitrary bytes, the `&#92;C` escape
+     * sequence must be used if a true wildcard is desired. The `.` character
+     * will not match the new line character `&#92;n`, which may be present in a
      * binary value.
      * </pre>
      */
@@ -6263,9 +6263,9 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only cells with values that satisfy the given regular expression.
-     * Note that, since cell values can contain arbitrary bytes, the '&#92;C' escape
-     * sequence must be used if a true wildcard is desired. The '.' character
-     * will not match the new line character '&#92;n', which may be present in a
+     * Note that, since cell values can contain arbitrary bytes, the `&#92;C` escape
+     * sequence must be used if a true wildcard is desired. The `.` character
+     * will not match the new line character `&#92;n`, which may be present in a
      * binary value.
      * </pre>
      */
@@ -6283,9 +6283,9 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only cells with values that satisfy the given regular expression.
-     * Note that, since cell values can contain arbitrary bytes, the '&#92;C' escape
-     * sequence must be used if a true wildcard is desired. The '.' character
-     * will not match the new line character '&#92;n', which may be present in a
+     * Note that, since cell values can contain arbitrary bytes, the `&#92;C` escape
+     * sequence must be used if a true wildcard is desired. The `.` character
+     * will not match the new line character `&#92;n`, which may be present in a
      * binary value.
      * </pre>
      */
@@ -6561,9 +6561,9 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only the most recent N cells within each column. For example,
-     * if N=2, this filter would match column "foo:bar" at timestamps 10 and 9,
-     * skip all earlier cells in "foo:bar", and then begin matching again in
-     * column "foo:bar2".
+     * if N=2, this filter would match column `foo:bar` at timestamps 10 and 9,
+     * skip all earlier cells in `foo:bar`, and then begin matching again in
+     * column `foo:bar2`.
      * If duplicate cells are present, as is possible when using an Interleave,
      * each copy of the cell is counted separately.
      * </pre>
@@ -6579,9 +6579,9 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only the most recent N cells within each column. For example,
-     * if N=2, this filter would match column "foo:bar" at timestamps 10 and 9,
-     * skip all earlier cells in "foo:bar", and then begin matching again in
-     * column "foo:bar2".
+     * if N=2, this filter would match column `foo:bar` at timestamps 10 and 9,
+     * skip all earlier cells in `foo:bar`, and then begin matching again in
+     * column `foo:bar2`.
      * If duplicate cells are present, as is possible when using an Interleave,
      * each copy of the cell is counted separately.
      * </pre>
@@ -6597,9 +6597,9 @@ public  final class RowFilter extends
      *
      * <pre>
      * Matches only the most recent N cells within each column. For example,
-     * if N=2, this filter would match column "foo:bar" at timestamps 10 and 9,
-     * skip all earlier cells in "foo:bar", and then begin matching again in
-     * column "foo:bar2".
+     * if N=2, this filter would match column `foo:bar` at timestamps 10 and 9,
+     * skip all earlier cells in `foo:bar`, and then begin matching again in
+     * column `foo:bar2`.
      * If duplicate cells are present, as is possible when using an Interleave,
      * each copy of the cell is counted separately.
      * </pre>
@@ -6663,13 +6663,13 @@ public  final class RowFilter extends
      * the client to determine which results were produced from which part of
      * the filter.
      * Values must be at most 15 characters in length, and match the RE2
-     * pattern [a-z0-9&#92;&#92;-]+
+     * pattern `[a-z0-9&#92;&#92;-]+`
      * Due to a technical limitation, it is not currently possible to apply
      * multiple labels to a cell. As a result, a Chain may have no more than
-     * one sub-filter which contains a apply_label_transformer. It is okay for
-     * an Interleave to contain multiple apply_label_transformers, as they will
-     * be applied to separate copies of the input. This may be relaxed in the
-     * future.
+     * one sub-filter which contains a `apply_label_transformer`. It is okay for
+     * an Interleave to contain multiple `apply_label_transformers`, as they
+     * will be applied to separate copies of the input. This may be relaxed in
+     * the future.
      * </pre>
      */
     public java.lang.String getApplyLabelTransformer() {
@@ -6697,13 +6697,13 @@ public  final class RowFilter extends
      * the client to determine which results were produced from which part of
      * the filter.
      * Values must be at most 15 characters in length, and match the RE2
-     * pattern [a-z0-9&#92;&#92;-]+
+     * pattern `[a-z0-9&#92;&#92;-]+`
      * Due to a technical limitation, it is not currently possible to apply
      * multiple labels to a cell. As a result, a Chain may have no more than
-     * one sub-filter which contains a apply_label_transformer. It is okay for
-     * an Interleave to contain multiple apply_label_transformers, as they will
-     * be applied to separate copies of the input. This may be relaxed in the
-     * future.
+     * one sub-filter which contains a `apply_label_transformer`. It is okay for
+     * an Interleave to contain multiple `apply_label_transformers`, as they
+     * will be applied to separate copies of the input. This may be relaxed in
+     * the future.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -6732,13 +6732,13 @@ public  final class RowFilter extends
      * the client to determine which results were produced from which part of
      * the filter.
      * Values must be at most 15 characters in length, and match the RE2
-     * pattern [a-z0-9&#92;&#92;-]+
+     * pattern `[a-z0-9&#92;&#92;-]+`
      * Due to a technical limitation, it is not currently possible to apply
      * multiple labels to a cell. As a result, a Chain may have no more than
-     * one sub-filter which contains a apply_label_transformer. It is okay for
-     * an Interleave to contain multiple apply_label_transformers, as they will
-     * be applied to separate copies of the input. This may be relaxed in the
-     * future.
+     * one sub-filter which contains a `apply_label_transformer`. It is okay for
+     * an Interleave to contain multiple `apply_label_transformers`, as they
+     * will be applied to separate copies of the input. This may be relaxed in
+     * the future.
      * </pre>
      */
     public Builder setApplyLabelTransformer(
@@ -6759,13 +6759,13 @@ public  final class RowFilter extends
      * the client to determine which results were produced from which part of
      * the filter.
      * Values must be at most 15 characters in length, and match the RE2
-     * pattern [a-z0-9&#92;&#92;-]+
+     * pattern `[a-z0-9&#92;&#92;-]+`
      * Due to a technical limitation, it is not currently possible to apply
      * multiple labels to a cell. As a result, a Chain may have no more than
-     * one sub-filter which contains a apply_label_transformer. It is okay for
-     * an Interleave to contain multiple apply_label_transformers, as they will
-     * be applied to separate copies of the input. This may be relaxed in the
-     * future.
+     * one sub-filter which contains a `apply_label_transformer`. It is okay for
+     * an Interleave to contain multiple `apply_label_transformers`, as they
+     * will be applied to separate copies of the input. This may be relaxed in
+     * the future.
      * </pre>
      */
     public Builder clearApplyLabelTransformer() {
@@ -6784,13 +6784,13 @@ public  final class RowFilter extends
      * the client to determine which results were produced from which part of
      * the filter.
      * Values must be at most 15 characters in length, and match the RE2
-     * pattern [a-z0-9&#92;&#92;-]+
+     * pattern `[a-z0-9&#92;&#92;-]+`
      * Due to a technical limitation, it is not currently possible to apply
      * multiple labels to a cell. As a result, a Chain may have no more than
-     * one sub-filter which contains a apply_label_transformer. It is okay for
-     * an Interleave to contain multiple apply_label_transformers, as they will
-     * be applied to separate copies of the input. This may be relaxed in the
-     * future.
+     * one sub-filter which contains a `apply_label_transformer`. It is okay for
+     * an Interleave to contain multiple `apply_label_transformers`, as they
+     * will be applied to separate copies of the input. This may be relaxed in
+     * the future.
      * </pre>
      */
     public Builder setApplyLabelTransformerBytes(
