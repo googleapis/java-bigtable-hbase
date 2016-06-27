@@ -85,7 +85,7 @@ public class RetryOptions implements Serializable {
     private double backoffMultiplier = DEFAULT_BACKOFF_MULTIPLIER;
     private int maxElaspedBackoffMillis = DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
     private int streamingBufferSize = DEFAULT_STREAMING_BUFFER_SIZE;
-    private int streamingBatchSize = DEFAULT_STREAMING_BUFFER_SIZE;
+    private int streamingBatchSize = DEFAULT_STREAMING_BATCH_SIZE;
     private int readPartialRowTimeoutMillis = DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
     private int maxScanTimeoutRetries = DEFAULT_MAX_SCAN_TIMEOUT_RETRIES;
     private Set<Status.Code> statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
