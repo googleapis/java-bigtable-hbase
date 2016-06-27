@@ -14,7 +14,7 @@ public interface FamilyOrBuilder extends
    * The unique key which identifies this family within its row. This is the
    * same key that's used to identify the family in, for example, a RowFilter
    * which sets its "family_name_regex_filter" field.
-   * Must match [-_.a-zA-Z0-9]+, except that AggregatingRowProcessors may
+   * Must match `[-_.a-zA-Z0-9]+`, except that AggregatingRowProcessors may
    * produce cells in a sentinel family with an empty name.
    * Must be no greater than 64 characters in length.
    * </pre>
@@ -27,7 +27,7 @@ public interface FamilyOrBuilder extends
    * The unique key which identifies this family within its row. This is the
    * same key that's used to identify the family in, for example, a RowFilter
    * which sets its "family_name_regex_filter" field.
-   * Must match [-_.a-zA-Z0-9]+, except that AggregatingRowProcessors may
+   * Must match `[-_.a-zA-Z0-9]+`, except that AggregatingRowProcessors may
    * produce cells in a sentinel family with an empty name.
    * Must be no greater than 64 characters in length.
    * </pre>

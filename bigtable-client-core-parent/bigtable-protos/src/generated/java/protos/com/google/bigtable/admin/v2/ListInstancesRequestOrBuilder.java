@@ -8,72 +8,39 @@ public interface ListInstancesRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   */
-  java.lang.String getName();
-  /**
-   * <code>optional string name = 1;</code>
-   */
-  com.google.protobuf.ByteString
-      getNameBytes();
-
-  /**
-   * <code>repeated string failed_locations = 2;</code>
+   * <code>optional string parent = 1;</code>
    *
    * <pre>
-   * Locations from which Instance information could not be retrieved,
-   * due to an outage or some other transient condition.
-   * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
-   * Cluster in a failed location may only have partial information returned.
+   * The unique name of the project for which a list of instances is requested.
+   * Values are of the form projects/&lt;project&gt;
    * </pre>
    */
-  com.google.protobuf.ProtocolStringList
-      getFailedLocationsList();
+  java.lang.String getParent();
   /**
-   * <code>repeated string failed_locations = 2;</code>
+   * <code>optional string parent = 1;</code>
    *
    * <pre>
-   * Locations from which Instance information could not be retrieved,
-   * due to an outage or some other transient condition.
-   * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
-   * Cluster in a failed location may only have partial information returned.
-   * </pre>
-   */
-  int getFailedLocationsCount();
-  /**
-   * <code>repeated string failed_locations = 2;</code>
-   *
-   * <pre>
-   * Locations from which Instance information could not be retrieved,
-   * due to an outage or some other transient condition.
-   * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
-   * Cluster in a failed location may only have partial information returned.
-   * </pre>
-   */
-  java.lang.String getFailedLocations(int index);
-  /**
-   * <code>repeated string failed_locations = 2;</code>
-   *
-   * <pre>
-   * Locations from which Instance information could not be retrieved,
-   * due to an outage or some other transient condition.
-   * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
-   * Cluster in a failed location may only have partial information returned.
+   * The unique name of the project for which a list of instances is requested.
+   * Values are of the form projects/&lt;project&gt;
    * </pre>
    */
   com.google.protobuf.ByteString
-      getFailedLocationsBytes(int index);
+      getParentBytes();
 
   /**
-   * <code>optional string page_token = 3;</code>
+   * <code>optional string page_token = 2;</code>
+   *
+   * <pre>
+   * The value of `next_page_token` returned by a previous call.
+   * </pre>
    */
   java.lang.String getPageToken();
   /**
-   * <code>optional string page_token = 3;</code>
+   * <code>optional string page_token = 2;</code>
+   *
+   * <pre>
+   * The value of `next_page_token` returned by a previous call.
+   * </pre>
    */
   com.google.protobuf.ByteString
       getPageTokenBytes();

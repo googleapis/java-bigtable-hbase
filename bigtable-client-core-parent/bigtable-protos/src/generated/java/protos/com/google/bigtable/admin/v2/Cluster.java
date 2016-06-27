@@ -5,6 +5,12 @@ package com.google.bigtable.admin.v2;
 
 /**
  * Protobuf type {@code google.bigtable.admin.v2.Cluster}
+ *
+ * <pre>
+ * A resizable group of nodes in a particular cloud location, capable
+ * of serving all [Tables][google.bigtable.admin.v2.Table] in the parent
+ * [Instance][google.bigtable.admin.v2.Instance].
+ * </pre>
  */
 public  final class Cluster extends
     com.google.protobuf.GeneratedMessage implements
@@ -101,15 +107,27 @@ public  final class Cluster extends
 
   /**
    * Protobuf enum {@code google.bigtable.admin.v2.Cluster.State}
+   *
+   * <pre>
+   * Possible states of a cluster.
+   * </pre>
    */
   public enum State
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
      * <code>STATE_NOT_KNOWN = 0;</code>
+     *
+     * <pre>
+     * The state of the cluster could not be determined.
+     * </pre>
      */
     STATE_NOT_KNOWN(0, 0),
     /**
      * <code>READY = 1;</code>
+     *
+     * <pre>
+     * The cluster has been successfully created and is ready to serve requests.
+     * </pre>
      */
     READY(1, 1),
     /**
@@ -118,18 +136,27 @@ public  final class Cluster extends
      * <pre>
      * The cluster is currently being created, and may be destroyed
      * if the creation process encounters an error.
+     * A cluster may not be able to serve requests while being created.
      * </pre>
      */
     CREATING(2, 2),
     /**
      * <code>RESIZING = 3;</code>
+     *
+     * <pre>
+     * The cluster is currently being resized, and may revert to its previous
+     * node count if the process encounters an error.
+     * A cluster is still capable of serving requests while being resized,
+     * but may exhibit performance as if its number of allocated nodes is
+     * between the starting and requested states.
+     * </pre>
      */
     RESIZING(3, 3),
     /**
      * <code>DISABLED = 4;</code>
      *
      * <pre>
-     * The cluster has no backing nodes.  The data (tables) still
+     * The cluster has no backing nodes. The data (tables) still
      * exist, but no operations can be performed on the cluster.
      * </pre>
      */
@@ -139,10 +166,18 @@ public  final class Cluster extends
 
     /**
      * <code>STATE_NOT_KNOWN = 0;</code>
+     *
+     * <pre>
+     * The state of the cluster could not be determined.
+     * </pre>
      */
     public static final int STATE_NOT_KNOWN_VALUE = 0;
     /**
      * <code>READY = 1;</code>
+     *
+     * <pre>
+     * The cluster has been successfully created and is ready to serve requests.
+     * </pre>
      */
     public static final int READY_VALUE = 1;
     /**
@@ -151,18 +186,27 @@ public  final class Cluster extends
      * <pre>
      * The cluster is currently being created, and may be destroyed
      * if the creation process encounters an error.
+     * A cluster may not be able to serve requests while being created.
      * </pre>
      */
     public static final int CREATING_VALUE = 2;
     /**
      * <code>RESIZING = 3;</code>
+     *
+     * <pre>
+     * The cluster is currently being resized, and may revert to its previous
+     * node count if the process encounters an error.
+     * A cluster is still capable of serving requests while being resized,
+     * but may exhibit performance as if its number of allocated nodes is
+     * between the starting and requested states.
+     * </pre>
      */
     public static final int RESIZING_VALUE = 3;
     /**
      * <code>DISABLED = 4;</code>
      *
      * <pre>
-     * The cluster has no backing nodes.  The data (tables) still
+     * The cluster has no backing nodes. The data (tables) still
      * exist, but no operations can be performed on the cluster.
      * </pre>
      */
@@ -245,6 +289,8 @@ public  final class Cluster extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The unique name of the cluster. Values are of the form
+   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
    * </pre>
    */
   public java.lang.String getName() {
@@ -264,6 +310,8 @@ public  final class Cluster extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The unique name of the cluster. Values are of the form
+   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -287,6 +335,8 @@ public  final class Cluster extends
    *
    * <pre>
    * &#64;CreationOnly
+   * The location where this cluster's nodes and storage reside. For best
+   * performance, clients should be located as close as possible to this cluster.
    * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
    * </pre>
    */
@@ -307,6 +357,8 @@ public  final class Cluster extends
    *
    * <pre>
    * &#64;CreationOnly
+   * The location where this cluster's nodes and storage reside. For best
+   * performance, clients should be located as close as possible to this cluster.
    * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
    * </pre>
    */
@@ -331,6 +383,7 @@ public  final class Cluster extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The current state of the cluster.
    * </pre>
    */
   public int getStateValue() {
@@ -341,6 +394,7 @@ public  final class Cluster extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The current state of the cluster.
    * </pre>
    */
   public com.google.bigtable.admin.v2.Cluster.State getState() {
@@ -352,6 +406,11 @@ public  final class Cluster extends
   private int serveNodes_;
   /**
    * <code>optional int32 serve_nodes = 4;</code>
+   *
+   * <pre>
+   * The number of nodes allocated to this cluster. More nodes enable higher
+   * throughput and more consistent performance.
+   * </pre>
    */
   public int getServeNodes() {
     return serveNodes_;
@@ -364,6 +423,8 @@ public  final class Cluster extends
    *
    * <pre>
    * &#64;CreationOnly
+   * The type of storage used by this cluster to serve its
+   * parent instance's tables, unless explicitly overridden.
    * </pre>
    */
   public int getDefaultStorageTypeValue() {
@@ -374,6 +435,8 @@ public  final class Cluster extends
    *
    * <pre>
    * &#64;CreationOnly
+   * The type of storage used by this cluster to serve its
+   * parent instance's tables, unless explicitly overridden.
    * </pre>
    */
   public com.google.bigtable.admin.v2.StorageType getDefaultStorageType() {
@@ -511,6 +574,12 @@ public  final class Cluster extends
   }
   /**
    * Protobuf type {@code google.bigtable.admin.v2.Cluster}
+   *
+   * <pre>
+   * A resizable group of nodes in a particular cloud location, capable
+   * of serving all [Tables][google.bigtable.admin.v2.Table] in the parent
+   * [Instance][google.bigtable.admin.v2.Instance].
+   * </pre>
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -645,6 +714,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The unique name of the cluster. Values are of the form
+     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
      * </pre>
      */
     public java.lang.String getName() {
@@ -664,6 +735,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The unique name of the cluster. Values are of the form
+     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -684,6 +757,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The unique name of the cluster. Values are of the form
+     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
      * </pre>
      */
     public Builder setName(
@@ -701,6 +776,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The unique name of the cluster. Values are of the form
+     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
      * </pre>
      */
     public Builder clearName() {
@@ -714,6 +791,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The unique name of the cluster. Values are of the form
+     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
      * </pre>
      */
     public Builder setNameBytes(
@@ -734,6 +813,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;CreationOnly
+     * The location where this cluster's nodes and storage reside. For best
+     * performance, clients should be located as close as possible to this cluster.
      * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
      * </pre>
      */
@@ -754,6 +835,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;CreationOnly
+     * The location where this cluster's nodes and storage reside. For best
+     * performance, clients should be located as close as possible to this cluster.
      * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
      * </pre>
      */
@@ -775,6 +858,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;CreationOnly
+     * The location where this cluster's nodes and storage reside. For best
+     * performance, clients should be located as close as possible to this cluster.
      * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
      * </pre>
      */
@@ -793,6 +878,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;CreationOnly
+     * The location where this cluster's nodes and storage reside. For best
+     * performance, clients should be located as close as possible to this cluster.
      * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
      * </pre>
      */
@@ -807,6 +894,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;CreationOnly
+     * The location where this cluster's nodes and storage reside. For best
+     * performance, clients should be located as close as possible to this cluster.
      * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
      * </pre>
      */
@@ -828,6 +917,7 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The current state of the cluster.
      * </pre>
      */
     public int getStateValue() {
@@ -838,6 +928,7 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The current state of the cluster.
      * </pre>
      */
     public Builder setStateValue(int value) {
@@ -850,6 +941,7 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The current state of the cluster.
      * </pre>
      */
     public com.google.bigtable.admin.v2.Cluster.State getState() {
@@ -861,6 +953,7 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The current state of the cluster.
      * </pre>
      */
     public Builder setState(com.google.bigtable.admin.v2.Cluster.State value) {
@@ -877,6 +970,7 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The current state of the cluster.
      * </pre>
      */
     public Builder clearState() {
@@ -889,12 +983,22 @@ public  final class Cluster extends
     private int serveNodes_ ;
     /**
      * <code>optional int32 serve_nodes = 4;</code>
+     *
+     * <pre>
+     * The number of nodes allocated to this cluster. More nodes enable higher
+     * throughput and more consistent performance.
+     * </pre>
      */
     public int getServeNodes() {
       return serveNodes_;
     }
     /**
      * <code>optional int32 serve_nodes = 4;</code>
+     *
+     * <pre>
+     * The number of nodes allocated to this cluster. More nodes enable higher
+     * throughput and more consistent performance.
+     * </pre>
      */
     public Builder setServeNodes(int value) {
       
@@ -904,6 +1008,11 @@ public  final class Cluster extends
     }
     /**
      * <code>optional int32 serve_nodes = 4;</code>
+     *
+     * <pre>
+     * The number of nodes allocated to this cluster. More nodes enable higher
+     * throughput and more consistent performance.
+     * </pre>
      */
     public Builder clearServeNodes() {
       
@@ -918,6 +1027,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;CreationOnly
+     * The type of storage used by this cluster to serve its
+     * parent instance's tables, unless explicitly overridden.
      * </pre>
      */
     public int getDefaultStorageTypeValue() {
@@ -928,6 +1039,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;CreationOnly
+     * The type of storage used by this cluster to serve its
+     * parent instance's tables, unless explicitly overridden.
      * </pre>
      */
     public Builder setDefaultStorageTypeValue(int value) {
@@ -940,6 +1053,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;CreationOnly
+     * The type of storage used by this cluster to serve its
+     * parent instance's tables, unless explicitly overridden.
      * </pre>
      */
     public com.google.bigtable.admin.v2.StorageType getDefaultStorageType() {
@@ -951,6 +1066,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;CreationOnly
+     * The type of storage used by this cluster to serve its
+     * parent instance's tables, unless explicitly overridden.
      * </pre>
      */
     public Builder setDefaultStorageType(com.google.bigtable.admin.v2.StorageType value) {
@@ -967,6 +1084,8 @@ public  final class Cluster extends
      *
      * <pre>
      * &#64;CreationOnly
+     * The type of storage used by this cluster to serve its
+     * parent instance's tables, unless explicitly overridden.
      * </pre>
      */
     public Builder clearDefaultStorageType() {

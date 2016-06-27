@@ -19,8 +19,7 @@ public  final class ListInstancesRequest extends
     super(builder);
   }
   private ListInstancesRequest() {
-    name_ = "";
-    failedLocations_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    parent_ = "";
     pageToken_ = "";
   }
 
@@ -51,19 +50,10 @@ public  final class ListInstancesRequest extends
           case 10: {
             String s = input.readStringRequireUtf8();
 
-            name_ = s;
+            parent_ = s;
             break;
           }
           case 18: {
-            String s = input.readStringRequireUtf8();
-            if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-              failedLocations_ = new com.google.protobuf.LazyStringArrayList();
-              mutable_bitField0_ |= 0x00000002;
-            }
-            failedLocations_.add(s);
-            break;
-          }
-          case 26: {
             String s = input.readStringRequireUtf8();
 
             pageToken_ = s;
@@ -78,9 +68,6 @@ public  final class ListInstancesRequest extends
           new com.google.protobuf.InvalidProtocolBufferException(
               e.getMessage()).setUnfinishedMessage(this));
     } finally {
-      if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-        failedLocations_ = failedLocations_.getUnmodifiableView();
-      }
       makeExtensionsImmutable();
     }
   }
@@ -96,106 +83,58 @@ public  final class ListInstancesRequest extends
             com.google.bigtable.admin.v2.ListInstancesRequest.class, com.google.bigtable.admin.v2.ListInstancesRequest.Builder.class);
   }
 
-  private int bitField0_;
-  public static final int NAME_FIELD_NUMBER = 1;
-  private volatile java.lang.Object name_;
+  public static final int PARENT_FIELD_NUMBER = 1;
+  private volatile java.lang.Object parent_;
   /**
-   * <code>optional string name = 1;</code>
+   * <code>optional string parent = 1;</code>
+   *
+   * <pre>
+   * The unique name of the project for which a list of instances is requested.
+   * Values are of the form projects/&lt;project&gt;
+   * </pre>
    */
-  public java.lang.String getName() {
-    java.lang.Object ref = name_;
+  public java.lang.String getParent() {
+    java.lang.Object ref = parent_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      name_ = s;
+      parent_ = s;
       return s;
     }
   }
   /**
-   * <code>optional string name = 1;</code>
+   * <code>optional string parent = 1;</code>
+   *
+   * <pre>
+   * The unique name of the project for which a list of instances is requested.
+   * Values are of the form projects/&lt;project&gt;
+   * </pre>
    */
   public com.google.protobuf.ByteString
-      getNameBytes() {
-    java.lang.Object ref = name_;
+      getParentBytes() {
+    java.lang.Object ref = parent_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      name_ = b;
+      parent_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
     }
   }
 
-  public static final int FAILED_LOCATIONS_FIELD_NUMBER = 2;
-  private com.google.protobuf.LazyStringList failedLocations_;
-  /**
-   * <code>repeated string failed_locations = 2;</code>
-   *
-   * <pre>
-   * Locations from which Instance information could not be retrieved,
-   * due to an outage or some other transient condition.
-   * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
-   * Cluster in a failed location may only have partial information returned.
-   * </pre>
-   */
-  public com.google.protobuf.ProtocolStringList
-      getFailedLocationsList() {
-    return failedLocations_;
-  }
-  /**
-   * <code>repeated string failed_locations = 2;</code>
-   *
-   * <pre>
-   * Locations from which Instance information could not be retrieved,
-   * due to an outage or some other transient condition.
-   * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
-   * Cluster in a failed location may only have partial information returned.
-   * </pre>
-   */
-  public int getFailedLocationsCount() {
-    return failedLocations_.size();
-  }
-  /**
-   * <code>repeated string failed_locations = 2;</code>
-   *
-   * <pre>
-   * Locations from which Instance information could not be retrieved,
-   * due to an outage or some other transient condition.
-   * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
-   * Cluster in a failed location may only have partial information returned.
-   * </pre>
-   */
-  public java.lang.String getFailedLocations(int index) {
-    return failedLocations_.get(index);
-  }
-  /**
-   * <code>repeated string failed_locations = 2;</code>
-   *
-   * <pre>
-   * Locations from which Instance information could not be retrieved,
-   * due to an outage or some other transient condition.
-   * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
-   * Cluster in a failed location may only have partial information returned.
-   * </pre>
-   */
-  public com.google.protobuf.ByteString
-      getFailedLocationsBytes(int index) {
-    return failedLocations_.getByteString(index);
-  }
-
-  public static final int PAGE_TOKEN_FIELD_NUMBER = 3;
+  public static final int PAGE_TOKEN_FIELD_NUMBER = 2;
   private volatile java.lang.Object pageToken_;
   /**
-   * <code>optional string page_token = 3;</code>
+   * <code>optional string page_token = 2;</code>
+   *
+   * <pre>
+   * The value of `next_page_token` returned by a previous call.
+   * </pre>
    */
   public java.lang.String getPageToken() {
     java.lang.Object ref = pageToken_;
@@ -210,7 +149,11 @@ public  final class ListInstancesRequest extends
     }
   }
   /**
-   * <code>optional string page_token = 3;</code>
+   * <code>optional string page_token = 2;</code>
+   *
+   * <pre>
+   * The value of `next_page_token` returned by a previous call.
+   * </pre>
    */
   public com.google.protobuf.ByteString
       getPageTokenBytes() {
@@ -238,14 +181,11 @@ public  final class ListInstancesRequest extends
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
-    }
-    for (int i = 0; i < failedLocations_.size(); i++) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 2, failedLocations_.getRaw(i));
+    if (!getParentBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, parent_);
     }
     if (!getPageTokenBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 3, pageToken_);
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, pageToken_);
     }
   }
 
@@ -254,19 +194,11 @@ public  final class ListInstancesRequest extends
     if (size != -1) return size;
 
     size = 0;
-    if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
-    }
-    {
-      int dataSize = 0;
-      for (int i = 0; i < failedLocations_.size(); i++) {
-        dataSize += computeStringSizeNoTag(failedLocations_.getRaw(i));
-      }
-      size += dataSize;
-      size += 1 * getFailedLocationsList().size();
+    if (!getParentBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, parent_);
     }
     if (!getPageTokenBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(3, pageToken_);
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, pageToken_);
     }
     memoizedSize = size;
     return size;
@@ -383,10 +315,8 @@ public  final class ListInstancesRequest extends
     }
     public Builder clear() {
       super.clear();
-      name_ = "";
+      parent_ = "";
 
-      failedLocations_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      bitField0_ = (bitField0_ & ~0x00000002);
       pageToken_ = "";
 
       return this;
@@ -411,16 +341,8 @@ public  final class ListInstancesRequest extends
 
     public com.google.bigtable.admin.v2.ListInstancesRequest buildPartial() {
       com.google.bigtable.admin.v2.ListInstancesRequest result = new com.google.bigtable.admin.v2.ListInstancesRequest(this);
-      int from_bitField0_ = bitField0_;
-      int to_bitField0_ = 0;
-      result.name_ = name_;
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        failedLocations_ = failedLocations_.getUnmodifiableView();
-        bitField0_ = (bitField0_ & ~0x00000002);
-      }
-      result.failedLocations_ = failedLocations_;
+      result.parent_ = parent_;
       result.pageToken_ = pageToken_;
-      result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
     }
@@ -436,18 +358,8 @@ public  final class ListInstancesRequest extends
 
     public Builder mergeFrom(com.google.bigtable.admin.v2.ListInstancesRequest other) {
       if (other == com.google.bigtable.admin.v2.ListInstancesRequest.getDefaultInstance()) return this;
-      if (!other.getName().isEmpty()) {
-        name_ = other.name_;
-        onChanged();
-      }
-      if (!other.failedLocations_.isEmpty()) {
-        if (failedLocations_.isEmpty()) {
-          failedLocations_ = other.failedLocations_;
-          bitField0_ = (bitField0_ & ~0x00000002);
-        } else {
-          ensureFailedLocationsIsMutable();
-          failedLocations_.addAll(other.failedLocations_);
-        }
+      if (!other.getParent().isEmpty()) {
+        parent_ = other.parent_;
         onChanged();
       }
       if (!other.getPageToken().isEmpty()) {
@@ -479,246 +391,108 @@ public  final class ListInstancesRequest extends
       }
       return this;
     }
-    private int bitField0_;
 
-    private java.lang.Object name_ = "";
+    private java.lang.Object parent_ = "";
     /**
-     * <code>optional string name = 1;</code>
+     * <code>optional string parent = 1;</code>
+     *
+     * <pre>
+     * The unique name of the project for which a list of instances is requested.
+     * Values are of the form projects/&lt;project&gt;
+     * </pre>
      */
-    public java.lang.String getName() {
-      java.lang.Object ref = name_;
+    public java.lang.String getParent() {
+      java.lang.Object ref = parent_;
       if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        name_ = s;
+        parent_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>optional string name = 1;</code>
+     * <code>optional string parent = 1;</code>
+     *
+     * <pre>
+     * The unique name of the project for which a list of instances is requested.
+     * Values are of the form projects/&lt;project&gt;
+     * </pre>
      */
     public com.google.protobuf.ByteString
-        getNameBytes() {
-      java.lang.Object ref = name_;
+        getParentBytes() {
+      java.lang.Object ref = parent_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        name_ = b;
+        parent_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>optional string name = 1;</code>
+     * <code>optional string parent = 1;</code>
+     *
+     * <pre>
+     * The unique name of the project for which a list of instances is requested.
+     * Values are of the form projects/&lt;project&gt;
+     * </pre>
      */
-    public Builder setName(
+    public Builder setParent(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
   
-      name_ = value;
+      parent_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
+     * <code>optional string parent = 1;</code>
+     *
+     * <pre>
+     * The unique name of the project for which a list of instances is requested.
+     * Values are of the form projects/&lt;project&gt;
+     * </pre>
      */
-    public Builder clearName() {
+    public Builder clearParent() {
       
-      name_ = getDefaultInstance().getName();
+      parent_ = getDefaultInstance().getParent();
       onChanged();
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
+     * <code>optional string parent = 1;</code>
+     *
+     * <pre>
+     * The unique name of the project for which a list of instances is requested.
+     * Values are of the form projects/&lt;project&gt;
+     * </pre>
      */
-    public Builder setNameBytes(
+    public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
       
-      name_ = value;
-      onChanged();
-      return this;
-    }
-
-    private com.google.protobuf.LazyStringList failedLocations_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-    private void ensureFailedLocationsIsMutable() {
-      if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-        failedLocations_ = new com.google.protobuf.LazyStringArrayList(failedLocations_);
-        bitField0_ |= 0x00000002;
-       }
-    }
-    /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
-     * <pre>
-     * Locations from which Instance information could not be retrieved,
-     * due to an outage or some other transient condition.
-     * Instances whose Clusters are all in one of the failed locations
-     * may be missing from 'instances', and Instances with at least one
-     * Cluster in a failed location may only have partial information returned.
-     * </pre>
-     */
-    public com.google.protobuf.ProtocolStringList
-        getFailedLocationsList() {
-      return failedLocations_.getUnmodifiableView();
-    }
-    /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
-     * <pre>
-     * Locations from which Instance information could not be retrieved,
-     * due to an outage or some other transient condition.
-     * Instances whose Clusters are all in one of the failed locations
-     * may be missing from 'instances', and Instances with at least one
-     * Cluster in a failed location may only have partial information returned.
-     * </pre>
-     */
-    public int getFailedLocationsCount() {
-      return failedLocations_.size();
-    }
-    /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
-     * <pre>
-     * Locations from which Instance information could not be retrieved,
-     * due to an outage or some other transient condition.
-     * Instances whose Clusters are all in one of the failed locations
-     * may be missing from 'instances', and Instances with at least one
-     * Cluster in a failed location may only have partial information returned.
-     * </pre>
-     */
-    public java.lang.String getFailedLocations(int index) {
-      return failedLocations_.get(index);
-    }
-    /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
-     * <pre>
-     * Locations from which Instance information could not be retrieved,
-     * due to an outage or some other transient condition.
-     * Instances whose Clusters are all in one of the failed locations
-     * may be missing from 'instances', and Instances with at least one
-     * Cluster in a failed location may only have partial information returned.
-     * </pre>
-     */
-    public com.google.protobuf.ByteString
-        getFailedLocationsBytes(int index) {
-      return failedLocations_.getByteString(index);
-    }
-    /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
-     * <pre>
-     * Locations from which Instance information could not be retrieved,
-     * due to an outage or some other transient condition.
-     * Instances whose Clusters are all in one of the failed locations
-     * may be missing from 'instances', and Instances with at least one
-     * Cluster in a failed location may only have partial information returned.
-     * </pre>
-     */
-    public Builder setFailedLocations(
-        int index, java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureFailedLocationsIsMutable();
-      failedLocations_.set(index, value);
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
-     * <pre>
-     * Locations from which Instance information could not be retrieved,
-     * due to an outage or some other transient condition.
-     * Instances whose Clusters are all in one of the failed locations
-     * may be missing from 'instances', and Instances with at least one
-     * Cluster in a failed location may only have partial information returned.
-     * </pre>
-     */
-    public Builder addFailedLocations(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureFailedLocationsIsMutable();
-      failedLocations_.add(value);
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
-     * <pre>
-     * Locations from which Instance information could not be retrieved,
-     * due to an outage or some other transient condition.
-     * Instances whose Clusters are all in one of the failed locations
-     * may be missing from 'instances', and Instances with at least one
-     * Cluster in a failed location may only have partial information returned.
-     * </pre>
-     */
-    public Builder addAllFailedLocations(
-        java.lang.Iterable<java.lang.String> values) {
-      ensureFailedLocationsIsMutable();
-      com.google.protobuf.AbstractMessageLite.Builder.addAll(
-          values, failedLocations_);
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
-     * <pre>
-     * Locations from which Instance information could not be retrieved,
-     * due to an outage or some other transient condition.
-     * Instances whose Clusters are all in one of the failed locations
-     * may be missing from 'instances', and Instances with at least one
-     * Cluster in a failed location may only have partial information returned.
-     * </pre>
-     */
-    public Builder clearFailedLocations() {
-      failedLocations_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      bitField0_ = (bitField0_ & ~0x00000002);
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
-     * <pre>
-     * Locations from which Instance information could not be retrieved,
-     * due to an outage or some other transient condition.
-     * Instances whose Clusters are all in one of the failed locations
-     * may be missing from 'instances', and Instances with at least one
-     * Cluster in a failed location may only have partial information returned.
-     * </pre>
-     */
-    public Builder addFailedLocationsBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      ensureFailedLocationsIsMutable();
-      failedLocations_.add(value);
+      parent_ = value;
       onChanged();
       return this;
     }
 
     private java.lang.Object pageToken_ = "";
     /**
-     * <code>optional string page_token = 3;</code>
+     * <code>optional string page_token = 2;</code>
+     *
+     * <pre>
+     * The value of `next_page_token` returned by a previous call.
+     * </pre>
      */
     public java.lang.String getPageToken() {
       java.lang.Object ref = pageToken_;
@@ -733,7 +507,11 @@ public  final class ListInstancesRequest extends
       }
     }
     /**
-     * <code>optional string page_token = 3;</code>
+     * <code>optional string page_token = 2;</code>
+     *
+     * <pre>
+     * The value of `next_page_token` returned by a previous call.
+     * </pre>
      */
     public com.google.protobuf.ByteString
         getPageTokenBytes() {
@@ -749,7 +527,11 @@ public  final class ListInstancesRequest extends
       }
     }
     /**
-     * <code>optional string page_token = 3;</code>
+     * <code>optional string page_token = 2;</code>
+     *
+     * <pre>
+     * The value of `next_page_token` returned by a previous call.
+     * </pre>
      */
     public Builder setPageToken(
         java.lang.String value) {
@@ -762,7 +544,11 @@ public  final class ListInstancesRequest extends
       return this;
     }
     /**
-     * <code>optional string page_token = 3;</code>
+     * <code>optional string page_token = 2;</code>
+     *
+     * <pre>
+     * The value of `next_page_token` returned by a previous call.
+     * </pre>
      */
     public Builder clearPageToken() {
       
@@ -771,7 +557,11 @@ public  final class ListInstancesRequest extends
       return this;
     }
     /**
-     * <code>optional string page_token = 3;</code>
+     * <code>optional string page_token = 2;</code>
+     *
+     * <pre>
+     * The value of `next_page_token` returned by a previous call.
+     * </pre>
      */
     public Builder setPageTokenBytes(
         com.google.protobuf.ByteString value) {

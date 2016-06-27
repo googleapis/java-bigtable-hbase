@@ -106,12 +106,20 @@ public  final class ListClustersResponse extends
   private java.util.List<com.google.bigtable.admin.v2.Cluster> clusters_;
   /**
    * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+   *
+   * <pre>
+   * The list of requested clusters.
+   * </pre>
    */
   public java.util.List<com.google.bigtable.admin.v2.Cluster> getClustersList() {
     return clusters_;
   }
   /**
    * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+   *
+   * <pre>
+   * The list of requested clusters.
+   * </pre>
    */
   public java.util.List<? extends com.google.bigtable.admin.v2.ClusterOrBuilder> 
       getClustersOrBuilderList() {
@@ -119,18 +127,30 @@ public  final class ListClustersResponse extends
   }
   /**
    * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+   *
+   * <pre>
+   * The list of requested clusters.
+   * </pre>
    */
   public int getClustersCount() {
     return clusters_.size();
   }
   /**
    * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+   *
+   * <pre>
+   * The list of requested clusters.
+   * </pre>
    */
   public com.google.bigtable.admin.v2.Cluster getClusters(int index) {
     return clusters_.get(index);
   }
   /**
    * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+   *
+   * <pre>
+   * The list of requested clusters.
+   * </pre>
    */
   public com.google.bigtable.admin.v2.ClusterOrBuilder getClustersOrBuilder(
       int index) {
@@ -198,6 +218,12 @@ public  final class ListClustersResponse extends
   private volatile java.lang.Object nextPageToken_;
   /**
    * <code>optional string next_page_token = 3;</code>
+   *
+   * <pre>
+   * Set if not all clusters could be returned in a single response.
+   * Pass this value to `page_token` in another request to get the next
+   * page of results.
+   * </pre>
    */
   public java.lang.String getNextPageToken() {
     java.lang.Object ref = nextPageToken_;
@@ -213,6 +239,12 @@ public  final class ListClustersResponse extends
   }
   /**
    * <code>optional string next_page_token = 3;</code>
+   *
+   * <pre>
+   * Set if not all clusters could be returned in a single response.
+   * Pass this value to `page_token` in another request to get the next
+   * page of results.
+   * </pre>
    */
   public com.google.protobuf.ByteString
       getNextPageTokenBytes() {
@@ -533,6 +565,10 @@ public  final class ListClustersResponse extends
 
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public java.util.List<com.google.bigtable.admin.v2.Cluster> getClustersList() {
       if (clustersBuilder_ == null) {
@@ -543,6 +579,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public int getClustersCount() {
       if (clustersBuilder_ == null) {
@@ -553,6 +593,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public com.google.bigtable.admin.v2.Cluster getClusters(int index) {
       if (clustersBuilder_ == null) {
@@ -563,6 +607,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public Builder setClusters(
         int index, com.google.bigtable.admin.v2.Cluster value) {
@@ -580,6 +628,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public Builder setClusters(
         int index, com.google.bigtable.admin.v2.Cluster.Builder builderForValue) {
@@ -594,6 +646,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public Builder addClusters(com.google.bigtable.admin.v2.Cluster value) {
       if (clustersBuilder_ == null) {
@@ -610,6 +666,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public Builder addClusters(
         int index, com.google.bigtable.admin.v2.Cluster value) {
@@ -627,6 +687,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public Builder addClusters(
         com.google.bigtable.admin.v2.Cluster.Builder builderForValue) {
@@ -641,6 +705,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public Builder addClusters(
         int index, com.google.bigtable.admin.v2.Cluster.Builder builderForValue) {
@@ -655,6 +723,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public Builder addAllClusters(
         java.lang.Iterable<? extends com.google.bigtable.admin.v2.Cluster> values) {
@@ -670,6 +742,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public Builder clearClusters() {
       if (clustersBuilder_ == null) {
@@ -683,6 +759,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public Builder removeClusters(int index) {
       if (clustersBuilder_ == null) {
@@ -696,6 +776,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public com.google.bigtable.admin.v2.Cluster.Builder getClustersBuilder(
         int index) {
@@ -703,6 +787,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public com.google.bigtable.admin.v2.ClusterOrBuilder getClustersOrBuilder(
         int index) {
@@ -713,6 +801,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public java.util.List<? extends com.google.bigtable.admin.v2.ClusterOrBuilder> 
          getClustersOrBuilderList() {
@@ -724,6 +816,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public com.google.bigtable.admin.v2.Cluster.Builder addClustersBuilder() {
       return getClustersFieldBuilder().addBuilder(
@@ -731,6 +827,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public com.google.bigtable.admin.v2.Cluster.Builder addClustersBuilder(
         int index) {
@@ -739,6 +839,10 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
+     *
+     * <pre>
+     * The list of requested clusters.
+     * </pre>
      */
     public java.util.List<com.google.bigtable.admin.v2.Cluster.Builder> 
          getClustersBuilderList() {
@@ -919,6 +1023,12 @@ public  final class ListClustersResponse extends
     private java.lang.Object nextPageToken_ = "";
     /**
      * <code>optional string next_page_token = 3;</code>
+     *
+     * <pre>
+     * Set if not all clusters could be returned in a single response.
+     * Pass this value to `page_token` in another request to get the next
+     * page of results.
+     * </pre>
      */
     public java.lang.String getNextPageToken() {
       java.lang.Object ref = nextPageToken_;
@@ -934,6 +1044,12 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>optional string next_page_token = 3;</code>
+     *
+     * <pre>
+     * Set if not all clusters could be returned in a single response.
+     * Pass this value to `page_token` in another request to get the next
+     * page of results.
+     * </pre>
      */
     public com.google.protobuf.ByteString
         getNextPageTokenBytes() {
@@ -950,6 +1066,12 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>optional string next_page_token = 3;</code>
+     *
+     * <pre>
+     * Set if not all clusters could be returned in a single response.
+     * Pass this value to `page_token` in another request to get the next
+     * page of results.
+     * </pre>
      */
     public Builder setNextPageToken(
         java.lang.String value) {
@@ -963,6 +1085,12 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>optional string next_page_token = 3;</code>
+     *
+     * <pre>
+     * Set if not all clusters could be returned in a single response.
+     * Pass this value to `page_token` in another request to get the next
+     * page of results.
+     * </pre>
      */
     public Builder clearNextPageToken() {
       
@@ -972,6 +1100,12 @@ public  final class ListClustersResponse extends
     }
     /**
      * <code>optional string next_page_token = 3;</code>
+     *
+     * <pre>
+     * Set if not all clusters could be returned in a single response.
+     * Pass this value to `page_token` in another request to get the next
+     * page of results.
+     * </pre>
      */
     public Builder setNextPageTokenBytes(
         com.google.protobuf.ByteString value) {

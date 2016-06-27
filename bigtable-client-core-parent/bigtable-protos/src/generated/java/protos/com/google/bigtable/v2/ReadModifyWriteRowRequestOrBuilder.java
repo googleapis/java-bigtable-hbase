@@ -14,7 +14,7 @@ public interface ReadModifyWriteRowRequestOrBuilder extends
    * The unique name of the table to which the read/modify/write rules should be
    * applied.
    * Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+   * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    */
   java.lang.String getTableName();
@@ -25,7 +25,7 @@ public interface ReadModifyWriteRowRequestOrBuilder extends
    * The unique name of the table to which the read/modify/write rules should be
    * applied.
    * Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+   * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    */
   com.google.protobuf.ByteString

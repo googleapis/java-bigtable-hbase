@@ -108,7 +108,7 @@ public  final class MutateRowsRequest extends
      * Changes to be atomically applied to the specified row. Mutations are
      * applied in order, meaning that earlier mutations can be masked by
      * later ones.
-     * At least one mutation must be specified.
+     * You must specify at least one mutation.
      * </pre>
      */
     java.util.List<com.google.bigtable.v2.Mutation> 
@@ -120,7 +120,7 @@ public  final class MutateRowsRequest extends
      * Changes to be atomically applied to the specified row. Mutations are
      * applied in order, meaning that earlier mutations can be masked by
      * later ones.
-     * At least one mutation must be specified.
+     * You must specify at least one mutation.
      * </pre>
      */
     com.google.bigtable.v2.Mutation getMutations(int index);
@@ -131,7 +131,7 @@ public  final class MutateRowsRequest extends
      * Changes to be atomically applied to the specified row. Mutations are
      * applied in order, meaning that earlier mutations can be masked by
      * later ones.
-     * At least one mutation must be specified.
+     * You must specify at least one mutation.
      * </pre>
      */
     int getMutationsCount();
@@ -142,7 +142,7 @@ public  final class MutateRowsRequest extends
      * Changes to be atomically applied to the specified row. Mutations are
      * applied in order, meaning that earlier mutations can be masked by
      * later ones.
-     * At least one mutation must be specified.
+     * You must specify at least one mutation.
      * </pre>
      */
     java.util.List<? extends com.google.bigtable.v2.MutationOrBuilder> 
@@ -154,7 +154,7 @@ public  final class MutateRowsRequest extends
      * Changes to be atomically applied to the specified row. Mutations are
      * applied in order, meaning that earlier mutations can be masked by
      * later ones.
-     * At least one mutation must be specified.
+     * You must specify at least one mutation.
      * </pre>
      */
     com.google.bigtable.v2.MutationOrBuilder getMutationsOrBuilder(
@@ -263,7 +263,7 @@ public  final class MutateRowsRequest extends
      * Changes to be atomically applied to the specified row. Mutations are
      * applied in order, meaning that earlier mutations can be masked by
      * later ones.
-     * At least one mutation must be specified.
+     * You must specify at least one mutation.
      * </pre>
      */
     public java.util.List<com.google.bigtable.v2.Mutation> getMutationsList() {
@@ -276,7 +276,7 @@ public  final class MutateRowsRequest extends
      * Changes to be atomically applied to the specified row. Mutations are
      * applied in order, meaning that earlier mutations can be masked by
      * later ones.
-     * At least one mutation must be specified.
+     * You must specify at least one mutation.
      * </pre>
      */
     public java.util.List<? extends com.google.bigtable.v2.MutationOrBuilder> 
@@ -290,7 +290,7 @@ public  final class MutateRowsRequest extends
      * Changes to be atomically applied to the specified row. Mutations are
      * applied in order, meaning that earlier mutations can be masked by
      * later ones.
-     * At least one mutation must be specified.
+     * You must specify at least one mutation.
      * </pre>
      */
     public int getMutationsCount() {
@@ -303,7 +303,7 @@ public  final class MutateRowsRequest extends
      * Changes to be atomically applied to the specified row. Mutations are
      * applied in order, meaning that earlier mutations can be masked by
      * later ones.
-     * At least one mutation must be specified.
+     * You must specify at least one mutation.
      * </pre>
      */
     public com.google.bigtable.v2.Mutation getMutations(int index) {
@@ -316,7 +316,7 @@ public  final class MutateRowsRequest extends
      * Changes to be atomically applied to the specified row. Mutations are
      * applied in order, meaning that earlier mutations can be masked by
      * later ones.
-     * At least one mutation must be specified.
+     * You must specify at least one mutation.
      * </pre>
      */
     public com.google.bigtable.v2.MutationOrBuilder getMutationsOrBuilder(
@@ -643,7 +643,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public java.util.List<com.google.bigtable.v2.Mutation> getMutationsList() {
@@ -660,7 +660,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public int getMutationsCount() {
@@ -677,7 +677,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public com.google.bigtable.v2.Mutation getMutations(int index) {
@@ -694,7 +694,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public Builder setMutations(
@@ -718,7 +718,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public Builder setMutations(
@@ -739,7 +739,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public Builder addMutations(com.google.bigtable.v2.Mutation value) {
@@ -762,7 +762,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public Builder addMutations(
@@ -786,7 +786,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public Builder addMutations(
@@ -807,7 +807,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public Builder addMutations(
@@ -828,7 +828,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public Builder addAllMutations(
@@ -850,7 +850,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public Builder clearMutations() {
@@ -870,7 +870,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public Builder removeMutations(int index) {
@@ -890,7 +890,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public com.google.bigtable.v2.Mutation.Builder getMutationsBuilder(
@@ -904,7 +904,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public com.google.bigtable.v2.MutationOrBuilder getMutationsOrBuilder(
@@ -921,7 +921,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public java.util.List<? extends com.google.bigtable.v2.MutationOrBuilder> 
@@ -939,7 +939,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public com.google.bigtable.v2.Mutation.Builder addMutationsBuilder() {
@@ -953,7 +953,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public com.google.bigtable.v2.Mutation.Builder addMutationsBuilder(
@@ -968,7 +968,7 @@ public  final class MutateRowsRequest extends
        * Changes to be atomically applied to the specified row. Mutations are
        * applied in order, meaning that earlier mutations can be masked by
        * later ones.
-       * At least one mutation must be specified.
+       * You must specify at least one mutation.
        * </pre>
        */
       public java.util.List<com.google.bigtable.v2.Mutation.Builder> 
@@ -1096,10 +1096,10 @@ public  final class MutateRowsRequest extends
    * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
    *
    * <pre>
-   * The row keys/mutations to be applied in bulk.
+   * The row keys and corresponding mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
    * applied in arbitrary order (even between entries for the same row).
-   * At least one entry must be specified, and in total the entries may
+   * At least one entry must be specified, and in total the entries can
    * contain at most 100000 mutations.
    * </pre>
    */
@@ -1110,10 +1110,10 @@ public  final class MutateRowsRequest extends
    * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
    *
    * <pre>
-   * The row keys/mutations to be applied in bulk.
+   * The row keys and corresponding mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
    * applied in arbitrary order (even between entries for the same row).
-   * At least one entry must be specified, and in total the entries may
+   * At least one entry must be specified, and in total the entries can
    * contain at most 100000 mutations.
    * </pre>
    */
@@ -1125,10 +1125,10 @@ public  final class MutateRowsRequest extends
    * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
    *
    * <pre>
-   * The row keys/mutations to be applied in bulk.
+   * The row keys and corresponding mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
    * applied in arbitrary order (even between entries for the same row).
-   * At least one entry must be specified, and in total the entries may
+   * At least one entry must be specified, and in total the entries can
    * contain at most 100000 mutations.
    * </pre>
    */
@@ -1139,10 +1139,10 @@ public  final class MutateRowsRequest extends
    * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
    *
    * <pre>
-   * The row keys/mutations to be applied in bulk.
+   * The row keys and corresponding mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
    * applied in arbitrary order (even between entries for the same row).
-   * At least one entry must be specified, and in total the entries may
+   * At least one entry must be specified, and in total the entries can
    * contain at most 100000 mutations.
    * </pre>
    */
@@ -1153,10 +1153,10 @@ public  final class MutateRowsRequest extends
    * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
    *
    * <pre>
-   * The row keys/mutations to be applied in bulk.
+   * The row keys and corresponding mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
    * applied in arbitrary order (even between entries for the same row).
-   * At least one entry must be specified, and in total the entries may
+   * At least one entry must be specified, and in total the entries can
    * contain at most 100000 mutations.
    * </pre>
    */
@@ -1533,10 +1533,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1551,10 +1551,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1569,10 +1569,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1587,10 +1587,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1612,10 +1612,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1634,10 +1634,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1658,10 +1658,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1683,10 +1683,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1705,10 +1705,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1727,10 +1727,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1750,10 +1750,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1771,10 +1771,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1792,10 +1792,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1807,10 +1807,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1825,10 +1825,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1844,10 +1844,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1859,10 +1859,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */
@@ -1875,10 +1875,10 @@ public  final class MutateRowsRequest extends
      * <code>repeated .google.bigtable.v2.MutateRowsRequest.Entry entries = 2;</code>
      *
      * <pre>
-     * The row keys/mutations to be applied in bulk.
+     * The row keys and corresponding mutations to be applied in bulk.
      * Each entry is applied as an atomic mutation, but the entries may be
      * applied in arbitrary order (even between entries for the same row).
-     * At least one entry must be specified, and in total the entries may
+     * At least one entry must be specified, and in total the entries can
      * contain at most 100000 mutations.
      * </pre>
      */

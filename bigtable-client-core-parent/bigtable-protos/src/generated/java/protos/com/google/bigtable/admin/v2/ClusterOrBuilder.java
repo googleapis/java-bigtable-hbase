@@ -12,6 +12,8 @@ public interface ClusterOrBuilder extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The unique name of the cluster. Values are of the form
+   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
    * </pre>
    */
   java.lang.String getName();
@@ -20,6 +22,8 @@ public interface ClusterOrBuilder extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The unique name of the cluster. Values are of the form
+   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
    * </pre>
    */
   com.google.protobuf.ByteString
@@ -30,6 +34,8 @@ public interface ClusterOrBuilder extends
    *
    * <pre>
    * &#64;CreationOnly
+   * The location where this cluster's nodes and storage reside. For best
+   * performance, clients should be located as close as possible to this cluster.
    * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
    * </pre>
    */
@@ -39,6 +45,8 @@ public interface ClusterOrBuilder extends
    *
    * <pre>
    * &#64;CreationOnly
+   * The location where this cluster's nodes and storage reside. For best
+   * performance, clients should be located as close as possible to this cluster.
    * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
    * </pre>
    */
@@ -50,6 +58,7 @@ public interface ClusterOrBuilder extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The current state of the cluster.
    * </pre>
    */
   int getStateValue();
@@ -58,12 +67,18 @@ public interface ClusterOrBuilder extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The current state of the cluster.
    * </pre>
    */
   com.google.bigtable.admin.v2.Cluster.State getState();
 
   /**
    * <code>optional int32 serve_nodes = 4;</code>
+   *
+   * <pre>
+   * The number of nodes allocated to this cluster. More nodes enable higher
+   * throughput and more consistent performance.
+   * </pre>
    */
   int getServeNodes();
 
@@ -72,6 +87,8 @@ public interface ClusterOrBuilder extends
    *
    * <pre>
    * &#64;CreationOnly
+   * The type of storage used by this cluster to serve its
+   * parent instance's tables, unless explicitly overridden.
    * </pre>
    */
   int getDefaultStorageTypeValue();
@@ -80,6 +97,8 @@ public interface ClusterOrBuilder extends
    *
    * <pre>
    * &#64;CreationOnly
+   * The type of storage used by this cluster to serve its
+   * parent instance's tables, unless explicitly overridden.
    * </pre>
    */
   com.google.bigtable.admin.v2.StorageType getDefaultStorageType();

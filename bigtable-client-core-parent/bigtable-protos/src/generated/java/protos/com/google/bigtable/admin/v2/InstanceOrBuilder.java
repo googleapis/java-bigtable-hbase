@@ -12,6 +12,8 @@ public interface InstanceOrBuilder extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The unique name of the instance. Values are of the form
+   * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
    * </pre>
    */
   java.lang.String getName();
@@ -20,6 +22,8 @@ public interface InstanceOrBuilder extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The unique name of the instance. Values are of the form
+   * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
    * </pre>
    */
   com.google.protobuf.ByteString
@@ -27,10 +31,22 @@ public interface InstanceOrBuilder extends
 
   /**
    * <code>optional string display_name = 2;</code>
+   *
+   * <pre>
+   * The descriptive name for this instance as it appears in UIs.
+   * Can be changed at any time, but should be kept globally unique
+   * to avoid confusion.
+   * </pre>
    */
   java.lang.String getDisplayName();
   /**
    * <code>optional string display_name = 2;</code>
+   *
+   * <pre>
+   * The descriptive name for this instance as it appears in UIs.
+   * Can be changed at any time, but should be kept globally unique
+   * to avoid confusion.
+   * </pre>
    */
   com.google.protobuf.ByteString
       getDisplayNameBytes();
@@ -39,7 +55,7 @@ public interface InstanceOrBuilder extends
    * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * The current state of the instance.
    * </pre>
    */
   int getStateValue();
@@ -47,7 +63,7 @@ public interface InstanceOrBuilder extends
    * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * The current state of the instance.
    * </pre>
    */
   com.google.bigtable.admin.v2.Instance.State getState();

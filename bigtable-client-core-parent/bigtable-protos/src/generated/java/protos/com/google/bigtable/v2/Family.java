@@ -7,7 +7,8 @@ package com.google.bigtable.v2;
  * Protobuf type {@code google.bigtable.v2.Family}
  *
  * <pre>
- * Specifies (some of) the contents of a single row/column family of a table.
+ * Specifies (some of) the contents of a single row/column family intersection
+ * of a table.
  * </pre>
  */
 public  final class Family extends
@@ -98,7 +99,7 @@ public  final class Family extends
    * The unique key which identifies this family within its row. This is the
    * same key that's used to identify the family in, for example, a RowFilter
    * which sets its "family_name_regex_filter" field.
-   * Must match [-_.a-zA-Z0-9]+, except that AggregatingRowProcessors may
+   * Must match `[-_.a-zA-Z0-9]+`, except that AggregatingRowProcessors may
    * produce cells in a sentinel family with an empty name.
    * Must be no greater than 64 characters in length.
    * </pre>
@@ -122,7 +123,7 @@ public  final class Family extends
    * The unique key which identifies this family within its row. This is the
    * same key that's used to identify the family in, for example, a RowFilter
    * which sets its "family_name_regex_filter" field.
-   * Must match [-_.a-zA-Z0-9]+, except that AggregatingRowProcessors may
+   * Must match `[-_.a-zA-Z0-9]+`, except that AggregatingRowProcessors may
    * produce cells in a sentinel family with an empty name.
    * Must be no greater than 64 characters in length.
    * </pre>
@@ -308,7 +309,8 @@ public  final class Family extends
    * Protobuf type {@code google.bigtable.v2.Family}
    *
    * <pre>
-   * Specifies (some of) the contents of a single row/column family of a table.
+   * Specifies (some of) the contents of a single row/column family intersection
+   * of a table.
    * </pre>
    */
   public static final class Builder extends
@@ -467,7 +469,7 @@ public  final class Family extends
      * The unique key which identifies this family within its row. This is the
      * same key that's used to identify the family in, for example, a RowFilter
      * which sets its "family_name_regex_filter" field.
-     * Must match [-_.a-zA-Z0-9]+, except that AggregatingRowProcessors may
+     * Must match `[-_.a-zA-Z0-9]+`, except that AggregatingRowProcessors may
      * produce cells in a sentinel family with an empty name.
      * Must be no greater than 64 characters in length.
      * </pre>
@@ -491,7 +493,7 @@ public  final class Family extends
      * The unique key which identifies this family within its row. This is the
      * same key that's used to identify the family in, for example, a RowFilter
      * which sets its "family_name_regex_filter" field.
-     * Must match [-_.a-zA-Z0-9]+, except that AggregatingRowProcessors may
+     * Must match `[-_.a-zA-Z0-9]+`, except that AggregatingRowProcessors may
      * produce cells in a sentinel family with an empty name.
      * Must be no greater than 64 characters in length.
      * </pre>
@@ -516,7 +518,7 @@ public  final class Family extends
      * The unique key which identifies this family within its row. This is the
      * same key that's used to identify the family in, for example, a RowFilter
      * which sets its "family_name_regex_filter" field.
-     * Must match [-_.a-zA-Z0-9]+, except that AggregatingRowProcessors may
+     * Must match `[-_.a-zA-Z0-9]+`, except that AggregatingRowProcessors may
      * produce cells in a sentinel family with an empty name.
      * Must be no greater than 64 characters in length.
      * </pre>
@@ -538,7 +540,7 @@ public  final class Family extends
      * The unique key which identifies this family within its row. This is the
      * same key that's used to identify the family in, for example, a RowFilter
      * which sets its "family_name_regex_filter" field.
-     * Must match [-_.a-zA-Z0-9]+, except that AggregatingRowProcessors may
+     * Must match `[-_.a-zA-Z0-9]+`, except that AggregatingRowProcessors may
      * produce cells in a sentinel family with an empty name.
      * Must be no greater than 64 characters in length.
      * </pre>
@@ -556,7 +558,7 @@ public  final class Family extends
      * The unique key which identifies this family within its row. This is the
      * same key that's used to identify the family in, for example, a RowFilter
      * which sets its "family_name_regex_filter" field.
-     * Must match [-_.a-zA-Z0-9]+, except that AggregatingRowProcessors may
+     * Must match `[-_.a-zA-Z0-9]+`, except that AggregatingRowProcessors may
      * produce cells in a sentinel family with an empty name.
      * Must be no greater than 64 characters in length.
      * </pre>

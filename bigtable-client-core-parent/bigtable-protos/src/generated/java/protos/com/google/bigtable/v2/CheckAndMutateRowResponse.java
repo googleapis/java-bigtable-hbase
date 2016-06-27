@@ -81,7 +81,7 @@ public  final class CheckAndMutateRowResponse extends
    * <code>optional bool predicate_matched = 1;</code>
    *
    * <pre>
-   * Whether or not the request's "predicate_filter" yielded any results for
+   * Whether or not the request's `predicate_filter` yielded any results for
    * the specified row.
    * </pre>
    */
@@ -304,7 +304,7 @@ public  final class CheckAndMutateRowResponse extends
      * <code>optional bool predicate_matched = 1;</code>
      *
      * <pre>
-     * Whether or not the request's "predicate_filter" yielded any results for
+     * Whether or not the request's `predicate_filter` yielded any results for
      * the specified row.
      * </pre>
      */
@@ -315,7 +315,7 @@ public  final class CheckAndMutateRowResponse extends
      * <code>optional bool predicate_matched = 1;</code>
      *
      * <pre>
-     * Whether or not the request's "predicate_filter" yielded any results for
+     * Whether or not the request's `predicate_filter` yielded any results for
      * the specified row.
      * </pre>
      */
@@ -329,7 +329,7 @@ public  final class CheckAndMutateRowResponse extends
      * <code>optional bool predicate_matched = 1;</code>
      *
      * <pre>
-     * Whether or not the request's "predicate_filter" yielded any results for
+     * Whether or not the request's `predicate_filter` yielded any results for
      * the specified row.
      * </pre>
      */
