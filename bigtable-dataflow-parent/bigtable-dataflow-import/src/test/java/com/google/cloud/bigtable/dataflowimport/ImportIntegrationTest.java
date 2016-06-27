@@ -125,7 +125,7 @@ public class ImportIntegrationTest {
         "Required property missing: " + BigtableOptionsFactory.PROJECT_ID_KEY);
     commonOptions.setBigtableProjectId(projectId);
     commonOptions.setProject(projectId); // Use Bigtable project as dataflow project.
-    commonOptions.setBigtableClusterId(
+    commonOptions.setBigtableInstanceId(
         checkNotNull(System.getProperty(BigtableOptionsFactory.INSTANCE_ID_KEY),
             "Required property missing: " + BigtableOptionsFactory.INSTANCE_ID_KEY));
     commonOptions.setStagingLocation(

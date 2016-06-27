@@ -33,13 +33,10 @@ public interface CloudBigtableOptions extends DataflowPipelineOptions {
 
   void setBigtableProjectId(String bigtableProjectId);
 
-  @Description("The Cloud Bigtable cluster ID.")
-  String getBigtableClusterId();
-
-  void setBigtableClusterId(String bigtableClusterId);
-
   @Description("The Google Cloud Bigtable instance ID .")
   String getBigtableInstanceId();
+
+  void setBigtableInstanceId(String bigtableInstanceId);
 
   @Description("The Cloud Bigtable table ID in the cluster." )
   String getBigtableTableId();
