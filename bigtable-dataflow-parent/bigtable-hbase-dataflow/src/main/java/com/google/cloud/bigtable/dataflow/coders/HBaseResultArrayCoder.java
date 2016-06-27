@@ -29,7 +29,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 /**
- * A {@link BigtableConverter} that serializes and deserializes the {@link Result} array.
+ * An {@link AtomicCoder} that serializes and deserializes the {@link Result} array.
  */
 public class HBaseResultArrayCoder extends AtomicCoder<Result[]>{
 

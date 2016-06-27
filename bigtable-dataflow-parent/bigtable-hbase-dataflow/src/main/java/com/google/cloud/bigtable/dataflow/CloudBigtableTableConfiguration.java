@@ -121,7 +121,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   /**
    * Creates a {@link CloudBigtableTableConfiguration} using the specified configuration.
    * @param projectId The project ID for the instance.
-   * @param zoneId The instance ID
+   * @param instanceId The instance ID
    * @param tableId The table to connect to in the cluster.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
