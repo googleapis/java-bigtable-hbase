@@ -66,56 +66,56 @@ public final class BigtableTableAdminProto {
       "e_admin.proto\022\030google.bigtable.admin.v2\032" +
       "\034google/api/annotations.proto\032$google/bi" +
       "gtable/admin/v2/table.proto\032\033google/prot" +
-      "obuf/empty.proto\"\306\001\n\022CreateTableRequest\022" +
-      "\014\n\004name\030\001 \001(\t\022\020\n\010table_id\030\002 \001(\t\022.\n\005table" +
-      "\030\003 \001(\0132\037.google.bigtable.admin.v2.Table\022" +
-      "J\n\016initial_splits\030\004 \003(\01322.google.bigtabl" +
-      "e.admin.v2.CreateTableRequest.Split\032\024\n\005S" +
-      "plit\022\013\n\003key\030\001 \001(\014\"m\n\023DropRowRangeRequest",
-      "\022\014\n\004name\030\001 \001(\t\022\030\n\016row_key_prefix\030\002 \001(\014H\000" +
-      "\022$\n\032delete_all_data_from_table\030\003 \001(\010H\000B\010" +
-      "\n\006target\"i\n\021ListTablesRequest\022\014\n\004name\030\001 " +
-      "\001(\t\0222\n\004view\030\002 \001(\0162$.google.bigtable.admi" +
-      "n.v2.Table.View\022\022\n\npage_token\030\003 \001(\t\"^\n\022L" +
-      "istTablesResponse\022/\n\006tables\030\001 \003(\0132\037.goog" +
-      "le.bigtable.admin.v2.Table\022\027\n\017next_page_" +
-      "token\030\002 \001(\t\"S\n\017GetTableRequest\022\014\n\004name\030\001" +
-      " \001(\t\0222\n\004view\030\002 \001(\0162$.google.bigtable.adm" +
-      "in.v2.Table.View\"\"\n\022DeleteTableRequest\022\014",
-      "\n\004name\030\001 \001(\t\"\256\002\n\033ModifyColumnFamiliesReq" +
-      "uest\022\014\n\004name\030\001 \001(\t\022Y\n\rmodifications\030\002 \003(" +
-      "\0132B.google.bigtable.admin.v2.ModifyColum" +
-      "nFamiliesRequest.Modification\032\245\001\n\014Modifi" +
-      "cation\022\n\n\002id\030\001 \001(\t\0228\n\006create\030\002 \001(\0132&.goo" +
-      "gle.bigtable.admin.v2.ColumnFamilyH\000\0228\n\006" +
-      "update\030\003 \001(\0132&.google.bigtable.admin.v2." +
-      "ColumnFamilyH\000\022\016\n\004drop\030\004 \001(\010H\000B\005\n\003mod2\264\007" +
-      "\n\022BigtableTableAdmin\022\221\001\n\013CreateTable\022,.g" +
-      "oogle.bigtable.admin.v2.CreateTableReque",
-      "st\032\037.google.bigtable.admin.v2.Table\"3\202\323\344" +
-      "\223\002-\"(/v2/{name=projects/*/instances/*}/t" +
-      "ables:\001*\022\231\001\n\nListTables\022+.google.bigtabl" +
-      "e.admin.v2.ListTablesRequest\032,.google.bi" +
-      "gtable.admin.v2.ListTablesResponse\"0\202\323\344\223" +
-      "\002*\022(/v2/{name=projects/*/instances/*}/ta" +
-      "bles\022\212\001\n\010GetTable\022).google.bigtable.admi" +
-      "n.v2.GetTableRequest\032\037.google.bigtable.a" +
-      "dmin.v2.Table\"2\202\323\344\223\002,\022*/v2/{name=project" +
-      "s/*/instances/*/tables/*}\022\207\001\n\013DeleteTabl",
-      "e\022,.google.bigtable.admin.v2.DeleteTable" +
-      "Request\032\026.google.protobuf.Empty\"2\202\323\344\223\002,*" +
-      "*/v2/{name=projects/*/instances/*/tables" +
-      "/*}\022\272\001\n\024ModifyColumnFamilies\0225.google.bi" +
-      "gtable.admin.v2.ModifyColumnFamiliesRequ" +
-      "est\032\037.google.bigtable.admin.v2.Table\"J\202\323" +
-      "\344\223\002D\"?/v2/{name=projects/*/instances/*/t" +
-      "ables/*}:modifyColumnFamilies:\001*\022\231\001\n\014Dro" +
-      "pRowRange\022-.google.bigtable.admin.v2.Dro" +
-      "pRowRangeRequest\032\026.google.protobuf.Empty",
-      "\"B\202\323\344\223\002<\"7/v2/{name=projects/*/instances" +
-      "/*/tables/*}:dropRowRange:\001*B9\n\034com.goog" +
-      "le.bigtable.admin.v2B\027BigtableTableAdmin" +
-      "ProtoP\001b\006proto3"
+      "obuf/empty.proto\"\310\001\n\022CreateTableRequest\022" +
+      "\016\n\006parent\030\001 \001(\t\022\020\n\010table_id\030\002 \001(\t\022.\n\005tab" +
+      "le\030\003 \001(\0132\037.google.bigtable.admin.v2.Tabl" +
+      "e\022J\n\016initial_splits\030\004 \003(\01322.google.bigta" +
+      "ble.admin.v2.CreateTableRequest.Split\032\024\n" +
+      "\005Split\022\013\n\003key\030\001 \001(\014\"m\n\023DropRowRangeReque",
+      "st\022\014\n\004name\030\001 \001(\t\022\030\n\016row_key_prefix\030\002 \001(\014" +
+      "H\000\022$\n\032delete_all_data_from_table\030\003 \001(\010H\000" +
+      "B\010\n\006target\"k\n\021ListTablesRequest\022\016\n\006paren" +
+      "t\030\001 \001(\t\0222\n\004view\030\002 \001(\0162$.google.bigtable." +
+      "admin.v2.Table.View\022\022\n\npage_token\030\003 \001(\t\"" +
+      "^\n\022ListTablesResponse\022/\n\006tables\030\001 \003(\0132\037." +
+      "google.bigtable.admin.v2.Table\022\027\n\017next_p" +
+      "age_token\030\002 \001(\t\"S\n\017GetTableRequest\022\014\n\004na" +
+      "me\030\001 \001(\t\0222\n\004view\030\002 \001(\0162$.google.bigtable" +
+      ".admin.v2.Table.View\"\"\n\022DeleteTableReque",
+      "st\022\014\n\004name\030\001 \001(\t\"\256\002\n\033ModifyColumnFamilie" +
+      "sRequest\022\014\n\004name\030\001 \001(\t\022Y\n\rmodifications\030" +
+      "\002 \003(\0132B.google.bigtable.admin.v2.ModifyC" +
+      "olumnFamiliesRequest.Modification\032\245\001\n\014Mo" +
+      "dification\022\n\n\002id\030\001 \001(\t\0228\n\006create\030\002 \001(\0132&" +
+      ".google.bigtable.admin.v2.ColumnFamilyH\000" +
+      "\0228\n\006update\030\003 \001(\0132&.google.bigtable.admin" +
+      ".v2.ColumnFamilyH\000\022\016\n\004drop\030\004 \001(\010H\000B\005\n\003mo" +
+      "d2\270\007\n\022BigtableTableAdmin\022\223\001\n\013CreateTable" +
+      "\022,.google.bigtable.admin.v2.CreateTableR",
+      "equest\032\037.google.bigtable.admin.v2.Table\"" +
+      "5\202\323\344\223\002/\"*/v2/{parent=projects/*/instance" +
+      "s/*}/tables:\001*\022\233\001\n\nListTables\022+.google.b" +
+      "igtable.admin.v2.ListTablesRequest\032,.goo" +
+      "gle.bigtable.admin.v2.ListTablesResponse" +
+      "\"2\202\323\344\223\002,\022*/v2/{parent=projects/*/instanc" +
+      "es/*}/tables\022\212\001\n\010GetTable\022).google.bigta" +
+      "ble.admin.v2.GetTableRequest\032\037.google.bi" +
+      "gtable.admin.v2.Table\"2\202\323\344\223\002,\022*/v2/{name" +
+      "=projects/*/instances/*/tables/*}\022\207\001\n\013De",
+      "leteTable\022,.google.bigtable.admin.v2.Del" +
+      "eteTableRequest\032\026.google.protobuf.Empty\"" +
+      "2\202\323\344\223\002,**/v2/{name=projects/*/instances/" +
+      "*/tables/*}\022\272\001\n\024ModifyColumnFamilies\0225.g" +
+      "oogle.bigtable.admin.v2.ModifyColumnFami" +
+      "liesRequest\032\037.google.bigtable.admin.v2.T" +
+      "able\"J\202\323\344\223\002D\"?/v2/{name=projects/*/insta" +
+      "nces/*/tables/*}:modifyColumnFamilies:\001*" +
+      "\022\231\001\n\014DropRowRange\022-.google.bigtable.admi" +
+      "n.v2.DropRowRangeRequest\032\026.google.protob",
+      "uf.Empty\"B\202\323\344\223\002<\"7/v2/{name=projects/*/i" +
+      "nstances/*/tables/*}:dropRowRange:\001*B9\n\034" +
+      "com.google.bigtable.admin.v2B\027BigtableTa" +
+      "bleAdminProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -137,7 +137,7 @@ public final class BigtableTableAdminProto {
     internal_static_google_bigtable_admin_v2_CreateTableRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_CreateTableRequest_descriptor,
-        new java.lang.String[] { "Name", "TableId", "Table", "InitialSplits", });
+        new java.lang.String[] { "Parent", "TableId", "Table", "InitialSplits", });
     internal_static_google_bigtable_admin_v2_CreateTableRequest_Split_descriptor =
       internal_static_google_bigtable_admin_v2_CreateTableRequest_descriptor.getNestedTypes().get(0);
     internal_static_google_bigtable_admin_v2_CreateTableRequest_Split_fieldAccessorTable = new
@@ -155,7 +155,7 @@ public final class BigtableTableAdminProto {
     internal_static_google_bigtable_admin_v2_ListTablesRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_ListTablesRequest_descriptor,
-        new java.lang.String[] { "Name", "View", "PageToken", });
+        new java.lang.String[] { "Parent", "View", "PageToken", });
     internal_static_google_bigtable_admin_v2_ListTablesResponse_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_google_bigtable_admin_v2_ListTablesResponse_fieldAccessorTable = new

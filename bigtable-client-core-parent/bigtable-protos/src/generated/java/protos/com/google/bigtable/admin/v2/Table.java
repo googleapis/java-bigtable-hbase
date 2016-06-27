@@ -54,23 +54,11 @@ public  final class Table extends
             name_ = s;
             break;
           }
-          case 18: {
-            if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-              clusterStates_ = com.google.protobuf.MapField.newMapField(
-                  ClusterStatesDefaultEntryHolder.defaultEntry);
-              mutable_bitField0_ |= 0x00000002;
-            }
-            com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState>
-            clusterStates = input.readMessage(
-                ClusterStatesDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-            clusterStates_.getMutableMap().put(clusterStates.getKey(), clusterStates.getValue());
-            break;
-          }
           case 26: {
-            if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+            if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
               columnFamilies_ = com.google.protobuf.MapField.newMapField(
                   ColumnFamiliesDefaultEntryHolder.defaultEntry);
-              mutable_bitField0_ |= 0x00000004;
+              mutable_bitField0_ |= 0x00000002;
             }
             com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
             columnFamilies = input.readMessage(
@@ -105,8 +93,6 @@ public  final class Table extends
   protected com.google.protobuf.MapField internalGetMapField(
       int number) {
     switch (number) {
-      case 2:
-        return internalGetClusterStates();
       case 3:
         return internalGetColumnFamilies();
       default:
@@ -123,15 +109,29 @@ public  final class Table extends
 
   /**
    * Protobuf enum {@code google.bigtable.admin.v2.Table.TimestampGranularity}
+   *
+   * <pre>
+   * Possible timestamp granularities to use when keeping multiple versions
+   * of data in a table.
+   * </pre>
    */
   public enum TimestampGranularity
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
      * <code>TIMESTAMP_GRANULARITY_UNSPECIFIED = 0;</code>
+     *
+     * <pre>
+     * The user did not specify a granularity. Should not be returned.
+     * When specified during table creation, MILLIS will be used.
+     * </pre>
      */
     TIMESTAMP_GRANULARITY_UNSPECIFIED(0, 0),
     /**
      * <code>MILLIS = 1;</code>
+     *
+     * <pre>
+     * The table keeps data versioned at a granularity of 1ms.
+     * </pre>
      */
     MILLIS(1, 1),
     UNRECOGNIZED(-1, -1),
@@ -139,10 +139,19 @@ public  final class Table extends
 
     /**
      * <code>TIMESTAMP_GRANULARITY_UNSPECIFIED = 0;</code>
+     *
+     * <pre>
+     * The user did not specify a granularity. Should not be returned.
+     * When specified during table creation, MILLIS will be used.
+     * </pre>
      */
     public static final int TIMESTAMP_GRANULARITY_UNSPECIFIED_VALUE = 0;
     /**
      * <code>MILLIS = 1;</code>
+     *
+     * <pre>
+     * The table keeps data versioned at a granularity of 1ms.
+     * </pre>
      */
     public static final int MILLIS_VALUE = 1;
 
@@ -247,22 +256,13 @@ public  final class Table extends
      */
     SCHEMA_VIEW(2, 2),
     /**
-     * <code>REPLICATION_VIEW = 3;</code>
-     *
-     * <pre>
-     * Only populates `name` and fields related to the table's
-     * replication state.
-     * </pre>
-     */
-    REPLICATION_VIEW(3, 3),
-    /**
      * <code>FULL = 4;</code>
      *
      * <pre>
      * Populates all fields.
      * </pre>
      */
-    FULL(4, 4),
+    FULL(3, 4),
     UNRECOGNIZED(-1, -1),
     ;
 
@@ -291,15 +291,6 @@ public  final class Table extends
      */
     public static final int SCHEMA_VIEW_VALUE = 2;
     /**
-     * <code>REPLICATION_VIEW = 3;</code>
-     *
-     * <pre>
-     * Only populates `name` and fields related to the table's
-     * replication state.
-     * </pre>
-     */
-    public static final int REPLICATION_VIEW_VALUE = 3;
-    /**
      * <code>FULL = 4;</code>
      *
      * <pre>
@@ -322,7 +313,6 @@ public  final class Table extends
         case 0: return VIEW_UNSPECIFIED;
         case 1: return NAME_ONLY;
         case 2: return SCHEMA_VIEW;
-        case 3: return REPLICATION_VIEW;
         case 4: return FULL;
         default: return null;
       }
@@ -378,643 +368,6 @@ public  final class Table extends
     // @@protoc_insertion_point(enum_scope:google.bigtable.admin.v2.Table.View)
   }
 
-  public interface ClusterStateOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:google.bigtable.admin.v2.Table.ClusterState)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>optional .google.bigtable.admin.v2.Table.ClusterState.ReplicationState replication_state = 1;</code>
-     *
-     * <pre>
-     * The state of replication for the table in this cluster.
-     * &#64;OutputOnly
-     * </pre>
-     */
-    int getReplicationStateValue();
-    /**
-     * <code>optional .google.bigtable.admin.v2.Table.ClusterState.ReplicationState replication_state = 1;</code>
-     *
-     * <pre>
-     * The state of replication for the table in this cluster.
-     * &#64;OutputOnly
-     * </pre>
-     */
-    com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState getReplicationState();
-  }
-  /**
-   * Protobuf type {@code google.bigtable.admin.v2.Table.ClusterState}
-   *
-   * <pre>
-   * The state of a table's data in a particular cluster.
-   * </pre>
-   */
-  public  static final class ClusterState extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.Table.ClusterState)
-      ClusterStateOrBuilder {
-    // Use ClusterState.newBuilder() to construct.
-    private ClusterState(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-    }
-    private ClusterState() {
-      replicationState_ = 0;
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
-    }
-    private ClusterState(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
-      this();
-      int mutable_bitField0_ = 0;
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!input.skipField(tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              int rawValue = input.readEnum();
-
-              replicationState_ = rawValue;
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
-      } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
-      } finally {
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Table_ClusterState_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Table_ClusterState_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.google.bigtable.admin.v2.Table.ClusterState.class, com.google.bigtable.admin.v2.Table.ClusterState.Builder.class);
-    }
-
-    /**
-     * Protobuf enum {@code google.bigtable.admin.v2.Table.ClusterState.ReplicationState}
-     */
-    public enum ReplicationState
-        implements com.google.protobuf.ProtocolMessageEnum {
-      /**
-       * <code>STATE_NOT_KNOWN = 0;</code>
-       *
-       * <pre>
-       * The replication state of the table is unknown in this cluster.
-       * </pre>
-       */
-      STATE_NOT_KNOWN(0, 0),
-      /**
-       * <code>INITIALIZING = 1;</code>
-       *
-       * <pre>
-       * The cluster was recently created, and the table must finish copying
-       * over pre-existing data from other clusters before it can begin
-       * receiving live replication updates and serving
-       * [Data API][google.bigtable.v2.BigtableService] requests.
-       * </pre>
-       */
-      INITIALIZING(1, 1),
-      /**
-       * <code>PLANNED_MAINTENANCE = 2;</code>
-       *
-       * <pre>
-       * The table is temporarily unable to serve
-       * [Data API][google.bigtable.v2.BigtableService] requests from this
-       * cluster due to planned internal maintenance.
-       * </pre>
-       */
-      PLANNED_MAINTENANCE(2, 2),
-      /**
-       * <code>UNPLANNED_MAINTENANCE = 3;</code>
-       *
-       * <pre>
-       * The table is temporarily unable to serve
-       * [Data API][google.bigtable.v2.BigtableService] requests from this
-       * cluster due to unplanned or emergency maintenance.
-       * </pre>
-       */
-      UNPLANNED_MAINTENANCE(3, 3),
-      /**
-       * <code>READY = 4;</code>
-       *
-       * <pre>
-       * The table can serve
-       * [Data API][google.bigtable.v2.BigtableService] requests from this
-       * cluster. Depending on replication delay, reads may not immediately
-       * reflect the state of the table in other clusters.
-       * </pre>
-       */
-      READY(4, 4),
-      UNRECOGNIZED(-1, -1),
-      ;
-
-      /**
-       * <code>STATE_NOT_KNOWN = 0;</code>
-       *
-       * <pre>
-       * The replication state of the table is unknown in this cluster.
-       * </pre>
-       */
-      public static final int STATE_NOT_KNOWN_VALUE = 0;
-      /**
-       * <code>INITIALIZING = 1;</code>
-       *
-       * <pre>
-       * The cluster was recently created, and the table must finish copying
-       * over pre-existing data from other clusters before it can begin
-       * receiving live replication updates and serving
-       * [Data API][google.bigtable.v2.BigtableService] requests.
-       * </pre>
-       */
-      public static final int INITIALIZING_VALUE = 1;
-      /**
-       * <code>PLANNED_MAINTENANCE = 2;</code>
-       *
-       * <pre>
-       * The table is temporarily unable to serve
-       * [Data API][google.bigtable.v2.BigtableService] requests from this
-       * cluster due to planned internal maintenance.
-       * </pre>
-       */
-      public static final int PLANNED_MAINTENANCE_VALUE = 2;
-      /**
-       * <code>UNPLANNED_MAINTENANCE = 3;</code>
-       *
-       * <pre>
-       * The table is temporarily unable to serve
-       * [Data API][google.bigtable.v2.BigtableService] requests from this
-       * cluster due to unplanned or emergency maintenance.
-       * </pre>
-       */
-      public static final int UNPLANNED_MAINTENANCE_VALUE = 3;
-      /**
-       * <code>READY = 4;</code>
-       *
-       * <pre>
-       * The table can serve
-       * [Data API][google.bigtable.v2.BigtableService] requests from this
-       * cluster. Depending on replication delay, reads may not immediately
-       * reflect the state of the table in other clusters.
-       * </pre>
-       */
-      public static final int READY_VALUE = 4;
-
-
-      public final int getNumber() {
-        if (index == -1) {
-          throw new java.lang.IllegalArgumentException(
-              "Can't get the number of an unknown enum value.");
-        }
-        return value;
-      }
-
-      public static ReplicationState valueOf(int value) {
-        switch (value) {
-          case 0: return STATE_NOT_KNOWN;
-          case 1: return INITIALIZING;
-          case 2: return PLANNED_MAINTENANCE;
-          case 3: return UNPLANNED_MAINTENANCE;
-          case 4: return READY;
-          default: return null;
-        }
-      }
-
-      public static com.google.protobuf.Internal.EnumLiteMap<ReplicationState>
-          internalGetValueMap() {
-        return internalValueMap;
-      }
-      private static final com.google.protobuf.Internal.EnumLiteMap<
-          ReplicationState> internalValueMap =
-            new com.google.protobuf.Internal.EnumLiteMap<ReplicationState>() {
-              public ReplicationState findValueByNumber(int number) {
-                return ReplicationState.valueOf(number);
-              }
-            };
-
-      public final com.google.protobuf.Descriptors.EnumValueDescriptor
-          getValueDescriptor() {
-        return getDescriptor().getValues().get(index);
-      }
-      public final com.google.protobuf.Descriptors.EnumDescriptor
-          getDescriptorForType() {
-        return getDescriptor();
-      }
-      public static final com.google.protobuf.Descriptors.EnumDescriptor
-          getDescriptor() {
-        return com.google.bigtable.admin.v2.Table.ClusterState.getDescriptor().getEnumTypes().get(0);
-      }
-
-      private static final ReplicationState[] VALUES = values();
-
-      public static ReplicationState valueOf(
-          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-        if (desc.getType() != getDescriptor()) {
-          throw new java.lang.IllegalArgumentException(
-            "EnumValueDescriptor is not for this type.");
-        }
-        if (desc.getIndex() == -1) {
-          return UNRECOGNIZED;
-        }
-        return VALUES[desc.getIndex()];
-      }
-
-      private final int index;
-      private final int value;
-
-      private ReplicationState(int index, int value) {
-        this.index = index;
-        this.value = value;
-      }
-
-      // @@protoc_insertion_point(enum_scope:google.bigtable.admin.v2.Table.ClusterState.ReplicationState)
-    }
-
-    public static final int REPLICATION_STATE_FIELD_NUMBER = 1;
-    private int replicationState_;
-    /**
-     * <code>optional .google.bigtable.admin.v2.Table.ClusterState.ReplicationState replication_state = 1;</code>
-     *
-     * <pre>
-     * The state of replication for the table in this cluster.
-     * &#64;OutputOnly
-     * </pre>
-     */
-    public int getReplicationStateValue() {
-      return replicationState_;
-    }
-    /**
-     * <code>optional .google.bigtable.admin.v2.Table.ClusterState.ReplicationState replication_state = 1;</code>
-     *
-     * <pre>
-     * The state of replication for the table in this cluster.
-     * &#64;OutputOnly
-     * </pre>
-     */
-    public com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState getReplicationState() {
-      com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState result = com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState.valueOf(replicationState_);
-      return result == null ? com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState.UNRECOGNIZED : result;
-    }
-
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      if (replicationState_ != com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState.STATE_NOT_KNOWN.getNumber()) {
-        output.writeEnum(1, replicationState_);
-      }
-    }
-
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (replicationState_ != com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState.STATE_NOT_KNOWN.getNumber()) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(1, replicationState_);
-      }
-      memoizedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    public static com.google.bigtable.admin.v2.Table.ClusterState parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.google.bigtable.admin.v2.Table.ClusterState parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.google.bigtable.admin.v2.Table.ClusterState parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.google.bigtable.admin.v2.Table.ClusterState parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.google.bigtable.admin.v2.Table.ClusterState parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.google.bigtable.admin.v2.Table.ClusterState parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.google.bigtable.admin.v2.Table.ClusterState parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.google.bigtable.admin.v2.Table.ClusterState parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.google.bigtable.admin.v2.Table.ClusterState parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.google.bigtable.admin.v2.Table.ClusterState parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(com.google.bigtable.admin.v2.Table.ClusterState prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code google.bigtable.admin.v2.Table.ClusterState}
-     *
-     * <pre>
-     * The state of a table's data in a particular cluster.
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.Table.ClusterState)
-        com.google.bigtable.admin.v2.Table.ClusterStateOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Table_ClusterState_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Table_ClusterState_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.google.bigtable.admin.v2.Table.ClusterState.class, com.google.bigtable.admin.v2.Table.ClusterState.Builder.class);
-      }
-
-      // Construct using com.google.bigtable.admin.v2.Table.ClusterState.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      public Builder clear() {
-        super.clear();
-        replicationState_ = 0;
-
-        return this;
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Table_ClusterState_descriptor;
-      }
-
-      public com.google.bigtable.admin.v2.Table.ClusterState getDefaultInstanceForType() {
-        return com.google.bigtable.admin.v2.Table.ClusterState.getDefaultInstance();
-      }
-
-      public com.google.bigtable.admin.v2.Table.ClusterState build() {
-        com.google.bigtable.admin.v2.Table.ClusterState result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.google.bigtable.admin.v2.Table.ClusterState buildPartial() {
-        com.google.bigtable.admin.v2.Table.ClusterState result = new com.google.bigtable.admin.v2.Table.ClusterState(this);
-        result.replicationState_ = replicationState_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.google.bigtable.admin.v2.Table.ClusterState) {
-          return mergeFrom((com.google.bigtable.admin.v2.Table.ClusterState)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.google.bigtable.admin.v2.Table.ClusterState other) {
-        if (other == com.google.bigtable.admin.v2.Table.ClusterState.getDefaultInstance()) return this;
-        if (other.replicationState_ != 0) {
-          setReplicationStateValue(other.getReplicationStateValue());
-        }
-        onChanged();
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.google.bigtable.admin.v2.Table.ClusterState parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.google.bigtable.admin.v2.Table.ClusterState) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-
-      private int replicationState_ = 0;
-      /**
-       * <code>optional .google.bigtable.admin.v2.Table.ClusterState.ReplicationState replication_state = 1;</code>
-       *
-       * <pre>
-       * The state of replication for the table in this cluster.
-       * &#64;OutputOnly
-       * </pre>
-       */
-      public int getReplicationStateValue() {
-        return replicationState_;
-      }
-      /**
-       * <code>optional .google.bigtable.admin.v2.Table.ClusterState.ReplicationState replication_state = 1;</code>
-       *
-       * <pre>
-       * The state of replication for the table in this cluster.
-       * &#64;OutputOnly
-       * </pre>
-       */
-      public Builder setReplicationStateValue(int value) {
-        replicationState_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .google.bigtable.admin.v2.Table.ClusterState.ReplicationState replication_state = 1;</code>
-       *
-       * <pre>
-       * The state of replication for the table in this cluster.
-       * &#64;OutputOnly
-       * </pre>
-       */
-      public com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState getReplicationState() {
-        com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState result = com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState.valueOf(replicationState_);
-        return result == null ? com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState.UNRECOGNIZED : result;
-      }
-      /**
-       * <code>optional .google.bigtable.admin.v2.Table.ClusterState.ReplicationState replication_state = 1;</code>
-       *
-       * <pre>
-       * The state of replication for the table in this cluster.
-       * &#64;OutputOnly
-       * </pre>
-       */
-      public Builder setReplicationState(com.google.bigtable.admin.v2.Table.ClusterState.ReplicationState value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        
-        replicationState_ = value.getNumber();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .google.bigtable.admin.v2.Table.ClusterState.ReplicationState replication_state = 1;</code>
-       *
-       * <pre>
-       * The state of replication for the table in this cluster.
-       * &#64;OutputOnly
-       * </pre>
-       */
-      public Builder clearReplicationState() {
-        
-        replicationState_ = 0;
-        onChanged();
-        return this;
-      }
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
-      }
-
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:google.bigtable.admin.v2.Table.ClusterState)
-    }
-
-    // @@protoc_insertion_point(class_scope:google.bigtable.admin.v2.Table.ClusterState)
-    private static final com.google.bigtable.admin.v2.Table.ClusterState DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new com.google.bigtable.admin.v2.Table.ClusterState();
-    }
-
-    public static com.google.bigtable.admin.v2.Table.ClusterState getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<ClusterState>
-        PARSER = new com.google.protobuf.AbstractParser<ClusterState>() {
-      public ClusterState parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new ClusterState(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
-      }
-    };
-
-    public static com.google.protobuf.Parser<ClusterState> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<ClusterState> getParserForType() {
-      return PARSER;
-    }
-
-    public com.google.bigtable.admin.v2.Table.ClusterState getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
   private int bitField0_;
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
@@ -1062,45 +415,6 @@ public  final class Table extends
     } else {
       return (com.google.protobuf.ByteString) ref;
     }
-  }
-
-  public static final int CLUSTER_STATES_FIELD_NUMBER = 2;
-  private static final class ClusterStatesDefaultEntryHolder {
-    static final com.google.protobuf.MapEntry<
-        java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState> defaultEntry =
-            com.google.protobuf.MapEntry
-            .<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState>newDefaultInstance(
-                com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Table_ClusterStatesEntry_descriptor, 
-                com.google.protobuf.WireFormat.FieldType.STRING,
-                "",
-                com.google.protobuf.WireFormat.FieldType.MESSAGE,
-                com.google.bigtable.admin.v2.Table.ClusterState.getDefaultInstance());
-  }
-  private com.google.protobuf.MapField<
-      java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState> clusterStates_;
-  private com.google.protobuf.MapField<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState>
-  internalGetClusterStates() {
-    if (clusterStates_ == null) {
-      return com.google.protobuf.MapField.emptyMapField(
-          ClusterStatesDefaultEntryHolder.defaultEntry);
-   }
-    return clusterStates_;
-  }
-  /**
-   * <code>map&lt;string, .google.bigtable.admin.v2.Table.ClusterState&gt; cluster_states = 2;</code>
-   *
-   * <pre>
-   * Map from cluster ID to per-cluster table state.
-   * If it could not be determined whether or not the table has data in a
-   * particular cluster (for example, if its zone is unavailable), then
-   * there will be an entry for the cluster with UNKNOWN `replication_status`.
-   * Views: REPLICATION_VIEW, FULL
-   * &#64;OutputOnly
-   * </pre>
-   */
-
-  public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState> getClusterStates() {
-    return internalGetClusterStates().getMap();
   }
 
   public static final int COLUMN_FAMILIES_FIELD_NUMBER = 3;
@@ -1186,15 +500,6 @@ public  final class Table extends
     if (!getNameBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
     }
-    for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState> entry
-         : internalGetClusterStates().getMap().entrySet()) {
-      com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState>
-      clusterStates = ClusterStatesDefaultEntryHolder.defaultEntry.newBuilderForType()
-          .setKey(entry.getKey())
-          .setValue(entry.getValue())
-          .build();
-      output.writeMessage(2, clusterStates);
-    }
     for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> entry
          : internalGetColumnFamilies().getMap().entrySet()) {
       com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
@@ -1216,16 +521,6 @@ public  final class Table extends
     size = 0;
     if (!getNameBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
-    }
-    for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState> entry
-         : internalGetClusterStates().getMap().entrySet()) {
-      com.google.protobuf.MapEntry<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState>
-      clusterStates = ClusterStatesDefaultEntryHolder.defaultEntry.newBuilderForType()
-          .setKey(entry.getKey())
-          .setValue(entry.getValue())
-          .build();
-      size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, clusterStates);
     }
     for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> entry
          : internalGetColumnFamilies().getMap().entrySet()) {
@@ -1338,8 +633,6 @@ public  final class Table extends
     protected com.google.protobuf.MapField internalGetMapField(
         int number) {
       switch (number) {
-        case 2:
-          return internalGetClusterStates();
         case 3:
           return internalGetColumnFamilies();
         default:
@@ -1351,8 +644,6 @@ public  final class Table extends
     protected com.google.protobuf.MapField internalGetMutableMapField(
         int number) {
       switch (number) {
-        case 2:
-          return internalGetMutableClusterStates();
         case 3:
           return internalGetMutableColumnFamilies();
         default:
@@ -1385,7 +676,6 @@ public  final class Table extends
       super.clear();
       name_ = "";
 
-      internalGetMutableClusterStates().clear();
       internalGetMutableColumnFamilies().clear();
       granularity_ = 0;
 
@@ -1414,8 +704,6 @@ public  final class Table extends
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
       result.name_ = name_;
-      result.clusterStates_ = internalGetClusterStates();
-      result.clusterStates_.makeImmutable();
       result.columnFamilies_ = internalGetColumnFamilies();
       result.columnFamilies_.makeImmutable();
       result.granularity_ = granularity_;
@@ -1439,8 +727,6 @@ public  final class Table extends
         name_ = other.name_;
         onChanged();
       }
-      internalGetMutableClusterStates().mergeFrom(
-          other.internalGetClusterStates());
       internalGetMutableColumnFamilies().mergeFrom(
           other.internalGetColumnFamilies());
       if (other.granularity_ != 0) {
@@ -1574,77 +860,6 @@ public  final class Table extends
       
       name_ = value;
       onChanged();
-      return this;
-    }
-
-    private com.google.protobuf.MapField<
-        java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState> clusterStates_;
-    private com.google.protobuf.MapField<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState>
-    internalGetClusterStates() {
-      if (clusterStates_ == null) {
-        return com.google.protobuf.MapField.emptyMapField(
-            ClusterStatesDefaultEntryHolder.defaultEntry);
-     }
-      return clusterStates_;
-    }
-    private com.google.protobuf.MapField<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState>
-    internalGetMutableClusterStates() {
-      onChanged();;
-      if (clusterStates_ == null) {
-        clusterStates_ = com.google.protobuf.MapField.newMapField(
-            ClusterStatesDefaultEntryHolder.defaultEntry);
-      }
-      if (!clusterStates_.isMutable()) {
-        clusterStates_ = clusterStates_.copy();
-      }
-      return clusterStates_;
-    }
-    /**
-     * <code>map&lt;string, .google.bigtable.admin.v2.Table.ClusterState&gt; cluster_states = 2;</code>
-     *
-     * <pre>
-     * Map from cluster ID to per-cluster table state.
-     * If it could not be determined whether or not the table has data in a
-     * particular cluster (for example, if its zone is unavailable), then
-     * there will be an entry for the cluster with UNKNOWN `replication_status`.
-     * Views: REPLICATION_VIEW, FULL
-     * &#64;OutputOnly
-     * </pre>
-     */
-    public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState> getClusterStates() {
-      return internalGetClusterStates().getMap();
-    }
-    /**
-     * <code>map&lt;string, .google.bigtable.admin.v2.Table.ClusterState&gt; cluster_states = 2;</code>
-     *
-     * <pre>
-     * Map from cluster ID to per-cluster table state.
-     * If it could not be determined whether or not the table has data in a
-     * particular cluster (for example, if its zone is unavailable), then
-     * there will be an entry for the cluster with UNKNOWN `replication_status`.
-     * Views: REPLICATION_VIEW, FULL
-     * &#64;OutputOnly
-     * </pre>
-     */
-    public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState>
-    getMutableClusterStates() {
-      return internalGetMutableClusterStates().getMutableMap();
-    }
-    /**
-     * <code>map&lt;string, .google.bigtable.admin.v2.Table.ClusterState&gt; cluster_states = 2;</code>
-     *
-     * <pre>
-     * Map from cluster ID to per-cluster table state.
-     * If it could not be determined whether or not the table has data in a
-     * particular cluster (for example, if its zone is unavailable), then
-     * there will be an entry for the cluster with UNKNOWN `replication_status`.
-     * Views: REPLICATION_VIEW, FULL
-     * &#64;OutputOnly
-     * </pre>
-     */
-    public Builder putAllClusterStates(
-        java.util.Map<java.lang.String, com.google.bigtable.admin.v2.Table.ClusterState> values) {
-      getMutableClusterStates().putAll(values);
       return this;
     }
 

@@ -104,9 +104,9 @@ public  final class Cell extends
    * The cell's stored timestamp, which also uniquely identifies it within
    * its column.
    * Values are always expressed in microseconds, but individual tables may set
-   * a coarser "granularity" to further restrict the allowed values. For
+   * a coarser granularity to further restrict the allowed values. For
    * example, a table which specifies millisecond granularity will only allow
-   * values of "timestamp_micros" which are multiples of 1000.
+   * values of `timestamp_micros` which are multiples of 1000.
    * </pre>
    */
   public long getTimestampMicros() {
@@ -134,7 +134,7 @@ public  final class Cell extends
    * <code>repeated string labels = 3;</code>
    *
    * <pre>
-   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
    */
   public com.google.protobuf.ProtocolStringList
@@ -145,7 +145,7 @@ public  final class Cell extends
    * <code>repeated string labels = 3;</code>
    *
    * <pre>
-   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
    */
   public int getLabelsCount() {
@@ -155,7 +155,7 @@ public  final class Cell extends
    * <code>repeated string labels = 3;</code>
    *
    * <pre>
-   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
    */
   public java.lang.String getLabels(int index) {
@@ -165,7 +165,7 @@ public  final class Cell extends
    * <code>repeated string labels = 3;</code>
    *
    * <pre>
-   * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+   * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -436,9 +436,9 @@ public  final class Cell extends
      * The cell's stored timestamp, which also uniquely identifies it within
      * its column.
      * Values are always expressed in microseconds, but individual tables may set
-     * a coarser "granularity" to further restrict the allowed values. For
+     * a coarser granularity to further restrict the allowed values. For
      * example, a table which specifies millisecond granularity will only allow
-     * values of "timestamp_micros" which are multiples of 1000.
+     * values of `timestamp_micros` which are multiples of 1000.
      * </pre>
      */
     public long getTimestampMicros() {
@@ -451,9 +451,9 @@ public  final class Cell extends
      * The cell's stored timestamp, which also uniquely identifies it within
      * its column.
      * Values are always expressed in microseconds, but individual tables may set
-     * a coarser "granularity" to further restrict the allowed values. For
+     * a coarser granularity to further restrict the allowed values. For
      * example, a table which specifies millisecond granularity will only allow
-     * values of "timestamp_micros" which are multiples of 1000.
+     * values of `timestamp_micros` which are multiples of 1000.
      * </pre>
      */
     public Builder setTimestampMicros(long value) {
@@ -469,9 +469,9 @@ public  final class Cell extends
      * The cell's stored timestamp, which also uniquely identifies it within
      * its column.
      * Values are always expressed in microseconds, but individual tables may set
-     * a coarser "granularity" to further restrict the allowed values. For
+     * a coarser granularity to further restrict the allowed values. For
      * example, a table which specifies millisecond granularity will only allow
-     * values of "timestamp_micros" which are multiples of 1000.
+     * values of `timestamp_micros` which are multiples of 1000.
      * </pre>
      */
     public Builder clearTimestampMicros() {
@@ -539,7 +539,7 @@ public  final class Cell extends
      * <code>repeated string labels = 3;</code>
      *
      * <pre>
-     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
      */
     public com.google.protobuf.ProtocolStringList
@@ -550,7 +550,7 @@ public  final class Cell extends
      * <code>repeated string labels = 3;</code>
      *
      * <pre>
-     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
      */
     public int getLabelsCount() {
@@ -560,7 +560,7 @@ public  final class Cell extends
      * <code>repeated string labels = 3;</code>
      *
      * <pre>
-     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
      */
     public java.lang.String getLabels(int index) {
@@ -570,7 +570,7 @@ public  final class Cell extends
      * <code>repeated string labels = 3;</code>
      *
      * <pre>
-     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -581,7 +581,7 @@ public  final class Cell extends
      * <code>repeated string labels = 3;</code>
      *
      * <pre>
-     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
      */
     public Builder setLabels(
@@ -598,7 +598,7 @@ public  final class Cell extends
      * <code>repeated string labels = 3;</code>
      *
      * <pre>
-     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
      */
     public Builder addLabels(
@@ -615,7 +615,7 @@ public  final class Cell extends
      * <code>repeated string labels = 3;</code>
      *
      * <pre>
-     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
      */
     public Builder addAllLabels(
@@ -630,7 +630,7 @@ public  final class Cell extends
      * <code>repeated string labels = 3;</code>
      *
      * <pre>
-     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
      */
     public Builder clearLabels() {
@@ -643,7 +643,7 @@ public  final class Cell extends
      * <code>repeated string labels = 3;</code>
      *
      * <pre>
-     * Labels applied to the cell by a [RowFilter][google.bigtable.v1.RowFilter].
+     * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
      */
     public Builder addLabelsBytes(

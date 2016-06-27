@@ -5,6 +5,13 @@ package com.google.bigtable.admin.v2;
 
 /**
  * Protobuf type {@code google.bigtable.admin.v2.Instance}
+ *
+ * <pre>
+ * A collection of Bigtable [Tables][google.bigtable.admin.v2.Table] and
+ * the resources that serve them.
+ * All tables in an instance are served from a single
+ * [Cluster][google.bigtable.admin.v2.Cluster].
+ * </pre>
  */
 public  final class Instance extends
     com.google.protobuf.GeneratedMessage implements
@@ -88,15 +95,28 @@ public  final class Instance extends
 
   /**
    * Protobuf enum {@code google.bigtable.admin.v2.Instance.State}
+   *
+   * <pre>
+   * Possible states of an instance.
+   * </pre>
    */
   public enum State
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
      * <code>STATE_NOT_KNOWN = 0;</code>
+     *
+     * <pre>
+     * The state of the instance could not be determined.
+     * </pre>
      */
     STATE_NOT_KNOWN(0, 0),
     /**
      * <code>READY = 1;</code>
+     *
+     * <pre>
+     * The instance has been successfully created and can serve requests
+     * to its tables.
+     * </pre>
      */
     READY(1, 1),
     /**
@@ -113,10 +133,19 @@ public  final class Instance extends
 
     /**
      * <code>STATE_NOT_KNOWN = 0;</code>
+     *
+     * <pre>
+     * The state of the instance could not be determined.
+     * </pre>
      */
     public static final int STATE_NOT_KNOWN_VALUE = 0;
     /**
      * <code>READY = 1;</code>
+     *
+     * <pre>
+     * The instance has been successfully created and can serve requests
+     * to its tables.
+     * </pre>
      */
     public static final int READY_VALUE = 1;
     /**
@@ -204,6 +233,8 @@ public  final class Instance extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The unique name of the instance. Values are of the form
+   * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
    * </pre>
    */
   public java.lang.String getName() {
@@ -223,6 +254,8 @@ public  final class Instance extends
    *
    * <pre>
    * &#64;OutputOnly
+   * The unique name of the instance. Values are of the form
+   * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -243,6 +276,12 @@ public  final class Instance extends
   private volatile java.lang.Object displayName_;
   /**
    * <code>optional string display_name = 2;</code>
+   *
+   * <pre>
+   * The descriptive name for this instance as it appears in UIs.
+   * Can be changed at any time, but should be kept globally unique
+   * to avoid confusion.
+   * </pre>
    */
   public java.lang.String getDisplayName() {
     java.lang.Object ref = displayName_;
@@ -258,6 +297,12 @@ public  final class Instance extends
   }
   /**
    * <code>optional string display_name = 2;</code>
+   *
+   * <pre>
+   * The descriptive name for this instance as it appears in UIs.
+   * Can be changed at any time, but should be kept globally unique
+   * to avoid confusion.
+   * </pre>
    */
   public com.google.protobuf.ByteString
       getDisplayNameBytes() {
@@ -279,7 +324,7 @@ public  final class Instance extends
    * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * The current state of the instance.
    * </pre>
    */
   public int getStateValue() {
@@ -289,7 +334,7 @@ public  final class Instance extends
    * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * The current state of the instance.
    * </pre>
    */
   public com.google.bigtable.admin.v2.Instance.State getState() {
@@ -413,6 +458,13 @@ public  final class Instance extends
   }
   /**
    * Protobuf type {@code google.bigtable.admin.v2.Instance}
+   *
+   * <pre>
+   * A collection of Bigtable [Tables][google.bigtable.admin.v2.Table] and
+   * the resources that serve them.
+   * All tables in an instance are served from a single
+   * [Cluster][google.bigtable.admin.v2.Cluster].
+   * </pre>
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -535,6 +587,8 @@ public  final class Instance extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The unique name of the instance. Values are of the form
+     * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
      * </pre>
      */
     public java.lang.String getName() {
@@ -554,6 +608,8 @@ public  final class Instance extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The unique name of the instance. Values are of the form
+     * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -574,6 +630,8 @@ public  final class Instance extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The unique name of the instance. Values are of the form
+     * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
      * </pre>
      */
     public Builder setName(
@@ -591,6 +649,8 @@ public  final class Instance extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The unique name of the instance. Values are of the form
+     * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
      * </pre>
      */
     public Builder clearName() {
@@ -604,6 +664,8 @@ public  final class Instance extends
      *
      * <pre>
      * &#64;OutputOnly
+     * The unique name of the instance. Values are of the form
+     * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
      * </pre>
      */
     public Builder setNameBytes(
@@ -621,6 +683,12 @@ public  final class Instance extends
     private java.lang.Object displayName_ = "";
     /**
      * <code>optional string display_name = 2;</code>
+     *
+     * <pre>
+     * The descriptive name for this instance as it appears in UIs.
+     * Can be changed at any time, but should be kept globally unique
+     * to avoid confusion.
+     * </pre>
      */
     public java.lang.String getDisplayName() {
       java.lang.Object ref = displayName_;
@@ -636,6 +704,12 @@ public  final class Instance extends
     }
     /**
      * <code>optional string display_name = 2;</code>
+     *
+     * <pre>
+     * The descriptive name for this instance as it appears in UIs.
+     * Can be changed at any time, but should be kept globally unique
+     * to avoid confusion.
+     * </pre>
      */
     public com.google.protobuf.ByteString
         getDisplayNameBytes() {
@@ -652,6 +726,12 @@ public  final class Instance extends
     }
     /**
      * <code>optional string display_name = 2;</code>
+     *
+     * <pre>
+     * The descriptive name for this instance as it appears in UIs.
+     * Can be changed at any time, but should be kept globally unique
+     * to avoid confusion.
+     * </pre>
      */
     public Builder setDisplayName(
         java.lang.String value) {
@@ -665,6 +745,12 @@ public  final class Instance extends
     }
     /**
      * <code>optional string display_name = 2;</code>
+     *
+     * <pre>
+     * The descriptive name for this instance as it appears in UIs.
+     * Can be changed at any time, but should be kept globally unique
+     * to avoid confusion.
+     * </pre>
      */
     public Builder clearDisplayName() {
       
@@ -674,6 +760,12 @@ public  final class Instance extends
     }
     /**
      * <code>optional string display_name = 2;</code>
+     *
+     * <pre>
+     * The descriptive name for this instance as it appears in UIs.
+     * Can be changed at any time, but should be kept globally unique
+     * to avoid confusion.
+     * </pre>
      */
     public Builder setDisplayNameBytes(
         com.google.protobuf.ByteString value) {
@@ -692,7 +784,7 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * The current state of the instance.
      * </pre>
      */
     public int getStateValue() {
@@ -702,7 +794,7 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * The current state of the instance.
      * </pre>
      */
     public Builder setStateValue(int value) {
@@ -714,7 +806,7 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * The current state of the instance.
      * </pre>
      */
     public com.google.bigtable.admin.v2.Instance.State getState() {
@@ -725,7 +817,7 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * The current state of the instance.
      * </pre>
      */
     public Builder setState(com.google.bigtable.admin.v2.Instance.State value) {
@@ -741,7 +833,7 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * The current state of the instance.
      * </pre>
      */
     public Builder clearState() {

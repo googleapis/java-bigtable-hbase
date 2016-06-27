@@ -9,10 +9,20 @@ public interface GetInstanceRequestOrBuilder extends
 
   /**
    * <code>optional string name = 1;</code>
+   *
+   * <pre>
+   * The unique name of the requested instance. Values are of the form
+   * projects/&lt;project&gt;/instances/&lt;instance&gt;
+   * </pre>
    */
   java.lang.String getName();
   /**
    * <code>optional string name = 1;</code>
+   *
+   * <pre>
+   * The unique name of the requested instance. Values are of the form
+   * projects/&lt;project&gt;/instances/&lt;instance&gt;
+   * </pre>
    */
   com.google.protobuf.ByteString
       getNameBytes();

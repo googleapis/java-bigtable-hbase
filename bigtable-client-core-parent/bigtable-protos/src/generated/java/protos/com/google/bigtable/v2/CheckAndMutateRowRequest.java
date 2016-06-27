@@ -129,7 +129,7 @@ public  final class CheckAndMutateRowRequest extends
    * The unique name of the table to which the conditional mutation should be
    * applied.
    * Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+   * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    */
   public java.lang.String getTableName() {
@@ -151,7 +151,7 @@ public  final class CheckAndMutateRowRequest extends
    * The unique name of the table to which the conditional mutation should be
    * applied.
    * Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+   * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -188,8 +188,8 @@ public  final class CheckAndMutateRowRequest extends
    *
    * <pre>
    * The filter to be applied to the contents of the specified row. Depending
-   * on whether or not any results are yielded, either "true_mutations" or
-   * "false_mutations" will be executed. If unset, checks that the row contains
+   * on whether or not any results are yielded, either `true_mutations` or
+   * `false_mutations` will be executed. If unset, checks that the row contains
    * any values at all.
    * </pre>
    */
@@ -201,8 +201,8 @@ public  final class CheckAndMutateRowRequest extends
    *
    * <pre>
    * The filter to be applied to the contents of the specified row. Depending
-   * on whether or not any results are yielded, either "true_mutations" or
-   * "false_mutations" will be executed. If unset, checks that the row contains
+   * on whether or not any results are yielded, either `true_mutations` or
+   * `false_mutations` will be executed. If unset, checks that the row contains
    * any values at all.
    * </pre>
    */
@@ -214,8 +214,8 @@ public  final class CheckAndMutateRowRequest extends
    *
    * <pre>
    * The filter to be applied to the contents of the specified row. Depending
-   * on whether or not any results are yielded, either "true_mutations" or
-   * "false_mutations" will be executed. If unset, checks that the row contains
+   * on whether or not any results are yielded, either `true_mutations` or
+   * `false_mutations` will be executed. If unset, checks that the row contains
    * any values at all.
    * </pre>
    */
@@ -229,10 +229,10 @@ public  final class CheckAndMutateRowRequest extends
    * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
    *
    * <pre>
-   * Changes to be atomically applied to the specified row if "predicate_filter"
-   * yields at least one cell when applied to "row_key". Entries are applied in
+   * Changes to be atomically applied to the specified row if `predicate_filter`
+   * yields at least one cell when applied to `row_key`. Entries are applied in
    * order, meaning that earlier mutations can be masked by later ones.
-   * Must contain at least one entry if "false_mutations" is empty, and at most
+   * Must contain at least one entry if `false_mutations` is empty, and at most
    * 100000.
    * </pre>
    */
@@ -243,10 +243,10 @@ public  final class CheckAndMutateRowRequest extends
    * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
    *
    * <pre>
-   * Changes to be atomically applied to the specified row if "predicate_filter"
-   * yields at least one cell when applied to "row_key". Entries are applied in
+   * Changes to be atomically applied to the specified row if `predicate_filter`
+   * yields at least one cell when applied to `row_key`. Entries are applied in
    * order, meaning that earlier mutations can be masked by later ones.
-   * Must contain at least one entry if "false_mutations" is empty, and at most
+   * Must contain at least one entry if `false_mutations` is empty, and at most
    * 100000.
    * </pre>
    */
@@ -258,10 +258,10 @@ public  final class CheckAndMutateRowRequest extends
    * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
    *
    * <pre>
-   * Changes to be atomically applied to the specified row if "predicate_filter"
-   * yields at least one cell when applied to "row_key". Entries are applied in
+   * Changes to be atomically applied to the specified row if `predicate_filter`
+   * yields at least one cell when applied to `row_key`. Entries are applied in
    * order, meaning that earlier mutations can be masked by later ones.
-   * Must contain at least one entry if "false_mutations" is empty, and at most
+   * Must contain at least one entry if `false_mutations` is empty, and at most
    * 100000.
    * </pre>
    */
@@ -272,10 +272,10 @@ public  final class CheckAndMutateRowRequest extends
    * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
    *
    * <pre>
-   * Changes to be atomically applied to the specified row if "predicate_filter"
-   * yields at least one cell when applied to "row_key". Entries are applied in
+   * Changes to be atomically applied to the specified row if `predicate_filter`
+   * yields at least one cell when applied to `row_key`. Entries are applied in
    * order, meaning that earlier mutations can be masked by later ones.
-   * Must contain at least one entry if "false_mutations" is empty, and at most
+   * Must contain at least one entry if `false_mutations` is empty, and at most
    * 100000.
    * </pre>
    */
@@ -286,10 +286,10 @@ public  final class CheckAndMutateRowRequest extends
    * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
    *
    * <pre>
-   * Changes to be atomically applied to the specified row if "predicate_filter"
-   * yields at least one cell when applied to "row_key". Entries are applied in
+   * Changes to be atomically applied to the specified row if `predicate_filter`
+   * yields at least one cell when applied to `row_key`. Entries are applied in
    * order, meaning that earlier mutations can be masked by later ones.
-   * Must contain at least one entry if "false_mutations" is empty, and at most
+   * Must contain at least one entry if `false_mutations` is empty, and at most
    * 100000.
    * </pre>
    */
@@ -304,10 +304,10 @@ public  final class CheckAndMutateRowRequest extends
    * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
    *
    * <pre>
-   * Changes to be atomically applied to the specified row if "predicate_filter"
-   * does not yield any cells when applied to "row_key". Entries are applied in
+   * Changes to be atomically applied to the specified row if `predicate_filter`
+   * does not yield any cells when applied to `row_key`. Entries are applied in
    * order, meaning that earlier mutations can be masked by later ones.
-   * Must contain at least one entry if "true_mutations" is empty, and at most
+   * Must contain at least one entry if `true_mutations` is empty, and at most
    * 100000.
    * </pre>
    */
@@ -318,10 +318,10 @@ public  final class CheckAndMutateRowRequest extends
    * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
    *
    * <pre>
-   * Changes to be atomically applied to the specified row if "predicate_filter"
-   * does not yield any cells when applied to "row_key". Entries are applied in
+   * Changes to be atomically applied to the specified row if `predicate_filter`
+   * does not yield any cells when applied to `row_key`. Entries are applied in
    * order, meaning that earlier mutations can be masked by later ones.
-   * Must contain at least one entry if "true_mutations" is empty, and at most
+   * Must contain at least one entry if `true_mutations` is empty, and at most
    * 100000.
    * </pre>
    */
@@ -333,10 +333,10 @@ public  final class CheckAndMutateRowRequest extends
    * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
    *
    * <pre>
-   * Changes to be atomically applied to the specified row if "predicate_filter"
-   * does not yield any cells when applied to "row_key". Entries are applied in
+   * Changes to be atomically applied to the specified row if `predicate_filter`
+   * does not yield any cells when applied to `row_key`. Entries are applied in
    * order, meaning that earlier mutations can be masked by later ones.
-   * Must contain at least one entry if "true_mutations" is empty, and at most
+   * Must contain at least one entry if `true_mutations` is empty, and at most
    * 100000.
    * </pre>
    */
@@ -347,10 +347,10 @@ public  final class CheckAndMutateRowRequest extends
    * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
    *
    * <pre>
-   * Changes to be atomically applied to the specified row if "predicate_filter"
-   * does not yield any cells when applied to "row_key". Entries are applied in
+   * Changes to be atomically applied to the specified row if `predicate_filter`
+   * does not yield any cells when applied to `row_key`. Entries are applied in
    * order, meaning that earlier mutations can be masked by later ones.
-   * Must contain at least one entry if "true_mutations" is empty, and at most
+   * Must contain at least one entry if `true_mutations` is empty, and at most
    * 100000.
    * </pre>
    */
@@ -361,10 +361,10 @@ public  final class CheckAndMutateRowRequest extends
    * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
    *
    * <pre>
-   * Changes to be atomically applied to the specified row if "predicate_filter"
-   * does not yield any cells when applied to "row_key". Entries are applied in
+   * Changes to be atomically applied to the specified row if `predicate_filter`
+   * does not yield any cells when applied to `row_key`. Entries are applied in
    * order, meaning that earlier mutations can be masked by later ones.
-   * Must contain at least one entry if "true_mutations" is empty, and at most
+   * Must contain at least one entry if `true_mutations` is empty, and at most
    * 100000.
    * </pre>
    */
@@ -727,7 +727,7 @@ public  final class CheckAndMutateRowRequest extends
      * The unique name of the table to which the conditional mutation should be
      * applied.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      */
     public java.lang.String getTableName() {
@@ -749,7 +749,7 @@ public  final class CheckAndMutateRowRequest extends
      * The unique name of the table to which the conditional mutation should be
      * applied.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -772,7 +772,7 @@ public  final class CheckAndMutateRowRequest extends
      * The unique name of the table to which the conditional mutation should be
      * applied.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      */
     public Builder setTableName(
@@ -792,7 +792,7 @@ public  final class CheckAndMutateRowRequest extends
      * The unique name of the table to which the conditional mutation should be
      * applied.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      */
     public Builder clearTableName() {
@@ -808,7 +808,7 @@ public  final class CheckAndMutateRowRequest extends
      * The unique name of the table to which the conditional mutation should be
      * applied.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      */
     public Builder setTableNameBytes(
@@ -872,8 +872,8 @@ public  final class CheckAndMutateRowRequest extends
      *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
-     * on whether or not any results are yielded, either "true_mutations" or
-     * "false_mutations" will be executed. If unset, checks that the row contains
+     * on whether or not any results are yielded, either `true_mutations` or
+     * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
      */
@@ -885,8 +885,8 @@ public  final class CheckAndMutateRowRequest extends
      *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
-     * on whether or not any results are yielded, either "true_mutations" or
-     * "false_mutations" will be executed. If unset, checks that the row contains
+     * on whether or not any results are yielded, either `true_mutations` or
+     * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
      */
@@ -902,8 +902,8 @@ public  final class CheckAndMutateRowRequest extends
      *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
-     * on whether or not any results are yielded, either "true_mutations" or
-     * "false_mutations" will be executed. If unset, checks that the row contains
+     * on whether or not any results are yielded, either `true_mutations` or
+     * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
      */
@@ -925,8 +925,8 @@ public  final class CheckAndMutateRowRequest extends
      *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
-     * on whether or not any results are yielded, either "true_mutations" or
-     * "false_mutations" will be executed. If unset, checks that the row contains
+     * on whether or not any results are yielded, either `true_mutations` or
+     * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
      */
@@ -946,8 +946,8 @@ public  final class CheckAndMutateRowRequest extends
      *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
-     * on whether or not any results are yielded, either "true_mutations" or
-     * "false_mutations" will be executed. If unset, checks that the row contains
+     * on whether or not any results are yielded, either `true_mutations` or
+     * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
      */
@@ -971,8 +971,8 @@ public  final class CheckAndMutateRowRequest extends
      *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
-     * on whether or not any results are yielded, either "true_mutations" or
-     * "false_mutations" will be executed. If unset, checks that the row contains
+     * on whether or not any results are yielded, either `true_mutations` or
+     * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
      */
@@ -992,8 +992,8 @@ public  final class CheckAndMutateRowRequest extends
      *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
-     * on whether or not any results are yielded, either "true_mutations" or
-     * "false_mutations" will be executed. If unset, checks that the row contains
+     * on whether or not any results are yielded, either `true_mutations` or
+     * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
      */
@@ -1007,8 +1007,8 @@ public  final class CheckAndMutateRowRequest extends
      *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
-     * on whether or not any results are yielded, either "true_mutations" or
-     * "false_mutations" will be executed. If unset, checks that the row contains
+     * on whether or not any results are yielded, either `true_mutations` or
+     * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
      */
@@ -1025,8 +1025,8 @@ public  final class CheckAndMutateRowRequest extends
      *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
-     * on whether or not any results are yielded, either "true_mutations" or
-     * "false_mutations" will be executed. If unset, checks that the row contains
+     * on whether or not any results are yielded, either `true_mutations` or
+     * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
      */
@@ -1060,10 +1060,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1078,10 +1078,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1096,10 +1096,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1114,10 +1114,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1139,10 +1139,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1161,10 +1161,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1185,10 +1185,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1210,10 +1210,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1232,10 +1232,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1254,10 +1254,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1277,10 +1277,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1298,10 +1298,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1319,10 +1319,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1334,10 +1334,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1352,10 +1352,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1371,10 +1371,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1386,10 +1386,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1402,10 +1402,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * yields at least one cell when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * yields at least one cell when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "false_mutations" is empty, and at most
+     * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1444,10 +1444,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1462,10 +1462,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1480,10 +1480,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1498,10 +1498,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1523,10 +1523,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1545,10 +1545,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1569,10 +1569,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1594,10 +1594,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1616,10 +1616,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1638,10 +1638,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1661,10 +1661,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1682,10 +1682,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1703,10 +1703,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1718,10 +1718,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1736,10 +1736,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1755,10 +1755,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1770,10 +1770,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */
@@ -1786,10 +1786,10 @@ public  final class CheckAndMutateRowRequest extends
      * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      *
      * <pre>
-     * Changes to be atomically applied to the specified row if "predicate_filter"
-     * does not yield any cells when applied to "row_key". Entries are applied in
+     * Changes to be atomically applied to the specified row if `predicate_filter`
+     * does not yield any cells when applied to `row_key`. Entries are applied in
      * order, meaning that earlier mutations can be masked by later ones.
-     * Must contain at least one entry if "true_mutations" is empty, and at most
+     * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
      */

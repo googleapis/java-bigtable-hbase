@@ -8,9 +8,9 @@ package com.google.bigtable.v2;
  *
  * <pre>
  * Specifies a contiguous range of columns within a single column family.
- * The range spans from &lt;column_family&gt;:&lt;start_qualifier&gt; to
- * &lt;column_family&gt;:&lt;end_qualifier&gt;, where both bounds can be either inclusive or
- * exclusive.
+ * The range spans from &amp;lt;column_family&amp;gt;:&amp;lt;start_qualifier&amp;gt; to
+ * &amp;lt;column_family&amp;gt;:&amp;lt;end_qualifier&amp;gt;, where both bounds can be either
+ * inclusive or exclusive.
  * </pre>
  */
 public  final class ColumnRange extends
@@ -405,9 +405,9 @@ public  final class ColumnRange extends
    *
    * <pre>
    * Specifies a contiguous range of columns within a single column family.
-   * The range spans from &lt;column_family&gt;:&lt;start_qualifier&gt; to
-   * &lt;column_family&gt;:&lt;end_qualifier&gt;, where both bounds can be either inclusive or
-   * exclusive.
+   * The range spans from &amp;lt;column_family&amp;gt;:&amp;lt;start_qualifier&amp;gt; to
+   * &amp;lt;column_family&amp;gt;:&amp;lt;end_qualifier&amp;gt;, where both bounds can be either
+   * inclusive or exclusive.
    * </pre>
    */
   public static final class Builder extends

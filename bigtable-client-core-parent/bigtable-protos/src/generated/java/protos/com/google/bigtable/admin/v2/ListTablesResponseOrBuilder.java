@@ -53,10 +53,22 @@ public interface ListTablesResponseOrBuilder extends
 
   /**
    * <code>optional string next_page_token = 2;</code>
+   *
+   * <pre>
+   * Set if not all tables could be returned in a single response.
+   * Pass this value to `page_token` in another request to get the next
+   * page of results.
+   * </pre>
    */
   java.lang.String getNextPageToken();
   /**
    * <code>optional string next_page_token = 2;</code>
+   *
+   * <pre>
+   * Set if not all tables could be returned in a single response.
+   * Pass this value to `page_token` in another request to get the next
+   * page of results.
+   * </pre>
    */
   com.google.protobuf.ByteString
       getNextPageTokenBytes();

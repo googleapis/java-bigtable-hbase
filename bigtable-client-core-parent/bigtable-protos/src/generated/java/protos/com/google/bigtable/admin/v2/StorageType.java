@@ -5,19 +5,35 @@ package com.google.bigtable.admin.v2;
 
 /**
  * Protobuf enum {@code google.bigtable.admin.v2.StorageType}
+ *
+ * <pre>
+ * Storage media types for persisting Bigtable data.
+ * </pre>
  */
 public enum StorageType
     implements com.google.protobuf.ProtocolMessageEnum {
   /**
    * <code>STORAGE_TYPE_UNSPECIFIED = 0;</code>
+   *
+   * <pre>
+   * The user did not specify a storage type.
+   * </pre>
    */
   STORAGE_TYPE_UNSPECIFIED(0, 0),
   /**
    * <code>SSD = 1;</code>
+   *
+   * <pre>
+   * Flash (SSD) storage should be used.
+   * </pre>
    */
   SSD(1, 1),
   /**
    * <code>HDD = 2;</code>
+   *
+   * <pre>
+   * Magnetic drive (HDD) storage should be used.
+   * </pre>
    */
   HDD(2, 2),
   UNRECOGNIZED(-1, -1),
@@ -25,14 +41,26 @@ public enum StorageType
 
   /**
    * <code>STORAGE_TYPE_UNSPECIFIED = 0;</code>
+   *
+   * <pre>
+   * The user did not specify a storage type.
+   * </pre>
    */
   public static final int STORAGE_TYPE_UNSPECIFIED_VALUE = 0;
   /**
    * <code>SSD = 1;</code>
+   *
+   * <pre>
+   * Flash (SSD) storage should be used.
+   * </pre>
    */
   public static final int SSD_VALUE = 1;
   /**
    * <code>HDD = 2;</code>
+   *
+   * <pre>
+   * Magnetic drive (HDD) storage should be used.
+   * </pre>
    */
   public static final int HDD_VALUE = 2;
 

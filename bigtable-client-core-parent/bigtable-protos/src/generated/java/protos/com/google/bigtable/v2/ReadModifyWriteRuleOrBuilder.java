@@ -12,7 +12,7 @@ public interface ReadModifyWriteRuleOrBuilder extends
    *
    * <pre>
    * The name of the family to which the read/modify/write should be applied.
-   * Must match [-_.a-zA-Z0-9]+
+   * Must match `[-_.a-zA-Z0-9]+`
    * </pre>
    */
   java.lang.String getFamilyName();
@@ -21,7 +21,7 @@ public interface ReadModifyWriteRuleOrBuilder extends
    *
    * <pre>
    * The name of the family to which the read/modify/write should be applied.
-   * Must match [-_.a-zA-Z0-9]+
+   * Must match `[-_.a-zA-Z0-9]+`
    * </pre>
    */
   com.google.protobuf.ByteString
@@ -42,7 +42,7 @@ public interface ReadModifyWriteRuleOrBuilder extends
    * <code>optional bytes append_value = 3;</code>
    *
    * <pre>
-   * Rule specifying that "append_value" be appended to the existing value.
+   * Rule specifying that `append_value` be appended to the existing value.
    * If the targeted cell is unset, it will be treated as containing the
    * empty string.
    * </pre>
@@ -53,7 +53,7 @@ public interface ReadModifyWriteRuleOrBuilder extends
    * <code>optional int64 increment_amount = 4;</code>
    *
    * <pre>
-   * Rule specifying that "increment_amount" be added to the existing value.
+   * Rule specifying that `increment_amount` be added to the existing value.
    * If the targeted cell is unset, it will be treated as containing a zero.
    * Otherwise, the targeted cell must contain an 8-byte value (interpreted
    * as a 64-bit big-endian signed integer), or the entire request will fail.

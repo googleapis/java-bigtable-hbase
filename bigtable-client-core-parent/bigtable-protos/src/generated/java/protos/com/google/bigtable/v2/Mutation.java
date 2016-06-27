@@ -134,7 +134,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family into which new data should be written.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     java.lang.String getFamilyName();
@@ -143,7 +143,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family into which new data should be written.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     com.google.protobuf.ByteString
@@ -167,7 +167,7 @@ public  final class Mutation extends
      * Use -1 for current Bigtable server time.
      * Otherwise, the client should set this value itself, noting that the
      * default value is a timestamp of zero if the field is left unspecified.
-     * Values must match the "granularity" of the table (e.g. micros, millis).
+     * Values must match the granularity of the table (e.g. micros, millis).
      * </pre>
      */
     long getTimestampMicros();
@@ -279,7 +279,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family into which new data should be written.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     public java.lang.String getFamilyName() {
@@ -299,7 +299,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family into which new data should be written.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -340,7 +340,7 @@ public  final class Mutation extends
      * Use -1 for current Bigtable server time.
      * Otherwise, the client should set this value itself, noting that the
      * default value is a timestamp of zero if the field is left unspecified.
-     * Values must match the "granularity" of the table (e.g. micros, millis).
+     * Values must match the granularity of the table (e.g. micros, millis).
      * </pre>
      */
     public long getTimestampMicros() {
@@ -615,7 +615,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family into which new data should be written.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public java.lang.String getFamilyName() {
@@ -635,7 +635,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family into which new data should be written.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public com.google.protobuf.ByteString
@@ -656,7 +656,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family into which new data should be written.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public Builder setFamilyName(
@@ -674,7 +674,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family into which new data should be written.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public Builder clearFamilyName() {
@@ -688,7 +688,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family into which new data should be written.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public Builder setFamilyNameBytes(
@@ -756,7 +756,7 @@ public  final class Mutation extends
        * Use -1 for current Bigtable server time.
        * Otherwise, the client should set this value itself, noting that the
        * default value is a timestamp of zero if the field is left unspecified.
-       * Values must match the "granularity" of the table (e.g. micros, millis).
+       * Values must match the granularity of the table (e.g. micros, millis).
        * </pre>
        */
       public long getTimestampMicros() {
@@ -770,7 +770,7 @@ public  final class Mutation extends
        * Use -1 for current Bigtable server time.
        * Otherwise, the client should set this value itself, noting that the
        * default value is a timestamp of zero if the field is left unspecified.
-       * Values must match the "granularity" of the table (e.g. micros, millis).
+       * Values must match the granularity of the table (e.g. micros, millis).
        * </pre>
        */
       public Builder setTimestampMicros(long value) {
@@ -787,7 +787,7 @@ public  final class Mutation extends
        * Use -1 for current Bigtable server time.
        * Otherwise, the client should set this value itself, noting that the
        * default value is a timestamp of zero if the field is left unspecified.
-       * Values must match the "granularity" of the table (e.g. micros, millis).
+       * Values must match the granularity of the table (e.g. micros, millis).
        * </pre>
        */
       public Builder clearTimestampMicros() {
@@ -904,7 +904,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family from which cells should be deleted.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     java.lang.String getFamilyName();
@@ -913,7 +913,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family from which cells should be deleted.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     com.google.protobuf.ByteString
@@ -1054,7 +1054,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family from which cells should be deleted.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     public java.lang.String getFamilyName() {
@@ -1074,7 +1074,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family from which cells should be deleted.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -1389,7 +1389,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family from which cells should be deleted.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public java.lang.String getFamilyName() {
@@ -1409,7 +1409,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family from which cells should be deleted.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public com.google.protobuf.ByteString
@@ -1430,7 +1430,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family from which cells should be deleted.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public Builder setFamilyName(
@@ -1448,7 +1448,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family from which cells should be deleted.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public Builder clearFamilyName() {
@@ -1462,7 +1462,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family from which cells should be deleted.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public Builder setFamilyNameBytes(
@@ -1740,7 +1740,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family from which cells should be deleted.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     java.lang.String getFamilyName();
@@ -1749,7 +1749,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family from which cells should be deleted.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     com.google.protobuf.ByteString
@@ -1835,7 +1835,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family from which cells should be deleted.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     public java.lang.String getFamilyName() {
@@ -1855,7 +1855,7 @@ public  final class Mutation extends
      *
      * <pre>
      * The name of the family from which cells should be deleted.
-     * Must match [-_.a-zA-Z0-9]+
+     * Must match `[-_.a-zA-Z0-9]+`
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -2088,7 +2088,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family from which cells should be deleted.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public java.lang.String getFamilyName() {
@@ -2108,7 +2108,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family from which cells should be deleted.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public com.google.protobuf.ByteString
@@ -2129,7 +2129,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family from which cells should be deleted.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public Builder setFamilyName(
@@ -2147,7 +2147,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family from which cells should be deleted.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public Builder clearFamilyName() {
@@ -2161,7 +2161,7 @@ public  final class Mutation extends
        *
        * <pre>
        * The name of the family from which cells should be deleted.
-       * Must match [-_.a-zA-Z0-9]+
+       * Must match `[-_.a-zA-Z0-9]+`
        * </pre>
        */
       public Builder setFamilyNameBytes(

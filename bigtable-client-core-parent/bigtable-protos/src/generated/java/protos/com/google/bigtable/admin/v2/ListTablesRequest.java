@@ -19,7 +19,7 @@ public  final class ListTablesRequest extends
     super(builder);
   }
   private ListTablesRequest() {
-    name_ = "";
+    parent_ = "";
     view_ = 0;
     pageToken_ = "";
   }
@@ -51,7 +51,7 @@ public  final class ListTablesRequest extends
           case 10: {
             String s = input.readStringRequireUtf8();
 
-            name_ = s;
+            parent_ = s;
             break;
           }
           case 16: {
@@ -90,30 +90,30 @@ public  final class ListTablesRequest extends
             com.google.bigtable.admin.v2.ListTablesRequest.class, com.google.bigtable.admin.v2.ListTablesRequest.Builder.class);
   }
 
-  public static final int NAME_FIELD_NUMBER = 1;
-  private volatile java.lang.Object name_;
+  public static final int PARENT_FIELD_NUMBER = 1;
+  private volatile java.lang.Object parent_;
   /**
-   * <code>optional string name = 1;</code>
+   * <code>optional string parent = 1;</code>
    *
    * <pre>
    * The unique name of the instance for which tables should be listed.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
    */
-  public java.lang.String getName() {
-    java.lang.Object ref = name_;
+  public java.lang.String getParent() {
+    java.lang.Object ref = parent_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      name_ = s;
+      parent_ = s;
       return s;
     }
   }
   /**
-   * <code>optional string name = 1;</code>
+   * <code>optional string parent = 1;</code>
    *
    * <pre>
    * The unique name of the instance for which tables should be listed.
@@ -121,13 +121,13 @@ public  final class ListTablesRequest extends
    * </pre>
    */
   public com.google.protobuf.ByteString
-      getNameBytes() {
-    java.lang.Object ref = name_;
+      getParentBytes() {
+    java.lang.Object ref = parent_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      name_ = b;
+      parent_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
@@ -166,7 +166,7 @@ public  final class ListTablesRequest extends
    * <code>optional string page_token = 3;</code>
    *
    * <pre>
-   * Not yet supported.
+   * The value of `next_page_token` returned by a previous call.
    * </pre>
    */
   public java.lang.String getPageToken() {
@@ -185,7 +185,7 @@ public  final class ListTablesRequest extends
    * <code>optional string page_token = 3;</code>
    *
    * <pre>
-   * Not yet supported.
+   * The value of `next_page_token` returned by a previous call.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -214,8 +214,8 @@ public  final class ListTablesRequest extends
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
+    if (!getParentBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, parent_);
     }
     if (view_ != com.google.bigtable.admin.v2.Table.View.VIEW_UNSPECIFIED.getNumber()) {
       output.writeEnum(2, view_);
@@ -230,8 +230,8 @@ public  final class ListTablesRequest extends
     if (size != -1) return size;
 
     size = 0;
-    if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
+    if (!getParentBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, parent_);
     }
     if (view_ != com.google.bigtable.admin.v2.Table.View.VIEW_UNSPECIFIED.getNumber()) {
       size += com.google.protobuf.CodedOutputStream
@@ -355,7 +355,7 @@ public  final class ListTablesRequest extends
     }
     public Builder clear() {
       super.clear();
-      name_ = "";
+      parent_ = "";
 
       view_ = 0;
 
@@ -383,7 +383,7 @@ public  final class ListTablesRequest extends
 
     public com.google.bigtable.admin.v2.ListTablesRequest buildPartial() {
       com.google.bigtable.admin.v2.ListTablesRequest result = new com.google.bigtable.admin.v2.ListTablesRequest(this);
-      result.name_ = name_;
+      result.parent_ = parent_;
       result.view_ = view_;
       result.pageToken_ = pageToken_;
       onBuilt();
@@ -401,8 +401,8 @@ public  final class ListTablesRequest extends
 
     public Builder mergeFrom(com.google.bigtable.admin.v2.ListTablesRequest other) {
       if (other == com.google.bigtable.admin.v2.ListTablesRequest.getDefaultInstance()) return this;
-      if (!other.getName().isEmpty()) {
-        name_ = other.name_;
+      if (!other.getParent().isEmpty()) {
+        parent_ = other.parent_;
         onChanged();
       }
       if (other.view_ != 0) {
@@ -438,29 +438,29 @@ public  final class ListTablesRequest extends
       return this;
     }
 
-    private java.lang.Object name_ = "";
+    private java.lang.Object parent_ = "";
     /**
-     * <code>optional string name = 1;</code>
+     * <code>optional string parent = 1;</code>
      *
      * <pre>
      * The unique name of the instance for which tables should be listed.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      */
-    public java.lang.String getName() {
-      java.lang.Object ref = name_;
+    public java.lang.String getParent() {
+      java.lang.Object ref = parent_;
       if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        name_ = s;
+        parent_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>optional string name = 1;</code>
+     * <code>optional string parent = 1;</code>
      *
      * <pre>
      * The unique name of the instance for which tables should be listed.
@@ -468,66 +468,66 @@ public  final class ListTablesRequest extends
      * </pre>
      */
     public com.google.protobuf.ByteString
-        getNameBytes() {
-      java.lang.Object ref = name_;
+        getParentBytes() {
+      java.lang.Object ref = parent_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        name_ = b;
+        parent_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>optional string name = 1;</code>
+     * <code>optional string parent = 1;</code>
      *
      * <pre>
      * The unique name of the instance for which tables should be listed.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      */
-    public Builder setName(
+    public Builder setParent(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
   
-      name_ = value;
+      parent_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
+     * <code>optional string parent = 1;</code>
      *
      * <pre>
      * The unique name of the instance for which tables should be listed.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      */
-    public Builder clearName() {
+    public Builder clearParent() {
       
-      name_ = getDefaultInstance().getName();
+      parent_ = getDefaultInstance().getParent();
       onChanged();
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
+     * <code>optional string parent = 1;</code>
      *
      * <pre>
      * The unique name of the instance for which tables should be listed.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
      */
-    public Builder setNameBytes(
+    public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
       
-      name_ = value;
+      parent_ = value;
       onChanged();
       return this;
     }
@@ -606,7 +606,7 @@ public  final class ListTablesRequest extends
      * <code>optional string page_token = 3;</code>
      *
      * <pre>
-     * Not yet supported.
+     * The value of `next_page_token` returned by a previous call.
      * </pre>
      */
     public java.lang.String getPageToken() {
@@ -625,7 +625,7 @@ public  final class ListTablesRequest extends
      * <code>optional string page_token = 3;</code>
      *
      * <pre>
-     * Not yet supported.
+     * The value of `next_page_token` returned by a previous call.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -645,7 +645,7 @@ public  final class ListTablesRequest extends
      * <code>optional string page_token = 3;</code>
      *
      * <pre>
-     * Not yet supported.
+     * The value of `next_page_token` returned by a previous call.
      * </pre>
      */
     public Builder setPageToken(
@@ -662,7 +662,7 @@ public  final class ListTablesRequest extends
      * <code>optional string page_token = 3;</code>
      *
      * <pre>
-     * Not yet supported.
+     * The value of `next_page_token` returned by a previous call.
      * </pre>
      */
     public Builder clearPageToken() {
@@ -675,7 +675,7 @@ public  final class ListTablesRequest extends
      * <code>optional string page_token = 3;</code>
      *
      * <pre>
-     * Not yet supported.
+     * The value of `next_page_token` returned by a previous call.
      * </pre>
      */
     public Builder setPageTokenBytes(

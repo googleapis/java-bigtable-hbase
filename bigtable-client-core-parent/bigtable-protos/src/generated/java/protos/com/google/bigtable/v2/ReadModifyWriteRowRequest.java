@@ -104,7 +104,7 @@ public  final class ReadModifyWriteRowRequest extends
    * The unique name of the table to which the read/modify/write rules should be
    * applied.
    * Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+   * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    */
   public java.lang.String getTableName() {
@@ -126,7 +126,7 @@ public  final class ReadModifyWriteRowRequest extends
    * The unique name of the table to which the read/modify/write rules should be
    * applied.
    * Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+   * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -505,7 +505,7 @@ public  final class ReadModifyWriteRowRequest extends
      * The unique name of the table to which the read/modify/write rules should be
      * applied.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      */
     public java.lang.String getTableName() {
@@ -527,7 +527,7 @@ public  final class ReadModifyWriteRowRequest extends
      * The unique name of the table to which the read/modify/write rules should be
      * applied.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -550,7 +550,7 @@ public  final class ReadModifyWriteRowRequest extends
      * The unique name of the table to which the read/modify/write rules should be
      * applied.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      */
     public Builder setTableName(
@@ -570,7 +570,7 @@ public  final class ReadModifyWriteRowRequest extends
      * The unique name of the table to which the read/modify/write rules should be
      * applied.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      */
     public Builder clearTableName() {
@@ -586,7 +586,7 @@ public  final class ReadModifyWriteRowRequest extends
      * The unique name of the table to which the read/modify/write rules should be
      * applied.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
      */
     public Builder setTableNameBytes(
