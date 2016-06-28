@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -85,7 +86,7 @@ public class RetryOptions implements Serializable {
     private double backoffMultiplier = DEFAULT_BACKOFF_MULTIPLIER;
     private int maxElaspedBackoffMillis = DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
     private int streamingBufferSize = DEFAULT_STREAMING_BUFFER_SIZE;
-    private int streamingBatchSize = DEFAULT_STREAMING_BUFFER_SIZE;
+    private int streamingBatchSize = DEFAULT_STREAMING_BATCH_SIZE;
     private int readPartialRowTimeoutMillis = DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
     private int maxScanTimeoutRetries = DEFAULT_MAX_SCAN_TIMEOUT_RETRIES;
     private Set<Status.Code> statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
@@ -343,5 +344,22 @@ public class RetryOptions implements Serializable {
         && streamingBatchSize == other.streamingBatchSize
         && readPartialRowTimeoutMillis == other.readPartialRowTimeoutMillis
         && maxScanTimeoutRetries == other.maxScanTimeoutRetries;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .omitNullValues()
+        .add("retriesEnabled", retriesEnabled)
+        .add("allowRetriesWithoutTimestamp", allowRetriesWithoutTimestamp)
+        .add("statusToRetryOn", statusToRetryOn)
+        .add("initialBackoffMillis", initialBackoffMillis)
+        .add("maxElaspedBackoffMillis", maxElaspedBackoffMillis)
+        .add("backoffMultiplier", backoffMultiplier)
+        .add("streamingBufferSize", streamingBufferSize)
+        .add("streamingBatchSize", streamingBatchSize)
+        .add("readPartialRowTimeoutMillis", readPartialRowTimeoutMillis)
+        .add("maxScanTimeoutRetries", maxScanTimeoutRetries)
+        .toString();
   }
 }
