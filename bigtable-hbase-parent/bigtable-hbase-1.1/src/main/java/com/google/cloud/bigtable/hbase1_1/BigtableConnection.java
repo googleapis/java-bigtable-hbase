@@ -17,8 +17,10 @@ package com.google.cloud.bigtable.hbase1_1;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
@@ -71,6 +73,24 @@ public class BigtableConnection extends AbstractBigtableConnection {
           @Override
           public QuotaRetriever getQuotaRetriever(QuotaFilter filter) throws IOException {
             throw new UnsupportedOperationException("getQuotaRetriever");  // TODO
+          }
+
+          @Override
+          public boolean abortProcedure(long arg0, boolean arg1) throws IOException {
+            // TODO Auto-generated method stub
+            return false;
+          }
+
+          @Override
+          public Future<Boolean> abortProcedureAsync(long arg0, boolean arg1) throws IOException {
+            // TODO Auto-generated method stub
+            return null;
+          }
+
+          @Override
+          public ProcedureInfo[] listProcedures() throws IOException {
+            // TODO Auto-generated method stub
+            return null;
           }
     };
   }
