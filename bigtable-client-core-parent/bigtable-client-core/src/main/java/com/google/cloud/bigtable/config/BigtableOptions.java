@@ -363,6 +363,7 @@ public class BigtableOptions implements Serializable {
         .add("credentialType", credentialOptions.getCredentialType())
         .add("port", port)
         .add("dataChannelCount", dataChannelCount)
+        .add("retryOptions", retryOptions)
         .add("bulkOptions", bulkOptions)
         .add("usePlaintextNegotiation", usePlaintextNegotiation)
         .toString();
