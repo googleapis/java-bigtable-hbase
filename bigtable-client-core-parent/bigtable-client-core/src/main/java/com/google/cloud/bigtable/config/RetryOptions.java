@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -343,5 +344,22 @@ public class RetryOptions implements Serializable {
         && streamingBatchSize == other.streamingBatchSize
         && readPartialRowTimeoutMillis == other.readPartialRowTimeoutMillis
         && maxScanTimeoutRetries == other.maxScanTimeoutRetries;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .omitNullValues()
+        .add("retriesEnabled", retriesEnabled)
+        .add("allowRetriesWithoutTimestamp", allowRetriesWithoutTimestamp)
+        .add("statusToRetryOn", statusToRetryOn)
+        .add("initialBackoffMillis", initialBackoffMillis)
+        .add("maxElaspedBackoffMillis", maxElaspedBackoffMillis)
+        .add("backoffMultiplier", backoffMultiplier)
+        .add("streamingBufferSize", streamingBufferSize)
+        .add("streamingBatchSize", streamingBatchSize)
+        .add("readPartialRowTimeoutMillis", readPartialRowTimeoutMillis)
+        .add("maxScanTimeoutRetries", maxScanTimeoutRetries)
+        .toString();
   }
 }
