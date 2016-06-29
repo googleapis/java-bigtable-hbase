@@ -120,7 +120,7 @@ public  final class RowFilter extends
             break;
           }
           case 42: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
             filterCase_ = 5;
             filter_ = s;
             break;
@@ -218,7 +218,7 @@ public  final class RowFilter extends
             break;
           }
           case 154: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
             filterCase_ = 19;
             filter_ = s;
             break;

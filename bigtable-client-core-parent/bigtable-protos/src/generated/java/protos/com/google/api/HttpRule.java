@@ -196,37 +196,37 @@ public  final class HttpRule extends
             break;
           }
           case 18: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
             patternCase_ = 2;
             pattern_ = s;
             break;
           }
           case 26: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
             patternCase_ = 3;
             pattern_ = s;
             break;
           }
           case 34: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
             patternCase_ = 4;
             pattern_ = s;
             break;
           }
           case 42: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
             patternCase_ = 5;
             pattern_ = s;
             break;
           }
           case 50: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
             patternCase_ = 6;
             pattern_ = s;
             break;
           }
           case 58: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             body_ = s;
             break;

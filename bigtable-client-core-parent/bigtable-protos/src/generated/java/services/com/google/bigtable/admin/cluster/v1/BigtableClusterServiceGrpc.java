@@ -12,8 +12,17 @@ import static io.grpc.stub.ServerCalls.asyncUnaryCall;
 import static io.grpc.stub.ServerCalls.asyncServerStreamingCall;
 import static io.grpc.stub.ServerCalls.asyncClientStreamingCall;
 import static io.grpc.stub.ServerCalls.asyncBidiStreamingCall;
+import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
+import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
 
-@javax.annotation.Generated("by gRPC proto compiler")
+/**
+ * <pre>
+ * Service for managing zonal Cloud Bigtable resources.
+ * </pre>
+ */
+@javax.annotation.Generated(
+    value = "by gRPC proto compiler (version 0.14.1)",
+    comments = "Source: google/bigtable/admin/cluster/v1/bigtable_cluster_service.proto")
 public class BigtableClusterServiceGrpc {
 
   private BigtableClusterServiceGrpc() {}
@@ -85,81 +94,449 @@ public class BigtableClusterServiceGrpc {
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.Operation.getDefaultInstance()));
 
+  /**
+   * Creates a new async stub that supports all call types for the service
+   */
   public static BigtableClusterServiceStub newStub(io.grpc.Channel channel) {
     return new BigtableClusterServiceStub(channel);
   }
 
+  /**
+   * Creates a new blocking-style stub that supports unary and streaming output calls on the service
+   */
   public static BigtableClusterServiceBlockingStub newBlockingStub(
       io.grpc.Channel channel) {
     return new BigtableClusterServiceBlockingStub(channel);
   }
 
+  /**
+   * Creates a new ListenableFuture-style stub that supports unary and streaming output calls on the service
+   */
   public static BigtableClusterServiceFutureStub newFutureStub(
       io.grpc.Channel channel) {
     return new BigtableClusterServiceFutureStub(channel);
   }
 
+  /**
+   * <pre>
+   * Service for managing zonal Cloud Bigtable resources.
+   * </pre>
+   */
   public static interface BigtableClusterService {
 
+    /**
+     * <pre>
+     * Lists the supported zones for the given project.
+     * </pre>
+     */
     public void listZones(com.google.bigtable.admin.cluster.v1.ListZonesRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.ListZonesResponse> responseObserver);
 
+    /**
+     * <pre>
+     * Gets information about a particular cluster.
+     * </pre>
+     */
     public void getCluster(com.google.bigtable.admin.cluster.v1.GetClusterRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster> responseObserver);
 
+    /**
+     * <pre>
+     * Lists all clusters in the given project, along with any zones for which
+     * cluster information could not be retrieved.
+     * </pre>
+     */
     public void listClusters(com.google.bigtable.admin.cluster.v1.ListClustersRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.ListClustersResponse> responseObserver);
 
+    /**
+     * <pre>
+     * Creates a cluster and begins preparing it to begin serving. The returned
+     * cluster embeds as its "current_operation" a long-running operation which
+     * can be used to track the progress of turning up the new cluster.
+     * Immediately upon completion of this request:
+     *  * The cluster will be readable via the API, with all requested attributes
+     *    but no allocated resources.
+     * Until completion of the embedded operation:
+     *  * Cancelling the operation will render the cluster immediately unreadable
+     *    via the API.
+     *  * All other attempts to modify or delete the cluster will be rejected.
+     * Upon completion of the embedded operation:
+     *  * Billing for all successfully-allocated resources will begin (some types
+     *    may have lower than the requested levels).
+     *  * New tables can be created in the cluster.
+     *  * The cluster's allocated resource levels will be readable via the API.
+     * The embedded operation's "metadata" field type is
+     * [CreateClusterMetadata][google.bigtable.admin.cluster.v1.CreateClusterMetadata] The embedded operation's "response" field type is
+     * [Cluster][google.bigtable.admin.cluster.v1.Cluster], if successful.
+     * </pre>
+     */
     public void createCluster(com.google.bigtable.admin.cluster.v1.CreateClusterRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster> responseObserver);
 
+    /**
+     * <pre>
+     * Updates a cluster, and begins allocating or releasing resources as
+     * requested. The returned cluster embeds as its "current_operation" a
+     * long-running operation which can be used to track the progress of updating
+     * the cluster.
+     * Immediately upon completion of this request:
+     *  * For resource types where a decrease in the cluster's allocation has been
+     *    requested, billing will be based on the newly-requested level.
+     * Until completion of the embedded operation:
+     *  * Cancelling the operation will set its metadata's "cancelled_at_time",
+     *    and begin restoring resources to their pre-request values. The operation
+     *    is guaranteed to succeed at undoing all resource changes, after which
+     *    point it will terminate with a CANCELLED status.
+     *  * All other attempts to modify or delete the cluster will be rejected.
+     *  * Reading the cluster via the API will continue to give the pre-request
+     *    resource levels.
+     * Upon completion of the embedded operation:
+     *  * Billing will begin for all successfully-allocated resources (some types
+     *    may have lower than the requested levels).
+     *  * All newly-reserved resources will be available for serving the cluster's
+     *    tables.
+     *  * The cluster's new resource levels will be readable via the API.
+     * [UpdateClusterMetadata][google.bigtable.admin.cluster.v1.UpdateClusterMetadata] The embedded operation's "response" field type is
+     * [Cluster][google.bigtable.admin.cluster.v1.Cluster], if successful.
+     * </pre>
+     */
     public void updateCluster(com.google.bigtable.admin.cluster.v1.Cluster request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster> responseObserver);
 
+    /**
+     * <pre>
+     * Marks a cluster and all of its tables for permanent deletion in 7 days.
+     * Immediately upon completion of the request:
+     *  * Billing will cease for all of the cluster's reserved resources.
+     *  * The cluster's "delete_time" field will be set 7 days in the future.
+     * Soon afterward:
+     *  * All tables within the cluster will become unavailable.
+     * Prior to the cluster's "delete_time":
+     *  * The cluster can be recovered with a call to UndeleteCluster.
+     *  * All other attempts to modify or delete the cluster will be rejected.
+     * At the cluster's "delete_time":
+     *  * The cluster and *all of its tables* will immediately and irrevocably
+     *    disappear from the API, and their data will be permanently deleted.
+     * </pre>
+     */
     public void deleteCluster(com.google.bigtable.admin.cluster.v1.DeleteClusterRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
 
+    /**
+     * <pre>
+     * Cancels the scheduled deletion of an cluster and begins preparing it to
+     * resume serving. The returned operation will also be embedded as the
+     * cluster's "current_operation".
+     * Immediately upon completion of this request:
+     *  * The cluster's "delete_time" field will be unset, protecting it from
+     *    automatic deletion.
+     * Until completion of the returned operation:
+     *  * The operation cannot be cancelled.
+     * Upon completion of the returned operation:
+     *  * Billing for the cluster's resources will resume.
+     *  * All tables within the cluster will be available.
+     * [UndeleteClusterMetadata][google.bigtable.admin.cluster.v1.UndeleteClusterMetadata] The embedded operation's "response" field type is
+     * [Cluster][google.bigtable.admin.cluster.v1.Cluster], if successful.
+     * </pre>
+     */
     public void undeleteCluster(com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest request,
         io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver);
   }
 
+  @io.grpc.ExperimentalApi
+  public static abstract class AbstractBigtableClusterService implements BigtableClusterService, io.grpc.BindableService {
+
+    @java.lang.Override
+    public void listZones(com.google.bigtable.admin.cluster.v1.ListZonesRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.ListZonesResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_LIST_ZONES, responseObserver);
+    }
+
+    @java.lang.Override
+    public void getCluster(com.google.bigtable.admin.cluster.v1.GetClusterRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_GET_CLUSTER, responseObserver);
+    }
+
+    @java.lang.Override
+    public void listClusters(com.google.bigtable.admin.cluster.v1.ListClustersRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.ListClustersResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_LIST_CLUSTERS, responseObserver);
+    }
+
+    @java.lang.Override
+    public void createCluster(com.google.bigtable.admin.cluster.v1.CreateClusterRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_CREATE_CLUSTER, responseObserver);
+    }
+
+    @java.lang.Override
+    public void updateCluster(com.google.bigtable.admin.cluster.v1.Cluster request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.cluster.v1.Cluster> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_UPDATE_CLUSTER, responseObserver);
+    }
+
+    @java.lang.Override
+    public void deleteCluster(com.google.bigtable.admin.cluster.v1.DeleteClusterRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_DELETE_CLUSTER, responseObserver);
+    }
+
+    @java.lang.Override
+    public void undeleteCluster(com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest request,
+        io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_UNDELETE_CLUSTER, responseObserver);
+    }
+
+    @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
+      return BigtableClusterServiceGrpc.bindService(this);
+    }
+  }
+
+  /**
+   * <pre>
+   * Service for managing zonal Cloud Bigtable resources.
+   * </pre>
+   */
   public static interface BigtableClusterServiceBlockingClient {
 
+    /**
+     * <pre>
+     * Lists the supported zones for the given project.
+     * </pre>
+     */
     public com.google.bigtable.admin.cluster.v1.ListZonesResponse listZones(com.google.bigtable.admin.cluster.v1.ListZonesRequest request);
 
+    /**
+     * <pre>
+     * Gets information about a particular cluster.
+     * </pre>
+     */
     public com.google.bigtable.admin.cluster.v1.Cluster getCluster(com.google.bigtable.admin.cluster.v1.GetClusterRequest request);
 
+    /**
+     * <pre>
+     * Lists all clusters in the given project, along with any zones for which
+     * cluster information could not be retrieved.
+     * </pre>
+     */
     public com.google.bigtable.admin.cluster.v1.ListClustersResponse listClusters(com.google.bigtable.admin.cluster.v1.ListClustersRequest request);
 
+    /**
+     * <pre>
+     * Creates a cluster and begins preparing it to begin serving. The returned
+     * cluster embeds as its "current_operation" a long-running operation which
+     * can be used to track the progress of turning up the new cluster.
+     * Immediately upon completion of this request:
+     *  * The cluster will be readable via the API, with all requested attributes
+     *    but no allocated resources.
+     * Until completion of the embedded operation:
+     *  * Cancelling the operation will render the cluster immediately unreadable
+     *    via the API.
+     *  * All other attempts to modify or delete the cluster will be rejected.
+     * Upon completion of the embedded operation:
+     *  * Billing for all successfully-allocated resources will begin (some types
+     *    may have lower than the requested levels).
+     *  * New tables can be created in the cluster.
+     *  * The cluster's allocated resource levels will be readable via the API.
+     * The embedded operation's "metadata" field type is
+     * [CreateClusterMetadata][google.bigtable.admin.cluster.v1.CreateClusterMetadata] The embedded operation's "response" field type is
+     * [Cluster][google.bigtable.admin.cluster.v1.Cluster], if successful.
+     * </pre>
+     */
     public com.google.bigtable.admin.cluster.v1.Cluster createCluster(com.google.bigtable.admin.cluster.v1.CreateClusterRequest request);
 
+    /**
+     * <pre>
+     * Updates a cluster, and begins allocating or releasing resources as
+     * requested. The returned cluster embeds as its "current_operation" a
+     * long-running operation which can be used to track the progress of updating
+     * the cluster.
+     * Immediately upon completion of this request:
+     *  * For resource types where a decrease in the cluster's allocation has been
+     *    requested, billing will be based on the newly-requested level.
+     * Until completion of the embedded operation:
+     *  * Cancelling the operation will set its metadata's "cancelled_at_time",
+     *    and begin restoring resources to their pre-request values. The operation
+     *    is guaranteed to succeed at undoing all resource changes, after which
+     *    point it will terminate with a CANCELLED status.
+     *  * All other attempts to modify or delete the cluster will be rejected.
+     *  * Reading the cluster via the API will continue to give the pre-request
+     *    resource levels.
+     * Upon completion of the embedded operation:
+     *  * Billing will begin for all successfully-allocated resources (some types
+     *    may have lower than the requested levels).
+     *  * All newly-reserved resources will be available for serving the cluster's
+     *    tables.
+     *  * The cluster's new resource levels will be readable via the API.
+     * [UpdateClusterMetadata][google.bigtable.admin.cluster.v1.UpdateClusterMetadata] The embedded operation's "response" field type is
+     * [Cluster][google.bigtable.admin.cluster.v1.Cluster], if successful.
+     * </pre>
+     */
     public com.google.bigtable.admin.cluster.v1.Cluster updateCluster(com.google.bigtable.admin.cluster.v1.Cluster request);
 
+    /**
+     * <pre>
+     * Marks a cluster and all of its tables for permanent deletion in 7 days.
+     * Immediately upon completion of the request:
+     *  * Billing will cease for all of the cluster's reserved resources.
+     *  * The cluster's "delete_time" field will be set 7 days in the future.
+     * Soon afterward:
+     *  * All tables within the cluster will become unavailable.
+     * Prior to the cluster's "delete_time":
+     *  * The cluster can be recovered with a call to UndeleteCluster.
+     *  * All other attempts to modify or delete the cluster will be rejected.
+     * At the cluster's "delete_time":
+     *  * The cluster and *all of its tables* will immediately and irrevocably
+     *    disappear from the API, and their data will be permanently deleted.
+     * </pre>
+     */
     public com.google.protobuf.Empty deleteCluster(com.google.bigtable.admin.cluster.v1.DeleteClusterRequest request);
 
+    /**
+     * <pre>
+     * Cancels the scheduled deletion of an cluster and begins preparing it to
+     * resume serving. The returned operation will also be embedded as the
+     * cluster's "current_operation".
+     * Immediately upon completion of this request:
+     *  * The cluster's "delete_time" field will be unset, protecting it from
+     *    automatic deletion.
+     * Until completion of the returned operation:
+     *  * The operation cannot be cancelled.
+     * Upon completion of the returned operation:
+     *  * Billing for the cluster's resources will resume.
+     *  * All tables within the cluster will be available.
+     * [UndeleteClusterMetadata][google.bigtable.admin.cluster.v1.UndeleteClusterMetadata] The embedded operation's "response" field type is
+     * [Cluster][google.bigtable.admin.cluster.v1.Cluster], if successful.
+     * </pre>
+     */
     public com.google.longrunning.Operation undeleteCluster(com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest request);
   }
 
+  /**
+   * <pre>
+   * Service for managing zonal Cloud Bigtable resources.
+   * </pre>
+   */
   public static interface BigtableClusterServiceFutureClient {
 
+    /**
+     * <pre>
+     * Lists the supported zones for the given project.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.cluster.v1.ListZonesResponse> listZones(
         com.google.bigtable.admin.cluster.v1.ListZonesRequest request);
 
+    /**
+     * <pre>
+     * Gets information about a particular cluster.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.cluster.v1.Cluster> getCluster(
         com.google.bigtable.admin.cluster.v1.GetClusterRequest request);
 
+    /**
+     * <pre>
+     * Lists all clusters in the given project, along with any zones for which
+     * cluster information could not be retrieved.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.cluster.v1.ListClustersResponse> listClusters(
         com.google.bigtable.admin.cluster.v1.ListClustersRequest request);
 
+    /**
+     * <pre>
+     * Creates a cluster and begins preparing it to begin serving. The returned
+     * cluster embeds as its "current_operation" a long-running operation which
+     * can be used to track the progress of turning up the new cluster.
+     * Immediately upon completion of this request:
+     *  * The cluster will be readable via the API, with all requested attributes
+     *    but no allocated resources.
+     * Until completion of the embedded operation:
+     *  * Cancelling the operation will render the cluster immediately unreadable
+     *    via the API.
+     *  * All other attempts to modify or delete the cluster will be rejected.
+     * Upon completion of the embedded operation:
+     *  * Billing for all successfully-allocated resources will begin (some types
+     *    may have lower than the requested levels).
+     *  * New tables can be created in the cluster.
+     *  * The cluster's allocated resource levels will be readable via the API.
+     * The embedded operation's "metadata" field type is
+     * [CreateClusterMetadata][google.bigtable.admin.cluster.v1.CreateClusterMetadata] The embedded operation's "response" field type is
+     * [Cluster][google.bigtable.admin.cluster.v1.Cluster], if successful.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.cluster.v1.Cluster> createCluster(
         com.google.bigtable.admin.cluster.v1.CreateClusterRequest request);
 
+    /**
+     * <pre>
+     * Updates a cluster, and begins allocating or releasing resources as
+     * requested. The returned cluster embeds as its "current_operation" a
+     * long-running operation which can be used to track the progress of updating
+     * the cluster.
+     * Immediately upon completion of this request:
+     *  * For resource types where a decrease in the cluster's allocation has been
+     *    requested, billing will be based on the newly-requested level.
+     * Until completion of the embedded operation:
+     *  * Cancelling the operation will set its metadata's "cancelled_at_time",
+     *    and begin restoring resources to their pre-request values. The operation
+     *    is guaranteed to succeed at undoing all resource changes, after which
+     *    point it will terminate with a CANCELLED status.
+     *  * All other attempts to modify or delete the cluster will be rejected.
+     *  * Reading the cluster via the API will continue to give the pre-request
+     *    resource levels.
+     * Upon completion of the embedded operation:
+     *  * Billing will begin for all successfully-allocated resources (some types
+     *    may have lower than the requested levels).
+     *  * All newly-reserved resources will be available for serving the cluster's
+     *    tables.
+     *  * The cluster's new resource levels will be readable via the API.
+     * [UpdateClusterMetadata][google.bigtable.admin.cluster.v1.UpdateClusterMetadata] The embedded operation's "response" field type is
+     * [Cluster][google.bigtable.admin.cluster.v1.Cluster], if successful.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.cluster.v1.Cluster> updateCluster(
         com.google.bigtable.admin.cluster.v1.Cluster request);
 
+    /**
+     * <pre>
+     * Marks a cluster and all of its tables for permanent deletion in 7 days.
+     * Immediately upon completion of the request:
+     *  * Billing will cease for all of the cluster's reserved resources.
+     *  * The cluster's "delete_time" field will be set 7 days in the future.
+     * Soon afterward:
+     *  * All tables within the cluster will become unavailable.
+     * Prior to the cluster's "delete_time":
+     *  * The cluster can be recovered with a call to UndeleteCluster.
+     *  * All other attempts to modify or delete the cluster will be rejected.
+     * At the cluster's "delete_time":
+     *  * The cluster and *all of its tables* will immediately and irrevocably
+     *    disappear from the API, and their data will be permanently deleted.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteCluster(
         com.google.bigtable.admin.cluster.v1.DeleteClusterRequest request);
 
+    /**
+     * <pre>
+     * Cancels the scheduled deletion of an cluster and begins preparing it to
+     * resume serving. The returned operation will also be embedded as the
+     * cluster's "current_operation".
+     * Immediately upon completion of this request:
+     *  * The cluster's "delete_time" field will be unset, protecting it from
+     *    automatic deletion.
+     * Until completion of the returned operation:
+     *  * The operation cannot be cancelled.
+     * Upon completion of the returned operation:
+     *  * Billing for the cluster's resources will resume.
+     *  * All tables within the cluster will be available.
+     * [UndeleteClusterMetadata][google.bigtable.admin.cluster.v1.UndeleteClusterMetadata] The embedded operation's "response" field type is
+     * [Cluster][google.bigtable.admin.cluster.v1.Cluster], if successful.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.longrunning.Operation> undeleteCluster(
         com.google.bigtable.admin.cluster.v1.UndeleteClusterRequest request);
   }
@@ -379,6 +756,7 @@ public class BigtableClusterServiceGrpc {
       this.methodId = methodId;
     }
 
+    @java.lang.Override
     @java.lang.SuppressWarnings("unchecked")
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
@@ -415,6 +793,7 @@ public class BigtableClusterServiceGrpc {
       }
     }
 
+    @java.lang.Override
     @java.lang.SuppressWarnings("unchecked")
     public io.grpc.stub.StreamObserver<Req> invoke(
         io.grpc.stub.StreamObserver<Resp> responseObserver) {

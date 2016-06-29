@@ -50,7 +50,7 @@ public  final class Cluster extends
             break;
           }
           case 10: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             name_ = s;
             break;
@@ -69,7 +69,7 @@ public  final class Cluster extends
             break;
           }
           case 34: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             displayName_ = s;
             break;

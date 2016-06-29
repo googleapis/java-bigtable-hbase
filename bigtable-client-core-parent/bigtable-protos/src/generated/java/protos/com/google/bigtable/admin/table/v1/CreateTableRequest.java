@@ -45,13 +45,13 @@ public  final class CreateTableRequest extends
             break;
           }
           case 10: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             name_ = s;
             break;
           }
           case 18: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             tableId_ = s;
             break;
@@ -70,7 +70,7 @@ public  final class CreateTableRequest extends
             break;
           }
           case 34: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
             if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
               initialSplitKeys_ = new com.google.protobuf.LazyStringArrayList();
               mutable_bitField0_ |= 0x00000008;

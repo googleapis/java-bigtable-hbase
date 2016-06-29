@@ -56,7 +56,7 @@ public  final class ListOperationsResponse extends
             break;
           }
           case 18: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             nextPageToken_ = s;
             break;
