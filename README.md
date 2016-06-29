@@ -44,7 +44,7 @@ You can create a [Maven project](https://cloud.google.com/bigtable/docs/using-ma
 <dependency>
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-hbase-1.0</artifactId>
-  <version>0.9.0-SNAPSHOT</version>
+  <version>0.9.0</version>
 </dependency>
 ```
 
