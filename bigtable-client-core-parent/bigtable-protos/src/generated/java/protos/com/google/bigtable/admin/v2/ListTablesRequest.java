@@ -49,7 +49,7 @@ public  final class ListTablesRequest extends
             break;
           }
           case 10: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             parent_ = s;
             break;
@@ -61,7 +61,7 @@ public  final class ListTablesRequest extends
             break;
           }
           case 26: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             pageToken_ = s;
             break;

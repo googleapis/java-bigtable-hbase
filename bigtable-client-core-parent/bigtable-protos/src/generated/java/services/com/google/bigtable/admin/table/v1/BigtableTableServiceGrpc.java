@@ -12,8 +12,18 @@ import static io.grpc.stub.ServerCalls.asyncUnaryCall;
 import static io.grpc.stub.ServerCalls.asyncServerStreamingCall;
 import static io.grpc.stub.ServerCalls.asyncClientStreamingCall;
 import static io.grpc.stub.ServerCalls.asyncBidiStreamingCall;
+import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
+import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
 
-@javax.annotation.Generated("by gRPC proto compiler")
+/**
+ * <pre>
+ * Service for creating, configuring, and deleting Cloud Bigtable tables.
+ * Provides access to the table schemas only, not the data stored within the tables.
+ * </pre>
+ */
+@javax.annotation.Generated(
+    value = "by gRPC proto compiler (version 0.14.1)",
+    comments = "Source: google/bigtable/admin/table/v1/bigtable_table_service.proto")
 public class BigtableTableServiceGrpc {
 
   private BigtableTableServiceGrpc() {}
@@ -103,97 +113,330 @@ public class BigtableTableServiceGrpc {
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
 
+  /**
+   * Creates a new async stub that supports all call types for the service
+   */
   public static BigtableTableServiceStub newStub(io.grpc.Channel channel) {
     return new BigtableTableServiceStub(channel);
   }
 
+  /**
+   * Creates a new blocking-style stub that supports unary and streaming output calls on the service
+   */
   public static BigtableTableServiceBlockingStub newBlockingStub(
       io.grpc.Channel channel) {
     return new BigtableTableServiceBlockingStub(channel);
   }
 
+  /**
+   * Creates a new ListenableFuture-style stub that supports unary and streaming output calls on the service
+   */
   public static BigtableTableServiceFutureStub newFutureStub(
       io.grpc.Channel channel) {
     return new BigtableTableServiceFutureStub(channel);
   }
 
+  /**
+   * <pre>
+   * Service for creating, configuring, and deleting Cloud Bigtable tables.
+   * Provides access to the table schemas only, not the data stored within the tables.
+   * </pre>
+   */
   public static interface BigtableTableService {
 
+    /**
+     * <pre>
+     * Creates a new table, to be served from a specified cluster.
+     * The table can be created with a full set of initial column families,
+     * specified in the request.
+     * </pre>
+     */
     public void createTable(com.google.bigtable.admin.table.v1.CreateTableRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.Table> responseObserver);
 
+    /**
+     * <pre>
+     * Lists the names of all tables served from a specified cluster.
+     * </pre>
+     */
     public void listTables(com.google.bigtable.admin.table.v1.ListTablesRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ListTablesResponse> responseObserver);
 
+    /**
+     * <pre>
+     * Gets the schema of the specified table, including its column families.
+     * </pre>
+     */
     public void getTable(com.google.bigtable.admin.table.v1.GetTableRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.Table> responseObserver);
 
+    /**
+     * <pre>
+     * Permanently deletes a specified table and all of its data.
+     * </pre>
+     */
     public void deleteTable(com.google.bigtable.admin.table.v1.DeleteTableRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
 
+    /**
+     * <pre>
+     * Changes the name of a specified table.
+     * Cannot be used to move tables between clusters, zones, or projects.
+     * </pre>
+     */
     public void renameTable(com.google.bigtable.admin.table.v1.RenameTableRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
 
+    /**
+     * <pre>
+     * Creates a new column family within a specified table.
+     * </pre>
+     */
     public void createColumnFamily(com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ColumnFamily> responseObserver);
 
+    /**
+     * <pre>
+     * Changes the configuration of a specified column family.
+     * </pre>
+     */
     public void updateColumnFamily(com.google.bigtable.admin.table.v1.ColumnFamily request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ColumnFamily> responseObserver);
 
+    /**
+     * <pre>
+     * Permanently deletes a specified column family and all of its data.
+     * </pre>
+     */
     public void deleteColumnFamily(com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
 
+    /**
+     * <pre>
+     * Delete all rows in a table corresponding to a particular prefix
+     * </pre>
+     */
     public void bulkDeleteRows(com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
   }
 
+  @io.grpc.ExperimentalApi
+  public static abstract class AbstractBigtableTableService implements BigtableTableService, io.grpc.BindableService {
+
+    @java.lang.Override
+    public void createTable(com.google.bigtable.admin.table.v1.CreateTableRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.Table> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_CREATE_TABLE, responseObserver);
+    }
+
+    @java.lang.Override
+    public void listTables(com.google.bigtable.admin.table.v1.ListTablesRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ListTablesResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_LIST_TABLES, responseObserver);
+    }
+
+    @java.lang.Override
+    public void getTable(com.google.bigtable.admin.table.v1.GetTableRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.Table> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_GET_TABLE, responseObserver);
+    }
+
+    @java.lang.Override
+    public void deleteTable(com.google.bigtable.admin.table.v1.DeleteTableRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_DELETE_TABLE, responseObserver);
+    }
+
+    @java.lang.Override
+    public void renameTable(com.google.bigtable.admin.table.v1.RenameTableRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_RENAME_TABLE, responseObserver);
+    }
+
+    @java.lang.Override
+    public void createColumnFamily(com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ColumnFamily> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_CREATE_COLUMN_FAMILY, responseObserver);
+    }
+
+    @java.lang.Override
+    public void updateColumnFamily(com.google.bigtable.admin.table.v1.ColumnFamily request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.table.v1.ColumnFamily> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_UPDATE_COLUMN_FAMILY, responseObserver);
+    }
+
+    @java.lang.Override
+    public void deleteColumnFamily(com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_DELETE_COLUMN_FAMILY, responseObserver);
+    }
+
+    @java.lang.Override
+    public void bulkDeleteRows(com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_BULK_DELETE_ROWS, responseObserver);
+    }
+
+    @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
+      return BigtableTableServiceGrpc.bindService(this);
+    }
+  }
+
+  /**
+   * <pre>
+   * Service for creating, configuring, and deleting Cloud Bigtable tables.
+   * Provides access to the table schemas only, not the data stored within the tables.
+   * </pre>
+   */
   public static interface BigtableTableServiceBlockingClient {
 
+    /**
+     * <pre>
+     * Creates a new table, to be served from a specified cluster.
+     * The table can be created with a full set of initial column families,
+     * specified in the request.
+     * </pre>
+     */
     public com.google.bigtable.admin.table.v1.Table createTable(com.google.bigtable.admin.table.v1.CreateTableRequest request);
 
+    /**
+     * <pre>
+     * Lists the names of all tables served from a specified cluster.
+     * </pre>
+     */
     public com.google.bigtable.admin.table.v1.ListTablesResponse listTables(com.google.bigtable.admin.table.v1.ListTablesRequest request);
 
+    /**
+     * <pre>
+     * Gets the schema of the specified table, including its column families.
+     * </pre>
+     */
     public com.google.bigtable.admin.table.v1.Table getTable(com.google.bigtable.admin.table.v1.GetTableRequest request);
 
+    /**
+     * <pre>
+     * Permanently deletes a specified table and all of its data.
+     * </pre>
+     */
     public com.google.protobuf.Empty deleteTable(com.google.bigtable.admin.table.v1.DeleteTableRequest request);
 
+    /**
+     * <pre>
+     * Changes the name of a specified table.
+     * Cannot be used to move tables between clusters, zones, or projects.
+     * </pre>
+     */
     public com.google.protobuf.Empty renameTable(com.google.bigtable.admin.table.v1.RenameTableRequest request);
 
+    /**
+     * <pre>
+     * Creates a new column family within a specified table.
+     * </pre>
+     */
     public com.google.bigtable.admin.table.v1.ColumnFamily createColumnFamily(com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest request);
 
+    /**
+     * <pre>
+     * Changes the configuration of a specified column family.
+     * </pre>
+     */
     public com.google.bigtable.admin.table.v1.ColumnFamily updateColumnFamily(com.google.bigtable.admin.table.v1.ColumnFamily request);
 
+    /**
+     * <pre>
+     * Permanently deletes a specified column family and all of its data.
+     * </pre>
+     */
     public com.google.protobuf.Empty deleteColumnFamily(com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest request);
 
+    /**
+     * <pre>
+     * Delete all rows in a table corresponding to a particular prefix
+     * </pre>
+     */
     public com.google.protobuf.Empty bulkDeleteRows(com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest request);
   }
 
+  /**
+   * <pre>
+   * Service for creating, configuring, and deleting Cloud Bigtable tables.
+   * Provides access to the table schemas only, not the data stored within the tables.
+   * </pre>
+   */
   public static interface BigtableTableServiceFutureClient {
 
+    /**
+     * <pre>
+     * Creates a new table, to be served from a specified cluster.
+     * The table can be created with a full set of initial column families,
+     * specified in the request.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.table.v1.Table> createTable(
         com.google.bigtable.admin.table.v1.CreateTableRequest request);
 
+    /**
+     * <pre>
+     * Lists the names of all tables served from a specified cluster.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.table.v1.ListTablesResponse> listTables(
         com.google.bigtable.admin.table.v1.ListTablesRequest request);
 
+    /**
+     * <pre>
+     * Gets the schema of the specified table, including its column families.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.table.v1.Table> getTable(
         com.google.bigtable.admin.table.v1.GetTableRequest request);
 
+    /**
+     * <pre>
+     * Permanently deletes a specified table and all of its data.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteTable(
         com.google.bigtable.admin.table.v1.DeleteTableRequest request);
 
+    /**
+     * <pre>
+     * Changes the name of a specified table.
+     * Cannot be used to move tables between clusters, zones, or projects.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> renameTable(
         com.google.bigtable.admin.table.v1.RenameTableRequest request);
 
+    /**
+     * <pre>
+     * Creates a new column family within a specified table.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.table.v1.ColumnFamily> createColumnFamily(
         com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest request);
 
+    /**
+     * <pre>
+     * Changes the configuration of a specified column family.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.table.v1.ColumnFamily> updateColumnFamily(
         com.google.bigtable.admin.table.v1.ColumnFamily request);
 
+    /**
+     * <pre>
+     * Permanently deletes a specified column family and all of its data.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteColumnFamily(
         com.google.bigtable.admin.table.v1.DeleteColumnFamilyRequest request);
 
+    /**
+     * <pre>
+     * Delete all rows in a table corresponding to a particular prefix
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> bulkDeleteRows(
         com.google.bigtable.admin.table.v1.BulkDeleteRowsRequest request);
   }
@@ -455,6 +698,7 @@ public class BigtableTableServiceGrpc {
       this.methodId = methodId;
     }
 
+    @java.lang.Override
     @java.lang.SuppressWarnings("unchecked")
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
@@ -499,6 +743,7 @@ public class BigtableTableServiceGrpc {
       }
     }
 
+    @java.lang.Override
     @java.lang.SuppressWarnings("unchecked")
     public io.grpc.stub.StreamObserver<Req> invoke(
         io.grpc.stub.StreamObserver<Resp> responseObserver) {

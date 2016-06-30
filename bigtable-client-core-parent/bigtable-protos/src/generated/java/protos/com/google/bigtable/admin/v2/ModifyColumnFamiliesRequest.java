@@ -48,7 +48,7 @@ public  final class ModifyColumnFamiliesRequest extends
             break;
           }
           case 10: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             name_ = s;
             break;
@@ -204,7 +204,7 @@ public  final class ModifyColumnFamiliesRequest extends
               break;
             }
             case 10: {
-              String s = input.readStringRequireUtf8();
+              java.lang.String s = input.readStringRequireUtf8();
 
               id_ = s;
               break;
