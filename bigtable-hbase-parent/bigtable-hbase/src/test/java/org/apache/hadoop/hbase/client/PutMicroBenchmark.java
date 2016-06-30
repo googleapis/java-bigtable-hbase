@@ -1,14 +1,22 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with the License. You may obtain
- * a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable
- * law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
- * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
- * for the specific language governing permissions and limitations under the License.
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.hadoop.hbase.client;
 
 import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
@@ -21,7 +29,6 @@ import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.protobuf.Empty;
 import com.google.protobuf.ServiceException;
 
 import org.apache.hadoop.conf.Configuration;
@@ -46,18 +53,21 @@ import java.util.concurrent.TimeUnit;
 public class PutMicroBenchmark {
   static final int NUM_CELLS = 100;
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
-  final static int PUT_COUNT = 100;
+  final static int REAL_CHANNEL_PUT_COUNT = 100;
+  final static int FAKE_CHANNEL_PUT_COUNT = 100_000;
 
-  public static void main(String[] args)
-      throws IOException, ServiceException, InterruptedException, GeneralSecurityException {
+  public static void main(String[] args) throws Exception {
     String projectId = args.length > 0 ? args[0] : "project";
-    String zoneId = args.length > 1 ? args[1] : "zone";
-    String clusterId = args.length > 2 ? args[2] : "cluster";
-    String tableId = args.length > 3 ? args[3] : "table";
+    String instanceId = args.length > 1 ? args[1] : "instanceId";
+    String tableId = args.length > 2 ? args[2] : "table";
 
-    ChannelPool cp = getChannelPool(args.length >= 3);
-    MutateRowRequest request = createRequest(projectId, zoneId, clusterId, tableId);
-    run(request, cp);
+    BigtableOptions options = new BigtableOptions.Builder()
+        .setProjectId(projectId)
+        .setInstanceId(instanceId)
+        .build();
+    boolean useRealConnection = args.length >= 2;
+    int putCount = useRealConnection ? REAL_CHANNEL_PUT_COUNT : FAKE_CHANNEL_PUT_COUNT;
+    run(createRequet(tableId, options), getChannelPool(useRealConnection), putCount);
   }
 
   protected static ChannelPool getChannelPool(final boolean useRealConnection)
@@ -102,11 +112,9 @@ public class PutMicroBenchmark {
     };
   }
 
-  protected static MutateRowRequest createRequest(String projectId, String zoneId, String clusterId,
-      String tableId) {
-    HBaseRequestAdapter hbaseAdapter = new HBaseRequestAdapter(
-        new BigtableOptions.Builder().build(), TableName.valueOf(tableId),
-        new Configuration(false));
+  private static MutateRowRequest createRequet(String tableId, BigtableOptions options) {
+    HBaseRequestAdapter hbaseAdapter =
+        new HBaseRequestAdapter(options, TableName.valueOf(tableId), new Configuration(false));
     DataGenerationHelper dataHelper = new DataGenerationHelper();
     byte[] rowKey = dataHelper.randomData("testrow-");
     byte[][] quals = dataHelper.randomData("testQualifier-", NUM_CELLS);
@@ -121,7 +129,7 @@ public class PutMicroBenchmark {
     return hbaseAdapter.adapt(put);
   }
 
-  protected static void run(final MutateRowRequest request, ChannelPool cp)
+  protected static void run(final MutateRowRequest request, ChannelPool cp, final int putCount)
       throws InterruptedException {
     final BigtableDataClient client = new BigtableDataGrpcClient(cp,
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
@@ -131,7 +139,7 @@ public class PutMicroBenchmark {
       @Override
       public void run() {
         long start = System.nanoTime();
-        for (int i = 0; i < PUT_COUNT; i++) {
+        for (int i = 0; i < putCount; i++) {
           try {
             client.mutateRow(request);
           } catch (ServiceException e) {
@@ -139,28 +147,46 @@ public class PutMicroBenchmark {
             e.printStackTrace();
           }
         }
-        long totalTime = System.nanoTime() - start;
-        System.out.println(String.format("Put %d in %d ms.  %d nanos/put.  %f put/sec", PUT_COUNT,
-          totalTime / 1000000, totalTime / PUT_COUNT, PUT_COUNT * 1000000000.0 / totalTime));
+        print(start, putCount);
       }
     };
 
+    r.run();
+
     int roundCount = 20;
-    System.out.println("====== Running serially");
-    for (int i = 0; i < roundCount; i++) {
-      r.run();
-    }
+    serialRun(putCount, r, roundCount);
+
     System.out.println("====== Running in parallel");
     ExecutorService e = Executors.newFixedThreadPool(roundCount);
+    long start = System.nanoTime();
     for (int i = 0; i < roundCount; i++) {
       e.execute(r);
     }
     e.shutdown();
     e.awaitTermination(10, TimeUnit.HOURS);
+    print(start, putCount * roundCount);
+
     System.out.println("====== Running serially");
+    serialRun(putCount, r, roundCount);
+  }
+
+  private static void serialRun(final int putCount, Runnable r, int roundCount) {
+    System.out.println("====== Running serially");
+    long start = System.nanoTime();
     for (int i = 0; i < roundCount; i++) {
       r.run();
     }
+    print(start, putCount * roundCount);
+  }
+
+
+  private static void print(long startTimeNanos, int putCount) {
+    long totalTime = System.nanoTime() - startTimeNanos;
+
+    System.out.printf(
+        "Put %d in %d ms.  %d nanos/put.  %,f put/sec",
+        putCount, totalTime / 1000000, totalTime / putCount, putCount * 1000000000.0 / totalTime);
+    System.out.println(); 
   }
 
   final static ManagedChannel channel = new ManagedChannel() {
@@ -205,9 +231,6 @@ public class PutMicroBenchmark {
     return channel;
   }
 
-  /**
-   * @return
-   */
   protected static <RequestT, ResponseT> ClientCall<RequestT, ResponseT> createNewCall() {
     return new ClientCall<RequestT, ResponseT>() {
 
@@ -223,17 +246,13 @@ public class PutMicroBenchmark {
       }
 
       @Override
-      public void cancel() {
-      }
-
-      @Override
       public void halfClose() {
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public void sendMessage(RequestT message) {
-        responseListener.onMessage((ResponseT) Empty.getDefaultInstance());
+        responseListener.onMessage((ResponseT) MutateRowResponse.getDefaultInstance());
         responseListener.onClose(Status.OK, null);
       }
     };
