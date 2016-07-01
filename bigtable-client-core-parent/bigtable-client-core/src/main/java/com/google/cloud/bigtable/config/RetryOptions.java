@@ -92,6 +92,22 @@ public class RetryOptions implements Serializable {
     private Set<Status.Code> statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
     private boolean allowRetriesWithoutTimestamp;
 
+    public Builder() {
+    }
+
+    public Builder(RetryOptions options) {
+      this.enableRetries = options.retriesEnabled;
+      this.initialBackoffMillis = options.initialBackoffMillis;
+      this.backoffMultiplier = options.backoffMultiplier;
+      this.maxElaspedBackoffMillis = options.maxElaspedBackoffMillis;
+      this.streamingBufferSize = options.streamingBufferSize;
+      this.streamingBatchSize = options.streamingBatchSize;
+      this.readPartialRowTimeoutMillis = options.readPartialRowTimeoutMillis;
+      this.maxScanTimeoutRetries = options.maxScanTimeoutRetries;
+      this.statusToRetryOn = new HashSet<>(options.statusToRetryOn);
+      this.allowRetriesWithoutTimestamp = options.allowRetriesWithoutTimestamp;
+    }
+
     /**
      * Enable or disable retries.
      */
@@ -361,5 +377,9 @@ public class RetryOptions implements Serializable {
         .add("readPartialRowTimeoutMillis", readPartialRowTimeoutMillis)
         .add("maxScanTimeoutRetries", maxScanTimeoutRetries)
         .toString();
+  }
+
+  public Builder toBuilder() {
+    return new Builder(this);
   }
 }
