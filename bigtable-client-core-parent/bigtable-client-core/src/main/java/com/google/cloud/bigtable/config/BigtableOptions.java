@@ -34,7 +34,7 @@ public class BigtableOptions implements Serializable {
 
   public static final String BIGTABLE_TABLE_ADMIN_HOST_DEFAULT =
       "bigtableadmin.googleapis.com";
-  public static final String BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT =
+  public static final String BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT =
       "bigtableadmin.googleapis.com";
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
   public static final int BIGTABLE_PORT_DEFAULT = 443;
@@ -63,7 +63,7 @@ public class BigtableOptions implements Serializable {
     // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
     private String dataHost = BIGTABLE_DATA_HOST_DEFAULT;
     private String tableAdminHost = BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
-    private String clusterAdminHost = BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT;
+    private String instanceAdminHost = BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT;
     private int port = BIGTABLE_PORT_DEFAULT;
 
     // The default credentials get credential from well known locations, such as the GCE
@@ -87,7 +87,7 @@ public class BigtableOptions implements Serializable {
       this.userAgent = original.userAgent;
       this.dataHost = original.dataHost;
       this.tableAdminHost = original.tableAdminHost;
-      this.clusterAdminHost = original.clusterAdminHost;
+      this.instanceAdminHost = original.instanceAdminHost;
       this.port = original.port;
       this.credentialOptions = original.credentialOptions;
       this.retryOptions = original.retryOptions;
@@ -101,8 +101,8 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
-    public Builder setClusterAdminHost(String clusterAdminHost) {
-      this.clusterAdminHost = clusterAdminHost;
+    public Builder setInstanceAdminHost(String instanceAdminHost) {
+      this.instanceAdminHost = instanceAdminHost;
       return this;
     }
 
@@ -171,7 +171,7 @@ public class BigtableOptions implements Serializable {
         bulkOptions = bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
       }
       return new BigtableOptions(
-          clusterAdminHost,
+          instanceAdminHost,
           tableAdminHost,
           dataHost,
           port,
@@ -186,7 +186,7 @@ public class BigtableOptions implements Serializable {
     }
   }
 
-  private final String clusterAdminHost;
+  private final String instanceAdminHost;
   private final String tableAdminHost;
   private final String dataHost;
   private final int port;
@@ -203,7 +203,7 @@ public class BigtableOptions implements Serializable {
 
   @VisibleForTesting
   BigtableOptions() {
-      clusterAdminHost = null;
+      instanceAdminHost = null;
       tableAdminHost = null;
       dataHost = null;
       port = 0;
@@ -218,7 +218,7 @@ public class BigtableOptions implements Serializable {
   }
 
   private BigtableOptions(
-      String clusterAdminHost,
+      String instanceAdminHost,
       String tableAdminHost,
       String dataHost,
       int port,
@@ -233,7 +233,7 @@ public class BigtableOptions implements Serializable {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
 
     this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
-    this.clusterAdminHost = Preconditions.checkNotNull(clusterAdminHost);
+    this.instanceAdminHost = Preconditions.checkNotNull(instanceAdminHost);
     this.dataHost = Preconditions.checkNotNull(dataHost);
     this.port = port;
     this.projectId = projectId;
@@ -258,7 +258,7 @@ public class BigtableOptions implements Serializable {
         instanceId,
         dataHost,
         tableAdminHost,
-        clusterAdminHost);
+        instanceAdminHost);
   }
 
   public String getProjectId() {
@@ -273,8 +273,8 @@ public class BigtableOptions implements Serializable {
     return tableAdminHost;
   }
 
-  public String getClusterAdminHost() {
-    return clusterAdminHost;
+  public String getInstanceAdminHost() {
+    return instanceAdminHost;
   }
 
   public String getInstanceId() {
@@ -339,7 +339,7 @@ public class BigtableOptions implements Serializable {
     return (port == other.port)
         && (dataChannelCount == other.dataChannelCount)
         && (usePlaintextNegotiation == other.usePlaintextNegotiation)
-        && Objects.equals(clusterAdminHost, other.clusterAdminHost)
+        && Objects.equals(instanceAdminHost, other.instanceAdminHost)
         && Objects.equals(tableAdminHost, other.tableAdminHost)
         && Objects.equals(dataHost, other.dataHost)
         && Objects.equals(projectId, other.projectId)
@@ -356,7 +356,7 @@ public class BigtableOptions implements Serializable {
         .omitNullValues()
         .add("dataHost", dataHost)
         .add("tableAdminHost", tableAdminHost)
-        .add("clusterAdminHost", clusterAdminHost)
+        .add("instanceAdminHost", instanceAdminHost)
         .add("projectId", projectId)
         .add("instanceId", instanceId)
         .add("userAgent", userAgent)
