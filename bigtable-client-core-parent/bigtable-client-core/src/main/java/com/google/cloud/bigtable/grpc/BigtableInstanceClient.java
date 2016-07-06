@@ -29,37 +29,22 @@ import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 
 /**
- *
- * @author sduskis
- *
+ * BigtableInstanceClient manages instances and clusters.
  */
 public interface BigtableInstanceClient {
-
   /**
-  * <P>Creates an instance and begins preparing it to begin serving. The returned
-  * {@link Operation} can be used to track the progress of turning up the new instance.
-  * Immediately upon completion of this request:</p><ul>
-  *  <li> The instance will be readable via the API, with all requested attributes
-  *    but no allocated resources.
-  * </ul>
-  * <p>Upon completion of the operation:</p><ul>
-  *  <li> Billing for all successfully-allocated resources will begin (some types
-  *    may have lower than the requested levels).
-  *  <li> New tables can be created in the instance.
-  *  <li> The instance's allocated resource levels will be readable via the API.
-  * </ul>
+  * Create an instance within a project.
   */
   Operation createInstance(CreateInstanceRequest request);
 
   /**
-   * <p>
    * Gets the latest state of a long-running operation. Clients may use this method to poll the
    * operation result at intervals as recommended by the API service.
-   * </p>
-   * <p>
-   * {@link #createInstance(CreateInstanceRequest)} will return a {@link Operation}. Use this method
-   * and pass in the {@link Operation}'s name in the request to see if the Operation is done via
-   * {@link Operation#getDone()}. The instance will not be available until that happens.
+   *
+   * <p>{@link #createInstance(CreateInstanceRequest)} and {@link #updateCluster(Cluster)} will
+   * return a {@link Operation}. Use this method and pass in the {@link Operation}'s name in the
+   * request to see if the Operation is done via {@link Operation#getDone()}. The instance will not
+   * be available until that happens.
    */
   Operation getOperation(GetOperationRequest request);
 
