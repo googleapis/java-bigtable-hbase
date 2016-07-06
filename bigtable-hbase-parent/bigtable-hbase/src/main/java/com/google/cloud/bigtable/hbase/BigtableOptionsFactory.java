@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.api.client.util.Strings.isNullOrEmpty;
-import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT;
+import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
@@ -45,8 +45,8 @@ public class BigtableOptionsFactory {
   protected static final Logger LOG = new Logger(BigtableOptionsFactory.class);
 
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
-  public static final String BIGTABLE_CLUSTER_ADMIN_HOST_KEY =
-      "google.bigtable.cluster.admin.endpoint.host";
+  public static final String BIGTABLE_INSTANCE_ADMIN_HOST_KEY =
+      "google.bigtable.instance.admin.endpoint.host";
   public static final String BIGTABLE_TABLE_ADMIN_HOST_KEY =
       "google.bigtable.admin.endpoint.host";
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
@@ -195,8 +195,8 @@ public class BigtableOptionsFactory {
       configuration, BIGTABLE_TABLE_ADMIN_HOST_KEY, BIGTABLE_TABLE_ADMIN_HOST_DEFAULT,
       "Table Admin"));
 
-    bigtableOptionsBuilder.setClusterAdminHost(getHost(configuration,
-        BIGTABLE_CLUSTER_ADMIN_HOST_KEY, BIGTABLE_CLUSTER_ADMIN_HOST_DEFAULT, "Cluster Admin"));
+    bigtableOptionsBuilder.setInstanceAdminHost(getHost(configuration,
+        BIGTABLE_INSTANCE_ADMIN_HOST_KEY, BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT, "Cluster Admin"));
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, BIGTABLE_PORT_DEFAULT);
     bigtableOptionsBuilder.setPort(port);

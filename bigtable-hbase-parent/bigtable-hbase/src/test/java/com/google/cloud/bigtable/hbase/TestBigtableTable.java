@@ -99,7 +99,7 @@ public class TestBigtableTable {
     MockitoAnnotations.initMocks(this);
 
     BigtableOptions options = new BigtableOptions.Builder()
-        .setClusterAdminHost("localhost")
+        .setInstanceAdminHost("localhost")
         .setTableAdminHost("localhost")
         .setDataHost("localhost")
         .setPort(0)
