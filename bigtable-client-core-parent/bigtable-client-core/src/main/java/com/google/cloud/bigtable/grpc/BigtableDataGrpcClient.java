@@ -334,7 +334,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
         channelPool.newCall(BigtableGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
 
-    ResponseQueueReader<Row> responseQueueReader = new ResponseQueueReader<>(
+    ResponseQueueReader responseQueueReader = new ResponseQueueReader(
         retryOptions.getReadPartialRowTimeoutMillis(), retryOptions.getStreamingBufferSize());
 
     StreamObserver<ReadRowsResponse> rowMerger = new RowMerger(responseQueueReader);
