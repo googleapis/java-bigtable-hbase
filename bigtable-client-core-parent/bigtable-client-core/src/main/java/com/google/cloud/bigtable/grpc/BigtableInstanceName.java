@@ -29,7 +29,7 @@ public class BigtableInstanceName implements Serializable {
   private static final long serialVersionUID = 1L;
 
   public static final String BIGTABLE_V2_INSTANCE_FMT = "projects/%s/instances/%s";
-  public static final String TABLE_SEPARATOR = "tables";
+  public static final String TABLE_SEPARATOR = "/tables/";
 
   private final String instanceName;
 
@@ -53,7 +53,7 @@ public class BigtableInstanceName implements Serializable {
    */
   public String toTableId(String tableName) {
     Preconditions.checkNotNull(tableName, "Table name cannot be null");
-    String tablesPrefix = instanceName + "/" + TABLE_SEPARATOR + "/";
+    String tablesPrefix = instanceName + TABLE_SEPARATOR;
     Preconditions.checkState(tableName.startsWith(tablesPrefix),
         "'%s' does not start with '%s'", tableName, tablesPrefix);
     String tableId = tableName.substring(tablesPrefix.length()).trim();
@@ -62,7 +62,7 @@ public class BigtableInstanceName implements Serializable {
   }
 
   public String toTableNameStr(String tableId) {
-    return instanceName +  "/" + TABLE_SEPARATOR + "/" + tableId;
+    return instanceName +  TABLE_SEPARATOR + tableId;
   }
 
   public BigtableTableName toTableName(String tableId) {

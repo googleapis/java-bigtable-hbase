@@ -179,13 +179,12 @@ public class PutMicroBenchmark {
     print(start, putCount * roundCount);
   }
 
-
-  private static void print(long startTimeNanos, int putCount) {
+  private static void print(long startTimeNanos, int count) {
     long totalTime = System.nanoTime() - startTimeNanos;
 
     System.out.printf(
         "Put %d in %d ms.  %d nanos/put.  %,f put/sec",
-        putCount, totalTime / 1000000, totalTime / putCount, putCount * 1000000000.0 / totalTime);
+        count, totalTime / 1000000, totalTime / count, count * 1000000000.0 / totalTime);
     System.out.println(); 
   }
 

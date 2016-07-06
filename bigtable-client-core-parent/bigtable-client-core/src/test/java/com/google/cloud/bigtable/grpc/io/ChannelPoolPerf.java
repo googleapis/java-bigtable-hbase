@@ -99,7 +99,7 @@ public class ChannelPoolPerf {
         }
         long diff = System.nanoTime() - start;
         double nanosPerRow = diff / TEST_COUNT;
-        System.out.println(String.format("took %d ms.  %.0f", diff / 1_000_000, nanosPerRow));
+        System.out.println(String.format("took %d ms.  %.0f nanos/row", diff / 1_000_000, nanosPerRow));
         return null;
       }
     };
