@@ -62,6 +62,7 @@ import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
@@ -75,7 +76,6 @@ import com.google.protobuf.ServiceException;
 
 public class BigtableTable implements Table {
   protected static final Logger LOG = new Logger(BigtableTable.class);
-
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
   // them (which they shouldn't since we built the filter), throw an exception.
@@ -98,23 +98,20 @@ public class BigtableTable implements Table {
   protected final HBaseRequestAdapter hbaseAdapter;
 
   protected final BigtableDataClient client;
-  protected final BatchExecutor batchExecutor;
+  private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
 
   /**
    * Constructed by BigtableConnection
    */
-  public BigtableTable(
-      AbstractBigtableConnection bigtableConnection,
-      TableName tableName,
-      HBaseRequestAdapter hbaseAdapter,
-      BatchExecutor batchExecutor) {
+  public BigtableTable(AbstractBigtableConnection bigtableConnection,
+      HBaseRequestAdapter hbaseAdapter) {
     this.bigtableConnection = bigtableConnection;
-    this.tableName = tableName;
-    this.options = bigtableConnection.getSession().getOptions();
-    this.client = bigtableConnection.getSession().getDataClient();
-    this.batchExecutor = batchExecutor;
+    BigtableSession session = bigtableConnection.getSession();
+    this.options = session.getOptions();
+    this.client = session.getDataClient();
     this.hbaseAdapter = hbaseAdapter;
+    this.tableName = hbaseAdapter.getTableName();
   }
 
   @Override
@@ -145,7 +142,7 @@ public class BigtableTable implements Table {
   @Override
   public boolean[] existsAll(List<Get> gets) throws IOException {
     LOG.trace("existsAll(Get)");
-    Boolean[] existsObjects = batchExecutor.exists(gets);
+    Boolean[] existsObjects = getBatchExecutor().exists(gets);
     boolean[] exists = new boolean[existsObjects.length];
     for (int i = 0; i < existsObjects.length; i++) {
       exists[i] = existsObjects[i];
@@ -157,7 +154,7 @@ public class BigtableTable implements Table {
   public void batch(List<? extends Row> actions, Object[] results)
       throws IOException, InterruptedException {
     LOG.trace("batch(List<>, Object[])");
-    batchExecutor.batch(actions, results);
+    getBatchExecutor().batch(actions, results);
   }
 
   /** 
@@ -167,14 +164,14 @@ public class BigtableTable implements Table {
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
     LOG.trace("batch(List<>)");
-    return batchExecutor.batch(actions);
+    return getBatchExecutor().batch(actions);
   }
 
   @Override
   public <R> void batchCallback(List<? extends Row> actions, Object[] results,
       Batch.Callback<R> callback) throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Object[], Batch.Callback)");
-    batchExecutor.batchCallback(actions, results, callback);
+    getBatchExecutor().batchCallback(actions, results, callback);
   }
 
   /**
@@ -186,14 +183,14 @@ public class BigtableTable implements Table {
       throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Batch.Callback)");
     Object[] results = new Object[actions.size()];
-    batchExecutor.batchCallback(actions, results, callback);
+    getBatchExecutor().batchCallback(actions, results, callback);
     return results;
   }
 
   @Override
   public Result[] get(List<Get> gets) throws IOException {
     LOG.trace("get(List<>)");
-    return batchExecutor.batch(gets);
+    return getBatchExecutor().batch(gets);
   }
 
   @Override
@@ -272,7 +269,7 @@ public class BigtableTable implements Table {
   @Override
   public void put(List<Put> puts) throws IOException {
     LOG.trace("put(List<Put>)");
-    batchExecutor.batch(puts);
+    getBatchExecutor().batch(puts);
   }
 
   @Override
@@ -318,7 +315,7 @@ public class BigtableTable implements Table {
   @Override
   public void delete(List<Delete> deletes) throws IOException {
     LOG.trace("delete(List<Delete>)");
-    batchExecutor.batch(deletes);
+    getBatchExecutor().batch(deletes);
   }
 
   @Override
@@ -604,5 +601,12 @@ public class BigtableTable implements Table {
         projectId,
         tableName,
         Bytes.toStringBinary(rowKey));
+  }
+
+  protected synchronized BatchExecutor getBatchExecutor() {
+    if (batchExecutor == null) {
+      batchExecutor = new BatchExecutor(this.bigtableConnection.getSession(), hbaseAdapter);
+    }
+    return batchExecutor;
   }
 }

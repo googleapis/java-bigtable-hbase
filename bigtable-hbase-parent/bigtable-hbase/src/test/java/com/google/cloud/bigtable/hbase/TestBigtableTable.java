@@ -87,9 +87,6 @@ public class TestBigtableTable {
   private BigtableDataClient mockClient;
 
   @Mock
-  private BatchExecutor mockBatchExecutor;
-
-  @Mock
   private ResultScanner<Row> mockResultScanner;
 
   public BigtableTable table;
@@ -118,8 +115,7 @@ public class TestBigtableTable {
     Mockito.when(mockConnection.getSession()).thenReturn(mockSession);
     Mockito.when(mockSession.getOptions()).thenReturn(options);
     Mockito.when(mockSession.getDataClient()).thenReturn(mockClient);
-    table =
-        new BigtableTable(mockConnection, tableName, hbaseAdapter, mockBatchExecutor);
+    table = new BigtableTable(mockConnection, hbaseAdapter);
   }
 
   @Test

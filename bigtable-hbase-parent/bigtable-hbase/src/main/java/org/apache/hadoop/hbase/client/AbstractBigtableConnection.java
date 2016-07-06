@@ -21,12 +21,12 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
-import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.common.base.MoreObjects;
 
 import org.apache.hadoop.conf.Configuration;
@@ -86,6 +86,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   // A set of tables that have been disabled via BigtableAdmin.
   private Set<TableName> disabledTables = new HashSet<>();
+  private MutationAdapters mutationAdapters;
 
   public AbstractBigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
@@ -135,9 +136,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
-    HBaseRequestAdapter adapter = createAdapter(tableName);
-    BatchExecutor batchExecutor = new BatchExecutor(session, adapter);
-    return new BigtableTable(this, tableName, adapter, batchExecutor);
+    return new BigtableTable(this, createAdapter(tableName));
   }
 
   @Override
@@ -169,7 +168,14 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   }
 
   private HBaseRequestAdapter createAdapter(TableName tableName) {
-    return new HBaseRequestAdapter(options, tableName, conf);
+    if (mutationAdapters == null) {
+      synchronized(this) {
+        if (mutationAdapters == null) {
+          mutationAdapters = new HBaseRequestAdapter.MutationAdapters(options, conf);
+        }
+      }
+    }
+    return new HBaseRequestAdapter(options, tableName, mutationAdapters);
   }
 
   @Override

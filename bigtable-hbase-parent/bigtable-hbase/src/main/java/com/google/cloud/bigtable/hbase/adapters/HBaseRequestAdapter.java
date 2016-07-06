@@ -39,67 +39,81 @@ import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
  */
 public class HBaseRequestAdapter {
 
+  public static class MutationAdapters {
+    protected final PutAdapter putAdapter;
+    protected final MutationAdapter mutationAdapter;
+    protected final RowMutationsAdapter rowMutationsAdapter;
+
+    public MutationAdapters(BigtableOptions options, Configuration config) {
+      this.putAdapter = Adapters.createPutAdapter(config, options);
+      this.mutationAdapter = Adapters.createMutationsAdapter(putAdapter);
+      this.rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
+    }
+  }
+
+  protected final MutationAdapters mutationAdapters;
   protected final TableName tableName;
   protected final BigtableTableName bigtableTableName;
-  protected final PutAdapter putAdapter;
-  protected final MutationAdapter mutationAdapter;
-  protected final RowMutationsAdapter rowMutationsAdapter;
 
   public HBaseRequestAdapter(BigtableOptions options, TableName tableName, Configuration config) {
+    this(options, tableName, new MutationAdapters(options, config));
+  }
+
+  public HBaseRequestAdapter(BigtableOptions options, TableName tableName,
+      MutationAdapters mutationAdapters) {
     this.tableName = tableName;
-    this.bigtableTableName = options.getInstanceName().toTableName(tableName.getQualifierAsString());
-    this.putAdapter = Adapters.createPutAdapter(config, options);
-    this.mutationAdapter = Adapters.createMutationsAdapter(putAdapter);
-    this.rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
+    this.bigtableTableName =
+        options.getInstanceName().toTableName(tableName.getQualifierAsString());
+    this.mutationAdapters = mutationAdapters;
   }
 
   public MutateRowRequest adapt(Delete delete) {
     MutateRowRequest.Builder requestBuilder = Adapters.DELETE_ADAPTER.adapt(delete);
-    requestBuilder.setTableName(bigtableTableName.toString());
+    requestBuilder.setTableName(getTableNameString());
     return requestBuilder.build();
   }
 
   public ReadRowsRequest adapt(Get get) {
     ReadHooks readHooks = new DefaultReadHooks();
     ReadRowsRequest.Builder builder = Adapters.GET_ADAPTER.adapt(get, readHooks);
-    builder.setTableName(bigtableTableName.toString());
+    builder.setTableName(getTableNameString());
     return readHooks.applyPreSendHook(builder.build());
   }
 
   public ReadRowsRequest adapt(Scan scan) {
     ReadHooks readHooks = new DefaultReadHooks();
     ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
-    builder.setTableName(bigtableTableName.toString());
+    builder.setTableName(getTableNameString());
     return readHooks.applyPreSendHook(builder.build());
   }
 
   public ReadModifyWriteRowRequest adapt(Append append) {
     ReadModifyWriteRowRequest.Builder builder = Adapters.APPEND_ADAPTER.adapt(append);
-    builder.setTableName(bigtableTableName.toString());
+    builder.setTableName(getTableNameString());
     return builder.build();
   }
 
   public ReadModifyWriteRowRequest adapt(Increment increment) {
     ReadModifyWriteRowRequest.Builder builder = Adapters.INCREMENT_ADAPTER.adapt(increment);
-    builder.setTableName(bigtableTableName.toString());
+    builder.setTableName(getTableNameString());
     return builder.build();
   }
 
   public MutateRowRequest adapt(Put put) {
-    MutateRowRequest.Builder builder = putAdapter.adapt(put);
-    builder.setTableName(bigtableTableName.toString());
+    MutateRowRequest.Builder builder = mutationAdapters.putAdapter.adapt(put);
+    builder.setTableName(getTableNameString());
     return builder.build();
   }
 
   public MutateRowRequest adapt(RowMutations mutations) {
-    MutateRowRequest.Builder builder = rowMutationsAdapter.adapt(mutations);
-    builder.setTableName(bigtableTableName.toString());
+    MutateRowRequest.Builder builder = mutationAdapters.rowMutationsAdapter.adapt(mutations);
+    builder.setTableName(getTableNameString());
     return builder.build();
   }
 
   public MutateRowRequest adapt(org.apache.hadoop.hbase.client.Mutation mutation) {
-    MutateRowRequest.Builder builder = mutationAdapter.adapt(mutation);
-    builder.setTableName(bigtableTableName.toString());
+    MutateRowRequest.Builder builder = mutationAdapters.mutationAdapter.adapt(mutation);
+    builder.setTableName(getTableNameString());
     return builder.build();
   }
 
@@ -110,4 +124,9 @@ public class HBaseRequestAdapter {
   public TableName getTableName() {
     return tableName;
   }
+
+  protected String getTableNameString() {
+    return getBigtableTableName().toString();
+  }
+
 }

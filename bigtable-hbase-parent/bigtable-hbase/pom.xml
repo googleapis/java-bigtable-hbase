@@ -72,5 +72,10 @@ limitations under the License.
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-tcnative-boringssl-static</artifactId>
+            <classifier>${os.detected.classifier}</classifier>
+        </dependency>
     </dependencies>
 </project>

@@ -58,7 +58,7 @@ public class TestBigtableInstanceName {
   @Test
   public void testGoodTableQualifier() {
     bigtableInstanceName
-        .toTableId(instanceName + "/" + BigtableInstanceName.TABLE_SEPARATOR + "/foo");
+        .toTableId(instanceName + BigtableInstanceName.TABLE_SEPARATOR + "foo");
   }
 
   @Test
@@ -70,20 +70,20 @@ public class TestBigtableInstanceName {
   @Test
   public void testBadQualifier() {
     expectedException.expect(IllegalStateException.class);
-    bigtableInstanceName.toTableId(instanceName.replace("some-instance", "another-instance") + "/"
-        + BigtableInstanceName.TABLE_SEPARATOR + "/foo");
+    bigtableInstanceName.toTableId(instanceName.replace("some-instance", "another-instance")
+        + BigtableInstanceName.TABLE_SEPARATOR + "foo");
   }
 
   @Test
   public void testBlankTableName() {
     expectedException.expect(IllegalStateException.class);
-    bigtableInstanceName.toTableId(instanceName + "/" + BigtableInstanceName.TABLE_SEPARATOR + "/");
+    bigtableInstanceName.toTableId(instanceName + BigtableInstanceName.TABLE_SEPARATOR);
   }
 
   @Test
   public void testNoTableName() {
     expectedException.expect(IllegalStateException.class);
-    bigtableInstanceName.toTableId(instanceName + "/" + BigtableInstanceName.TABLE_SEPARATOR);
+    bigtableInstanceName.toTableId(instanceName + BigtableInstanceName.TABLE_SEPARATOR);
   }
 
   @Test
