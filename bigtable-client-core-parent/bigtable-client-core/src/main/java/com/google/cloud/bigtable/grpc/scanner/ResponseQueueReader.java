@@ -21,6 +21,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.bigtable.v2.Row;
 import com.google.common.base.Preconditions;
 
 import io.grpc.stub.StreamObserver;
@@ -29,8 +30,8 @@ import io.grpc.stub.StreamObserver;
  * Helper to read a queue of ResultQueueEntries and use the RowMergers to reconstruct
  * complete Row objects from the partial ReadRowsResponse objects.
  */
-public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT> {
-  protected final BlockingQueue<ResultQueueEntry<ResponseT>> resultQueue;
+public class ResponseQueueReader implements StreamObserver<Row> {
+  protected final BlockingQueue<ResultQueueEntry<Row>> resultQueue;
   protected AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
   private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
@@ -45,9 +46,9 @@ public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT>
    * @return null if end-of-stream, otherwise a complete Row.
    * @throws IOException On errors.
    */
-  public synchronized ResponseT getNextMergedRow() throws IOException {
+  public synchronized Row getNextMergedRow() throws IOException {
     if (!lastResponseProcessed) {
-      ResultQueueEntry<ResponseT> queueEntry = getNext();
+      ResultQueueEntry<Row> queueEntry = getNext();
 
       if (queueEntry.isCompletionMarker()) {
         lastResponseProcessed = true;
@@ -61,8 +62,8 @@ public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT>
     return null;
   }
 
-  protected ResultQueueEntry<ResponseT> getNext() throws IOException {
-    ResultQueueEntry<ResponseT> queueEntry;
+  protected ResultQueueEntry<Row> getNext() throws IOException {
+    ResultQueueEntry<Row> queueEntry;
     try {
       queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
@@ -81,7 +82,7 @@ public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT>
   }
 
   @Override
-  public void onNext(ResponseT row) {
+  public void onNext(Row row) {
     try {
       resultQueue.put(ResultQueueEntry.fromResponse(row));
     } catch (InterruptedException e) {
@@ -93,7 +94,7 @@ public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT>
   @Override
   public void onError(Throwable t) {
     try {
-      resultQueue.put(ResultQueueEntry.<ResponseT> fromThrowable(t));
+      resultQueue.put(ResultQueueEntry.<Row> fromThrowable(t));
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
@@ -104,7 +105,7 @@ public class ResponseQueueReader<ResponseT> implements StreamObserver<ResponseT>
   public void onCompleted() {
     try {
       completionMarkerFound.set(true);
-      resultQueue.put(ResultQueueEntry.<ResponseT> completionMarker());
+      resultQueue.put(ResultQueueEntry.<Row> completionMarker());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
