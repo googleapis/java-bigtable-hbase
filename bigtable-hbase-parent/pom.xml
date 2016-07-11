@@ -38,4 +38,32 @@ limitations under the License.
         <module>bigtable-hbase-1.2</module>
         <module>bigtable-hbase-mapreduce</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <windowtitle>HBase + Cloud Bigtable Connector ${project.version} API</windowtitle>
+                            <doctitle>HBase + Cloud Bigtable Connector ${project.version} API</doctitle>
+                            <overview>../overview.html</overview>
+                            <bottom><![CDATA[<br>]]></bottom>
+
+                            <detectLinks />
+                            <offlineLinks>
+                                <offlineLink>
+                                    <url>https://hbase.apache.org/apidocs/</url>
+                                    <location>${basedir}/javadoc/hbase-docs</location>
+                                </offlineLink>
+                            </offlineLinks>
+                        </configuration>
+                    </plugin>
+               </plugins>
+           </build>
+        </profile>
+    </profiles>
 </project>
