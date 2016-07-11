@@ -20,6 +20,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.util.concurrent.AsyncFunction;
 
+import io.grpc.CallOptions;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
@@ -33,10 +34,13 @@ public class RetryingUnaryRpcListener<RequestT, ResponseT>
 
   private ResponseT value;
 
-  public RetryingUnaryRpcListener(RetryOptions retryOptions, RequestT request,
+  public RetryingUnaryRpcListener(
+      RetryOptions retryOptions,
+      RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
+      CallOptions callOptions,
       ScheduledExecutorService executorService) {
-    super(retryOptions, request, retryableRpc, executorService);
+    super(retryOptions, request, retryableRpc, callOptions, executorService);
   }
 
   @Override

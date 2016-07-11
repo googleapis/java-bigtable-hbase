@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
@@ -44,7 +45,6 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     extends ClientCall.Listener<ResponseT> implements Runnable {
 
   protected final static Logger LOG = new Logger(AbstractRetryingRpcListener.class);
-
 
   protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
     @Override
@@ -73,6 +73,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   private final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   private final RetryOptions retryOptions;
   private final RequestT request;
+  private final CallOptions callOptions;
   private final ScheduledExecutorService retryExecutorService;
   private int failedCount;
 
@@ -83,10 +84,12 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
           RetryOptions retryOptions,
           RequestT request,
           BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
+          CallOptions callOptions,
           ScheduledExecutorService retryExecutorService) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
+    this.callOptions = callOptions;
     this.retryExecutorService = retryExecutorService;
   }
 
@@ -118,10 +121,8 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     }
     LOG.info("Retrying failed call. Failure #%d, got: %s", status.getCause(), failedCount, status);
 
-    if (call != null) {
-      call.cancel();
-      call = null;
-    }
+    cancel();
+    call = null;
 
     retryExecutorService.schedule(this, nextBackOff, TimeUnit.MILLISECONDS);
   }
@@ -142,13 +143,12 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   }
 
   /**
-   * Calls
-   * {@link BigtableAsyncRpc#call(Object, Listener)} ()}
-   * with this as the listener so that retries happen correctly.
+   * Calls {@link BigtableAsyncRpc#call(Object, Listener, CallOptions)} with this as the listener so
+   * that retries happen correctly.
    */
   @Override
   public void run() {
-    this.call = rpc.call(request, this);
+    this.call = rpc.call(request, this, callOptions);
   }
 
   public void cancel() {

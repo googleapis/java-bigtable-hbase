@@ -15,13 +15,13 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 
-/**
- * This interface represents a logical asynchronous RPC.
- */
+/** This interface represents a logical asynchronous RPC. */
 public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
-  ClientCall<REQUEST, RESPONSE> call(REQUEST request, ClientCall.Listener<RESPONSE> listener);
+  ClientCall<REQUEST, RESPONSE> call(
+      REQUEST request, ClientCall.Listener<RESPONSE> listener, CallOptions callOptions);
 
   boolean isRetryable(REQUEST request);
 }

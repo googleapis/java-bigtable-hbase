@@ -53,8 +53,9 @@ public interface BigtableAsyncUtilities {
         @Override
         public ClientCall<RequestT, ResponseT> call(
             RequestT request,
-            ClientCall.Listener<ResponseT> listener) {
-          return createCall(channel, method, request, listener, 1);
+            ClientCall.Listener<ResponseT> listener,
+            CallOptions callOptions) {
+          return createCall(channel, callOptions, method, request, listener, 1);
         }
 
         @Override
@@ -77,9 +78,8 @@ public interface BigtableAsyncUtilities {
 
         @Override
         public ClientCall<RequestT, ResponseT> call(
-            RequestT request,
-            ClientCall.Listener<ResponseT> listener) {
-          return createCall(channel, method, request, listener, 1);
+            RequestT request, ClientCall.Listener<ResponseT> listener, CallOptions callOptions) {
+          return createCall(channel, callOptions, method, request, listener, 1);
         }
       };
     }
@@ -96,11 +96,11 @@ public interface BigtableAsyncUtilities {
 
     private <RequestT, ResponseT> ClientCall<RequestT, ResponseT> createCall(
         Channel channel,
+        CallOptions callOptions,
         MethodDescriptor<RequestT, ResponseT> method,
         RequestT request,
-        ClientCall.Listener<ResponseT> listener,
-        int count) {
-      ClientCall<RequestT, ResponseT> call = channel.newCall(method, CallOptions.DEFAULT);
+        ClientCall.Listener<ResponseT> listener, int count) {
+      ClientCall<RequestT, ResponseT> call = channel.newCall(method, callOptions);
       start(call, request, listener, count);
       return call;
     }

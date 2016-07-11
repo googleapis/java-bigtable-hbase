@@ -230,11 +230,11 @@ public class BigtableDataGrpcClientTests {
         return null;
       }
     }).when(mockBigtableRpc).call(any(Object.class),
-      any(ClientCall.Listener.class));
+      any(ClientCall.Listener.class), CallOptions.DEFAULT);
   }
 
   private void verifyRequestCalled(Object request) {
     verify(mockBigtableRpc, times(1))
-        .call(eq(request), any(ClientCall.Listener.class));
+        .call(eq(request), any(ClientCall.Listener.class), CallOptions.DEFAULT);
   }
 }
