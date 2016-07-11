@@ -357,7 +357,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     cancellationToken.addListener(new Runnable() {
       @Override
       public void run() {
-        readRowsCall.cancel();
+        readRowsCall.cancel("User requested cancelation.", null);
       }
     }, MoreExecutors.directExecutor());
     return cancellationToken;
