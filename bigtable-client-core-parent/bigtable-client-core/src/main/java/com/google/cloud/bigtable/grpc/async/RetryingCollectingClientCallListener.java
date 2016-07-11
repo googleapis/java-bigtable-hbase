@@ -21,6 +21,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.collect.ImmutableList;
 
+import io.grpc.CallOptions;
+
 public class RetryingCollectingClientCallListener<RequestT, ResponseT>
     extends AbstractRetryingRpcListener<RequestT, ResponseT, List<ResponseT>> {
 
@@ -30,8 +32,9 @@ public class RetryingCollectingClientCallListener<RequestT, ResponseT>
       RetryOptions retryOptions,
       RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
+      CallOptions callOptions,
       ScheduledExecutorService executorService) {
-    super(retryOptions, request, retryableRpc, executorService);
+    super(retryOptions, request, retryableRpc, callOptions, executorService);
   }
 
   @Override
