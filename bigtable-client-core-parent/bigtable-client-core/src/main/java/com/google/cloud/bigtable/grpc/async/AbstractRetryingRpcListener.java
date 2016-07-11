@@ -50,7 +50,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     @Override
     protected void interruptTask() {
       if (call != null) {
-        call.cancel();
+        call.cancel("Request interrupted.", null);
       }
     }
 
@@ -121,7 +121,13 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     }
     LOG.info("Retrying failed call. Failure #%d, got: %s", status.getCause(), failedCount, status);
 
-    cancel();
+    if (this.call != null) {
+      call.cancel(
+          String.format(
+              "Request being retried. Previous call failed with status %s.",
+              status.getCode().name()),
+          null);
+    }
     call = null;
 
     retryExecutorService.schedule(this, nextBackOff, TimeUnit.MILLISECONDS);
@@ -153,7 +159,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
   public void cancel() {
     if (this.call != null) {
-      call.cancel();
+      call.cancel("User requested cancelation.", null);
     }
   }
 }

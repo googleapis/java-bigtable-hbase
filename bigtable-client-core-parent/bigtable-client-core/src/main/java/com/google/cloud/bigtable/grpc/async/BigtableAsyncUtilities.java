@@ -111,9 +111,14 @@ public interface BigtableAsyncUtilities {
       call.request(requestCount);
       try {
         call.sendMessage(request);
+      } catch (Throwable t) {
+        call.cancel("Exception in sendMessage.", t);
+        throw Throwables.propagate(t);
+      }
+      try {
         call.halfClose();
       } catch (Throwable t) {
-        call.cancel();
+        call.cancel("Exception in halfClose.", t);
         throw Throwables.propagate(t);
       }
     }
