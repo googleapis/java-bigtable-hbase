@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.grpc;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -69,7 +68,7 @@ import io.grpc.MethodDescriptor;
 
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class BigtableDataGrpcClientTests {
+public class TestBigtableDataGrpcClient {
 
   @Mock
   ChannelPool mockChannelPool;
@@ -101,15 +100,18 @@ public class BigtableDataGrpcClientTests {
         .thenReturn(mockClientCall);
 
     predicates = new HashMap<>();
-    when(mockAsyncUtilities.createAsyncUnaryRpc(any(MethodDescriptor.class), any(Predicate.class)))
-        .thenAnswer(new Answer<BigtableAsyncRpc>() {
+    Answer<BigtableAsyncRpc> answer =
+        new Answer<BigtableAsyncRpc>() {
           @Override
           public BigtableAsyncRpc answer(InvocationOnMock invocation) throws Throwable {
-            String fullMethodName = invocation.getArgumentAt(0, MethodDescriptor.class).getFullMethodName();
+            String fullMethodName =
+                invocation.getArgumentAt(0, MethodDescriptor.class).getFullMethodName();
             predicates.put(fullMethodName, invocation.getArgumentAt(1, Predicate.class));
             return mockBigtableRpc;
           }
-        });
+        };
+    when(mockAsyncUtilities.createAsyncUnaryRpc(any(MethodDescriptor.class), any(Predicate.class)))
+        .thenAnswer(answer);
   }
 
   protected BigtableDataGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
@@ -209,7 +211,7 @@ public class BigtableDataGrpcClientTests {
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder();
     requestBuilder.getRowsBuilder().addRowKeys(ByteString.copyFrom(new byte[0]));
     createClient(false).readRows(requestBuilder.build());
-    verify(mockChannelPool, times(1)).newCall(eq(BigtableGrpc.METHOD_READ_ROWS),
+    verify(mockChannelPool, times(1)).newCall(same(BigtableGrpc.METHOD_READ_ROWS),
       same(CallOptions.DEFAULT));
   }
 
@@ -218,7 +220,7 @@ public class BigtableDataGrpcClientTests {
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder();
     requestBuilder.getRowsBuilder().addRowRanges(RowRange.getDefaultInstance());
     createClient(false).readRows(requestBuilder.build());
-    verify(mockChannelPool, times(1)).newCall(eq(BigtableGrpc.METHOD_READ_ROWS),
+    verify(mockChannelPool, times(1)).newCall(same(BigtableGrpc.METHOD_READ_ROWS),
       same(CallOptions.DEFAULT));
   }
 
@@ -230,11 +232,11 @@ public class BigtableDataGrpcClientTests {
         return null;
       }
     }).when(mockBigtableRpc).call(any(Object.class),
-      any(ClientCall.Listener.class), CallOptions.DEFAULT);
+      any(ClientCall.Listener.class), same(CallOptions.DEFAULT));
   }
 
   private void verifyRequestCalled(Object request) {
     verify(mockBigtableRpc, times(1))
-        .call(eq(request), any(ClientCall.Listener.class), CallOptions.DEFAULT);
+        .call(same(request), any(ClientCall.Listener.class), same(CallOptions.DEFAULT));
   }
 }
