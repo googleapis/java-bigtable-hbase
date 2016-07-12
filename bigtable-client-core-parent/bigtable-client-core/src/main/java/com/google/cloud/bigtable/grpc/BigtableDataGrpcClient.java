@@ -135,7 +135,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       };
 
   // Member variables
-
   private final ChannelPool channelPool;
   private final ScheduledExecutorService retryExecutorService;
   private final RetryOptions retryOptions;
@@ -149,6 +148,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       };
 
   private final BigtableAsyncUtilities asyncUtilities;
+  private CallOptionsFactory callOptionsFactory = new CallOptionsFactory.Default();
 
   private final BigtableAsyncRpc<SampleRowKeysRequest, SampleRowKeysResponse> sampleRowKeysAsync;
   private final BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readRowsAsync;
@@ -158,9 +158,14 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final BigtableAsyncRpc<CheckAndMutateRowRequest, CheckAndMutateRowResponse> checkAndMutateRpc;
   private final BigtableAsyncRpc<ReadModifyWriteRowRequest, ReadModifyWriteRowResponse> readWriteModifyRpc;
 
-  public BigtableDataGrpcClient(ChannelPool channelPool,
-      ScheduledExecutorService retryExecutorService, BigtableOptions bigtableOptions) {
-    this(channelPool, retryExecutorService, bigtableOptions,
+  public BigtableDataGrpcClient(
+      ChannelPool channelPool,
+      ScheduledExecutorService retryExecutorService,
+      BigtableOptions bigtableOptions) {
+    this(
+        channelPool,
+        retryExecutorService,
+        bigtableOptions,
         new BigtableAsyncUtilities.Default(channelPool));
   }
 
@@ -200,6 +205,11 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
             Predicates.<ReadModifyWriteRowRequest> alwaysFalse());
   }
 
+  @Override
+  public void setCallOptionsFactory(CallOptionsFactory callOptionsFactory) {
+    this.callOptionsFactory = callOptionsFactory;
+  }
+
   private <T> Predicate<T> getMutationRetryableFunction(Predicate<T> isRetryableMutation) {
     if (retryOptions.allowRetriesWithoutTimestamp()) {
       return Predicates.<T> alwaysTrue();
@@ -210,93 +220,101 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   @Override
   public MutateRowResponse mutateRow(MutateRowRequest request) throws ServiceException {
-    return getBlockingUnaryResult(request, mutateRowRpc, CallOptions.DEFAULT);
+    return getBlockingUnaryResult(request, mutateRowRpc);
   }
 
   @Override
   public ListenableFuture<MutateRowResponse> mutateRowAsync(MutateRowRequest request) {
-    return getUnaryFuture(request, mutateRowRpc, CallOptions.DEFAULT);
+    return getUnaryFuture(request, mutateRowRpc);
   }
 
   @Override
   public List<MutateRowsResponse> mutateRows(MutateRowsRequest request) throws ServiceException {
-    return getBlockingStreamingResult(request, mutateRowsRpc, CallOptions.DEFAULT);
+    return getBlockingStreamingResult(request, mutateRowsRpc);
   }
 
   @Override
   public ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request) {
-    return getStreamingFuture(request, mutateRowsRpc, CallOptions.DEFAULT);
+    return getStreamingFuture(request, mutateRowsRpc);
   }
 
   @Override
   public CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request)
       throws ServiceException {
-    return getBlockingUnaryResult(request, checkAndMutateRpc, CallOptions.DEFAULT);
+    return getBlockingUnaryResult(request, checkAndMutateRpc);
   }
 
   @Override
   public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request) {
-    return getUnaryFuture(request, checkAndMutateRpc, CallOptions.DEFAULT);
+    return getUnaryFuture(request, checkAndMutateRpc);
   }
 
   @Override
   public ReadModifyWriteRowResponse readModifyWriteRow(ReadModifyWriteRowRequest request) {
-    return getBlockingUnaryResult(request, readWriteModifyRpc, CallOptions.DEFAULT);
+    return getBlockingUnaryResult(request, readWriteModifyRpc);
   }
 
   @Override
   public ListenableFuture<ReadModifyWriteRowResponse> readModifyWriteRowAsync(
       ReadModifyWriteRowRequest request) {
-    return getUnaryFuture(request, readWriteModifyRpc, CallOptions.DEFAULT);
+    return getUnaryFuture(request, readWriteModifyRpc);
   }
 
   @Override
   public ImmutableList<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request) {
     return ImmutableList.copyOf(
-        getBlockingStreamingResult(request, sampleRowKeysAsync, CallOptions.DEFAULT));
+        getBlockingStreamingResult(request, sampleRowKeysAsync));
   }
 
   @Override
   public ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(
       SampleRowKeysRequest request) {
-    return getStreamingFuture(request, sampleRowKeysAsync, CallOptions.DEFAULT);
+    return getStreamingFuture(request, sampleRowKeysAsync);
   }
 
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request) {
     return Futures.transform(
-        getStreamingFuture(request, readRowsAsync, CallOptions.DEFAULT), ROW_TRANSFORMER);
+        getStreamingFuture(request, readRowsAsync), ROW_TRANSFORMER);
   }
 
   // Helper methods
-  protected <ReqT, RespT> ListenableFuture<List<RespT>> getStreamingFuture(
-      ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, CallOptions callOptions) {
-    return getCompletionFuture(
-        new RetryingCollectingClientCallListener<>(
-            retryOptions, request, rpc, callOptions, retryExecutorService));
+  protected <ReqT, RespT> ListenableFuture<List<RespT>> getStreamingFuture(ReqT request,
+      BigtableAsyncRpc<ReqT, RespT> rpc) {
+    return getCompletionFuture(createStreamingListener(request, rpc));
   }
 
-  private <ReqT, RespT> List<RespT> getBlockingStreamingResult(
-      ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, CallOptions callOptions) {
-    return getBlockingResult(
-        new RetryingCollectingClientCallListener<>(
-            retryOptions, request, rpc, callOptions, retryExecutorService));
+  private <ReqT, RespT> List<RespT> getBlockingStreamingResult(ReqT request,
+      BigtableAsyncRpc<ReqT, RespT> rpc) {
+    return getBlockingResult(createStreamingListener(request, rpc));
   }
 
-  private <ReqT, RespT> ListenableFuture<RespT> getUnaryFuture(
-      ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, CallOptions callOptions) {
+  private <ReqT, RespT> ListenableFuture<RespT> getUnaryFuture(ReqT request,
+      BigtableAsyncRpc<ReqT, RespT> rpc) {
     expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
-    return getCompletionFuture(
-        new RetryingUnaryRpcListener<>(
-            retryOptions, request, rpc, callOptions, retryExecutorService));
+    return getCompletionFuture(createUnaryListener(request, rpc));
   }
 
-  private <ReqT, RespT> RespT getBlockingUnaryResult(
-      ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, CallOptions callOptions) {
-    return getBlockingResult(
-        new RetryingUnaryRpcListener<>(
-            retryOptions, request, rpc, callOptions, retryExecutorService));
+  private <ReqT, RespT> RespT getBlockingUnaryResult(ReqT request,
+      BigtableAsyncRpc<ReqT, RespT> rpc) {
+    return getBlockingResult(createUnaryListener(request, rpc));
+  }
+
+  private <ReqT, RespT> RetryingUnaryRpcListener<ReqT, RespT> createUnaryListener(ReqT request,
+      BigtableAsyncRpc<ReqT, RespT> rpc) {
+    return new RetryingUnaryRpcListener<>(retryOptions, request, rpc, getCallOptions(request, rpc),
+        retryExecutorService);
+  }
+
+  private <ReqT, RespT> RetryingCollectingClientCallListener<ReqT, RespT>
+      createStreamingListener(ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc) {
+    return new RetryingCollectingClientCallListener<>(retryOptions, request, rpc,
+        getCallOptions(request, rpc), retryExecutorService);
+  }
+
+  private <ReqT> CallOptions getCallOptions(ReqT request, BigtableAsyncRpc<ReqT, ?> rpc) {
+    return callOptionsFactory.create(rpc.getMethodDescriptor(), request);
   }
 
   private static <ReqT, RespT, OutputT> ListenableFuture<OutputT>
@@ -305,8 +323,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return listener.getCompletionFuture();
   }
 
-  private static <ReqT, RespT, OutputT> OutputT
-      getBlockingResult(AbstractRetryingRpcListener<ReqT, RespT, OutputT> listener) {
+  private static <ReqT, RespT, OutputT> OutputT getBlockingResult(
+      AbstractRetryingRpcListener<ReqT, RespT, OutputT> listener) {
     try {
       listener.run();
       return listener.getCompletionFuture().get();

@@ -62,6 +62,11 @@ public interface BigtableAsyncUtilities {
         public boolean isRetryable(RequestT request) {
           return isRetryable.apply(request);
         }
+
+        @Override
+        public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
+          return method;
+        }
       };
     }
 
@@ -80,6 +85,11 @@ public interface BigtableAsyncUtilities {
         public ClientCall<RequestT, ResponseT> call(
             RequestT request, ClientCall.Listener<ResponseT> listener, CallOptions callOptions) {
           return createCall(channel, callOptions, method, request, listener, 1);
+        }
+
+        @Override
+        public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
+          return method;
         }
       };
     }
