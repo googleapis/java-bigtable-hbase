@@ -266,7 +266,9 @@ public class BigtableSession implements Closeable {
     // More often than not, users want the dataClient. Create a new one in the constructor.
     this.dataClient =
         new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
-
+    dataClient.setCallOptionsFactory(
+      new CallOptionsFactory.ConfiguredCallOptionsFactory(options.getCallOptionsConfig()));
+    
     // Defer the creation of both the tableAdminClient until we need them.
 
     initializeResourceLimiter(options);

@@ -21,9 +21,11 @@ import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_DATA_HOS
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
 import static com.google.cloud.bigtable.config.BigtableOptions.BIGTABLE_PORT_DEFAULT;
 import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT;
+import static com.google.cloud.bigtable.config.CallOptionsConfig.*;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
+import com.google.cloud.bigtable.config.CallOptionsConfig;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -180,6 +182,17 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_ASYNC_MUTATOR_COUNT_KEY =
       "google.bigtable.buffered.mutator.async.worker.count";
 
+  /**
+   * Should timeouts be used? Currently, this feature is experimental.
+   */
+  public static final String BIGTABLE_USE_TIMEOUTS_KEY = "google.bigtable.rpc.use.timeouts";
+
+  /**
+   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED? Currently,
+   * this feature is experimental.
+   */
+  public static final String BIGTABLE_RPC_TIMEOUT_MS_KEY = "google.bigtable.rpc.timeout.ms";
+
   public static BigtableOptions fromConfiguration(final Configuration configuration)
       throws IOException {
 
@@ -200,8 +213,48 @@ public class BigtableOptionsFactory {
 
     int port = configuration.getInt(BIGTABLE_PORT_KEY, BIGTABLE_PORT_DEFAULT);
     bigtableOptionsBuilder.setPort(port);
-    setChannelOptions(bigtableOptionsBuilder, configuration);
+    bigtableOptionsBuilder.setUsePlaintextNegotiation(
+      configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false));
 
+    setBulkOptions(configuration, bigtableOptionsBuilder);
+    setChannelOptions(configuration, bigtableOptionsBuilder);
+    setClientCallOptions(configuration, bigtableOptionsBuilder);
+
+    return bigtableOptionsBuilder.build();
+  }
+
+  private static String getValue(final Configuration configuration, String key, String type) {
+    String value = configuration.get(key);
+    Preconditions.checkArgument(
+        !isNullOrEmpty(value),
+        String.format("%s must be supplied via %s", type, key));
+    LOG.debug("%s %s", type, value);
+    return value;
+  }
+
+  private static String getHost(Configuration configuration, String key,
+      String defaultVal, String type) {
+    String hostName = configuration.get(key, defaultVal);
+    LOG.debug("%s endpoint host %s.", type, hostName);
+    return hostName;
+  }
+
+  private static void
+      setChannelOptions(Configuration configuration, BigtableOptions.Builder builder)
+          throws IOException {
+    setCredentialOptions(builder, configuration);
+
+    builder.setRetryOptions(createRetryOptions(configuration));
+
+    int channelCount = configuration.getInt(
+        BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
+    builder.setDataChannelCount(channelCount);
+
+    builder.setUserAgent(BigtableConstants.USER_AGENT);
+  }
+
+  private static void setBulkOptions(final Configuration configuration,
+      BigtableOptions.Builder bigtableOptionsBuilder) {
     BulkOptions.Builder bulkOptionsBuilder = new BulkOptions.Builder();
 
     int asyncMutatorCount = configuration.getInt(
@@ -229,40 +282,6 @@ public class BigtableOptionsFactory {
     bulkOptionsBuilder.setMaxMemory(maxMemory);
 
     bigtableOptionsBuilder.setBulkOptions(bulkOptionsBuilder.build());
-    bigtableOptionsBuilder.setUsePlaintextNegotiation(
-      configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false));
-
-    return bigtableOptionsBuilder.build();
-  }
-
-  private static String getValue(final Configuration configuration, String key, String type) {
-    String value = configuration.get(key);
-    Preconditions.checkArgument(
-        !isNullOrEmpty(value),
-        String.format("%s must be supplied via %s", type, key));
-    LOG.debug("%s %s", type, value);
-    return value;
-  }
-
-  private static String getHost(Configuration configuration, String key,
-      String defaultVal, String type) {
-    String hostName = configuration.get(key, defaultVal);
-    LOG.debug("%s endpoint host %s.", type, hostName);
-    return hostName;
-  }
-
-  private static void
-      setChannelOptions(BigtableOptions.Builder builder, Configuration configuration)
-          throws IOException {
-    setCredentialOptions(builder, configuration);
-
-    builder.setRetryOptions(createRetryOptions(configuration));
-
-    int channelCount = configuration.getInt(
-        BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
-    builder.setDataChannelCount(channelCount);
-
-    builder.setUserAgent(BigtableConstants.USER_AGENT);
   }
 
   private static void setCredentialOptions(BigtableOptions.Builder builder,
@@ -299,6 +318,18 @@ public class BigtableOptionsFactory {
       throw new IllegalStateException(
           "Either service account or null credentials must be enabled");
     }
+  }
+
+  private static void setClientCallOptions(Configuration configuration,
+      BigtableOptions.Builder bigtableOptionsBuilder) {
+    CallOptionsConfig.Builder clientCallOptionsBuilder = new CallOptionsConfig.Builder();
+
+    clientCallOptionsBuilder
+        .setUseTimeout(configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, USE_TIMEOUT_DEFAULT));
+    clientCallOptionsBuilder
+        .setTimeoutMs(configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, TIMEOUT_MS_DEFAULT));
+
+    bigtableOptionsBuilder.setCallOptionsConfig(clientCallOptionsBuilder.build());
   }
 
   private static RetryOptions createRetryOptions(Configuration configuration) {
