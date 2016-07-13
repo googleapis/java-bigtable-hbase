@@ -66,17 +66,17 @@ public class BigtableOptions implements Serializable {
     private String instanceAdminHost = BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT;
     private int port = BIGTABLE_PORT_DEFAULT;
 
-    // The default credentials get credential from well known locations, such as the GCE
-    // metdata service or gcloud configuration in other environments. A user can also override
-    // the default behavior with P12 or JSon configuration.
-    private CredentialOptions credentialOptions = CredentialOptions.defaultCredentials();
-
-    // Performance tuning options.
-    private RetryOptions retryOptions = new RetryOptions.Builder().build();
     private int dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
 
     private BulkOptions bulkOptions;
     private boolean usePlaintextNegotiation = false;
+
+    private RetryOptions retryOptions = new RetryOptions.Builder().build();
+    private CallOptionsConfig callOptionsConfig = new CallOptionsConfig.Builder().build();
+    // CredentialOptions.defaultCredentials() gets credentials from well known locations, such as
+    // the GCE metdata service or gcloud configuration in other environments. A user can also
+    // override the default behavior with P12 or JSon configuration.
+    private CredentialOptions credentialOptions = CredentialOptions.defaultCredentials();
 
     public Builder() {
     }
@@ -94,6 +94,7 @@ public class BigtableOptions implements Serializable {
       this.dataChannelCount = original.dataChannelCount;
       this.bulkOptions = original.bulkOptions;
       this.usePlaintextNegotiation = original.usePlaintextNegotiation;
+      this.callOptionsConfig = original.callOptionsConfig;
     }
 
     public Builder setTableAdminHost(String tableAdminHost) {
@@ -160,6 +161,11 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
+    public Builder setCallOptionsConfig(CallOptionsConfig callOptionsConfig) {
+      this.callOptionsConfig = callOptionsConfig;
+      return this;
+    }
+
     public BigtableOptions build() {
       if (bulkOptions == null) {
         int maxInflightRpcs =
@@ -177,12 +183,13 @@ public class BigtableOptions implements Serializable {
           port,
           projectId,
           instanceId,
-          credentialOptions,
           userAgent,
-          retryOptions,
+          usePlaintextNegotiation,
           dataChannelCount,
           bulkOptions,
-          usePlaintextNegotiation);
+          callOptionsConfig,
+          credentialOptions,
+          retryOptions);
     }
   }
 
@@ -192,14 +199,16 @@ public class BigtableOptions implements Serializable {
   private final int port;
   private final String projectId;
   private final String instanceId;
-  private final CredentialOptions credentialOptions;
   private final String userAgent;
-  private final RetryOptions retryOptions;
   private final int dataChannelCount;
-  private final BigtableInstanceName instanceName;
-  private BulkOptions bulkOptions;
   private final boolean usePlaintextNegotiation;
 
+  private final BigtableInstanceName instanceName;
+
+  private final BulkOptions bulkOptions;
+  private final CallOptionsConfig callOptionsConfig;
+  private final CredentialOptions credentialOptions;
+  private final RetryOptions retryOptions;
 
   @VisibleForTesting
   BigtableOptions() {
@@ -209,12 +218,15 @@ public class BigtableOptions implements Serializable {
       port = 0;
       projectId = null;
       instanceId = null;
-      credentialOptions = null;
       userAgent = null;
-      retryOptions = null;
       dataChannelCount = 1;
       instanceName = null;
       usePlaintextNegotiation = false;
+
+      bulkOptions = null;
+      callOptionsConfig = null;
+      credentialOptions = null;
+      retryOptions = null;
   }
 
   private BigtableOptions(
@@ -224,12 +236,13 @@ public class BigtableOptions implements Serializable {
       int port,
       String projectId,
       String instanceId,
-      CredentialOptions credentialOptions,
       String userAgent,
-      RetryOptions retryOptions,
+      boolean usePlaintextNegotiation,
       int channelCount,
       BulkOptions bulkOptions,
-      boolean usePlaintextNegotiation) {
+      CallOptionsConfig callOptionsConfig,
+      CredentialOptions credentialOptions,
+      RetryOptions retryOptions) {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
 
     this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
@@ -244,6 +257,7 @@ public class BigtableOptions implements Serializable {
     this.dataChannelCount = channelCount;
     this.bulkOptions = bulkOptions;
     this.usePlaintextNegotiation = usePlaintextNegotiation;
+    this.callOptionsConfig = callOptionsConfig;
 
     if (!Strings.isNullOrEmpty(projectId)
         && !Strings.isNullOrEmpty(instanceId)) {
@@ -327,6 +341,10 @@ public class BigtableOptions implements Serializable {
     return usePlaintextNegotiation;
   }
 
+  public CallOptionsConfig getCallOptionsConfig() {
+    return callOptionsConfig;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (obj == null || obj.getClass() != BigtableOptions.class) {
@@ -347,7 +365,8 @@ public class BigtableOptions implements Serializable {
         && Objects.equals(userAgent, other.userAgent)
         && Objects.equals(credentialOptions, other.credentialOptions)
         && Objects.equals(retryOptions, other.retryOptions)
-        && Objects.equals(bulkOptions, other.bulkOptions);
+        && Objects.equals(bulkOptions, other.bulkOptions)
+        && Objects.equals(callOptionsConfig, other.callOptionsConfig);
   }
 
   @Override
@@ -365,6 +384,7 @@ public class BigtableOptions implements Serializable {
         .add("dataChannelCount", dataChannelCount)
         .add("retryOptions", retryOptions)
         .add("bulkOptions", bulkOptions)
+        .add("callOptionsConfig", callOptionsConfig)
         .add("usePlaintextNegotiation", usePlaintextNegotiation)
         .toString();
   }

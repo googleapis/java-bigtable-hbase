@@ -15,11 +15,16 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import java.util.concurrent.TimeUnit;
+
+import com.google.cloud.bigtable.config.CallOptionsConfig;
+
 import io.grpc.CallOptions;
+import io.grpc.Deadline;
 import io.grpc.MethodDescriptor;
 
 /**
- * A factory that creates {@link CallOption}s for use in {@link BigtableDataClient} RPCs.
+ * A factory that creates {@link CallOptions} for use in {@link BigtableDataClient} RPCs.
  */
 public interface CallOptionsFactory {
 
@@ -45,6 +50,26 @@ public interface CallOptionsFactory {
     public <RequestT> CallOptions create(MethodDescriptor<RequestT, ?> descriptor,
         RequestT request) {
       return CallOptions.DEFAULT;
+    }
+  }
+
+  /** Creates a new {@link CallOptions} based on a {@link CallOptionsConfig}. */
+  public static class ConfiguredCallOptionsFactory implements CallOptionsFactory {
+    private final CallOptionsConfig config;
+
+    public ConfiguredCallOptionsFactory(CallOptionsConfig config) {
+      this.config = config;
+    }
+
+    @Override
+    public <RequestT> CallOptions create(
+        MethodDescriptor<RequestT, ?> descriptor, RequestT request) {
+      if (config.isUseTimeout()) {
+        return CallOptions.DEFAULT.withDeadline(
+            Deadline.after(config.getTimeoutMs(), TimeUnit.MILLISECONDS));
+      } else {
+        return CallOptions.DEFAULT;
+      }
     }
   }
 }
