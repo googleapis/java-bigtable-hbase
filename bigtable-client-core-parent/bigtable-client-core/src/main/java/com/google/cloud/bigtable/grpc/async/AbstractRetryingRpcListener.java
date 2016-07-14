@@ -76,6 +76,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   private final CallOptions callOptions;
   private final ScheduledExecutorService retryExecutorService;
   private int failedCount;
+  private final Metadata originalMetadata;
 
   protected final GrpcFuture<ResultT> completionFuture = new GrpcFuture<>();
   protected ClientCall<RequestT, ResponseT> call;
@@ -85,12 +86,14 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
           RequestT request,
           BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
           CallOptions callOptions,
-          ScheduledExecutorService retryExecutorService) {
+          ScheduledExecutorService retryExecutorService,
+          Metadata originalMetadata) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
     this.callOptions = callOptions;
     this.retryExecutorService = retryExecutorService;
+    this.originalMetadata = originalMetadata;
   }
 
   @Override
@@ -154,7 +157,9 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
    */
   @Override
   public void run() {
-    this.call = rpc.call(request, this, callOptions);
+    Metadata metadata = new Metadata();
+    metadata.merge(originalMetadata);
+    this.call = rpc.call(request, this, callOptions, metadata);
   }
 
   public void cancel() {

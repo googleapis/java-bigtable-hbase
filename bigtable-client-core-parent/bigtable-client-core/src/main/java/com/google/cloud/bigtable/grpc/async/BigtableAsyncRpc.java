@@ -17,14 +17,33 @@ package com.google.cloud.bigtable.grpc.async;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
 /** This interface represents a logical asynchronous RPC. */
 public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
-  ClientCall<REQUEST, RESPONSE> call(
-      REQUEST request, ClientCall.Listener<RESPONSE> listener, CallOptions callOptions);
+  /**
+   * Creates a {@link ClientCall}.
+   *
+   * @param request The request to send.
+   * @param listener A listener which handles responses.
+   * @param callOptions A set of gRPC options to use on this call.
+   * @param metadata A set of predefined headers to use.
+   * @return A ClientCall that represents a new request.
+   */
+  ClientCall<REQUEST, RESPONSE> call(REQUEST request, ClientCall.Listener<RESPONSE> listener,
+      CallOptions callOptions, Metadata metadata);
 
+  /**
+   * Can this request be retried?
+   *
+   * @param request The request to send which may require introspection to determine retryability.
+   * @return
+   */
   boolean isRetryable(REQUEST request);
 
+  /**
+   * @return {@link MethodDescriptor} that describes the logical endpoint.
+   */
   MethodDescriptor<REQUEST, RESPONSE> getMethodDescriptor();
 }

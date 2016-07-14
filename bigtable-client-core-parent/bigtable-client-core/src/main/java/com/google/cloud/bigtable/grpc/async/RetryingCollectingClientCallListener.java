@@ -22,19 +22,17 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.collect.ImmutableList;
 
 import io.grpc.CallOptions;
+import io.grpc.Metadata;
 
 public class RetryingCollectingClientCallListener<RequestT, ResponseT>
     extends AbstractRetryingRpcListener<RequestT, ResponseT, List<ResponseT>> {
 
   private ImmutableList.Builder<ResponseT> buffer;
 
-  public RetryingCollectingClientCallListener(
-      RetryOptions retryOptions,
-      RequestT request,
-      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
-      CallOptions callOptions,
-      ScheduledExecutorService executorService) {
-    super(retryOptions, request, retryableRpc, callOptions, executorService);
+  public RetryingCollectingClientCallListener(RetryOptions retryOptions, RequestT request,
+      BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, CallOptions callOptions,
+      ScheduledExecutorService executorService, Metadata metadata) {
+    super(retryOptions, request, retryableRpc, callOptions, executorService, metadata);
   }
 
   @Override

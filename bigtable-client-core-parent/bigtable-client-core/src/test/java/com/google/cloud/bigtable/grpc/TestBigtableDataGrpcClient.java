@@ -64,6 +64,7 @@ import com.google.protobuf.ByteString;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
 @RunWith(JUnit4.class)
@@ -231,12 +232,12 @@ public class TestBigtableDataGrpcClient {
         invocation.getArgumentAt(1, ClientCall.Listener.class).onMessage(response);
         return null;
       }
-    }).when(mockBigtableRpc).call(any(Object.class),
-      any(ClientCall.Listener.class), same(CallOptions.DEFAULT));
+    }).when(mockBigtableRpc).call(any(Object.class), any(ClientCall.Listener.class),
+      same(CallOptions.DEFAULT), any(Metadata.class));
   }
 
   private void verifyRequestCalled(Object request) {
-    verify(mockBigtableRpc, times(1))
-        .call(same(request), any(ClientCall.Listener.class), same(CallOptions.DEFAULT));
+    verify(mockBigtableRpc, times(1)).call(same(request), any(ClientCall.Listener.class),
+      same(CallOptions.DEFAULT), any(Metadata.class));
   }
 }
