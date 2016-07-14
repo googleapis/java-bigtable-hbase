@@ -102,14 +102,14 @@ public class BigtableSession implements Closeable {
       // gRPC uses tcnative / OpenSsl by default, if it's available.  It defaults to alpn-boot
       // if tcnative is not in the classpath.
       if (OpenSsl.isAvailable()) {
-        LOG.info("gRPC is using the OpenSSL provider (tcnactive jar - Open Ssl version: %s)",
+        LOG.info("SslContext: gRPC is using the OpenSSL provider (tcnactive jar - Open Ssl version: %s)",
           OpenSsl.versionString());
       } else {
         if (isJettyAlpnConfigured()) {
           // gRPC uses jetty ALPN as a backup to tcnative.
-          LOG.info("gRPC is using the JDK provider (alpn-boot jar)");
+          LOG.info("SslContext: gRPC is using the JDK provider (alpn-boot jar)");
         } else {
-          LOG.info("gRPC cannot be configured.  Neither OpenSsl nor Alpn are available.");
+          LOG.info("SslContext: gRPC cannot be configured.  Neither OpenSsl nor Alpn are available.");
         }
       }
     }
@@ -229,6 +229,7 @@ public class BigtableSession implements Closeable {
         + "on data host %s, table admin host %s.",
         options.getProjectId(), options.getInstanceId(), options.getDataHost(),
         options.getTableAdminHost());
+    LOG.info("Bigtable options: %s.", options);
     if (!isAlpnProviderEnabled()) {
       LOG.error(
           "Neither Jetty ALPN nor OpenSSL are available. "
