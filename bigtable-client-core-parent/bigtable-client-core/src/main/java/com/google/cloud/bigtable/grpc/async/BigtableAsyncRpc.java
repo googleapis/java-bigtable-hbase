@@ -20,7 +20,10 @@ import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
-/** This interface represents a logical asynchronous RPC. */
+/**
+ * This interface represents a logical asynchronous RPC end point, including creating a
+ * {@link ClientCall} for a new request.
+ */
 public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
   /**
    * Creates a {@link ClientCall}.
@@ -38,7 +41,7 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
    * Can this request be retried?
    *
    * @param request The request to send which may require introspection to determine retryability.
-   * @return
+   * @return true if the request can be retried.
    */
   boolean isRetryable(REQUEST request);
 

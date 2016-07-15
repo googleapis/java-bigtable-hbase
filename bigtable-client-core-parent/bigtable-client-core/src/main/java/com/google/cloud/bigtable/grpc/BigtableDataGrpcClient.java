@@ -80,8 +80,8 @@ import com.google.protobuf.ServiceException;
  */
 public class BigtableDataGrpcClient implements BigtableDataClient {
 
-  private static final Metadata.Key<String> GRPC_PARAMS_KEY =
-      Metadata.Key.of("grpc-url-params", Metadata.ASCII_STRING_MARSHALLER);
+  private static final Metadata.Key<String> GRPC_RESOURCE_PREFIX_KEY =
+      Metadata.Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER);
 
   private static final Logger LOG = new Logger(BigtableDataGrpcClient.class);
 
@@ -352,13 +352,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
    */
   private Metadata createMetadata(String tableName) {
     Metadata metadata = new Metadata();
-    BigtableInstanceName instanceName = this.bigtableOptions.getInstanceName();
-    if (instanceName != null) {
-      String projectId = this.bigtableOptions.getProjectId();
-      String instanceId = this.bigtableOptions.getInstanceId();
-      String tableId = instanceName.toTableId(tableName);
-      metadata.put(GRPC_PARAMS_KEY, String.format("[project_id=%s,instance_id=m%s,table_id=%s]",
-        projectId, instanceId, tableId));
+    if (tableName != null) {
+      metadata.put(GRPC_RESOURCE_PREFIX_KEY, tableName);
     }
     return metadata;
   }
