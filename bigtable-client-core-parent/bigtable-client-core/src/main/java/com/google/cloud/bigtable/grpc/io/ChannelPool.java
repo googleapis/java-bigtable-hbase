@@ -126,12 +126,7 @@ public class ChannelPool extends ManagedChannel {
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
     Preconditions.checkState(!shutdown, "Cannot perform operations on a closed connection");
-    return createWrappedCall(methodDescriptor, callOptions, getNextChannel());
-  }
-
-  private <ReqT, RespT> ClientCall<ReqT, RespT> createWrappedCall(
-      MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions, ManagedChannel channel) {
-    ClientCall<ReqT, RespT> delegate = channel.newCall(methodDescriptor, callOptions);
+    ClientCall<ReqT, RespT> delegate = getNextChannel().newCall(methodDescriptor, callOptions);
     return new CheckedForwardingClientCall<ReqT, RespT>(delegate) {
       @Override
       protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)

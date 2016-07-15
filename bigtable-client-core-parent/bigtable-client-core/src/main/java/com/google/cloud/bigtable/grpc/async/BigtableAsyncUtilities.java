@@ -37,7 +37,7 @@ public interface BigtableAsyncUtilities {
       MethodDescriptor<RequestT, ResponseT> method, Predicate<RequestT> isRetryable);
 
   <RequestT, ResponseT> void asyncServerStreamingCall(ClientCall<RequestT, ResponseT> call,
-      RequestT request, ClientCall.Listener<ResponseT> listener);
+      RequestT request, ClientCall.Listener<ResponseT> listener, Metadata metadata);
 
   public static class Default implements BigtableAsyncUtilities {
     private final Channel channel;
@@ -51,11 +51,9 @@ public interface BigtableAsyncUtilities {
         final MethodDescriptor<RequestT, ResponseT> method, final Predicate<RequestT> isRetryable) {
       return new BigtableAsyncRpc<RequestT, ResponseT>() {
         @Override
-        public ClientCall<RequestT, ResponseT> call(
-            RequestT request,
-            ClientCall.Listener<ResponseT> listener,
-            CallOptions callOptions) {
-          return createCall(channel, callOptions, method, request, listener, 1);
+        public ClientCall<RequestT, ResponseT> call(RequestT request,
+            ClientCall.Listener<ResponseT> listener, CallOptions callOptions, Metadata metadata) {
+          return createCall(channel, callOptions, method, request, listener, 1, metadata);
         }
 
         @Override
@@ -82,9 +80,9 @@ public interface BigtableAsyncUtilities {
         }
 
         @Override
-        public ClientCall<RequestT, ResponseT> call(
-            RequestT request, ClientCall.Listener<ResponseT> listener, CallOptions callOptions) {
-          return createCall(channel, callOptions, method, request, listener, 1);
+        public ClientCall<RequestT, ResponseT> call(RequestT request,
+            ClientCall.Listener<ResponseT> listener, CallOptions callOptions, Metadata metadata) {
+          return createCall(channel, callOptions, method, request, listener, 1, metadata);
         }
 
         @Override
@@ -96,28 +94,26 @@ public interface BigtableAsyncUtilities {
 
     @Override
     public <RequestT, ResponseT> void asyncServerStreamingCall(ClientCall<RequestT, ResponseT> call,
-        RequestT request, ClientCall.Listener<ResponseT> listener) {
+        RequestT request, ClientCall.Listener<ResponseT> listener, Metadata metadata) {
       // gRPC treats streaming and unary calls differently for the number of responses to retrieve.
       // See createAsyncUnaryRpc for how unary calls are handled.
       //
       // See ClientCalls.startCall() for more information.
-      start(call, request, listener, 1);
+      start(call, request, listener, 1, metadata);
     }
 
-    private <RequestT, ResponseT> ClientCall<RequestT, ResponseT> createCall(
-        Channel channel,
-        CallOptions callOptions,
-        MethodDescriptor<RequestT, ResponseT> method,
-        RequestT request,
-        ClientCall.Listener<ResponseT> listener, int count) {
+    private <RequestT, ResponseT> ClientCall<RequestT, ResponseT> createCall(Channel channel,
+        CallOptions callOptions, MethodDescriptor<RequestT, ResponseT> method, RequestT request,
+        ClientCall.Listener<ResponseT> listener, int count, Metadata metadata) {
       ClientCall<RequestT, ResponseT> call = channel.newCall(method, callOptions);
-      start(call, request, listener, count);
+      start(call, request, listener, count, metadata);
       return call;
     }
 
     private static <RequestT, ResponseT> void start(ClientCall<RequestT, ResponseT> call,
-        RequestT request, ClientCall.Listener<ResponseT> listener, int requestCount) {
-      call.start(listener, new Metadata());
+        RequestT request, ClientCall.Listener<ResponseT> listener, int requestCount,
+        Metadata metadata) {
+      call.start(listener, metadata);
       call.request(requestCount);
       try {
         call.sendMessage(request);

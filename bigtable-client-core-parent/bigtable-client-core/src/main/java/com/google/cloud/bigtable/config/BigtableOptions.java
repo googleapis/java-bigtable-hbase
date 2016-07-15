@@ -261,7 +261,7 @@ public class BigtableOptions implements Serializable {
 
     if (!Strings.isNullOrEmpty(projectId)
         && !Strings.isNullOrEmpty(instanceId)) {
-      this.instanceName = new BigtableInstanceName(getProjectId(), getInstanceId());
+      this.instanceName = new BigtableInstanceName(projectId, instanceId);
     } else {
       this.instanceName = null;
     }

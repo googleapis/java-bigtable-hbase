@@ -55,19 +55,21 @@ public class PutMicroBenchmark {
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   final static int REAL_CHANNEL_PUT_COUNT = 100;
   final static int FAKE_CHANNEL_PUT_COUNT = 100_000;
+  private static BigtableOptions options;
 
   public static void main(String[] args) throws Exception {
     String projectId = args.length > 0 ? args[0] : "project";
     String instanceId = args.length > 1 ? args[1] : "instanceId";
     String tableId = args.length > 2 ? args[2] : "table";
 
-    BigtableOptions options = new BigtableOptions.Builder()
+    options = new BigtableOptions.Builder()
         .setProjectId(projectId)
         .setInstanceId(instanceId)
+        .setUserAgent("put_microbenchmark")
         .build();
     boolean useRealConnection = args.length >= 2;
     int putCount = useRealConnection ? REAL_CHANNEL_PUT_COUNT : FAKE_CHANNEL_PUT_COUNT;
-    run(createRequet(tableId, options), getChannelPool(useRealConnection), putCount);
+    run(createRequet(tableId), getChannelPool(useRealConnection), putCount);
   }
 
   protected static ChannelPool getChannelPool(final boolean useRealConnection)
@@ -81,8 +83,7 @@ public class PutMicroBenchmark {
 
   protected static ChannelPool createNettyChannelPool()
       throws IOException, GeneralSecurityException {
-    final BigtableOptions options = new BigtableOptions.Builder().setUserAgent("put_microbenchmark").build();
-    return new ChannelPool(getHeaders(options), new ChannelPool.ChannelFactory() {
+    return new ChannelPool(getHeaders(), new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
         return BigtableSession.createNettyChannel(options.getDataHost(), options);
@@ -90,7 +91,7 @@ public class PutMicroBenchmark {
     });
   }
 
-  protected static ImmutableList<HeaderInterceptor> getHeaders(BigtableOptions options)
+  protected static ImmutableList<HeaderInterceptor> getHeaders()
       throws IOException, GeneralSecurityException {
     CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
     HeaderInterceptor headerInterceptor = credentialsCache
@@ -112,7 +113,7 @@ public class PutMicroBenchmark {
     };
   }
 
-  private static MutateRowRequest createRequet(String tableId, BigtableOptions options) {
+  private static MutateRowRequest createRequet(String tableId) {
     HBaseRequestAdapter hbaseAdapter =
         new HBaseRequestAdapter(options, TableName.valueOf(tableId), new Configuration(false));
     DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -132,8 +133,7 @@ public class PutMicroBenchmark {
   protected static void run(final MutateRowRequest request, ChannelPool cp, final int putCount)
       throws InterruptedException {
     final BigtableDataClient client = new BigtableDataGrpcClient(cp,
-        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
-        new BigtableOptions.Builder().build());
+        BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
 
     Runnable r = new Runnable() {
       @Override
