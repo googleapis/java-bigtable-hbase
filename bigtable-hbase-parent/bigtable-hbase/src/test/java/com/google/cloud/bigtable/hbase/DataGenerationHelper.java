@@ -28,9 +28,13 @@ public class DataGenerationHelper {
   }
 
   public byte[][] randomData(String prefix, int count) {
+    return randomData(prefix, count, 8);
+  }
+
+  public byte[][] randomData(String prefix, int count, int size) {
     byte[][] result = new byte[count][];
     for (int i = 0; i < count; ++i) {
-      result[i] = Bytes.toBytes(prefix + RandomStringUtils.randomAlphanumeric(8));
+      result[i] = Bytes.toBytes(prefix + RandomStringUtils.randomAlphanumeric(size));
     }
     return result;
   }

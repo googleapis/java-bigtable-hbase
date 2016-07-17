@@ -37,15 +37,19 @@ public class PutAdapterPerf {
     byte[] value = RandomStringUtils.randomAlphanumeric(10000).getBytes();
     put.addColumn(Bytes.toBytes("Family1"), Bytes.toBytes("Qaulifier"), value);
 
+    BigtableOptions options = new BigtableOptions.Builder()
+        .setInstanceId("instanceId")
+        .setProjectId("projectId")
+        .build();
     HBaseRequestAdapter adapter =
-        new HBaseRequestAdapter(new BigtableOptions.Builder().build(),
+        new HBaseRequestAdapter(options,
             TableName.valueOf("tableName"), new Configuration());
     for (int i = 0; i < 10; i++) {
       putAdapterPerf(adapter, put);
     }
   }
 
-  static int count = 100000;
+  static int count = 1_000_000;
 
   private static void putAdapterPerf(HBaseRequestAdapter adapter, Put put) {
     System.out.println("Size: " + adapter.adapt(put).getSerializedSize());
@@ -57,7 +61,7 @@ public class PutAdapterPerf {
       }
       long time = System.nanoTime() - start;
       System.out.println(
-          String.format("RowMerger.readNext: %d rows merged in %d ms.  %d nanos per row.", count,
+          String.format("adapted: %,d rows merged in %,d ms.  %,d nanos per row.", count,
               time / 1000000, time / count));
     }
     System.gc();
@@ -69,7 +73,7 @@ public class PutAdapterPerf {
       }
       long time = System.nanoTime() - start;
       System.out.println(
-          String.format("RowMerger.readNext: %d rows merged in %d ms.  %d nanos per row.", count,
+          String.format("adapted, streamRequest: %,d rows merged in %,d ms.  %,d nanos per row.", count,
               time / 1000000, time / count));
     }
     System.gc();
@@ -81,9 +85,9 @@ public class PutAdapterPerf {
         BigtableGrpc.METHOD_MUTATE_ROW.streamRequest(adapted);
       }
       long time = System.nanoTime() - start;
-      System.out.println(
-          String.format("RowMerger.readNext / serialized size: %d rows merged in %d ms.  %d nanos per row.", count,
-              time / 1000000, time / count));
+      System.out.println(String.format(
+        "adapted, getSerializedSize, streamRequest: %,d rows merged in %,d ms.  %,d nanos per row.",
+        count, time / 1000000, time / count));
     }
   }
 }
