@@ -19,7 +19,6 @@ import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.bigtable.v2.Mutation.SetCell;
-import com.google.bigtable.v2.Mutation.SetCell.Builder;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
 import com.google.protobuf.BigtableZeroCopyByteStringUtil;
@@ -30,6 +29,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Put;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -57,56 +57,55 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
       throw new IllegalArgumentException("No columns to insert");
     }
 
-    MutateRowRequest.Builder result = MutateRowRequest.newBuilder();
-    result.setRowKey(ByteString.copyFrom(operation.getRow()));
-
     // Bigtable uses a 1ms granularity. Use this timestamp if the Put does not have one specified to
     // make mutations idempotent.
     long currentTimestampMicros = setClientTimestamp ? System.currentTimeMillis() * 1000 : -1;
+    final int rowLength = operation.getRow().length;
 
+    List<Mutation> mutations = new ArrayList<>();
     for (Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
       ByteString familyString = ByteString.copyFrom(entry.getKey());
+      int familySize = familyString.size();
 
       for (Cell cell : entry.getValue()) {
+        int qualifierLength = cell.getQualifierLength();
+        int valueLength = cell.getValueLength();
         // Since we are not using the interface involving KeyValues, we reconstruct how big they would be.
         // 20 bytes for metadata plus the length of all the elements.
-        int keyValueSize = (20 +
-            cell.getRowLength() +
-            cell.getFamilyLength() +
-            cell.getQualifierLength() +
-            cell.getValueLength());
+        int keyValueSize = (20 + rowLength + familySize + qualifierLength + valueLength);
         if (maxKeyValueSize > 0 && keyValueSize > maxKeyValueSize) {
           throw new IllegalArgumentException("KeyValue size too large");
         }
-        Mutation.Builder modBuilder = result.addMutationsBuilder();
-        Builder setCellBuilder = modBuilder.getSetCellBuilder();
 
         ByteString cellQualifierByteString = ByteString.copyFrom(
             cell.getQualifierArray(),
             cell.getQualifierOffset(),
-            cell.getQualifierLength());
+            qualifierLength);
 
-        setCellBuilder.setFamilyNameBytes(familyString);
-        setCellBuilder.setColumnQualifier(cellQualifierByteString);
+        ByteString value = ByteString.copyFrom(
+            cell.getValueArray(),
+            cell.getValueOffset(),
+            valueLength);
 
+        long timestampMicros = currentTimestampMicros;
         if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
-          long timestampMicros = BigtableConstants.BIGTABLE_TIMEUNIT.convert(
-              cell.getTimestamp(),
-              BigtableConstants.HBASE_TIMEUNIT);
-          setCellBuilder.setTimestampMicros(timestampMicros);
-        } else {
-          setCellBuilder.setTimestampMicros(currentTimestampMicros);
+          timestampMicros = BigtableConstants.BIGTABLE_TIMEUNIT.convert(cell.getTimestamp(),
+            BigtableConstants.HBASE_TIMEUNIT);
         }
 
-        setCellBuilder.setValue(
-            ByteString.copyFrom(
-                cell.getValueArray(),
-                cell.getValueOffset(),
-                cell.getValueLength()));
+        mutations.add(Mutation.newBuilder()
+            .setSetCell(SetCell.newBuilder()
+                .setFamilyNameBytes(familyString)
+                .setColumnQualifier(cellQualifierByteString)
+                .setValue(value)
+                .setTimestampMicros(timestampMicros))
+            .build());
       }
     }
 
-    return result;
+    return MutateRowRequest.newBuilder()
+        .setRowKey(ByteString.copyFrom(operation.getRow()))
+        .addAllMutations(mutations);
   }
 
   public Put adapt(MutateRowRequest request) throws IOException {

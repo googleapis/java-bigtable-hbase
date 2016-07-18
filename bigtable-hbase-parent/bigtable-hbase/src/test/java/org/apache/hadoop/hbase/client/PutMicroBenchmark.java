@@ -44,17 +44,16 @@ import io.grpc.Status;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class PutMicroBenchmark {
-  static final int NUM_CELLS = 100;
-  public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
-  final static int REAL_CHANNEL_PUT_COUNT = 100;
-  final static int FAKE_CHANNEL_PUT_COUNT = 100_000;
+  static final int NUM_CELLS = 10;
+  private static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
+  private final static int REAL_CHANNEL_PUT_COUNT = 100;
+  private final static int FAKE_CHANNEL_PUT_COUNT = 100_000;
+  private static final int VALUE_SIZE = 100;
   private static BigtableOptions options;
 
   public static void main(String[] args) throws Exception {
@@ -69,7 +68,15 @@ public class PutMicroBenchmark {
         .build();
     boolean useRealConnection = args.length >= 2;
     int putCount = useRealConnection ? REAL_CHANNEL_PUT_COUNT : FAKE_CHANNEL_PUT_COUNT;
-    run(createRequet(tableId), getChannelPool(useRealConnection), putCount);
+    HBaseRequestAdapter hbaseAdapter =
+        new HBaseRequestAdapter(options, TableName.valueOf(tableId), new Configuration(false));
+
+    testCreatePuts(10_000);
+
+    Put put = createPut();
+    System.out.println(String.format("Put size: %d, proto size: %d", put.heapSize(),
+      hbaseAdapter.adapt(put).getSerializedSize()));
+    run(hbaseAdapter, put, getChannelPool(useRealConnection), putCount);
   }
 
   protected static ChannelPool getChannelPool(final boolean useRealConnection)
@@ -113,50 +120,87 @@ public class PutMicroBenchmark {
     };
   }
 
-  private static MutateRowRequest createRequet(String tableId) {
-    HBaseRequestAdapter hbaseAdapter =
-        new HBaseRequestAdapter(options, TableName.valueOf(tableId), new Configuration(false));
+  private static void createRandomData() {
     DataGenerationHelper dataHelper = new DataGenerationHelper();
-    byte[] rowKey = dataHelper.randomData("testrow-");
-    byte[][] quals = dataHelper.randomData("testQualifier-", NUM_CELLS);
-    byte[][] values = dataHelper.randomData("testValue-", NUM_CELLS);
+    dataHelper.randomData("testrow-");
 
-    Put put = new Put(rowKey);
-    List<QualifierValue> keyValues = new ArrayList<QualifierValue>(NUM_CELLS);
     for (int i = 0; i < NUM_CELLS; ++i) {
-      put.addColumn(COLUMN_FAMILY, quals[i], values[i]);
-      keyValues.add(new QualifierValue(quals[i], values[i]));
+      dataHelper.randomData("testQualifier-");
+      dataHelper.randomData("testValue-");
     }
-    return hbaseAdapter.adapt(put);
   }
 
-  protected static void run(final MutateRowRequest request, ChannelPool cp, final int putCount)
-      throws InterruptedException {
+  private static Put createPut() {
+    DataGenerationHelper dataHelper = new DataGenerationHelper();
+    return createPuts(dataHelper.randomData("testrow-"),
+      dataHelper.randomData("testQualifier-", NUM_CELLS),
+      dataHelper.randomData("testValue-", NUM_CELLS));
+  }
+
+  protected static Put createPuts(byte[] rowKey, byte[][] quals, byte[][] values) {
+    Put put = new Put(rowKey);
+    for (int i = 0; i < NUM_CELLS; ++i) {
+      put.addImmutable(COLUMN_FAMILY, quals[i], values[i]);
+    }
+    return put;
+  }
+
+  protected static void run(final HBaseRequestAdapter hbaseAdapter, final Put put, ChannelPool cp,
+      final int putCount) throws InterruptedException {
     final BigtableDataClient client = new BigtableDataGrpcClient(cp,
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(), options);
 
-    Runnable r = new Runnable() {
+    Runnable r1 = new Runnable() {
       @Override
       public void run() {
         long start = System.nanoTime();
         for (int i = 0; i < putCount; i++) {
           try {
-            client.mutateRow(request);
+            client.mutateRow(hbaseAdapter.adapt(put));
           } catch (ServiceException e) {
-            // TODO(sduskis): Auto-generated catch block
             e.printStackTrace();
           }
         }
-        print(start, putCount);
+        print("constantly adapted", start, putCount);
       }
     };
 
-    r.run();
+    Runnable r2 = new Runnable() {
+      @Override
+      public void run() {
+        long start = System.nanoTime();
+        final MutateRowRequest adapted = hbaseAdapter.adapt(put);
+        for (int i = 0; i < putCount; i++) {
+          try {
+            client.mutateRow(adapted);
+          } catch (ServiceException e) {
+            e.printStackTrace();
+          }
+        }
+        print("preadapted", start, putCount);
+      }
+    };
+
+    r1.run();
+    r2.run();
 
     int roundCount = 20;
-    serialRun(putCount, r, roundCount);
+
+    System.out.println("====== Running serially");
+    serialRun("constantly adapted", putCount, r1, roundCount);
+    serialRun("pre adapted", putCount, r2, roundCount);
 
     System.out.println("====== Running in parallel");
+    runParallel("constantly adapted", r1, putCount, roundCount);
+    runParallel("pre adapted", r2, putCount, roundCount);
+
+    System.out.println("====== Running serially");
+    serialRun("constantly adapted", putCount, r1, roundCount);
+    serialRun("pre adapted", putCount, r2, roundCount);
+  }
+
+  protected static void runParallel(final String key, Runnable r, final int putCount,
+      int roundCount) throws InterruptedException {
     ExecutorService e = Executors.newFixedThreadPool(roundCount);
     long start = System.nanoTime();
     for (int i = 0; i < roundCount; i++) {
@@ -164,26 +208,43 @@ public class PutMicroBenchmark {
     }
     e.shutdown();
     e.awaitTermination(10, TimeUnit.HOURS);
-    print(start, putCount * roundCount);
-
-    System.out.println("====== Running serially");
-    serialRun(putCount, r, roundCount);
+    print(key, start, putCount * roundCount);
   }
 
-  private static void serialRun(final int putCount, Runnable r, int roundCount) {
-    System.out.println("====== Running serially");
+  private static void testCreatePuts(int putCount) {
+    long start = System.nanoTime();
+    for (int i = 0; i < putCount; i++) {
+      createRandomData();
+    }
+    print("Created random data", start, putCount);
+
+    DataGenerationHelper dataHelper = new DataGenerationHelper();
+    byte[] key = dataHelper.randomData("testrow-");
+    byte[][] quals = dataHelper.randomData("testQualifier-", NUM_CELLS);
+    byte[][] vals = dataHelper.randomData("testValue-", NUM_CELLS, VALUE_SIZE);
+
+    for (int j = 0; j < 20; j++) {
+      start = System.nanoTime();
+      for (int i = 0; i < putCount; i++) {
+        createPuts(key, quals, vals);
+      }
+      print("Created Puts", start, putCount);
+    }
+  }
+
+  private static void serialRun(String key, final int putCount, Runnable r, int roundCount) {
     long start = System.nanoTime();
     for (int i = 0; i < roundCount; i++) {
       r.run();
     }
-    print(start, putCount * roundCount);
+    print(key, start, putCount * roundCount);
   }
 
-  private static void print(long startTimeNanos, int count) {
+  private static void print(String key, long startTimeNanos, int count) {
     long totalTime = System.nanoTime() - startTimeNanos;
 
     System.out.printf(
-        "Put %d in %d ms.  %d nanos/put.  %,f put/sec",
+        "%s, Put %,d in %d ms.  %,d nanos/put.  %,f put/sec", key,
         count, totalTime / 1000000, totalTime / count, count * 1000000000.0 / totalTime);
     System.out.println(); 
   }
@@ -255,20 +316,5 @@ public class PutMicroBenchmark {
         responseListener.onClose(Status.OK, null);
       }
     };
-  }
-
-  protected static class QualifierValue implements Comparable<QualifierValue> {
-    protected final byte[] qualifier;
-    protected final byte[] value;
-
-    public QualifierValue(byte[] qualifier, byte[] value) {
-      this.qualifier = qualifier;
-      this.value = value;
-    }
-
-    @Override
-    public int compareTo(QualifierValue qualifierValue) {
-      return Bytes.compareTo(this.qualifier, qualifierValue.qualifier);
-    }
   }
 }

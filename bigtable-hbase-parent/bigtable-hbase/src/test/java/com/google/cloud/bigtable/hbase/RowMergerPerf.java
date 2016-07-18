@@ -40,7 +40,7 @@ public class RowMergerPerf {
     return Arrays.asList(ReadRowsResponse.newBuilder().addChunks(contentChunk).build());
   }
 
-  static int count = 5000000;
+  static int count = 500_000;
 
   private static void rowMergerPerf(List<ReadRowsResponse> responses) {
     RowAdapter adapter = Adapters.ROW_ADAPTER;
