@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -28,7 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
-
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,6 +59,7 @@ import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
+import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -70,6 +72,12 @@ import io.grpc.MethodDescriptor;
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBigtableDataGrpcClient {
+
+  private static final String TABLE_NAME =
+      new BigtableInstanceName("projectId", "instanceId").toTableNameStr("tableId");
+
+  private static final GoogleCloudResourcePrefixInterceptor interceptor =
+      new GoogleCloudResourcePrefixInterceptor("Value we don't want");
 
   @Mock
   ChannelPool mockChannelPool;
@@ -94,6 +102,8 @@ public class TestBigtableDataGrpcClient {
 
   Map<String, Predicate> predicates;
 
+  private Metadata tableMetadata;
+
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
@@ -113,6 +123,9 @@ public class TestBigtableDataGrpcClient {
         };
     when(mockAsyncUtilities.createAsyncUnaryRpc(any(MethodDescriptor.class), any(Predicate.class)))
         .thenAnswer(answer);
+
+    tableMetadata = new Metadata();
+    tableMetadata.put(GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY, TABLE_NAME);
   }
 
   protected BigtableDataGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
@@ -125,7 +138,7 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testRetyableMutateRow() throws Exception {
-    MutateRowRequest request = MutateRowRequest.getDefaultInstance();
+    MutateRowRequest request = MutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     setResponse(MutateRowResponse.getDefaultInstance());
     createClient(false).mutateRow(request);
     verifyRequestCalled(request);
@@ -133,7 +146,7 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testRetyableMutateRowAsync() throws InterruptedException, ExecutionException {
-    MutateRowRequest request = MutateRowRequest.getDefaultInstance();
+    MutateRowRequest request = MutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     when(mockFuture.get()).thenReturn(MutateRowsResponse.getDefaultInstance());
     createClient(false).mutateRowAsync(request);
     verifyRequestCalled(request);
@@ -141,7 +154,8 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testRetyableCheckAndMutateRow() throws Exception {
-    CheckAndMutateRowRequest request = CheckAndMutateRowRequest.getDefaultInstance();
+    CheckAndMutateRowRequest request =
+        CheckAndMutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     setResponse(CheckAndMutateRowResponse.getDefaultInstance());
     createClient(false).checkAndMutateRow(request);
     verifyRequestCalled(request);
@@ -149,7 +163,8 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testRetyableCheckAndMutateRowAsync() {
-    CheckAndMutateRowRequest request = CheckAndMutateRowRequest.getDefaultInstance();
+    CheckAndMutateRowRequest request =
+        CheckAndMutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     createClient(false).checkAndMutateRowAsync(request);
     verifyRequestCalled(request);
   }
@@ -226,18 +241,30 @@ public class TestBigtableDataGrpcClient {
   }
 
   private void setResponse(final Object response) {
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        invocation.getArgumentAt(1, ClientCall.Listener.class).onMessage(response);
-        return null;
-      }
-    }).when(mockBigtableRpc).call(any(Object.class), any(ClientCall.Listener.class),
-      same(CallOptions.DEFAULT), any(Metadata.class));
+    Answer<Void> answer =
+        new Answer<Void>() {
+          @Override
+          public Void answer(InvocationOnMock invocation) throws Throwable {
+            invocation.getArgumentAt(1, ClientCall.Listener.class).onMessage(response);
+            Metadata metadata = invocation.getArgumentAt(3, Metadata.class);
+            interceptor.updateHeaders(metadata);
+            String headerValue =
+                metadata.get(GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY);
+            Assert.assertEquals(TABLE_NAME, headerValue);
+            return null;
+          }
+        };
+    doAnswer(answer)
+        .when(mockBigtableRpc)
+        .call(any(), any(ClientCall.Listener.class), any(CallOptions.class), any(Metadata.class));
   }
 
   private void verifyRequestCalled(Object request) {
-    verify(mockBigtableRpc, times(1)).call(same(request), any(ClientCall.Listener.class),
-      same(CallOptions.DEFAULT), any(Metadata.class));
+    verify(mockBigtableRpc, times(1))
+        .call(
+            eq(request),
+            any(ClientCall.Listener.class),
+            any(CallOptions.class),
+            any(Metadata.class));
   }
 }

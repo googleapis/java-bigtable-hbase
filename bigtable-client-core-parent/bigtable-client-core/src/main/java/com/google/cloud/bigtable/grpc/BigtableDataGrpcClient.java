@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
@@ -79,9 +80,6 @@ import com.google.protobuf.ServiceException;
  * streaming call.
  */
 public class BigtableDataGrpcClient implements BigtableDataClient {
-
-  private static final Metadata.Key<String> GRPC_RESOURCE_PREFIX_KEY =
-      Metadata.Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER);
 
   private static final Logger LOG = new Logger(BigtableDataGrpcClient.class);
 

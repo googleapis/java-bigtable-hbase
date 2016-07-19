@@ -57,6 +57,7 @@ import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
+import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import com.google.common.collect.ImmutableList;
@@ -241,7 +242,8 @@ public class BigtableSession implements Closeable {
     this.options = options;
 
     Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
-
+    headerInterceptorBuilder.add(
+        new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
     // Looking up Credentials takes time. Creating the retry executor and the EventLoopGroup don't
     // take as long, but still take time. Get the credentials on one thread, and start up the elg
     // and scheduledRetries thread pools on another thread.
