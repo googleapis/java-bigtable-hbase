@@ -24,6 +24,7 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
+import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -77,30 +78,39 @@ public class PutMicroBenchmark {
     if (useRealConnection) {
       return createNettyChannelPool();
     } else {
-      return new ChannelPool(ImmutableList.<HeaderInterceptor> of(), createFakeChannels());
+      return new ChannelPool(
+          ImmutableList.<HeaderInterceptor>of(prefixInterceptor()), createFakeChannels());
     }
   }
 
   protected static ChannelPool createNettyChannelPool()
       throws IOException, GeneralSecurityException {
-    return new ChannelPool(getHeaders(), new ChannelPool.ChannelFactory() {
-      @Override
-      public ManagedChannel create() throws IOException {
-        return BigtableSession.createNettyChannel(options.getDataHost(), options);
-      }
-    });
+    return new ChannelPool(
+        getHeaders(),
+        new ChannelPool.ChannelFactory() {
+          @Override
+          public ManagedChannel create() throws IOException {
+            return BigtableSession.createNettyChannel(options.getDataHost(), options);
+          }
+        });
   }
 
   protected static ImmutableList<HeaderInterceptor> getHeaders()
       throws IOException, GeneralSecurityException {
     CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
-    HeaderInterceptor headerInterceptor = credentialsCache
-        .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+    HeaderInterceptor headerInterceptor =
+        credentialsCache.getCredentialsInterceptor(
+            options.getCredentialOptions(), options.getRetryOptions());
     Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
     if (headerInterceptor != null) {
       headerInterceptorBuilder.add(headerInterceptor);
     }
+    headerInterceptorBuilder.add(prefixInterceptor());
     return headerInterceptorBuilder.build();
+  }
+
+  private static GoogleCloudResourcePrefixInterceptor prefixInterceptor() {
+    return new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString());
   }
 
   protected static ChannelPool.ChannelFactory createFakeChannels() {
