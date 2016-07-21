@@ -27,7 +27,7 @@ limitations under the License.
     <packaging>pom</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-       This project is a parent project for the hbase Cloud Bigtable java client projects.
+        This project is a parent project for the hbase Cloud Bigtable java client projects.
     </description>
 
     <modules>
@@ -54,12 +54,9 @@ limitations under the License.
                             <bottom><![CDATA[<br>]]></bottom>
 
                             <detectLinks />
-                            <offlineLinks>
-                                <offlineLink>
-                                    <url>https://hbase.apache.org/apidocs/</url>
-                                    <location>${basedir}/javadoc/hbase-docs</location>
-                                </offlineLink>
-                            </offlineLinks>
+                            <links>
+                                <link>https://hbase.apache.org/apidocs/</link>
+                            </links>
                         </configuration>
                     </plugin>
                </plugins>
