@@ -44,7 +44,13 @@ You can create a [Maven project](https://cloud.google.com/bigtable/docs/using-ma
 <dependency>
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-hbase-1.0</artifactId>
-  <version>0.9.0</version>
+  <version>0.9.1</version>
+</dependency>
+
+<dependency>
+  <groupId>io.netty</groupId>
+  <artifactId>netty-tcnative-boringssl-static</artifactId>
+  <version>1.1.33.Fork19</version>
 </dependency>
 ```
 
