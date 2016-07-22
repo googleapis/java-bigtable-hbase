@@ -7,7 +7,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * Wrapper around {@link BigtableZeroCopyByteStringUtil} for cases where it's not available.
+ * Wrapper around {@link com.google.protobuf.BigtableZeroCopyByteStringUtil} for cases where it's not available.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ByteStringer {
   private static final Log LOG = LogFactory.getLog(ByteStringer.class);
@@ -34,12 +37,21 @@ public class ByteStringer {
   }
 
   /**
-   * Wraps a byte array in a {@link ByteString} without copying it.
+   * Wraps a byte array in a {@link com.google.protobuf.ByteString} without copying it.
+   *
+   * @param array an array of byte.
+   * @return a {@link com.google.protobuf.ByteString} object.
    */
   public static ByteString wrap(final byte[] array) {
     return USE_ZEROCOPYBYTESTRING? BigtableZeroCopyByteStringUtil.wrap(array): ByteString.copyFrom(array);
   }
 
+  /**
+   * <p>extract.</p>
+   *
+   * @param buf a {@link com.google.protobuf.ByteString} object.
+   * @return an array of byte.
+   */
   public static byte[] extract(ByteString buf) {
     return USE_ZEROCOPYBYTESTRING ? BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(buf) : buf
         .toByteArray();

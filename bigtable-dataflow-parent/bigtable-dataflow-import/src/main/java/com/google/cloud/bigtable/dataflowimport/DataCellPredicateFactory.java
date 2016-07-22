@@ -27,15 +27,19 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
 
 /**
- * Function that creates a {@link Predicate}s from a Delete Marker {@code Cell}. The
+ * Function that creates a {@link com.google.common.base.Predicate}s from a Delete Marker {@code Cell}. The
  * {@code Predicate} returns {@code true} for all cells that should be deleted because of this
  * Delete Marker.
  *
  * <p>A predicate assumes that all cells to be filtered belong to the same row and column family
  * as the seed Delete Marker, and does NOT validate this assumption on cells encountered.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class DataCellPredicateFactory implements Function<Cell, Predicate<Cell>> {
 
+  /** {@inheritDoc} */
   @Override
   public Predicate<Cell> apply(Cell deleteMarker) {
     checkArgument(CellUtil.isDelete(deleteMarker), "expecting delete marker cell.");

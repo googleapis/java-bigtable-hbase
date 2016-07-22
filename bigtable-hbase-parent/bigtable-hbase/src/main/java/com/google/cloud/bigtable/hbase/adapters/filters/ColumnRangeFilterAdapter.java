@@ -27,6 +27,9 @@ import java.io.IOException;
 
 /**
  * Adapter for a single ColumnRangeFilter to a Cloud Bigtable RowFilter.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ColumnRangeFilterAdapter implements TypedFilterAdapter<ColumnRangeFilter> {
 
@@ -36,6 +39,7 @@ public class ColumnRangeFilterAdapter implements TypedFilterAdapter<ColumnRangeF
   private static final FilterSupportStatus UNSUPPORTED_STATUS =
       FilterSupportStatus.newNotSupported(REQUIRE_SINGLE_FAMILY_MESSAGE);
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, ColumnRangeFilter filter)
       throws IOException {
@@ -61,6 +65,7 @@ public class ColumnRangeFilterAdapter implements TypedFilterAdapter<ColumnRangeF
         .build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context,

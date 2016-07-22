@@ -29,17 +29,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+/**
+ * <p>SampledRowKeysAdapter class.</p>
+ *
+ * @author sduskis
+ * @version $Id: $Id
+ */
 public class SampledRowKeysAdapter {
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(SampledRowKeysAdapter.class);
 
   private final TableName tableName;
   private final ServerName serverName;
 
+  /**
+   * <p>Constructor for SampledRowKeysAdapter.</p>
+   *
+   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
+   * @param serverName a {@link org.apache.hadoop.hbase.ServerName} object.
+   */
   public SampledRowKeysAdapter(TableName tableName, ServerName serverName) {
     this.tableName = tableName;
     this.serverName = serverName;
   }
 
+  /**
+   * <p>adaptResponse.</p>
+   *
+   * @param responses a {@link java.util.List} object.
+   * @return a {@link java.util.List} object.
+   */
   public List<HRegionLocation> adaptResponse(List<SampleRowKeysResponse> responses) {
 
     List<HRegionLocation> regions = new ArrayList<>();

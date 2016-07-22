@@ -27,15 +27,45 @@ import io.grpc.MethodDescriptor;
 
 /**
  * Utilities for creating and executing async methods.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface BigtableAsyncUtilities {
 
+  /**
+   * <p>createStreamingAsyncRpc.</p>
+   *
+   * @param method a {@link io.grpc.MethodDescriptor} object.
+   * @param <RequestT> a RequestT object.
+   * @param <ResponseT> a ResponseT object.
+   * @return a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
+   */
   <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createStreamingAsyncRpc(
       MethodDescriptor<RequestT, ResponseT> method);
 
+  /**
+   * <p>createAsyncUnaryRpc.</p>
+   *
+   * @param method a {@link io.grpc.MethodDescriptor} object.
+   * @param isRetryable a {@link com.google.common.base.Predicate} object.
+   * @param <RequestT> a RequestT object.
+   * @param <ResponseT> a ResponseT object.
+   * @return a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
+   */
   <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncUnaryRpc(
       MethodDescriptor<RequestT, ResponseT> method, Predicate<RequestT> isRetryable);
 
+  /**
+   * <p>asyncServerStreamingCall.</p>
+   *
+   * @param call a {@link io.grpc.ClientCall} object.
+   * @param request a RequestT object.
+   * @param listener a {@link io.grpc.ClientCall.Listener} object.
+   * @param metadata a {@link io.grpc.Metadata} object.
+   * @param <RequestT> a RequestT object.
+   * @param <ResponseT> a ResponseT object.
+   */
   <RequestT, ResponseT> void asyncServerStreamingCall(ClientCall<RequestT, ResponseT> call,
       RequestT request, ClientCall.Listener<ResponseT> listener, Metadata metadata);
 

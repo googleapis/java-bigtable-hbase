@@ -22,13 +22,22 @@ import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.common.base.Preconditions;
 
 /**
- * A {@link ResultScanner} implementation against the v2 bigtable API.
+ * A {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} implementation against the v2 bigtable API.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class StreamingBigtableResultScanner extends AbstractBigtableResultScanner {
 
   private final CancellationToken cancellationToken;
   private final ResponseQueueReader responseQueueReader;
 
+  /**
+   * <p>Constructor for StreamingBigtableResultScanner.</p>
+   *
+   * @param responseQueueReader a {@link com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader} object.
+   * @param cancellationToken a {@link com.google.cloud.bigtable.grpc.io.CancellationToken} object.
+   */
   public StreamingBigtableResultScanner(ResponseQueueReader responseQueueReader,
       CancellationToken cancellationToken) {
     Preconditions.checkArgument(cancellationToken != null, "cancellationToken cannot be null");
@@ -36,16 +45,19 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
     this.responseQueueReader = responseQueueReader;
   }
 
+  /** {@inheritDoc} */
   @Override
   public Row next() throws IOException {
     return responseQueueReader.getNextMergedRow();
   }
 
+  /** {@inheritDoc} */
   @Override
   public int available() {
     return responseQueueReader.available();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
     cancellationToken.cancel();

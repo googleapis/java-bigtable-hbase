@@ -19,10 +19,16 @@ import io.grpc.Metadata;
 
 /**
  * This interface provides a simple mechanism to update headers before a gRPC method is called.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface HeaderInterceptor {
   /**
    * Modify the headers before an RPC call is made.
+   *
+   * @param headers a {@link io.grpc.Metadata} object.
+   * @throws java.lang.Exception if any.
    */
   void updateHeaders(Metadata headers) throws Exception;
 }

@@ -31,12 +31,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Caches {@link RefreshingOAuth2CredentialsInterceptor} for default authorization cases.  In other
+ * Caches {@link com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor} for default authorization cases.  In other
  * types of authorization, such as file based Credentials, it will create a new one.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class CredentialInterceptorCache {
   private static CredentialInterceptorCache instance = new CredentialInterceptorCache();
 
+  /**
+   * <p>Getter for the field <code>instance</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache} object.
+   */
   public static CredentialInterceptorCache getInstance() {
     return instance;
   }
@@ -50,25 +58,26 @@ public class CredentialInterceptorCache {
   }
 
   /**
-   * Given {@link CredentialOptions} that define how to look up credentials, do the following:
+   * Given {@link com.google.cloud.bigtable.config.CredentialOptions} that define how to look up credentials, do the following:
    *
    * <ol>
    *   <li> Look up the credentials
    *   <li> If there are credentials, create a gRPC interceptor that gets OAuth2 security tokens
    *        and add that token as a header on all calls.
-   *        <br>NOTE: {@link RefreshingOAuth2CredentialsInterceptor} ensures that the token stays
+   *        <br>NOTE: {@link com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor} ensures that the token stays
    *        fresh. It does token lookups asynchronously so that the calls themselves take as little
    *        performance penalty as possible.
-   *   <li> Cache the interceptor in step #2 if the {@link CredentialOptions} uses
+   *   <li> Cache the interceptor in step #2 if the {@link com.google.cloud.bigtable.config.CredentialOptions} uses
    *        <a href="https://developers.google.com/identity/protocols/application-default-credentials">
    *        default application credentials
    *        </a>
    * </ol>
+   *
    * @param credentialOptions Defines how credentials should be achieved
-   * @param retryOptions
+   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @return a HeaderInterceptor
-   * @throws IOException
-   * @throws GeneralSecurityException
+   * @throws java.io.IOException if any.
+   * @throws java.security.GeneralSecurityException if any.
    */
   public synchronized HeaderInterceptor getCredentialsInterceptor(
       CredentialOptions credentialOptions, RetryOptions retryOptions)

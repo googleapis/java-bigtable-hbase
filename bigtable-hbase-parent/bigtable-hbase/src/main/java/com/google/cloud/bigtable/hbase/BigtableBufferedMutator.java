@@ -54,12 +54,17 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.GeneratedMessage;
 
 /**
- * Bigtable's {@link BufferedMutator} implementation.
+ * Bigtable's {@link org.apache.hadoop.hbase.client.BufferedMutator} implementation.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableBufferedMutator implements BufferedMutator {
 
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableBufferedMutator.class);
 
+  /** Constant <code>MUTATION_TO_BE_SENT_WAIT_MS=1000</code> */
   protected static final long MUTATION_TO_BE_SENT_WAIT_MS = 1000;
 
   private static class MutationException {
@@ -160,11 +165,13 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
 
   /**
+   * <p>Constructor for BigtableBufferedMutator.</p>
+   *
    * @param adapter Converts HBase objects to Bigtable protos
    * @param configuration For Additional configuration. TODO: move this to options
    * @param listener Handles exceptions. By default, it just throws the exception.
-   * @param session a {@link BigtableSession} to get {@link BigtableOptions}, {@link AsyncExecutor}
-   * and {@link BulkMutation} objects from
+   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} to get {@link com.google.cloud.bigtable.config.BigtableOptions}, {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor}
+   * and {@link com.google.cloud.bigtable.grpc.async.BulkMutation} objects from
    * @param asyncRpcExecutorService Optional performance improvement for adapting hbase objects and
    * starting the async operations on the BigtableDataClient.
    */
@@ -198,6 +205,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
     closedWriteLock.lock();
@@ -214,6 +222,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void flush() throws IOException {
     // Make sure that the async mutator workers are running.
@@ -228,21 +237,25 @@ public class BigtableBufferedMutator implements BufferedMutator {
     handleExceptions();
   }
 
+  /** {@inheritDoc} */
   @Override
   public Configuration getConfiguration() {
     return this.configuration;
   }
 
+  /** {@inheritDoc} */
   @Override
   public TableName getName() {
     return this.adapter.getTableName();
   }
 
+  /** {@inheritDoc} */
   @Override
   public long getWriteBufferSize() {
     return this.asyncExecutor.getMaxHeapSize();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void mutate(List<? extends Mutation> mutations) throws IOException {
     closedReadLock.lock();
@@ -260,6 +273,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Being a Mutation. This method will block if either of the following are true:
    * 1) There are more than {@code maxInflightRpcs} RPCs in flight
    * 2) There are more than {@link #getWriteBufferSize()} bytes pending
@@ -310,11 +325,23 @@ public class BigtableBufferedMutator implements BufferedMutator {
     addExceptionCallback(issueRequestDetails(mutation, operationId), mutation);
   }
 
+  /**
+   * <p>addExceptionCallback.</p>
+   *
+   * @param future a {@link com.google.common.util.concurrent.ListenableFuture} object.
+   * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
+   */
   protected void addExceptionCallback(ListenableFuture<? extends GeneratedMessage> future,
       Mutation mutation) {
     Futures.addCallback(future, new ExceptionCallback(mutation));
   }
 
+  /**
+   * <p>adapt.</p>
+   *
+   * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
+   * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
+   */
   protected MutateRowRequest adapt(Mutation mutation) {
     if (mutation instanceof Put) {
       return adapter.adapt((Put) mutation);
@@ -409,6 +436,11 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
+  /**
+   * <p>hasInflightRequests.</p>
+   *
+   * @return a boolean.
+   */
   public boolean hasInflightRequests() {
     return this.asyncExecutor.hasInflightRequests()
         || (bulkMutation != null && !bulkMutation.isFlushed());

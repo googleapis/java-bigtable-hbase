@@ -33,6 +33,9 @@ import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Context for the currently executing filter adapter.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 @NotThreadSafe
 public class FilterAdapterContext {
@@ -48,6 +51,12 @@ public class FilterAdapterContext {
   private int counter;
   private final List<WhileMatchFilter> whileMatchFilters = new ArrayList<>();
 
+  /**
+   * <p>Constructor for FilterAdapterContext.</p>
+   *
+   * @param scan a {@link org.apache.hadoop.hbase.client.Scan} object.
+   * @param readHooks a {@link com.google.cloud.bigtable.hbase.adapters.read.ReadHooks} object.
+   */
   public FilterAdapterContext(Scan scan, ReadHooks readHooks) {
     this.scan = scan;
     this.filterListStack = new ArrayDeque<>();
@@ -58,6 +67,12 @@ public class FilterAdapterContext {
     return scan;
   }
 
+  /**
+   * <p>beginFilterList.</p>
+   *
+   * @param lst a {@link org.apache.hadoop.hbase.filter.FilterList} object.
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext.ContextCloseable} object.
+   */
   public ContextCloseable beginFilterList(final FilterList lst) {
     Preconditions.checkNotNull(lst);
     filterListStack.push(lst);
@@ -70,10 +85,20 @@ public class FilterAdapterContext {
     };
   }
 
+  /**
+   * <p>getFilterListDepth.</p>
+   *
+   * @return a int.
+   */
   public int getFilterListDepth() {
     return filterListStack.size();
   }
 
+  /**
+   * <p>getCurrentFilterList.</p>
+   *
+   * @return a {@link com.google.common.base.Optional} object.
+   */
   public Optional<FilterList> getCurrentFilterList() {
     if (filterListStack.isEmpty()) {
       return Optional.absent();
@@ -81,12 +106,19 @@ public class FilterAdapterContext {
     return Optional.of(filterListStack.peek());
   }
 
+  /**
+   * <p>Getter for the field <code>readHooks</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.read.ReadHooks} object.
+   */
   public ReadHooks getReadHooks() {
     return readHooks;
   }
 
   /**
-   * Returns the next unique ID as a {@link String} in this adapter context.
+   * Returns the next unique ID as a {@link java.lang.String} in this adapter context.
+   *
+   * @return a {@link java.lang.String} object.
    */
   public String getNextUniqueId() {
     return String.valueOf(++counter);
@@ -103,12 +135,22 @@ public class FilterAdapterContext {
   /*
    * Adds a {@link WhileMatchFilter}, {@code filter} in the context.
    */
+  /**
+   * <p>addWhileMatchFilter.</p>
+   *
+   * @param filter a {@link org.apache.hadoop.hbase.filter.WhileMatchFilter} object.
+   */
   public void addWhileMatchFilter(WhileMatchFilter filter) {
     whileMatchFilters.add(filter);
   }
 
   /*
    * Returns the number of {@link WhileMatchFilter}s in the context.
+   */
+  /**
+   * <p>getNumberOfWhileMatchFilters.</p>
+   *
+   * @return a int.
    */
   public int getNumberOfWhileMatchFilters() {
     return whileMatchFilters.size();

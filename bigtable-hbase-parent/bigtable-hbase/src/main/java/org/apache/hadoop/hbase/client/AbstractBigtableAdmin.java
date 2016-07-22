@@ -76,11 +76,19 @@ import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.protobuf.ByteString;
 
+/**
+ * <p>Abstract AbstractBigtableAdmin class.</p>
+ *
+ * @author sduskis
+ * @version $Id: $Id
+ */
 public abstract class AbstractBigtableAdmin implements Admin {
 
   private static final Logger LOG = new Logger(AbstractBigtableAdmin.class);
 
   /**
+   * {@inheritDoc}
+   *
    * Bigtable doesn't require disabling tables before deletes or schema changes. Some clients do
    * call disable first, and then check for disable before deletes or schema changes. We're keeping
    * track of that state in memory on so that those clients can proceed with the delete/schema
@@ -97,6 +105,15 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final ColumnDescriptorAdapter columnDescriptorAdapter = new ColumnDescriptorAdapter();
   private final TableAdapter tableAdapter;
 
+  /**
+   * <p>Constructor for AbstractBigtableAdmin.</p>
+   *
+   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   * @param configuration a {@link org.apache.hadoop.conf.Configuration} object.
+   * @param connection a {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection} object.
+   * @param bigtableTableAdminClient a {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} object.
+   * @param disabledTables a {@link java.util.Set} object.
+   */
   public AbstractBigtableAdmin(
       BigtableOptions options,
       Configuration configuration,
@@ -113,11 +130,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
     this.tableAdapter = new TableAdapter(options, columnDescriptorAdapter);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Connection getConnection() {
     return connection;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean tableExists(TableName tableName) throws IOException {
     for(TableName existingTableName : listTableNames(tableName.getNameAsString())) {
@@ -130,11 +149,19 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  /**
+   * <p>tableExists.</p>
+   *
+   * @param tableName a {@link java.lang.String} object.
+   * @return a boolean.
+   * @throws java.io.IOException if any.
+   */
   @Deprecated
   public boolean tableExists(String tableName) throws IOException {
     return tableExists(TableName.valueOf(tableName));
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTables() throws IOException {
     // NOTE: We don't have systables.
@@ -149,12 +176,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return response;
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTables(Pattern pattern) throws IOException {
     // NOTE: We don't have systables.
     return getTableDescriptors(listTableNames(pattern));
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTables(final Pattern pattern, final boolean includeSysTables)
       throws IOException {
@@ -164,12 +193,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  /** {@inheritDoc} */
   @Override
   @Deprecated
   public TableName[] listTableNames(String patternStr) throws IOException {
     return listTableNames(Pattern.compile(patternStr));
   }
 
+  /** {@inheritDoc} */
   @Override
   public TableName[] listTableNames(Pattern pattern) throws IOException {
     List<TableName> result = new ArrayList<>();
@@ -183,25 +214,31 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return result.toArray(new TableName[result.size()]);
   }
 
+  /** {@inheritDoc} */
   @Override
   public TableName[] listTableNames(Pattern pattern, boolean includeSysTables) throws IOException {
     return listTableNames(pattern);
   }
 
+  /** {@inheritDoc} */
   @Override
   public TableName[] listTableNames(String regex, boolean includeSysTables) throws IOException {
     return listTableNames(regex);
   }
+
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTables(String regex) throws IOException {
     return listTables(Pattern.compile(regex));
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTables(String regex, boolean includeSysTables) throws IOException {
     return listTables(regex);
   }
 
+  /** {@inheritDoc} */
   @Override
   /**
    * Lists all table names for the cluster provided in the configuration.
@@ -241,6 +278,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return result;
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor getTableDescriptor(TableName tableName)
       throws TableNotFoundException, IOException {
@@ -273,6 +311,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  /**
+   * <p>getTableNames.</p>
+   *
+   * @param regex a {@link java.lang.String} object.
+   * @return an array of {@link java.lang.String} objects.
+   * @throws java.io.IOException if any.
+   */
   @Deprecated
   public String[] getTableNames(String regex) throws IOException {
     HTableDescriptor[] tableDescriptors = listTables(regex);
@@ -283,11 +328,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return tableNames;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc) throws IOException {
     createTable(desc, null);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions)
       throws IOException {
@@ -307,6 +354,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     createTable(desc, splitKeys);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
@@ -329,12 +377,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void createTableAsync(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
     LOG.warn("Creating the table synchronously");
     createTable(desc, splitKeys);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void deleteTable(TableName tableName) throws IOException {
     Builder deleteBuilder = DeleteTableRequest.newBuilder();
@@ -351,11 +401,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
     disabledTables.remove(tableName);
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] deleteTables(String regex) throws IOException {
     return deleteTables(Pattern.compile(regex));
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] deleteTables(Pattern pattern) throws IOException {
     List<HTableDescriptor> failed = new LinkedList<HTableDescriptor>();
@@ -370,6 +422,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return failed.toArray(new HTableDescriptor[failed.size()]);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void enableTable(TableName tableName) throws IOException {
     TableName.isLegalFullyQualifiedTableName(tableName.getName());
@@ -382,16 +435,24 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  /**
+   * <p>enableTable.</p>
+   *
+   * @param tableName a {@link java.lang.String} object.
+   * @throws java.io.IOException if any.
+   */
   @Deprecated
   public void enableTable(String tableName) throws IOException {
     enableTable(TableName.valueOf(tableName));
   }
 
+  /** {@inheritDoc} */
   @Override
   public void enableTableAsync(TableName tableName) throws IOException {
     enableTable(tableName);
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] enableTables(String regex) throws IOException {
     HTableDescriptor[] tableDescriptors = listTables(regex);
@@ -401,6 +462,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return tableDescriptors;
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] enableTables(Pattern pattern) throws IOException {
     HTableDescriptor[] tableDescriptors = listTables(pattern);
@@ -410,11 +472,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return tableDescriptors;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void disableTableAsync(TableName tableName) throws IOException {
     disableTable(tableName);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void disableTable(TableName tableName) throws IOException {
     TableName.isLegalFullyQualifiedTableName(tableName.getName());
@@ -430,11 +494,18 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  /**
+   * <p>disableTable.</p>
+   *
+   * @param tableName a {@link java.lang.String} object.
+   * @throws java.io.IOException if any.
+   */
   @Deprecated
   public void disableTable(String tableName) throws IOException {
     disableTable(TableName.valueOf(tableName));
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] disableTables(String regex) throws IOException {
     HTableDescriptor[] tableDescriptors = listTables(regex);
@@ -444,6 +515,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return tableDescriptors;
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] disableTables(Pattern pattern) throws IOException {
     HTableDescriptor[] tableDescriptors = listTables(pattern);
@@ -453,6 +525,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return tableDescriptors;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isTableEnabled(TableName tableName) throws IOException {
     return !isTableDisabled(tableName);
@@ -460,11 +533,19 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  /**
+   * <p>isTableEnabled.</p>
+   *
+   * @param tableName a {@link java.lang.String} object.
+   * @return a boolean.
+   * @throws java.io.IOException if any.
+   */
   @Deprecated
   public boolean isTableEnabled(String tableName) throws IOException {
     return isTableEnabled(TableName.valueOf(tableName));
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isTableDisabled(TableName tableName) throws IOException {
     return disabledTables.contains(tableName);
@@ -472,16 +553,25 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  /**
+   * <p>isTableDisabled.</p>
+   *
+   * @param tableName a {@link java.lang.String} object.
+   * @return a boolean.
+   * @throws java.io.IOException if any.
+   */
   @Deprecated
   public boolean isTableDisabled(String tableName) throws IOException {
     return isTableDisabled(TableName.valueOf(tableName));
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isTableAvailable(TableName tableName) throws IOException {
     return tableExists(tableName);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
     String columnName = column.getNameAsString();
@@ -491,6 +581,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
 
+  /** {@inheritDoc} */
   @Override
   public void modifyColumn(TableName tableName, HColumnDescriptor column) throws IOException {
     String columnName = column.getNameAsString();
@@ -499,6 +590,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     modifyColumn(tableName, columnName, "update", modification);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
     final String columnNameStr = Bytes.toString(columnName);
@@ -507,6 +599,15 @@ public abstract class AbstractBigtableAdmin implements Admin {
     modifyColumn(tableName, columnNameStr, "delete", modification);
   }
 
+  /**
+   * <p>modifyColumn.</p>
+   *
+   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
+   * @param columnName a {@link java.lang.String} object.
+   * @param modificationType a {@link java.lang.String} object.
+   * @param modification a {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder} object.
+   * @throws java.io.IOException if any.
+   */
   protected void modifyColumn(TableName tableName, String columnName,
       String modificationType, Modification.Builder modification) throws IOException {
     ModifyColumnFamiliesRequest.Builder modifyColumnBuilder = ModifyColumnFamiliesRequest
@@ -527,16 +628,16 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  /** {@inheritDoc} */
   @Deprecated
   public void addColumn(String tableName, HColumnDescriptor column) throws IOException {
     addColumn(TableName.valueOf(tableName), column);
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Modify an existing column family on a table. Asynchronous operation.
-   * @param tableName name of table
-   * @param descriptor new column descriptor to use
-   * @throws IOException if a remote or network exception occurs
    */
   public void modifyColumn(final String tableName, HColumnDescriptor descriptor)
       throws IOException {
@@ -545,6 +646,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  /**
+   * <p>deleteColumn.</p>
+   *
+   * @param tableName a {@link java.lang.String} object.
+   * @param columnName an array of byte.
+   * @throws java.io.IOException if any.
+   */
   @Deprecated
   public void deleteColumn(String tableName, byte[] columnName) throws IOException {
     deleteColumn(TableName.valueOf(tableName), columnName);
@@ -552,12 +660,20 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
+  /**
+   * <p>deleteColumn.</p>
+   *
+   * @param tableName a {@link java.lang.String} object.
+   * @param columnName a {@link java.lang.String} object.
+   * @throws java.io.IOException if any.
+   */
   @Deprecated
   public void deleteColumn(final String tableName, final String columnName)
   throws IOException {
     deleteColumn(TableName.valueOf(tableName), Bytes.toBytes(columnName));
   }
 
+  /** {@inheritDoc} */
   @Override
   public ClusterStatus getClusterStatus() throws IOException {
     return new ClusterStatus() {
@@ -569,11 +685,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
     };
   }
 
+  /** {@inheritDoc} */
   @Override
   public Configuration getConfiguration() {
     return configuration;
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
     List<HRegionInfo> regionInfos = new ArrayList<>();
@@ -583,11 +701,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return regionInfos;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
     // no-op
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] getTableDescriptorsByTableName(List<TableName> tableNames)
       throws IOException {
@@ -595,6 +715,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return getTableDescriptors(tableNameArray);
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(getClass())
@@ -606,21 +727,25 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /* Unsupported operations */
 
+  /** {@inheritDoc} */
   @Override
   public int getOperationTimeout() {
     throw new UnsupportedOperationException("getOperationTimeout");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void abort(String why, Throwable e) {
     throw new UnsupportedOperationException("abort");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isAborted() {
     throw new UnsupportedOperationException("isAborted");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void truncateTable(TableName tableName, boolean preserveSplits) throws IOException {
     if (!preserveSplits) {
@@ -630,6 +755,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
     disabledTables.remove(tableName);
   }
 
+  /**
+   * <p>deleteRowRangeByPrefix.</p>
+   *
+   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
+   * @param prefix an array of byte.
+   * @throws java.io.IOException if any.
+   */
   public void deleteRowRangeByPrefix(TableName tableName, byte[] prefix) throws IOException {
     issueBulkDelete(
         tableName,
@@ -649,16 +781,26 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
   }
 
+  /**
+   * <p>toBigtableName.</p>
+   *
+   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
+   * @return a {@link java.lang.String} object.
+   */
   protected String toBigtableName(TableName tableName) {
     return bigtableInstanceName.toTableNameStr(tableName.getNameAsString());
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isTableAvailable(TableName tableName, byte[][] splitKeys) throws IOException {
     return tableExists(tableName);
   }
 
-  /** HBase column operations are not synchronous, since they're not as fast as Bigtable.  Bigtable
+  /**
+   * {@inheritDoc}
+   *
+   * HBase column operations are not synchronous, since they're not as fast as Bigtable.  Bigtable
    * does not have async operations, so always return (0, 0).  This is needed for some shell
    * operations.
    */
@@ -667,262 +809,318 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return new Pair<>(0, 0);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Pair<Integer, Integer> getAlterStatus(byte[] tableName) throws IOException {
     return getAlterStatus(TableName.valueOf(tableName));
   }
 
+  /**
+   * <p>getAlterStatus.</p>
+   *
+   * @param tableName a {@link java.lang.String} object.
+   * @return a {@link org.apache.hadoop.hbase.util.Pair} object.
+   * @throws java.io.IOException if any.
+   */
   public Pair<Integer, Integer> getAlterStatus(String tableName) throws IOException {
     return getAlterStatus(TableName.valueOf(tableName));
   }
 
+  /** {@inheritDoc} */
   @Override
   public void closeRegion(String regionname, String serverName) throws IOException {
     throw new UnsupportedOperationException("closeRegion");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void closeRegion(byte[] regionname, String serverName) throws IOException {
     throw new UnsupportedOperationException("closeRegion");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean closeRegionWithEncodedRegionName(String encodedRegionName, String serverName)
       throws IOException {
     throw new UnsupportedOperationException("closeRegionWithEncodedRegionName");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void closeRegion(ServerName sn, HRegionInfo hri) throws IOException {
     throw new UnsupportedOperationException("closeRegion");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<HRegionInfo> getOnlineRegions(ServerName sn) throws IOException {
     throw new UnsupportedOperationException("getOnlineRegions");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void flush(TableName tableName) throws IOException {
     throw new UnsupportedOperationException("flush");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void flushRegion(byte[] bytes) throws IOException {
     LOG.info("flushRegion is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void compact(TableName tableName) throws IOException {
     LOG.info("compact is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void compactRegion(byte[] bytes) throws IOException {
     LOG.info("compactRegion is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void compact(TableName tableName, byte[] bytes) throws IOException {
     LOG.info("compact is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void compactRegion(byte[] bytes, byte[] bytes2) throws IOException {
     LOG.info("compactRegion is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void majorCompact(TableName tableName) throws IOException {
     LOG.info("majorCompact is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void majorCompactRegion(byte[] bytes) throws IOException {
     LOG.info("majorCompactRegion is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void majorCompact(TableName tableName, byte[] bytes) throws IOException {
     LOG.info("majorCompact is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void majorCompactRegion(byte[] bytes, byte[] bytes2) throws IOException {
     LOG.info("majorCompactRegion is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void compactRegionServer(ServerName serverName, boolean b) throws IOException {
     LOG.info("compactRegionServer is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void move(byte[] encodedRegionName, byte[] destServerName)
       throws HBaseIOException, MasterNotRunningException, ZooKeeperConnectionException {
     LOG.info("move is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void assign(byte[] regionName)
       throws MasterNotRunningException, ZooKeeperConnectionException, IOException {
     LOG.info("assign is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void unassign(byte[] regionName, boolean force)
       throws MasterNotRunningException, ZooKeeperConnectionException, IOException {
     LOG.info("unassign is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void offline(byte[] regionName) throws IOException {
     throw new UnsupportedOperationException("offline");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean setBalancerRunning(boolean on, boolean synchronous)
       throws MasterNotRunningException, ZooKeeperConnectionException {
     throw new UnsupportedOperationException("setBalancerRunning");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean balancer()
       throws MasterNotRunningException, ZooKeeperConnectionException {
     throw new UnsupportedOperationException("balancer");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean enableCatalogJanitor(boolean enable)
       throws MasterNotRunningException {
     throw new UnsupportedOperationException("enableCatalogJanitor");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public int runCatalogScan() throws MasterNotRunningException {
     throw new UnsupportedOperationException("runCatalogScan");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isCatalogJanitorEnabled() throws MasterNotRunningException {
     throw new UnsupportedOperationException("isCatalogJanitorEnabled");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void mergeRegions(byte[] encodedNameOfRegionA, byte[] encodedNameOfRegionB,
       boolean forcible) throws IOException {
     LOG.info("mergeRegions is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void split(TableName tableName) throws IOException {
     LOG.info("split is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void splitRegion(byte[] bytes) throws IOException {
     LOG.info("splitRegion is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void split(TableName tableName, byte[] bytes) throws IOException {
     LOG.info("split is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void splitRegion(byte[] bytes, byte[] bytes2) throws IOException {
     LOG.info("split is a no-op");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void modifyTable(TableName tableName, HTableDescriptor htd) throws IOException {
     throw new UnsupportedOperationException("modifyTable");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void shutdown() throws IOException {
     throw new UnsupportedOperationException("shutdown");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void stopMaster() throws IOException {
     throw new UnsupportedOperationException("stopMaster");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void stopRegionServer(String hostnamePort) throws IOException {
     throw new UnsupportedOperationException("stopRegionServer");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
     throw new UnsupportedOperationException("createNamespace");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException {
     throw new UnsupportedOperationException("modifyNamespace");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void deleteNamespace(String name) throws IOException {
     throw new UnsupportedOperationException("deleteNamespace");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException {
     throw new UnsupportedOperationException("getNamespaceDescriptor");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public NamespaceDescriptor[] listNamespaceDescriptors() throws IOException {
     throw new UnsupportedOperationException("listNamespaceDescriptors");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] listTableDescriptorsByNamespace(String name) throws IOException {
     throw new UnsupportedOperationException("listDescriptorsByNamespace");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public TableName[] listTableNamesByNamespace(String name) throws IOException {
     throw new UnsupportedOperationException("listTableNamesByNamespace");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor[] getTableDescriptors(List<String> names) throws IOException {
     throw new UnsupportedOperationException("getTableDescriptors");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public String[] getMasterCoprocessors() {
     throw new UnsupportedOperationException("getMasterCoprocessors");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName)
       throws IOException {
     throw new UnsupportedOperationException("getCompactionState");
   }
 
+  /** {@inheritDoc} */
   @Override
   public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] bytes)
       throws IOException {
     throw new UnsupportedOperationException("getCompactionStateForRegion");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void snapshot(String snapshotName, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
     throw new UnsupportedOperationException("snapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void snapshot(byte[] snapshotName, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
     throw new UnsupportedOperationException("snapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void snapshot(String snapshotName, TableName tableName,
       HBaseProtos.SnapshotDescription.Type type)
@@ -930,136 +1128,161 @@ public abstract class AbstractBigtableAdmin implements Admin {
     throw new UnsupportedOperationException("snapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void snapshot(HBaseProtos.SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
     throw new UnsupportedOperationException("snapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException {
     throw new UnsupportedOperationException("takeSnapshotAsync");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isSnapshotFinished(HBaseProtos.SnapshotDescription snapshot)
       throws IOException, HBaseSnapshotException, UnknownSnapshotException {
     throw new UnsupportedOperationException("isSnapshotFinished");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
     throw new UnsupportedOperationException("restoreSnapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
     throw new UnsupportedOperationException("restoreSnapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
       throws IOException, RestoreSnapshotException {
     throw new UnsupportedOperationException("restoreSnapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
       throws IOException, RestoreSnapshotException {
     throw new UnsupportedOperationException("restoreSnapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void cloneSnapshot(byte[] snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     throw new UnsupportedOperationException("cloneSnapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     throw new UnsupportedOperationException("cloneSnapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void execProcedure(String signature, String instance, Map<String, String> props)
       throws IOException {
     throw new UnsupportedOperationException("execProcedure");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public byte[] execProcedureWithRet(String signature, String instance, Map<String, String> props)
       throws IOException {
     throw new UnsupportedOperationException("execProcedureWithRet");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isProcedureFinished(String signature, String instance, Map<String, String> props)
       throws IOException {
     throw new UnsupportedOperationException("isProcedureFinished");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
     throw new UnsupportedOperationException("listSnapshots");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<HBaseProtos.SnapshotDescription> listSnapshots(String regex) throws IOException {
     throw new UnsupportedOperationException("listSnapshots");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
     throw new UnsupportedOperationException("listSnapshots");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void deleteSnapshot(byte[] snapshotName) throws IOException {
     throw new UnsupportedOperationException("deleteSnapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void deleteSnapshot(String snapshotName) throws IOException {
     throw new UnsupportedOperationException("deleteSnapshot");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void deleteSnapshots(String regex) throws IOException {
     throw new UnsupportedOperationException("deleteSnapshots");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void deleteSnapshots(Pattern pattern) throws IOException {
     throw new UnsupportedOperationException("deleteSnapshots");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public CoprocessorRpcChannel coprocessorService() {
     throw new UnsupportedOperationException("coprocessorService");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public CoprocessorRpcChannel coprocessorService(ServerName serverName) {
     throw new UnsupportedOperationException("coprocessorService");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void updateConfiguration(ServerName serverName) throws IOException {
     throw new UnsupportedOperationException("updateConfiguration");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void updateConfiguration() throws IOException {
     throw new UnsupportedOperationException("updateConfiguration");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public int getMasterInfoPort() throws IOException {
     throw new UnsupportedOperationException("getMasterInfoPort");  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public void rollWALWriter(ServerName serverName) throws IOException, FailedLogCloseException {
     throw new UnsupportedOperationException("rollWALWriter");  // TODO

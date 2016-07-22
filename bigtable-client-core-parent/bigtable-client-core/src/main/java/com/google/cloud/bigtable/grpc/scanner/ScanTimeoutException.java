@@ -19,11 +19,19 @@ import java.io.IOException;
 
 /**
  * An IOException that presents timeout when reading response.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ScanTimeoutException extends IOException {
 
   private static final long serialVersionUID = 4115316291347038875L;
 
+  /**
+   * <p>Constructor for ScanTimeoutException.</p>
+   *
+   * @param message a {@link java.lang.String} object.
+   */
   public ScanTimeoutException(String message) {
     super(message);
   }

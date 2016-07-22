@@ -20,9 +20,17 @@ import org.apache.hadoop.util.ProgramDriver;
 /**
  * Driver for bigtable mapreduce jobs. Select which to run by passing
  * name of job to this main.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class Driver {
 
+  /**
+   * <p>main.</p>
+   *
+   * @param args an array of {@link java.lang.String} objects.
+   */
   public static void main(String[] args) {
     ProgramDriver programDriver = new ProgramDriver();
     int exitCode = -1;

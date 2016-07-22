@@ -39,11 +39,15 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 /**
- * A {@link AsyncFunction} that retries a {@link BigtableAsyncRpc} request.
+ * A {@link com.google.common.util.concurrent.AsyncFunction} that retries a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} request.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     extends ClientCall.Listener<ResponseT> implements Runnable {
 
+  /** Constant <code>LOG</code> */
   protected final static Logger LOG = new Logger(AbstractRetryingRpcListener.class);
 
   protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
@@ -81,6 +85,16 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   protected final GrpcFuture<ResultT> completionFuture = new GrpcFuture<>();
   protected ClientCall<RequestT, ResponseT> call;
 
+  /**
+   * <p>Constructor for AbstractRetryingRpcListener.</p>
+   *
+   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
+   * @param request a RequestT object.
+   * @param retryableRpc a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
+   * @param callOptions a {@link io.grpc.CallOptions} object.
+   * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
+   * @param originalMetadata a {@link io.grpc.Metadata} object.
+   */
   public AbstractRetryingRpcListener(
           RetryOptions retryOptions,
           RequestT request,
@@ -96,6 +110,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     this.originalMetadata = originalMetadata;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
     if (status.isOk()) {
@@ -111,6 +126,9 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     }
   }
 
+  /**
+   * <p>onOK.</p>
+   */
   protected abstract void onOK();
 
   private void backOffAndRetry(Status status) {
@@ -147,11 +165,18 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     return BackOff.STOP;
   }
 
+  /**
+   * <p>Getter for the field <code>completionFuture</code>.</p>
+   *
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} object.
+   */
   public ListenableFuture<ResultT> getCompletionFuture() {
     return completionFuture;
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Calls {@link BigtableAsyncRpc#call(Object, Listener, CallOptions, Metadata)} with this as the
    * listener so that retries happen correctly.
    */
@@ -162,6 +187,9 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     this.call = rpc.call(request, this, callOptions, metadata);
   }
 
+  /**
+   * <p>cancel.</p>
+   */
   public void cancel() {
     if (this.call != null) {
       call.cancel("User requested cancelation.", null);

@@ -26,9 +26,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- * Adapter for HBase {@link PrefixFilter} instances.
+ * Adapter for HBase {@link org.apache.hadoop.hbase.filter.PrefixFilter} instances.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class PrefixFilterAdapter implements TypedFilterAdapter<PrefixFilter> {
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, PrefixFilter filter)
       throws IOException {
@@ -43,6 +47,7 @@ public class PrefixFilterAdapter implements TypedFilterAdapter<PrefixFilter> {
         .build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, PrefixFilter filter) {

@@ -28,6 +28,9 @@ import java.io.IOException;
 
 /**
  * A TypedFilterAdapter for adapting PageFilter instances.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class PageFilterAdapter implements TypedFilterAdapter<PageFilter> {
 
@@ -36,6 +39,7 @@ public class PageFilterAdapter implements TypedFilterAdapter<PageFilter> {
           "Page filters may only appear as top level filters or be contained within "
               + "a top-level FilterList instances with MUST_PASS_ALL as its Operator");
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, PageFilter filter) throws IOException {
     final long pageSize = filter.getPageSize();
@@ -49,6 +53,7 @@ public class PageFilterAdapter implements TypedFilterAdapter<PageFilter> {
     return null;
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(FilterAdapterContext context, PageFilter filter) {
     Optional<FilterList> currentList = context.getCurrentFilterList();

@@ -32,12 +32,17 @@ import com.google.common.collect.ImmutableSet;
 
 /**
  * Options for retrying requests, including back off configuration.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class RetryOptions implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
+  /** Constant <code>DEFAULT_STREAMING_BUFFER_SIZE=60</code> */
   public static int DEFAULT_STREAMING_BUFFER_SIZE = 60;
+  /** Constant <code>DEFAULT_STREAMING_BATCH_SIZE=DEFAULT_STREAMING_BUFFER_SIZE / 2</code> */
   public static int DEFAULT_STREAMING_BATCH_SIZE = DEFAULT_STREAMING_BUFFER_SIZE / 2;
 
   /**
@@ -46,6 +51,7 @@ public class RetryOptions implements Serializable {
    */
   public static final boolean DEFAULT_ENABLE_GRPC_RETRIES = true;
 
+  /** Constant <code>DEFAULT_ENABLE_GRPC_RETRIES_SET</code> */
   public static final ImmutableSet<Status.Code> DEFAULT_ENABLE_GRPC_RETRIES_SET = ImmutableSet.of(
       Status.Code.DEADLINE_EXCEEDED,
       Status.Code.INTERNAL,
@@ -228,6 +234,20 @@ public class RetryOptions implements Serializable {
   private final int maxScanTimeoutRetries;
   private final ImmutableSet<Code> statusToRetryOn;
 
+  /**
+   * <p>Constructor for RetryOptions.</p>
+   *
+   * @param retriesEnabled a boolean.
+   * @param allowRetriesWithoutTimestamp a boolean.
+   * @param initialBackoffMillis a int.
+   * @param backoffMultiplier a double.
+   * @param maxElaspedBackoffMillis a int.
+   * @param streamingBufferSize a int.
+   * @param streamingBatchSize a int.
+   * @param readPartialRowTimeoutMillis a int.
+   * @param maxScanTimeoutRetries a int.
+   * @param statusToRetryOn a {@link com.google.common.collect.ImmutableSet} object.
+   */
   public RetryOptions(
       boolean retriesEnabled,
       boolean allowRetriesWithoutTimestamp,
@@ -253,6 +273,8 @@ public class RetryOptions implements Serializable {
 
   /**
    * The amount of time in milliseconds we will wait for our first error retry.
+   *
+   * @return a int.
    */
   public int getInitialBackoffMillis() {
     return initialBackoffMillis;
@@ -260,6 +282,8 @@ public class RetryOptions implements Serializable {
 
   /**
    * Maximum amount of time we will retry an operation that is failing.
+   *
+   * @return a int.
    */
   public int getMaxElaspedBackoffMillis() {
     return maxElaspedBackoffMillis;
@@ -267,6 +291,8 @@ public class RetryOptions implements Serializable {
 
   /**
    * Multiplier we will apply to backoff times between retries.
+   *
+   * @return a double.
    */
   public double getBackoffMultiplier() {
     return backoffMultiplier;
@@ -274,6 +300,8 @@ public class RetryOptions implements Serializable {
 
   /**
    * Enable or disable retries.
+   *
+   * @return a boolean.
    */
   public boolean enableRetries() {
     return retriesEnabled;
@@ -281,6 +309,8 @@ public class RetryOptions implements Serializable {
 
   /**
    * Should retries be allowed even if a timestamp isn't set?
+   *
+   * @return a boolean.
    */
   public boolean allowRetriesWithoutTimestamp() {
     return allowRetriesWithoutTimestamp;
@@ -288,6 +318,8 @@ public class RetryOptions implements Serializable {
 
   /**
    * Whether to retry on deadline exceeded.
+   *
+   * @return a boolean.
    */
   public boolean retryOnDeadlineExceeded() {
     return statusToRetryOn.contains(Status.Code.DEADLINE_EXCEEDED);
@@ -295,6 +327,8 @@ public class RetryOptions implements Serializable {
 
   /**
    * The maximum number of messages to buffer when scanning.
+   *
+   * @return a int.
    */
   public int getStreamingBufferSize() {
     return streamingBufferSize;
@@ -302,6 +336,8 @@ public class RetryOptions implements Serializable {
 
   /**
    * The number of messages to request when scanning.
+   *
+   * @return a int.
    */
   public int getStreamingBatchSize() {
     return streamingBatchSize;
@@ -309,6 +345,8 @@ public class RetryOptions implements Serializable {
 
   /**
    * A timeout for reading individual ReadRowsResponse messages from a stream.
+   *
+   * @return a int.
    */
   public int getReadPartialRowTimeoutMillis() {
     return readPartialRowTimeoutMillis;
@@ -316,22 +354,37 @@ public class RetryOptions implements Serializable {
 
   /**
    * The maximum number of times to retry after a scan timeout.
+   *
+   * @return a int.
    */
   public int getMaxScanTimeoutRetries() {
     return maxScanTimeoutRetries;
   }
 
   /**
-   * Determines if the RPC should be retried based on the input {@link Status.Code}.
+   * Determines if the RPC should be retried based on the input {@link io.grpc.Status.Code}.
+   *
+   * @param code a {@link io.grpc.Status.Code} object.
+   * @return a boolean.
    */
   public boolean isRetryable(Status.Code code) {
     return statusToRetryOn.contains(code);
   }
 
+  /**
+   * <p>createBackoff.</p>
+   *
+   * @return a {@link com.google.api.client.util.BackOff} object.
+   */
   public BackOff createBackoff() {
     return createBackoffBuilder().build();
   }
 
+  /**
+   * <p>createBackoffBuilder.</p>
+   *
+   * @return a {@link com.google.api.client.util.ExponentialBackOff.Builder} object.
+   */
   @VisibleForTesting
   protected ExponentialBackOff.Builder createBackoffBuilder() {
     return new ExponentialBackOff.Builder()
@@ -340,6 +393,7 @@ public class RetryOptions implements Serializable {
         .setMultiplier(getBackoffMultiplier());
   }
   
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (obj == null || obj.getClass() != RetryOptions.class) {
@@ -362,6 +416,7 @@ public class RetryOptions implements Serializable {
         && maxScanTimeoutRetries == other.maxScanTimeoutRetries;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -379,6 +434,11 @@ public class RetryOptions implements Serializable {
         .toString();
   }
 
+  /**
+   * <p>toBuilder.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.config.RetryOptions.Builder} object.
+   */
   public Builder toBuilder() {
     return new Builder(this);
   }

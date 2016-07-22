@@ -37,12 +37,16 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 
 /**
- * This class combines a collection of {@link ReadRowsRequest}s with a single row key into a single
- * {@link ReadRowsRequest} with a {@link RowSet} which will result in fewer round trips. This class
+ * This class combines a collection of {@link com.google.bigtable.v2.ReadRowsRequest}s with a single row key into a single
+ * {@link com.google.bigtable.v2.ReadRowsRequest} with a {@link com.google.bigtable.v2.RowSet} which will result in fewer round trips. This class
  * is not thread safe, and requires calling classes to make it thread safe.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BulkRead {
 
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BulkRead.class);
 
   private final BigtableDataClient client;
@@ -63,6 +67,12 @@ public class BulkRead {
    */
   private Multimap<ByteString, SettableFuture<List<Row>>> futures;
 
+  /**
+   * <p>Constructor for BulkRead.</p>
+   *
+   * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
+   * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
+   */
   public BulkRead(BigtableDataClient client, BigtableTableName tableName) {
     this.client = client;
     this.tableName = tableName.toString();
@@ -71,11 +81,10 @@ public class BulkRead {
   /**
    * Adds the key in the request to a list of to look up in a batch read.
    *
-   * @param request a {@link ReadRowsRequest} with a single row key.
-   *
-   * @return a {@link ListenableFuture} that will be populated with the {@link Row} that
+   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} with a single row key.
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will be populated with the {@link com.google.bigtable.v2.Row} that
    *    corresponds to the request
-   * @throws InterruptedException
+   * @throws java.lang.InterruptedException if any.
    */
   public ListenableFuture<List<Row>> add(ReadRowsRequest request) throws InterruptedException {
     Preconditions.checkNotNull(request);

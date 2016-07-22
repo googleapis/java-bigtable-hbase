@@ -19,6 +19,9 @@ package com.google.cloud.bigtable.grpc;
 /**
  * This class encapsulates a tableName.  A tableName is of the form
  * projects/(projectId)/zones/(zoneId)/clusters/(clusterId)/tables/(tableId).
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableTableName {
   private final String tableName;
@@ -27,6 +30,7 @@ public class BigtableTableName {
     this.tableName = tableName;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return tableName;

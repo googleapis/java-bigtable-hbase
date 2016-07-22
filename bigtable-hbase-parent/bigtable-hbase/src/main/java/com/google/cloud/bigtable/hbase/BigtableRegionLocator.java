@@ -34,10 +34,18 @@ import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.common.collect.ImmutableList;
 
+/**
+ * <p>BigtableRegionLocator class.</p>
+ *
+ * @author sduskis
+ * @version $Id: $Id
+ */
 public class BigtableRegionLocator implements RegionLocator {
   // Reuse the results from previous calls during this time.
+  /** Constant <code>MAX_REGION_AGE_MILLIS=60 * 1000</code> */
   public static long MAX_REGION_AGE_MILLIS = 60 * 1000;
 
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableRegionLocator.class);
 
   private final TableName tableName;
@@ -47,6 +55,13 @@ public class BigtableRegionLocator implements RegionLocator {
   private List<HRegionLocation> regions;
   private long regionsFetchTimeMillis;
 
+  /**
+   * <p>Constructor for BigtableRegionLocator.</p>
+   *
+   * @param tableName a {@link org.apache.hadoop.hbase.TableName} object.
+   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   * @param client a {@link com.google.cloud.bigtable.grpc.BigtableDataClient} object.
+   */
   public BigtableRegionLocator(TableName tableName, BigtableOptions options, BigtableDataClient client) {
     this.tableName = tableName;
     this.client = client;
@@ -80,11 +95,13 @@ public class BigtableRegionLocator implements RegionLocator {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public HRegionLocation getRegionLocation(byte[] row) throws IOException {
     return getRegionLocation(row, false);
   }
 
+  /** {@inheritDoc} */
   @Override
   public HRegionLocation getRegionLocation(byte[] row, boolean reload) throws IOException {
     for(HRegionLocation region : getRegions(reload)) {
@@ -95,21 +112,25 @@ public class BigtableRegionLocator implements RegionLocator {
     throw new IOException("Region not found for row: " + Bytes.toStringBinary(row));
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<HRegionLocation> getAllRegionLocations() throws IOException {
     return getRegions(false);
   }
 
+  /** {@inheritDoc} */
   @Override
   public byte[][] getStartKeys() throws IOException {
     return getStartEndKeys().getFirst();
   }
 
+  /** {@inheritDoc} */
   @Override
   public byte[][] getEndKeys() throws IOException {
     return getStartEndKeys().getSecond();
   }
 
+  /** {@inheritDoc} */
   @Override
   public Pair<byte[][], byte[][]> getStartEndKeys() throws IOException {
     List<HRegionLocation> regions = getAllRegionLocations();
@@ -124,11 +145,13 @@ public class BigtableRegionLocator implements RegionLocator {
     return Pair.newPair(startKeys, endKeys);
   }
 
+  /** {@inheritDoc} */
   @Override
   public TableName getName() {
     return tableName;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
   }

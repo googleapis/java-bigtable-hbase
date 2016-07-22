@@ -25,19 +25,38 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.security.User;
 
 /**
- * HBase 1.0 specific implementation of {@link AbstractBigtableConnection}.
+ * HBase 1.0 specific implementation of {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection}.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableConnection extends AbstractBigtableConnection {
 
+  /**
+   * <p>Constructor for BigtableConnection.</p>
+   *
+   * @param conf a {@link org.apache.hadoop.conf.Configuration} object.
+   * @throws java.io.IOException if any.
+   */
   public BigtableConnection(Configuration conf) throws IOException {
     super(conf);
   }
 
+  /**
+   * <p>Constructor for BigtableConnection.</p>
+   *
+   * @param conf a {@link org.apache.hadoop.conf.Configuration} object.
+   * @param managed a boolean.
+   * @param pool a {@link java.util.concurrent.ExecutorService} object.
+   * @param user a {@link org.apache.hadoop.hbase.security.User} object.
+   * @throws java.io.IOException if any.
+   */
   protected BigtableConnection(Configuration conf, boolean managed, ExecutorService pool, User user)
       throws IOException {
     super(conf, managed, pool, user);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Admin getAdmin() throws IOException {
     return new AbstractBigtableAdmin(getOptions(), getConfiguration(), this,

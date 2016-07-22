@@ -24,15 +24,26 @@ import com.google.common.base.Preconditions;
  * This class encapsulates a Bigtable instance name.  An instance name is of the form
  * projects/(projectId)/instances/(instanceId).  It also has convenience methods
  * to create a tableName and a tableId.  TableName is (instanceName)/tables/(tableId).
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableInstanceName implements Serializable {
   private static final long serialVersionUID = 1L;
 
+  /** Constant <code>BIGTABLE_V2_INSTANCE_FMT="projects/%s/instances/%s"</code> */
   public static final String BIGTABLE_V2_INSTANCE_FMT = "projects/%s/instances/%s";
+  /** Constant <code>TABLE_SEPARATOR="/tables/"</code> */
   public static final String TABLE_SEPARATOR = "/tables/";
 
   private final String instanceName;
 
+  /**
+   * <p>Constructor for BigtableInstanceName.</p>
+   *
+   * @param projectId a {@link java.lang.String} object.
+   * @param instanceId a {@link java.lang.String} object.
+   */
   public BigtableInstanceName(String projectId, String instanceId) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId), "projectId must be supplied");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(instanceId), "instanceId must be supplied");
@@ -40,6 +51,8 @@ public class BigtableInstanceName implements Serializable {
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Get the instance name.
    */
   @Override
@@ -50,6 +63,9 @@ public class BigtableInstanceName implements Serializable {
   /**
    * Transforms a tableName within this instance of the form
    * projects/(projectId)/instances/(instanceId)/tables/(tableId) to (tableId).
+   *
+   * @param tableName a {@link java.lang.String} object.
+   * @return a {@link java.lang.String} object.
    */
   public String toTableId(String tableName) {
     Preconditions.checkNotNull(tableName, "Table name cannot be null");
@@ -61,10 +77,22 @@ public class BigtableInstanceName implements Serializable {
     return tableId;
   }
 
+  /**
+   * <p>toTableNameStr.</p>
+   *
+   * @param tableId a {@link java.lang.String} object.
+   * @return a {@link java.lang.String} object.
+   */
   public String toTableNameStr(String tableId) {
     return instanceName +  TABLE_SEPARATOR + tableId;
   }
 
+  /**
+   * <p>toTableName.</p>
+   *
+   * @param tableId a {@link java.lang.String} object.
+   * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
+   */
   public BigtableTableName toTableName(String tableId) {
     return new BigtableTableName(toTableNameStr(tableId));
   }

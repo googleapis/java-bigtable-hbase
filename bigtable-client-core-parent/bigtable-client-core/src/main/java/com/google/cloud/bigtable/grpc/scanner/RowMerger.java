@@ -40,17 +40,17 @@ import java.util.TreeMap;
 
 /**
  * <p>
- * Builds a complete {@link Row} from {@link ReadRowsResponse} objects. A {@link ReadRowsResponse}
- * may contain a single {@link Row}, multiple {@link Row}s, or even a part of a {@link Cell} if the
+ * Builds a complete {@link com.google.bigtable.v2.Row} from {@link com.google.bigtable.v2.ReadRowsResponse} objects. A {@link com.google.bigtable.v2.ReadRowsResponse}
+ * may contain a single {@link com.google.bigtable.v2.Row}, multiple {@link com.google.bigtable.v2.Row}s, or even a part of a {@link com.google.bigtable.v2.Cell} if the
  * cell is
  * </p>
  * <p>
  * Each RowMerger object is valid only for building a single Row. Expected usage is along the lines
  * of:
  * </p>
- * 
+ *
  * <pre>
- * {@link StreamObserver}&lt;{@link Row}&gt; observer = ...;
+ * {@link io.grpc.stub.StreamObserver}&lt;{@link com.google.bigtable.v2.Row}&gt; observer = ...;
  * RowMerger rowMerger = new RowMerger(observer);
  * ...
  * rowMerger.onNext(...);
@@ -58,12 +58,21 @@ import java.util.TreeMap;
  * rowMerger.onComplete();
  * </pre>
  * <p>
- * When a complete row is found, {@link StreamObserver#onNext(Object)} will be called.
- * {@link StreamObserver#onError(Throwable)} will be called for
+ * When a complete row is found, {@link io.grpc.stub.StreamObserver#onNext(Object)} will be called.
+ * {@link io.grpc.stub.StreamObserver#onError(Throwable)} will be called for
  * </p>
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
+  /**
+   * <p>toRows.</p>
+   *
+   * @param responses a {@link java.lang.Iterable} object.
+   * @return a {@link java.util.List} object.
+   */
   public static List<Row> toRows(Iterable<ReadRowsResponse> responses) {
     final ArrayList<Row> result = new ArrayList<>();
     RowMerger rowMerger = new RowMerger(new StreamObserver<Row>() {
@@ -425,10 +434,16 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private RowInProgress rowInProgress;
   private boolean complete;
 
+  /**
+   * <p>Constructor for RowMerger.</p>
+   *
+   * @param observer a {@link io.grpc.stub.StreamObserver} object.
+   */
   public RowMerger(StreamObserver<Row> observer) {
     this.observer = observer;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onNext(ReadRowsResponse readRowsResponse) {
     if (complete) {
@@ -480,16 +495,16 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     }
   }
 
-  /**
-   * 
-   */
+  /** {@inheritDoc} */
   @Override
   public void onError(Throwable e) {
     observer.onError(e);
     complete = true;
   }
 
-  /** 
+  /**
+   * {@inheritDoc}
+   *
    * All {@link ReadRowsResponse} have been processed, and HTTP OK was sent.
    */
   @Override

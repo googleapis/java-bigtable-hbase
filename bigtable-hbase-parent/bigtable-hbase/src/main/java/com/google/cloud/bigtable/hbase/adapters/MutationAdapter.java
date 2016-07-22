@@ -30,6 +30,9 @@ import java.util.Map;
  * Adapt a generic Mutation to a bigtable operation.
  *
  * This class uses instanceof checking to determine an appropriate adaptation to apply.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class MutationAdapter
     implements OperationAdapter<Mutation, MutateRowRequest.Builder> {
@@ -55,6 +58,14 @@ public class MutationAdapter
 
   private final AdapterInstanceMap adapterMap = new AdapterInstanceMap();
 
+  /**
+   * <p>Constructor for MutationAdapter.</p>
+   *
+   * @param deleteAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
+   * @param putAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
+   * @param incrementAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
+   * @param appendAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
+   */
   public MutationAdapter(
       OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
       OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
@@ -66,6 +77,7 @@ public class MutationAdapter
     adapterMap.put(Append.class, appendAdapter);
   }
 
+  /** {@inheritDoc} */
   @Override
   public MutateRowRequest.Builder adapt(Mutation mutation) {
     OperationAdapter<Mutation, MutateRowRequest.Builder> adapter =

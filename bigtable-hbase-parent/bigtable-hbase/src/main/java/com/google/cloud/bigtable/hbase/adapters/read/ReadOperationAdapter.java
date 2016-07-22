@@ -21,7 +21,17 @@ import org.apache.hadoop.hbase.client.Operation;
 
 /**
  * Interface used for Scan and Get operation adapters.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface ReadOperationAdapter<T extends Operation> {
+  /**
+   * <p>adapt.</p>
+   *
+   * @param request a T object.
+   * @param readHooks a {@link com.google.cloud.bigtable.hbase.adapters.read.ReadHooks} object.
+   * @return a {@link com.google.bigtable.v2.ReadRowsRequest.Builder} object.
+   */
   ReadRowsRequest.Builder adapt(T request, ReadHooks readHooks);
 }

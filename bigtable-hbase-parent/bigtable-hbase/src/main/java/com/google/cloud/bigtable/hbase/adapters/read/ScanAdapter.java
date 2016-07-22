@@ -39,16 +39,29 @@ import java.util.NavigableSet;
 
 /**
  * An adapter for Scan operation that makes use of the proto filter language.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
 
   private final FilterAdapter filterAdapter;
+  /**
+   * <p>Constructor for ScanAdapter.</p>
+   *
+   * @param filterAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter} object.
+   */
   public ScanAdapter(FilterAdapter filterAdapter) {
     this.filterAdapter = filterAdapter;
   }
 
+  /**
+   * <p>throwIfUnsupportedScan.</p>
+   *
+   * @param scan a {@link org.apache.hadoop.hbase.client.Scan} object.
+   */
   public void throwIfUnsupportedScan(Scan scan) {
     if (scan.getFilter() != null) {
       filterAdapter.throwIfUnsupportedFilter(scan, scan.getFilter());
@@ -62,6 +75,10 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   /**
    * Given a Scan, build a RowFilter that include matching columns
+   *
+   * @param scan a {@link org.apache.hadoop.hbase.client.Scan} object.
+   * @param hooks a {@link com.google.cloud.bigtable.hbase.adapters.read.ReadHooks} object.
+   * @return a {@link com.google.bigtable.v2.RowFilter} object.
    */
   public RowFilter buildFilter(Scan scan, ReadHooks hooks) {
     RowFilter.Chain.Builder chainBuilder = RowFilter.Chain.newBuilder();
@@ -87,6 +104,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public Builder adapt(Scan scan, ReadHooks readHooks) {
     throwIfUnsupportedScan(scan);

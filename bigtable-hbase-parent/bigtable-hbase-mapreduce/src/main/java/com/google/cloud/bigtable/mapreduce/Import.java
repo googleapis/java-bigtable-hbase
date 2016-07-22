@@ -65,17 +65,25 @@ import java.util.TreeMap;
 
 
 /**
- * Import data written by {@link Export}.
+ * Import data written by {@link org.apache.hadoop.hbase.mapreduce.Export}.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
 public class Import extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(Import.class);
   final static String NAME = "import";
+  /** Constant <code>CF_RENAME_PROP="HBASE_IMPORTER_RENAME_CFS"</code> */
   public final static String CF_RENAME_PROP = "HBASE_IMPORTER_RENAME_CFS";
+  /** Constant <code>BULK_OUTPUT_CONF_KEY="import.bulk.output"</code> */
   public final static String BULK_OUTPUT_CONF_KEY = "import.bulk.output";
+  /** Constant <code>FILTER_CLASS_CONF_KEY="import.filter.class"</code> */
   public final static String FILTER_CLASS_CONF_KEY = "import.filter.class";
+  /** Constant <code>FILTER_ARGS_CONF_KEY="import.filter.args"</code> */
   public final static String FILTER_ARGS_CONF_KEY = "import.filter.args";
+  /** Constant <code>TABLE_NAME="import.table.name"</code> */
   public final static String TABLE_NAME = "import.table.name";
 
   private final static String JOB_NAME_CONF_KEY = "mapreduce.job.name";
@@ -219,11 +227,12 @@ public class Import extends Configured implements Tool {
   }
 
   /**
-   * Create a {@link Filter} to apply to all incoming keys ({@link KeyValue KeyValues}) to
+   * Create a {@link org.apache.hadoop.hbase.filter.Filter} to apply to all incoming keys ({@link KeyValue KeyValues}) to
    * optionally not include in the job output
-   * @param conf {@link Configuration} from which to load the filter
+   *
+   * @param conf {@link org.apache.hadoop.conf.Configuration} from which to load the filter
    * @return the filter to use for the task, or <tt>null</tt> if no filter to should be used
-   * @throws IllegalArgumentException if the filter is misconfigured
+   * @throws java.lang.IllegalArgumentException if the filter is misconfigured
    */
   public static Filter instantiateFilter(Configuration conf) {
     // get the filter, if it was configured    
@@ -268,9 +277,12 @@ public class Import extends Configured implements Tool {
 
   /**
    * Attempt to filter out the keyvalue
-   * @param kv {@link KeyValue} on which to apply the filter
+   *
+   * @param kv {@link org.apache.hadoop.hbase.KeyValue} on which to apply the filter
    * @return <tt>null</tt> if the key should not be written, otherwise returns the original
-   *         {@link KeyValue}
+   *         {@link org.apache.hadoop.hbase.KeyValue}
+   * @param filter a {@link org.apache.hadoop.hbase.filter.Filter} object.
+   * @throws java.io.IOException if any.
    */
   public static Cell filterKv(Filter filter, Cell kv) throws IOException {
     // apply the filter and skip this kv if the filter doesn't apply
@@ -337,12 +349,12 @@ public class Import extends Configured implements Tool {
   /**
    * <p>Sets a configuration property with key {@link #CF_RENAME_PROP} in conf that tells
    * the mapper how to rename column families.
-   * 
-   * <p>Alternately, instead of calling this function, you could set the configuration key 
-   * {@link #CF_RENAME_PROP} yourself. The value should look like 
+   *
+   * <p>Alternately, instead of calling this function, you could set the configuration key
+   * {@link #CF_RENAME_PROP} yourself. The value should look like
    * <pre>srcCf1:destCf1,srcCf2:destCf2,....</pre>. This would have the same effect on
    * the mapper behavior.
-   * 
+   *
    * @param conf the Configuration in which the {@link #CF_RENAME_PROP} key will be
    *  set
    * @param renameMap a mapping from source CF names to destination CF names
@@ -370,8 +382,9 @@ public class Import extends Configured implements Tool {
 
   /**
    * Add a Filter to be instantiated on import
+   *
    * @param conf Configuration to update (will be passed to the job)
-   * @param clazz {@link Filter} subclass to instantiate on the server.
+   * @param clazz {@link org.apache.hadoop.hbase.filter.Filter} subclass to instantiate on the server.
    * @param filterArgs List of arguments to pass to the filter on instantiation
    */
   public static void addFilterAndArguments(Configuration conf, Class<? extends Filter> clazz,
@@ -382,10 +395,11 @@ public class Import extends Configured implements Tool {
 
   /**
    * Sets up the actual job.
+   *
    * @param conf The current configuration.
    * @param args The command line parameters.
    * @return The newly created job.
-   * @throws IOException When setting up the job fails.
+   * @throws java.io.IOException When setting up the job fails.
    */
   public static Job createSubmittableJob(Configuration conf, String[] args)
   throws IOException {
@@ -458,6 +472,7 @@ public class Import extends Configured implements Tool {
         + "  -Dmapreduce.reduce.speculative=false\n");
   }
 
+  /** {@inheritDoc} */
   @Override
   public int run(String[] args) throws Exception {
     String[] otherArgs = new GenericOptionsParser(getConf(), args).getRemainingArgs();
@@ -475,8 +490,9 @@ public class Import extends Configured implements Tool {
 
   /**
    * Main entry point.
+   *
    * @param args The command line parameters.
-   * @throws Exception When running the job fails.
+   * @throws java.lang.Exception When running the job fails.
    */
   public static void main(String[] args) throws Exception {
     System.exit(ToolRunner.run(HBaseConfiguration.create(), new Import(), args));

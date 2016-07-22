@@ -26,8 +26,12 @@ import java.io.IOException;
 
 /**
  * An adapter for KeyOnlyFilter to a Bigtable strip_value_transform.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class KeyOnlyFilterAdapter implements TypedFilterAdapter<KeyOnlyFilter> {
+  /** Constant <code>TEST_CELL</code> */
   protected static final Cell TEST_CELL = new KeyValue(
       Bytes.toBytes('r'), // Row
       Bytes.toBytes('f'), // Family
@@ -35,6 +39,7 @@ public class KeyOnlyFilterAdapter implements TypedFilterAdapter<KeyOnlyFilter> {
       1L,
       Bytes.toBytes('v'));
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, KeyOnlyFilter filter)
       throws IOException {
@@ -43,6 +48,7 @@ public class KeyOnlyFilterAdapter implements TypedFilterAdapter<KeyOnlyFilter> {
         .build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, KeyOnlyFilter filter) {

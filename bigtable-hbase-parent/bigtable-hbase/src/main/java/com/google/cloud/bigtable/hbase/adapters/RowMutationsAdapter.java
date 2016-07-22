@@ -23,19 +23,33 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RowMutations;
 
 /**
- * An adapter that adapts a {@link RowMutations} object into an Bigtable
- * {@link MutateRowRequest}.
+ * An adapter that adapts a {@link org.apache.hadoop.hbase.client.RowMutations} object into an Bigtable
+ * {@link com.google.bigtable.v2.MutateRowRequest}.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class RowMutationsAdapter {
 
   protected final OperationAdapter<Mutation,
       MutateRowRequest.Builder> mutationAdapter;
 
+  /**
+   * <p>Constructor for RowMutationsAdapter.</p>
+   *
+   * @param mutationAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
+   */
   public RowMutationsAdapter(
       OperationAdapter<Mutation, MutateRowRequest.Builder> mutationAdapter) {
     this.mutationAdapter = mutationAdapter;
   }
 
+  /**
+   * <p>adapt.</p>
+   *
+   * @param mutations a {@link org.apache.hadoop.hbase.client.RowMutations} object.
+   * @return a {@link com.google.bigtable.v2.MutateRowRequest.Builder} object.
+   */
   public MutateRowRequest.Builder adapt(RowMutations mutations) {
     MutateRowRequest.Builder result = MutateRowRequest.newBuilder();
 

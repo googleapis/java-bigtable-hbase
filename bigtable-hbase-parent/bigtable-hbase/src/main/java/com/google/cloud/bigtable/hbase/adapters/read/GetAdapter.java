@@ -26,14 +26,23 @@ import org.apache.hadoop.hbase.client.Scan;
 /**
  * A Get adapter that transform the Get into a ReadRowsRequest using the proto-based
  * filter language.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class GetAdapter implements ReadOperationAdapter<Get> {
 
   protected final ScanAdapter scanAdapter;
+  /**
+   * <p>Constructor for GetAdapter.</p>
+   *
+   * @param scanAdapter a {@link com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter} object.
+   */
   public GetAdapter(ScanAdapter scanAdapter) {
     this.scanAdapter = scanAdapter;
   }
 
+  /** {@inheritDoc} */
   @Override
   public Builder adapt(Get operation, ReadHooks readHooks) {
     Scan operationAsScan = new Scan(operation);

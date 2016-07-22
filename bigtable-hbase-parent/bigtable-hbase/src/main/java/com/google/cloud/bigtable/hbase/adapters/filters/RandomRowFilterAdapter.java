@@ -23,8 +23,12 @@ import java.io.IOException;
 
 /**
  * Adapter for {@link org.apache.hadoop.hbase.filter.RandomRowFilter}
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class RandomRowFilterAdapter implements TypedFilterAdapter<RandomRowFilter> {
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, RandomRowFilter filter)
       throws IOException {
@@ -33,6 +37,7 @@ public class RandomRowFilterAdapter implements TypedFilterAdapter<RandomRowFilte
         .build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, RandomRowFilter filter) {

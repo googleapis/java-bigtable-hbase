@@ -27,15 +27,29 @@ import java.io.IOException;
 
 /**
  * Adapt a Bigtable ResultScanner to an HBase Result Scanner.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableResultScannerAdapter {
 
   final ResponseAdapter<Row, Result> rowAdapter;
 
+  /**
+   * <p>Constructor for BigtableResultScannerAdapter.</p>
+   *
+   * @param rowAdapter a {@link com.google.cloud.bigtable.hbase.adapters.ResponseAdapter} object.
+   */
   public BigtableResultScannerAdapter(ResponseAdapter<Row, Result> rowAdapter) {
     this.rowAdapter = rowAdapter;
   }
 
+  /**
+   * <p>adapt.</p>
+   *
+   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
+   * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
+   */
   public ResultScanner adapt(
       final com.google.cloud.bigtable.grpc.scanner.ResultScanner<Row> bigtableResultScanner) {
     return new AbstractClientScanner() {

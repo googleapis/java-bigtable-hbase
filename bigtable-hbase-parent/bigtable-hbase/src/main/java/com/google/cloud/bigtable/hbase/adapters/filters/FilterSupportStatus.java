@@ -25,6 +25,9 @@ import java.util.List;
  *
  * The isSupported method indicates whether the Filter is supported and if isSupport() is false
  * a reason may be provided by the adapter.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class FilterSupportStatus {
 
@@ -42,6 +45,7 @@ public class FilterSupportStatus {
   /**
    * Static helper to construct not support adaptations due to no adapter being available for
    * the given Filter type.
+   *
    * @param unknownFilterType The unknown filter instance.
    * @return A new FilterSupportStatus.
    */
@@ -54,6 +58,9 @@ public class FilterSupportStatus {
 
   /**
    * Generic static constructor for not supported adaptations with the stated reason.
+   *
+   * @param reason a {@link java.lang.String} object.
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterSupportStatus} object.
    */
   public static FilterSupportStatus newNotSupported(String reason) {
     return new FilterSupportStatus(false, reason);
@@ -61,6 +68,9 @@ public class FilterSupportStatus {
 
   /**
    * Static constructor for a not supported status caused by sub-filters not being supported.
+   *
+   * @param unsupportedSubfilters a {@link java.util.List} object.
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterSupportStatus} object.
    */
   public static FilterSupportStatus newCompositeNotSupported(
       List<FilterSupportStatus> unsupportedSubfilters) {
@@ -82,6 +92,8 @@ public class FilterSupportStatus {
 
   /**
    * True if the adaptation is supported, false otherwise.
+   *
+   * @return a boolean.
    */
   public boolean isSupported() {
     return isSupported;
@@ -94,6 +106,7 @@ public class FilterSupportStatus {
     return reason;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return String.format(

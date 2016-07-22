@@ -45,10 +45,13 @@ import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 /**
-* Export an HBase table.
-* Writes content to sequence files up in HDFS.  Use {@link Import} to read it
-* back in again.
-*/
+ * Export an HBase table.
+ * Writes content to sequence files up in HDFS.  Use {@link com.google.cloud.bigtable.mapreduce.Import} to read it
+ * back in again.
+ *
+ * @author sduskis
+ * @version $Id: $Id
+ */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
 public class Export {
@@ -63,7 +66,7 @@ public class Export {
    * @param conf  The current configuration.
    * @param args  The command line parameters.
    * @return The newly created job.
-   * @throws IOException When setting up the job fails.
+   * @throws java.io.IOException When setting up the job fails.
    */
   public static Job createSubmittableJob(Configuration conf, String[] args)
   throws IOException {
@@ -177,7 +180,7 @@ public class Export {
    * Main entry point.
    *
    * @param args  The command line parameters.
-   * @throws Exception When running the job fails.
+   * @throws java.lang.Exception When running the job fails.
    */
   public static void main(String[] args) throws Exception {
     Configuration conf = HBaseConfiguration.create();

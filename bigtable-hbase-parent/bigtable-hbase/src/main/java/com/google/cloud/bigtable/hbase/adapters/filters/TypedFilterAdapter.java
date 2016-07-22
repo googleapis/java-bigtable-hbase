@@ -23,6 +23,9 @@ import java.io.IOException;
 
 /**
  * An adapter that can adapt an HBase Filter instance into a Bigtable RowFilter.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface TypedFilterAdapter<S extends Filter> {
 
@@ -30,11 +33,20 @@ public interface TypedFilterAdapter<S extends Filter> {
    * Adapt the given filter. Implementers of this method should assume that
    * isFilterSupported has already been called with a result indicating it
    * is in fact supproted.
+   *
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   * @param filter a S object.
+   * @return a {@link com.google.bigtable.v2.RowFilter} object.
+   * @throws java.io.IOException if any.
    */
   RowFilter adapt(FilterAdapterContext context, S filter) throws IOException;
 
   /**
    * Determine if the given filter can be adapted to a Bigtable RowFilter.
+   *
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   * @param filter a S object.
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterSupportStatus} object.
    */
   FilterSupportStatus isFilterSupported(FilterAdapterContext context, S filter);
 }

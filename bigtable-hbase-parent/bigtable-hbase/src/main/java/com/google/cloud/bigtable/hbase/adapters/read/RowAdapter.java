@@ -35,7 +35,10 @@ import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.BigtableZeroCopyByteStringUtil;
 
 /**
- * Adapt between a {@link Row} and an hbase client {@link Result}.
+ * Adapt between a {@link com.google.bigtable.v2.Row} and an hbase client {@link org.apache.hadoop.hbase.client.Result}.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class RowAdapter implements ResponseAdapter<Row, Result> {
   // This only works because BIGTABLE_TIMEUNIT is smaller than HBASE_TIMEUNIT, otherwise we will get
@@ -44,6 +47,8 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
     BigtableConstants.HBASE_TIMEUNIT);
 
   /**
+   * {@inheritDoc}
+   *
    * Convert a {@link Row} to a {@link Result}.
    */
   @Override
@@ -88,7 +93,10 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
   }
 
   /**
-   * Convert a {@link Result} to a {@link Row}.
+   * Convert a {@link org.apache.hadoop.hbase.client.Result} to a {@link com.google.bigtable.v2.Row}.
+   *
+   * @param result a {@link org.apache.hadoop.hbase.client.Result} object.
+   * @return a {@link com.google.bigtable.v2.Row} object.
    */
   public Row adaptToRow(Result result) {
     Row.Builder rowBuilder = Row.newBuilder();

@@ -32,51 +32,70 @@ import com.google.protobuf.Empty;
 
 import io.grpc.Channel;
 
+/**
+ * <p>BigtableInstanceGrpcClient class.</p>
+ *
+ * @author sduskis
+ * @version $Id: $Id
+ */
 public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
 
   private final BigtableInstanceAdminGrpc.BigtableInstanceAdminBlockingStub instanceClient;
   private final OperationsGrpc.OperationsBlockingStub operationsStub;
 
+  /**
+   * <p>Constructor for BigtableInstanceGrpcClient.</p>
+   *
+   * @param channel a {@link io.grpc.Channel} object.
+   */
   public BigtableInstanceGrpcClient(Channel channel) {
     this.instanceClient = BigtableInstanceAdminGrpc.newBlockingStub(channel);
     operationsStub = OperationsGrpc.newBlockingStub(channel);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Operation createInstance(CreateInstanceRequest request) {
     return instanceClient.createInstance(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Operation getOperation(GetOperationRequest request) {
     return operationsStub.getOperation(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListInstancesResponse listInstances(ListInstancesRequest request) {
     return instanceClient.listInstances(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Instance updateInstance(Instance instance) {
     return instanceClient.updateInstance(instance);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Empty deleteInstance(DeleteInstanceRequest request) {
     return instanceClient.deleteInstance(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Cluster getCluster(GetClusterRequest request) {
     return instanceClient.getCluster(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListClustersResponse listCluster(ListClustersRequest request) {
     return instanceClient.listClusters(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Operation updateCluster(Cluster cluster) {
     return instanceClient.updateCluster(cluster);

@@ -36,9 +36,13 @@ import io.grpc.MethodDescriptor;
 
 /**
  * Manages a set of ClosableChannels and uses them in a round robin.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ChannelPool extends ManagedChannel {
 
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(ChannelPool.class);
 
   public interface ChannelFactory {
@@ -53,6 +57,13 @@ public class ChannelPool extends ManagedChannel {
 
   private boolean shutdown = false;
 
+  /**
+   * <p>Constructor for ChannelPool.</p>
+   *
+   * @param headerInterceptors a {@link java.util.List} object.
+   * @param factory a {@link com.google.cloud.bigtable.grpc.io.ChannelPool.ChannelFactory} object.
+   * @throws java.io.IOException if any.
+   */
   public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
       throws IOException {
     ManagedChannel channel = factory.create();
@@ -72,6 +83,7 @@ public class ChannelPool extends ManagedChannel {
    *
    * @param capacity The minimum number of channels required for the RPCs of the ChannelPool's
    * clients.
+   * @throws java.io.IOException if any.
    */
   public void ensureChannelCount(int capacity) throws IOException {
     if (this.shutdown) {
@@ -103,24 +115,20 @@ public class ChannelPool extends ManagedChannel {
     return channelsList.get(index);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public String authority() {
     return authority;
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Create a {@link ClientCall} on a Channel from the pool chosen in a round-robin fashion to the
    * remote operation specified by the given {@link MethodDescriptor}. The returned {@link
    * ClientCall} does not trigger any remote behavior until {@link
    * ClientCall#start(ClientCall.Listener, Metadata)} is
    * invoked.
-   *
-   * @param methodDescriptor describes the name and parameter types of the operation to call.
-   * @param callOptions runtime options to be applied to this call.
-   * @return a {@link ClientCall} bound to the specified method.
    */
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
@@ -149,10 +157,16 @@ public class ChannelPool extends ManagedChannel {
     channels.set(ImmutableList.copyOf(newChannelList));
   }
 
+  /**
+   * <p>size.</p>
+   *
+   * @return a int.
+   */
   public int size() {
     return channels.get().size();
   }
 
+  /** {@inheritDoc} */
   @Override
   public synchronized ManagedChannel shutdown() {
     for (ManagedChannel channel : channels.get()) {
@@ -162,11 +176,13 @@ public class ChannelPool extends ManagedChannel {
     return this;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isShutdown() {
     return shutdown;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isTerminated() {
     for (ManagedChannel managedChannel: channels.get()) {
@@ -177,6 +193,7 @@ public class ChannelPool extends ManagedChannel {
     return true;
   }
 
+  /** {@inheritDoc} */
   @Override
   public ManagedChannel shutdownNow() {
     for (ManagedChannel channel : channels.get()) {
@@ -185,6 +202,7 @@ public class ChannelPool extends ManagedChannel {
     return this;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     long endTimeNanos = System.nanoTime() + unit.toNanos(timeout);

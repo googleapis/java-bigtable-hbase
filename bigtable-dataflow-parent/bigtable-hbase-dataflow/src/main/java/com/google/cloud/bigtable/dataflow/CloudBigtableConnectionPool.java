@@ -30,16 +30,23 @@ import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Pubsub and other windowed sources can have a large quantity of bundles in short amounts of time.
- * {@link AbstractCloudBigtableTableDoFn} should not create a connection per
+ * {@link com.google.cloud.bigtable.dataflow.AbstractCloudBigtableTableDoFn} should not create a connection per
  * bundle, since that could happen ever few milliseconds. Rather, it should rely on a connection
  * pool to better manage connection life-cycles.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class CloudBigtableConnectionPool {
 
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = LoggerFactory.getLogger(CloudBigtableConnectionPool.class);
 
   private final Map<String, Connection> connections = new HashMap<>();
 
+  /**
+   * <p>Constructor for CloudBigtableConnectionPool.</p>
+   */
   public CloudBigtableConnectionPool() {
   }
 
@@ -48,15 +55,23 @@ public class CloudBigtableConnectionPool {
    *
    * <p>NOTE: Do not call close() on the connection, since it's shared.
    *
-   * @param config
-   * @return
-   * @throws IOException
+   * @param config a {@link org.apache.hadoop.conf.Configuration} object.
+   * @throws java.io.IOException if any.
+   * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
    */
   public Connection getConnection(Configuration config) throws IOException {
     String key = BigtableOptionsFactory.fromConfiguration(config).getInstanceName().toString();
     return getConnection(config, key);
   }
 
+  /**
+   * <p>getConnection.</p>
+   *
+   * @param config a {@link org.apache.hadoop.conf.Configuration} object.
+   * @param key a {@link java.lang.String} object.
+   * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
+   * @throws java.io.IOException if any.
+   */
   protected synchronized Connection getConnection(Configuration config, String key)
       throws IOException {
     Connection connection = connections.get(key);
@@ -67,6 +82,13 @@ public class CloudBigtableConnectionPool {
     return connection;
   }
 
+  /**
+   * <p>createConnection.</p>
+   *
+   * @param config a {@link org.apache.hadoop.conf.Configuration} object.
+   * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
+   * @throws java.io.IOException if any.
+   */
   @VisibleForTesting
   protected Connection createConnection(Configuration config) throws IOException {
     return new BigtableConnection(config) {

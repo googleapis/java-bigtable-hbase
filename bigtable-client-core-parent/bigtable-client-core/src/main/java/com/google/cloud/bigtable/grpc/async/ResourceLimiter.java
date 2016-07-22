@@ -12,6 +12,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class limits access by RPCs to system resources
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ResourceLimiter {
   private static final Logger LOG = new Logger(ResourceLimiter.class);
@@ -25,6 +28,12 @@ public class ResourceLimiter {
   private final LinkedBlockingDeque<Long> completedOperationIds = new LinkedBlockingDeque<>();
   private long currentWriteBufferSize;
 
+  /**
+   * <p>Constructor for ResourceLimiter.</p>
+   *
+   * @param maxHeapSize a long.
+   * @param maxInFlightRpcs a int.
+   */
   public ResourceLimiter(long maxHeapSize, int maxInFlightRpcs) {
     this.maxHeapSize = maxHeapSize;
     this.maxInFlightRpcs = maxInFlightRpcs;
@@ -38,7 +47,7 @@ public class ResourceLimiter {
    *
    * @param heapSize The serialized size of the RPC to be sent
    * @return A unique operation id
-   * @throws InterruptedException
+   * @throws java.lang.InterruptedException if any.
    */
   public synchronized long registerOperationWithHeapSize(long heapSize)
       throws InterruptedException {
@@ -54,12 +63,16 @@ public class ResourceLimiter {
 
   /**
    * Mark an operation id, as returned by {@code registerOperationWithHeapSize}, as complete
+   *
+   * @param id a long.
    */
   public void markCanBeCompleted(long id) {
     completedOperationIds.offerLast(id);
   }
 
   /**
+   * <p>Getter for the field <code>maxHeapSize</code>.</p>
+   *
    * @return The maximum allowed number of bytes across all across all outstanding RPCs
    */
   public long getMaxHeapSize() {
@@ -67,6 +80,8 @@ public class ResourceLimiter {
   }
 
   /**
+   * <p>Getter for the field <code>maxInFlightRpcs</code>.</p>
+   *
    * @return The maximum allowed number of in-flight RPCs
    */
   public int getMaxInFlightRpcs() {
@@ -74,6 +89,8 @@ public class ResourceLimiter {
   }
 
   /**
+   * <p>getHeapSize.</p>
+   *
    * @return The total size of all currently outstanding RPCs
    */
   public long getHeapSize() {
@@ -81,6 +98,8 @@ public class ResourceLimiter {
   }
 
   /**
+   * <p>isFull.</p>
+   *
    * @return true if no more RPCs can be started, false otherwise
    */
   public synchronized boolean isFull() {
@@ -102,6 +121,8 @@ public class ResourceLimiter {
   }
 
   /**
+   * <p>hasInflightRequests.</p>
+   *
    * @return true if there are currently in-flight RPCs
    */
   public synchronized boolean hasInflightRequests() {

@@ -46,6 +46,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * <p>Abstract AbstractBigtableConnection class.</p>
+ *
+ * @author sduskis
+ * @version $Id: $Id
+ */
 public abstract class AbstractBigtableConnection implements Connection, Closeable {
   private static final AtomicLong SEQUENCE_GENERATOR = new AtomicLong();
   private static final Map<Long, BigtableBufferedMutator> ACTIVE_BUFFERED_MUTATORS =
@@ -88,22 +94,27 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
   private Set<TableName> disabledTables = new HashSet<>();
   private MutationAdapters mutationAdapters;
 
+  /**
+   * <p>Constructor for AbstractBigtableConnection.</p>
+   *
+   * @param conf a {@link org.apache.hadoop.conf.Configuration} object.
+   * @throws java.io.IOException if any.
+   */
   public AbstractBigtableConnection(Configuration conf) throws IOException {
     this(conf, false, null, null);
   }
 
   /**
-   * The constructor called from {@link ConnectionFactory#createConnection(Configuration)} and
+   * The constructor called from {@link org.apache.hadoop.hbase.client.ConnectionFactory#createConnection(Configuration)} and
    * in its many forms via reflection with this specific signature.
    *
-   * @param conf The configuration for this channel. See {@link BigtableOptionsFactory} for more details.
+   * @param conf The configuration for this channel. See {@link com.google.cloud.bigtable.hbase.BigtableOptionsFactory} for more details.
    * @param managed This should always be false. It's an artifact of old HBase behavior.
-   * @param pool An {@link ExecutorService} to run HBase/Bigtable object conversions on. The RPCs
+   * @param pool An {@link java.util.concurrent.ExecutorService} to run HBase/Bigtable object conversions on. The RPCs
    *             themselves run via NIO, and not on a waiting thread
    * @param user This is an artifact of HBase which Cloud Bigtable ignores. User information is
    * captured in the Credentials configuration in conf.
-   *
-   * @throws IOException if the setup is not correct. The most likely issue is ALPN or OpenSSL 
+   * @throws java.io.IOException if the setup is not correct. The most likely issue is ALPN or OpenSSL
    * misconfiguration.
    */
   protected AbstractBigtableConnection(Configuration conf, boolean managed, ExecutorService pool,
@@ -124,21 +135,25 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     this.session = new BigtableSession(options);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Configuration getConfiguration() {
     return this.conf;
   }
 
+  /** {@inheritDoc} */
   @Override
   public Table getTable(TableName tableName) throws IOException {
     return getTable(tableName, batchPool);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Table getTable(TableName tableName, ExecutorService pool) throws IOException {
     return new BigtableTable(this, createAdapter(tableName));
   }
 
+  /** {@inheritDoc} */
   @Override
   public BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
     TableName tableName = params.getTableName();
@@ -178,6 +193,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     return new HBaseRequestAdapter(options, tableName, mutationAdapters);
   }
 
+  /** {@inheritDoc} */
   @Override
   public BufferedMutator getBufferedMutator(TableName tableName) throws IOException {
     // HBase uses 2MB as the write buffer size.  Their limit is the size to reach before performing
@@ -186,14 +202,20 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     return getBufferedMutator(new BufferedMutatorParams(tableName));
   }
 
-  /** This should not be used.  The hbase shell needs this in hbsae 0.99.2.  Remove this once
-   * 1.0.0 comes out
+  /**
+   * This should not be used.  The hbase shell needs this in hbase 0.99.2. Remove this once
+   * 1.0.0 comes out.
+   *
+   * @param tableName a {@link java.lang.String} object.
+   * @return a {@link org.apache.hadoop.hbase.client.Table} object.
+   * @throws java.io.IOException if any.
    */
   @Deprecated
   public Table getTable(String tableName) throws IOException {
     return getTable(TableName.valueOf(tableName));
   }
 
+  /** {@inheritDoc} */
   @Override
   public RegionLocator getRegionLocator(TableName tableName) throws IOException {
     for (RegionLocator locator : locatorCache) {
@@ -218,6 +240,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     throw new IllegalStateException(newLocator + " was supposed to be in the cache");
   }
 
+  /** {@inheritDoc} */
   @Override
   public void abort(final String msg, Throwable t) {
     if (t != null) {
@@ -233,16 +256,19 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isClosed() {
     return this.closed;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isAborted() {
     return this.aborted;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void close() throws IOException{
     if (!this.closed) {
@@ -260,6 +286,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(AbstractBigtableConnection.class)
@@ -284,22 +311,44 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public abstract Admin getAdmin() throws IOException;
 
   /* Methods needed to construct a Bigtable Admin implementation: */
+  /**
+   * <p>getBigtableTableAdminClient.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableAdminClient} object.
+   * @throws java.io.IOException if any.
+   */
   protected BigtableTableAdminClient getBigtableTableAdminClient() throws IOException {
     return session.getTableAdminClient();
   }
 
+  /**
+   * <p>Getter for the field <code>options</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   */
   protected BigtableOptions getOptions() {
     return options;
   }
 
+  /**
+   * <p>Getter for the field <code>disabledTables</code>.</p>
+   *
+   * @return a {@link java.util.Set} object.
+   */
   protected Set<TableName> getDisabledTables() {
     return disabledTables;
   }
 
+  /**
+   * <p>Getter for the field <code>session</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.grpc.BigtableSession} object.
+   */
   public BigtableSession getSession() {
     return session;
   }

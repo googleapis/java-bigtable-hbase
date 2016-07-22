@@ -31,15 +31,24 @@ import java.util.List;
 
 /**
  * Adapts a FilterList into either a RowFilter with chaining or interleaving.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class FilterListAdapter
     implements TypedFilterAdapter<FilterList>, UnsupportedStatusCollector<FilterList> {
   private final FilterAdapter subFilterAdapter;
 
+  /**
+   * <p>Constructor for FilterListAdapter.</p>
+   *
+   * @param subFilterAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter} object.
+   */
   public FilterListAdapter(FilterAdapter subFilterAdapter) {
     this.subFilterAdapter = subFilterAdapter;
   }
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, FilterList filter) throws IOException {
     try (ContextCloseable ignored = context.beginFilterList(filter)) {
@@ -73,6 +82,7 @@ public class FilterListAdapter
     return result;
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context,
@@ -88,6 +98,7 @@ public class FilterListAdapter
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void collectUnsupportedStatuses(
       FilterAdapterContext context,

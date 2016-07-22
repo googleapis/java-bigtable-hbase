@@ -29,6 +29,9 @@ import java.util.Map;
  * Helper class to deduplicate Cells in a mutation.
  *
  * This is used primarily to apply client-side Increment and Append deduplication logic.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class CellDeduplicationHelper {
 
@@ -62,6 +65,10 @@ public class CellDeduplicationHelper {
   /**
    * Given a Mutation and a family with potentially duplicate cell family:qualifier combinations,
    * remove all entries except for the last for that family:qualifier pair.
+   *
+   * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
+   * @param family an array of byte.
+   * @return a {@link java.util.List} object.
    */
   public static List<Cell> deduplicateFamily(Mutation mutation, byte[] family) {
     List<Cell> result = new LinkedList<>();

@@ -32,8 +32,12 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Throttles the number of RPCs that are outstanding at any point in time.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class RpcThrottler {
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(RpcThrottler.class);
 
   private static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
@@ -55,6 +59,11 @@ public class RpcThrottler {
   private long noSuccessWarningDeadlineNanos;
   private int noSuccessWarningCount;
 
+  /**
+   * <p>Constructor for RpcThrottler.</p>
+   *
+   * @param resourceLimiter a {@link com.google.cloud.bigtable.grpc.async.ResourceLimiter} object.
+   */
   public RpcThrottler(ResourceLimiter resourceLimiter) {
     this(resourceLimiter, NanoClock.SYSTEM, DEFAULT_FINISH_WAIT_MILLIS);
   }
@@ -70,8 +79,10 @@ public class RpcThrottler {
   /**
    * Register a new RPC operation. Blocks until the requested resources are available.
    * This method must be paired with a call to {@code addCallback}.
+   *
    * @param heapSize The serialized size of the RPC
    * @return An operation id
+   * @throws java.lang.InterruptedException if any.
    */
   public long registerOperationWithHeapSize(long heapSize)
       throws InterruptedException {
@@ -90,6 +101,11 @@ public class RpcThrottler {
    * Add a callback to a Future representing an RPC call with the given
    * operation id that will clean upon completion and reclaim any utilized resources.
    * This method must be paired with every call to {@code registerOperationWithHeapSize}.
+   *
+   * @param future a {@link com.google.common.util.concurrent.ListenableFuture} object.
+   * @param id a long.
+   * @return a {@link com.google.common.util.concurrent.FutureCallback} object.
+   * @param <T> a T object.
    */
   public <T> FutureCallback<T> addCallback(ListenableFuture<T> future, final long id) {
     FutureCallback<T> callback = new FutureCallback<T>() {
@@ -111,6 +127,9 @@ public class RpcThrottler {
    * Registers a retry, if a retry is necessary, it
    * will be complete before a call to {@code awaitCompletion} returns.
    * Retries do not count against any RPC resource limits.
+   *
+   * @return a long.
+   * @param <T> a T object.
    */
   public <T> long registerRetry() {
     final long id = retrySequenceGenerator.incrementAndGet();
@@ -126,7 +145,8 @@ public class RpcThrottler {
 
   /**
    * Blocks until all outstanding RPCs and retries have completed
-   * @throws InterruptedException
+   *
+   * @throws java.lang.InterruptedException if any.
    */
   public void awaitCompletion() throws InterruptedException {
     boolean performedWarning = false;
@@ -161,6 +181,8 @@ public class RpcThrottler {
   }
 
   /**
+   * <p>getMaxHeapSize.</p>
+   *
    * @return The maximum allowed number of bytes across all across all outstanding RPCs
    */
   public long getMaxHeapSize() {
@@ -168,6 +190,8 @@ public class RpcThrottler {
   }
 
   /**
+   * <p>hasInflightRequests.</p>
+   *
    * @return true if there are any outstanding requests being tracked by this throttler
    */
   public boolean hasInflightRequests() {
@@ -209,6 +233,11 @@ public class RpcThrottler {
     resetNoSuccessWarningDeadline();
   }
 
+  /**
+   * <p>onRetryCompletion.</p>
+   *
+   * @param id a long.
+   */
   public void onRetryCompletion(long id) {
     lock.lock();
     try {

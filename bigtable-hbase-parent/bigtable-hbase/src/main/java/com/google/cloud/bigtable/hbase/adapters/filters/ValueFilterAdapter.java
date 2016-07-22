@@ -31,9 +31,13 @@ import java.io.IOException;
 
 /**
  * Adapt a single HBase ValueFilter.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, ValueFilter filter) throws IOException {
     if (filter.getComparator() instanceof BinaryComparator) {
@@ -47,6 +51,7 @@ public class ValueFilterAdapter implements TypedFilterAdapter<ValueFilter> {
         String.format("Cannot adapt filter with comparator%s", filter.getComparator()));
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, ValueFilter filter) {

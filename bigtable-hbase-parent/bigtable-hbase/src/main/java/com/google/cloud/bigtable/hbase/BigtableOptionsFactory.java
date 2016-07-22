@@ -40,20 +40,30 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
- * Static methods to convert an instance of {@link Configuration}
- * to a {@link BigtableOptions} instance.
+ * Static methods to convert an instance of {@link org.apache.hadoop.conf.Configuration}
+ * to a {@link com.google.cloud.bigtable.config.BigtableOptions} instance.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableOptionsFactory {
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableOptionsFactory.class);
 
+  /** Constant <code>BIGTABLE_PORT_KEY="google.bigtable.endpoint.port"</code> */
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
+  /** Constant <code>BIGTABLE_INSTANCE_ADMIN_HOST_KEY="google.bigtable.instance.admin.endpoint"{trunked}</code> */
   public static final String BIGTABLE_INSTANCE_ADMIN_HOST_KEY =
       "google.bigtable.instance.admin.endpoint.host";
+  /** Constant <code>BIGTABLE_TABLE_ADMIN_HOST_KEY="google.bigtable.admin.endpoint.host"</code> */
   public static final String BIGTABLE_TABLE_ADMIN_HOST_KEY =
       "google.bigtable.admin.endpoint.host";
+  /** Constant <code>BIGTABLE_HOST_KEY="google.bigtable.endpoint.host"</code> */
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
 
+  /** Constant <code>PROJECT_ID_KEY="google.bigtable.project.id"</code> */
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
+  /** Constant <code>INSTANCE_ID_KEY="google.bigtable.instance.id"</code> */
   public static final String INSTANCE_ID_KEY = "google.bigtable.instance.id";
 
   /**
@@ -62,6 +72,7 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABE_USE_SERVICE_ACCOUNTS_KEY =
       "google.bigtable.auth.service.account.enable";
+  /** Constant <code>BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT=true</code> */
   public static final boolean BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT = true;
 
   /**
@@ -69,6 +80,7 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY =
       "google.bigtable.auth.null.credential.enable";
+  /** Constant <code>BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT=false</code> */
   public static final boolean BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT = false;
 
   /**
@@ -154,15 +166,19 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABLE_DATA_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
 
+  /** Constant <code>BIGTABLE_USE_BULK_API="google.bigtable.use.bulk.api"</code> */
   public static final String BIGTABLE_USE_BULK_API =
       "google.bigtable.use.bulk.api";
 
+  /** Constant <code>BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES="google.bigtable.bulk.max.request.size.b"{trunked}</code> */
   public static final String BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES =
       "google.bigtable.bulk.max.request.size.bytes";
 
+  /** Constant <code>BIGTABLE_BULK_MAX_ROW_KEY_COUNT="google.bigtable.bulk.max.row.key.count"</code> */
   public static final String BIGTABLE_BULK_MAX_ROW_KEY_COUNT =
       "google.bigtable.bulk.max.row.key.count";
 
+  /** Constant <code>MAX_INFLIGHT_RPCS_KEY="google.bigtable.buffered.mutator.max.in"{trunked}</code> */
   public static final String MAX_INFLIGHT_RPCS_KEY =
       "google.bigtable.buffered.mutator.max.inflight.rpcs";
 
@@ -173,6 +189,7 @@ public class BigtableOptionsFactory {
       "google.bigtable.buffered.mutator.max.memory";
 
 
+  /** Constant <code>BIGTABLE_USE_PLAINTEXT_NEGOTIATION="google.bigtable.use.plaintext.negotiati"{trunked}</code> */
   public static final String BIGTABLE_USE_PLAINTEXT_NEGOTIATION =
       "google.bigtable.use.plaintext.negotiation";
 
@@ -193,6 +210,13 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABLE_RPC_TIMEOUT_MS_KEY = "google.bigtable.rpc.timeout.ms";
 
+  /**
+   * <p>fromConfiguration.</p>
+   *
+   * @param configuration a {@link org.apache.hadoop.conf.Configuration} object.
+   * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   * @throws java.io.IOException if any.
+   */
   public static BigtableOptions fromConfiguration(final Configuration configuration)
       throws IOException {
 

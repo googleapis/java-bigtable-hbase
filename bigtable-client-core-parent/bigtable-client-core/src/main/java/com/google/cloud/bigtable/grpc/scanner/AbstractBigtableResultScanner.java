@@ -23,8 +23,12 @@ import java.util.ArrayList;
 /**
  * Abstract base class for Bigtable ResultScanner implementations that provides
  * a common next(int) implementation.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public abstract class AbstractBigtableResultScanner implements ResultScanner<Row> {
+  /** {@inheritDoc} */
   @Override
   public final Row[] next(int count) throws IOException {
     ArrayList<Row> resultList = new ArrayList<>(count);

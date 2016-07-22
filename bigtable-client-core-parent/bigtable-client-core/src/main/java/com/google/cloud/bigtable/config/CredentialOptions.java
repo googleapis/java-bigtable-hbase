@@ -24,7 +24,7 @@ import com.google.auth.Credentials;
 /**
  * <p>
  * This class encapsulates the method the Cloud Bigtable client should use to look up
- * {@link Credentials}. Here are the credential types supported:
+ * {@link com.google.auth.Credentials}. Here are the credential types supported:
  * </p>
  * <ol>
  * <li>DefaultCredentials - Initializes OAuth2 credential using preconfigured ServiceAccount
@@ -39,13 +39,18 @@ import com.google.auth.Credentials;
  * <li>UserSupplied - User supplies a fully formed Credentials.
  * <li>None - used for unit testing</li>
  * </ol>
+ *
  * @see CredentialFactory#getCredentials(CredentialOptions) CredentialFactory for more details on
- *      how CredentialOptions are used to create a {@link Credentials}.
+ *      how CredentialOptions are used to create a {@link com.google.auth.Credentials}.
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class CredentialOptions implements Serializable {
   private static final long serialVersionUID = 1L;
 
+  /** Constant <code>SERVICE_ACCOUNT_JSON_ENV_VARIABLE="GOOGLE_APPLICATION_CREDENTIALS"</code> */
   public static final String SERVICE_ACCOUNT_JSON_ENV_VARIABLE = "GOOGLE_APPLICATION_CREDENTIALS";
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(CredentialOptions.class);
 
   public enum CredentialType {
@@ -56,6 +61,12 @@ public class CredentialOptions implements Serializable {
     None,
   }
 
+  /**
+   * <p>jsonCredentials.</p>
+   *
+   * @param jsonInputStream a {@link java.io.InputStream} object.
+   * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
+   */
   public static CredentialOptions jsonCredentials(InputStream jsonInputStream) {
     return new JsonCredentialsOptions(jsonInputStream);
   }
@@ -63,6 +74,8 @@ public class CredentialOptions implements Serializable {
   /**
    * Get a configured json credentials file from the GOOGLE_APPLICATION_CREDENTIALS environment
    * variable.
+   *
+   * @return a {@link java.lang.String} object.
    */
   public static String getEnvJsonFile() {
     return System.getenv().get(SERVICE_ACCOUNT_JSON_ENV_VARIABLE);
@@ -80,6 +93,8 @@ public class CredentialOptions implements Serializable {
    * Initializes OAuth2 credential using preconfigured ServiceAccount settings on the local GCE VM.
    * See: <a href="https://developers.google.com/compute/docs/authentication">Authenticating from
    * Google Compute Engine</a>.
+   *
+   * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
    */
   public static CredentialOptions defaultCredentials() {
     return new CredentialOptions(CredentialType.DefaultCredentials);
@@ -89,13 +104,20 @@ public class CredentialOptions implements Serializable {
    * Initializes OAuth2 credential from a private keyfile, as described in <a
    * href="https://code.google.com/p/google-api-java-client/wiki/OAuth2#Service_Accounts" > OAuth2
    * Service Accounts</a>
+   *
+   * @param serviceAccount a {@link java.lang.String} object.
+   * @param keyFile a {@link java.lang.String} object.
+   * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
    */
   public static CredentialOptions p12Credential(String serviceAccount, String keyFile) {
     return new P12CredentialOptions(serviceAccount, keyFile);
   }
 
   /**
-   * A CredentialOption that wraps an existing {@link Credentials} object.
+   * A CredentialOption that wraps an existing {@link com.google.auth.Credentials} object.
+   *
+   * @param credentials a {@link com.google.auth.Credentials} object.
+   * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
    */
   public static CredentialOptions credential(Credentials credentials) {
     return new UserSuppliedCredentialOptions(credentials);
@@ -103,6 +125,8 @@ public class CredentialOptions implements Serializable {
 
   /**
    * No credentials - used for unit testing.
+   *
+   * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
    */
   public static CredentialOptions nullCredential() {
     LOG.info("Enabling the use of null credentials. This should not be used in production.");
@@ -221,10 +245,16 @@ public class CredentialOptions implements Serializable {
   private CredentialOptions() {
   }
 
+  /**
+   * <p>Getter for the field <code>credentialType</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.config.CredentialOptions.CredentialType} object.
+   */
   public CredentialType getCredentialType() {
     return credentialType;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (obj == null || obj.getClass() != CredentialOptions.class){

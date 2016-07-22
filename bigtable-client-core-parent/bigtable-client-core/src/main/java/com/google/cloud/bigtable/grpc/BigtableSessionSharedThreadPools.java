@@ -26,11 +26,17 @@ import java.util.concurrent.ThreadFactory;
 
 /**
  * This class contains executors and other thread pool related resources that can be reused across a
- * few {@link BigtableSession}s.  All executors are automatically expand if there is higher use.
+ * few {@link com.google.cloud.bigtable.grpc.BigtableSession}s.  All executors are automatically expand if there is higher use.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableSessionSharedThreadPools {
+  /** Constant <code>BATCH_POOL_THREAD_NAME="bigtable-batch-pool"</code> */
   public static final String BATCH_POOL_THREAD_NAME = "bigtable-batch-pool";
+  /** Constant <code>RETRY_THREADPOOL_NAME="bigtable-rpc-retry"</code> */
   public static final String RETRY_THREADPOOL_NAME = "bigtable-rpc-retry";
+  /** Constant <code>GRPC_EVENTLOOP_GROUP_NAME="bigtable-grpc-elg"</code> */
   public static final String GRPC_EVENTLOOP_GROUP_NAME = "bigtable-grpc-elg";
 
   /** Number of threads to use to initiate retry calls */
@@ -40,6 +46,8 @@ public class BigtableSessionSharedThreadPools {
 
   /**
    * Get the shared instance of ThreadPools.
+   *
+   * @return a {@link com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools} object.
    */
   public static BigtableSessionSharedThreadPools getInstance() {
     return INSTANCE;
@@ -62,10 +70,16 @@ public class BigtableSessionSharedThreadPools {
    */
   protected ScheduledExecutorService retryExecutor;
 
+  /**
+   * <p>Constructor for BigtableSessionSharedThreadPools.</p>
+   */
   protected BigtableSessionSharedThreadPools() {
     init();
   }
 
+  /**
+   * <p>init.</p>
+   */
   protected void init() {
     batchThreadPool = Executors.newCachedThreadPool(createThreadFactory(BATCH_POOL_THREAD_NAME));
     elg = new NioEventLoopGroup(0, createThreadFactory(GRPC_EVENTLOOP_GROUP_NAME));
@@ -73,18 +87,39 @@ public class BigtableSessionSharedThreadPools {
       createThreadFactory(RETRY_THREADPOOL_NAME));
   }
 
+  /**
+   * <p>createThreadFactory.</p>
+   *
+   * @param name a {@link java.lang.String} object.
+   * @return a {@link java.util.concurrent.ThreadFactory} object.
+   */
   protected ThreadFactory createThreadFactory(String name) {
     return ThreadPoolUtil.createThreadFactory(name);
   }
 
+  /**
+   * <p>Getter for the field <code>batchThreadPool</code>.</p>
+   *
+   * @return a {@link java.util.concurrent.ExecutorService} object.
+   */
   public ExecutorService getBatchThreadPool() {
     return batchThreadPool;
   }
 
+  /**
+   * <p>Getter for the field <code>elg</code>.</p>
+   *
+   * @return a {@link io.netty.channel.nio.NioEventLoopGroup} object.
+   */
   public NioEventLoopGroup getElg() {
     return elg;
   }
 
+  /**
+   * <p>Getter for the field <code>retryExecutor</code>.</p>
+   *
+   * @return a {@link java.util.concurrent.ScheduledExecutorService} object.
+   */
   public ScheduledExecutorService getRetryExecutor() {
     return retryExecutor;
   }

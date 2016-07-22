@@ -23,13 +23,17 @@ import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 
 /**
- * Experimental options to turn on timeout options. {@link CallOptions} supports other settings as
+ * Experimental options to turn on timeout options. {@link io.grpc.CallOptions} supports other settings as
  * well, which this configuration object could help set.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class CallOptionsConfig implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
+  /** Constant <code>USE_TIMEOUT_DEFAULT=false</code> */
   public static final boolean USE_TIMEOUT_DEFAULT = false;
 
   /**
@@ -69,19 +73,36 @@ public class CallOptionsConfig implements Serializable {
   private final boolean useTimeout;
   private final int timeoutMs;
 
+  /**
+   * <p>Constructor for CallOptionsConfig.</p>
+   *
+   * @param useTimeout a boolean.
+   * @param timeoutMs a int.
+   */
   public CallOptionsConfig(boolean useTimeout, int timeoutMs) {
     this.useTimeout = useTimeout;
     this.timeoutMs = timeoutMs;
   }
 
+  /**
+   * <p>isUseTimeout.</p>
+   *
+   * @return a boolean.
+   */
   public boolean isUseTimeout() {
     return useTimeout;
   }
 
+  /**
+   * <p>Getter for the field <code>timeoutMs</code>.</p>
+   *
+   * @return a int.
+   */
   public int getTimeoutMs() {
     return timeoutMs;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (obj == this) {
@@ -95,6 +116,7 @@ public class CallOptionsConfig implements Serializable {
         && timeoutMs == other.timeoutMs;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -103,6 +125,11 @@ public class CallOptionsConfig implements Serializable {
         .toString();
   }
 
+  /**
+   * <p>toBuilder.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.config.CallOptionsConfig.Builder} object.
+   */
   public Builder toBuilder() {
     return new Builder(this);
   }

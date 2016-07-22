@@ -21,24 +21,35 @@ import java.io.IOException;
 
 /**
  * A scanner of Bigtable rows.
+ *
  * @param <T> The type of Rows this scanner will iterate over. Expected Bigtable Row objects.
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface ResultScanner<T> extends Closeable {
   /**
    * Read the next row and block until a row is available. Will return null on end-of-stream.
+   *
+   * @return a T object.
+   * @throws java.io.IOException if any.
    */
   T next() throws IOException;
 
   /**
    * Read the next N rows where N &lt;= count. Will block until count are available or end-of-stream is
    * reached.
+   *
    * @param count The number of rows to read.
+   * @return an array of T objects.
+   * @throws java.io.IOException if any.
    */
   T[] next(int count) throws IOException;
 
   /**
    * Check number of rows immediately available. Calls to {@link #next()} will not block on network for at least
    * n results.
+   *
+   * @return a int.
    */
   int available();
 }

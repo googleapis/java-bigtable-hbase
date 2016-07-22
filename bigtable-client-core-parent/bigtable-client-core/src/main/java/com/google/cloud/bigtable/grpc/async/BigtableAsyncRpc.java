@@ -22,11 +22,14 @@ import io.grpc.MethodDescriptor;
 
 /**
  * This interface represents a logical asynchronous RPC end point, including creating a
- * {@link ClientCall} for a new request.
+ * {@link io.grpc.ClientCall} for a new request.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
   /**
-   * Creates a {@link ClientCall}.
+   * Creates a {@link io.grpc.ClientCall}.
    *
    * @param request The request to send.
    * @param listener A listener which handles responses.
@@ -46,7 +49,9 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
   boolean isRetryable(REQUEST request);
 
   /**
-   * @return {@link MethodDescriptor} that describes the logical endpoint.
+   * <p>getMethodDescriptor.</p>
+   *
+   * @return {@link io.grpc.MethodDescriptor} that describes the logical endpoint.
    */
   MethodDescriptor<REQUEST, RESPONSE> getMethodDescriptor();
 }
