@@ -633,6 +633,13 @@ limitations under the License.
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>2.10.4</version>
+                        <configuration>
+                            <!--
+                              javadoc excluded packages:
+                                com.google.bigtable.v1 (Deprecated)
+                            -->
+                            <excludePackageNames>com.google.bigtable.v1</excludePackageNames>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
