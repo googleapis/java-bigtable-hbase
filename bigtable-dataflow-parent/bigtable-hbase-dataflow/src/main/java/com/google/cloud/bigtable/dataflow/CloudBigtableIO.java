@@ -597,9 +597,9 @@ public class CloudBigtableIO {
     }
 
     /**
-     * Gets an estimated size based on data returned from {@link #getSampleRowKeys}. The estimate
-     * will be high if a {@link Scan} is set on the {@link CloudBigtableScanConfiguration}; in such
-     * cases, the estimate will not take the Scan into account, and will return a larger estimate
+     * Gets an estimated size based on data returned from {@link BigtableDataClient#sampleRowKeys}.
+     * The estimate will be high if a {@link Scan} is set on the {@link CloudBigtableScanConfiguration};
+     * in such cases, the estimate will not take the Scan into account, and will return a larger estimate
      * than what the {@link CloudBigtableIO.Reader} will actually read.
      *
      * @param options The pipeline options.

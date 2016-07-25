@@ -628,15 +628,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   // Used by the Hbase shell but not defined by Admin. Will be removed once the
   // shell is switch to use the methods defined in the interface.
-  /** {@inheritDoc} */
   @Deprecated
   public void addColumn(String tableName, HColumnDescriptor column) throws IOException {
     addColumn(TableName.valueOf(tableName), column);
   }
 
   /**
-   * {@inheritDoc}
-   *
    * Modify an existing column family on a table. Asynchronous operation.
    */
   public void modifyColumn(final String tableName, HColumnDescriptor descriptor)

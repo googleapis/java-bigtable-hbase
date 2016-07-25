@@ -177,8 +177,8 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   /**
    * {@inheritDoc}
    *
-   * Calls {@link BigtableAsyncRpc#call(Object, Listener, CallOptions, Metadata)} with this as the
-   * listener so that retries happen correctly.
+   * Calls {@link BigtableAsyncRpc#call} with this as the listener so that
+   * retries happen correctly.
    */
   @Override
   public void run() {

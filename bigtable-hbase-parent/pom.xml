@@ -56,6 +56,7 @@ limitations under the License.
                             <detectLinks />
                             <links>
                                 <link>https://hbase.apache.org/apidocs/</link>
+                                <link>http://www.grpc.io/grpc-java/javadoc/</link>
                             </links>
                         </configuration>
                     </plugin>

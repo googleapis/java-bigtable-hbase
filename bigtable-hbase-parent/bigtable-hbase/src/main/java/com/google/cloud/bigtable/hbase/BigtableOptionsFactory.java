@@ -121,7 +121,7 @@ public class BigtableOptionsFactory {
       "google.bigtable.alllow.no.timestamp.retries";
 
   /**
-   * Key to set to a comma separated list of grpc codes to retry. See {@link Status.Code} for more
+   * Key to set to a comma separated list of grpc codes to retry. See {@link io.grpc.Status.Code} for more
    * information.
    */
   public static final String ADDITIONAL_RETRY_CODES = "google.bigtable.grpc.retry.codes";

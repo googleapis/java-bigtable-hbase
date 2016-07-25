@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * Wrapper around commons Log to conditionally format messages if a specified log level is enabled.
+ * Wrapper around {@link org.apache.commons.logging.Log} to conditionally format
+ * messages if a specified log level is enabled.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -37,10 +38,11 @@ public class Logger {
   }
 
   /**
-   * <p>trace.</p>
+   * <p>trace</p>
    *
-   * @param message a {@link java.lang.String} object.
-   * @param args a {@link java.lang.Object} object.
+   * @see Log#trace
+   * @param message Format string.
+   * @param args Arguments for format string.
    */
   public void trace(String message, Object ... args) {
     if (log.isTraceEnabled()) {
@@ -49,10 +51,11 @@ public class Logger {
   }
 
   /**
-   * <p>debug.</p>
+   * <p>debug</p>
    *
-   * @param message a {@link java.lang.String} object.
-   * @param args a {@link java.lang.Object} object.
+   * @see Log#debug
+   * @param message Format string.
+   * @param args Arguments for format string.
    */
   public void debug(String message, Object ... args) {
     if (log.isDebugEnabled()) {
@@ -61,10 +64,11 @@ public class Logger {
   }
 
   /**
-   * <p>info.</p>
+   * <p>info</p>
    *
-   * @param message a {@link java.lang.String} object.
-   * @param args a {@link java.lang.Object} object.
+   * @see Log#info
+   * @param message Format string.
+   * @param args Arguments for format string.
    */
   public void info(String message, Object ... args) {
     if (log.isInfoEnabled()) {
@@ -73,11 +77,12 @@ public class Logger {
   }
 
   /**
-   * <p>info.</p>
+   * <p>info</p>
    *
-   * @param message a {@link java.lang.String} object.
+   * @see Log#info
+   * @param message Format string.
    * @param t a {@link java.lang.Throwable} object.
-   * @param args a {@link java.lang.Object} object.
+   * @param args Arguments for format string.
    */
   public void info(String message, Throwable t, Object ... args) {
     if (log.isInfoEnabled()) {
@@ -86,10 +91,11 @@ public class Logger {
   }
 
   /**
-   * <p>warn.</p>
+   * <p>warn</p>
    *
-   * @param message a {@link java.lang.String} object.
-   * @param args a {@link java.lang.Object} object.
+   * @see Log#warn
+   * @param message Format string.
+   * @param args Arguments for format string.
    */
   public void warn(String message, Object ... args) {
     if (log.isWarnEnabled()) {
@@ -98,11 +104,12 @@ public class Logger {
   }
 
   /**
-   * <p>warn.</p>
+   * <p>warn</p>
    *
-   * @param message a {@link java.lang.String} object.
+   * @see Log#warn
+   * @param message Format string.
    * @param t a {@link java.lang.Throwable} object.
-   * @param args a {@link java.lang.Object} object.
+   * @param args Arguments for format string.
    */
   public void warn(String message, Throwable t, Object ... args) {
     if (log.isWarnEnabled()) {
@@ -111,10 +118,11 @@ public class Logger {
   }
 
   /**
-   * <p>error.</p>
+   * <p>error</p>
    *
-   * @param message a {@link java.lang.String} object.
-   * @param args a {@link java.lang.Object} object.
+   * @see Log#error
+   * @param message Format string.
+   * @param args Arguments for format string.
    */
   public void error(String message, Object ... args) {
     if (log.isErrorEnabled()) {
@@ -123,11 +131,12 @@ public class Logger {
   }
 
   /**
-   * <p>error.</p>
+   * <p>error</p>
    *
-   * @param message a {@link java.lang.String} object.
+   * @see Log#error
+   * @param message Format string.
    * @param t a {@link java.lang.Throwable} object.
-   * @param args a {@link java.lang.Object} object.
+   * @param args Arguments for format string.
    */
   public void error(String message, Throwable t, Object ... args) {
     if (log.isErrorEnabled()) {
@@ -136,8 +145,9 @@ public class Logger {
   }
 
   /**
-   * <p>fatal.</p>
+   * <p>fatal</p>
    *
+   * @see Log#fatal
    * @param message a {@link java.lang.String} object.
    * @param args a {@link java.lang.Object} object.
    */
@@ -148,11 +158,12 @@ public class Logger {
   }
 
   /**
-   * <p>fatal.</p>
+   * <p>fatal</p>
    *
-   * @param message a {@link java.lang.String} object.
+   * @see Log#fatal
+   * @param message Format string.
    * @param t a {@link java.lang.Throwable} object.
-   * @param args a {@link java.lang.Object} object.
+   * @param args Arguments for format string.
    */
   public void fatal(String message, Throwable t, Object ... args) {
     if (log.isFatalEnabled()) {
