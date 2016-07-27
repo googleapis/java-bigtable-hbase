@@ -15,6 +15,8 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.Slf4jReporter;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -35,6 +37,7 @@ import com.google.protobuf.ServiceException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.LoggerFactory;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
@@ -62,6 +65,11 @@ public class PutMicroBenchmark {
     String instanceId = args.length > 1 ? args[1] : "instanceId";
     String tableId = args.length > 2 ? args[2] : "table";
 
+    ConsoleReporter reporter = ConsoleReporter.forRegistry(BigtableSession.metrics)
+        .convertRatesTo(TimeUnit.SECONDS)
+        .convertDurationsTo(TimeUnit.MILLISECONDS)
+        .build();
+
     options = new BigtableOptions.Builder()
         .setProjectId(projectId)
         .setInstanceId(instanceId)
@@ -78,6 +86,7 @@ public class PutMicroBenchmark {
     System.out.println(String.format("Put size: %d, proto size: %d", put.heapSize(),
       hbaseAdapter.adapt(put).getSerializedSize()));
     run(hbaseAdapter, put, getChannelPool(useRealConnection), putCount);
+    reporter.report();
   }
 
   protected static ChannelPool getChannelPool(final boolean useRealConnection)

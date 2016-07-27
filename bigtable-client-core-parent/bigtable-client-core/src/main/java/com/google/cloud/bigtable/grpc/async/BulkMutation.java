@@ -17,6 +17,9 @@ package com.google.cloud.bigtable.grpc.async;
 
 
 import com.google.common.annotations.VisibleForTesting;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Timer;
 import com.google.api.client.util.BackOff;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
@@ -25,6 +28,7 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.util.concurrent.FutureCallback;
@@ -58,6 +62,17 @@ public class BulkMutation {
           .withDescription("Mutation does not have a status")
           .asRuntimeException();
   protected final static Logger LOG = new Logger(BulkMutation.class);
+
+  private static final Counter mutatedCount =
+      BigtableSession.metrics.counter("BulkMutation.mutations.individual.count");
+  private static final Counter retriedCount =
+      BigtableSession.metrics.counter("BulkMutation.mutations.individual.retries");
+  private static final Histogram batchSize =
+      BigtableSession.metrics.histogram("BulkMutation.mutations.batch.size");
+  private static final Histogram batchRetryCount =
+      BigtableSession.metrics.histogram("BulkMutation.mutations.batch.retries.size");
+  private static final Timer batchOperationLatency =
+      BigtableSession.metrics.timer("BulkMutation.mutations.batch.latency.operation");
 
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
@@ -108,6 +123,7 @@ public class BulkMutation {
     private final ScheduledExecutorService retryExecutorService;
     private final int maxRowKeyCount;
     private final long maxRequestSize;
+    private final Timer.Context operationLatency;
 
     private RequestManager currentRequestManager;
     private Long retryId;
@@ -127,6 +143,7 @@ public class BulkMutation {
       this.retryExecutorService = retryExecutorService;
       this.maxRowKeyCount = maxRowKeyCount;
       this.maxRequestSize = maxRequestSize;
+      this.operationLatency = batchOperationLatency.time();
     }
 
     /**
@@ -302,6 +319,7 @@ public class BulkMutation {
       if (retryRequestManager == null || retryRequestManager.futures.isEmpty()) {
         this.currentRequestManager = null;
         setRetryComplete();
+        operationLatency.stop();
       } else {
         this.currentRequestManager = retryRequestManager;
         LOG.info(
@@ -321,11 +339,15 @@ public class BulkMutation {
     public synchronized void run() {
       ListenableFuture<List<MutateRowsResponse>> future = null;
       try {
+        int size = currentRequestManager.futures.size();
         if (retryId == null) {
           retryId = Long.valueOf(this.asyncExecutor.getRpcThrottler().registerRetry());
+          batchSize.update(size);
+        } else {
+          batchRetryCount.update(size);
+          retriedCount.inc(size);
         }
-        MutateRowsRequest request = currentRequestManager.build();
-        future = asyncExecutor.mutateRowsAsync(request);
+        future = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
       } catch (InterruptedException e) {
         future = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
@@ -408,6 +430,7 @@ public class BulkMutation {
       currentBatch.run();
       currentBatch = null;
     }
+    mutatedCount.inc();
     return future;
   }
 

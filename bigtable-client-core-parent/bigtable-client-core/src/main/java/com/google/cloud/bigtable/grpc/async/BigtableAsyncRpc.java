@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import com.codahale.metrics.Timer;
+
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
@@ -25,6 +27,7 @@ import io.grpc.MethodDescriptor;
  * {@link ClientCall} for a new request.
  */
 public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
+
   /**
    * Creates a {@link ClientCall}.
    *
@@ -49,4 +52,8 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
    * @return {@link MethodDescriptor} that describes the logical endpoint.
    */
   MethodDescriptor<REQUEST, RESPONSE> getMethodDescriptor();
+
+  Timer.Context createTimerContext();
+
+  void incrementRetryCount();
 }

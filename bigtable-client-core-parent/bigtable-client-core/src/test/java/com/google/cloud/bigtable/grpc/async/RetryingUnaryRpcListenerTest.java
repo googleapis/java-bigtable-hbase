@@ -40,12 +40,13 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 
 import io.grpc.CallOptions;
@@ -80,11 +81,15 @@ public class RetryingUnaryRpcListenerTest {
   @Mock
   private ScheduledExecutorService executorService;
 
+  public final static MetricRegistry metrics = new MetricRegistry();
+  public final static Timer timer = metrics.timer(RetryingUnaryRpcListenerTest.class.getName());
+
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
     retryOptions = RetryOptionsUtil.createTestRetryOptions(nanoClock);
 
+    when(readAsync.createTimerContext()).thenReturn(timer.time());
     underTest = new RetryingUnaryRpcListener<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
         readAsync, CallOptions.DEFAULT, executorService, new Metadata());
 
@@ -117,8 +122,10 @@ public class RetryingUnaryRpcListenerTest {
     when(readAsync.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);
   }
 
+
   @Test
   public void testOK() throws Exception {
+    long originalCount = timer.getCount();
     final ReadRowsResponse result = ReadRowsResponse.getDefaultInstance();
     Answer<Void> answer = new Answer<Void>() {
       @Override
@@ -131,13 +138,15 @@ public class RetryingUnaryRpcListenerTest {
     };
     doAnswer(answer).when(readAsync).call(any(ReadRowsRequest.class),
       any(ClientCall.Listener.class), any(CallOptions.class), any(Metadata.class));
-    underTest.run();
+    underTest.start();
     Assert.assertEquals(result, underTest.getCompletionFuture().get(1, TimeUnit.SECONDS));
     verify(nanoClock, times(0)).nanoTime();
+    Assert.assertEquals(1, timer.getCount() - originalCount);
   }
 
   @Test
   public void testRecoveredFailure() throws Exception {
+    long originalCount = timer.getCount();
     final ReadRowsResponse result = ReadRowsResponse.getDefaultInstance();
     final Status errorStatus = Status.UNAVAILABLE;
     final AtomicInteger counter = new AtomicInteger(0);
@@ -156,10 +165,11 @@ public class RetryingUnaryRpcListenerTest {
     };
     doAnswer(answer).when(readAsync).call(any(ReadRowsRequest.class),
       any(ClientCall.Listener.class), any(CallOptions.class), any(Metadata.class));
-    underTest.run();
+    underTest.start();
 
     Assert.assertEquals(result, underTest.getCompletionFuture().get(1, TimeUnit.HOURS));
     Assert.assertEquals(5, counter.get());
+    Assert.assertEquals(1, timer.getCount() - originalCount);
   }
 
   @Test
@@ -175,7 +185,7 @@ public class RetryingUnaryRpcListenerTest {
     doAnswer(answer).when(readAsync).call(any(ReadRowsRequest.class),
       any(ClientCall.Listener.class), any(CallOptions.class), any(Metadata.class));
     try {
-      underTest.run();
+      underTest.start();
       underTest.getCompletionFuture().get(1, TimeUnit.MINUTES);
       Assert.fail();
     } catch (ExecutionException e) {

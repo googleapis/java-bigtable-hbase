@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.codahale.metrics.Timer;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest.Builder;
 import com.google.bigtable.v2.RowFilter;
@@ -23,6 +24,7 @@ import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.bigtable.v2.TimestampRange;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
@@ -60,30 +62,38 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     }
   }
 
+  private static Timer buildFilterTimer = BigtableSession.metrics.timer("ScanAdapter.buildFilter");
+
+
   /**
    * Given a Scan, build a RowFilter that include matching columns
    */
   public RowFilter buildFilter(Scan scan, ReadHooks hooks) {
-    RowFilter.Chain.Builder chainBuilder = RowFilter.Chain.newBuilder();
-    chainBuilder.addFilters(createColumnFamilyFilter(scan));
-    chainBuilder.addFilters(createColumnLimitFilter(scan.getMaxVersions()));
-
-    if (scan.getTimeRange() != null && !scan.getTimeRange().isAllTime()) {
-      RowFilter timeRangeFilter = createTimeRangeFilter(scan.getTimeRange());
-      chainBuilder.addFilters(timeRangeFilter);
-    }
-
-    if (scan.getFilter() != null) {
-      Optional<RowFilter> userFilter = createUserFilter(scan, hooks);
-      if (userFilter.isPresent()) {
-        chainBuilder.addFilters(userFilter.get());
+    Timer.Context context = buildFilterTimer.time();
+    try {
+      RowFilter.Chain.Builder chainBuilder = RowFilter.Chain.newBuilder();
+      chainBuilder.addFilters(createColumnFamilyFilter(scan));
+      chainBuilder.addFilters(createColumnLimitFilter(scan.getMaxVersions()));
+  
+      if (scan.getTimeRange() != null && !scan.getTimeRange().isAllTime()) {
+        RowFilter timeRangeFilter = createTimeRangeFilter(scan.getTimeRange());
+        chainBuilder.addFilters(timeRangeFilter);
       }
-    }
-
-    if (chainBuilder.getFiltersCount() == 1) {
-      return chainBuilder.getFilters(0);
-    } else {
-      return RowFilter.newBuilder().setChain(chainBuilder).build();
+  
+      if (scan.getFilter() != null) {
+        Optional<RowFilter> userFilter = createUserFilter(scan, hooks);
+        if (userFilter.isPresent()) {
+          chainBuilder.addFilters(userFilter.get());
+        }
+      }
+  
+      if (chainBuilder.getFiltersCount() == 1) {
+        return chainBuilder.getFilters(0);
+      } else {
+        return RowFilter.newBuilder().setChain(chainBuilder).build();
+      }
+    } finally {
+      context.stop();
     }
   }
 

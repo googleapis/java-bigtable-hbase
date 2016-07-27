@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
+import com.codahale.metrics.Timer;
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
 import com.google.cloud.bigtable.config.Logger;
@@ -80,6 +81,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
   protected final GrpcFuture<ResultT> completionFuture = new GrpcFuture<>();
   protected ClientCall<RequestT, ResponseT> call;
+  private Timer.Context operationLatencyTimer;
 
   public AbstractRetryingRpcListener(
           RetryOptions retryOptions,
@@ -100,6 +102,9 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   public void onClose(Status status, Metadata trailers) {
     if (status.isOk()) {
       onOK();
+      if (operationLatencyTimer != null) {
+        this.operationLatencyTimer.close();
+      }
     } else {
       Status.Code code = status.getCode();
       if (retryOptions.enableRetries() && retryOptions.isRetryable(code)
@@ -107,6 +112,9 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
         backOffAndRetry(status);
       } else {
         completionFuture.setException(status.asRuntimeException());
+        if (operationLatencyTimer != null) {
+          this.operationLatencyTimer.close();
+        }
       }
     }
   }
@@ -133,6 +141,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     }
     call = null;
 
+    rpc.incrementRetryCount();
     retryExecutorService.schedule(this, nextBackOff, TimeUnit.MILLISECONDS);
   }
 
@@ -166,5 +175,10 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     if (this.call != null) {
       call.cancel("User requested cancelation.", null);
     }
+  }
+
+  public void start() {
+    this.operationLatencyTimer = rpc.createTimerContext();
+    run();
   }
 }

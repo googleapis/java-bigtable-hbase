@@ -16,12 +16,15 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.common.base.MoreObjects;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Timer;
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.bigtable.v2.Row;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.BigtableZeroCopyByteStringUtil;
@@ -31,12 +34,11 @@ import io.grpc.stub.StreamObserver;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.TreeMap;
 
 /**
  * <p>
@@ -209,49 +211,75 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   }
 
   private static class FamilyBuilderManager {
-    private final Map<CellKey, Column.Builder> columnBuilders = new TreeMap<>();
+    private final List<FamilyCell> cells = new ArrayList<>();
 
-    public void addCell(String family, ByteString qualifier, Cell cell) {
-      CellKey key = new CellKey(family, qualifier);
-      Column.Builder columnBuilder = columnBuilders.get(key);
-      if (columnBuilder == null) {
-        columnBuilder = Column.newBuilder().setQualifier(qualifier);
-        columnBuilders.put(key, columnBuilder);
-      }
-      columnBuilder.addCells(cell);
+    public void addCell(String family, ByteString qualifier, Cell cell, int order) {
+      cells.add(new FamilyCell(family, qualifier, cell, order));
     }
 
     public Row.Builder addFamiliesTo(Row.Builder rowBuilder) {
-      CellKey previousKey = null;
+      Collections.sort(cells);
+      String previousFamily = null;
+      ByteString previousQualifier = null ;
       Family.Builder currentFamilyBuilder = null;
-      for (Entry<CellKey, Column.Builder> entry : columnBuilders.entrySet()) {
-        CellKey currentKey = entry.getKey();
-        if (previousKey == null || !previousKey.family.equals(currentKey.family)) {
-          currentFamilyBuilder = rowBuilder.addFamiliesBuilder().setName(currentKey.family);
+      Column.Builder currentColumnBuilder = null;
+      for (FamilyCell familyCell : cells) {
+        if (currentFamilyBuilder == null || !familyCell.family.equals(previousFamily)){
+          if (currentFamilyBuilder != null) {
+            if (currentColumnBuilder != null) {
+              currentFamilyBuilder.addColumns(currentColumnBuilder.build());
+            }
+            rowBuilder.addFamilies(currentFamilyBuilder.build());
+            currentColumnBuilder = Column.newBuilder();
+          }
+          currentFamilyBuilder = Family.newBuilder().setName(familyCell.family);
+          currentColumnBuilder = Column.newBuilder().setQualifier(familyCell.qualifier);  
+          previousFamily = familyCell.family;
+          previousQualifier = familyCell.qualifier;
+        } else if (previousQualifier == null || !previousQualifier.equals(familyCell.qualifier)) {
+          currentFamilyBuilder.addColumns(currentColumnBuilder.build());
+          previousQualifier = familyCell.qualifier;
+          currentColumnBuilder = Column.newBuilder().setQualifier(familyCell.qualifier);
         }
-        currentFamilyBuilder.addColumns(entry.getValue());
-        previousKey = currentKey;
+        currentColumnBuilder.addCells(familyCell.cell);
+      }
+      if (currentColumnBuilder != null) {
+        currentFamilyBuilder.addColumns(currentColumnBuilder.build());
+      }
+      if (currentFamilyBuilder != null) {
+        rowBuilder.addFamilies(currentFamilyBuilder.build());
       }
       return rowBuilder;
     }
   }
 
-  private static class CellKey implements Comparable<CellKey> {
+  private static class FamilyCell implements Comparable<FamilyCell> {
     final String family;
     final ByteString qualifier;
+    final Cell cell;
+    final int order;
+    private final ByteBuffer qualifierBuffer;
 
-    CellKey(String family, ByteString qualifier) {
+    FamilyCell(String family, ByteString qualifier, Cell cell, int order) {
       this.family = family;
       this.qualifier = qualifier;
+      this.cell = cell;
+      this.order = order;
+      qualifierBuffer = qualifier.asReadOnlyByteBuffer();
     }
 
     @Override
-    public int compareTo(CellKey o) {
+    public int compareTo(FamilyCell o) {
       int comp = family.compareTo(o.family);
       if (comp != 0) {
         return comp;
       }
-      return qualifier.asReadOnlyByteBuffer().compareTo(o.qualifier.asReadOnlyByteBuffer());
+      comp = qualifierBuffer.compareTo(o.qualifierBuffer);
+      if (comp != 0) {
+        return comp;
+      }
+
+      return Integer.compare(order, order);
     }
 
     @Override
@@ -342,15 +370,16 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     private CellIdentifier currentId;
     private Cell.Builder cellBuilderInProgress;
     private ByteArrayOutputStream outputStream;
+    private int order = 0;
 
     void addFullChunk(ReadRowsResponse.CellChunk chunk) {
       Preconditions.checkState(!hasChunkInProgess());
-      addCell(
-          Cell.newBuilder()
-              .setTimestampMicros(chunk.getTimestampMicros())
-              .addAllLabels(chunk.getLabelsList())
-              .setValue(chunk.getValue())
-              .build());
+//      Context createCellContext = ripCreateCell.time();
+      Cell cell = Cell.newBuilder().setTimestampMicros(chunk.getTimestampMicros())
+          .addAllLabels(chunk.getLabelsList()).setValue(chunk.getValue()).build();
+//      createCellContext.stop();
+
+      addCell(cell);
     }
 
     public void completeMultiChunkCell() {
@@ -362,7 +391,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     }
 
     private void addCell(Cell cell) {
-      families.addCell(currentId.family, currentId.qualifier, cell);
+      families.addCell(currentId.family, currentId.qualifier, cell, order++);
     }
 
     /**
@@ -425,20 +454,33 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private RowInProgress rowInProgress;
   private boolean complete;
 
+  private Timer.Context firstContext;
+
+  private static Timer process = BigtableSession.metrics.timer("RowMerger.process");
+  private static Timer first = BigtableSession.metrics.timer("RowMerger.first");
+  private static Histogram rowsPerResponse = BigtableSession.metrics.histogram("RowMerger.rows.per.response");
+
   public RowMerger(StreamObserver<Row> observer) {
     this.observer = observer;
+    this.firstContext = first.time();
   }
 
   @Override
   public void onNext(ReadRowsResponse readRowsResponse) {
+    if (firstContext != null) {
+      firstContext.stop();
+      firstContext = null;
+    }
     if (complete) {
       onError(new IllegalStateException("Adding partialRow after completion"));
       return;
     }
+    Timer.Context processContext = process.time();
     ByteString lastScannedRowKey = readRowsResponse.getLastScannedRowKey();
     if (!lastScannedRowKey.isEmpty()) {
       state.handleLastScannedRowKey(lastScannedRowKey);
     }
+    int rowCount = 0;
     for (ReadRowsResponse.CellChunk chunk : readRowsResponse.getChunksList()) {
       try {
         state.validateChunk(rowInProgress, previousKey, chunk);
@@ -447,6 +489,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         return;
       }
       try {
+
         if (isReset(chunk)) {
           rowInProgress = null;
           state = RowMergerState.NewRow;
@@ -456,6 +499,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
           rowInProgress = new RowInProgress();
           rowInProgress.updateCurrentKey(chunk);
         }
+
         if (chunk.getValueSize() > 0) {
           rowInProgress.addPartialCellChunk(chunk);
           state = RowMergerState.CellInProgress;
@@ -469,6 +513,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         }
 
         if (isCommit(chunk)) {
+          rowCount++;
           observer.onNext(rowInProgress.createRow());
           previousKey = rowInProgress.getRowKey();
           rowInProgress = null;
@@ -478,6 +523,8 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         onError(e);
       }
     }
+    rowsPerResponse.update(rowCount);
+    processContext.stop();
   }
 
   /**

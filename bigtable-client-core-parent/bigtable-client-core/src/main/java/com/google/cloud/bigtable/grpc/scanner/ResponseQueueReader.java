@@ -21,7 +21,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.base.Preconditions;
 
 import io.grpc.stub.StreamObserver;
@@ -36,6 +39,13 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
 
+  private static Timer first = BigtableSession.metrics.timer("ResponseQueueReader.first");
+  private static Timer getNextMergedRow = BigtableSession.metrics.timer("ResponseQueueReader.getNextMergedRow");
+  private static Timer betweenComplete = BigtableSession.metrics.timer("ResponseQueueReader.betweenComplete");
+  private static Timer poll = BigtableSession.metrics.timer("ResponseQueueReader.poll");
+  private boolean isFirst = true;
+  private Context betweenCompleteContext;
+
   public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap) {
     this.resultQueue = new LinkedBlockingQueue<>(capacityCap);
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
@@ -47,6 +57,24 @@ public class ResponseQueueReader implements StreamObserver<Row> {
    * @throws IOException On errors.
    */
   public synchronized Row getNextMergedRow() throws IOException {
+    Context context = getNextMergedRow.time();
+    try {
+      if (isFirst) {
+        Timer.Context firstContet = first.time();
+        try {
+          return getNextRow();
+        } finally {
+          firstContet.close();
+        }
+      } else {
+        return getNextRow();
+      }
+    } finally {
+      context.stop();
+    }
+  }
+
+  protected Row getNextRow() throws IOException {
     if (!lastResponseProcessed) {
       ResultQueueEntry<Row> queueEntry = getNext();
 
@@ -63,6 +91,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   }
 
   protected ResultQueueEntry<Row> getNext() throws IOException {
+    final Context context = poll.time();
     ResultQueueEntry<Row> queueEntry;
     try {
       queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
@@ -73,7 +102,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
     if (queueEntry == null) {
       throw new ScanTimeoutException("Timeout while merging responses.");
     }
-
+    context.stop();
     return queueEntry;
   }
 
@@ -84,10 +113,14 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   @Override
   public void onNext(Row row) {
     try {
+      if (betweenCompleteContext != null) {
+        betweenCompleteContext.close();
+      }
       resultQueue.put(ResultQueueEntry.fromResponse(row));
     } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
+    } finally {
+      betweenCompleteContext = betweenComplete.time();
     }
   }
 
@@ -96,7 +129,6 @@ public class ResponseQueueReader implements StreamObserver<Row> {
     try {
       resultQueue.put(ResultQueueEntry.<Row> fromThrowable(t));
     } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
     }
   }
@@ -107,7 +139,6 @@ public class ResponseQueueReader implements StreamObserver<Row> {
       completionMarkerFound.set(true);
       resultQueue.put(ResultQueueEntry.<Row> completionMarker());
     } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
     }
   }

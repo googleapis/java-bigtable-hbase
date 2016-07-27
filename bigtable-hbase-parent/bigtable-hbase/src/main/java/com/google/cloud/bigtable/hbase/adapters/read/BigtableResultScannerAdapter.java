@@ -15,8 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
+import com.codahale.metrics.Timer;
 import com.google.api.client.util.Throwables;
 import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
@@ -36,17 +38,20 @@ public class BigtableResultScannerAdapter {
     this.rowAdapter = rowAdapter;
   }
 
+  private static Timer adaptTimer = BigtableSession.metrics.timer("BigtableResultScannerAdapter.adapt");
+
   public ResultScanner adapt(
       final com.google.cloud.bigtable.grpc.scanner.ResultScanner<Row> bigtableResultScanner) {
     return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {
         Row row = bigtableResultScanner.next();
-        if (row == null) {
-          // Null signals EOF.
-          return null;
+        Timer.Context context = adaptTimer.time();
+        try {
+          return row == null ? null : rowAdapter.adaptResponse(row);
+        } finally {
+          context.stop();
         }
-        return rowAdapter.adaptResponse(row);
       }
 
       @Override

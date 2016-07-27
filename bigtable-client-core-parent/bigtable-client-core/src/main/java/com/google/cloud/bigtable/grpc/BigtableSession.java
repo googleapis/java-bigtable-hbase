@@ -16,15 +16,6 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import io.grpc.ManagedChannel;
-import io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.NegotiationType;
-import io.grpc.netty.NettyChannelBuilder;
-import io.netty.channel.EventLoopGroup;
-import io.netty.handler.ssl.OpenSsl;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -42,8 +33,10 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
+import org.slf4j.LoggerFactory;
+
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
 import com.google.api.client.util.Strings;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
@@ -60,8 +53,19 @@ import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.util.ThreadPoolUtil;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+
+import io.grpc.ManagedChannel;
+import io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.NegotiationType;
+import io.grpc.netty.NettyChannelBuilder;
+import io.netty.channel.EventLoopGroup;
+import io.netty.handler.ssl.OpenSsl;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -79,6 +83,18 @@ public class BigtableSession implements Closeable {
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static SslContextBuilder sslBuilder;
   private static ResourceLimiter resourceLimiter;
+  public static Slf4jReporter reporter;
+
+  public final static MetricRegistry metrics = new MetricRegistry();
+
+  static {
+    reporter = Slf4jReporter.forRegistry(metrics)
+        .outputTo(LoggerFactory.getLogger(BigtableSession.class.getPackage().getName()))
+        .convertRatesTo(TimeUnit.SECONDS)
+        .convertDurationsTo(TimeUnit.MILLISECONDS)
+        .build();
+    reporter.start(5, TimeUnit.MINUTES);
+  }
 
   // 256 MB, server has 256 MB limit.
   private final static int MAX_MESSAGE_SIZE = 1 << 28;
@@ -421,6 +437,7 @@ public class BigtableSession implements Closeable {
       }
     }
     managedChannels.clear();
+    reporter.report();
   }
 
   public BigtableOptions getOptions() {

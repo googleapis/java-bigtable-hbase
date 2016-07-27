@@ -51,6 +51,7 @@ import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.codahale.metrics.Timer;
 import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
@@ -76,6 +77,9 @@ import com.google.protobuf.ServiceException;
 
 public class BigtableTable implements Table {
   protected static final Logger LOG = new Logger(BigtableTable.class);
+
+  private static Timer getScannerTimer = BigtableSession.metrics.timer("BigtableTable.getScanner");
+  private static Timer putTimer = BigtableSession.metrics.timer("BigtableTable.put.single");
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
   // them (which they shouldn't since we built the filter), throw an exception.
@@ -206,6 +210,7 @@ public class BigtableTable implements Table {
 
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
+    Timer.Context context = getScannerTimer.time();
     try {
       LOG.trace("getScanner(Scan)");
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v2.Row> scanner =
@@ -222,9 +227,12 @@ public class BigtableTable implements Table {
               options.getProjectId(),
               tableName.getQualifierAsString()),
           throwable);
+    } finally {
+      context.stop();
     }
   }
 
+  
   @VisibleForTesting
   static boolean hasWhileMatchFilter(Filter filter) {
     if (filter instanceof WhileMatchFilter) {
@@ -257,12 +265,15 @@ public class BigtableTable implements Table {
 
   @Override
   public void put(Put put) throws IOException {
+    Timer.Context context = putTimer.time();
     LOG.trace("put(Put)");
     MutateRowRequest request = hbaseAdapter.adapt(put);
     try {
       client.mutateRow(request);
     } catch (Throwable t) {
       throw logAndCreateIOException("put", put.getRow(), t);
+    } finally {
+      context.stop();
     }
   }
 

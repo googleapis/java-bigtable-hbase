@@ -16,6 +16,10 @@
 package com.google.cloud.bigtable.grpc.async;
 
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 
@@ -39,7 +43,61 @@ public interface BigtableAsyncUtilities {
   <RequestT, ResponseT> void asyncServerStreamingCall(ClientCall<RequestT, ResponseT> call,
       RequestT request, ClientCall.Listener<ResponseT> listener, Metadata metadata);
 
+  public static class RpcMetrics {
+    private Counter retriesCounter;
+    private Timer operationalLatency;
+
+    public RpcMetrics(MethodDescriptor<?, ?> descriptor) {
+      this(descriptor.getFullMethodName());
+    }
+
+    public RpcMetrics(String descriptor) {
+      this.retriesCounter = BigtableSession.metrics.counter(descriptor + ".retries");
+      this.operationalLatency = BigtableSession.metrics.timer(descriptor + ".operation.latency");
+    }
+
+    public Timer.Context getTimer() {
+      return operationalLatency.time();
+    }
+
+    public void incrementRetries() {
+      retriesCounter.inc();
+    }
+  }
+
   public static class Default implements BigtableAsyncUtilities {
+    private abstract class AbstractBigtableAsyncRpc<RequestT, ResponseT>
+        implements BigtableAsyncRpc<RequestT, ResponseT> {
+      private final MethodDescriptor<RequestT, ResponseT> method;
+      private final RpcMetrics metrics;
+
+      private AbstractBigtableAsyncRpc(MethodDescriptor<RequestT, ResponseT> method) {
+        this.method = method;
+        this.metrics = new RpcMetrics(method);
+      }
+
+      @Override
+      public ClientCall<RequestT, ResponseT> call(RequestT request,
+          ClientCall.Listener<ResponseT> listener, CallOptions callOptions, Metadata metadata) {
+        return createCall(channel, callOptions, method, request, listener, 1, metadata);
+      }
+
+      @Override
+      public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
+        return method;
+      }
+
+      @Override
+      public Context createTimerContext() {
+        return metrics.getTimer();
+      }
+
+      @Override
+      public void incrementRetryCount() {
+        metrics.retriesCounter.inc();
+      }
+    }
+
     private final Channel channel;
 
     public Default(Channel channel) {
@@ -49,45 +107,22 @@ public interface BigtableAsyncUtilities {
     @Override
     public <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncUnaryRpc(
         final MethodDescriptor<RequestT, ResponseT> method, final Predicate<RequestT> isRetryable) {
-      return new BigtableAsyncRpc<RequestT, ResponseT>() {
-        @Override
-        public ClientCall<RequestT, ResponseT> call(RequestT request,
-            ClientCall.Listener<ResponseT> listener, CallOptions callOptions, Metadata metadata) {
-          return createCall(channel, callOptions, method, request, listener, 1, metadata);
-        }
-
+      return new AbstractBigtableAsyncRpc<RequestT, ResponseT>(method) {
         @Override
         public boolean isRetryable(RequestT request) {
           return isRetryable.apply(request);
-        }
-
-        @Override
-        public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
-          return method;
         }
       };
     }
 
     @Override
-    public <RequestT, ResponseT>
-        BigtableAsyncRpc<RequestT, ResponseT> createStreamingAsyncRpc(
-            final MethodDescriptor<RequestT, ResponseT> method) {
-      return new BigtableAsyncRpc<RequestT, ResponseT>() {
-
+    public <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT>
+        createStreamingAsyncRpc(final MethodDescriptor<RequestT, ResponseT> method) {
+      return new AbstractBigtableAsyncRpc<RequestT, ResponseT>(method) {
         @Override
         public boolean isRetryable(RequestT request) {
+          // TODO: 
           return true;
-        }
-
-        @Override
-        public ClientCall<RequestT, ResponseT> call(RequestT request,
-            ClientCall.Listener<ResponseT> listener, CallOptions callOptions, Metadata metadata) {
-          return createCall(channel, callOptions, method, request, listener, 1, metadata);
-        }
-
-        @Override
-        public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
-          return method;
         }
       };
     }
