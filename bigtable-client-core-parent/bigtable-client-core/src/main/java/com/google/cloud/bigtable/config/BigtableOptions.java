@@ -32,6 +32,11 @@ public class BigtableOptions implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
+  // If set to a host:port address, this environment variable will configure the client to connect
+  // to a Bigtable emulator running at the given address with plaintext negotiation.
+  // TODO: Link to emulator documentation when available.
+  public static final String BIGTABLE_EMULATOR_HOST_ENV_VAR = "BIGTABLE_EMULATOR_HOST";
+
   public static final String BIGTABLE_TABLE_ADMIN_HOST_DEFAULT =
       "bigtableadmin.googleapis.com";
   public static final String BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT =
@@ -166,6 +171,37 @@ public class BigtableOptions implements Serializable {
       return this;
     }
 
+    /**
+     * Apply emulator settings from the relevant environment variable, if set.
+     */
+    private void applyEmulatorEnvironment() {
+      // Look for a host:port for the emulator.
+      String emulatorHost = System.getenv(BIGTABLE_EMULATOR_HOST_ENV_VAR);
+      if (emulatorHost == null) {
+        return;
+      }
+
+      String[] hostPort = emulatorHost.split(":");
+      if (hostPort.length != 2) {
+        throw new RuntimeException("Malformed " + BIGTABLE_EMULATOR_HOST_ENV_VAR +
+            " environment variable: " + emulatorHost + ". Expecting host:port.");
+      }
+      int port;
+      try {
+        port = Integer.parseInt(hostPort[1]);
+      } catch (NumberFormatException e) {
+        throw new RuntimeException("Invalid port in " + BIGTABLE_EMULATOR_HOST_ENV_VAR +
+            " environment variable: " + emulatorHost);
+      }
+      setUsePlaintextNegotiation(true);
+      setDataHost(hostPort[0]);
+      setTableAdminHost(hostPort[0]);
+      setInstanceAdminHost(hostPort[0]);
+      setPort(port);
+
+      LOG.info("Connecting to the Bigtable emulator at " + emulatorHost);
+    }
+
     public BigtableOptions build() {
       if (bulkOptions == null) {
         int maxInflightRpcs =
@@ -176,6 +212,7 @@ public class BigtableOptions implements Serializable {
             BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * dataChannelCount;
         bulkOptions = bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
       }
+      applyEmulatorEnvironment();
       return new BigtableOptions(
           instanceAdminHost,
           tableAdminHost,
