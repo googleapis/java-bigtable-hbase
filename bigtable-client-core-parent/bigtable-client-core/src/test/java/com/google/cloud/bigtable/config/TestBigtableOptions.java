@@ -20,6 +20,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -81,5 +85,71 @@ public class TestBigtableOptions {
   @Test
   public void testNullStringsDontThrowExceptions() {
      new BigtableOptions.Builder().build();
+  }
+
+  @Test
+  public void testEmulator() {
+    Map<String, String> oldEnv = System.getenv();
+    Map<String, String> testEnv = new HashMap<>();
+    testEnv.put(BigtableOptions.BIGTABLE_EMULATOR_HOST_ENV_VAR, "localhost:1234");
+    setTestEnv(testEnv);
+    BigtableOptions options = new BigtableOptions.Builder()
+        .setPort(443)
+        .setDataHost("xxx")
+        .build();
+    Assert.assertEquals(1234, options.getPort());
+    Assert.assertEquals("localhost", options.getDataHost());
+    Assert.assertEquals("localhost", options.getInstanceAdminHost());
+    Assert.assertEquals("localhost", options.getTableAdminHost());
+    Assert.assertTrue(options.usePlaintextNegotiation());
+
+    setTestEnv(oldEnv);
+    options = new BigtableOptions.Builder()
+        .setDataHost("override")
+        .build();
+    Assert.assertEquals(BigtableOptions.BIGTABLE_PORT_DEFAULT, options.getPort());
+    Assert.assertEquals("override", options.getDataHost());
+    Assert.assertEquals(BigtableOptions.BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT, options.getInstanceAdminHost());
+    Assert.assertEquals(BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT, options.getTableAdminHost());
+    Assert.assertFalse(options.usePlaintextNegotiation());
+  }
+
+  /**
+   * This is a dirty way to override the environment that is accessible to a test.
+   * It only modifies the JVM's view of the environment, not the environment itself.
+   * From: http://stackoverflow.com/questions/318239/how-do-i-set-environment-variables-from-java/496849
+   */
+  private static void setTestEnv(Map<String, String> newEnv)
+  {
+    try {
+      Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
+      Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
+      theEnvironmentField.setAccessible(true);
+      Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
+      env.putAll(newEnv);
+      Field theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
+      theCaseInsensitiveEnvironmentField.setAccessible(true);
+      Map<String, String> cienv = (Map<String, String>)     theCaseInsensitiveEnvironmentField.get(null);
+      cienv.putAll(newEnv);
+    } catch (NoSuchFieldException e) {
+      try {
+        Class[] classes = Collections.class.getDeclaredClasses();
+        Map<String, String> env = System.getenv();
+        for (Class cl : classes) {
+          if ("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
+            Field field = cl.getDeclaredField("m");
+            field.setAccessible(true);
+            Object obj = field.get(env);
+            Map<String, String> map = (Map<String, String>) obj;
+            map.clear();
+            map.putAll(newEnv);
+          }
+        }
+      } catch (Exception e2) {
+        e2.printStackTrace();
+      }
+    } catch (Exception e1) {
+      e1.printStackTrace();
+    }
   }
 }
