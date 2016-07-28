@@ -182,10 +182,10 @@ public class BigtableOptions implements Serializable {
       }
 
       String[] hostPort = emulatorHost.split(":");
-      if (hostPort.length != 2) {
-        throw new RuntimeException("Malformed " + BIGTABLE_EMULATOR_HOST_ENV_VAR +
-            " environment variable: " + emulatorHost + ". Expecting host:port.");
-      }
+      Preconditions.checkArgument(hostPort.length == 2,
+          "Malformed " + BIGTABLE_EMULATOR_HOST_ENV_VAR + " environment variable: " +
+          emulatorHost + ". Expecting host:port.");
+
       int port;
       try {
         port = Integer.parseInt(hostPort[1]);
