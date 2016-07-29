@@ -4,12 +4,12 @@
 package com.google.bigtable.admin.table.v1;
 
 /**
- * Protobuf type {@code google.bigtable.admin.table.v1.Table}
- *
  * <pre>
  * A collection of user data indexed by row, column, and timestamp.
  * Each table is served using the resources of its parent cluster.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.table.v1.Table}
  */
 public  final class Table extends
     com.google.protobuf.GeneratedMessage implements
@@ -31,7 +31,8 @@ public  final class Table extends
   }
   private Table(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -88,11 +89,10 @@ public  final class Table extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -128,8 +128,8 @@ public  final class Table extends
     /**
      * <code>MILLIS = 0;</code>
      */
-    MILLIS(0, 0),
-    UNRECOGNIZED(-1, -1),
+    MILLIS(0),
+    UNRECOGNIZED(-1),
     ;
 
     /**
@@ -139,14 +139,22 @@ public  final class Table extends
 
 
     public final int getNumber() {
-      if (index == -1) {
+      if (this == UNRECOGNIZED) {
         throw new java.lang.IllegalArgumentException(
             "Can't get the number of an unknown enum value.");
       }
       return value;
     }
 
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static TimestampGranularity valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static TimestampGranularity forNumber(int value) {
       switch (value) {
         case 0: return MILLIS;
         default: return null;
@@ -161,13 +169,13 @@ public  final class Table extends
         TimestampGranularity> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<TimestampGranularity>() {
             public TimestampGranularity findValueByNumber(int number) {
-              return TimestampGranularity.valueOf(number);
+              return TimestampGranularity.forNumber(number);
             }
           };
 
     public final com.google.protobuf.Descriptors.EnumValueDescriptor
         getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
+      return getDescriptor().getValues().get(ordinal());
     }
     public final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptorForType() {
@@ -192,11 +200,9 @@ public  final class Table extends
       return VALUES[desc.getIndex()];
     }
 
-    private final int index;
     private final int value;
 
-    private TimestampGranularity(int index, int value) {
-      this.index = index;
+    private TimestampGranularity(int value) {
       this.value = value;
     }
 
@@ -207,12 +213,12 @@ public  final class Table extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A unique identifier of the form
    * &lt;cluster_name&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -227,12 +233,12 @@ public  final class Table extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A unique identifier of the form
    * &lt;cluster_name&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -251,37 +257,37 @@ public  final class Table extends
   public static final int CURRENT_OPERATION_FIELD_NUMBER = 2;
   private com.google.longrunning.Operation currentOperation_;
   /**
-   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-   *
    * <pre>
    * If this Table is in the process of being created, the Operation used to
    * track its progress. As long as this operation is present, the Table will
    * not accept any Table Admin or Read/Write requests.
    * </pre>
+   *
+   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
    */
   public boolean hasCurrentOperation() {
     return currentOperation_ != null;
   }
   /**
-   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-   *
    * <pre>
    * If this Table is in the process of being created, the Operation used to
    * track its progress. As long as this operation is present, the Table will
    * not accept any Table Admin or Read/Write requests.
    * </pre>
+   *
+   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
    */
   public com.google.longrunning.Operation getCurrentOperation() {
     return currentOperation_ == null ? com.google.longrunning.Operation.getDefaultInstance() : currentOperation_;
   }
   /**
-   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-   *
    * <pre>
    * If this Table is in the process of being created, the Operation used to
    * track its progress. As long as this operation is present, the Table will
    * not accept any Table Admin or Read/Write requests.
    * </pre>
+   *
+   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
    */
   public com.google.longrunning.OperationOrBuilder getCurrentOperationOrBuilder() {
     return getCurrentOperation();
@@ -306,15 +312,15 @@ public  final class Table extends
     if (columnFamilies_ == null) {
       return com.google.protobuf.MapField.emptyMapField(
           ColumnFamiliesDefaultEntryHolder.defaultEntry);
-   }
+    }
     return columnFamilies_;
   }
   /**
-   * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
-   *
    * <pre>
    * The column families configured for this table, mapped by column family id.
    * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
    */
 
   public java.util.Map<java.lang.String, com.google.bigtable.admin.table.v1.ColumnFamily> getColumnFamilies() {
@@ -324,28 +330,28 @@ public  final class Table extends
   public static final int GRANULARITY_FIELD_NUMBER = 4;
   private int granularity_;
   /**
-   * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
-   *
    * <pre>
    * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
    * this table. Timestamps not matching the granularity will be rejected.
    * Cannot be changed once the table is created.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
    */
   public int getGranularityValue() {
     return granularity_;
   }
   /**
-   * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
-   *
    * <pre>
    * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
    * this table. Timestamps not matching the granularity will be rejected.
    * Cannot be changed once the table is created.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
    */
   public com.google.bigtable.admin.table.v1.Table.TimestampGranularity getGranularity() {
-    com.google.bigtable.admin.table.v1.Table.TimestampGranularity result = com.google.bigtable.admin.table.v1.Table.TimestampGranularity.valueOf(granularity_);
+    com.google.bigtable.admin.table.v1.Table.TimestampGranularity result = com.google.bigtable.admin.table.v1.Table.TimestampGranularity.forNumber(granularity_);
     return result == null ? com.google.bigtable.admin.table.v1.Table.TimestampGranularity.UNRECOGNIZED : result;
   }
 
@@ -435,34 +441,40 @@ public  final class Table extends
   }
   public static com.google.bigtable.admin.table.v1.Table parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.Table parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.table.v1.Table parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.Table parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.table.v1.Table parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.Table parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -484,12 +496,12 @@ public  final class Table extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.table.v1.Table}
-   *
    * <pre>
    * A collection of user data indexed by row, column, and timestamp.
    * Each table is served using the resources of its parent cluster.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.table.v1.Table}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -634,7 +646,7 @@ public  final class Table extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.table.v1.Table) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -646,12 +658,12 @@ public  final class Table extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A unique identifier of the form
      * &lt;cluster_name&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -666,12 +678,12 @@ public  final class Table extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A unique identifier of the form
      * &lt;cluster_name&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -687,12 +699,12 @@ public  final class Table extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A unique identifier of the form
      * &lt;cluster_name&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -705,12 +717,12 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A unique identifier of the form
      * &lt;cluster_name&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -719,12 +731,12 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A unique identifier of the form
      * &lt;cluster_name&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -742,25 +754,25 @@ public  final class Table extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.longrunning.Operation, com.google.longrunning.Operation.Builder, com.google.longrunning.OperationOrBuilder> currentOperationBuilder_;
     /**
-     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-     *
      * <pre>
      * If this Table is in the process of being created, the Operation used to
      * track its progress. As long as this operation is present, the Table will
      * not accept any Table Admin or Read/Write requests.
      * </pre>
+     *
+     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
      */
     public boolean hasCurrentOperation() {
       return currentOperationBuilder_ != null || currentOperation_ != null;
     }
     /**
-     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-     *
      * <pre>
      * If this Table is in the process of being created, the Operation used to
      * track its progress. As long as this operation is present, the Table will
      * not accept any Table Admin or Read/Write requests.
      * </pre>
+     *
+     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
      */
     public com.google.longrunning.Operation getCurrentOperation() {
       if (currentOperationBuilder_ == null) {
@@ -770,13 +782,13 @@ public  final class Table extends
       }
     }
     /**
-     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-     *
      * <pre>
      * If this Table is in the process of being created, the Operation used to
      * track its progress. As long as this operation is present, the Table will
      * not accept any Table Admin or Read/Write requests.
      * </pre>
+     *
+     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
      */
     public Builder setCurrentOperation(com.google.longrunning.Operation value) {
       if (currentOperationBuilder_ == null) {
@@ -792,13 +804,13 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-     *
      * <pre>
      * If this Table is in the process of being created, the Operation used to
      * track its progress. As long as this operation is present, the Table will
      * not accept any Table Admin or Read/Write requests.
      * </pre>
+     *
+     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
      */
     public Builder setCurrentOperation(
         com.google.longrunning.Operation.Builder builderForValue) {
@@ -812,13 +824,13 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-     *
      * <pre>
      * If this Table is in the process of being created, the Operation used to
      * track its progress. As long as this operation is present, the Table will
      * not accept any Table Admin or Read/Write requests.
      * </pre>
+     *
+     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
      */
     public Builder mergeCurrentOperation(com.google.longrunning.Operation value) {
       if (currentOperationBuilder_ == null) {
@@ -836,13 +848,13 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-     *
      * <pre>
      * If this Table is in the process of being created, the Operation used to
      * track its progress. As long as this operation is present, the Table will
      * not accept any Table Admin or Read/Write requests.
      * </pre>
+     *
+     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
      */
     public Builder clearCurrentOperation() {
       if (currentOperationBuilder_ == null) {
@@ -856,13 +868,13 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-     *
      * <pre>
      * If this Table is in the process of being created, the Operation used to
      * track its progress. As long as this operation is present, the Table will
      * not accept any Table Admin or Read/Write requests.
      * </pre>
+     *
+     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
      */
     public com.google.longrunning.Operation.Builder getCurrentOperationBuilder() {
       
@@ -870,13 +882,13 @@ public  final class Table extends
       return getCurrentOperationFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-     *
      * <pre>
      * If this Table is in the process of being created, the Operation used to
      * track its progress. As long as this operation is present, the Table will
      * not accept any Table Admin or Read/Write requests.
      * </pre>
+     *
+     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
      */
     public com.google.longrunning.OperationOrBuilder getCurrentOperationOrBuilder() {
       if (currentOperationBuilder_ != null) {
@@ -887,13 +899,13 @@ public  final class Table extends
       }
     }
     /**
-     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-     *
      * <pre>
      * If this Table is in the process of being created, the Operation used to
      * track its progress. As long as this operation is present, the Table will
      * not accept any Table Admin or Read/Write requests.
      * </pre>
+     *
+     * <code>optional .google.longrunning.Operation current_operation = 2;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.longrunning.Operation, com.google.longrunning.Operation.Builder, com.google.longrunning.OperationOrBuilder> 
@@ -916,7 +928,7 @@ public  final class Table extends
       if (columnFamilies_ == null) {
         return com.google.protobuf.MapField.emptyMapField(
             ColumnFamiliesDefaultEntryHolder.defaultEntry);
-     }
+      }
       return columnFamilies_;
     }
     private com.google.protobuf.MapField<java.lang.String, com.google.bigtable.admin.table.v1.ColumnFamily>
@@ -932,32 +944,32 @@ public  final class Table extends
       return columnFamilies_;
     }
     /**
-     * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
-     *
      * <pre>
      * The column families configured for this table, mapped by column family id.
      * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
      */
     public java.util.Map<java.lang.String, com.google.bigtable.admin.table.v1.ColumnFamily> getColumnFamilies() {
       return internalGetColumnFamilies().getMap();
     }
     /**
-     * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
-     *
      * <pre>
      * The column families configured for this table, mapped by column family id.
      * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
      */
     public java.util.Map<java.lang.String, com.google.bigtable.admin.table.v1.ColumnFamily>
     getMutableColumnFamilies() {
       return internalGetMutableColumnFamilies().getMutableMap();
     }
     /**
-     * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
-     *
      * <pre>
      * The column families configured for this table, mapped by column family id.
      * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
      */
     public Builder putAllColumnFamilies(
         java.util.Map<java.lang.String, com.google.bigtable.admin.table.v1.ColumnFamily> values) {
@@ -967,25 +979,25 @@ public  final class Table extends
 
     private int granularity_ = 0;
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
-     *
      * <pre>
      * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
      * this table. Timestamps not matching the granularity will be rejected.
      * Cannot be changed once the table is created.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
      */
     public int getGranularityValue() {
       return granularity_;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
-     *
      * <pre>
      * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
      * this table. Timestamps not matching the granularity will be rejected.
      * Cannot be changed once the table is created.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
      */
     public Builder setGranularityValue(int value) {
       granularity_ = value;
@@ -993,26 +1005,26 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
-     *
      * <pre>
      * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
      * this table. Timestamps not matching the granularity will be rejected.
      * Cannot be changed once the table is created.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
      */
     public com.google.bigtable.admin.table.v1.Table.TimestampGranularity getGranularity() {
-      com.google.bigtable.admin.table.v1.Table.TimestampGranularity result = com.google.bigtable.admin.table.v1.Table.TimestampGranularity.valueOf(granularity_);
+      com.google.bigtable.admin.table.v1.Table.TimestampGranularity result = com.google.bigtable.admin.table.v1.Table.TimestampGranularity.forNumber(granularity_);
       return result == null ? com.google.bigtable.admin.table.v1.Table.TimestampGranularity.UNRECOGNIZED : result;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
-     *
      * <pre>
      * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
      * this table. Timestamps not matching the granularity will be rejected.
      * Cannot be changed once the table is created.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
      */
     public Builder setGranularity(com.google.bigtable.admin.table.v1.Table.TimestampGranularity value) {
       if (value == null) {
@@ -1024,13 +1036,13 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
-     *
      * <pre>
      * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
      * this table. Timestamps not matching the granularity will be rejected.
      * Cannot be changed once the table is created.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
      */
     public Builder clearGranularity() {
       
@@ -1068,16 +1080,7 @@ public  final class Table extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new Table(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

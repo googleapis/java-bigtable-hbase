@@ -8,44 +8,42 @@ public interface TableOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the table. Values are of the form
    * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
    * Views: NAME_ONLY, SCHEMA_VIEW, REPLICATION_VIEW, FULL
    * &#64;OutputOnly
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the table. Values are of the form
    * projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
    * Views: NAME_ONLY, SCHEMA_VIEW, REPLICATION_VIEW, FULL
    * &#64;OutputOnly
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
-   *
    * <pre>
    * The column families configured for this table, mapped by column family ID.
    * Views: SCHEMA_VIEW, FULL
    * &#64;CreationOnly
    * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
    */
   java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
   getColumnFamilies();
 
   /**
-   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-   *
    * <pre>
    * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
    * this table. Timestamps not matching the granularity will be rejected.
@@ -53,11 +51,11 @@ public interface TableOrBuilder extends
    * Views: SCHEMA_VIEW, FULL
    * &#64;CreationOnly
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   int getGranularityValue();
   /**
-   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-   *
    * <pre>
    * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
    * this table. Timestamps not matching the granularity will be rejected.
@@ -65,6 +63,8 @@ public interface TableOrBuilder extends
    * Views: SCHEMA_VIEW, FULL
    * &#64;CreationOnly
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   com.google.bigtable.admin.v2.Table.TimestampGranularity getGranularity();
 }

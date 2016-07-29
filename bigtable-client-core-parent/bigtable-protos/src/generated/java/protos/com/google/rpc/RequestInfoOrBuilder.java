@@ -8,41 +8,41 @@ public interface RequestInfoOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string request_id = 1;</code>
-   *
    * <pre>
    * An opaque string that should only be interpreted by the service generating
    * it. For example, it can be used to identify requests in the service's logs.
    * </pre>
+   *
+   * <code>optional string request_id = 1;</code>
    */
   java.lang.String getRequestId();
   /**
-   * <code>optional string request_id = 1;</code>
-   *
    * <pre>
    * An opaque string that should only be interpreted by the service generating
    * it. For example, it can be used to identify requests in the service's logs.
    * </pre>
+   *
+   * <code>optional string request_id = 1;</code>
    */
   com.google.protobuf.ByteString
       getRequestIdBytes();
 
   /**
-   * <code>optional string serving_data = 2;</code>
-   *
    * <pre>
    * Any data that was used to serve this request. For example, an encrypted
    * stack trace that can be sent back to the service provider for debugging.
    * </pre>
+   *
+   * <code>optional string serving_data = 2;</code>
    */
   java.lang.String getServingData();
   /**
-   * <code>optional string serving_data = 2;</code>
-   *
    * <pre>
    * Any data that was used to serve this request. For example, an encrypted
    * stack trace that can be sent back to the service provider for debugging.
    * </pre>
+   *
+   * <code>optional string serving_data = 2;</code>
    */
   com.google.protobuf.ByteString
       getServingDataBytes();

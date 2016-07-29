@@ -8,21 +8,21 @@ public interface DeleteClusterRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the cluster to be deleted.
    * Values are of the form projects/&lt;project&gt;/zones/&lt;zone&gt;/clusters/&lt;cluster&gt;
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the cluster to be deleted.
    * Values are of the form projects/&lt;project&gt;/zones/&lt;zone&gt;/clusters/&lt;cluster&gt;
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();

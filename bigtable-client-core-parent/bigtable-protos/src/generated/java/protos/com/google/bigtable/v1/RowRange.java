@@ -4,11 +4,11 @@
 package com.google.bigtable.v1;
 
 /**
- * Protobuf type {@code google.bigtable.v1.RowRange}
- *
  * <pre>
  * Specifies a contiguous range of rows.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v1.RowRange}
  */
 public  final class RowRange extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class RowRange extends
   }
   private RowRange(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -60,11 +61,10 @@ public  final class RowRange extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -84,11 +84,11 @@ public  final class RowRange extends
   public static final int START_KEY_FIELD_NUMBER = 2;
   private com.google.protobuf.ByteString startKey_;
   /**
-   * <code>optional bytes start_key = 2;</code>
-   *
    * <pre>
    * Inclusive lower bound. If left empty, interpreted as the empty string.
    * </pre>
+   *
+   * <code>optional bytes start_key = 2;</code>
    */
   public com.google.protobuf.ByteString getStartKey() {
     return startKey_;
@@ -97,11 +97,11 @@ public  final class RowRange extends
   public static final int END_KEY_FIELD_NUMBER = 3;
   private com.google.protobuf.ByteString endKey_;
   /**
-   * <code>optional bytes end_key = 3;</code>
-   *
    * <pre>
    * Exclusive upper bound. If left empty, interpreted as infinity.
    * </pre>
+   *
+   * <code>optional bytes end_key = 3;</code>
    */
   public com.google.protobuf.ByteString getEndKey() {
     return endKey_;
@@ -168,34 +168,40 @@ public  final class RowRange extends
   }
   public static com.google.bigtable.v1.RowRange parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.RowRange parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.RowRange parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.RowRange parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.RowRange parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.RowRange parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -217,11 +223,11 @@ public  final class RowRange extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v1.RowRange}
-   *
    * <pre>
    * Specifies a contiguous range of rows.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v1.RowRange}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -321,7 +327,7 @@ public  final class RowRange extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v1.RowRange) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -332,21 +338,21 @@ public  final class RowRange extends
 
     private com.google.protobuf.ByteString startKey_ = com.google.protobuf.ByteString.EMPTY;
     /**
-     * <code>optional bytes start_key = 2;</code>
-     *
      * <pre>
      * Inclusive lower bound. If left empty, interpreted as the empty string.
      * </pre>
+     *
+     * <code>optional bytes start_key = 2;</code>
      */
     public com.google.protobuf.ByteString getStartKey() {
       return startKey_;
     }
     /**
-     * <code>optional bytes start_key = 2;</code>
-     *
      * <pre>
      * Inclusive lower bound. If left empty, interpreted as the empty string.
      * </pre>
+     *
+     * <code>optional bytes start_key = 2;</code>
      */
     public Builder setStartKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -358,11 +364,11 @@ public  final class RowRange extends
       return this;
     }
     /**
-     * <code>optional bytes start_key = 2;</code>
-     *
      * <pre>
      * Inclusive lower bound. If left empty, interpreted as the empty string.
      * </pre>
+     *
+     * <code>optional bytes start_key = 2;</code>
      */
     public Builder clearStartKey() {
       
@@ -373,21 +379,21 @@ public  final class RowRange extends
 
     private com.google.protobuf.ByteString endKey_ = com.google.protobuf.ByteString.EMPTY;
     /**
-     * <code>optional bytes end_key = 3;</code>
-     *
      * <pre>
      * Exclusive upper bound. If left empty, interpreted as infinity.
      * </pre>
+     *
+     * <code>optional bytes end_key = 3;</code>
      */
     public com.google.protobuf.ByteString getEndKey() {
       return endKey_;
     }
     /**
-     * <code>optional bytes end_key = 3;</code>
-     *
      * <pre>
      * Exclusive upper bound. If left empty, interpreted as infinity.
      * </pre>
+     *
+     * <code>optional bytes end_key = 3;</code>
      */
     public Builder setEndKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -399,11 +405,11 @@ public  final class RowRange extends
       return this;
     }
     /**
-     * <code>optional bytes end_key = 3;</code>
-     *
      * <pre>
      * Exclusive upper bound. If left empty, interpreted as infinity.
      * </pre>
+     *
+     * <code>optional bytes end_key = 3;</code>
      */
     public Builder clearEndKey() {
       
@@ -441,16 +447,7 @@ public  final class RowRange extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new RowRange(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

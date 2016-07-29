@@ -8,39 +8,39 @@ public interface RenameTableRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The current unique name of the table.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The current unique name of the table.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>optional string new_id = 2;</code>
-   *
    * <pre>
    * The new name by which the table should be referred to within its containing
    * cluster, e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
    * </pre>
+   *
+   * <code>optional string new_id = 2;</code>
    */
   java.lang.String getNewId();
   /**
-   * <code>optional string new_id = 2;</code>
-   *
    * <pre>
    * The new name by which the table should be referred to within its containing
    * cluster, e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
    * </pre>
+   *
+   * <code>optional string new_id = 2;</code>
    */
   com.google.protobuf.ByteString
       getNewIdBytes();

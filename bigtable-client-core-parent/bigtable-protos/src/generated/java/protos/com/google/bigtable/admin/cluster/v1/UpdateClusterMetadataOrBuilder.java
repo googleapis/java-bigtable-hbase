@@ -8,108 +8,108 @@ public interface UpdateClusterMetadataOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.Cluster original_request = 1;</code>
-   *
    * <pre>
    * The request which prompted the creation of this operation.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.Cluster original_request = 1;</code>
    */
   boolean hasOriginalRequest();
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.Cluster original_request = 1;</code>
-   *
    * <pre>
    * The request which prompted the creation of this operation.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.Cluster original_request = 1;</code>
    */
   com.google.bigtable.admin.cluster.v1.Cluster getOriginalRequest();
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.Cluster original_request = 1;</code>
-   *
    * <pre>
    * The request which prompted the creation of this operation.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.Cluster original_request = 1;</code>
    */
   com.google.bigtable.admin.cluster.v1.ClusterOrBuilder getOriginalRequestOrBuilder();
 
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-   *
    * <pre>
    * The time at which original_request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   boolean hasRequestTime();
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-   *
    * <pre>
    * The time at which original_request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   com.google.protobuf.Timestamp getRequestTime();
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-   *
    * <pre>
    * The time at which original_request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   com.google.protobuf.TimestampOrBuilder getRequestTimeOrBuilder();
 
   /**
-   * <code>optional .google.protobuf.Timestamp cancel_time = 3;</code>
-   *
    * <pre>
    * The time at which this operation was cancelled. If set, this operation is
    * in the process of undoing itself (which is guaranteed to succeed) and
    * cannot be cancelled again.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp cancel_time = 3;</code>
    */
   boolean hasCancelTime();
   /**
-   * <code>optional .google.protobuf.Timestamp cancel_time = 3;</code>
-   *
    * <pre>
    * The time at which this operation was cancelled. If set, this operation is
    * in the process of undoing itself (which is guaranteed to succeed) and
    * cannot be cancelled again.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp cancel_time = 3;</code>
    */
   com.google.protobuf.Timestamp getCancelTime();
   /**
-   * <code>optional .google.protobuf.Timestamp cancel_time = 3;</code>
-   *
    * <pre>
    * The time at which this operation was cancelled. If set, this operation is
    * in the process of undoing itself (which is guaranteed to succeed) and
    * cannot be cancelled again.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp cancel_time = 3;</code>
    */
   com.google.protobuf.TimestampOrBuilder getCancelTimeOrBuilder();
 
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 4;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 4;</code>
    */
   boolean hasFinishTime();
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 4;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 4;</code>
    */
   com.google.protobuf.Timestamp getFinishTime();
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 4;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 4;</code>
    */
   com.google.protobuf.TimestampOrBuilder getFinishTimeOrBuilder();
 }

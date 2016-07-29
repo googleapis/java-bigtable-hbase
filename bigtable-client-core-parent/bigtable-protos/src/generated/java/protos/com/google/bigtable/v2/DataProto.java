@@ -8,99 +8,99 @@ public final class DataProto {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Row_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_Row_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Family_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_Family_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Column_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_Column_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Cell_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_Cell_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowRange_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_RowRange_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowSet_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_RowSet_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ColumnRange_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_ColumnRange_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_TimestampRange_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_TimestampRange_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ValueRange_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_ValueRange_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowFilter_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_RowFilter_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowFilter_Chain_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_RowFilter_Chain_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowFilter_Interleave_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_RowFilter_Interleave_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowFilter_Condition_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_RowFilter_Condition_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Mutation_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_Mutation_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Mutation_SetCell_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_Mutation_SetCell_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Mutation_DeleteFromColumn_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_Mutation_DeleteFromColumn_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Mutation_DeleteFromFamily_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_Mutation_DeleteFromFamily_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Mutation_DeleteFromRow_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_Mutation_DeleteFromRow_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ReadModifyWriteRule_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_v2_ReadModifyWriteRule_fieldAccessorTable;
 
@@ -108,7 +108,7 @@ public final class DataProto {
       getDescriptor() {
     return descriptor;
   }
-  private static com.google.protobuf.Descriptors.FileDescriptor
+  private static  com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
     java.lang.String[] descriptorData = {

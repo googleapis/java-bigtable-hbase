@@ -4,11 +4,11 @@
 package com.google.bigtable.v2;
 
 /**
- * Protobuf type {@code google.bigtable.v2.ReadRowsResponse}
- *
  * <pre>
  * Response message for Bigtable.ReadRows.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v2.ReadRowsResponse}
  */
 public  final class ReadRowsResponse extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class ReadRowsResponse extends
   }
   private ReadRowsResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -63,11 +64,10 @@ public  final class ReadRowsResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         chunks_ = java.util.Collections.unmodifiableList(chunks_);
@@ -92,20 +92,18 @@ public  final class ReadRowsResponse extends
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional bytes row_key = 1;</code>
-     *
      * <pre>
      * The row key for this chunk of data.  If the row key is empty,
      * this CellChunk is a continuation of the same row as the previous
      * CellChunk in the response stream, even if that CellChunk was in a
      * previous ReadRowsResponse message.
      * </pre>
+     *
+     * <code>optional bytes row_key = 1;</code>
      */
     com.google.protobuf.ByteString getRowKey();
 
     /**
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-     *
      * <pre>
      * The column family name for this chunk of data.  If this message
      * is not present this CellChunk is a continuation of the same column
@@ -114,11 +112,11 @@ public  final class ReadRowsResponse extends
      * explicitly for the presence of this message, not just for
      * `family_name.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
      */
     boolean hasFamilyName();
     /**
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-     *
      * <pre>
      * The column family name for this chunk of data.  If this message
      * is not present this CellChunk is a continuation of the same column
@@ -127,11 +125,11 @@ public  final class ReadRowsResponse extends
      * explicitly for the presence of this message, not just for
      * `family_name.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
      */
     com.google.protobuf.StringValue getFamilyName();
     /**
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-     *
      * <pre>
      * The column family name for this chunk of data.  If this message
      * is not present this CellChunk is a continuation of the same column
@@ -140,12 +138,12 @@ public  final class ReadRowsResponse extends
      * explicitly for the presence of this message, not just for
      * `family_name.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
      */
     com.google.protobuf.StringValueOrBuilder getFamilyNameOrBuilder();
 
     /**
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-     *
      * <pre>
      * The column qualifier for this chunk of data.  If this message
      * is not present, this CellChunk is a continuation of the same column
@@ -153,11 +151,11 @@ public  final class ReadRowsResponse extends
      * clients must check for the presence of this message, not just
      * for `qualifier.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
      */
     boolean hasQualifier();
     /**
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-     *
      * <pre>
      * The column qualifier for this chunk of data.  If this message
      * is not present, this CellChunk is a continuation of the same column
@@ -165,11 +163,11 @@ public  final class ReadRowsResponse extends
      * clients must check for the presence of this message, not just
      * for `qualifier.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
      */
     com.google.protobuf.BytesValue getQualifier();
     /**
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-     *
      * <pre>
      * The column qualifier for this chunk of data.  If this message
      * is not present, this CellChunk is a continuation of the same column
@@ -177,12 +175,12 @@ public  final class ReadRowsResponse extends
      * clients must check for the presence of this message, not just
      * for `qualifier.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
      */
     com.google.protobuf.BytesValueOrBuilder getQualifierOrBuilder();
 
     /**
-     * <code>optional int64 timestamp_micros = 4;</code>
-     *
      * <pre>
      * The cell's stored timestamp, which also uniquely identifies it
      * within its column.  Values are always expressed in
@@ -193,55 +191,55 @@ public  final class ReadRowsResponse extends
      * 1000.  Timestamps are only set in the first CellChunk per cell
      * (for cells split into multiple chunks).
      * </pre>
+     *
+     * <code>optional int64 timestamp_micros = 4;</code>
      */
     long getTimestampMicros();
 
     /**
-     * <code>repeated string labels = 5;</code>
-     *
      * <pre>
      * Labels applied to the cell by a
      * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
      * on the first CellChunk per cell.
      * </pre>
+     *
+     * <code>repeated string labels = 5;</code>
      */
     com.google.protobuf.ProtocolStringList
         getLabelsList();
     /**
-     * <code>repeated string labels = 5;</code>
-     *
      * <pre>
      * Labels applied to the cell by a
      * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
      * on the first CellChunk per cell.
      * </pre>
+     *
+     * <code>repeated string labels = 5;</code>
      */
     int getLabelsCount();
     /**
-     * <code>repeated string labels = 5;</code>
-     *
      * <pre>
      * Labels applied to the cell by a
      * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
      * on the first CellChunk per cell.
      * </pre>
+     *
+     * <code>repeated string labels = 5;</code>
      */
     java.lang.String getLabels(int index);
     /**
-     * <code>repeated string labels = 5;</code>
-     *
      * <pre>
      * Labels applied to the cell by a
      * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
      * on the first CellChunk per cell.
      * </pre>
+     *
+     * <code>repeated string labels = 5;</code>
      */
     com.google.protobuf.ByteString
         getLabelsBytes(int index);
 
     /**
-     * <code>optional bytes value = 6;</code>
-     *
      * <pre>
      * The value stored in the cell.  Cell values can be split across
      * multiple CellChunks.  In that case only the value field will be
@@ -249,50 +247,52 @@ public  final class ReadRowsResponse extends
      * will only be present in the first CellChunk, even if the first
      * CellChunk came in a previous ReadRowsResponse.
      * </pre>
+     *
+     * <code>optional bytes value = 6;</code>
      */
     com.google.protobuf.ByteString getValue();
 
     /**
-     * <code>optional int32 value_size = 7;</code>
-     *
      * <pre>
      * If this CellChunk is part of a chunked cell value and this is
      * not the final chunk of that cell, value_size will be set to the
      * total length of the cell value.  The client can use this size
      * to pre-allocate memory to hold the full cell value.
      * </pre>
+     *
+     * <code>optional int32 value_size = 7;</code>
      */
     int getValueSize();
 
     /**
-     * <code>optional bool reset_row = 8;</code>
-     *
      * <pre>
      * Indicates that the client should drop all previous chunks for
      * `row_key`, as it will be re-read from the beginning.
      * </pre>
+     *
+     * <code>optional bool reset_row = 8;</code>
      */
     boolean getResetRow();
 
     /**
-     * <code>optional bool commit_row = 9;</code>
-     *
      * <pre>
      * Indicates that the client can safely process all previous chunks for
      * `row_key`, as its data has been fully read.
      * </pre>
+     *
+     * <code>optional bool commit_row = 9;</code>
      */
     boolean getCommitRow();
 
     public com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase getRowStatusCase();
   }
   /**
-   * Protobuf type {@code google.bigtable.v2.ReadRowsResponse.CellChunk}
-   *
    * <pre>
    * Specifies a piece of a row's contents returned as part of the read
    * response stream.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v2.ReadRowsResponse.CellChunk}
    */
   public  static final class CellChunk extends
       com.google.protobuf.GeneratedMessage implements
@@ -317,7 +317,8 @@ public  final class ReadRowsResponse extends
     }
     private CellChunk(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       this();
       int mutable_bitField0_ = 0;
       try {
@@ -402,11 +403,10 @@ public  final class ReadRowsResponse extends
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
           labels_ = labels_.getUnmodifiableView();
@@ -434,17 +434,24 @@ public  final class ReadRowsResponse extends
       RESET_ROW(8),
       COMMIT_ROW(9),
       ROWSTATUS_NOT_SET(0);
-      private int value = 0;
+      private final int value;
       private RowStatusCase(int value) {
         this.value = value;
       }
+      /**
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
       public static RowStatusCase valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static RowStatusCase forNumber(int value) {
         switch (value) {
           case 8: return RESET_ROW;
           case 9: return COMMIT_ROW;
           case 0: return ROWSTATUS_NOT_SET;
-          default: throw new java.lang.IllegalArgumentException(
-            "Value is undefined for this oneof enum.");
+          default: return null;
         }
       }
       public int getNumber() {
@@ -454,21 +461,21 @@ public  final class ReadRowsResponse extends
 
     public RowStatusCase
     getRowStatusCase() {
-      return RowStatusCase.valueOf(
+      return RowStatusCase.forNumber(
           rowStatusCase_);
     }
 
     public static final int ROW_KEY_FIELD_NUMBER = 1;
     private com.google.protobuf.ByteString rowKey_;
     /**
-     * <code>optional bytes row_key = 1;</code>
-     *
      * <pre>
      * The row key for this chunk of data.  If the row key is empty,
      * this CellChunk is a continuation of the same row as the previous
      * CellChunk in the response stream, even if that CellChunk was in a
      * previous ReadRowsResponse message.
      * </pre>
+     *
+     * <code>optional bytes row_key = 1;</code>
      */
     public com.google.protobuf.ByteString getRowKey() {
       return rowKey_;
@@ -477,8 +484,6 @@ public  final class ReadRowsResponse extends
     public static final int FAMILY_NAME_FIELD_NUMBER = 2;
     private com.google.protobuf.StringValue familyName_;
     /**
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-     *
      * <pre>
      * The column family name for this chunk of data.  If this message
      * is not present this CellChunk is a continuation of the same column
@@ -487,13 +492,13 @@ public  final class ReadRowsResponse extends
      * explicitly for the presence of this message, not just for
      * `family_name.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
      */
     public boolean hasFamilyName() {
       return familyName_ != null;
     }
     /**
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-     *
      * <pre>
      * The column family name for this chunk of data.  If this message
      * is not present this CellChunk is a continuation of the same column
@@ -502,13 +507,13 @@ public  final class ReadRowsResponse extends
      * explicitly for the presence of this message, not just for
      * `family_name.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
      */
     public com.google.protobuf.StringValue getFamilyName() {
       return familyName_ == null ? com.google.protobuf.StringValue.getDefaultInstance() : familyName_;
     }
     /**
-     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-     *
      * <pre>
      * The column family name for this chunk of data.  If this message
      * is not present this CellChunk is a continuation of the same column
@@ -517,6 +522,8 @@ public  final class ReadRowsResponse extends
      * explicitly for the presence of this message, not just for
      * `family_name.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.StringValue family_name = 2;</code>
      */
     public com.google.protobuf.StringValueOrBuilder getFamilyNameOrBuilder() {
       return getFamilyName();
@@ -525,8 +532,6 @@ public  final class ReadRowsResponse extends
     public static final int QUALIFIER_FIELD_NUMBER = 3;
     private com.google.protobuf.BytesValue qualifier_;
     /**
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-     *
      * <pre>
      * The column qualifier for this chunk of data.  If this message
      * is not present, this CellChunk is a continuation of the same column
@@ -534,13 +539,13 @@ public  final class ReadRowsResponse extends
      * clients must check for the presence of this message, not just
      * for `qualifier.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
      */
     public boolean hasQualifier() {
       return qualifier_ != null;
     }
     /**
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-     *
      * <pre>
      * The column qualifier for this chunk of data.  If this message
      * is not present, this CellChunk is a continuation of the same column
@@ -548,13 +553,13 @@ public  final class ReadRowsResponse extends
      * clients must check for the presence of this message, not just
      * for `qualifier.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
      */
     public com.google.protobuf.BytesValue getQualifier() {
       return qualifier_ == null ? com.google.protobuf.BytesValue.getDefaultInstance() : qualifier_;
     }
     /**
-     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-     *
      * <pre>
      * The column qualifier for this chunk of data.  If this message
      * is not present, this CellChunk is a continuation of the same column
@@ -562,6 +567,8 @@ public  final class ReadRowsResponse extends
      * clients must check for the presence of this message, not just
      * for `qualifier.value` being non-empty.
      * </pre>
+     *
+     * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
      */
     public com.google.protobuf.BytesValueOrBuilder getQualifierOrBuilder() {
       return getQualifier();
@@ -570,8 +577,6 @@ public  final class ReadRowsResponse extends
     public static final int TIMESTAMP_MICROS_FIELD_NUMBER = 4;
     private long timestampMicros_;
     /**
-     * <code>optional int64 timestamp_micros = 4;</code>
-     *
      * <pre>
      * The cell's stored timestamp, which also uniquely identifies it
      * within its column.  Values are always expressed in
@@ -582,6 +587,8 @@ public  final class ReadRowsResponse extends
      * 1000.  Timestamps are only set in the first CellChunk per cell
      * (for cells split into multiple chunks).
      * </pre>
+     *
+     * <code>optional int64 timestamp_micros = 4;</code>
      */
     public long getTimestampMicros() {
       return timestampMicros_;
@@ -590,50 +597,50 @@ public  final class ReadRowsResponse extends
     public static final int LABELS_FIELD_NUMBER = 5;
     private com.google.protobuf.LazyStringList labels_;
     /**
-     * <code>repeated string labels = 5;</code>
-     *
      * <pre>
      * Labels applied to the cell by a
      * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
      * on the first CellChunk per cell.
      * </pre>
+     *
+     * <code>repeated string labels = 5;</code>
      */
     public com.google.protobuf.ProtocolStringList
         getLabelsList() {
       return labels_;
     }
     /**
-     * <code>repeated string labels = 5;</code>
-     *
      * <pre>
      * Labels applied to the cell by a
      * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
      * on the first CellChunk per cell.
      * </pre>
+     *
+     * <code>repeated string labels = 5;</code>
      */
     public int getLabelsCount() {
       return labels_.size();
     }
     /**
-     * <code>repeated string labels = 5;</code>
-     *
      * <pre>
      * Labels applied to the cell by a
      * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
      * on the first CellChunk per cell.
      * </pre>
+     *
+     * <code>repeated string labels = 5;</code>
      */
     public java.lang.String getLabels(int index) {
       return labels_.get(index);
     }
     /**
-     * <code>repeated string labels = 5;</code>
-     *
      * <pre>
      * Labels applied to the cell by a
      * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
      * on the first CellChunk per cell.
      * </pre>
+     *
+     * <code>repeated string labels = 5;</code>
      */
     public com.google.protobuf.ByteString
         getLabelsBytes(int index) {
@@ -643,8 +650,6 @@ public  final class ReadRowsResponse extends
     public static final int VALUE_FIELD_NUMBER = 6;
     private com.google.protobuf.ByteString value_;
     /**
-     * <code>optional bytes value = 6;</code>
-     *
      * <pre>
      * The value stored in the cell.  Cell values can be split across
      * multiple CellChunks.  In that case only the value field will be
@@ -652,6 +657,8 @@ public  final class ReadRowsResponse extends
      * will only be present in the first CellChunk, even if the first
      * CellChunk came in a previous ReadRowsResponse.
      * </pre>
+     *
+     * <code>optional bytes value = 6;</code>
      */
     public com.google.protobuf.ByteString getValue() {
       return value_;
@@ -660,14 +667,14 @@ public  final class ReadRowsResponse extends
     public static final int VALUE_SIZE_FIELD_NUMBER = 7;
     private int valueSize_;
     /**
-     * <code>optional int32 value_size = 7;</code>
-     *
      * <pre>
      * If this CellChunk is part of a chunked cell value and this is
      * not the final chunk of that cell, value_size will be set to the
      * total length of the cell value.  The client can use this size
      * to pre-allocate memory to hold the full cell value.
      * </pre>
+     *
+     * <code>optional int32 value_size = 7;</code>
      */
     public int getValueSize() {
       return valueSize_;
@@ -675,12 +682,12 @@ public  final class ReadRowsResponse extends
 
     public static final int RESET_ROW_FIELD_NUMBER = 8;
     /**
-     * <code>optional bool reset_row = 8;</code>
-     *
      * <pre>
      * Indicates that the client should drop all previous chunks for
      * `row_key`, as it will be re-read from the beginning.
      * </pre>
+     *
+     * <code>optional bool reset_row = 8;</code>
      */
     public boolean getResetRow() {
       if (rowStatusCase_ == 8) {
@@ -691,12 +698,12 @@ public  final class ReadRowsResponse extends
 
     public static final int COMMIT_ROW_FIELD_NUMBER = 9;
     /**
-     * <code>optional bool commit_row = 9;</code>
-     *
      * <pre>
      * Indicates that the client can safely process all previous chunks for
      * `row_key`, as its data has been fully read.
      * </pre>
+     *
+     * <code>optional bool commit_row = 9;</code>
      */
     public boolean getCommitRow() {
       if (rowStatusCase_ == 9) {
@@ -823,34 +830,40 @@ public  final class ReadRowsResponse extends
     }
     public static com.google.bigtable.v2.ReadRowsResponse.CellChunk parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v2.ReadRowsResponse.CellChunk parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.v2.ReadRowsResponse.CellChunk parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v2.ReadRowsResponse.CellChunk parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.v2.ReadRowsResponse.CellChunk parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v2.ReadRowsResponse.CellChunk parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
     public Builder newBuilderForType() { return newBuilder(); }
@@ -872,12 +885,12 @@ public  final class ReadRowsResponse extends
       return builder;
     }
     /**
-     * Protobuf type {@code google.bigtable.v2.ReadRowsResponse.CellChunk}
-     *
      * <pre>
      * Specifies a piece of a row's contents returned as part of the read
      * response stream.
      * </pre>
+     *
+     * Protobuf type {@code google.bigtable.v2.ReadRowsResponse.CellChunk}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -1059,7 +1072,7 @@ public  final class ReadRowsResponse extends
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (com.google.bigtable.v2.ReadRowsResponse.CellChunk) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -1071,7 +1084,7 @@ public  final class ReadRowsResponse extends
       private java.lang.Object rowStatus_;
       public RowStatusCase
           getRowStatusCase() {
-        return RowStatusCase.valueOf(
+        return RowStatusCase.forNumber(
             rowStatusCase_);
       }
 
@@ -1086,27 +1099,27 @@ public  final class ReadRowsResponse extends
 
       private com.google.protobuf.ByteString rowKey_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>optional bytes row_key = 1;</code>
-       *
        * <pre>
        * The row key for this chunk of data.  If the row key is empty,
        * this CellChunk is a continuation of the same row as the previous
        * CellChunk in the response stream, even if that CellChunk was in a
        * previous ReadRowsResponse message.
        * </pre>
+       *
+       * <code>optional bytes row_key = 1;</code>
        */
       public com.google.protobuf.ByteString getRowKey() {
         return rowKey_;
       }
       /**
-       * <code>optional bytes row_key = 1;</code>
-       *
        * <pre>
        * The row key for this chunk of data.  If the row key is empty,
        * this CellChunk is a continuation of the same row as the previous
        * CellChunk in the response stream, even if that CellChunk was in a
        * previous ReadRowsResponse message.
        * </pre>
+       *
+       * <code>optional bytes row_key = 1;</code>
        */
       public Builder setRowKey(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1118,14 +1131,14 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional bytes row_key = 1;</code>
-       *
        * <pre>
        * The row key for this chunk of data.  If the row key is empty,
        * this CellChunk is a continuation of the same row as the previous
        * CellChunk in the response stream, even if that CellChunk was in a
        * previous ReadRowsResponse message.
        * </pre>
+       *
+       * <code>optional bytes row_key = 1;</code>
        */
       public Builder clearRowKey() {
         
@@ -1138,8 +1151,6 @@ public  final class ReadRowsResponse extends
       private com.google.protobuf.SingleFieldBuilder<
           com.google.protobuf.StringValue, com.google.protobuf.StringValue.Builder, com.google.protobuf.StringValueOrBuilder> familyNameBuilder_;
       /**
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-       *
        * <pre>
        * The column family name for this chunk of data.  If this message
        * is not present this CellChunk is a continuation of the same column
@@ -1148,13 +1159,13 @@ public  final class ReadRowsResponse extends
        * explicitly for the presence of this message, not just for
        * `family_name.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
        */
       public boolean hasFamilyName() {
         return familyNameBuilder_ != null || familyName_ != null;
       }
       /**
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-       *
        * <pre>
        * The column family name for this chunk of data.  If this message
        * is not present this CellChunk is a continuation of the same column
@@ -1163,6 +1174,8 @@ public  final class ReadRowsResponse extends
        * explicitly for the presence of this message, not just for
        * `family_name.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
        */
       public com.google.protobuf.StringValue getFamilyName() {
         if (familyNameBuilder_ == null) {
@@ -1172,8 +1185,6 @@ public  final class ReadRowsResponse extends
         }
       }
       /**
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-       *
        * <pre>
        * The column family name for this chunk of data.  If this message
        * is not present this CellChunk is a continuation of the same column
@@ -1182,6 +1193,8 @@ public  final class ReadRowsResponse extends
        * explicitly for the presence of this message, not just for
        * `family_name.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
        */
       public Builder setFamilyName(com.google.protobuf.StringValue value) {
         if (familyNameBuilder_ == null) {
@@ -1197,8 +1210,6 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-       *
        * <pre>
        * The column family name for this chunk of data.  If this message
        * is not present this CellChunk is a continuation of the same column
@@ -1207,6 +1218,8 @@ public  final class ReadRowsResponse extends
        * explicitly for the presence of this message, not just for
        * `family_name.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
        */
       public Builder setFamilyName(
           com.google.protobuf.StringValue.Builder builderForValue) {
@@ -1220,8 +1233,6 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-       *
        * <pre>
        * The column family name for this chunk of data.  If this message
        * is not present this CellChunk is a continuation of the same column
@@ -1230,6 +1241,8 @@ public  final class ReadRowsResponse extends
        * explicitly for the presence of this message, not just for
        * `family_name.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
        */
       public Builder mergeFamilyName(com.google.protobuf.StringValue value) {
         if (familyNameBuilder_ == null) {
@@ -1247,8 +1260,6 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-       *
        * <pre>
        * The column family name for this chunk of data.  If this message
        * is not present this CellChunk is a continuation of the same column
@@ -1257,6 +1268,8 @@ public  final class ReadRowsResponse extends
        * explicitly for the presence of this message, not just for
        * `family_name.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
        */
       public Builder clearFamilyName() {
         if (familyNameBuilder_ == null) {
@@ -1270,8 +1283,6 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-       *
        * <pre>
        * The column family name for this chunk of data.  If this message
        * is not present this CellChunk is a continuation of the same column
@@ -1280,6 +1291,8 @@ public  final class ReadRowsResponse extends
        * explicitly for the presence of this message, not just for
        * `family_name.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
        */
       public com.google.protobuf.StringValue.Builder getFamilyNameBuilder() {
         
@@ -1287,8 +1300,6 @@ public  final class ReadRowsResponse extends
         return getFamilyNameFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-       *
        * <pre>
        * The column family name for this chunk of data.  If this message
        * is not present this CellChunk is a continuation of the same column
@@ -1297,6 +1308,8 @@ public  final class ReadRowsResponse extends
        * explicitly for the presence of this message, not just for
        * `family_name.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
        */
       public com.google.protobuf.StringValueOrBuilder getFamilyNameOrBuilder() {
         if (familyNameBuilder_ != null) {
@@ -1307,8 +1320,6 @@ public  final class ReadRowsResponse extends
         }
       }
       /**
-       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
-       *
        * <pre>
        * The column family name for this chunk of data.  If this message
        * is not present this CellChunk is a continuation of the same column
@@ -1317,6 +1328,8 @@ public  final class ReadRowsResponse extends
        * explicitly for the presence of this message, not just for
        * `family_name.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.StringValue family_name = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           com.google.protobuf.StringValue, com.google.protobuf.StringValue.Builder, com.google.protobuf.StringValueOrBuilder> 
@@ -1336,8 +1349,6 @@ public  final class ReadRowsResponse extends
       private com.google.protobuf.SingleFieldBuilder<
           com.google.protobuf.BytesValue, com.google.protobuf.BytesValue.Builder, com.google.protobuf.BytesValueOrBuilder> qualifierBuilder_;
       /**
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-       *
        * <pre>
        * The column qualifier for this chunk of data.  If this message
        * is not present, this CellChunk is a continuation of the same column
@@ -1345,13 +1356,13 @@ public  final class ReadRowsResponse extends
        * clients must check for the presence of this message, not just
        * for `qualifier.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
        */
       public boolean hasQualifier() {
         return qualifierBuilder_ != null || qualifier_ != null;
       }
       /**
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-       *
        * <pre>
        * The column qualifier for this chunk of data.  If this message
        * is not present, this CellChunk is a continuation of the same column
@@ -1359,6 +1370,8 @@ public  final class ReadRowsResponse extends
        * clients must check for the presence of this message, not just
        * for `qualifier.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
        */
       public com.google.protobuf.BytesValue getQualifier() {
         if (qualifierBuilder_ == null) {
@@ -1368,8 +1381,6 @@ public  final class ReadRowsResponse extends
         }
       }
       /**
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-       *
        * <pre>
        * The column qualifier for this chunk of data.  If this message
        * is not present, this CellChunk is a continuation of the same column
@@ -1377,6 +1388,8 @@ public  final class ReadRowsResponse extends
        * clients must check for the presence of this message, not just
        * for `qualifier.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
        */
       public Builder setQualifier(com.google.protobuf.BytesValue value) {
         if (qualifierBuilder_ == null) {
@@ -1392,8 +1405,6 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-       *
        * <pre>
        * The column qualifier for this chunk of data.  If this message
        * is not present, this CellChunk is a continuation of the same column
@@ -1401,6 +1412,8 @@ public  final class ReadRowsResponse extends
        * clients must check for the presence of this message, not just
        * for `qualifier.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
        */
       public Builder setQualifier(
           com.google.protobuf.BytesValue.Builder builderForValue) {
@@ -1414,8 +1427,6 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-       *
        * <pre>
        * The column qualifier for this chunk of data.  If this message
        * is not present, this CellChunk is a continuation of the same column
@@ -1423,6 +1434,8 @@ public  final class ReadRowsResponse extends
        * clients must check for the presence of this message, not just
        * for `qualifier.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
        */
       public Builder mergeQualifier(com.google.protobuf.BytesValue value) {
         if (qualifierBuilder_ == null) {
@@ -1440,8 +1453,6 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-       *
        * <pre>
        * The column qualifier for this chunk of data.  If this message
        * is not present, this CellChunk is a continuation of the same column
@@ -1449,6 +1460,8 @@ public  final class ReadRowsResponse extends
        * clients must check for the presence of this message, not just
        * for `qualifier.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
        */
       public Builder clearQualifier() {
         if (qualifierBuilder_ == null) {
@@ -1462,8 +1475,6 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-       *
        * <pre>
        * The column qualifier for this chunk of data.  If this message
        * is not present, this CellChunk is a continuation of the same column
@@ -1471,6 +1482,8 @@ public  final class ReadRowsResponse extends
        * clients must check for the presence of this message, not just
        * for `qualifier.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
        */
       public com.google.protobuf.BytesValue.Builder getQualifierBuilder() {
         
@@ -1478,8 +1491,6 @@ public  final class ReadRowsResponse extends
         return getQualifierFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-       *
        * <pre>
        * The column qualifier for this chunk of data.  If this message
        * is not present, this CellChunk is a continuation of the same column
@@ -1487,6 +1498,8 @@ public  final class ReadRowsResponse extends
        * clients must check for the presence of this message, not just
        * for `qualifier.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
        */
       public com.google.protobuf.BytesValueOrBuilder getQualifierOrBuilder() {
         if (qualifierBuilder_ != null) {
@@ -1497,8 +1510,6 @@ public  final class ReadRowsResponse extends
         }
       }
       /**
-       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
-       *
        * <pre>
        * The column qualifier for this chunk of data.  If this message
        * is not present, this CellChunk is a continuation of the same column
@@ -1506,6 +1517,8 @@ public  final class ReadRowsResponse extends
        * clients must check for the presence of this message, not just
        * for `qualifier.value` being non-empty.
        * </pre>
+       *
+       * <code>optional .google.protobuf.BytesValue qualifier = 3;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           com.google.protobuf.BytesValue, com.google.protobuf.BytesValue.Builder, com.google.protobuf.BytesValueOrBuilder> 
@@ -1523,8 +1536,6 @@ public  final class ReadRowsResponse extends
 
       private long timestampMicros_ ;
       /**
-       * <code>optional int64 timestamp_micros = 4;</code>
-       *
        * <pre>
        * The cell's stored timestamp, which also uniquely identifies it
        * within its column.  Values are always expressed in
@@ -1535,13 +1546,13 @@ public  final class ReadRowsResponse extends
        * 1000.  Timestamps are only set in the first CellChunk per cell
        * (for cells split into multiple chunks).
        * </pre>
+       *
+       * <code>optional int64 timestamp_micros = 4;</code>
        */
       public long getTimestampMicros() {
         return timestampMicros_;
       }
       /**
-       * <code>optional int64 timestamp_micros = 4;</code>
-       *
        * <pre>
        * The cell's stored timestamp, which also uniquely identifies it
        * within its column.  Values are always expressed in
@@ -1552,6 +1563,8 @@ public  final class ReadRowsResponse extends
        * 1000.  Timestamps are only set in the first CellChunk per cell
        * (for cells split into multiple chunks).
        * </pre>
+       *
+       * <code>optional int64 timestamp_micros = 4;</code>
        */
       public Builder setTimestampMicros(long value) {
         
@@ -1560,8 +1573,6 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional int64 timestamp_micros = 4;</code>
-       *
        * <pre>
        * The cell's stored timestamp, which also uniquely identifies it
        * within its column.  Values are always expressed in
@@ -1572,6 +1583,8 @@ public  final class ReadRowsResponse extends
        * 1000.  Timestamps are only set in the first CellChunk per cell
        * (for cells split into multiple chunks).
        * </pre>
+       *
+       * <code>optional int64 timestamp_micros = 4;</code>
        */
       public Builder clearTimestampMicros() {
         
@@ -1588,63 +1601,63 @@ public  final class ReadRowsResponse extends
          }
       }
       /**
-       * <code>repeated string labels = 5;</code>
-       *
        * <pre>
        * Labels applied to the cell by a
        * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
        * on the first CellChunk per cell.
        * </pre>
+       *
+       * <code>repeated string labels = 5;</code>
        */
       public com.google.protobuf.ProtocolStringList
           getLabelsList() {
         return labels_.getUnmodifiableView();
       }
       /**
-       * <code>repeated string labels = 5;</code>
-       *
        * <pre>
        * Labels applied to the cell by a
        * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
        * on the first CellChunk per cell.
        * </pre>
+       *
+       * <code>repeated string labels = 5;</code>
        */
       public int getLabelsCount() {
         return labels_.size();
       }
       /**
-       * <code>repeated string labels = 5;</code>
-       *
        * <pre>
        * Labels applied to the cell by a
        * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
        * on the first CellChunk per cell.
        * </pre>
+       *
+       * <code>repeated string labels = 5;</code>
        */
       public java.lang.String getLabels(int index) {
         return labels_.get(index);
       }
       /**
-       * <code>repeated string labels = 5;</code>
-       *
        * <pre>
        * Labels applied to the cell by a
        * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
        * on the first CellChunk per cell.
        * </pre>
+       *
+       * <code>repeated string labels = 5;</code>
        */
       public com.google.protobuf.ByteString
           getLabelsBytes(int index) {
         return labels_.getByteString(index);
       }
       /**
-       * <code>repeated string labels = 5;</code>
-       *
        * <pre>
        * Labels applied to the cell by a
        * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
        * on the first CellChunk per cell.
        * </pre>
+       *
+       * <code>repeated string labels = 5;</code>
        */
       public Builder setLabels(
           int index, java.lang.String value) {
@@ -1657,13 +1670,13 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>repeated string labels = 5;</code>
-       *
        * <pre>
        * Labels applied to the cell by a
        * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
        * on the first CellChunk per cell.
        * </pre>
+       *
+       * <code>repeated string labels = 5;</code>
        */
       public Builder addLabels(
           java.lang.String value) {
@@ -1676,13 +1689,13 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>repeated string labels = 5;</code>
-       *
        * <pre>
        * Labels applied to the cell by a
        * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
        * on the first CellChunk per cell.
        * </pre>
+       *
+       * <code>repeated string labels = 5;</code>
        */
       public Builder addAllLabels(
           java.lang.Iterable<java.lang.String> values) {
@@ -1693,13 +1706,13 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>repeated string labels = 5;</code>
-       *
        * <pre>
        * Labels applied to the cell by a
        * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
        * on the first CellChunk per cell.
        * </pre>
+       *
+       * <code>repeated string labels = 5;</code>
        */
       public Builder clearLabels() {
         labels_ = com.google.protobuf.LazyStringArrayList.EMPTY;
@@ -1708,13 +1721,13 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>repeated string labels = 5;</code>
-       *
        * <pre>
        * Labels applied to the cell by a
        * [RowFilter][google.bigtable.v2.RowFilter].  Labels are only set
        * on the first CellChunk per cell.
        * </pre>
+       *
+       * <code>repeated string labels = 5;</code>
        */
       public Builder addLabelsBytes(
           com.google.protobuf.ByteString value) {
@@ -1730,8 +1743,6 @@ public  final class ReadRowsResponse extends
 
       private com.google.protobuf.ByteString value_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>optional bytes value = 6;</code>
-       *
        * <pre>
        * The value stored in the cell.  Cell values can be split across
        * multiple CellChunks.  In that case only the value field will be
@@ -1739,13 +1750,13 @@ public  final class ReadRowsResponse extends
        * will only be present in the first CellChunk, even if the first
        * CellChunk came in a previous ReadRowsResponse.
        * </pre>
+       *
+       * <code>optional bytes value = 6;</code>
        */
       public com.google.protobuf.ByteString getValue() {
         return value_;
       }
       /**
-       * <code>optional bytes value = 6;</code>
-       *
        * <pre>
        * The value stored in the cell.  Cell values can be split across
        * multiple CellChunks.  In that case only the value field will be
@@ -1753,6 +1764,8 @@ public  final class ReadRowsResponse extends
        * will only be present in the first CellChunk, even if the first
        * CellChunk came in a previous ReadRowsResponse.
        * </pre>
+       *
+       * <code>optional bytes value = 6;</code>
        */
       public Builder setValue(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1764,8 +1777,6 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional bytes value = 6;</code>
-       *
        * <pre>
        * The value stored in the cell.  Cell values can be split across
        * multiple CellChunks.  In that case only the value field will be
@@ -1773,6 +1784,8 @@ public  final class ReadRowsResponse extends
        * will only be present in the first CellChunk, even if the first
        * CellChunk came in a previous ReadRowsResponse.
        * </pre>
+       *
+       * <code>optional bytes value = 6;</code>
        */
       public Builder clearValue() {
         
@@ -1783,27 +1796,27 @@ public  final class ReadRowsResponse extends
 
       private int valueSize_ ;
       /**
-       * <code>optional int32 value_size = 7;</code>
-       *
        * <pre>
        * If this CellChunk is part of a chunked cell value and this is
        * not the final chunk of that cell, value_size will be set to the
        * total length of the cell value.  The client can use this size
        * to pre-allocate memory to hold the full cell value.
        * </pre>
+       *
+       * <code>optional int32 value_size = 7;</code>
        */
       public int getValueSize() {
         return valueSize_;
       }
       /**
-       * <code>optional int32 value_size = 7;</code>
-       *
        * <pre>
        * If this CellChunk is part of a chunked cell value and this is
        * not the final chunk of that cell, value_size will be set to the
        * total length of the cell value.  The client can use this size
        * to pre-allocate memory to hold the full cell value.
        * </pre>
+       *
+       * <code>optional int32 value_size = 7;</code>
        */
       public Builder setValueSize(int value) {
         
@@ -1812,14 +1825,14 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional int32 value_size = 7;</code>
-       *
        * <pre>
        * If this CellChunk is part of a chunked cell value and this is
        * not the final chunk of that cell, value_size will be set to the
        * total length of the cell value.  The client can use this size
        * to pre-allocate memory to hold the full cell value.
        * </pre>
+       *
+       * <code>optional int32 value_size = 7;</code>
        */
       public Builder clearValueSize() {
         
@@ -1829,12 +1842,12 @@ public  final class ReadRowsResponse extends
       }
 
       /**
-       * <code>optional bool reset_row = 8;</code>
-       *
        * <pre>
        * Indicates that the client should drop all previous chunks for
        * `row_key`, as it will be re-read from the beginning.
        * </pre>
+       *
+       * <code>optional bool reset_row = 8;</code>
        */
       public boolean getResetRow() {
         if (rowStatusCase_ == 8) {
@@ -1843,12 +1856,12 @@ public  final class ReadRowsResponse extends
         return false;
       }
       /**
-       * <code>optional bool reset_row = 8;</code>
-       *
        * <pre>
        * Indicates that the client should drop all previous chunks for
        * `row_key`, as it will be re-read from the beginning.
        * </pre>
+       *
+       * <code>optional bool reset_row = 8;</code>
        */
       public Builder setResetRow(boolean value) {
         rowStatusCase_ = 8;
@@ -1857,12 +1870,12 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional bool reset_row = 8;</code>
-       *
        * <pre>
        * Indicates that the client should drop all previous chunks for
        * `row_key`, as it will be re-read from the beginning.
        * </pre>
+       *
+       * <code>optional bool reset_row = 8;</code>
        */
       public Builder clearResetRow() {
         if (rowStatusCase_ == 8) {
@@ -1874,12 +1887,12 @@ public  final class ReadRowsResponse extends
       }
 
       /**
-       * <code>optional bool commit_row = 9;</code>
-       *
        * <pre>
        * Indicates that the client can safely process all previous chunks for
        * `row_key`, as its data has been fully read.
        * </pre>
+       *
+       * <code>optional bool commit_row = 9;</code>
        */
       public boolean getCommitRow() {
         if (rowStatusCase_ == 9) {
@@ -1888,12 +1901,12 @@ public  final class ReadRowsResponse extends
         return false;
       }
       /**
-       * <code>optional bool commit_row = 9;</code>
-       *
        * <pre>
        * Indicates that the client can safely process all previous chunks for
        * `row_key`, as its data has been fully read.
        * </pre>
+       *
+       * <code>optional bool commit_row = 9;</code>
        */
       public Builder setCommitRow(boolean value) {
         rowStatusCase_ = 9;
@@ -1902,12 +1915,12 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional bool commit_row = 9;</code>
-       *
        * <pre>
        * Indicates that the client can safely process all previous chunks for
        * `row_key`, as its data has been fully read.
        * </pre>
+       *
+       * <code>optional bool commit_row = 9;</code>
        */
       public Builder clearCommitRow() {
         if (rowStatusCase_ == 9) {
@@ -1947,16 +1960,7 @@ public  final class ReadRowsResponse extends
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
           return new CellChunk(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
       }
     };
 
@@ -2014,8 +2018,6 @@ public  final class ReadRowsResponse extends
   public static final int LAST_SCANNED_ROW_KEY_FIELD_NUMBER = 2;
   private com.google.protobuf.ByteString lastScannedRowKey_;
   /**
-   * <code>optional bytes last_scanned_row_key = 2;</code>
-   *
    * <pre>
    * Optionally the server might return the row key of the last row it
    * has scanned.  The client can use this to construct a more
@@ -2025,6 +2027,8 @@ public  final class ReadRowsResponse extends
    * lot of data that was filtered out since the last committed row
    * key, allowing the client to skip that work on a retry.
    * </pre>
+   *
+   * <code>optional bytes last_scanned_row_key = 2;</code>
    */
   public com.google.protobuf.ByteString getLastScannedRowKey() {
     return lastScannedRowKey_;
@@ -2091,34 +2095,40 @@ public  final class ReadRowsResponse extends
   }
   public static com.google.bigtable.v2.ReadRowsResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadRowsResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ReadRowsResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadRowsResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ReadRowsResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadRowsResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -2140,11 +2150,11 @@ public  final class ReadRowsResponse extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v2.ReadRowsResponse}
-   *
    * <pre>
    * Response message for Bigtable.ReadRows.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v2.ReadRowsResponse}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -2283,7 +2293,7 @@ public  final class ReadRowsResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.ReadRowsResponse) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -2535,8 +2545,6 @@ public  final class ReadRowsResponse extends
 
     private com.google.protobuf.ByteString lastScannedRowKey_ = com.google.protobuf.ByteString.EMPTY;
     /**
-     * <code>optional bytes last_scanned_row_key = 2;</code>
-     *
      * <pre>
      * Optionally the server might return the row key of the last row it
      * has scanned.  The client can use this to construct a more
@@ -2546,13 +2554,13 @@ public  final class ReadRowsResponse extends
      * lot of data that was filtered out since the last committed row
      * key, allowing the client to skip that work on a retry.
      * </pre>
+     *
+     * <code>optional bytes last_scanned_row_key = 2;</code>
      */
     public com.google.protobuf.ByteString getLastScannedRowKey() {
       return lastScannedRowKey_;
     }
     /**
-     * <code>optional bytes last_scanned_row_key = 2;</code>
-     *
      * <pre>
      * Optionally the server might return the row key of the last row it
      * has scanned.  The client can use this to construct a more
@@ -2562,6 +2570,8 @@ public  final class ReadRowsResponse extends
      * lot of data that was filtered out since the last committed row
      * key, allowing the client to skip that work on a retry.
      * </pre>
+     *
+     * <code>optional bytes last_scanned_row_key = 2;</code>
      */
     public Builder setLastScannedRowKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -2573,8 +2583,6 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>optional bytes last_scanned_row_key = 2;</code>
-     *
      * <pre>
      * Optionally the server might return the row key of the last row it
      * has scanned.  The client can use this to construct a more
@@ -2584,6 +2592,8 @@ public  final class ReadRowsResponse extends
      * lot of data that was filtered out since the last committed row
      * key, allowing the client to skip that work on a retry.
      * </pre>
+     *
+     * <code>optional bytes last_scanned_row_key = 2;</code>
      */
     public Builder clearLastScannedRowKey() {
       
@@ -2621,16 +2631,7 @@ public  final class ReadRowsResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ReadRowsResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

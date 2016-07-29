@@ -26,7 +26,8 @@ public  final class CreateColumnFamilyRequest extends
   }
   private CreateColumnFamilyRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -71,11 +72,10 @@ public  final class CreateColumnFamilyRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -95,11 +95,11 @@ public  final class CreateColumnFamilyRequest extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the table in which to create the new column family.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -114,11 +114,11 @@ public  final class CreateColumnFamilyRequest extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the table in which to create the new column family.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -137,12 +137,12 @@ public  final class CreateColumnFamilyRequest extends
   public static final int COLUMN_FAMILY_ID_FIELD_NUMBER = 2;
   private volatile java.lang.Object columnFamilyId_;
   /**
-   * <code>optional string column_family_id = 2;</code>
-   *
    * <pre>
    * The name by which the new column family should be referred to within the
    * table, e.g. "foobar" rather than "&lt;table_name&gt;/columnFamilies/foobar".
    * </pre>
+   *
+   * <code>optional string column_family_id = 2;</code>
    */
   public java.lang.String getColumnFamilyId() {
     java.lang.Object ref = columnFamilyId_;
@@ -157,12 +157,12 @@ public  final class CreateColumnFamilyRequest extends
     }
   }
   /**
-   * <code>optional string column_family_id = 2;</code>
-   *
    * <pre>
    * The name by which the new column family should be referred to within the
    * table, e.g. "foobar" rather than "&lt;table_name&gt;/columnFamilies/foobar".
    * </pre>
+   *
+   * <code>optional string column_family_id = 2;</code>
    */
   public com.google.protobuf.ByteString
       getColumnFamilyIdBytes() {
@@ -181,31 +181,31 @@ public  final class CreateColumnFamilyRequest extends
   public static final int COLUMN_FAMILY_FIELD_NUMBER = 3;
   private com.google.bigtable.admin.table.v1.ColumnFamily columnFamily_;
   /**
-   * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-   *
    * <pre>
    * The column family to create. The `name` field must be left blank.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
    */
   public boolean hasColumnFamily() {
     return columnFamily_ != null;
   }
   /**
-   * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-   *
    * <pre>
    * The column family to create. The `name` field must be left blank.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
    */
   public com.google.bigtable.admin.table.v1.ColumnFamily getColumnFamily() {
     return columnFamily_ == null ? com.google.bigtable.admin.table.v1.ColumnFamily.getDefaultInstance() : columnFamily_;
   }
   /**
-   * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-   *
    * <pre>
    * The column family to create. The `name` field must be left blank.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
    */
   public com.google.bigtable.admin.table.v1.ColumnFamilyOrBuilder getColumnFamilyOrBuilder() {
     return getColumnFamily();
@@ -277,34 +277,40 @@ public  final class CreateColumnFamilyRequest extends
   }
   public static com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -442,7 +448,7 @@ public  final class CreateColumnFamilyRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.table.v1.CreateColumnFamilyRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -453,11 +459,11 @@ public  final class CreateColumnFamilyRequest extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table in which to create the new column family.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -472,11 +478,11 @@ public  final class CreateColumnFamilyRequest extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table in which to create the new column family.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -492,11 +498,11 @@ public  final class CreateColumnFamilyRequest extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table in which to create the new column family.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -509,11 +515,11 @@ public  final class CreateColumnFamilyRequest extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table in which to create the new column family.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -522,11 +528,11 @@ public  final class CreateColumnFamilyRequest extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table in which to create the new column family.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -542,12 +548,12 @@ public  final class CreateColumnFamilyRequest extends
 
     private java.lang.Object columnFamilyId_ = "";
     /**
-     * <code>optional string column_family_id = 2;</code>
-     *
      * <pre>
      * The name by which the new column family should be referred to within the
      * table, e.g. "foobar" rather than "&lt;table_name&gt;/columnFamilies/foobar".
      * </pre>
+     *
+     * <code>optional string column_family_id = 2;</code>
      */
     public java.lang.String getColumnFamilyId() {
       java.lang.Object ref = columnFamilyId_;
@@ -562,12 +568,12 @@ public  final class CreateColumnFamilyRequest extends
       }
     }
     /**
-     * <code>optional string column_family_id = 2;</code>
-     *
      * <pre>
      * The name by which the new column family should be referred to within the
      * table, e.g. "foobar" rather than "&lt;table_name&gt;/columnFamilies/foobar".
      * </pre>
+     *
+     * <code>optional string column_family_id = 2;</code>
      */
     public com.google.protobuf.ByteString
         getColumnFamilyIdBytes() {
@@ -583,12 +589,12 @@ public  final class CreateColumnFamilyRequest extends
       }
     }
     /**
-     * <code>optional string column_family_id = 2;</code>
-     *
      * <pre>
      * The name by which the new column family should be referred to within the
      * table, e.g. "foobar" rather than "&lt;table_name&gt;/columnFamilies/foobar".
      * </pre>
+     *
+     * <code>optional string column_family_id = 2;</code>
      */
     public Builder setColumnFamilyId(
         java.lang.String value) {
@@ -601,12 +607,12 @@ public  final class CreateColumnFamilyRequest extends
       return this;
     }
     /**
-     * <code>optional string column_family_id = 2;</code>
-     *
      * <pre>
      * The name by which the new column family should be referred to within the
      * table, e.g. "foobar" rather than "&lt;table_name&gt;/columnFamilies/foobar".
      * </pre>
+     *
+     * <code>optional string column_family_id = 2;</code>
      */
     public Builder clearColumnFamilyId() {
       
@@ -615,12 +621,12 @@ public  final class CreateColumnFamilyRequest extends
       return this;
     }
     /**
-     * <code>optional string column_family_id = 2;</code>
-     *
      * <pre>
      * The name by which the new column family should be referred to within the
      * table, e.g. "foobar" rather than "&lt;table_name&gt;/columnFamilies/foobar".
      * </pre>
+     *
+     * <code>optional string column_family_id = 2;</code>
      */
     public Builder setColumnFamilyIdBytes(
         com.google.protobuf.ByteString value) {
@@ -638,21 +644,21 @@ public  final class CreateColumnFamilyRequest extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.table.v1.ColumnFamily, com.google.bigtable.admin.table.v1.ColumnFamily.Builder, com.google.bigtable.admin.table.v1.ColumnFamilyOrBuilder> columnFamilyBuilder_;
     /**
-     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-     *
      * <pre>
      * The column family to create. The `name` field must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
      */
     public boolean hasColumnFamily() {
       return columnFamilyBuilder_ != null || columnFamily_ != null;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-     *
      * <pre>
      * The column family to create. The `name` field must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
      */
     public com.google.bigtable.admin.table.v1.ColumnFamily getColumnFamily() {
       if (columnFamilyBuilder_ == null) {
@@ -662,11 +668,11 @@ public  final class CreateColumnFamilyRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-     *
      * <pre>
      * The column family to create. The `name` field must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
      */
     public Builder setColumnFamily(com.google.bigtable.admin.table.v1.ColumnFamily value) {
       if (columnFamilyBuilder_ == null) {
@@ -682,11 +688,11 @@ public  final class CreateColumnFamilyRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-     *
      * <pre>
      * The column family to create. The `name` field must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
      */
     public Builder setColumnFamily(
         com.google.bigtable.admin.table.v1.ColumnFamily.Builder builderForValue) {
@@ -700,11 +706,11 @@ public  final class CreateColumnFamilyRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-     *
      * <pre>
      * The column family to create. The `name` field must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
      */
     public Builder mergeColumnFamily(com.google.bigtable.admin.table.v1.ColumnFamily value) {
       if (columnFamilyBuilder_ == null) {
@@ -722,11 +728,11 @@ public  final class CreateColumnFamilyRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-     *
      * <pre>
      * The column family to create. The `name` field must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
      */
     public Builder clearColumnFamily() {
       if (columnFamilyBuilder_ == null) {
@@ -740,11 +746,11 @@ public  final class CreateColumnFamilyRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-     *
      * <pre>
      * The column family to create. The `name` field must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
      */
     public com.google.bigtable.admin.table.v1.ColumnFamily.Builder getColumnFamilyBuilder() {
       
@@ -752,11 +758,11 @@ public  final class CreateColumnFamilyRequest extends
       return getColumnFamilyFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-     *
      * <pre>
      * The column family to create. The `name` field must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
      */
     public com.google.bigtable.admin.table.v1.ColumnFamilyOrBuilder getColumnFamilyOrBuilder() {
       if (columnFamilyBuilder_ != null) {
@@ -767,11 +773,11 @@ public  final class CreateColumnFamilyRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
-     *
      * <pre>
      * The column family to create. The `name` field must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.ColumnFamily column_family = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.table.v1.ColumnFamily, com.google.bigtable.admin.table.v1.ColumnFamily.Builder, com.google.bigtable.admin.table.v1.ColumnFamilyOrBuilder> 
@@ -816,16 +822,7 @@ public  final class CreateColumnFamilyRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new CreateColumnFamilyRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

@@ -8,108 +8,108 @@ public interface ClusterOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A permanent unique identifier for the cluster. For technical reasons, the
    * zone in which the cluster resides is included here.
    * Values are of the form
    * projects/&lt;project&gt;/zones/&lt;zone&gt;/clusters/[a-z][-a-z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A permanent unique identifier for the cluster. For technical reasons, the
    * zone in which the cluster resides is included here.
    * Values are of the form
    * projects/&lt;project&gt;/zones/&lt;zone&gt;/clusters/[a-z][-a-z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>optional .google.longrunning.Operation current_operation = 3;</code>
-   *
    * <pre>
    * The operation currently running on the cluster, if any.
    * This cannot be set directly, only through CreateCluster, UpdateCluster,
    * or UndeleteCluster. Calls to these methods will be rejected if
    * "current_operation" is already set.
    * </pre>
+   *
+   * <code>optional .google.longrunning.Operation current_operation = 3;</code>
    */
   boolean hasCurrentOperation();
   /**
-   * <code>optional .google.longrunning.Operation current_operation = 3;</code>
-   *
    * <pre>
    * The operation currently running on the cluster, if any.
    * This cannot be set directly, only through CreateCluster, UpdateCluster,
    * or UndeleteCluster. Calls to these methods will be rejected if
    * "current_operation" is already set.
    * </pre>
+   *
+   * <code>optional .google.longrunning.Operation current_operation = 3;</code>
    */
   com.google.longrunning.Operation getCurrentOperation();
   /**
-   * <code>optional .google.longrunning.Operation current_operation = 3;</code>
-   *
    * <pre>
    * The operation currently running on the cluster, if any.
    * This cannot be set directly, only through CreateCluster, UpdateCluster,
    * or UndeleteCluster. Calls to these methods will be rejected if
    * "current_operation" is already set.
    * </pre>
+   *
+   * <code>optional .google.longrunning.Operation current_operation = 3;</code>
    */
   com.google.longrunning.OperationOrBuilder getCurrentOperationOrBuilder();
 
   /**
-   * <code>optional string display_name = 4;</code>
-   *
    * <pre>
    * The descriptive name for this cluster as it appears in UIs.
    * Must be unique per zone.
    * </pre>
+   *
+   * <code>optional string display_name = 4;</code>
    */
   java.lang.String getDisplayName();
   /**
-   * <code>optional string display_name = 4;</code>
-   *
    * <pre>
    * The descriptive name for this cluster as it appears in UIs.
    * Must be unique per zone.
    * </pre>
+   *
+   * <code>optional string display_name = 4;</code>
    */
   com.google.protobuf.ByteString
       getDisplayNameBytes();
 
   /**
-   * <code>optional int32 serve_nodes = 5;</code>
-   *
    * <pre>
    * The number of serve nodes allocated to this cluster.
    * </pre>
+   *
+   * <code>optional int32 serve_nodes = 5;</code>
    */
   int getServeNodes();
 
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
-   *
    * <pre>
    * What storage type to use for tables in this cluster. Only configurable at
    * cluster creation time. If unspecified, STORAGE_SSD will be used.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
    */
   int getDefaultStorageTypeValue();
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
-   *
    * <pre>
    * What storage type to use for tables in this cluster. Only configurable at
    * cluster creation time. If unspecified, STORAGE_SSD will be used.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.StorageType default_storage_type = 8;</code>
    */
   com.google.bigtable.admin.cluster.v1.StorageType getDefaultStorageType();
 }

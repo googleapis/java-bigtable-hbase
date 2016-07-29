@@ -4,11 +4,11 @@
 package com.google.api;
 
 /**
- * Protobuf type {@code google.api.CustomHttpPattern}
- *
  * <pre>
  * A custom pattern is used for defining custom HTTP verb.
  * </pre>
+ *
+ * Protobuf type {@code google.api.CustomHttpPattern}
  */
 public  final class CustomHttpPattern extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class CustomHttpPattern extends
   }
   private CustomHttpPattern(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -62,11 +63,10 @@ public  final class CustomHttpPattern extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -86,11 +86,11 @@ public  final class CustomHttpPattern extends
   public static final int KIND_FIELD_NUMBER = 1;
   private volatile java.lang.Object kind_;
   /**
-   * <code>optional string kind = 1;</code>
-   *
    * <pre>
    * The name of this custom HTTP verb.
    * </pre>
+   *
+   * <code>optional string kind = 1;</code>
    */
   public java.lang.String getKind() {
     java.lang.Object ref = kind_;
@@ -105,11 +105,11 @@ public  final class CustomHttpPattern extends
     }
   }
   /**
-   * <code>optional string kind = 1;</code>
-   *
    * <pre>
    * The name of this custom HTTP verb.
    * </pre>
+   *
+   * <code>optional string kind = 1;</code>
    */
   public com.google.protobuf.ByteString
       getKindBytes() {
@@ -128,11 +128,11 @@ public  final class CustomHttpPattern extends
   public static final int PATH_FIELD_NUMBER = 2;
   private volatile java.lang.Object path_;
   /**
-   * <code>optional string path = 2;</code>
-   *
    * <pre>
    * The path matched by this custom verb.
    * </pre>
+   *
+   * <code>optional string path = 2;</code>
    */
   public java.lang.String getPath() {
     java.lang.Object ref = path_;
@@ -147,11 +147,11 @@ public  final class CustomHttpPattern extends
     }
   }
   /**
-   * <code>optional string path = 2;</code>
-   *
    * <pre>
    * The path matched by this custom verb.
    * </pre>
+   *
+   * <code>optional string path = 2;</code>
    */
   public com.google.protobuf.ByteString
       getPathBytes() {
@@ -226,34 +226,40 @@ public  final class CustomHttpPattern extends
   }
   public static com.google.api.CustomHttpPattern parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.api.CustomHttpPattern parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.api.CustomHttpPattern parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.api.CustomHttpPattern parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.api.CustomHttpPattern parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.api.CustomHttpPattern parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -275,11 +281,11 @@ public  final class CustomHttpPattern extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.api.CustomHttpPattern}
-   *
    * <pre>
    * A custom pattern is used for defining custom HTTP verb.
    * </pre>
+   *
+   * Protobuf type {@code google.api.CustomHttpPattern}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -381,7 +387,7 @@ public  final class CustomHttpPattern extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.api.CustomHttpPattern) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -392,11 +398,11 @@ public  final class CustomHttpPattern extends
 
     private java.lang.Object kind_ = "";
     /**
-     * <code>optional string kind = 1;</code>
-     *
      * <pre>
      * The name of this custom HTTP verb.
      * </pre>
+     *
+     * <code>optional string kind = 1;</code>
      */
     public java.lang.String getKind() {
       java.lang.Object ref = kind_;
@@ -411,11 +417,11 @@ public  final class CustomHttpPattern extends
       }
     }
     /**
-     * <code>optional string kind = 1;</code>
-     *
      * <pre>
      * The name of this custom HTTP verb.
      * </pre>
+     *
+     * <code>optional string kind = 1;</code>
      */
     public com.google.protobuf.ByteString
         getKindBytes() {
@@ -431,11 +437,11 @@ public  final class CustomHttpPattern extends
       }
     }
     /**
-     * <code>optional string kind = 1;</code>
-     *
      * <pre>
      * The name of this custom HTTP verb.
      * </pre>
+     *
+     * <code>optional string kind = 1;</code>
      */
     public Builder setKind(
         java.lang.String value) {
@@ -448,11 +454,11 @@ public  final class CustomHttpPattern extends
       return this;
     }
     /**
-     * <code>optional string kind = 1;</code>
-     *
      * <pre>
      * The name of this custom HTTP verb.
      * </pre>
+     *
+     * <code>optional string kind = 1;</code>
      */
     public Builder clearKind() {
       
@@ -461,11 +467,11 @@ public  final class CustomHttpPattern extends
       return this;
     }
     /**
-     * <code>optional string kind = 1;</code>
-     *
      * <pre>
      * The name of this custom HTTP verb.
      * </pre>
+     *
+     * <code>optional string kind = 1;</code>
      */
     public Builder setKindBytes(
         com.google.protobuf.ByteString value) {
@@ -481,11 +487,11 @@ public  final class CustomHttpPattern extends
 
     private java.lang.Object path_ = "";
     /**
-     * <code>optional string path = 2;</code>
-     *
      * <pre>
      * The path matched by this custom verb.
      * </pre>
+     *
+     * <code>optional string path = 2;</code>
      */
     public java.lang.String getPath() {
       java.lang.Object ref = path_;
@@ -500,11 +506,11 @@ public  final class CustomHttpPattern extends
       }
     }
     /**
-     * <code>optional string path = 2;</code>
-     *
      * <pre>
      * The path matched by this custom verb.
      * </pre>
+     *
+     * <code>optional string path = 2;</code>
      */
     public com.google.protobuf.ByteString
         getPathBytes() {
@@ -520,11 +526,11 @@ public  final class CustomHttpPattern extends
       }
     }
     /**
-     * <code>optional string path = 2;</code>
-     *
      * <pre>
      * The path matched by this custom verb.
      * </pre>
+     *
+     * <code>optional string path = 2;</code>
      */
     public Builder setPath(
         java.lang.String value) {
@@ -537,11 +543,11 @@ public  final class CustomHttpPattern extends
       return this;
     }
     /**
-     * <code>optional string path = 2;</code>
-     *
      * <pre>
      * The path matched by this custom verb.
      * </pre>
+     *
+     * <code>optional string path = 2;</code>
      */
     public Builder clearPath() {
       
@@ -550,11 +556,11 @@ public  final class CustomHttpPattern extends
       return this;
     }
     /**
-     * <code>optional string path = 2;</code>
-     *
      * <pre>
      * The path matched by this custom verb.
      * </pre>
+     *
+     * <code>optional string path = 2;</code>
      */
     public Builder setPathBytes(
         com.google.protobuf.ByteString value) {
@@ -597,16 +603,7 @@ public  final class CustomHttpPattern extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new CustomHttpPattern(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

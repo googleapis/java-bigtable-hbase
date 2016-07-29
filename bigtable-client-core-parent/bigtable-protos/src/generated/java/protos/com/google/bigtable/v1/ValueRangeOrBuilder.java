@@ -8,38 +8,38 @@ public interface ValueRangeOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional bytes start_value_inclusive = 1;</code>
-   *
    * <pre>
    * Used when giving an inclusive lower bound for the range.
    * </pre>
+   *
+   * <code>optional bytes start_value_inclusive = 1;</code>
    */
   com.google.protobuf.ByteString getStartValueInclusive();
 
   /**
-   * <code>optional bytes start_value_exclusive = 2;</code>
-   *
    * <pre>
    * Used when giving an exclusive lower bound for the range.
    * </pre>
+   *
+   * <code>optional bytes start_value_exclusive = 2;</code>
    */
   com.google.protobuf.ByteString getStartValueExclusive();
 
   /**
-   * <code>optional bytes end_value_inclusive = 3;</code>
-   *
    * <pre>
    * Used when giving an inclusive upper bound for the range.
    * </pre>
+   *
+   * <code>optional bytes end_value_inclusive = 3;</code>
    */
   com.google.protobuf.ByteString getEndValueInclusive();
 
   /**
-   * <code>optional bytes end_value_exclusive = 4;</code>
-   *
    * <pre>
    * Used when giving an exclusive upper bound for the range.
    * </pre>
+   *
+   * <code>optional bytes end_value_exclusive = 4;</code>
    */
   com.google.protobuf.ByteString getEndValueExclusive();
 

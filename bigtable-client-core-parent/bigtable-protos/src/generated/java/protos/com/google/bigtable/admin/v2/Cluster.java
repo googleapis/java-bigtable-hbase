@@ -4,13 +4,13 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.Cluster}
- *
  * <pre>
  * A resizable group of nodes in a particular cloud location, capable
  * of serving all [Tables][google.bigtable.admin.v2.Table] in the parent
  * [Instance][google.bigtable.admin.v2.Instance].
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.Cluster}
  */
 public  final class Cluster extends
     com.google.protobuf.GeneratedMessage implements
@@ -35,7 +35,8 @@ public  final class Cluster extends
   }
   private Cluster(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -84,11 +85,10 @@ public  final class Cluster extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -106,43 +106,41 @@ public  final class Cluster extends
   }
 
   /**
-   * Protobuf enum {@code google.bigtable.admin.v2.Cluster.State}
-   *
    * <pre>
    * Possible states of a cluster.
    * </pre>
+   *
+   * Protobuf enum {@code google.bigtable.admin.v2.Cluster.State}
    */
   public enum State
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
-     * <code>STATE_NOT_KNOWN = 0;</code>
-     *
      * <pre>
      * The state of the cluster could not be determined.
      * </pre>
-     */
-    STATE_NOT_KNOWN(0, 0),
-    /**
-     * <code>READY = 1;</code>
      *
+     * <code>STATE_NOT_KNOWN = 0;</code>
+     */
+    STATE_NOT_KNOWN(0),
+    /**
      * <pre>
      * The cluster has been successfully created and is ready to serve requests.
      * </pre>
-     */
-    READY(1, 1),
-    /**
-     * <code>CREATING = 2;</code>
      *
+     * <code>READY = 1;</code>
+     */
+    READY(1),
+    /**
      * <pre>
      * The cluster is currently being created, and may be destroyed
      * if the creation process encounters an error.
      * A cluster may not be able to serve requests while being created.
      * </pre>
-     */
-    CREATING(2, 2),
-    /**
-     * <code>RESIZING = 3;</code>
      *
+     * <code>CREATING = 2;</code>
+     */
+    CREATING(2),
+    /**
      * <pre>
      * The cluster is currently being resized, and may revert to its previous
      * node count if the process encounters an error.
@@ -150,49 +148,49 @@ public  final class Cluster extends
      * but may exhibit performance as if its number of allocated nodes is
      * between the starting and requested states.
      * </pre>
-     */
-    RESIZING(3, 3),
-    /**
-     * <code>DISABLED = 4;</code>
      *
+     * <code>RESIZING = 3;</code>
+     */
+    RESIZING(3),
+    /**
      * <pre>
      * The cluster has no backing nodes. The data (tables) still
      * exist, but no operations can be performed on the cluster.
      * </pre>
+     *
+     * <code>DISABLED = 4;</code>
      */
-    DISABLED(4, 4),
-    UNRECOGNIZED(-1, -1),
+    DISABLED(4),
+    UNRECOGNIZED(-1),
     ;
 
     /**
-     * <code>STATE_NOT_KNOWN = 0;</code>
-     *
      * <pre>
      * The state of the cluster could not be determined.
      * </pre>
+     *
+     * <code>STATE_NOT_KNOWN = 0;</code>
      */
     public static final int STATE_NOT_KNOWN_VALUE = 0;
     /**
-     * <code>READY = 1;</code>
-     *
      * <pre>
      * The cluster has been successfully created and is ready to serve requests.
      * </pre>
+     *
+     * <code>READY = 1;</code>
      */
     public static final int READY_VALUE = 1;
     /**
-     * <code>CREATING = 2;</code>
-     *
      * <pre>
      * The cluster is currently being created, and may be destroyed
      * if the creation process encounters an error.
      * A cluster may not be able to serve requests while being created.
      * </pre>
+     *
+     * <code>CREATING = 2;</code>
      */
     public static final int CREATING_VALUE = 2;
     /**
-     * <code>RESIZING = 3;</code>
-     *
      * <pre>
      * The cluster is currently being resized, and may revert to its previous
      * node count if the process encounters an error.
@@ -200,28 +198,38 @@ public  final class Cluster extends
      * but may exhibit performance as if its number of allocated nodes is
      * between the starting and requested states.
      * </pre>
+     *
+     * <code>RESIZING = 3;</code>
      */
     public static final int RESIZING_VALUE = 3;
     /**
-     * <code>DISABLED = 4;</code>
-     *
      * <pre>
      * The cluster has no backing nodes. The data (tables) still
      * exist, but no operations can be performed on the cluster.
      * </pre>
+     *
+     * <code>DISABLED = 4;</code>
      */
     public static final int DISABLED_VALUE = 4;
 
 
     public final int getNumber() {
-      if (index == -1) {
+      if (this == UNRECOGNIZED) {
         throw new java.lang.IllegalArgumentException(
             "Can't get the number of an unknown enum value.");
       }
       return value;
     }
 
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static State valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static State forNumber(int value) {
       switch (value) {
         case 0: return STATE_NOT_KNOWN;
         case 1: return READY;
@@ -240,13 +248,13 @@ public  final class Cluster extends
         State> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<State>() {
             public State findValueByNumber(int number) {
-              return State.valueOf(number);
+              return State.forNumber(number);
             }
           };
 
     public final com.google.protobuf.Descriptors.EnumValueDescriptor
         getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
+      return getDescriptor().getValues().get(ordinal());
     }
     public final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptorForType() {
@@ -271,11 +279,9 @@ public  final class Cluster extends
       return VALUES[desc.getIndex()];
     }
 
-    private final int index;
     private final int value;
 
-    private State(int index, int value) {
-      this.index = index;
+    private State(int value) {
       this.value = value;
     }
 
@@ -285,13 +291,13 @@ public  final class Cluster extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * &#64;OutputOnly
    * The unique name of the cluster. Values are of the form
    * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -306,13 +312,13 @@ public  final class Cluster extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * &#64;OutputOnly
    * The unique name of the cluster. Values are of the form
    * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -331,14 +337,14 @@ public  final class Cluster extends
   public static final int LOCATION_FIELD_NUMBER = 2;
   private volatile java.lang.Object location_;
   /**
-   * <code>optional string location = 2;</code>
-   *
    * <pre>
    * &#64;CreationOnly
    * The location where this cluster's nodes and storage reside. For best
    * performance, clients should be located as close as possible to this cluster.
    * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
    * </pre>
+   *
+   * <code>optional string location = 2;</code>
    */
   public java.lang.String getLocation() {
     java.lang.Object ref = location_;
@@ -353,14 +359,14 @@ public  final class Cluster extends
     }
   }
   /**
-   * <code>optional string location = 2;</code>
-   *
    * <pre>
    * &#64;CreationOnly
    * The location where this cluster's nodes and storage reside. For best
    * performance, clients should be located as close as possible to this cluster.
    * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
    * </pre>
+   *
+   * <code>optional string location = 2;</code>
    */
   public com.google.protobuf.ByteString
       getLocationBytes() {
@@ -379,38 +385,38 @@ public  final class Cluster extends
   public static final int STATE_FIELD_NUMBER = 3;
   private int state_;
   /**
-   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
-   *
    * <pre>
    * &#64;OutputOnly
    * The current state of the cluster.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
    */
   public int getStateValue() {
     return state_;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
-   *
    * <pre>
    * &#64;OutputOnly
    * The current state of the cluster.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
    */
   public com.google.bigtable.admin.v2.Cluster.State getState() {
-    com.google.bigtable.admin.v2.Cluster.State result = com.google.bigtable.admin.v2.Cluster.State.valueOf(state_);
+    com.google.bigtable.admin.v2.Cluster.State result = com.google.bigtable.admin.v2.Cluster.State.forNumber(state_);
     return result == null ? com.google.bigtable.admin.v2.Cluster.State.UNRECOGNIZED : result;
   }
 
   public static final int SERVE_NODES_FIELD_NUMBER = 4;
   private int serveNodes_;
   /**
-   * <code>optional int32 serve_nodes = 4;</code>
-   *
    * <pre>
    * The number of nodes allocated to this cluster. More nodes enable higher
    * throughput and more consistent performance.
    * </pre>
+   *
+   * <code>optional int32 serve_nodes = 4;</code>
    */
   public int getServeNodes() {
     return serveNodes_;
@@ -419,28 +425,28 @@ public  final class Cluster extends
   public static final int DEFAULT_STORAGE_TYPE_FIELD_NUMBER = 5;
   private int defaultStorageType_;
   /**
-   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
-   *
    * <pre>
    * &#64;CreationOnly
    * The type of storage used by this cluster to serve its
    * parent instance's tables, unless explicitly overridden.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
    */
   public int getDefaultStorageTypeValue() {
     return defaultStorageType_;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
-   *
    * <pre>
    * &#64;CreationOnly
    * The type of storage used by this cluster to serve its
    * parent instance's tables, unless explicitly overridden.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
    */
   public com.google.bigtable.admin.v2.StorageType getDefaultStorageType() {
-    com.google.bigtable.admin.v2.StorageType result = com.google.bigtable.admin.v2.StorageType.valueOf(defaultStorageType_);
+    com.google.bigtable.admin.v2.StorageType result = com.google.bigtable.admin.v2.StorageType.forNumber(defaultStorageType_);
     return result == null ? com.google.bigtable.admin.v2.StorageType.UNRECOGNIZED : result;
   }
 
@@ -524,34 +530,40 @@ public  final class Cluster extends
   }
   public static com.google.bigtable.admin.v2.Cluster parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Cluster parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Cluster parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Cluster parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Cluster parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Cluster parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -573,13 +585,13 @@ public  final class Cluster extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.Cluster}
-   *
    * <pre>
    * A resizable group of nodes in a particular cloud location, capable
    * of serving all [Tables][google.bigtable.admin.v2.Table] in the parent
    * [Instance][google.bigtable.admin.v2.Instance].
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.Cluster}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -699,7 +711,7 @@ public  final class Cluster extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.Cluster) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -710,13 +722,13 @@ public  final class Cluster extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * &#64;OutputOnly
      * The unique name of the cluster. Values are of the form
      * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -731,13 +743,13 @@ public  final class Cluster extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * &#64;OutputOnly
      * The unique name of the cluster. Values are of the form
      * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -753,13 +765,13 @@ public  final class Cluster extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * &#64;OutputOnly
      * The unique name of the cluster. Values are of the form
      * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -772,13 +784,13 @@ public  final class Cluster extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * &#64;OutputOnly
      * The unique name of the cluster. Values are of the form
      * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -787,13 +799,13 @@ public  final class Cluster extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * &#64;OutputOnly
      * The unique name of the cluster. Values are of the form
      * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -809,14 +821,14 @@ public  final class Cluster extends
 
     private java.lang.Object location_ = "";
     /**
-     * <code>optional string location = 2;</code>
-     *
      * <pre>
      * &#64;CreationOnly
      * The location where this cluster's nodes and storage reside. For best
      * performance, clients should be located as close as possible to this cluster.
      * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
      * </pre>
+     *
+     * <code>optional string location = 2;</code>
      */
     public java.lang.String getLocation() {
       java.lang.Object ref = location_;
@@ -831,14 +843,14 @@ public  final class Cluster extends
       }
     }
     /**
-     * <code>optional string location = 2;</code>
-     *
      * <pre>
      * &#64;CreationOnly
      * The location where this cluster's nodes and storage reside. For best
      * performance, clients should be located as close as possible to this cluster.
      * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
      * </pre>
+     *
+     * <code>optional string location = 2;</code>
      */
     public com.google.protobuf.ByteString
         getLocationBytes() {
@@ -854,14 +866,14 @@ public  final class Cluster extends
       }
     }
     /**
-     * <code>optional string location = 2;</code>
-     *
      * <pre>
      * &#64;CreationOnly
      * The location where this cluster's nodes and storage reside. For best
      * performance, clients should be located as close as possible to this cluster.
      * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
      * </pre>
+     *
+     * <code>optional string location = 2;</code>
      */
     public Builder setLocation(
         java.lang.String value) {
@@ -874,14 +886,14 @@ public  final class Cluster extends
       return this;
     }
     /**
-     * <code>optional string location = 2;</code>
-     *
      * <pre>
      * &#64;CreationOnly
      * The location where this cluster's nodes and storage reside. For best
      * performance, clients should be located as close as possible to this cluster.
      * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
      * </pre>
+     *
+     * <code>optional string location = 2;</code>
      */
     public Builder clearLocation() {
       
@@ -890,14 +902,14 @@ public  final class Cluster extends
       return this;
     }
     /**
-     * <code>optional string location = 2;</code>
-     *
      * <pre>
      * &#64;CreationOnly
      * The location where this cluster's nodes and storage reside. For best
      * performance, clients should be located as close as possible to this cluster.
      * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
      * </pre>
+     *
+     * <code>optional string location = 2;</code>
      */
     public Builder setLocationBytes(
         com.google.protobuf.ByteString value) {
@@ -913,23 +925,23 @@ public  final class Cluster extends
 
     private int state_ = 0;
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
-     *
      * <pre>
      * &#64;OutputOnly
      * The current state of the cluster.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
      */
     public int getStateValue() {
       return state_;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
-     *
      * <pre>
      * &#64;OutputOnly
      * The current state of the cluster.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
      */
     public Builder setStateValue(int value) {
       state_ = value;
@@ -937,24 +949,24 @@ public  final class Cluster extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
-     *
      * <pre>
      * &#64;OutputOnly
      * The current state of the cluster.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
      */
     public com.google.bigtable.admin.v2.Cluster.State getState() {
-      com.google.bigtable.admin.v2.Cluster.State result = com.google.bigtable.admin.v2.Cluster.State.valueOf(state_);
+      com.google.bigtable.admin.v2.Cluster.State result = com.google.bigtable.admin.v2.Cluster.State.forNumber(state_);
       return result == null ? com.google.bigtable.admin.v2.Cluster.State.UNRECOGNIZED : result;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
-     *
      * <pre>
      * &#64;OutputOnly
      * The current state of the cluster.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
      */
     public Builder setState(com.google.bigtable.admin.v2.Cluster.State value) {
       if (value == null) {
@@ -966,12 +978,12 @@ public  final class Cluster extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
-     *
      * <pre>
      * &#64;OutputOnly
      * The current state of the cluster.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
      */
     public Builder clearState() {
       
@@ -982,23 +994,23 @@ public  final class Cluster extends
 
     private int serveNodes_ ;
     /**
-     * <code>optional int32 serve_nodes = 4;</code>
-     *
      * <pre>
      * The number of nodes allocated to this cluster. More nodes enable higher
      * throughput and more consistent performance.
      * </pre>
+     *
+     * <code>optional int32 serve_nodes = 4;</code>
      */
     public int getServeNodes() {
       return serveNodes_;
     }
     /**
-     * <code>optional int32 serve_nodes = 4;</code>
-     *
      * <pre>
      * The number of nodes allocated to this cluster. More nodes enable higher
      * throughput and more consistent performance.
      * </pre>
+     *
+     * <code>optional int32 serve_nodes = 4;</code>
      */
     public Builder setServeNodes(int value) {
       
@@ -1007,12 +1019,12 @@ public  final class Cluster extends
       return this;
     }
     /**
-     * <code>optional int32 serve_nodes = 4;</code>
-     *
      * <pre>
      * The number of nodes allocated to this cluster. More nodes enable higher
      * throughput and more consistent performance.
      * </pre>
+     *
+     * <code>optional int32 serve_nodes = 4;</code>
      */
     public Builder clearServeNodes() {
       
@@ -1023,25 +1035,25 @@ public  final class Cluster extends
 
     private int defaultStorageType_ = 0;
     /**
-     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
-     *
      * <pre>
      * &#64;CreationOnly
      * The type of storage used by this cluster to serve its
      * parent instance's tables, unless explicitly overridden.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      */
     public int getDefaultStorageTypeValue() {
       return defaultStorageType_;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
-     *
      * <pre>
      * &#64;CreationOnly
      * The type of storage used by this cluster to serve its
      * parent instance's tables, unless explicitly overridden.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      */
     public Builder setDefaultStorageTypeValue(int value) {
       defaultStorageType_ = value;
@@ -1049,26 +1061,26 @@ public  final class Cluster extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
-     *
      * <pre>
      * &#64;CreationOnly
      * The type of storage used by this cluster to serve its
      * parent instance's tables, unless explicitly overridden.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      */
     public com.google.bigtable.admin.v2.StorageType getDefaultStorageType() {
-      com.google.bigtable.admin.v2.StorageType result = com.google.bigtable.admin.v2.StorageType.valueOf(defaultStorageType_);
+      com.google.bigtable.admin.v2.StorageType result = com.google.bigtable.admin.v2.StorageType.forNumber(defaultStorageType_);
       return result == null ? com.google.bigtable.admin.v2.StorageType.UNRECOGNIZED : result;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
-     *
      * <pre>
      * &#64;CreationOnly
      * The type of storage used by this cluster to serve its
      * parent instance's tables, unless explicitly overridden.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      */
     public Builder setDefaultStorageType(com.google.bigtable.admin.v2.StorageType value) {
       if (value == null) {
@@ -1080,13 +1092,13 @@ public  final class Cluster extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
-     *
      * <pre>
      * &#64;CreationOnly
      * The type of storage used by this cluster to serve its
      * parent instance's tables, unless explicitly overridden.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      */
     public Builder clearDefaultStorageType() {
       
@@ -1124,16 +1136,7 @@ public  final class Cluster extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new Cluster(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

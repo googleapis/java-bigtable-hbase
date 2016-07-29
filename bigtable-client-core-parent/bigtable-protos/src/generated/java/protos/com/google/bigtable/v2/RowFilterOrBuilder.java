@@ -8,65 +8,63 @@ public interface RowFilterOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
-   *
    * <pre>
    * Applies several RowFilters to the data in sequence, progressively
    * narrowing the results.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
    */
   com.google.bigtable.v2.RowFilter.Chain getChain();
   /**
-   * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
-   *
    * <pre>
    * Applies several RowFilters to the data in sequence, progressively
    * narrowing the results.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.RowFilter.Chain chain = 1;</code>
    */
   com.google.bigtable.v2.RowFilter.ChainOrBuilder getChainOrBuilder();
 
   /**
-   * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
-   *
    * <pre>
    * Applies several RowFilters to the data in parallel and combines the
    * results.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
    */
   com.google.bigtable.v2.RowFilter.Interleave getInterleave();
   /**
-   * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
-   *
    * <pre>
    * Applies several RowFilters to the data in parallel and combines the
    * results.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.RowFilter.Interleave interleave = 2;</code>
    */
   com.google.bigtable.v2.RowFilter.InterleaveOrBuilder getInterleaveOrBuilder();
 
   /**
-   * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
-   *
    * <pre>
    * Applies one of two possible RowFilters to the data based on the output of
    * a predicate RowFilter.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
    */
   com.google.bigtable.v2.RowFilter.Condition getCondition();
   /**
-   * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
-   *
    * <pre>
    * Applies one of two possible RowFilters to the data based on the output of
    * a predicate RowFilter.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.RowFilter.Condition condition = 3;</code>
    */
   com.google.bigtable.v2.RowFilter.ConditionOrBuilder getConditionOrBuilder();
 
   /**
-   * <code>optional bool sink = 16;</code>
-   *
    * <pre>
    * ADVANCED USE ONLY.
    * Hook for introspection into the RowFilter. Outputs all cells directly to
@@ -123,32 +121,32 @@ public interface RowFilterOrBuilder extends
    * Cannot be used within the `predicate_filter`, `true_filter`, or
    * `false_filter` of a [Condition][google.bigtable.v2.RowFilter.Condition].
    * </pre>
+   *
+   * <code>optional bool sink = 16;</code>
    */
   boolean getSink();
 
   /**
-   * <code>optional bool pass_all_filter = 17;</code>
-   *
    * <pre>
    * Matches all cells, regardless of input. Functionally equivalent to
    * leaving `filter` unset, but included for completeness.
    * </pre>
+   *
+   * <code>optional bool pass_all_filter = 17;</code>
    */
   boolean getPassAllFilter();
 
   /**
-   * <code>optional bool block_all_filter = 18;</code>
-   *
    * <pre>
    * Does not match any cells, regardless of input. Useful for temporarily
    * disabling just part of a filter.
    * </pre>
+   *
+   * <code>optional bool block_all_filter = 18;</code>
    */
   boolean getBlockAllFilter();
 
   /**
-   * <code>optional bytes row_key_regex_filter = 4;</code>
-   *
    * <pre>
    * Matches only cells from rows whose keys satisfy the given RE2 regex. In
    * other words, passes through the entire row when the key matches, and
@@ -158,22 +156,22 @@ public interface RowFilterOrBuilder extends
    * will not match the new line character `&#92;n`, which may be present in a
    * binary key.
    * </pre>
+   *
+   * <code>optional bytes row_key_regex_filter = 4;</code>
    */
   com.google.protobuf.ByteString getRowKeyRegexFilter();
 
   /**
-   * <code>optional double row_sample_filter = 14;</code>
-   *
    * <pre>
    * Matches all cells from a row with probability p, and matches no cells
    * from the row with probability 1-p.
    * </pre>
+   *
+   * <code>optional double row_sample_filter = 14;</code>
    */
   double getRowSampleFilter();
 
   /**
-   * <code>optional string family_name_regex_filter = 5;</code>
-   *
    * <pre>
    * Matches only cells from columns whose families satisfy the given RE2
    * regex. For technical reasons, the regex must not contain the `:`
@@ -182,11 +180,11 @@ public interface RowFilterOrBuilder extends
    * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
    * column family names.
    * </pre>
+   *
+   * <code>optional string family_name_regex_filter = 5;</code>
    */
   java.lang.String getFamilyNameRegexFilter();
   /**
-   * <code>optional string family_name_regex_filter = 5;</code>
-   *
    * <pre>
    * Matches only cells from columns whose families satisfy the given RE2
    * regex. For technical reasons, the regex must not contain the `:`
@@ -195,13 +193,13 @@ public interface RowFilterOrBuilder extends
    * `&#92;n`, it is sufficient to use `.` as a full wildcard when matching
    * column family names.
    * </pre>
+   *
+   * <code>optional string family_name_regex_filter = 5;</code>
    */
   com.google.protobuf.ByteString
       getFamilyNameRegexFilterBytes();
 
   /**
-   * <code>optional bytes column_qualifier_regex_filter = 6;</code>
-   *
    * <pre>
    * Matches only cells from columns whose qualifiers satisfy the given RE2
    * regex.
@@ -210,46 +208,46 @@ public interface RowFilterOrBuilder extends
    * character will not match the new line character `&#92;n`, which may be
    * present in a binary qualifier.
    * </pre>
+   *
+   * <code>optional bytes column_qualifier_regex_filter = 6;</code>
    */
   com.google.protobuf.ByteString getColumnQualifierRegexFilter();
 
   /**
-   * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
-   *
    * <pre>
    * Matches only cells from columns within the given range.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
    */
   com.google.bigtable.v2.ColumnRange getColumnRangeFilter();
   /**
-   * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
-   *
    * <pre>
    * Matches only cells from columns within the given range.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.ColumnRange column_range_filter = 7;</code>
    */
   com.google.bigtable.v2.ColumnRangeOrBuilder getColumnRangeFilterOrBuilder();
 
   /**
-   * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
-   *
    * <pre>
    * Matches only cells with timestamps within the given range.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
    */
   com.google.bigtable.v2.TimestampRange getTimestampRangeFilter();
   /**
-   * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
-   *
    * <pre>
    * Matches only cells with timestamps within the given range.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.TimestampRange timestamp_range_filter = 8;</code>
    */
   com.google.bigtable.v2.TimestampRangeOrBuilder getTimestampRangeFilterOrBuilder();
 
   /**
-   * <code>optional bytes value_regex_filter = 9;</code>
-   *
    * <pre>
    * Matches only cells with values that satisfy the given regular expression.
    * Note that, since cell values can contain arbitrary bytes, the `&#92;C` escape
@@ -257,51 +255,51 @@ public interface RowFilterOrBuilder extends
    * will not match the new line character `&#92;n`, which may be present in a
    * binary value.
    * </pre>
+   *
+   * <code>optional bytes value_regex_filter = 9;</code>
    */
   com.google.protobuf.ByteString getValueRegexFilter();
 
   /**
-   * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
-   *
    * <pre>
    * Matches only cells with values that fall within the given range.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
    */
   com.google.bigtable.v2.ValueRange getValueRangeFilter();
   /**
-   * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
-   *
    * <pre>
    * Matches only cells with values that fall within the given range.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.ValueRange value_range_filter = 15;</code>
    */
   com.google.bigtable.v2.ValueRangeOrBuilder getValueRangeFilterOrBuilder();
 
   /**
-   * <code>optional int32 cells_per_row_offset_filter = 10;</code>
-   *
    * <pre>
    * Skips the first N cells of each row, matching all subsequent cells.
    * If duplicate cells are present, as is possible when using an Interleave,
    * each copy of the cell is counted separately.
    * </pre>
+   *
+   * <code>optional int32 cells_per_row_offset_filter = 10;</code>
    */
   int getCellsPerRowOffsetFilter();
 
   /**
-   * <code>optional int32 cells_per_row_limit_filter = 11;</code>
-   *
    * <pre>
    * Matches only the first N cells of each row.
    * If duplicate cells are present, as is possible when using an Interleave,
    * each copy of the cell is counted separately.
    * </pre>
+   *
+   * <code>optional int32 cells_per_row_limit_filter = 11;</code>
    */
   int getCellsPerRowLimitFilter();
 
   /**
-   * <code>optional int32 cells_per_column_limit_filter = 12;</code>
-   *
    * <pre>
    * Matches only the most recent N cells within each column. For example,
    * if N=2, this filter would match column `foo:bar` at timestamps 10 and 9,
@@ -310,21 +308,21 @@ public interface RowFilterOrBuilder extends
    * If duplicate cells are present, as is possible when using an Interleave,
    * each copy of the cell is counted separately.
    * </pre>
+   *
+   * <code>optional int32 cells_per_column_limit_filter = 12;</code>
    */
   int getCellsPerColumnLimitFilter();
 
   /**
-   * <code>optional bool strip_value_transformer = 13;</code>
-   *
    * <pre>
    * Replaces each cell's value with the empty string.
    * </pre>
+   *
+   * <code>optional bool strip_value_transformer = 13;</code>
    */
   boolean getStripValueTransformer();
 
   /**
-   * <code>optional string apply_label_transformer = 19;</code>
-   *
    * <pre>
    * Applies the given label to all cells in the output row. This allows
    * the client to determine which results were produced from which part of
@@ -338,11 +336,11 @@ public interface RowFilterOrBuilder extends
    * will be applied to separate copies of the input. This may be relaxed in
    * the future.
    * </pre>
+   *
+   * <code>optional string apply_label_transformer = 19;</code>
    */
   java.lang.String getApplyLabelTransformer();
   /**
-   * <code>optional string apply_label_transformer = 19;</code>
-   *
    * <pre>
    * Applies the given label to all cells in the output row. This allows
    * the client to determine which results were produced from which part of
@@ -356,6 +354,8 @@ public interface RowFilterOrBuilder extends
    * will be applied to separate copies of the input. This may be relaxed in
    * the future.
    * </pre>
+   *
+   * <code>optional string apply_label_transformer = 19;</code>
    */
   com.google.protobuf.ByteString
       getApplyLabelTransformerBytes();

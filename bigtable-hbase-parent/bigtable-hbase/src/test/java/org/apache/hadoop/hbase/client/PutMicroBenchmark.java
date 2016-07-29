@@ -325,6 +325,10 @@ public class PutMicroBenchmark {
         responseListener.onMessage((ResponseT) MutateRowResponse.getDefaultInstance());
         responseListener.onClose(Status.OK, null);
       }
+
+      @Override
+      public void cancel(String message, Throwable cause) {
+      }
     };
   }
 }

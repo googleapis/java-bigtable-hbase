@@ -8,69 +8,69 @@ public final class BigtableInstanceAdminProto {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_CreateInstanceRequest_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_CreateInstanceRequest_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_CreateInstanceRequest_ClustersEntry_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_CreateInstanceRequest_ClustersEntry_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_GetInstanceRequest_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_GetInstanceRequest_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_ListInstancesRequest_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_ListInstancesRequest_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_ListInstancesResponse_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_ListInstancesResponse_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_DeleteInstanceRequest_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_DeleteInstanceRequest_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_CreateClusterRequest_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_CreateClusterRequest_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_GetClusterRequest_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_GetClusterRequest_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_ListClustersRequest_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_ListClustersRequest_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_ListClustersResponse_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_ListClustersResponse_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_DeleteClusterRequest_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_DeleteClusterRequest_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_fieldAccessorTable;
 
@@ -78,7 +78,7 @@ public final class BigtableInstanceAdminProto {
       getDescriptor() {
     return descriptor;
   }
-  private static com.google.protobuf.Descriptors.FileDescriptor
+  private static  com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
     java.lang.String[] descriptorData = {

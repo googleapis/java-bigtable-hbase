@@ -8,14 +8,14 @@ public final class HttpProto {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_api_HttpRule_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_api_HttpRule_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_api_CustomHttpPattern_descriptor;
-  static
+  static final 
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_api_CustomHttpPattern_fieldAccessorTable;
 
@@ -23,7 +23,7 @@ public final class HttpProto {
       getDescriptor() {
     return descriptor;
   }
-  private static com.google.protobuf.Descriptors.FileDescriptor
+  private static  com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
     java.lang.String[] descriptorData = {

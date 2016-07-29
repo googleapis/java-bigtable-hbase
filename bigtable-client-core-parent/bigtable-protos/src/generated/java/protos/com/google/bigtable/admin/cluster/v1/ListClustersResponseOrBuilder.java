@@ -8,89 +8,89 @@ public interface ListClustersResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Cluster clusters = 1;</code>
-   *
    * <pre>
    * The list of requested Clusters.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Cluster clusters = 1;</code>
    */
   java.util.List<com.google.bigtable.admin.cluster.v1.Cluster> 
       getClustersList();
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Cluster clusters = 1;</code>
-   *
    * <pre>
    * The list of requested Clusters.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Cluster clusters = 1;</code>
    */
   com.google.bigtable.admin.cluster.v1.Cluster getClusters(int index);
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Cluster clusters = 1;</code>
-   *
    * <pre>
    * The list of requested Clusters.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Cluster clusters = 1;</code>
    */
   int getClustersCount();
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Cluster clusters = 1;</code>
-   *
    * <pre>
    * The list of requested Clusters.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Cluster clusters = 1;</code>
    */
   java.util.List<? extends com.google.bigtable.admin.cluster.v1.ClusterOrBuilder> 
       getClustersOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Cluster clusters = 1;</code>
-   *
    * <pre>
    * The list of requested Clusters.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Cluster clusters = 1;</code>
    */
   com.google.bigtable.admin.cluster.v1.ClusterOrBuilder getClustersOrBuilder(
       int index);
 
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone failed_zones = 2;</code>
-   *
    * <pre>
    * The zones for which clusters could not be retrieved.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone failed_zones = 2;</code>
    */
   java.util.List<com.google.bigtable.admin.cluster.v1.Zone> 
       getFailedZonesList();
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone failed_zones = 2;</code>
-   *
    * <pre>
    * The zones for which clusters could not be retrieved.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone failed_zones = 2;</code>
    */
   com.google.bigtable.admin.cluster.v1.Zone getFailedZones(int index);
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone failed_zones = 2;</code>
-   *
    * <pre>
    * The zones for which clusters could not be retrieved.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone failed_zones = 2;</code>
    */
   int getFailedZonesCount();
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone failed_zones = 2;</code>
-   *
    * <pre>
    * The zones for which clusters could not be retrieved.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone failed_zones = 2;</code>
    */
   java.util.List<? extends com.google.bigtable.admin.cluster.v1.ZoneOrBuilder> 
       getFailedZonesOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone failed_zones = 2;</code>
-   *
    * <pre>
    * The zones for which clusters could not be retrieved.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone failed_zones = 2;</code>
    */
   com.google.bigtable.admin.cluster.v1.ZoneOrBuilder getFailedZonesOrBuilder(
       int index);

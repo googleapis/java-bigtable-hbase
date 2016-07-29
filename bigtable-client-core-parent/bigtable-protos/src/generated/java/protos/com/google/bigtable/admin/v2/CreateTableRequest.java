@@ -4,11 +4,11 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.CreateTableRequest}
- *
  * <pre>
  * Request message for [google.bigtable.admin.v2.BigtableTableAdmin.CreateTable][google.bigtable.admin.v2.BigtableTableAdmin.CreateTable]
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.CreateTableRequest}
  */
 public  final class CreateTableRequest extends
     com.google.protobuf.GeneratedMessage implements
@@ -31,7 +31,8 @@ public  final class CreateTableRequest extends
   }
   private CreateTableRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -84,11 +85,10 @@ public  final class CreateTableRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
         initialSplits_ = java.util.Collections.unmodifiableList(initialSplits_);
@@ -113,20 +113,20 @@ public  final class CreateTableRequest extends
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional bytes key = 1;</code>
-     *
      * <pre>
      * Row key to use as an initial tablet boundary.
      * </pre>
+     *
+     * <code>optional bytes key = 1;</code>
      */
     com.google.protobuf.ByteString getKey();
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.CreateTableRequest.Split}
-   *
    * <pre>
    * An initial split point for a newly created table.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.CreateTableRequest.Split}
    */
   public  static final class Split extends
       com.google.protobuf.GeneratedMessage implements
@@ -147,7 +147,8 @@ public  final class CreateTableRequest extends
     }
     private Split(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       this();
       int mutable_bitField0_ = 0;
       try {
@@ -172,11 +173,10 @@ public  final class CreateTableRequest extends
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
       } finally {
         makeExtensionsImmutable();
       }
@@ -196,11 +196,11 @@ public  final class CreateTableRequest extends
     public static final int KEY_FIELD_NUMBER = 1;
     private com.google.protobuf.ByteString key_;
     /**
-     * <code>optional bytes key = 1;</code>
-     *
      * <pre>
      * Row key to use as an initial tablet boundary.
      * </pre>
+     *
+     * <code>optional bytes key = 1;</code>
      */
     public com.google.protobuf.ByteString getKey() {
       return key_;
@@ -260,34 +260,40 @@ public  final class CreateTableRequest extends
     }
     public static com.google.bigtable.admin.v2.CreateTableRequest.Split parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.CreateTableRequest.Split parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.CreateTableRequest.Split parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.CreateTableRequest.Split parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.CreateTableRequest.Split parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.CreateTableRequest.Split parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
     public Builder newBuilderForType() { return newBuilder(); }
@@ -309,11 +315,11 @@ public  final class CreateTableRequest extends
       return builder;
     }
     /**
-     * Protobuf type {@code google.bigtable.admin.v2.CreateTableRequest.Split}
-     *
      * <pre>
      * An initial split point for a newly created table.
      * </pre>
+     *
+     * Protobuf type {@code google.bigtable.admin.v2.CreateTableRequest.Split}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -407,7 +413,7 @@ public  final class CreateTableRequest extends
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (com.google.bigtable.admin.v2.CreateTableRequest.Split) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -418,21 +424,21 @@ public  final class CreateTableRequest extends
 
       private com.google.protobuf.ByteString key_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>optional bytes key = 1;</code>
-       *
        * <pre>
        * Row key to use as an initial tablet boundary.
        * </pre>
+       *
+       * <code>optional bytes key = 1;</code>
        */
       public com.google.protobuf.ByteString getKey() {
         return key_;
       }
       /**
-       * <code>optional bytes key = 1;</code>
-       *
        * <pre>
        * Row key to use as an initial tablet boundary.
        * </pre>
+       *
+       * <code>optional bytes key = 1;</code>
        */
       public Builder setKey(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -444,11 +450,11 @@ public  final class CreateTableRequest extends
         return this;
       }
       /**
-       * <code>optional bytes key = 1;</code>
-       *
        * <pre>
        * Row key to use as an initial tablet boundary.
        * </pre>
+       *
+       * <code>optional bytes key = 1;</code>
        */
       public Builder clearKey() {
         
@@ -486,16 +492,7 @@ public  final class CreateTableRequest extends
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
           return new Split(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
       }
     };
 
@@ -518,12 +515,12 @@ public  final class CreateTableRequest extends
   public static final int PARENT_FIELD_NUMBER = 1;
   private volatile java.lang.Object parent_;
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the instance in which to create the table.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public java.lang.String getParent() {
     java.lang.Object ref = parent_;
@@ -538,12 +535,12 @@ public  final class CreateTableRequest extends
     }
   }
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the instance in which to create the table.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public com.google.protobuf.ByteString
       getParentBytes() {
@@ -562,12 +559,12 @@ public  final class CreateTableRequest extends
   public static final int TABLE_ID_FIELD_NUMBER = 2;
   private volatile java.lang.Object tableId_;
   /**
-   * <code>optional string table_id = 2;</code>
-   *
    * <pre>
    * The name by which the new table should be referred to within the parent
    * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
    * </pre>
+   *
+   * <code>optional string table_id = 2;</code>
    */
   public java.lang.String getTableId() {
     java.lang.Object ref = tableId_;
@@ -582,12 +579,12 @@ public  final class CreateTableRequest extends
     }
   }
   /**
-   * <code>optional string table_id = 2;</code>
-   *
    * <pre>
    * The name by which the new table should be referred to within the parent
    * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
    * </pre>
+   *
+   * <code>optional string table_id = 2;</code>
    */
   public com.google.protobuf.ByteString
       getTableIdBytes() {
@@ -606,31 +603,31 @@ public  final class CreateTableRequest extends
   public static final int TABLE_FIELD_NUMBER = 3;
   private com.google.bigtable.admin.v2.Table table_;
   /**
-   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-   *
    * <pre>
    * The Table to create.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
    */
   public boolean hasTable() {
     return table_ != null;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-   *
    * <pre>
    * The Table to create.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
    */
   public com.google.bigtable.admin.v2.Table getTable() {
     return table_ == null ? com.google.bigtable.admin.v2.Table.getDefaultInstance() : table_;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-   *
    * <pre>
    * The Table to create.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
    */
   public com.google.bigtable.admin.v2.TableOrBuilder getTableOrBuilder() {
     return getTable();
@@ -639,8 +636,6 @@ public  final class CreateTableRequest extends
   public static final int INITIAL_SPLITS_FIELD_NUMBER = 4;
   private java.util.List<com.google.bigtable.admin.v2.CreateTableRequest.Split> initialSplits_;
   /**
-   * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -657,13 +652,13 @@ public  final class CreateTableRequest extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
    */
   public java.util.List<com.google.bigtable.admin.v2.CreateTableRequest.Split> getInitialSplitsList() {
     return initialSplits_;
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -680,14 +675,14 @@ public  final class CreateTableRequest extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
    */
   public java.util.List<? extends com.google.bigtable.admin.v2.CreateTableRequest.SplitOrBuilder> 
       getInitialSplitsOrBuilderList() {
     return initialSplits_;
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -704,13 +699,13 @@ public  final class CreateTableRequest extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
    */
   public int getInitialSplitsCount() {
     return initialSplits_.size();
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -727,13 +722,13 @@ public  final class CreateTableRequest extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
    */
   public com.google.bigtable.admin.v2.CreateTableRequest.Split getInitialSplits(int index) {
     return initialSplits_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -750,6 +745,8 @@ public  final class CreateTableRequest extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
    */
   public com.google.bigtable.admin.v2.CreateTableRequest.SplitOrBuilder getInitialSplitsOrBuilder(
       int index) {
@@ -829,34 +826,40 @@ public  final class CreateTableRequest extends
   }
   public static com.google.bigtable.admin.v2.CreateTableRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateTableRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.CreateTableRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateTableRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.CreateTableRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateTableRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -878,11 +881,11 @@ public  final class CreateTableRequest extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.CreateTableRequest}
-   *
    * <pre>
    * Request message for [google.bigtable.admin.v2.BigtableTableAdmin.CreateTable][google.bigtable.admin.v2.BigtableTableAdmin.CreateTable]
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.CreateTableRequest}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -1043,7 +1046,7 @@ public  final class CreateTableRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.CreateTableRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -1055,12 +1058,12 @@ public  final class CreateTableRequest extends
 
     private java.lang.Object parent_ = "";
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the table.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public java.lang.String getParent() {
       java.lang.Object ref = parent_;
@@ -1075,12 +1078,12 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the table.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public com.google.protobuf.ByteString
         getParentBytes() {
@@ -1096,12 +1099,12 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the table.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParent(
         java.lang.String value) {
@@ -1114,12 +1117,12 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the table.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder clearParent() {
       
@@ -1128,12 +1131,12 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the table.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
@@ -1149,12 +1152,12 @@ public  final class CreateTableRequest extends
 
     private java.lang.Object tableId_ = "";
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the parent
      * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public java.lang.String getTableId() {
       java.lang.Object ref = tableId_;
@@ -1169,12 +1172,12 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the parent
      * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public com.google.protobuf.ByteString
         getTableIdBytes() {
@@ -1190,12 +1193,12 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the parent
      * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public Builder setTableId(
         java.lang.String value) {
@@ -1208,12 +1211,12 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the parent
      * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public Builder clearTableId() {
       
@@ -1222,12 +1225,12 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the parent
      * instance, e.g. "foobar" rather than "&lt;parent&gt;/tables/foobar".
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public Builder setTableIdBytes(
         com.google.protobuf.ByteString value) {
@@ -1245,21 +1248,21 @@ public  final class CreateTableRequest extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.v2.Table, com.google.bigtable.admin.v2.Table.Builder, com.google.bigtable.admin.v2.TableOrBuilder> tableBuilder_;
     /**
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
      */
     public boolean hasTable() {
       return tableBuilder_ != null || table_ != null;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
      */
     public com.google.bigtable.admin.v2.Table getTable() {
       if (tableBuilder_ == null) {
@@ -1269,11 +1272,11 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
      */
     public Builder setTable(com.google.bigtable.admin.v2.Table value) {
       if (tableBuilder_ == null) {
@@ -1289,11 +1292,11 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
      */
     public Builder setTable(
         com.google.bigtable.admin.v2.Table.Builder builderForValue) {
@@ -1307,11 +1310,11 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
      */
     public Builder mergeTable(com.google.bigtable.admin.v2.Table value) {
       if (tableBuilder_ == null) {
@@ -1329,11 +1332,11 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
      */
     public Builder clearTable() {
       if (tableBuilder_ == null) {
@@ -1347,11 +1350,11 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
      */
     public com.google.bigtable.admin.v2.Table.Builder getTableBuilder() {
       
@@ -1359,11 +1362,11 @@ public  final class CreateTableRequest extends
       return getTableFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
      */
     public com.google.bigtable.admin.v2.TableOrBuilder getTableOrBuilder() {
       if (tableBuilder_ != null) {
@@ -1374,11 +1377,11 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table table = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.v2.Table, com.google.bigtable.admin.v2.Table.Builder, com.google.bigtable.admin.v2.TableOrBuilder> 
@@ -1407,8 +1410,6 @@ public  final class CreateTableRequest extends
         com.google.bigtable.admin.v2.CreateTableRequest.Split, com.google.bigtable.admin.v2.CreateTableRequest.Split.Builder, com.google.bigtable.admin.v2.CreateTableRequest.SplitOrBuilder> initialSplitsBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1425,6 +1426,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public java.util.List<com.google.bigtable.admin.v2.CreateTableRequest.Split> getInitialSplitsList() {
       if (initialSplitsBuilder_ == null) {
@@ -1434,8 +1437,6 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1452,6 +1453,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public int getInitialSplitsCount() {
       if (initialSplitsBuilder_ == null) {
@@ -1461,8 +1464,6 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1479,6 +1480,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public com.google.bigtable.admin.v2.CreateTableRequest.Split getInitialSplits(int index) {
       if (initialSplitsBuilder_ == null) {
@@ -1488,8 +1491,6 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1506,6 +1507,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public Builder setInitialSplits(
         int index, com.google.bigtable.admin.v2.CreateTableRequest.Split value) {
@@ -1522,8 +1525,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1540,6 +1541,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public Builder setInitialSplits(
         int index, com.google.bigtable.admin.v2.CreateTableRequest.Split.Builder builderForValue) {
@@ -1553,8 +1556,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1571,6 +1572,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public Builder addInitialSplits(com.google.bigtable.admin.v2.CreateTableRequest.Split value) {
       if (initialSplitsBuilder_ == null) {
@@ -1586,8 +1589,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1604,6 +1605,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public Builder addInitialSplits(
         int index, com.google.bigtable.admin.v2.CreateTableRequest.Split value) {
@@ -1620,8 +1623,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1638,6 +1639,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public Builder addInitialSplits(
         com.google.bigtable.admin.v2.CreateTableRequest.Split.Builder builderForValue) {
@@ -1651,8 +1654,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1669,6 +1670,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public Builder addInitialSplits(
         int index, com.google.bigtable.admin.v2.CreateTableRequest.Split.Builder builderForValue) {
@@ -1682,8 +1685,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1700,6 +1701,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public Builder addAllInitialSplits(
         java.lang.Iterable<? extends com.google.bigtable.admin.v2.CreateTableRequest.Split> values) {
@@ -1714,8 +1717,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1732,6 +1733,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public Builder clearInitialSplits() {
       if (initialSplitsBuilder_ == null) {
@@ -1744,8 +1747,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1762,6 +1763,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public Builder removeInitialSplits(int index) {
       if (initialSplitsBuilder_ == null) {
@@ -1774,8 +1777,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1792,14 +1793,14 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public com.google.bigtable.admin.v2.CreateTableRequest.Split.Builder getInitialSplitsBuilder(
         int index) {
       return getInitialSplitsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1816,6 +1817,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public com.google.bigtable.admin.v2.CreateTableRequest.SplitOrBuilder getInitialSplitsOrBuilder(
         int index) {
@@ -1825,8 +1828,6 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1843,6 +1844,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public java.util.List<? extends com.google.bigtable.admin.v2.CreateTableRequest.SplitOrBuilder> 
          getInitialSplitsOrBuilderList() {
@@ -1853,8 +1856,6 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1871,14 +1872,14 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public com.google.bigtable.admin.v2.CreateTableRequest.Split.Builder addInitialSplitsBuilder() {
       return getInitialSplitsFieldBuilder().addBuilder(
           com.google.bigtable.admin.v2.CreateTableRequest.Split.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1895,6 +1896,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public com.google.bigtable.admin.v2.CreateTableRequest.Split.Builder addInitialSplitsBuilder(
         int index) {
@@ -1902,8 +1905,6 @@ public  final class CreateTableRequest extends
           index, com.google.bigtable.admin.v2.CreateTableRequest.Split.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1920,6 +1921,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.CreateTableRequest.Split initial_splits = 4;</code>
      */
     public java.util.List<com.google.bigtable.admin.v2.CreateTableRequest.Split.Builder> 
          getInitialSplitsBuilderList() {
@@ -1969,16 +1972,7 @@ public  final class CreateTableRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new CreateTableRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

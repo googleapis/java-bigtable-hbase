@@ -4,11 +4,11 @@
 package com.google.bigtable.v2;
 
 /**
- * Protobuf type {@code google.bigtable.v2.CheckAndMutateRowResponse}
- *
  * <pre>
  * Response message for Bigtable.CheckAndMutateRow.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v2.CheckAndMutateRowResponse}
  */
 public  final class CheckAndMutateRowResponse extends
     com.google.protobuf.GeneratedMessage implements
@@ -29,7 +29,8 @@ public  final class CheckAndMutateRowResponse extends
   }
   private CheckAndMutateRowResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -54,11 +55,10 @@ public  final class CheckAndMutateRowResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -78,12 +78,12 @@ public  final class CheckAndMutateRowResponse extends
   public static final int PREDICATE_MATCHED_FIELD_NUMBER = 1;
   private boolean predicateMatched_;
   /**
-   * <code>optional bool predicate_matched = 1;</code>
-   *
    * <pre>
    * Whether or not the request's `predicate_filter` yielded any results for
    * the specified row.
    * </pre>
+   *
+   * <code>optional bool predicate_matched = 1;</code>
    */
   public boolean getPredicateMatched() {
     return predicateMatched_;
@@ -143,34 +143,40 @@ public  final class CheckAndMutateRowResponse extends
   }
   public static com.google.bigtable.v2.CheckAndMutateRowResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.CheckAndMutateRowResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.CheckAndMutateRowResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.CheckAndMutateRowResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.CheckAndMutateRowResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.CheckAndMutateRowResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -192,11 +198,11 @@ public  final class CheckAndMutateRowResponse extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v2.CheckAndMutateRowResponse}
-   *
    * <pre>
    * Response message for Bigtable.CheckAndMutateRow.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v2.CheckAndMutateRowResponse}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -290,7 +296,7 @@ public  final class CheckAndMutateRowResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.CheckAndMutateRowResponse) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -301,23 +307,23 @@ public  final class CheckAndMutateRowResponse extends
 
     private boolean predicateMatched_ ;
     /**
-     * <code>optional bool predicate_matched = 1;</code>
-     *
      * <pre>
      * Whether or not the request's `predicate_filter` yielded any results for
      * the specified row.
      * </pre>
+     *
+     * <code>optional bool predicate_matched = 1;</code>
      */
     public boolean getPredicateMatched() {
       return predicateMatched_;
     }
     /**
-     * <code>optional bool predicate_matched = 1;</code>
-     *
      * <pre>
      * Whether or not the request's `predicate_filter` yielded any results for
      * the specified row.
      * </pre>
+     *
+     * <code>optional bool predicate_matched = 1;</code>
      */
     public Builder setPredicateMatched(boolean value) {
       
@@ -326,12 +332,12 @@ public  final class CheckAndMutateRowResponse extends
       return this;
     }
     /**
-     * <code>optional bool predicate_matched = 1;</code>
-     *
      * <pre>
      * Whether or not the request's `predicate_filter` yielded any results for
      * the specified row.
      * </pre>
+     *
+     * <code>optional bool predicate_matched = 1;</code>
      */
     public Builder clearPredicateMatched() {
       
@@ -369,16 +375,7 @@ public  final class CheckAndMutateRowResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new CheckAndMutateRowResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

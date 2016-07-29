@@ -4,11 +4,11 @@
 package com.google.bigtable.v1;
 
 /**
- * Protobuf service {@code google.bigtable.v1.BigtableService}
- *
  * <pre>
  * Service for reading from and writing to existing Bigtables.
  * </pre>
+ *
+ * Protobuf service {@code google.bigtable.v1.BigtableService}
  */
 public  abstract class BigtableService
     implements com.google.protobuf.Service {
@@ -16,14 +16,14 @@ public  abstract class BigtableService
 
   public interface Interface {
     /**
-     * <code>rpc ReadRows(.google.bigtable.v1.ReadRowsRequest) returns (stream .google.bigtable.v1.ReadRowsResponse);</code>
-     *
      * <pre>
      * Streams back the contents of all requested rows, optionally applying
      * the same Reader filter to each. Depending on their size, rows may be
      * broken up across multiple responses, but atomicity of each row will still
      * be preserved.
      * </pre>
+     *
+     * <code>rpc ReadRows(.google.bigtable.v1.ReadRowsRequest) returns (stream .google.bigtable.v1.ReadRowsResponse);</code>
      */
     public abstract void readRows(
         com.google.protobuf.RpcController controller,
@@ -31,14 +31,14 @@ public  abstract class BigtableService
         com.google.protobuf.RpcCallback<com.google.bigtable.v1.ReadRowsResponse> done);
 
     /**
-     * <code>rpc SampleRowKeys(.google.bigtable.v1.SampleRowKeysRequest) returns (stream .google.bigtable.v1.SampleRowKeysResponse);</code>
-     *
      * <pre>
      * Returns a sample of row keys in the table. The returned row keys will
      * delimit contiguous sections of the table of approximately equal size,
      * which can be used to break up the data for distributed tasks like
      * mapreduces.
      * </pre>
+     *
+     * <code>rpc SampleRowKeys(.google.bigtable.v1.SampleRowKeysRequest) returns (stream .google.bigtable.v1.SampleRowKeysResponse);</code>
      */
     public abstract void sampleRowKeys(
         com.google.protobuf.RpcController controller,
@@ -46,12 +46,12 @@ public  abstract class BigtableService
         com.google.protobuf.RpcCallback<com.google.bigtable.v1.SampleRowKeysResponse> done);
 
     /**
-     * <code>rpc MutateRow(.google.bigtable.v1.MutateRowRequest) returns (.google.protobuf.Empty);</code>
-     *
      * <pre>
      * Mutates a row atomically. Cells already present in the row are left
      * unchanged unless explicitly changed by 'mutation'.
      * </pre>
+     *
+     * <code>rpc MutateRow(.google.bigtable.v1.MutateRowRequest) returns (.google.protobuf.Empty);</code>
      */
     public abstract void mutateRow(
         com.google.protobuf.RpcController controller,
@@ -59,13 +59,13 @@ public  abstract class BigtableService
         com.google.protobuf.RpcCallback<com.google.protobuf.Empty> done);
 
     /**
-     * <code>rpc MutateRows(.google.bigtable.v1.MutateRowsRequest) returns (.google.bigtable.v1.MutateRowsResponse);</code>
-     *
      * <pre>
      * Mutates multiple rows in a batch. Each individual row is mutated
      * atomically as in MutateRow, but the entire batch is not executed
      * atomically.
      * </pre>
+     *
+     * <code>rpc MutateRows(.google.bigtable.v1.MutateRowsRequest) returns (.google.bigtable.v1.MutateRowsResponse);</code>
      */
     public abstract void mutateRows(
         com.google.protobuf.RpcController controller,
@@ -73,11 +73,11 @@ public  abstract class BigtableService
         com.google.protobuf.RpcCallback<com.google.bigtable.v1.MutateRowsResponse> done);
 
     /**
-     * <code>rpc CheckAndMutateRow(.google.bigtable.v1.CheckAndMutateRowRequest) returns (.google.bigtable.v1.CheckAndMutateRowResponse);</code>
-     *
      * <pre>
      * Mutates a row atomically based on the output of a predicate Reader filter.
      * </pre>
+     *
+     * <code>rpc CheckAndMutateRow(.google.bigtable.v1.CheckAndMutateRowRequest) returns (.google.bigtable.v1.CheckAndMutateRowResponse);</code>
      */
     public abstract void checkAndMutateRow(
         com.google.protobuf.RpcController controller,
@@ -85,14 +85,14 @@ public  abstract class BigtableService
         com.google.protobuf.RpcCallback<com.google.bigtable.v1.CheckAndMutateRowResponse> done);
 
     /**
-     * <code>rpc ReadModifyWriteRow(.google.bigtable.v1.ReadModifyWriteRowRequest) returns (.google.bigtable.v1.Row);</code>
-     *
      * <pre>
      * Modifies a row atomically, reading the latest existing timestamp/value from
      * the specified columns and writing a new value at
      * max(existing timestamp, current server time) based on pre-defined
      * read/modify/write rules. Returns the new contents of all modified cells.
      * </pre>
+     *
+     * <code>rpc ReadModifyWriteRow(.google.bigtable.v1.ReadModifyWriteRowRequest) returns (.google.bigtable.v1.Row);</code>
      */
     public abstract void readModifyWriteRow(
         com.google.protobuf.RpcController controller,
@@ -247,14 +247,14 @@ public  abstract class BigtableService
   }
 
   /**
-   * <code>rpc ReadRows(.google.bigtable.v1.ReadRowsRequest) returns (stream .google.bigtable.v1.ReadRowsResponse);</code>
-   *
    * <pre>
    * Streams back the contents of all requested rows, optionally applying
    * the same Reader filter to each. Depending on their size, rows may be
    * broken up across multiple responses, but atomicity of each row will still
    * be preserved.
    * </pre>
+   *
+   * <code>rpc ReadRows(.google.bigtable.v1.ReadRowsRequest) returns (stream .google.bigtable.v1.ReadRowsResponse);</code>
    */
   public abstract void readRows(
       com.google.protobuf.RpcController controller,
@@ -262,14 +262,14 @@ public  abstract class BigtableService
       com.google.protobuf.RpcCallback<com.google.bigtable.v1.ReadRowsResponse> done);
 
   /**
-   * <code>rpc SampleRowKeys(.google.bigtable.v1.SampleRowKeysRequest) returns (stream .google.bigtable.v1.SampleRowKeysResponse);</code>
-   *
    * <pre>
    * Returns a sample of row keys in the table. The returned row keys will
    * delimit contiguous sections of the table of approximately equal size,
    * which can be used to break up the data for distributed tasks like
    * mapreduces.
    * </pre>
+   *
+   * <code>rpc SampleRowKeys(.google.bigtable.v1.SampleRowKeysRequest) returns (stream .google.bigtable.v1.SampleRowKeysResponse);</code>
    */
   public abstract void sampleRowKeys(
       com.google.protobuf.RpcController controller,
@@ -277,12 +277,12 @@ public  abstract class BigtableService
       com.google.protobuf.RpcCallback<com.google.bigtable.v1.SampleRowKeysResponse> done);
 
   /**
-   * <code>rpc MutateRow(.google.bigtable.v1.MutateRowRequest) returns (.google.protobuf.Empty);</code>
-   *
    * <pre>
    * Mutates a row atomically. Cells already present in the row are left
    * unchanged unless explicitly changed by 'mutation'.
    * </pre>
+   *
+   * <code>rpc MutateRow(.google.bigtable.v1.MutateRowRequest) returns (.google.protobuf.Empty);</code>
    */
   public abstract void mutateRow(
       com.google.protobuf.RpcController controller,
@@ -290,13 +290,13 @@ public  abstract class BigtableService
       com.google.protobuf.RpcCallback<com.google.protobuf.Empty> done);
 
   /**
-   * <code>rpc MutateRows(.google.bigtable.v1.MutateRowsRequest) returns (.google.bigtable.v1.MutateRowsResponse);</code>
-   *
    * <pre>
    * Mutates multiple rows in a batch. Each individual row is mutated
    * atomically as in MutateRow, but the entire batch is not executed
    * atomically.
    * </pre>
+   *
+   * <code>rpc MutateRows(.google.bigtable.v1.MutateRowsRequest) returns (.google.bigtable.v1.MutateRowsResponse);</code>
    */
   public abstract void mutateRows(
       com.google.protobuf.RpcController controller,
@@ -304,11 +304,11 @@ public  abstract class BigtableService
       com.google.protobuf.RpcCallback<com.google.bigtable.v1.MutateRowsResponse> done);
 
   /**
-   * <code>rpc CheckAndMutateRow(.google.bigtable.v1.CheckAndMutateRowRequest) returns (.google.bigtable.v1.CheckAndMutateRowResponse);</code>
-   *
    * <pre>
    * Mutates a row atomically based on the output of a predicate Reader filter.
    * </pre>
+   *
+   * <code>rpc CheckAndMutateRow(.google.bigtable.v1.CheckAndMutateRowRequest) returns (.google.bigtable.v1.CheckAndMutateRowResponse);</code>
    */
   public abstract void checkAndMutateRow(
       com.google.protobuf.RpcController controller,
@@ -316,14 +316,14 @@ public  abstract class BigtableService
       com.google.protobuf.RpcCallback<com.google.bigtable.v1.CheckAndMutateRowResponse> done);
 
   /**
-   * <code>rpc ReadModifyWriteRow(.google.bigtable.v1.ReadModifyWriteRowRequest) returns (.google.bigtable.v1.Row);</code>
-   *
    * <pre>
    * Modifies a row atomically, reading the latest existing timestamp/value from
    * the specified columns and writing a new value at
    * max(existing timestamp, current server time) based on pre-defined
    * read/modify/write rules. Returns the new contents of all modified cells.
    * </pre>
+   *
+   * <code>rpc ReadModifyWriteRow(.google.bigtable.v1.ReadModifyWriteRowRequest) returns (.google.bigtable.v1.Row);</code>
    */
   public abstract void readModifyWriteRow(
       com.google.protobuf.RpcController controller,

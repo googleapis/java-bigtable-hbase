@@ -4,11 +4,11 @@
 package com.google.bigtable.v2;
 
 /**
- * Protobuf type {@code google.bigtable.v2.ReadModifyWriteRowRequest}
- *
  * <pre>
  * Request message for Bigtable.ReadModifyWriteRow.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v2.ReadModifyWriteRowRequest}
  */
 public  final class ReadModifyWriteRowRequest extends
     com.google.protobuf.GeneratedMessage implements
@@ -31,7 +31,8 @@ public  final class ReadModifyWriteRowRequest extends
   }
   private ReadModifyWriteRowRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -70,11 +71,10 @@ public  final class ReadModifyWriteRowRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
         rules_ = java.util.Collections.unmodifiableList(rules_);
@@ -98,14 +98,14 @@ public  final class ReadModifyWriteRowRequest extends
   public static final int TABLE_NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object tableName_;
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table to which the read/modify/write rules should be
    * applied.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   public java.lang.String getTableName() {
     java.lang.Object ref = tableName_;
@@ -120,14 +120,14 @@ public  final class ReadModifyWriteRowRequest extends
     }
   }
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table to which the read/modify/write rules should be
    * applied.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getTableNameBytes() {
@@ -146,11 +146,11 @@ public  final class ReadModifyWriteRowRequest extends
   public static final int ROW_KEY_FIELD_NUMBER = 2;
   private com.google.protobuf.ByteString rowKey_;
   /**
-   * <code>optional bytes row_key = 2;</code>
-   *
    * <pre>
    * The key of the row to which the read/modify/write rules should be applied.
    * </pre>
+   *
+   * <code>optional bytes row_key = 2;</code>
    */
   public com.google.protobuf.ByteString getRowKey() {
     return rowKey_;
@@ -159,62 +159,62 @@ public  final class ReadModifyWriteRowRequest extends
   public static final int RULES_FIELD_NUMBER = 3;
   private java.util.List<com.google.bigtable.v2.ReadModifyWriteRule> rules_;
   /**
-   * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-   *
    * <pre>
    * Rules specifying how the specified row's contents are to be transformed
    * into writes. Entries are applied in order, meaning that earlier rules will
    * affect the results of later ones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
    */
   public java.util.List<com.google.bigtable.v2.ReadModifyWriteRule> getRulesList() {
     return rules_;
   }
   /**
-   * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-   *
    * <pre>
    * Rules specifying how the specified row's contents are to be transformed
    * into writes. Entries are applied in order, meaning that earlier rules will
    * affect the results of later ones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
    */
   public java.util.List<? extends com.google.bigtable.v2.ReadModifyWriteRuleOrBuilder> 
       getRulesOrBuilderList() {
     return rules_;
   }
   /**
-   * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-   *
    * <pre>
    * Rules specifying how the specified row's contents are to be transformed
    * into writes. Entries are applied in order, meaning that earlier rules will
    * affect the results of later ones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
    */
   public int getRulesCount() {
     return rules_.size();
   }
   /**
-   * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-   *
    * <pre>
    * Rules specifying how the specified row's contents are to be transformed
    * into writes. Entries are applied in order, meaning that earlier rules will
    * affect the results of later ones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
    */
   public com.google.bigtable.v2.ReadModifyWriteRule getRules(int index) {
     return rules_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-   *
    * <pre>
    * Rules specifying how the specified row's contents are to be transformed
    * into writes. Entries are applied in order, meaning that earlier rules will
    * affect the results of later ones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
    */
   public com.google.bigtable.v2.ReadModifyWriteRuleOrBuilder getRulesOrBuilder(
       int index) {
@@ -288,34 +288,40 @@ public  final class ReadModifyWriteRowRequest extends
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -337,11 +343,11 @@ public  final class ReadModifyWriteRowRequest extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v2.ReadModifyWriteRowRequest}
-   *
    * <pre>
    * Request message for Bigtable.ReadModifyWriteRow.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v2.ReadModifyWriteRowRequest}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -487,7 +493,7 @@ public  final class ReadModifyWriteRowRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.ReadModifyWriteRowRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -499,14 +505,14 @@ public  final class ReadModifyWriteRowRequest extends
 
     private java.lang.Object tableName_ = "";
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table to which the read/modify/write rules should be
      * applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public java.lang.String getTableName() {
       java.lang.Object ref = tableName_;
@@ -521,14 +527,14 @@ public  final class ReadModifyWriteRowRequest extends
       }
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table to which the read/modify/write rules should be
      * applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getTableNameBytes() {
@@ -544,14 +550,14 @@ public  final class ReadModifyWriteRowRequest extends
       }
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table to which the read/modify/write rules should be
      * applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public Builder setTableName(
         java.lang.String value) {
@@ -564,14 +570,14 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table to which the read/modify/write rules should be
      * applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public Builder clearTableName() {
       
@@ -580,14 +586,14 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table to which the read/modify/write rules should be
      * applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public Builder setTableNameBytes(
         com.google.protobuf.ByteString value) {
@@ -603,21 +609,21 @@ public  final class ReadModifyWriteRowRequest extends
 
     private com.google.protobuf.ByteString rowKey_ = com.google.protobuf.ByteString.EMPTY;
     /**
-     * <code>optional bytes row_key = 2;</code>
-     *
      * <pre>
      * The key of the row to which the read/modify/write rules should be applied.
      * </pre>
+     *
+     * <code>optional bytes row_key = 2;</code>
      */
     public com.google.protobuf.ByteString getRowKey() {
       return rowKey_;
     }
     /**
-     * <code>optional bytes row_key = 2;</code>
-     *
      * <pre>
      * The key of the row to which the read/modify/write rules should be applied.
      * </pre>
+     *
+     * <code>optional bytes row_key = 2;</code>
      */
     public Builder setRowKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -629,11 +635,11 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>optional bytes row_key = 2;</code>
-     *
      * <pre>
      * The key of the row to which the read/modify/write rules should be applied.
      * </pre>
+     *
+     * <code>optional bytes row_key = 2;</code>
      */
     public Builder clearRowKey() {
       
@@ -655,13 +661,13 @@ public  final class ReadModifyWriteRowRequest extends
         com.google.bigtable.v2.ReadModifyWriteRule, com.google.bigtable.v2.ReadModifyWriteRule.Builder, com.google.bigtable.v2.ReadModifyWriteRuleOrBuilder> rulesBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public java.util.List<com.google.bigtable.v2.ReadModifyWriteRule> getRulesList() {
       if (rulesBuilder_ == null) {
@@ -671,13 +677,13 @@ public  final class ReadModifyWriteRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public int getRulesCount() {
       if (rulesBuilder_ == null) {
@@ -687,13 +693,13 @@ public  final class ReadModifyWriteRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public com.google.bigtable.v2.ReadModifyWriteRule getRules(int index) {
       if (rulesBuilder_ == null) {
@@ -703,13 +709,13 @@ public  final class ReadModifyWriteRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public Builder setRules(
         int index, com.google.bigtable.v2.ReadModifyWriteRule value) {
@@ -726,13 +732,13 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public Builder setRules(
         int index, com.google.bigtable.v2.ReadModifyWriteRule.Builder builderForValue) {
@@ -746,13 +752,13 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public Builder addRules(com.google.bigtable.v2.ReadModifyWriteRule value) {
       if (rulesBuilder_ == null) {
@@ -768,13 +774,13 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public Builder addRules(
         int index, com.google.bigtable.v2.ReadModifyWriteRule value) {
@@ -791,13 +797,13 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public Builder addRules(
         com.google.bigtable.v2.ReadModifyWriteRule.Builder builderForValue) {
@@ -811,13 +817,13 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public Builder addRules(
         int index, com.google.bigtable.v2.ReadModifyWriteRule.Builder builderForValue) {
@@ -831,13 +837,13 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public Builder addAllRules(
         java.lang.Iterable<? extends com.google.bigtable.v2.ReadModifyWriteRule> values) {
@@ -852,13 +858,13 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public Builder clearRules() {
       if (rulesBuilder_ == null) {
@@ -871,13 +877,13 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public Builder removeRules(int index) {
       if (rulesBuilder_ == null) {
@@ -890,26 +896,26 @@ public  final class ReadModifyWriteRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public com.google.bigtable.v2.ReadModifyWriteRule.Builder getRulesBuilder(
         int index) {
       return getRulesFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public com.google.bigtable.v2.ReadModifyWriteRuleOrBuilder getRulesOrBuilder(
         int index) {
@@ -919,13 +925,13 @@ public  final class ReadModifyWriteRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public java.util.List<? extends com.google.bigtable.v2.ReadModifyWriteRuleOrBuilder> 
          getRulesOrBuilderList() {
@@ -936,26 +942,26 @@ public  final class ReadModifyWriteRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public com.google.bigtable.v2.ReadModifyWriteRule.Builder addRulesBuilder() {
       return getRulesFieldBuilder().addBuilder(
           com.google.bigtable.v2.ReadModifyWriteRule.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public com.google.bigtable.v2.ReadModifyWriteRule.Builder addRulesBuilder(
         int index) {
@@ -963,13 +969,13 @@ public  final class ReadModifyWriteRowRequest extends
           index, com.google.bigtable.v2.ReadModifyWriteRule.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
-     *
      * <pre>
      * Rules specifying how the specified row's contents are to be transformed
      * into writes. Entries are applied in order, meaning that earlier rules will
      * affect the results of later ones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.ReadModifyWriteRule rules = 3;</code>
      */
     public java.util.List<com.google.bigtable.v2.ReadModifyWriteRule.Builder> 
          getRulesBuilderList() {
@@ -1019,16 +1025,7 @@ public  final class ReadModifyWriteRowRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ReadModifyWriteRowRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

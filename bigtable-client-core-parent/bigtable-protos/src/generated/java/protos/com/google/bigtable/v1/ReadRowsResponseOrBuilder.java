@@ -8,56 +8,56 @@ public interface ReadRowsResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional bytes row_key = 1;</code>
-   *
    * <pre>
    * The key of the row for which we're receiving data.
    * Results will be received in increasing row key order, unless
    * "allow_row_interleaving" was specified in the request.
    * </pre>
+   *
+   * <code>optional bytes row_key = 1;</code>
    */
   com.google.protobuf.ByteString getRowKey();
 
   /**
-   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-   *
    * <pre>
    * One or more chunks of the row specified by "row_key".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
    */
   java.util.List<com.google.bigtable.v1.ReadRowsResponse.Chunk> 
       getChunksList();
   /**
-   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-   *
    * <pre>
    * One or more chunks of the row specified by "row_key".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
    */
   com.google.bigtable.v1.ReadRowsResponse.Chunk getChunks(int index);
   /**
-   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-   *
    * <pre>
    * One or more chunks of the row specified by "row_key".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
    */
   int getChunksCount();
   /**
-   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-   *
    * <pre>
    * One or more chunks of the row specified by "row_key".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
    */
   java.util.List<? extends com.google.bigtable.v1.ReadRowsResponse.ChunkOrBuilder> 
       getChunksOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-   *
    * <pre>
    * One or more chunks of the row specified by "row_key".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
    */
   com.google.bigtable.v1.ReadRowsResponse.ChunkOrBuilder getChunksOrBuilder(
       int index);

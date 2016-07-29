@@ -4,11 +4,11 @@
 package com.google.bigtable.admin.cluster.v1;
 
 /**
- * Protobuf type {@code google.bigtable.admin.cluster.v1.ListZonesResponse}
- *
  * <pre>
  * Response message for BigtableClusterService.ListZones.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.cluster.v1.ListZonesResponse}
  */
 public  final class ListZonesResponse extends
     com.google.protobuf.GeneratedMessage implements
@@ -29,7 +29,8 @@ public  final class ListZonesResponse extends
   }
   private ListZonesResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -57,11 +58,10 @@ public  final class ListZonesResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         zones_ = java.util.Collections.unmodifiableList(zones_);
@@ -84,52 +84,52 @@ public  final class ListZonesResponse extends
   public static final int ZONES_FIELD_NUMBER = 1;
   private java.util.List<com.google.bigtable.admin.cluster.v1.Zone> zones_;
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-   *
    * <pre>
    * The list of requested zones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
    */
   public java.util.List<com.google.bigtable.admin.cluster.v1.Zone> getZonesList() {
     return zones_;
   }
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-   *
    * <pre>
    * The list of requested zones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
    */
   public java.util.List<? extends com.google.bigtable.admin.cluster.v1.ZoneOrBuilder> 
       getZonesOrBuilderList() {
     return zones_;
   }
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-   *
    * <pre>
    * The list of requested zones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
    */
   public int getZonesCount() {
     return zones_.size();
   }
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-   *
    * <pre>
    * The list of requested zones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
    */
   public com.google.bigtable.admin.cluster.v1.Zone getZones(int index) {
     return zones_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-   *
    * <pre>
    * The list of requested zones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
    */
   public com.google.bigtable.admin.cluster.v1.ZoneOrBuilder getZonesOrBuilder(
       int index) {
@@ -190,34 +190,40 @@ public  final class ListZonesResponse extends
   }
   public static com.google.bigtable.admin.cluster.v1.ListZonesResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.cluster.v1.ListZonesResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.cluster.v1.ListZonesResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.cluster.v1.ListZonesResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.cluster.v1.ListZonesResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.cluster.v1.ListZonesResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -239,11 +245,11 @@ public  final class ListZonesResponse extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.cluster.v1.ListZonesResponse}
-   *
    * <pre>
    * Response message for BigtableClusterService.ListZones.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.cluster.v1.ListZonesResponse}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -374,7 +380,7 @@ public  final class ListZonesResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.cluster.v1.ListZonesResponse) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -397,11 +403,11 @@ public  final class ListZonesResponse extends
         com.google.bigtable.admin.cluster.v1.Zone, com.google.bigtable.admin.cluster.v1.Zone.Builder, com.google.bigtable.admin.cluster.v1.ZoneOrBuilder> zonesBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public java.util.List<com.google.bigtable.admin.cluster.v1.Zone> getZonesList() {
       if (zonesBuilder_ == null) {
@@ -411,11 +417,11 @@ public  final class ListZonesResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public int getZonesCount() {
       if (zonesBuilder_ == null) {
@@ -425,11 +431,11 @@ public  final class ListZonesResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public com.google.bigtable.admin.cluster.v1.Zone getZones(int index) {
       if (zonesBuilder_ == null) {
@@ -439,11 +445,11 @@ public  final class ListZonesResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public Builder setZones(
         int index, com.google.bigtable.admin.cluster.v1.Zone value) {
@@ -460,11 +466,11 @@ public  final class ListZonesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public Builder setZones(
         int index, com.google.bigtable.admin.cluster.v1.Zone.Builder builderForValue) {
@@ -478,11 +484,11 @@ public  final class ListZonesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public Builder addZones(com.google.bigtable.admin.cluster.v1.Zone value) {
       if (zonesBuilder_ == null) {
@@ -498,11 +504,11 @@ public  final class ListZonesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public Builder addZones(
         int index, com.google.bigtable.admin.cluster.v1.Zone value) {
@@ -519,11 +525,11 @@ public  final class ListZonesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public Builder addZones(
         com.google.bigtable.admin.cluster.v1.Zone.Builder builderForValue) {
@@ -537,11 +543,11 @@ public  final class ListZonesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public Builder addZones(
         int index, com.google.bigtable.admin.cluster.v1.Zone.Builder builderForValue) {
@@ -555,11 +561,11 @@ public  final class ListZonesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public Builder addAllZones(
         java.lang.Iterable<? extends com.google.bigtable.admin.cluster.v1.Zone> values) {
@@ -574,11 +580,11 @@ public  final class ListZonesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public Builder clearZones() {
       if (zonesBuilder_ == null) {
@@ -591,11 +597,11 @@ public  final class ListZonesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public Builder removeZones(int index) {
       if (zonesBuilder_ == null) {
@@ -608,22 +614,22 @@ public  final class ListZonesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public com.google.bigtable.admin.cluster.v1.Zone.Builder getZonesBuilder(
         int index) {
       return getZonesFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public com.google.bigtable.admin.cluster.v1.ZoneOrBuilder getZonesOrBuilder(
         int index) {
@@ -633,11 +639,11 @@ public  final class ListZonesResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public java.util.List<? extends com.google.bigtable.admin.cluster.v1.ZoneOrBuilder> 
          getZonesOrBuilderList() {
@@ -648,22 +654,22 @@ public  final class ListZonesResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public com.google.bigtable.admin.cluster.v1.Zone.Builder addZonesBuilder() {
       return getZonesFieldBuilder().addBuilder(
           com.google.bigtable.admin.cluster.v1.Zone.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public com.google.bigtable.admin.cluster.v1.Zone.Builder addZonesBuilder(
         int index) {
@@ -671,11 +677,11 @@ public  final class ListZonesResponse extends
           index, com.google.bigtable.admin.cluster.v1.Zone.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-     *
      * <pre>
      * The list of requested zones.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
      */
     public java.util.List<com.google.bigtable.admin.cluster.v1.Zone.Builder> 
          getZonesBuilderList() {
@@ -725,16 +731,7 @@ public  final class ListZonesResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ListZonesResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

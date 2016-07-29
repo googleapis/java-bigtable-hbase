@@ -4,14 +4,14 @@
 package com.google.rpc;
 
 /**
- * Protobuf type {@code google.rpc.Help}
- *
  * <pre>
  * Provides links to documentation or for performing an out of band action.
  * For example, if a quota check failed with an error indicating the calling
  * project hasn't enabled the accessed service, this can contain a URL pointing
  * directly to the right place in the developer console to flip the bit.
  * </pre>
+ *
+ * Protobuf type {@code google.rpc.Help}
  */
 public  final class Help extends
     com.google.protobuf.GeneratedMessage implements
@@ -32,7 +32,8 @@ public  final class Help extends
   }
   private Help(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -60,11 +61,10 @@ public  final class Help extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         links_ = java.util.Collections.unmodifiableList(links_);
@@ -89,47 +89,47 @@ public  final class Help extends
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional string description = 1;</code>
-     *
      * <pre>
      * Describes what the link offers.
      * </pre>
+     *
+     * <code>optional string description = 1;</code>
      */
     java.lang.String getDescription();
     /**
-     * <code>optional string description = 1;</code>
-     *
      * <pre>
      * Describes what the link offers.
      * </pre>
+     *
+     * <code>optional string description = 1;</code>
      */
     com.google.protobuf.ByteString
         getDescriptionBytes();
 
     /**
-     * <code>optional string url = 2;</code>
-     *
      * <pre>
      * The URL of the link.
      * </pre>
+     *
+     * <code>optional string url = 2;</code>
      */
     java.lang.String getUrl();
     /**
-     * <code>optional string url = 2;</code>
-     *
      * <pre>
      * The URL of the link.
      * </pre>
+     *
+     * <code>optional string url = 2;</code>
      */
     com.google.protobuf.ByteString
         getUrlBytes();
   }
   /**
-   * Protobuf type {@code google.rpc.Help.Link}
-   *
    * <pre>
    * Describes a URL link.
    * </pre>
+   *
+   * Protobuf type {@code google.rpc.Help.Link}
    */
   public  static final class Link extends
       com.google.protobuf.GeneratedMessage implements
@@ -151,7 +151,8 @@ public  final class Help extends
     }
     private Link(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       this();
       int mutable_bitField0_ = 0;
       try {
@@ -183,11 +184,10 @@ public  final class Help extends
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
       } finally {
         makeExtensionsImmutable();
       }
@@ -207,11 +207,11 @@ public  final class Help extends
     public static final int DESCRIPTION_FIELD_NUMBER = 1;
     private volatile java.lang.Object description_;
     /**
-     * <code>optional string description = 1;</code>
-     *
      * <pre>
      * Describes what the link offers.
      * </pre>
+     *
+     * <code>optional string description = 1;</code>
      */
     public java.lang.String getDescription() {
       java.lang.Object ref = description_;
@@ -226,11 +226,11 @@ public  final class Help extends
       }
     }
     /**
-     * <code>optional string description = 1;</code>
-     *
      * <pre>
      * Describes what the link offers.
      * </pre>
+     *
+     * <code>optional string description = 1;</code>
      */
     public com.google.protobuf.ByteString
         getDescriptionBytes() {
@@ -249,11 +249,11 @@ public  final class Help extends
     public static final int URL_FIELD_NUMBER = 2;
     private volatile java.lang.Object url_;
     /**
-     * <code>optional string url = 2;</code>
-     *
      * <pre>
      * The URL of the link.
      * </pre>
+     *
+     * <code>optional string url = 2;</code>
      */
     public java.lang.String getUrl() {
       java.lang.Object ref = url_;
@@ -268,11 +268,11 @@ public  final class Help extends
       }
     }
     /**
-     * <code>optional string url = 2;</code>
-     *
      * <pre>
      * The URL of the link.
      * </pre>
+     *
+     * <code>optional string url = 2;</code>
      */
     public com.google.protobuf.ByteString
         getUrlBytes() {
@@ -347,34 +347,40 @@ public  final class Help extends
     }
     public static com.google.rpc.Help.Link parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.rpc.Help.Link parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.rpc.Help.Link parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.rpc.Help.Link parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.rpc.Help.Link parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.rpc.Help.Link parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
     public Builder newBuilderForType() { return newBuilder(); }
@@ -396,11 +402,11 @@ public  final class Help extends
       return builder;
     }
     /**
-     * Protobuf type {@code google.rpc.Help.Link}
-     *
      * <pre>
      * Describes a URL link.
      * </pre>
+     *
+     * Protobuf type {@code google.rpc.Help.Link}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -502,7 +508,7 @@ public  final class Help extends
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (com.google.rpc.Help.Link) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -513,11 +519,11 @@ public  final class Help extends
 
       private java.lang.Object description_ = "";
       /**
-       * <code>optional string description = 1;</code>
-       *
        * <pre>
        * Describes what the link offers.
        * </pre>
+       *
+       * <code>optional string description = 1;</code>
        */
       public java.lang.String getDescription() {
         java.lang.Object ref = description_;
@@ -532,11 +538,11 @@ public  final class Help extends
         }
       }
       /**
-       * <code>optional string description = 1;</code>
-       *
        * <pre>
        * Describes what the link offers.
        * </pre>
+       *
+       * <code>optional string description = 1;</code>
        */
       public com.google.protobuf.ByteString
           getDescriptionBytes() {
@@ -552,11 +558,11 @@ public  final class Help extends
         }
       }
       /**
-       * <code>optional string description = 1;</code>
-       *
        * <pre>
        * Describes what the link offers.
        * </pre>
+       *
+       * <code>optional string description = 1;</code>
        */
       public Builder setDescription(
           java.lang.String value) {
@@ -569,11 +575,11 @@ public  final class Help extends
         return this;
       }
       /**
-       * <code>optional string description = 1;</code>
-       *
        * <pre>
        * Describes what the link offers.
        * </pre>
+       *
+       * <code>optional string description = 1;</code>
        */
       public Builder clearDescription() {
         
@@ -582,11 +588,11 @@ public  final class Help extends
         return this;
       }
       /**
-       * <code>optional string description = 1;</code>
-       *
        * <pre>
        * Describes what the link offers.
        * </pre>
+       *
+       * <code>optional string description = 1;</code>
        */
       public Builder setDescriptionBytes(
           com.google.protobuf.ByteString value) {
@@ -602,11 +608,11 @@ public  final class Help extends
 
       private java.lang.Object url_ = "";
       /**
-       * <code>optional string url = 2;</code>
-       *
        * <pre>
        * The URL of the link.
        * </pre>
+       *
+       * <code>optional string url = 2;</code>
        */
       public java.lang.String getUrl() {
         java.lang.Object ref = url_;
@@ -621,11 +627,11 @@ public  final class Help extends
         }
       }
       /**
-       * <code>optional string url = 2;</code>
-       *
        * <pre>
        * The URL of the link.
        * </pre>
+       *
+       * <code>optional string url = 2;</code>
        */
       public com.google.protobuf.ByteString
           getUrlBytes() {
@@ -641,11 +647,11 @@ public  final class Help extends
         }
       }
       /**
-       * <code>optional string url = 2;</code>
-       *
        * <pre>
        * The URL of the link.
        * </pre>
+       *
+       * <code>optional string url = 2;</code>
        */
       public Builder setUrl(
           java.lang.String value) {
@@ -658,11 +664,11 @@ public  final class Help extends
         return this;
       }
       /**
-       * <code>optional string url = 2;</code>
-       *
        * <pre>
        * The URL of the link.
        * </pre>
+       *
+       * <code>optional string url = 2;</code>
        */
       public Builder clearUrl() {
         
@@ -671,11 +677,11 @@ public  final class Help extends
         return this;
       }
       /**
-       * <code>optional string url = 2;</code>
-       *
        * <pre>
        * The URL of the link.
        * </pre>
+       *
+       * <code>optional string url = 2;</code>
        */
       public Builder setUrlBytes(
           com.google.protobuf.ByteString value) {
@@ -718,16 +724,7 @@ public  final class Help extends
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
           return new Link(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
       }
     };
 
@@ -749,52 +746,52 @@ public  final class Help extends
   public static final int LINKS_FIELD_NUMBER = 1;
   private java.util.List<com.google.rpc.Help.Link> links_;
   /**
-   * <code>repeated .google.rpc.Help.Link links = 1;</code>
-   *
    * <pre>
    * URL(s) pointing to additional information on handling the current error.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Help.Link links = 1;</code>
    */
   public java.util.List<com.google.rpc.Help.Link> getLinksList() {
     return links_;
   }
   /**
-   * <code>repeated .google.rpc.Help.Link links = 1;</code>
-   *
    * <pre>
    * URL(s) pointing to additional information on handling the current error.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Help.Link links = 1;</code>
    */
   public java.util.List<? extends com.google.rpc.Help.LinkOrBuilder> 
       getLinksOrBuilderList() {
     return links_;
   }
   /**
-   * <code>repeated .google.rpc.Help.Link links = 1;</code>
-   *
    * <pre>
    * URL(s) pointing to additional information on handling the current error.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Help.Link links = 1;</code>
    */
   public int getLinksCount() {
     return links_.size();
   }
   /**
-   * <code>repeated .google.rpc.Help.Link links = 1;</code>
-   *
    * <pre>
    * URL(s) pointing to additional information on handling the current error.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Help.Link links = 1;</code>
    */
   public com.google.rpc.Help.Link getLinks(int index) {
     return links_.get(index);
   }
   /**
-   * <code>repeated .google.rpc.Help.Link links = 1;</code>
-   *
    * <pre>
    * URL(s) pointing to additional information on handling the current error.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Help.Link links = 1;</code>
    */
   public com.google.rpc.Help.LinkOrBuilder getLinksOrBuilder(
       int index) {
@@ -855,34 +852,40 @@ public  final class Help extends
   }
   public static com.google.rpc.Help parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.Help parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.Help parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.rpc.Help parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.Help parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.Help parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -904,14 +907,14 @@ public  final class Help extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.rpc.Help}
-   *
    * <pre>
    * Provides links to documentation or for performing an out of band action.
    * For example, if a quota check failed with an error indicating the calling
    * project hasn't enabled the accessed service, this can contain a URL pointing
    * directly to the right place in the developer console to flip the bit.
    * </pre>
+   *
+   * Protobuf type {@code google.rpc.Help}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -1042,7 +1045,7 @@ public  final class Help extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.rpc.Help) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -1065,11 +1068,11 @@ public  final class Help extends
         com.google.rpc.Help.Link, com.google.rpc.Help.Link.Builder, com.google.rpc.Help.LinkOrBuilder> linksBuilder_;
 
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public java.util.List<com.google.rpc.Help.Link> getLinksList() {
       if (linksBuilder_ == null) {
@@ -1079,11 +1082,11 @@ public  final class Help extends
       }
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public int getLinksCount() {
       if (linksBuilder_ == null) {
@@ -1093,11 +1096,11 @@ public  final class Help extends
       }
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public com.google.rpc.Help.Link getLinks(int index) {
       if (linksBuilder_ == null) {
@@ -1107,11 +1110,11 @@ public  final class Help extends
       }
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public Builder setLinks(
         int index, com.google.rpc.Help.Link value) {
@@ -1128,11 +1131,11 @@ public  final class Help extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public Builder setLinks(
         int index, com.google.rpc.Help.Link.Builder builderForValue) {
@@ -1146,11 +1149,11 @@ public  final class Help extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public Builder addLinks(com.google.rpc.Help.Link value) {
       if (linksBuilder_ == null) {
@@ -1166,11 +1169,11 @@ public  final class Help extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public Builder addLinks(
         int index, com.google.rpc.Help.Link value) {
@@ -1187,11 +1190,11 @@ public  final class Help extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public Builder addLinks(
         com.google.rpc.Help.Link.Builder builderForValue) {
@@ -1205,11 +1208,11 @@ public  final class Help extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public Builder addLinks(
         int index, com.google.rpc.Help.Link.Builder builderForValue) {
@@ -1223,11 +1226,11 @@ public  final class Help extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public Builder addAllLinks(
         java.lang.Iterable<? extends com.google.rpc.Help.Link> values) {
@@ -1242,11 +1245,11 @@ public  final class Help extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public Builder clearLinks() {
       if (linksBuilder_ == null) {
@@ -1259,11 +1262,11 @@ public  final class Help extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public Builder removeLinks(int index) {
       if (linksBuilder_ == null) {
@@ -1276,22 +1279,22 @@ public  final class Help extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public com.google.rpc.Help.Link.Builder getLinksBuilder(
         int index) {
       return getLinksFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public com.google.rpc.Help.LinkOrBuilder getLinksOrBuilder(
         int index) {
@@ -1301,11 +1304,11 @@ public  final class Help extends
       }
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public java.util.List<? extends com.google.rpc.Help.LinkOrBuilder> 
          getLinksOrBuilderList() {
@@ -1316,22 +1319,22 @@ public  final class Help extends
       }
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public com.google.rpc.Help.Link.Builder addLinksBuilder() {
       return getLinksFieldBuilder().addBuilder(
           com.google.rpc.Help.Link.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public com.google.rpc.Help.Link.Builder addLinksBuilder(
         int index) {
@@ -1339,11 +1342,11 @@ public  final class Help extends
           index, com.google.rpc.Help.Link.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.rpc.Help.Link links = 1;</code>
-     *
      * <pre>
      * URL(s) pointing to additional information on handling the current error.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Help.Link links = 1;</code>
      */
     public java.util.List<com.google.rpc.Help.Link.Builder> 
          getLinksBuilderList() {
@@ -1393,16 +1396,7 @@ public  final class Help extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new Help(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

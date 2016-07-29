@@ -4,11 +4,11 @@
 package com.google.bigtable.v1;
 
 /**
- * Protobuf type {@code google.bigtable.v1.Family}
- *
  * <pre>
  * Specifies (some of) the contents of a single row/column family of a table.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v1.Family}
  */
 public  final class Family extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class Family extends
   }
   private Family(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -64,11 +65,10 @@ public  final class Family extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
         columns_ = java.util.Collections.unmodifiableList(columns_);
@@ -92,8 +92,6 @@ public  final class Family extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique key which identifies this family within its row. This is the
    * same key that's used to identify the family in, for example, a RowFilter
@@ -102,6 +100,8 @@ public  final class Family extends
    * produce cells in a sentinel family with an empty name.
    * Must be no greater than 64 characters in length.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -116,8 +116,6 @@ public  final class Family extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique key which identifies this family within its row. This is the
    * same key that's used to identify the family in, for example, a RowFilter
@@ -126,6 +124,8 @@ public  final class Family extends
    * produce cells in a sentinel family with an empty name.
    * Must be no greater than 64 characters in length.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -144,52 +144,52 @@ public  final class Family extends
   public static final int COLUMNS_FIELD_NUMBER = 2;
   private java.util.List<com.google.bigtable.v1.Column> columns_;
   /**
-   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-   *
    * <pre>
    * Must not be empty. Sorted in order of increasing "qualifier".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
    */
   public java.util.List<com.google.bigtable.v1.Column> getColumnsList() {
     return columns_;
   }
   /**
-   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-   *
    * <pre>
    * Must not be empty. Sorted in order of increasing "qualifier".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
    */
   public java.util.List<? extends com.google.bigtable.v1.ColumnOrBuilder> 
       getColumnsOrBuilderList() {
     return columns_;
   }
   /**
-   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-   *
    * <pre>
    * Must not be empty. Sorted in order of increasing "qualifier".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
    */
   public int getColumnsCount() {
     return columns_.size();
   }
   /**
-   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-   *
    * <pre>
    * Must not be empty. Sorted in order of increasing "qualifier".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
    */
   public com.google.bigtable.v1.Column getColumns(int index) {
     return columns_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-   *
    * <pre>
    * Must not be empty. Sorted in order of increasing "qualifier".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
    */
   public com.google.bigtable.v1.ColumnOrBuilder getColumnsOrBuilder(
       int index) {
@@ -256,34 +256,40 @@ public  final class Family extends
   }
   public static com.google.bigtable.v1.Family parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.Family parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.Family parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.Family parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.Family parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.Family parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -305,11 +311,11 @@ public  final class Family extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v1.Family}
-   *
    * <pre>
    * Specifies (some of) the contents of a single row/column family of a table.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v1.Family}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -449,7 +455,7 @@ public  final class Family extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v1.Family) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -461,8 +467,6 @@ public  final class Family extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique key which identifies this family within its row. This is the
      * same key that's used to identify the family in, for example, a RowFilter
@@ -471,6 +475,8 @@ public  final class Family extends
      * produce cells in a sentinel family with an empty name.
      * Must be no greater than 64 characters in length.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -485,8 +491,6 @@ public  final class Family extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique key which identifies this family within its row. This is the
      * same key that's used to identify the family in, for example, a RowFilter
@@ -495,6 +499,8 @@ public  final class Family extends
      * produce cells in a sentinel family with an empty name.
      * Must be no greater than 64 characters in length.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -510,8 +516,6 @@ public  final class Family extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique key which identifies this family within its row. This is the
      * same key that's used to identify the family in, for example, a RowFilter
@@ -520,6 +524,8 @@ public  final class Family extends
      * produce cells in a sentinel family with an empty name.
      * Must be no greater than 64 characters in length.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -532,8 +538,6 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique key which identifies this family within its row. This is the
      * same key that's used to identify the family in, for example, a RowFilter
@@ -542,6 +546,8 @@ public  final class Family extends
      * produce cells in a sentinel family with an empty name.
      * Must be no greater than 64 characters in length.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -550,8 +556,6 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique key which identifies this family within its row. This is the
      * same key that's used to identify the family in, for example, a RowFilter
@@ -560,6 +564,8 @@ public  final class Family extends
      * produce cells in a sentinel family with an empty name.
      * Must be no greater than 64 characters in length.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -586,11 +592,11 @@ public  final class Family extends
         com.google.bigtable.v1.Column, com.google.bigtable.v1.Column.Builder, com.google.bigtable.v1.ColumnOrBuilder> columnsBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public java.util.List<com.google.bigtable.v1.Column> getColumnsList() {
       if (columnsBuilder_ == null) {
@@ -600,11 +606,11 @@ public  final class Family extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public int getColumnsCount() {
       if (columnsBuilder_ == null) {
@@ -614,11 +620,11 @@ public  final class Family extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public com.google.bigtable.v1.Column getColumns(int index) {
       if (columnsBuilder_ == null) {
@@ -628,11 +634,11 @@ public  final class Family extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public Builder setColumns(
         int index, com.google.bigtable.v1.Column value) {
@@ -649,11 +655,11 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public Builder setColumns(
         int index, com.google.bigtable.v1.Column.Builder builderForValue) {
@@ -667,11 +673,11 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public Builder addColumns(com.google.bigtable.v1.Column value) {
       if (columnsBuilder_ == null) {
@@ -687,11 +693,11 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public Builder addColumns(
         int index, com.google.bigtable.v1.Column value) {
@@ -708,11 +714,11 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public Builder addColumns(
         com.google.bigtable.v1.Column.Builder builderForValue) {
@@ -726,11 +732,11 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public Builder addColumns(
         int index, com.google.bigtable.v1.Column.Builder builderForValue) {
@@ -744,11 +750,11 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public Builder addAllColumns(
         java.lang.Iterable<? extends com.google.bigtable.v1.Column> values) {
@@ -763,11 +769,11 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public Builder clearColumns() {
       if (columnsBuilder_ == null) {
@@ -780,11 +786,11 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public Builder removeColumns(int index) {
       if (columnsBuilder_ == null) {
@@ -797,22 +803,22 @@ public  final class Family extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public com.google.bigtable.v1.Column.Builder getColumnsBuilder(
         int index) {
       return getColumnsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public com.google.bigtable.v1.ColumnOrBuilder getColumnsOrBuilder(
         int index) {
@@ -822,11 +828,11 @@ public  final class Family extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public java.util.List<? extends com.google.bigtable.v1.ColumnOrBuilder> 
          getColumnsOrBuilderList() {
@@ -837,22 +843,22 @@ public  final class Family extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public com.google.bigtable.v1.Column.Builder addColumnsBuilder() {
       return getColumnsFieldBuilder().addBuilder(
           com.google.bigtable.v1.Column.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public com.google.bigtable.v1.Column.Builder addColumnsBuilder(
         int index) {
@@ -860,11 +866,11 @@ public  final class Family extends
           index, com.google.bigtable.v1.Column.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of increasing "qualifier".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
      */
     public java.util.List<com.google.bigtable.v1.Column.Builder> 
          getColumnsBuilderList() {
@@ -914,16 +920,7 @@ public  final class Family extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new Family(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

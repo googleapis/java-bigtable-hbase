@@ -4,11 +4,11 @@
 package com.google.rpc;
 
 /**
- * Protobuf type {@code google.rpc.ResourceInfo}
- *
  * <pre>
  * Describes the resource that is being accessed.
  * </pre>
+ *
+ * Protobuf type {@code google.rpc.ResourceInfo}
  */
 public  final class ResourceInfo extends
     com.google.protobuf.GeneratedMessage implements
@@ -32,7 +32,8 @@ public  final class ResourceInfo extends
   }
   private ResourceInfo(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -76,11 +77,10 @@ public  final class ResourceInfo extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -100,13 +100,13 @@ public  final class ResourceInfo extends
   public static final int RESOURCE_TYPE_FIELD_NUMBER = 1;
   private volatile java.lang.Object resourceType_;
   /**
-   * <code>optional string resource_type = 1;</code>
-   *
    * <pre>
    * A name for the type of resource being accessed, e.g. "sql table",
    * "cloud storage bucket", "file", "Google calendar"; or the type URL
    * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
    * </pre>
+   *
+   * <code>optional string resource_type = 1;</code>
    */
   public java.lang.String getResourceType() {
     java.lang.Object ref = resourceType_;
@@ -121,13 +121,13 @@ public  final class ResourceInfo extends
     }
   }
   /**
-   * <code>optional string resource_type = 1;</code>
-   *
    * <pre>
    * A name for the type of resource being accessed, e.g. "sql table",
    * "cloud storage bucket", "file", "Google calendar"; or the type URL
    * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
    * </pre>
+   *
+   * <code>optional string resource_type = 1;</code>
    */
   public com.google.protobuf.ByteString
       getResourceTypeBytes() {
@@ -146,13 +146,13 @@ public  final class ResourceInfo extends
   public static final int RESOURCE_NAME_FIELD_NUMBER = 2;
   private volatile java.lang.Object resourceName_;
   /**
-   * <code>optional string resource_name = 2;</code>
-   *
    * <pre>
    * The name of the resource being accessed.  For example, a shared calendar
    * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
    * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
    * </pre>
+   *
+   * <code>optional string resource_name = 2;</code>
    */
   public java.lang.String getResourceName() {
     java.lang.Object ref = resourceName_;
@@ -167,13 +167,13 @@ public  final class ResourceInfo extends
     }
   }
   /**
-   * <code>optional string resource_name = 2;</code>
-   *
    * <pre>
    * The name of the resource being accessed.  For example, a shared calendar
    * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
    * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
    * </pre>
+   *
+   * <code>optional string resource_name = 2;</code>
    */
   public com.google.protobuf.ByteString
       getResourceNameBytes() {
@@ -192,13 +192,13 @@ public  final class ResourceInfo extends
   public static final int OWNER_FIELD_NUMBER = 3;
   private volatile java.lang.Object owner_;
   /**
-   * <code>optional string owner = 3;</code>
-   *
    * <pre>
    * The owner of the resource (optional).
    * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
    * id&gt;".
    * </pre>
+   *
+   * <code>optional string owner = 3;</code>
    */
   public java.lang.String getOwner() {
     java.lang.Object ref = owner_;
@@ -213,13 +213,13 @@ public  final class ResourceInfo extends
     }
   }
   /**
-   * <code>optional string owner = 3;</code>
-   *
    * <pre>
    * The owner of the resource (optional).
    * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
    * id&gt;".
    * </pre>
+   *
+   * <code>optional string owner = 3;</code>
    */
   public com.google.protobuf.ByteString
       getOwnerBytes() {
@@ -238,13 +238,13 @@ public  final class ResourceInfo extends
   public static final int DESCRIPTION_FIELD_NUMBER = 4;
   private volatile java.lang.Object description_;
   /**
-   * <code>optional string description = 4;</code>
-   *
    * <pre>
    * Describes what error is encountered when accessing this resource.
    * For example, updating a cloud project may require the `writer` permission
    * on the developer console project.
    * </pre>
+   *
+   * <code>optional string description = 4;</code>
    */
   public java.lang.String getDescription() {
     java.lang.Object ref = description_;
@@ -259,13 +259,13 @@ public  final class ResourceInfo extends
     }
   }
   /**
-   * <code>optional string description = 4;</code>
-   *
    * <pre>
    * Describes what error is encountered when accessing this resource.
    * For example, updating a cloud project may require the `writer` permission
    * on the developer console project.
    * </pre>
+   *
+   * <code>optional string description = 4;</code>
    */
   public com.google.protobuf.ByteString
       getDescriptionBytes() {
@@ -352,34 +352,40 @@ public  final class ResourceInfo extends
   }
   public static com.google.rpc.ResourceInfo parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.ResourceInfo parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.ResourceInfo parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.rpc.ResourceInfo parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.ResourceInfo parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.ResourceInfo parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -401,11 +407,11 @@ public  final class ResourceInfo extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.rpc.ResourceInfo}
-   *
    * <pre>
    * Describes the resource that is being accessed.
    * </pre>
+   *
+   * Protobuf type {@code google.rpc.ResourceInfo}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -521,7 +527,7 @@ public  final class ResourceInfo extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.rpc.ResourceInfo) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -532,13 +538,13 @@ public  final class ResourceInfo extends
 
     private java.lang.Object resourceType_ = "";
     /**
-     * <code>optional string resource_type = 1;</code>
-     *
      * <pre>
      * A name for the type of resource being accessed, e.g. "sql table",
      * "cloud storage bucket", "file", "Google calendar"; or the type URL
      * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
      * </pre>
+     *
+     * <code>optional string resource_type = 1;</code>
      */
     public java.lang.String getResourceType() {
       java.lang.Object ref = resourceType_;
@@ -553,13 +559,13 @@ public  final class ResourceInfo extends
       }
     }
     /**
-     * <code>optional string resource_type = 1;</code>
-     *
      * <pre>
      * A name for the type of resource being accessed, e.g. "sql table",
      * "cloud storage bucket", "file", "Google calendar"; or the type URL
      * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
      * </pre>
+     *
+     * <code>optional string resource_type = 1;</code>
      */
     public com.google.protobuf.ByteString
         getResourceTypeBytes() {
@@ -575,13 +581,13 @@ public  final class ResourceInfo extends
       }
     }
     /**
-     * <code>optional string resource_type = 1;</code>
-     *
      * <pre>
      * A name for the type of resource being accessed, e.g. "sql table",
      * "cloud storage bucket", "file", "Google calendar"; or the type URL
      * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
      * </pre>
+     *
+     * <code>optional string resource_type = 1;</code>
      */
     public Builder setResourceType(
         java.lang.String value) {
@@ -594,13 +600,13 @@ public  final class ResourceInfo extends
       return this;
     }
     /**
-     * <code>optional string resource_type = 1;</code>
-     *
      * <pre>
      * A name for the type of resource being accessed, e.g. "sql table",
      * "cloud storage bucket", "file", "Google calendar"; or the type URL
      * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
      * </pre>
+     *
+     * <code>optional string resource_type = 1;</code>
      */
     public Builder clearResourceType() {
       
@@ -609,13 +615,13 @@ public  final class ResourceInfo extends
       return this;
     }
     /**
-     * <code>optional string resource_type = 1;</code>
-     *
      * <pre>
      * A name for the type of resource being accessed, e.g. "sql table",
      * "cloud storage bucket", "file", "Google calendar"; or the type URL
      * of the resource: e.g. "type.googleapis.com/google.pubsub.v1.Topic".
      * </pre>
+     *
+     * <code>optional string resource_type = 1;</code>
      */
     public Builder setResourceTypeBytes(
         com.google.protobuf.ByteString value) {
@@ -631,13 +637,13 @@ public  final class ResourceInfo extends
 
     private java.lang.Object resourceName_ = "";
     /**
-     * <code>optional string resource_name = 2;</code>
-     *
      * <pre>
      * The name of the resource being accessed.  For example, a shared calendar
      * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
      * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
      * </pre>
+     *
+     * <code>optional string resource_name = 2;</code>
      */
     public java.lang.String getResourceName() {
       java.lang.Object ref = resourceName_;
@@ -652,13 +658,13 @@ public  final class ResourceInfo extends
       }
     }
     /**
-     * <code>optional string resource_name = 2;</code>
-     *
      * <pre>
      * The name of the resource being accessed.  For example, a shared calendar
      * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
      * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
      * </pre>
+     *
+     * <code>optional string resource_name = 2;</code>
      */
     public com.google.protobuf.ByteString
         getResourceNameBytes() {
@@ -674,13 +680,13 @@ public  final class ResourceInfo extends
       }
     }
     /**
-     * <code>optional string resource_name = 2;</code>
-     *
      * <pre>
      * The name of the resource being accessed.  For example, a shared calendar
      * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
      * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
      * </pre>
+     *
+     * <code>optional string resource_name = 2;</code>
      */
     public Builder setResourceName(
         java.lang.String value) {
@@ -693,13 +699,13 @@ public  final class ResourceInfo extends
       return this;
     }
     /**
-     * <code>optional string resource_name = 2;</code>
-     *
      * <pre>
      * The name of the resource being accessed.  For example, a shared calendar
      * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
      * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
      * </pre>
+     *
+     * <code>optional string resource_name = 2;</code>
      */
     public Builder clearResourceName() {
       
@@ -708,13 +714,13 @@ public  final class ResourceInfo extends
       return this;
     }
     /**
-     * <code>optional string resource_name = 2;</code>
-     *
      * <pre>
      * The name of the resource being accessed.  For example, a shared calendar
      * name: "example.com_4fghdhgsrgh&#64;group.calendar.google.com", if the current
      * error is [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED].
      * </pre>
+     *
+     * <code>optional string resource_name = 2;</code>
      */
     public Builder setResourceNameBytes(
         com.google.protobuf.ByteString value) {
@@ -730,13 +736,13 @@ public  final class ResourceInfo extends
 
     private java.lang.Object owner_ = "";
     /**
-     * <code>optional string owner = 3;</code>
-     *
      * <pre>
      * The owner of the resource (optional).
      * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
      * id&gt;".
      * </pre>
+     *
+     * <code>optional string owner = 3;</code>
      */
     public java.lang.String getOwner() {
       java.lang.Object ref = owner_;
@@ -751,13 +757,13 @@ public  final class ResourceInfo extends
       }
     }
     /**
-     * <code>optional string owner = 3;</code>
-     *
      * <pre>
      * The owner of the resource (optional).
      * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
      * id&gt;".
      * </pre>
+     *
+     * <code>optional string owner = 3;</code>
      */
     public com.google.protobuf.ByteString
         getOwnerBytes() {
@@ -773,13 +779,13 @@ public  final class ResourceInfo extends
       }
     }
     /**
-     * <code>optional string owner = 3;</code>
-     *
      * <pre>
      * The owner of the resource (optional).
      * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
      * id&gt;".
      * </pre>
+     *
+     * <code>optional string owner = 3;</code>
      */
     public Builder setOwner(
         java.lang.String value) {
@@ -792,13 +798,13 @@ public  final class ResourceInfo extends
       return this;
     }
     /**
-     * <code>optional string owner = 3;</code>
-     *
      * <pre>
      * The owner of the resource (optional).
      * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
      * id&gt;".
      * </pre>
+     *
+     * <code>optional string owner = 3;</code>
      */
     public Builder clearOwner() {
       
@@ -807,13 +813,13 @@ public  final class ResourceInfo extends
       return this;
     }
     /**
-     * <code>optional string owner = 3;</code>
-     *
      * <pre>
      * The owner of the resource (optional).
      * For example, "user:&lt;owner email&gt;" or "project:&lt;Google developer project
      * id&gt;".
      * </pre>
+     *
+     * <code>optional string owner = 3;</code>
      */
     public Builder setOwnerBytes(
         com.google.protobuf.ByteString value) {
@@ -829,13 +835,13 @@ public  final class ResourceInfo extends
 
     private java.lang.Object description_ = "";
     /**
-     * <code>optional string description = 4;</code>
-     *
      * <pre>
      * Describes what error is encountered when accessing this resource.
      * For example, updating a cloud project may require the `writer` permission
      * on the developer console project.
      * </pre>
+     *
+     * <code>optional string description = 4;</code>
      */
     public java.lang.String getDescription() {
       java.lang.Object ref = description_;
@@ -850,13 +856,13 @@ public  final class ResourceInfo extends
       }
     }
     /**
-     * <code>optional string description = 4;</code>
-     *
      * <pre>
      * Describes what error is encountered when accessing this resource.
      * For example, updating a cloud project may require the `writer` permission
      * on the developer console project.
      * </pre>
+     *
+     * <code>optional string description = 4;</code>
      */
     public com.google.protobuf.ByteString
         getDescriptionBytes() {
@@ -872,13 +878,13 @@ public  final class ResourceInfo extends
       }
     }
     /**
-     * <code>optional string description = 4;</code>
-     *
      * <pre>
      * Describes what error is encountered when accessing this resource.
      * For example, updating a cloud project may require the `writer` permission
      * on the developer console project.
      * </pre>
+     *
+     * <code>optional string description = 4;</code>
      */
     public Builder setDescription(
         java.lang.String value) {
@@ -891,13 +897,13 @@ public  final class ResourceInfo extends
       return this;
     }
     /**
-     * <code>optional string description = 4;</code>
-     *
      * <pre>
      * Describes what error is encountered when accessing this resource.
      * For example, updating a cloud project may require the `writer` permission
      * on the developer console project.
      * </pre>
+     *
+     * <code>optional string description = 4;</code>
      */
     public Builder clearDescription() {
       
@@ -906,13 +912,13 @@ public  final class ResourceInfo extends
       return this;
     }
     /**
-     * <code>optional string description = 4;</code>
-     *
      * <pre>
      * Describes what error is encountered when accessing this resource.
      * For example, updating a cloud project may require the `writer` permission
      * on the developer console project.
      * </pre>
+     *
+     * <code>optional string description = 4;</code>
      */
     public Builder setDescriptionBytes(
         com.google.protobuf.ByteString value) {
@@ -955,16 +961,7 @@ public  final class ResourceInfo extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ResourceInfo(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

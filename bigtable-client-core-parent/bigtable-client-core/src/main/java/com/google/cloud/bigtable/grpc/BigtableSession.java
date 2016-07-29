@@ -16,18 +16,10 @@
 
 package com.google.cloud.bigtable.grpc;
 
-import io.grpc.ManagedChannel;
-import io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.NegotiationType;
-import io.grpc.netty.NettyChannelBuilder;
-import io.netty.channel.EventLoopGroup;
-import io.netty.handler.ssl.OpenSsl;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -42,8 +34,6 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.api.client.util.Strings;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
@@ -60,8 +50,22 @@ import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.cloud.bigtable.util.ThreadPoolUtil;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+
+import io.grpc.Attributes;
+import io.grpc.ManagedChannel;
+import io.grpc.NameResolver;
+import io.grpc.internal.DnsNameResolverProvider;
+import io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.NegotiationType;
+import io.grpc.netty.NettyChannelBuilder;
+import io.netty.channel.EventLoopGroup;
+import io.netty.handler.ssl.OpenSsl;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -95,6 +99,20 @@ public class BigtableSession implements Closeable {
   static final String INSTANCE_ID_EMPTY_OR_NULL = "InstanceId must not be empty or null.";
   @VisibleForTesting
   static final String USER_AGENT_EMPTY_OR_NULL = "UserAgent must not be empty or null";
+  
+  private static final DnsNameResolverProvider DNS_NAME_RESOLVER_PROVIDER = new DnsNameResolverProvider();
+  private static final NameResolver.Factory NAMESPACE_FACTORY = new NameResolver.Factory() {
+    
+    @Override
+    public NameResolver newNameResolver(URI targetUri, Attributes params) {
+      return DNS_NAME_RESOLVER_PROVIDER.newNameResolver(targetUri, params);
+    }
+    
+    @Override
+    public String getDefaultScheme() {
+      return DNS_NAME_RESOLVER_PROVIDER.getDefaultScheme();
+    }
+  };
 
   static {
     performWarmup();
@@ -447,6 +465,7 @@ public class BigtableSession implements Closeable {
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
     return NettyChannelBuilder
         .forAddress(host,  options.getPort())
+        .nameResolverFactory(NAMESPACE_FACTORY)
         .maxMessageSize(MAX_MESSAGE_SIZE)
         .sslContext(createSslContext())
         .eventLoopGroup(sharedPools.getElg())

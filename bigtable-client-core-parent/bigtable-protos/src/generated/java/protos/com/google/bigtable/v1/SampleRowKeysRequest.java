@@ -4,11 +4,11 @@
 package com.google.bigtable.v1;
 
 /**
- * Protobuf type {@code google.bigtable.v1.SampleRowKeysRequest}
- *
  * <pre>
  * Request message for BigtableService.SampleRowKeys.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v1.SampleRowKeysRequest}
  */
 public  final class SampleRowKeysRequest extends
     com.google.protobuf.GeneratedMessage implements
@@ -29,7 +29,8 @@ public  final class SampleRowKeysRequest extends
   }
   private SampleRowKeysRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -55,11 +56,10 @@ public  final class SampleRowKeysRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -79,11 +79,11 @@ public  final class SampleRowKeysRequest extends
   public static final int TABLE_NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object tableName_;
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table from which to sample row keys.
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   public java.lang.String getTableName() {
     java.lang.Object ref = tableName_;
@@ -98,11 +98,11 @@ public  final class SampleRowKeysRequest extends
     }
   }
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table from which to sample row keys.
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getTableNameBytes() {
@@ -171,34 +171,40 @@ public  final class SampleRowKeysRequest extends
   }
   public static com.google.bigtable.v1.SampleRowKeysRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.SampleRowKeysRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.SampleRowKeysRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.SampleRowKeysRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.SampleRowKeysRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.SampleRowKeysRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -220,11 +226,11 @@ public  final class SampleRowKeysRequest extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v1.SampleRowKeysRequest}
-   *
    * <pre>
    * Request message for BigtableService.SampleRowKeys.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v1.SampleRowKeysRequest}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -319,7 +325,7 @@ public  final class SampleRowKeysRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v1.SampleRowKeysRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -330,11 +336,11 @@ public  final class SampleRowKeysRequest extends
 
     private java.lang.Object tableName_ = "";
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table from which to sample row keys.
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public java.lang.String getTableName() {
       java.lang.Object ref = tableName_;
@@ -349,11 +355,11 @@ public  final class SampleRowKeysRequest extends
       }
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table from which to sample row keys.
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getTableNameBytes() {
@@ -369,11 +375,11 @@ public  final class SampleRowKeysRequest extends
       }
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table from which to sample row keys.
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public Builder setTableName(
         java.lang.String value) {
@@ -386,11 +392,11 @@ public  final class SampleRowKeysRequest extends
       return this;
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table from which to sample row keys.
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public Builder clearTableName() {
       
@@ -399,11 +405,11 @@ public  final class SampleRowKeysRequest extends
       return this;
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table from which to sample row keys.
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public Builder setTableNameBytes(
         com.google.protobuf.ByteString value) {
@@ -446,16 +452,7 @@ public  final class SampleRowKeysRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new SampleRowKeysRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

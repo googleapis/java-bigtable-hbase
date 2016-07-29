@@ -4,12 +4,12 @@
 package com.google.bigtable.v1;
 
 /**
- * Protobuf type {@code google.bigtable.v1.ReadModifyWriteRule}
- *
  * <pre>
  * Specifies an atomic read/modify/write operation on the latest value of the
  * specified column.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v1.ReadModifyWriteRule}
  */
 public  final class ReadModifyWriteRule extends
     com.google.protobuf.GeneratedMessage implements
@@ -31,7 +31,8 @@ public  final class ReadModifyWriteRule extends
   }
   private ReadModifyWriteRule(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -72,11 +73,10 @@ public  final class ReadModifyWriteRule extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -100,17 +100,24 @@ public  final class ReadModifyWriteRule extends
     APPEND_VALUE(3),
     INCREMENT_AMOUNT(4),
     RULE_NOT_SET(0);
-    private int value = 0;
+    private final int value;
     private RuleCase(int value) {
       this.value = value;
     }
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static RuleCase valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static RuleCase forNumber(int value) {
       switch (value) {
         case 3: return APPEND_VALUE;
         case 4: return INCREMENT_AMOUNT;
         case 0: return RULE_NOT_SET;
-        default: throw new java.lang.IllegalArgumentException(
-          "Value is undefined for this oneof enum.");
+        default: return null;
       }
     }
     public int getNumber() {
@@ -120,19 +127,19 @@ public  final class ReadModifyWriteRule extends
 
   public RuleCase
   getRuleCase() {
-    return RuleCase.valueOf(
+    return RuleCase.forNumber(
         ruleCase_);
   }
 
   public static final int FAMILY_NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object familyName_;
   /**
-   * <code>optional string family_name = 1;</code>
-   *
    * <pre>
    * The name of the family to which the read/modify/write should be applied.
    * Must match [-_.a-zA-Z0-9]+
    * </pre>
+   *
+   * <code>optional string family_name = 1;</code>
    */
   public java.lang.String getFamilyName() {
     java.lang.Object ref = familyName_;
@@ -147,12 +154,12 @@ public  final class ReadModifyWriteRule extends
     }
   }
   /**
-   * <code>optional string family_name = 1;</code>
-   *
    * <pre>
    * The name of the family to which the read/modify/write should be applied.
    * Must match [-_.a-zA-Z0-9]+
    * </pre>
+   *
+   * <code>optional string family_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getFamilyNameBytes() {
@@ -171,13 +178,13 @@ public  final class ReadModifyWriteRule extends
   public static final int COLUMN_QUALIFIER_FIELD_NUMBER = 2;
   private com.google.protobuf.ByteString columnQualifier_;
   /**
-   * <code>optional bytes column_qualifier = 2;</code>
-   *
    * <pre>
    * The qualifier of the column to which the read/modify/write should be
    * applied.
    * Can be any byte string, including the empty string.
    * </pre>
+   *
+   * <code>optional bytes column_qualifier = 2;</code>
    */
   public com.google.protobuf.ByteString getColumnQualifier() {
     return columnQualifier_;
@@ -185,13 +192,13 @@ public  final class ReadModifyWriteRule extends
 
   public static final int APPEND_VALUE_FIELD_NUMBER = 3;
   /**
-   * <code>optional bytes append_value = 3;</code>
-   *
    * <pre>
    * Rule specifying that "append_value" be appended to the existing value.
    * If the targeted cell is unset, it will be treated as containing the
    * empty string.
    * </pre>
+   *
+   * <code>optional bytes append_value = 3;</code>
    */
   public com.google.protobuf.ByteString getAppendValue() {
     if (ruleCase_ == 3) {
@@ -202,14 +209,14 @@ public  final class ReadModifyWriteRule extends
 
   public static final int INCREMENT_AMOUNT_FIELD_NUMBER = 4;
   /**
-   * <code>optional int64 increment_amount = 4;</code>
-   *
    * <pre>
    * Rule specifying that "increment_amount" be added to the existing value.
    * If the targeted cell is unset, it will be treated as containing a zero.
    * Otherwise, the targeted cell must contain an 8-byte value (interpreted
    * as a 64-bit big-endian signed integer), or the entire request will fail.
    * </pre>
+   *
+   * <code>optional int64 increment_amount = 4;</code>
    */
   public long getIncrementAmount() {
     if (ruleCase_ == 4) {
@@ -296,34 +303,40 @@ public  final class ReadModifyWriteRule extends
   }
   public static com.google.bigtable.v1.ReadModifyWriteRule parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.ReadModifyWriteRule parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.ReadModifyWriteRule parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.ReadModifyWriteRule parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.ReadModifyWriteRule parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.ReadModifyWriteRule parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -345,12 +358,12 @@ public  final class ReadModifyWriteRule extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v1.ReadModifyWriteRule}
-   *
    * <pre>
    * Specifies an atomic read/modify/write operation on the latest value of the
    * specified column.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v1.ReadModifyWriteRule}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -473,7 +486,7 @@ public  final class ReadModifyWriteRule extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v1.ReadModifyWriteRule) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -485,7 +498,7 @@ public  final class ReadModifyWriteRule extends
     private java.lang.Object rule_;
     public RuleCase
         getRuleCase() {
-      return RuleCase.valueOf(
+      return RuleCase.forNumber(
           ruleCase_);
     }
 
@@ -499,12 +512,12 @@ public  final class ReadModifyWriteRule extends
 
     private java.lang.Object familyName_ = "";
     /**
-     * <code>optional string family_name = 1;</code>
-     *
      * <pre>
      * The name of the family to which the read/modify/write should be applied.
      * Must match [-_.a-zA-Z0-9]+
      * </pre>
+     *
+     * <code>optional string family_name = 1;</code>
      */
     public java.lang.String getFamilyName() {
       java.lang.Object ref = familyName_;
@@ -519,12 +532,12 @@ public  final class ReadModifyWriteRule extends
       }
     }
     /**
-     * <code>optional string family_name = 1;</code>
-     *
      * <pre>
      * The name of the family to which the read/modify/write should be applied.
      * Must match [-_.a-zA-Z0-9]+
      * </pre>
+     *
+     * <code>optional string family_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getFamilyNameBytes() {
@@ -540,12 +553,12 @@ public  final class ReadModifyWriteRule extends
       }
     }
     /**
-     * <code>optional string family_name = 1;</code>
-     *
      * <pre>
      * The name of the family to which the read/modify/write should be applied.
      * Must match [-_.a-zA-Z0-9]+
      * </pre>
+     *
+     * <code>optional string family_name = 1;</code>
      */
     public Builder setFamilyName(
         java.lang.String value) {
@@ -558,12 +571,12 @@ public  final class ReadModifyWriteRule extends
       return this;
     }
     /**
-     * <code>optional string family_name = 1;</code>
-     *
      * <pre>
      * The name of the family to which the read/modify/write should be applied.
      * Must match [-_.a-zA-Z0-9]+
      * </pre>
+     *
+     * <code>optional string family_name = 1;</code>
      */
     public Builder clearFamilyName() {
       
@@ -572,12 +585,12 @@ public  final class ReadModifyWriteRule extends
       return this;
     }
     /**
-     * <code>optional string family_name = 1;</code>
-     *
      * <pre>
      * The name of the family to which the read/modify/write should be applied.
      * Must match [-_.a-zA-Z0-9]+
      * </pre>
+     *
+     * <code>optional string family_name = 1;</code>
      */
     public Builder setFamilyNameBytes(
         com.google.protobuf.ByteString value) {
@@ -593,25 +606,25 @@ public  final class ReadModifyWriteRule extends
 
     private com.google.protobuf.ByteString columnQualifier_ = com.google.protobuf.ByteString.EMPTY;
     /**
-     * <code>optional bytes column_qualifier = 2;</code>
-     *
      * <pre>
      * The qualifier of the column to which the read/modify/write should be
      * applied.
      * Can be any byte string, including the empty string.
      * </pre>
+     *
+     * <code>optional bytes column_qualifier = 2;</code>
      */
     public com.google.protobuf.ByteString getColumnQualifier() {
       return columnQualifier_;
     }
     /**
-     * <code>optional bytes column_qualifier = 2;</code>
-     *
      * <pre>
      * The qualifier of the column to which the read/modify/write should be
      * applied.
      * Can be any byte string, including the empty string.
      * </pre>
+     *
+     * <code>optional bytes column_qualifier = 2;</code>
      */
     public Builder setColumnQualifier(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -623,13 +636,13 @@ public  final class ReadModifyWriteRule extends
       return this;
     }
     /**
-     * <code>optional bytes column_qualifier = 2;</code>
-     *
      * <pre>
      * The qualifier of the column to which the read/modify/write should be
      * applied.
      * Can be any byte string, including the empty string.
      * </pre>
+     *
+     * <code>optional bytes column_qualifier = 2;</code>
      */
     public Builder clearColumnQualifier() {
       
@@ -639,13 +652,13 @@ public  final class ReadModifyWriteRule extends
     }
 
     /**
-     * <code>optional bytes append_value = 3;</code>
-     *
      * <pre>
      * Rule specifying that "append_value" be appended to the existing value.
      * If the targeted cell is unset, it will be treated as containing the
      * empty string.
      * </pre>
+     *
+     * <code>optional bytes append_value = 3;</code>
      */
     public com.google.protobuf.ByteString getAppendValue() {
       if (ruleCase_ == 3) {
@@ -654,13 +667,13 @@ public  final class ReadModifyWriteRule extends
       return com.google.protobuf.ByteString.EMPTY;
     }
     /**
-     * <code>optional bytes append_value = 3;</code>
-     *
      * <pre>
      * Rule specifying that "append_value" be appended to the existing value.
      * If the targeted cell is unset, it will be treated as containing the
      * empty string.
      * </pre>
+     *
+     * <code>optional bytes append_value = 3;</code>
      */
     public Builder setAppendValue(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -672,13 +685,13 @@ public  final class ReadModifyWriteRule extends
       return this;
     }
     /**
-     * <code>optional bytes append_value = 3;</code>
-     *
      * <pre>
      * Rule specifying that "append_value" be appended to the existing value.
      * If the targeted cell is unset, it will be treated as containing the
      * empty string.
      * </pre>
+     *
+     * <code>optional bytes append_value = 3;</code>
      */
     public Builder clearAppendValue() {
       if (ruleCase_ == 3) {
@@ -690,14 +703,14 @@ public  final class ReadModifyWriteRule extends
     }
 
     /**
-     * <code>optional int64 increment_amount = 4;</code>
-     *
      * <pre>
      * Rule specifying that "increment_amount" be added to the existing value.
      * If the targeted cell is unset, it will be treated as containing a zero.
      * Otherwise, the targeted cell must contain an 8-byte value (interpreted
      * as a 64-bit big-endian signed integer), or the entire request will fail.
      * </pre>
+     *
+     * <code>optional int64 increment_amount = 4;</code>
      */
     public long getIncrementAmount() {
       if (ruleCase_ == 4) {
@@ -706,14 +719,14 @@ public  final class ReadModifyWriteRule extends
       return 0L;
     }
     /**
-     * <code>optional int64 increment_amount = 4;</code>
-     *
      * <pre>
      * Rule specifying that "increment_amount" be added to the existing value.
      * If the targeted cell is unset, it will be treated as containing a zero.
      * Otherwise, the targeted cell must contain an 8-byte value (interpreted
      * as a 64-bit big-endian signed integer), or the entire request will fail.
      * </pre>
+     *
+     * <code>optional int64 increment_amount = 4;</code>
      */
     public Builder setIncrementAmount(long value) {
       ruleCase_ = 4;
@@ -722,14 +735,14 @@ public  final class ReadModifyWriteRule extends
       return this;
     }
     /**
-     * <code>optional int64 increment_amount = 4;</code>
-     *
      * <pre>
      * Rule specifying that "increment_amount" be added to the existing value.
      * If the targeted cell is unset, it will be treated as containing a zero.
      * Otherwise, the targeted cell must contain an 8-byte value (interpreted
      * as a 64-bit big-endian signed integer), or the entire request will fail.
      * </pre>
+     *
+     * <code>optional int64 increment_amount = 4;</code>
      */
     public Builder clearIncrementAmount() {
       if (ruleCase_ == 4) {
@@ -769,16 +782,7 @@ public  final class ReadModifyWriteRule extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ReadModifyWriteRule(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

@@ -8,84 +8,84 @@ public interface ReadModifyWriteRowRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table to which the read/modify/write rules should be
    * applied.
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table to which the read/modify/write rules should be
    * applied.
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();
 
   /**
-   * <code>optional bytes row_key = 2;</code>
-   *
    * <pre>
    * The key of the row to which the read/modify/write rules should be applied.
    * </pre>
+   *
+   * <code>optional bytes row_key = 2;</code>
    */
   com.google.protobuf.ByteString getRowKey();
 
   /**
-   * <code>repeated .google.bigtable.v1.ReadModifyWriteRule rules = 3;</code>
-   *
    * <pre>
    * Rules specifying how the specified row's contents are to be transformed
    * into writes. Entries are applied in order, meaning that earlier rules will
    * affect the results of later ones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadModifyWriteRule rules = 3;</code>
    */
   java.util.List<com.google.bigtable.v1.ReadModifyWriteRule> 
       getRulesList();
   /**
-   * <code>repeated .google.bigtable.v1.ReadModifyWriteRule rules = 3;</code>
-   *
    * <pre>
    * Rules specifying how the specified row's contents are to be transformed
    * into writes. Entries are applied in order, meaning that earlier rules will
    * affect the results of later ones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadModifyWriteRule rules = 3;</code>
    */
   com.google.bigtable.v1.ReadModifyWriteRule getRules(int index);
   /**
-   * <code>repeated .google.bigtable.v1.ReadModifyWriteRule rules = 3;</code>
-   *
    * <pre>
    * Rules specifying how the specified row's contents are to be transformed
    * into writes. Entries are applied in order, meaning that earlier rules will
    * affect the results of later ones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadModifyWriteRule rules = 3;</code>
    */
   int getRulesCount();
   /**
-   * <code>repeated .google.bigtable.v1.ReadModifyWriteRule rules = 3;</code>
-   *
    * <pre>
    * Rules specifying how the specified row's contents are to be transformed
    * into writes. Entries are applied in order, meaning that earlier rules will
    * affect the results of later ones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadModifyWriteRule rules = 3;</code>
    */
   java.util.List<? extends com.google.bigtable.v1.ReadModifyWriteRuleOrBuilder> 
       getRulesOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.v1.ReadModifyWriteRule rules = 3;</code>
-   *
    * <pre>
    * Rules specifying how the specified row's contents are to be transformed
    * into writes. Entries are applied in order, meaning that earlier rules will
    * affect the results of later ones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadModifyWriteRule rules = 3;</code>
    */
   com.google.bigtable.v1.ReadModifyWriteRuleOrBuilder getRulesOrBuilder(
       int index);

@@ -4,11 +4,11 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.CreateInstanceRequest}
- *
  * <pre>
  * Request message for BigtableInstanceAdmin.CreateInstance.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.CreateInstanceRequest}
  */
 public  final class CreateInstanceRequest extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class CreateInstanceRequest extends
   }
   private CreateInstanceRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -87,11 +88,10 @@ public  final class CreateInstanceRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -123,12 +123,12 @@ public  final class CreateInstanceRequest extends
   public static final int PARENT_FIELD_NUMBER = 1;
   private volatile java.lang.Object parent_;
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the project in which to create the new instance.
    * Values are of the form projects/&lt;project&gt;
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public java.lang.String getParent() {
     java.lang.Object ref = parent_;
@@ -143,12 +143,12 @@ public  final class CreateInstanceRequest extends
     }
   }
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the project in which to create the new instance.
    * Values are of the form projects/&lt;project&gt;
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public com.google.protobuf.ByteString
       getParentBytes() {
@@ -167,13 +167,13 @@ public  final class CreateInstanceRequest extends
   public static final int INSTANCE_ID_FIELD_NUMBER = 2;
   private volatile java.lang.Object instanceId_;
   /**
-   * <code>optional string instance_id = 2;</code>
-   *
    * <pre>
    * The id to be used when referring to the new instance within its project,
    * e.g. just the "myinstance" section of the full name
    * "projects/myproject/instances/myinstance"
    * </pre>
+   *
+   * <code>optional string instance_id = 2;</code>
    */
   public java.lang.String getInstanceId() {
     java.lang.Object ref = instanceId_;
@@ -188,13 +188,13 @@ public  final class CreateInstanceRequest extends
     }
   }
   /**
-   * <code>optional string instance_id = 2;</code>
-   *
    * <pre>
    * The id to be used when referring to the new instance within its project,
    * e.g. just the "myinstance" section of the full name
    * "projects/myproject/instances/myinstance"
    * </pre>
+   *
+   * <code>optional string instance_id = 2;</code>
    */
   public com.google.protobuf.ByteString
       getInstanceIdBytes() {
@@ -213,34 +213,34 @@ public  final class CreateInstanceRequest extends
   public static final int INSTANCE_FIELD_NUMBER = 3;
   private com.google.bigtable.admin.v2.Instance instance_;
   /**
-   * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-   *
    * <pre>
    * The instance to create.
    * Fields marked "&#64;OutputOnly" must be left blank.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
    */
   public boolean hasInstance() {
     return instance_ != null;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-   *
    * <pre>
    * The instance to create.
    * Fields marked "&#64;OutputOnly" must be left blank.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
    */
   public com.google.bigtable.admin.v2.Instance getInstance() {
     return instance_ == null ? com.google.bigtable.admin.v2.Instance.getDefaultInstance() : instance_;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-   *
    * <pre>
    * The instance to create.
    * Fields marked "&#64;OutputOnly" must be left blank.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
    */
   public com.google.bigtable.admin.v2.InstanceOrBuilder getInstanceOrBuilder() {
     return getInstance();
@@ -265,12 +265,10 @@ public  final class CreateInstanceRequest extends
     if (clusters_ == null) {
       return com.google.protobuf.MapField.emptyMapField(
           ClustersDefaultEntryHolder.defaultEntry);
-   }
+    }
     return clusters_;
   }
   /**
-   * <code>map&lt;string, .google.bigtable.admin.v2.Cluster&gt; clusters = 4;</code>
-   *
    * <pre>
    * The clusters to be created within the instance, mapped by desired
    * cluster ID (e.g. just the "mycluster" part of the full name
@@ -278,6 +276,8 @@ public  final class CreateInstanceRequest extends
    * Fields marked "&#64;OutputOnly" must be left blank.
    * Currently exactly one cluster must be specified.
    * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.Cluster&gt; clusters = 4;</code>
    */
 
   public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.Cluster> getClusters() {
@@ -369,34 +369,40 @@ public  final class CreateInstanceRequest extends
   }
   public static com.google.bigtable.admin.v2.CreateInstanceRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateInstanceRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.CreateInstanceRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateInstanceRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.CreateInstanceRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateInstanceRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -418,11 +424,11 @@ public  final class CreateInstanceRequest extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.CreateInstanceRequest}
-   *
    * <pre>
    * Request message for BigtableInstanceAdmin.CreateInstance.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.CreateInstanceRequest}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -568,7 +574,7 @@ public  final class CreateInstanceRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.CreateInstanceRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -580,12 +586,12 @@ public  final class CreateInstanceRequest extends
 
     private java.lang.Object parent_ = "";
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the project in which to create the new instance.
      * Values are of the form projects/&lt;project&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public java.lang.String getParent() {
       java.lang.Object ref = parent_;
@@ -600,12 +606,12 @@ public  final class CreateInstanceRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the project in which to create the new instance.
      * Values are of the form projects/&lt;project&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public com.google.protobuf.ByteString
         getParentBytes() {
@@ -621,12 +627,12 @@ public  final class CreateInstanceRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the project in which to create the new instance.
      * Values are of the form projects/&lt;project&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParent(
         java.lang.String value) {
@@ -639,12 +645,12 @@ public  final class CreateInstanceRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the project in which to create the new instance.
      * Values are of the form projects/&lt;project&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder clearParent() {
       
@@ -653,12 +659,12 @@ public  final class CreateInstanceRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the project in which to create the new instance.
      * Values are of the form projects/&lt;project&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
@@ -674,13 +680,13 @@ public  final class CreateInstanceRequest extends
 
     private java.lang.Object instanceId_ = "";
     /**
-     * <code>optional string instance_id = 2;</code>
-     *
      * <pre>
      * The id to be used when referring to the new instance within its project,
      * e.g. just the "myinstance" section of the full name
      * "projects/myproject/instances/myinstance"
      * </pre>
+     *
+     * <code>optional string instance_id = 2;</code>
      */
     public java.lang.String getInstanceId() {
       java.lang.Object ref = instanceId_;
@@ -695,13 +701,13 @@ public  final class CreateInstanceRequest extends
       }
     }
     /**
-     * <code>optional string instance_id = 2;</code>
-     *
      * <pre>
      * The id to be used when referring to the new instance within its project,
      * e.g. just the "myinstance" section of the full name
      * "projects/myproject/instances/myinstance"
      * </pre>
+     *
+     * <code>optional string instance_id = 2;</code>
      */
     public com.google.protobuf.ByteString
         getInstanceIdBytes() {
@@ -717,13 +723,13 @@ public  final class CreateInstanceRequest extends
       }
     }
     /**
-     * <code>optional string instance_id = 2;</code>
-     *
      * <pre>
      * The id to be used when referring to the new instance within its project,
      * e.g. just the "myinstance" section of the full name
      * "projects/myproject/instances/myinstance"
      * </pre>
+     *
+     * <code>optional string instance_id = 2;</code>
      */
     public Builder setInstanceId(
         java.lang.String value) {
@@ -736,13 +742,13 @@ public  final class CreateInstanceRequest extends
       return this;
     }
     /**
-     * <code>optional string instance_id = 2;</code>
-     *
      * <pre>
      * The id to be used when referring to the new instance within its project,
      * e.g. just the "myinstance" section of the full name
      * "projects/myproject/instances/myinstance"
      * </pre>
+     *
+     * <code>optional string instance_id = 2;</code>
      */
     public Builder clearInstanceId() {
       
@@ -751,13 +757,13 @@ public  final class CreateInstanceRequest extends
       return this;
     }
     /**
-     * <code>optional string instance_id = 2;</code>
-     *
      * <pre>
      * The id to be used when referring to the new instance within its project,
      * e.g. just the "myinstance" section of the full name
      * "projects/myproject/instances/myinstance"
      * </pre>
+     *
+     * <code>optional string instance_id = 2;</code>
      */
     public Builder setInstanceIdBytes(
         com.google.protobuf.ByteString value) {
@@ -775,23 +781,23 @@ public  final class CreateInstanceRequest extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.v2.Instance, com.google.bigtable.admin.v2.Instance.Builder, com.google.bigtable.admin.v2.InstanceOrBuilder> instanceBuilder_;
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-     *
      * <pre>
      * The instance to create.
      * Fields marked "&#64;OutputOnly" must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
      */
     public boolean hasInstance() {
       return instanceBuilder_ != null || instance_ != null;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-     *
      * <pre>
      * The instance to create.
      * Fields marked "&#64;OutputOnly" must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
      */
     public com.google.bigtable.admin.v2.Instance getInstance() {
       if (instanceBuilder_ == null) {
@@ -801,12 +807,12 @@ public  final class CreateInstanceRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-     *
      * <pre>
      * The instance to create.
      * Fields marked "&#64;OutputOnly" must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
      */
     public Builder setInstance(com.google.bigtable.admin.v2.Instance value) {
       if (instanceBuilder_ == null) {
@@ -822,12 +828,12 @@ public  final class CreateInstanceRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-     *
      * <pre>
      * The instance to create.
      * Fields marked "&#64;OutputOnly" must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
      */
     public Builder setInstance(
         com.google.bigtable.admin.v2.Instance.Builder builderForValue) {
@@ -841,12 +847,12 @@ public  final class CreateInstanceRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-     *
      * <pre>
      * The instance to create.
      * Fields marked "&#64;OutputOnly" must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
      */
     public Builder mergeInstance(com.google.bigtable.admin.v2.Instance value) {
       if (instanceBuilder_ == null) {
@@ -864,12 +870,12 @@ public  final class CreateInstanceRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-     *
      * <pre>
      * The instance to create.
      * Fields marked "&#64;OutputOnly" must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
      */
     public Builder clearInstance() {
       if (instanceBuilder_ == null) {
@@ -883,12 +889,12 @@ public  final class CreateInstanceRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-     *
      * <pre>
      * The instance to create.
      * Fields marked "&#64;OutputOnly" must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
      */
     public com.google.bigtable.admin.v2.Instance.Builder getInstanceBuilder() {
       
@@ -896,12 +902,12 @@ public  final class CreateInstanceRequest extends
       return getInstanceFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-     *
      * <pre>
      * The instance to create.
      * Fields marked "&#64;OutputOnly" must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
      */
     public com.google.bigtable.admin.v2.InstanceOrBuilder getInstanceOrBuilder() {
       if (instanceBuilder_ != null) {
@@ -912,12 +918,12 @@ public  final class CreateInstanceRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
-     *
      * <pre>
      * The instance to create.
      * Fields marked "&#64;OutputOnly" must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance instance = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.v2.Instance, com.google.bigtable.admin.v2.Instance.Builder, com.google.bigtable.admin.v2.InstanceOrBuilder> 
@@ -940,7 +946,7 @@ public  final class CreateInstanceRequest extends
       if (clusters_ == null) {
         return com.google.protobuf.MapField.emptyMapField(
             ClustersDefaultEntryHolder.defaultEntry);
-     }
+      }
       return clusters_;
     }
     private com.google.protobuf.MapField<java.lang.String, com.google.bigtable.admin.v2.Cluster>
@@ -956,8 +962,6 @@ public  final class CreateInstanceRequest extends
       return clusters_;
     }
     /**
-     * <code>map&lt;string, .google.bigtable.admin.v2.Cluster&gt; clusters = 4;</code>
-     *
      * <pre>
      * The clusters to be created within the instance, mapped by desired
      * cluster ID (e.g. just the "mycluster" part of the full name
@@ -965,13 +969,13 @@ public  final class CreateInstanceRequest extends
      * Fields marked "&#64;OutputOnly" must be left blank.
      * Currently exactly one cluster must be specified.
      * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.Cluster&gt; clusters = 4;</code>
      */
     public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.Cluster> getClusters() {
       return internalGetClusters().getMap();
     }
     /**
-     * <code>map&lt;string, .google.bigtable.admin.v2.Cluster&gt; clusters = 4;</code>
-     *
      * <pre>
      * The clusters to be created within the instance, mapped by desired
      * cluster ID (e.g. just the "mycluster" part of the full name
@@ -979,14 +983,14 @@ public  final class CreateInstanceRequest extends
      * Fields marked "&#64;OutputOnly" must be left blank.
      * Currently exactly one cluster must be specified.
      * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.Cluster&gt; clusters = 4;</code>
      */
     public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.Cluster>
     getMutableClusters() {
       return internalGetMutableClusters().getMutableMap();
     }
     /**
-     * <code>map&lt;string, .google.bigtable.admin.v2.Cluster&gt; clusters = 4;</code>
-     *
      * <pre>
      * The clusters to be created within the instance, mapped by desired
      * cluster ID (e.g. just the "mycluster" part of the full name
@@ -994,6 +998,8 @@ public  final class CreateInstanceRequest extends
      * Fields marked "&#64;OutputOnly" must be left blank.
      * Currently exactly one cluster must be specified.
      * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.Cluster&gt; clusters = 4;</code>
      */
     public Builder putAllClusters(
         java.util.Map<java.lang.String, com.google.bigtable.admin.v2.Cluster> values) {
@@ -1030,16 +1036,7 @@ public  final class CreateInstanceRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new CreateInstanceRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

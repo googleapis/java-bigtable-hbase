@@ -4,11 +4,11 @@
 package com.google.bigtable.v1;
 
 /**
- * Protobuf type {@code google.bigtable.v1.ReadRowsResponse}
- *
  * <pre>
  * Response message for BigtableService.ReadRows.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v1.ReadRowsResponse}
  */
 public  final class ReadRowsResponse extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class ReadRowsResponse extends
   }
   private ReadRowsResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -63,11 +64,10 @@ public  final class ReadRowsResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
         chunks_ = java.util.Collections.unmodifiableList(chunks_);
@@ -92,57 +92,57 @@ public  final class ReadRowsResponse extends
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-     *
      * <pre>
      * A subset of the data from a particular row. As long as no "reset_row"
      * is received in between, multiple "row_contents" from the same row are
      * from the same atomic view of that row, and will be received in the
      * expected family/column/timestamp order.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
      */
     com.google.bigtable.v1.Family getRowContents();
     /**
-     * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-     *
      * <pre>
      * A subset of the data from a particular row. As long as no "reset_row"
      * is received in between, multiple "row_contents" from the same row are
      * from the same atomic view of that row, and will be received in the
      * expected family/column/timestamp order.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
      */
     com.google.bigtable.v1.FamilyOrBuilder getRowContentsOrBuilder();
 
     /**
-     * <code>optional bool reset_row = 2;</code>
-     *
      * <pre>
      * Indicates that the client should drop all previous chunks for
      * "row_key", as it will be re-read from the beginning.
      * </pre>
+     *
+     * <code>optional bool reset_row = 2;</code>
      */
     boolean getResetRow();
 
     /**
-     * <code>optional bool commit_row = 3;</code>
-     *
      * <pre>
      * Indicates that the client can safely process all previous chunks for
      * "row_key", as its data has been fully read.
      * </pre>
+     *
+     * <code>optional bool commit_row = 3;</code>
      */
     boolean getCommitRow();
 
     public com.google.bigtable.v1.ReadRowsResponse.Chunk.ChunkCase getChunkCase();
   }
   /**
-   * Protobuf type {@code google.bigtable.v1.ReadRowsResponse.Chunk}
-   *
    * <pre>
    * Specifies a piece of a row's contents returned as part of the read
    * response stream.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v1.ReadRowsResponse.Chunk}
    */
   public  static final class Chunk extends
       com.google.protobuf.GeneratedMessage implements
@@ -162,7 +162,8 @@ public  final class ReadRowsResponse extends
     }
     private Chunk(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       this();
       int mutable_bitField0_ = 0;
       try {
@@ -206,11 +207,10 @@ public  final class ReadRowsResponse extends
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
       } finally {
         makeExtensionsImmutable();
       }
@@ -235,18 +235,25 @@ public  final class ReadRowsResponse extends
       RESET_ROW(2),
       COMMIT_ROW(3),
       CHUNK_NOT_SET(0);
-      private int value = 0;
+      private final int value;
       private ChunkCase(int value) {
         this.value = value;
       }
+      /**
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
       public static ChunkCase valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static ChunkCase forNumber(int value) {
         switch (value) {
           case 1: return ROW_CONTENTS;
           case 2: return RESET_ROW;
           case 3: return COMMIT_ROW;
           case 0: return CHUNK_NOT_SET;
-          default: throw new java.lang.IllegalArgumentException(
-            "Value is undefined for this oneof enum.");
+          default: return null;
         }
       }
       public int getNumber() {
@@ -256,20 +263,20 @@ public  final class ReadRowsResponse extends
 
     public ChunkCase
     getChunkCase() {
-      return ChunkCase.valueOf(
+      return ChunkCase.forNumber(
           chunkCase_);
     }
 
     public static final int ROW_CONTENTS_FIELD_NUMBER = 1;
     /**
-     * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-     *
      * <pre>
      * A subset of the data from a particular row. As long as no "reset_row"
      * is received in between, multiple "row_contents" from the same row are
      * from the same atomic view of that row, and will be received in the
      * expected family/column/timestamp order.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
      */
     public com.google.bigtable.v1.Family getRowContents() {
       if (chunkCase_ == 1) {
@@ -278,14 +285,14 @@ public  final class ReadRowsResponse extends
       return com.google.bigtable.v1.Family.getDefaultInstance();
     }
     /**
-     * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-     *
      * <pre>
      * A subset of the data from a particular row. As long as no "reset_row"
      * is received in between, multiple "row_contents" from the same row are
      * from the same atomic view of that row, and will be received in the
      * expected family/column/timestamp order.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
      */
     public com.google.bigtable.v1.FamilyOrBuilder getRowContentsOrBuilder() {
       if (chunkCase_ == 1) {
@@ -296,12 +303,12 @@ public  final class ReadRowsResponse extends
 
     public static final int RESET_ROW_FIELD_NUMBER = 2;
     /**
-     * <code>optional bool reset_row = 2;</code>
-     *
      * <pre>
      * Indicates that the client should drop all previous chunks for
      * "row_key", as it will be re-read from the beginning.
      * </pre>
+     *
+     * <code>optional bool reset_row = 2;</code>
      */
     public boolean getResetRow() {
       if (chunkCase_ == 2) {
@@ -312,12 +319,12 @@ public  final class ReadRowsResponse extends
 
     public static final int COMMIT_ROW_FIELD_NUMBER = 3;
     /**
-     * <code>optional bool commit_row = 3;</code>
-     *
      * <pre>
      * Indicates that the client can safely process all previous chunks for
      * "row_key", as its data has been fully read.
      * </pre>
+     *
+     * <code>optional bool commit_row = 3;</code>
      */
     public boolean getCommitRow() {
       if (chunkCase_ == 3) {
@@ -398,34 +405,40 @@ public  final class ReadRowsResponse extends
     }
     public static com.google.bigtable.v1.ReadRowsResponse.Chunk parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v1.ReadRowsResponse.Chunk parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.v1.ReadRowsResponse.Chunk parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v1.ReadRowsResponse.Chunk parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.v1.ReadRowsResponse.Chunk parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v1.ReadRowsResponse.Chunk parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
     public Builder newBuilderForType() { return newBuilder(); }
@@ -447,12 +460,12 @@ public  final class ReadRowsResponse extends
       return builder;
     }
     /**
-     * Protobuf type {@code google.bigtable.v1.ReadRowsResponse.Chunk}
-     *
      * <pre>
      * Specifies a piece of a row's contents returned as part of the read
      * response stream.
      * </pre>
+     *
+     * Protobuf type {@code google.bigtable.v1.ReadRowsResponse.Chunk}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -573,7 +586,7 @@ public  final class ReadRowsResponse extends
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (com.google.bigtable.v1.ReadRowsResponse.Chunk) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -585,7 +598,7 @@ public  final class ReadRowsResponse extends
       private java.lang.Object chunk_;
       public ChunkCase
           getChunkCase() {
-        return ChunkCase.valueOf(
+        return ChunkCase.forNumber(
             chunkCase_);
       }
 
@@ -600,14 +613,14 @@ public  final class ReadRowsResponse extends
       private com.google.protobuf.SingleFieldBuilder<
           com.google.bigtable.v1.Family, com.google.bigtable.v1.Family.Builder, com.google.bigtable.v1.FamilyOrBuilder> rowContentsBuilder_;
       /**
-       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-       *
        * <pre>
        * A subset of the data from a particular row. As long as no "reset_row"
        * is received in between, multiple "row_contents" from the same row are
        * from the same atomic view of that row, and will be received in the
        * expected family/column/timestamp order.
        * </pre>
+       *
+       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
        */
       public com.google.bigtable.v1.Family getRowContents() {
         if (rowContentsBuilder_ == null) {
@@ -623,14 +636,14 @@ public  final class ReadRowsResponse extends
         }
       }
       /**
-       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-       *
        * <pre>
        * A subset of the data from a particular row. As long as no "reset_row"
        * is received in between, multiple "row_contents" from the same row are
        * from the same atomic view of that row, and will be received in the
        * expected family/column/timestamp order.
        * </pre>
+       *
+       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
        */
       public Builder setRowContents(com.google.bigtable.v1.Family value) {
         if (rowContentsBuilder_ == null) {
@@ -646,14 +659,14 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-       *
        * <pre>
        * A subset of the data from a particular row. As long as no "reset_row"
        * is received in between, multiple "row_contents" from the same row are
        * from the same atomic view of that row, and will be received in the
        * expected family/column/timestamp order.
        * </pre>
+       *
+       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
        */
       public Builder setRowContents(
           com.google.bigtable.v1.Family.Builder builderForValue) {
@@ -667,14 +680,14 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-       *
        * <pre>
        * A subset of the data from a particular row. As long as no "reset_row"
        * is received in between, multiple "row_contents" from the same row are
        * from the same atomic view of that row, and will be received in the
        * expected family/column/timestamp order.
        * </pre>
+       *
+       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
        */
       public Builder mergeRowContents(com.google.bigtable.v1.Family value) {
         if (rowContentsBuilder_ == null) {
@@ -696,14 +709,14 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-       *
        * <pre>
        * A subset of the data from a particular row. As long as no "reset_row"
        * is received in between, multiple "row_contents" from the same row are
        * from the same atomic view of that row, and will be received in the
        * expected family/column/timestamp order.
        * </pre>
+       *
+       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
        */
       public Builder clearRowContents() {
         if (rowContentsBuilder_ == null) {
@@ -722,27 +735,27 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-       *
        * <pre>
        * A subset of the data from a particular row. As long as no "reset_row"
        * is received in between, multiple "row_contents" from the same row are
        * from the same atomic view of that row, and will be received in the
        * expected family/column/timestamp order.
        * </pre>
+       *
+       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
        */
       public com.google.bigtable.v1.Family.Builder getRowContentsBuilder() {
         return getRowContentsFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-       *
        * <pre>
        * A subset of the data from a particular row. As long as no "reset_row"
        * is received in between, multiple "row_contents" from the same row are
        * from the same atomic view of that row, and will be received in the
        * expected family/column/timestamp order.
        * </pre>
+       *
+       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
        */
       public com.google.bigtable.v1.FamilyOrBuilder getRowContentsOrBuilder() {
         if ((chunkCase_ == 1) && (rowContentsBuilder_ != null)) {
@@ -755,14 +768,14 @@ public  final class ReadRowsResponse extends
         }
       }
       /**
-       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
-       *
        * <pre>
        * A subset of the data from a particular row. As long as no "reset_row"
        * is received in between, multiple "row_contents" from the same row are
        * from the same atomic view of that row, and will be received in the
        * expected family/column/timestamp order.
        * </pre>
+       *
+       * <code>optional .google.bigtable.v1.Family row_contents = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           com.google.bigtable.v1.Family, com.google.bigtable.v1.Family.Builder, com.google.bigtable.v1.FamilyOrBuilder> 
@@ -784,12 +797,12 @@ public  final class ReadRowsResponse extends
       }
 
       /**
-       * <code>optional bool reset_row = 2;</code>
-       *
        * <pre>
        * Indicates that the client should drop all previous chunks for
        * "row_key", as it will be re-read from the beginning.
        * </pre>
+       *
+       * <code>optional bool reset_row = 2;</code>
        */
       public boolean getResetRow() {
         if (chunkCase_ == 2) {
@@ -798,12 +811,12 @@ public  final class ReadRowsResponse extends
         return false;
       }
       /**
-       * <code>optional bool reset_row = 2;</code>
-       *
        * <pre>
        * Indicates that the client should drop all previous chunks for
        * "row_key", as it will be re-read from the beginning.
        * </pre>
+       *
+       * <code>optional bool reset_row = 2;</code>
        */
       public Builder setResetRow(boolean value) {
         chunkCase_ = 2;
@@ -812,12 +825,12 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional bool reset_row = 2;</code>
-       *
        * <pre>
        * Indicates that the client should drop all previous chunks for
        * "row_key", as it will be re-read from the beginning.
        * </pre>
+       *
+       * <code>optional bool reset_row = 2;</code>
        */
       public Builder clearResetRow() {
         if (chunkCase_ == 2) {
@@ -829,12 +842,12 @@ public  final class ReadRowsResponse extends
       }
 
       /**
-       * <code>optional bool commit_row = 3;</code>
-       *
        * <pre>
        * Indicates that the client can safely process all previous chunks for
        * "row_key", as its data has been fully read.
        * </pre>
+       *
+       * <code>optional bool commit_row = 3;</code>
        */
       public boolean getCommitRow() {
         if (chunkCase_ == 3) {
@@ -843,12 +856,12 @@ public  final class ReadRowsResponse extends
         return false;
       }
       /**
-       * <code>optional bool commit_row = 3;</code>
-       *
        * <pre>
        * Indicates that the client can safely process all previous chunks for
        * "row_key", as its data has been fully read.
        * </pre>
+       *
+       * <code>optional bool commit_row = 3;</code>
        */
       public Builder setCommitRow(boolean value) {
         chunkCase_ = 3;
@@ -857,12 +870,12 @@ public  final class ReadRowsResponse extends
         return this;
       }
       /**
-       * <code>optional bool commit_row = 3;</code>
-       *
        * <pre>
        * Indicates that the client can safely process all previous chunks for
        * "row_key", as its data has been fully read.
        * </pre>
+       *
+       * <code>optional bool commit_row = 3;</code>
        */
       public Builder clearCommitRow() {
         if (chunkCase_ == 3) {
@@ -902,16 +915,7 @@ public  final class ReadRowsResponse extends
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
           return new Chunk(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
       }
     };
 
@@ -934,13 +938,13 @@ public  final class ReadRowsResponse extends
   public static final int ROW_KEY_FIELD_NUMBER = 1;
   private com.google.protobuf.ByteString rowKey_;
   /**
-   * <code>optional bytes row_key = 1;</code>
-   *
    * <pre>
    * The key of the row for which we're receiving data.
    * Results will be received in increasing row key order, unless
    * "allow_row_interleaving" was specified in the request.
    * </pre>
+   *
+   * <code>optional bytes row_key = 1;</code>
    */
   public com.google.protobuf.ByteString getRowKey() {
     return rowKey_;
@@ -949,52 +953,52 @@ public  final class ReadRowsResponse extends
   public static final int CHUNKS_FIELD_NUMBER = 2;
   private java.util.List<com.google.bigtable.v1.ReadRowsResponse.Chunk> chunks_;
   /**
-   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-   *
    * <pre>
    * One or more chunks of the row specified by "row_key".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
    */
   public java.util.List<com.google.bigtable.v1.ReadRowsResponse.Chunk> getChunksList() {
     return chunks_;
   }
   /**
-   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-   *
    * <pre>
    * One or more chunks of the row specified by "row_key".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
    */
   public java.util.List<? extends com.google.bigtable.v1.ReadRowsResponse.ChunkOrBuilder> 
       getChunksOrBuilderList() {
     return chunks_;
   }
   /**
-   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-   *
    * <pre>
    * One or more chunks of the row specified by "row_key".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
    */
   public int getChunksCount() {
     return chunks_.size();
   }
   /**
-   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-   *
    * <pre>
    * One or more chunks of the row specified by "row_key".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
    */
   public com.google.bigtable.v1.ReadRowsResponse.Chunk getChunks(int index) {
     return chunks_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-   *
    * <pre>
    * One or more chunks of the row specified by "row_key".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
    */
   public com.google.bigtable.v1.ReadRowsResponse.ChunkOrBuilder getChunksOrBuilder(
       int index) {
@@ -1062,34 +1066,40 @@ public  final class ReadRowsResponse extends
   }
   public static com.google.bigtable.v1.ReadRowsResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.ReadRowsResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.ReadRowsResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.ReadRowsResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.ReadRowsResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.ReadRowsResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -1111,11 +1121,11 @@ public  final class ReadRowsResponse extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v1.ReadRowsResponse}
-   *
    * <pre>
    * Response message for BigtableService.ReadRows.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v1.ReadRowsResponse}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -1254,7 +1264,7 @@ public  final class ReadRowsResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v1.ReadRowsResponse) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -1266,25 +1276,25 @@ public  final class ReadRowsResponse extends
 
     private com.google.protobuf.ByteString rowKey_ = com.google.protobuf.ByteString.EMPTY;
     /**
-     * <code>optional bytes row_key = 1;</code>
-     *
      * <pre>
      * The key of the row for which we're receiving data.
      * Results will be received in increasing row key order, unless
      * "allow_row_interleaving" was specified in the request.
      * </pre>
+     *
+     * <code>optional bytes row_key = 1;</code>
      */
     public com.google.protobuf.ByteString getRowKey() {
       return rowKey_;
     }
     /**
-     * <code>optional bytes row_key = 1;</code>
-     *
      * <pre>
      * The key of the row for which we're receiving data.
      * Results will be received in increasing row key order, unless
      * "allow_row_interleaving" was specified in the request.
      * </pre>
+     *
+     * <code>optional bytes row_key = 1;</code>
      */
     public Builder setRowKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -1296,13 +1306,13 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>optional bytes row_key = 1;</code>
-     *
      * <pre>
      * The key of the row for which we're receiving data.
      * Results will be received in increasing row key order, unless
      * "allow_row_interleaving" was specified in the request.
      * </pre>
+     *
+     * <code>optional bytes row_key = 1;</code>
      */
     public Builder clearRowKey() {
       
@@ -1324,11 +1334,11 @@ public  final class ReadRowsResponse extends
         com.google.bigtable.v1.ReadRowsResponse.Chunk, com.google.bigtable.v1.ReadRowsResponse.Chunk.Builder, com.google.bigtable.v1.ReadRowsResponse.ChunkOrBuilder> chunksBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public java.util.List<com.google.bigtable.v1.ReadRowsResponse.Chunk> getChunksList() {
       if (chunksBuilder_ == null) {
@@ -1338,11 +1348,11 @@ public  final class ReadRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public int getChunksCount() {
       if (chunksBuilder_ == null) {
@@ -1352,11 +1362,11 @@ public  final class ReadRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public com.google.bigtable.v1.ReadRowsResponse.Chunk getChunks(int index) {
       if (chunksBuilder_ == null) {
@@ -1366,11 +1376,11 @@ public  final class ReadRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public Builder setChunks(
         int index, com.google.bigtable.v1.ReadRowsResponse.Chunk value) {
@@ -1387,11 +1397,11 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public Builder setChunks(
         int index, com.google.bigtable.v1.ReadRowsResponse.Chunk.Builder builderForValue) {
@@ -1405,11 +1415,11 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public Builder addChunks(com.google.bigtable.v1.ReadRowsResponse.Chunk value) {
       if (chunksBuilder_ == null) {
@@ -1425,11 +1435,11 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public Builder addChunks(
         int index, com.google.bigtable.v1.ReadRowsResponse.Chunk value) {
@@ -1446,11 +1456,11 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public Builder addChunks(
         com.google.bigtable.v1.ReadRowsResponse.Chunk.Builder builderForValue) {
@@ -1464,11 +1474,11 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public Builder addChunks(
         int index, com.google.bigtable.v1.ReadRowsResponse.Chunk.Builder builderForValue) {
@@ -1482,11 +1492,11 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public Builder addAllChunks(
         java.lang.Iterable<? extends com.google.bigtable.v1.ReadRowsResponse.Chunk> values) {
@@ -1501,11 +1511,11 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public Builder clearChunks() {
       if (chunksBuilder_ == null) {
@@ -1518,11 +1528,11 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public Builder removeChunks(int index) {
       if (chunksBuilder_ == null) {
@@ -1535,22 +1545,22 @@ public  final class ReadRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public com.google.bigtable.v1.ReadRowsResponse.Chunk.Builder getChunksBuilder(
         int index) {
       return getChunksFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public com.google.bigtable.v1.ReadRowsResponse.ChunkOrBuilder getChunksOrBuilder(
         int index) {
@@ -1560,11 +1570,11 @@ public  final class ReadRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public java.util.List<? extends com.google.bigtable.v1.ReadRowsResponse.ChunkOrBuilder> 
          getChunksOrBuilderList() {
@@ -1575,22 +1585,22 @@ public  final class ReadRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public com.google.bigtable.v1.ReadRowsResponse.Chunk.Builder addChunksBuilder() {
       return getChunksFieldBuilder().addBuilder(
           com.google.bigtable.v1.ReadRowsResponse.Chunk.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public com.google.bigtable.v1.ReadRowsResponse.Chunk.Builder addChunksBuilder(
         int index) {
@@ -1598,11 +1608,11 @@ public  final class ReadRowsResponse extends
           index, com.google.bigtable.v1.ReadRowsResponse.Chunk.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
-     *
      * <pre>
      * One or more chunks of the row specified by "row_key".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.ReadRowsResponse.Chunk chunks = 2;</code>
      */
     public java.util.List<com.google.bigtable.v1.ReadRowsResponse.Chunk.Builder> 
          getChunksBuilderList() {
@@ -1652,16 +1662,7 @@ public  final class ReadRowsResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ReadRowsResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

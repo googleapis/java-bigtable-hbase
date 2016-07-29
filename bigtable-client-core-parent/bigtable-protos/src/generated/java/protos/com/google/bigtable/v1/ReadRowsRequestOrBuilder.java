@@ -8,101 +8,99 @@ public interface ReadRowsRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table from which to read.
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table from which to read.
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();
 
   /**
-   * <code>optional bytes row_key = 2;</code>
-   *
    * <pre>
    * The key of a single row from which to read.
    * </pre>
+   *
+   * <code>optional bytes row_key = 2;</code>
    */
   com.google.protobuf.ByteString getRowKey();
 
   /**
-   * <code>optional .google.bigtable.v1.RowRange row_range = 3;</code>
-   *
    * <pre>
    * A range of rows from which to read.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v1.RowRange row_range = 3;</code>
    */
   com.google.bigtable.v1.RowRange getRowRange();
   /**
-   * <code>optional .google.bigtable.v1.RowRange row_range = 3;</code>
-   *
    * <pre>
    * A range of rows from which to read.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v1.RowRange row_range = 3;</code>
    */
   com.google.bigtable.v1.RowRangeOrBuilder getRowRangeOrBuilder();
 
   /**
-   * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
-   *
    * <pre>
    * A set of rows from which to read. Entries need not be in order, and will
    * be deduplicated before reading.
    * The total serialized size of the set must not exceed 1MB.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
    */
   com.google.bigtable.v1.RowSet getRowSet();
   /**
-   * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
-   *
    * <pre>
    * A set of rows from which to read. Entries need not be in order, and will
    * be deduplicated before reading.
    * The total serialized size of the set must not exceed 1MB.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v1.RowSet row_set = 8;</code>
    */
   com.google.bigtable.v1.RowSetOrBuilder getRowSetOrBuilder();
 
   /**
-   * <code>optional .google.bigtable.v1.RowFilter filter = 5;</code>
-   *
    * <pre>
    * The filter to apply to the contents of the specified row(s). If unset,
    * reads the entire table.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v1.RowFilter filter = 5;</code>
    */
   boolean hasFilter();
   /**
-   * <code>optional .google.bigtable.v1.RowFilter filter = 5;</code>
-   *
    * <pre>
    * The filter to apply to the contents of the specified row(s). If unset,
    * reads the entire table.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v1.RowFilter filter = 5;</code>
    */
   com.google.bigtable.v1.RowFilter getFilter();
   /**
-   * <code>optional .google.bigtable.v1.RowFilter filter = 5;</code>
-   *
    * <pre>
    * The filter to apply to the contents of the specified row(s). If unset,
    * reads the entire table.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v1.RowFilter filter = 5;</code>
    */
   com.google.bigtable.v1.RowFilterOrBuilder getFilterOrBuilder();
 
   /**
-   * <code>optional bool allow_row_interleaving = 6;</code>
-   *
    * <pre>
    * By default, rows are read sequentially, producing results which are
    * guaranteed to arrive in increasing row order. Setting
@@ -111,17 +109,19 @@ public interface ReadRowsRequestOrBuilder extends
    * and may force the client to use more memory to buffer partially-received
    * rows. Cannot be set to true when specifying "num_rows_limit".
    * </pre>
+   *
+   * <code>optional bool allow_row_interleaving = 6;</code>
    */
   boolean getAllowRowInterleaving();
 
   /**
-   * <code>optional int64 num_rows_limit = 7;</code>
-   *
    * <pre>
    * The read will terminate after committing to N rows' worth of results. The
    * default (zero) is to return all results.
    * Note that "allow_row_interleaving" cannot be set to true when this is set.
    * </pre>
+   *
+   * <code>optional int64 num_rows_limit = 7;</code>
    */
   long getNumRowsLimit();
 

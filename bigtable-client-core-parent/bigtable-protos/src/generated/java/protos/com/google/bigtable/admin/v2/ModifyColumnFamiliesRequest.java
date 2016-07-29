@@ -4,11 +4,11 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest}
- *
  * <pre>
  * Request message for [google.bigtable.admin.v2.BigtableTableAdmin.ModifyColumnFamilies][google.bigtable.admin.v2.BigtableTableAdmin.ModifyColumnFamilies]
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest}
  */
 public  final class ModifyColumnFamiliesRequest extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class ModifyColumnFamiliesRequest extends
   }
   private ModifyColumnFamiliesRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -64,11 +65,10 @@ public  final class ModifyColumnFamiliesRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
         modifications_ = java.util.Collections.unmodifiableList(modifications_);
@@ -93,79 +93,79 @@ public  final class ModifyColumnFamiliesRequest extends
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional string id = 1;</code>
-     *
      * <pre>
      * The ID of the column family to be modified.
      * </pre>
+     *
+     * <code>optional string id = 1;</code>
      */
     java.lang.String getId();
     /**
-     * <code>optional string id = 1;</code>
-     *
      * <pre>
      * The ID of the column family to be modified.
      * </pre>
+     *
+     * <code>optional string id = 1;</code>
      */
     com.google.protobuf.ByteString
         getIdBytes();
 
     /**
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-     *
      * <pre>
      * Create a new column family with the specified schema, or fail if
      * one already exists with the given ID.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
      */
     com.google.bigtable.admin.v2.ColumnFamily getCreate();
     /**
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-     *
      * <pre>
      * Create a new column family with the specified schema, or fail if
      * one already exists with the given ID.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
      */
     com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getCreateOrBuilder();
 
     /**
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-     *
      * <pre>
      * Update an existing column family to the specified schema, or fail
      * if no column family exists with the given ID.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
      */
     com.google.bigtable.admin.v2.ColumnFamily getUpdate();
     /**
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-     *
      * <pre>
      * Update an existing column family to the specified schema, or fail
      * if no column family exists with the given ID.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
      */
     com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getUpdateOrBuilder();
 
     /**
-     * <code>optional bool drop = 4;</code>
-     *
      * <pre>
      * Drop (delete) the column family with the given ID, or fail if no such
      * family exists.
      * </pre>
+     *
+     * <code>optional bool drop = 4;</code>
      */
     boolean getDrop();
 
     public com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.ModCase getModCase();
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification}
-   *
    * <pre>
    * A create, update, or delete of a particular column family.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification}
    */
   public  static final class Modification extends
       com.google.protobuf.GeneratedMessage implements
@@ -186,7 +186,8 @@ public  final class ModifyColumnFamiliesRequest extends
     }
     private Modification(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       this();
       int mutable_bitField0_ = 0;
       try {
@@ -245,11 +246,10 @@ public  final class ModifyColumnFamiliesRequest extends
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
       } finally {
         makeExtensionsImmutable();
       }
@@ -274,18 +274,25 @@ public  final class ModifyColumnFamiliesRequest extends
       UPDATE(3),
       DROP(4),
       MOD_NOT_SET(0);
-      private int value = 0;
+      private final int value;
       private ModCase(int value) {
         this.value = value;
       }
+      /**
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
       public static ModCase valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static ModCase forNumber(int value) {
         switch (value) {
           case 2: return CREATE;
           case 3: return UPDATE;
           case 4: return DROP;
           case 0: return MOD_NOT_SET;
-          default: throw new java.lang.IllegalArgumentException(
-            "Value is undefined for this oneof enum.");
+          default: return null;
         }
       }
       public int getNumber() {
@@ -295,18 +302,18 @@ public  final class ModifyColumnFamiliesRequest extends
 
     public ModCase
     getModCase() {
-      return ModCase.valueOf(
+      return ModCase.forNumber(
           modCase_);
     }
 
     public static final int ID_FIELD_NUMBER = 1;
     private volatile java.lang.Object id_;
     /**
-     * <code>optional string id = 1;</code>
-     *
      * <pre>
      * The ID of the column family to be modified.
      * </pre>
+     *
+     * <code>optional string id = 1;</code>
      */
     public java.lang.String getId() {
       java.lang.Object ref = id_;
@@ -321,11 +328,11 @@ public  final class ModifyColumnFamiliesRequest extends
       }
     }
     /**
-     * <code>optional string id = 1;</code>
-     *
      * <pre>
      * The ID of the column family to be modified.
      * </pre>
+     *
+     * <code>optional string id = 1;</code>
      */
     public com.google.protobuf.ByteString
         getIdBytes() {
@@ -343,12 +350,12 @@ public  final class ModifyColumnFamiliesRequest extends
 
     public static final int CREATE_FIELD_NUMBER = 2;
     /**
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-     *
      * <pre>
      * Create a new column family with the specified schema, or fail if
      * one already exists with the given ID.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
      */
     public com.google.bigtable.admin.v2.ColumnFamily getCreate() {
       if (modCase_ == 2) {
@@ -357,12 +364,12 @@ public  final class ModifyColumnFamiliesRequest extends
       return com.google.bigtable.admin.v2.ColumnFamily.getDefaultInstance();
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-     *
      * <pre>
      * Create a new column family with the specified schema, or fail if
      * one already exists with the given ID.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
      */
     public com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getCreateOrBuilder() {
       if (modCase_ == 2) {
@@ -373,12 +380,12 @@ public  final class ModifyColumnFamiliesRequest extends
 
     public static final int UPDATE_FIELD_NUMBER = 3;
     /**
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-     *
      * <pre>
      * Update an existing column family to the specified schema, or fail
      * if no column family exists with the given ID.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
      */
     public com.google.bigtable.admin.v2.ColumnFamily getUpdate() {
       if (modCase_ == 3) {
@@ -387,12 +394,12 @@ public  final class ModifyColumnFamiliesRequest extends
       return com.google.bigtable.admin.v2.ColumnFamily.getDefaultInstance();
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-     *
      * <pre>
      * Update an existing column family to the specified schema, or fail
      * if no column family exists with the given ID.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
      */
     public com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getUpdateOrBuilder() {
       if (modCase_ == 3) {
@@ -403,12 +410,12 @@ public  final class ModifyColumnFamiliesRequest extends
 
     public static final int DROP_FIELD_NUMBER = 4;
     /**
-     * <code>optional bool drop = 4;</code>
-     *
      * <pre>
      * Drop (delete) the column family with the given ID, or fail if no such
      * family exists.
      * </pre>
+     *
+     * <code>optional bool drop = 4;</code>
      */
     public boolean getDrop() {
       if (modCase_ == 4) {
@@ -493,34 +500,40 @@ public  final class ModifyColumnFamiliesRequest extends
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
     public Builder newBuilderForType() { return newBuilder(); }
@@ -542,11 +555,11 @@ public  final class ModifyColumnFamiliesRequest extends
       return builder;
     }
     /**
-     * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification}
-     *
      * <pre>
      * A create, update, or delete of a particular column family.
      * </pre>
+     *
+     * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -678,7 +691,7 @@ public  final class ModifyColumnFamiliesRequest extends
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -690,7 +703,7 @@ public  final class ModifyColumnFamiliesRequest extends
       private java.lang.Object mod_;
       public ModCase
           getModCase() {
-        return ModCase.valueOf(
+        return ModCase.forNumber(
             modCase_);
       }
 
@@ -704,11 +717,11 @@ public  final class ModifyColumnFamiliesRequest extends
 
       private java.lang.Object id_ = "";
       /**
-       * <code>optional string id = 1;</code>
-       *
        * <pre>
        * The ID of the column family to be modified.
        * </pre>
+       *
+       * <code>optional string id = 1;</code>
        */
       public java.lang.String getId() {
         java.lang.Object ref = id_;
@@ -723,11 +736,11 @@ public  final class ModifyColumnFamiliesRequest extends
         }
       }
       /**
-       * <code>optional string id = 1;</code>
-       *
        * <pre>
        * The ID of the column family to be modified.
        * </pre>
+       *
+       * <code>optional string id = 1;</code>
        */
       public com.google.protobuf.ByteString
           getIdBytes() {
@@ -743,11 +756,11 @@ public  final class ModifyColumnFamiliesRequest extends
         }
       }
       /**
-       * <code>optional string id = 1;</code>
-       *
        * <pre>
        * The ID of the column family to be modified.
        * </pre>
+       *
+       * <code>optional string id = 1;</code>
        */
       public Builder setId(
           java.lang.String value) {
@@ -760,11 +773,11 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional string id = 1;</code>
-       *
        * <pre>
        * The ID of the column family to be modified.
        * </pre>
+       *
+       * <code>optional string id = 1;</code>
        */
       public Builder clearId() {
         
@@ -773,11 +786,11 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional string id = 1;</code>
-       *
        * <pre>
        * The ID of the column family to be modified.
        * </pre>
+       *
+       * <code>optional string id = 1;</code>
        */
       public Builder setIdBytes(
           com.google.protobuf.ByteString value) {
@@ -794,12 +807,12 @@ public  final class ModifyColumnFamiliesRequest extends
       private com.google.protobuf.SingleFieldBuilder<
           com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder> createBuilder_;
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-       *
        * <pre>
        * Create a new column family with the specified schema, or fail if
        * one already exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamily getCreate() {
         if (createBuilder_ == null) {
@@ -815,12 +828,12 @@ public  final class ModifyColumnFamiliesRequest extends
         }
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-       *
        * <pre>
        * Create a new column family with the specified schema, or fail if
        * one already exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public Builder setCreate(com.google.bigtable.admin.v2.ColumnFamily value) {
         if (createBuilder_ == null) {
@@ -836,12 +849,12 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-       *
        * <pre>
        * Create a new column family with the specified schema, or fail if
        * one already exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public Builder setCreate(
           com.google.bigtable.admin.v2.ColumnFamily.Builder builderForValue) {
@@ -855,12 +868,12 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-       *
        * <pre>
        * Create a new column family with the specified schema, or fail if
        * one already exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public Builder mergeCreate(com.google.bigtable.admin.v2.ColumnFamily value) {
         if (createBuilder_ == null) {
@@ -882,12 +895,12 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-       *
        * <pre>
        * Create a new column family with the specified schema, or fail if
        * one already exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public Builder clearCreate() {
         if (createBuilder_ == null) {
@@ -906,23 +919,23 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-       *
        * <pre>
        * Create a new column family with the specified schema, or fail if
        * one already exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamily.Builder getCreateBuilder() {
         return getCreateFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-       *
        * <pre>
        * Create a new column family with the specified schema, or fail if
        * one already exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getCreateOrBuilder() {
         if ((modCase_ == 2) && (createBuilder_ != null)) {
@@ -935,12 +948,12 @@ public  final class ModifyColumnFamiliesRequest extends
         }
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
-       *
        * <pre>
        * Create a new column family with the specified schema, or fail if
        * one already exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder> 
@@ -964,12 +977,12 @@ public  final class ModifyColumnFamiliesRequest extends
       private com.google.protobuf.SingleFieldBuilder<
           com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder> updateBuilder_;
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-       *
        * <pre>
        * Update an existing column family to the specified schema, or fail
        * if no column family exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamily getUpdate() {
         if (updateBuilder_ == null) {
@@ -985,12 +998,12 @@ public  final class ModifyColumnFamiliesRequest extends
         }
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-       *
        * <pre>
        * Update an existing column family to the specified schema, or fail
        * if no column family exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public Builder setUpdate(com.google.bigtable.admin.v2.ColumnFamily value) {
         if (updateBuilder_ == null) {
@@ -1006,12 +1019,12 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-       *
        * <pre>
        * Update an existing column family to the specified schema, or fail
        * if no column family exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public Builder setUpdate(
           com.google.bigtable.admin.v2.ColumnFamily.Builder builderForValue) {
@@ -1025,12 +1038,12 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-       *
        * <pre>
        * Update an existing column family to the specified schema, or fail
        * if no column family exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public Builder mergeUpdate(com.google.bigtable.admin.v2.ColumnFamily value) {
         if (updateBuilder_ == null) {
@@ -1052,12 +1065,12 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-       *
        * <pre>
        * Update an existing column family to the specified schema, or fail
        * if no column family exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public Builder clearUpdate() {
         if (updateBuilder_ == null) {
@@ -1076,23 +1089,23 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-       *
        * <pre>
        * Update an existing column family to the specified schema, or fail
        * if no column family exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamily.Builder getUpdateBuilder() {
         return getUpdateFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-       *
        * <pre>
        * Update an existing column family to the specified schema, or fail
        * if no column family exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       public com.google.bigtable.admin.v2.ColumnFamilyOrBuilder getUpdateOrBuilder() {
         if ((modCase_ == 3) && (updateBuilder_ != null)) {
@@ -1105,12 +1118,12 @@ public  final class ModifyColumnFamiliesRequest extends
         }
       }
       /**
-       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
-       *
        * <pre>
        * Update an existing column family to the specified schema, or fail
        * if no column family exists with the given ID.
        * </pre>
+       *
+       * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder> 
@@ -1132,12 +1145,12 @@ public  final class ModifyColumnFamiliesRequest extends
       }
 
       /**
-       * <code>optional bool drop = 4;</code>
-       *
        * <pre>
        * Drop (delete) the column family with the given ID, or fail if no such
        * family exists.
        * </pre>
+       *
+       * <code>optional bool drop = 4;</code>
        */
       public boolean getDrop() {
         if (modCase_ == 4) {
@@ -1146,12 +1159,12 @@ public  final class ModifyColumnFamiliesRequest extends
         return false;
       }
       /**
-       * <code>optional bool drop = 4;</code>
-       *
        * <pre>
        * Drop (delete) the column family with the given ID, or fail if no such
        * family exists.
        * </pre>
+       *
+       * <code>optional bool drop = 4;</code>
        */
       public Builder setDrop(boolean value) {
         modCase_ = 4;
@@ -1160,12 +1173,12 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
       /**
-       * <code>optional bool drop = 4;</code>
-       *
        * <pre>
        * Drop (delete) the column family with the given ID, or fail if no such
        * family exists.
        * </pre>
+       *
+       * <code>optional bool drop = 4;</code>
        */
       public Builder clearDrop() {
         if (modCase_ == 4) {
@@ -1205,16 +1218,7 @@ public  final class ModifyColumnFamiliesRequest extends
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
           return new Modification(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
       }
     };
 
@@ -1237,12 +1241,12 @@ public  final class ModifyColumnFamiliesRequest extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the table whose families should be modified.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -1257,12 +1261,12 @@ public  final class ModifyColumnFamiliesRequest extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the table whose families should be modified.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -1281,67 +1285,67 @@ public  final class ModifyColumnFamiliesRequest extends
   public static final int MODIFICATIONS_FIELD_NUMBER = 2;
   private java.util.List<com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification> modifications_;
   /**
-   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-   *
    * <pre>
    * Modifications to be atomically applied to the specified table's families.
    * Entries are applied in order, meaning that earlier modifications can be
    * masked by later ones (in the case of repeated updates to the same family,
    * for example).
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
    */
   public java.util.List<com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification> getModificationsList() {
     return modifications_;
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-   *
    * <pre>
    * Modifications to be atomically applied to the specified table's families.
    * Entries are applied in order, meaning that earlier modifications can be
    * masked by later ones (in the case of repeated updates to the same family,
    * for example).
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
    */
   public java.util.List<? extends com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder> 
       getModificationsOrBuilderList() {
     return modifications_;
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-   *
    * <pre>
    * Modifications to be atomically applied to the specified table's families.
    * Entries are applied in order, meaning that earlier modifications can be
    * masked by later ones (in the case of repeated updates to the same family,
    * for example).
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
    */
   public int getModificationsCount() {
     return modifications_.size();
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-   *
    * <pre>
    * Modifications to be atomically applied to the specified table's families.
    * Entries are applied in order, meaning that earlier modifications can be
    * masked by later ones (in the case of repeated updates to the same family,
    * for example).
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
    */
   public com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification getModifications(int index) {
     return modifications_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-   *
    * <pre>
    * Modifications to be atomically applied to the specified table's families.
    * Entries are applied in order, meaning that earlier modifications can be
    * masked by later ones (in the case of repeated updates to the same family,
    * for example).
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
    */
   public com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder getModificationsOrBuilder(
       int index) {
@@ -1408,34 +1412,40 @@ public  final class ModifyColumnFamiliesRequest extends
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -1457,11 +1467,11 @@ public  final class ModifyColumnFamiliesRequest extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest}
-   *
    * <pre>
    * Request message for [google.bigtable.admin.v2.BigtableTableAdmin.ModifyColumnFamilies][google.bigtable.admin.v2.BigtableTableAdmin.ModifyColumnFamilies]
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -1601,7 +1611,7 @@ public  final class ModifyColumnFamiliesRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -1613,12 +1623,12 @@ public  final class ModifyColumnFamiliesRequest extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table whose families should be modified.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -1633,12 +1643,12 @@ public  final class ModifyColumnFamiliesRequest extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table whose families should be modified.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -1654,12 +1664,12 @@ public  final class ModifyColumnFamiliesRequest extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table whose families should be modified.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -1672,12 +1682,12 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table whose families should be modified.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -1686,12 +1696,12 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table whose families should be modified.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -1718,14 +1728,14 @@ public  final class ModifyColumnFamiliesRequest extends
         com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder> modificationsBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public java.util.List<com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification> getModificationsList() {
       if (modificationsBuilder_ == null) {
@@ -1735,14 +1745,14 @@ public  final class ModifyColumnFamiliesRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public int getModificationsCount() {
       if (modificationsBuilder_ == null) {
@@ -1752,14 +1762,14 @@ public  final class ModifyColumnFamiliesRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification getModifications(int index) {
       if (modificationsBuilder_ == null) {
@@ -1769,14 +1779,14 @@ public  final class ModifyColumnFamiliesRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public Builder setModifications(
         int index, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification value) {
@@ -1793,14 +1803,14 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public Builder setModifications(
         int index, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder builderForValue) {
@@ -1814,14 +1824,14 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public Builder addModifications(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification value) {
       if (modificationsBuilder_ == null) {
@@ -1837,14 +1847,14 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public Builder addModifications(
         int index, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification value) {
@@ -1861,14 +1871,14 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public Builder addModifications(
         com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder builderForValue) {
@@ -1882,14 +1892,14 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public Builder addModifications(
         int index, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder builderForValue) {
@@ -1903,14 +1913,14 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public Builder addAllModifications(
         java.lang.Iterable<? extends com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification> values) {
@@ -1925,14 +1935,14 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public Builder clearModifications() {
       if (modificationsBuilder_ == null) {
@@ -1945,14 +1955,14 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public Builder removeModifications(int index) {
       if (modificationsBuilder_ == null) {
@@ -1965,28 +1975,28 @@ public  final class ModifyColumnFamiliesRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder getModificationsBuilder(
         int index) {
       return getModificationsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder getModificationsOrBuilder(
         int index) {
@@ -1996,14 +2006,14 @@ public  final class ModifyColumnFamiliesRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public java.util.List<? extends com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder> 
          getModificationsOrBuilderList() {
@@ -2014,28 +2024,28 @@ public  final class ModifyColumnFamiliesRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder addModificationsBuilder() {
       return getModificationsFieldBuilder().addBuilder(
           com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder addModificationsBuilder(
         int index) {
@@ -2043,14 +2053,14 @@ public  final class ModifyColumnFamiliesRequest extends
           index, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
-     *
      * <pre>
      * Modifications to be atomically applied to the specified table's families.
      * Entries are applied in order, meaning that earlier modifications can be
      * masked by later ones (in the case of repeated updates to the same family,
      * for example).
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
      */
     public java.util.List<com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder> 
          getModificationsBuilderList() {
@@ -2100,16 +2110,7 @@ public  final class ModifyColumnFamiliesRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ModifyColumnFamiliesRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 
