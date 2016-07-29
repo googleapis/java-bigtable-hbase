@@ -93,14 +93,14 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
     RowFilter filter = buildFilter(scan, readHooks);
 
     RowSet.Builder rowSetBuilder = RowSet.newBuilder();
+    ByteString startRow = ByteString.copyFrom(scan.getStartRow());
     if (scan.isGetScan()) {
-      rowSetBuilder.addRowKeys(ByteString.copyFrom(scan.getStartRow()));
+      rowSetBuilder.addRowKeys(startRow);
     } else {
-      rowSetBuilder.addRowRanges(
-        RowRange.newBuilder().setStartKeyClosed(ByteString.copyFrom(scan.getStartRow()))
-            .setEndKeyOpen(ByteString.copyFrom(scan.getStopRow())));
+      ByteString stopRow = ByteString.copyFrom(scan.getStopRow());
+      rowSetBuilder.addRowRangesBuilder().setStartKeyClosed(startRow).setEndKeyOpen(stopRow);
     }
-    return ReadRowsRequest.newBuilder().setFilter(filter).setRows(rowSetBuilder);
+    return ReadRowsRequest.newBuilder().setRows(rowSetBuilder).setFilter(filter);
   }
 
   private static byte[] quoteRegex(byte[] unquoted)  {
