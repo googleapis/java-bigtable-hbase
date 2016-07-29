@@ -262,7 +262,7 @@ public class BigtableSession implements Closeable {
 
     headerInterceptors = headerInterceptorBuilder.build();
 
-    ChannelPool dataChannel = createChannelPool(options.getDataHost());
+    ChannelPool dataChannel = createChannelPool(options.getDataHost(), options.getChannelCount());
 
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
@@ -337,7 +337,7 @@ public class BigtableSession implements Closeable {
 
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
-      ManagedChannel channel = createChannelPool(options.getTableAdminHost());
+      ManagedChannel channel = createChannelPool(options.getTableAdminHost(), 1);
       tableAdminClient = new BigtableTableAdminGrpcClient(channel);
     }
     return tableAdminClient;
@@ -345,25 +345,37 @@ public class BigtableSession implements Closeable {
 
   public synchronized BigtableInstanceClient getInstanceAdminClient() throws IOException {
     if (instanceAdminClient == null) {
-      ManagedChannel channel = createChannelPool(options.getInstanceAdminHost());
+      ManagedChannel channel = createChannelPool(options.getInstanceAdminHost(), 1);
       instanceAdminClient = new BigtableInstanceGrpcClient(channel);
     }
     return instanceAdminClient;
   }
 
   /**
-   * <p>
-   * Create a new {@link ChannelPool} of the given size, with auth headers and user agent interceptors.
-   * </p>
+   * Create a new {@link ChannelPool} of the size one, with auth headers and user agent
+   * interceptors.
+   *
+   * @throws IOException
    */
   protected ChannelPool createChannelPool(final String hostString) throws IOException {
-    ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
-      @Override
-      public ManagedChannel create() throws IOException {
-        return createNettyChannel(hostString, options);
-      }
-    };
-    ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory);
+    return createChannelPool(hostString, 1);
+  }
+  /**
+   * Create a new {@link ChannelPool} of the given size, with auth headers and user agent
+   * interceptors.
+   */
+  protected ChannelPool createChannelPool(final String hostString, int channelCount)
+      throws IOException {
+    ChannelPool channelPool =
+        new ChannelPool(
+            headerInterceptors,
+            channelCount,
+            new ChannelPool.ChannelFactory() {
+              @Override
+              public ManagedChannel create() throws IOException {
+                return createNettyChannel(hostString, options);
+              }
+            });
     managedChannels.add(channelPool);
     return channelPool;
   }

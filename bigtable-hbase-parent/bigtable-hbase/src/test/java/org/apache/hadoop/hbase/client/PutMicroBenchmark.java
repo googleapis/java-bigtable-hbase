@@ -50,7 +50,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class PutMicroBenchmark {
-  static final int NUM_CELLS = 10;
+  static final int NUM_CELLS = 100;
   private static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   private final static int REAL_CHANNEL_PUT_COUNT = 100;
   private final static int FAKE_CHANNEL_PUT_COUNT = 100_000;
@@ -86,7 +86,9 @@ public class PutMicroBenchmark {
       return createNettyChannelPool();
     } else {
       return new ChannelPool(
-          ImmutableList.<HeaderInterceptor>of(prefixInterceptor()), createFakeChannels());
+          ImmutableList.<HeaderInterceptor>of(prefixInterceptor()),
+          options.getChannelCount(),
+          createFakeChannels());
     }
   }
 
@@ -94,6 +96,7 @@ public class PutMicroBenchmark {
       throws IOException, GeneralSecurityException {
     return new ChannelPool(
         getHeaders(),
+        options.getChannelCount(),
         new ChannelPool.ChannelFactory() {
           @Override
           public ManagedChannel create() throws IOException {
