@@ -22,7 +22,6 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -44,7 +43,6 @@ import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.async.RetryingCollectingClientCallListener;
@@ -80,8 +78,6 @@ import com.google.protobuf.ServiceException;
  * streaming call.
  */
 public class BigtableDataGrpcClient implements BigtableDataClient {
-
-  private static final Logger LOG = new Logger(BigtableDataGrpcClient.class);
 
   // Retryable Predicates
   @VisibleForTesting
@@ -144,7 +140,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final ChannelPool channelPool;
   private final ScheduledExecutorService retryExecutorService;
   private final RetryOptions retryOptions;
-  private final BigtableOptions bigtableOptions;
   private final BigtableResultScannerFactory<ReadRowsRequest, Row> streamingScannerFactory =
       new BigtableResultScannerFactory<ReadRowsRequest, Row>() {
         @Override
@@ -183,7 +178,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       BigtableAsyncUtilities asyncUtilities) {
     this.channelPool = channelPool;
     this.retryExecutorService = retryExecutorService;
-    this.bigtableOptions = bigtableOptions;
     this.retryOptions = bigtableOptions.getRetryOptions();
     this.asyncUtilities = asyncUtilities;
 
@@ -298,7 +292,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private <ReqT, RespT> ListenableFuture<RespT> getUnaryFuture(ReqT request,
       BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return getCompletionFuture(createUnaryListener(request, rpc, tableName));
   }
 
@@ -370,8 +363,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   private ResultScanner<Row> streamRows(ReadRowsRequest request) {
-    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
-
     ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
         channelPool.newCall(BigtableGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
 
@@ -397,13 +388,5 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       }
     }, MoreExecutors.directExecutor());
     return cancellationToken;
-  }
-
-  private void expandPoolIfNecessary(int channelCount) {
-    try {
-      this.channelPool.ensureChannelCount(channelCount);
-    } catch (IOException e) {
-      LOG.info("Could not expand the channel pool.", e);
-    }
   }
 }

@@ -82,13 +82,12 @@ public class ChannelPoolPerf {
     int threads = 10;
     int concurrent = 400;
     final ChannelPool cp = new ChannelPool(
-      Collections.<HeaderInterceptor>emptyList(), new ChannelPool.ChannelFactory() {
+      Collections.<HeaderInterceptor>emptyList(), 1, new ChannelPool.ChannelFactory() {
         @Override
         public ManagedChannel create() throws IOException {
           return channel;
         }
       });
-    cp.ensureChannelCount(40);
     ExecutorService es = Executors.newFixedThreadPool(threads);
     Callable<Void> runnable = new Callable<Void>() {
       @Override

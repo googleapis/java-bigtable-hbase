@@ -54,6 +54,7 @@ public class TestGoogleCloudResourcePrefixInterceptor {
     
     cp = new ChannelPool(
         Arrays.<HeaderInterceptor>asList(new GoogleCloudResourcePrefixInterceptor(HEADER_VALUE)),
+        1,
         new ChannelFactory() {
           @Override
           public ManagedChannel create() throws IOException {
