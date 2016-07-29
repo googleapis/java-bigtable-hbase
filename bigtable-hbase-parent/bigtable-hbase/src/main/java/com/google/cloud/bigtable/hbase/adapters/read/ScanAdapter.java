@@ -90,16 +90,17 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   @Override
   public Builder adapt(Scan scan, ReadHooks readHooks) {
     throwIfUnsupportedScan(scan);
-    // For gets, startRow == stopRow.  There's no need to create a new ByteString for stopRow
     RowFilter filter = buildFilter(scan, readHooks);
 
-    return ReadRowsRequest.newBuilder()
-        .setFilter(filter)
-        .setRows(RowSet.newBuilder()
-            .addRowRanges(
-              RowRange.newBuilder()
-                  .setStartKeyClosed(ByteString.copyFrom(scan.getStartRow()))
-                  .setEndKeyOpen(ByteString.copyFrom(scan.getStopRow()))));
+    RowSet.Builder rowSetBuilder = RowSet.newBuilder();
+    ByteString startRow = ByteString.copyFrom(scan.getStartRow());
+    if (scan.isGetScan()) {
+      rowSetBuilder.addRowKeys(startRow);
+    } else {
+      ByteString stopRow = ByteString.copyFrom(scan.getStopRow());
+      rowSetBuilder.addRowRangesBuilder().setStartKeyClosed(startRow).setEndKeyOpen(stopRow);
+    }
+    return ReadRowsRequest.newBuilder().setRows(rowSetBuilder).setFilter(filter);
   }
 
   private static byte[] quoteRegex(byte[] unquoted)  {

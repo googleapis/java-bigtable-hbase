@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
@@ -25,8 +26,11 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.google.protobuf.ByteString;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -213,6 +217,27 @@ public class TestScan extends AbstractTest {
     Assert.assertEquals(rowsToWrite, deleteCount);
     try (ResultScanner resultScanner = table.getScanner(scan)) {
       Assert.assertNull(resultScanner.next());
+    }
+  }
+
+  @Test
+  public void testStartEndEquals() throws IOException {
+    // Initialize variables
+    Table table = getConnection().getTable(TABLE_NAME);
+    byte[] rowKey = dataHelper.randomData("start_end_equals");
+    byte[] qualifier = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+
+    table.put(new Put(rowKey).addColumn(COLUMN_FAMILY, qualifier, value));
+    Scan scan = new Scan();
+    scan.setStartRow(rowKey).setStopRow(rowKey);
+    try (ResultScanner resultScanner = table.getScanner(scan)) {
+      Result result = resultScanner.next();
+      Assert.assertNotNull(result);
+      Cell cell = result.getColumnCells(COLUMN_FAMILY, qualifier).get(0);
+      Assert.assertTrue(Bytes.equals(value,
+        ByteString.copyFrom(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength())
+            .toByteArray()));
     }
   }
 }
