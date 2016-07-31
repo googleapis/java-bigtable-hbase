@@ -34,6 +34,9 @@ import java.util.Map;
 
 /**
  * Adapt a single Delete operation to a Bigtable RowMutation
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.Builder> {
   static boolean isPointDelete(Cell cell) {
@@ -121,6 +124,7 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
     return deleteBuilder;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MutateRowRequest.Builder adapt(Delete operation) {
     MutateRowRequest.Builder result = MutateRowRequest.newBuilder()
@@ -158,6 +162,12 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
   }
 
 
+  /**
+   * <p>adapt.</p>
+   *
+   * @param request a {@link com.google.bigtable.v2.MutateRowRequest} object.
+   * @return a {@link org.apache.hadoop.hbase.client.Delete} object.
+   */
   public Delete adapt(MutateRowRequest request) {
     Delete delete = new Delete(request.getRowKey().toByteArray());
 

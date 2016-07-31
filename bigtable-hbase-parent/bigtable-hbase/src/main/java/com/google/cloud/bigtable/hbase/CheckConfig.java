@@ -38,8 +38,18 @@ import java.security.GeneralSecurityException;
  * A simple utility class for checking and displaying common Bigtable-HBase configuration values.
  *
  * Expected usage: hbase com.google.cloud.bigtable.hbase.CheckConfig
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class CheckConfig {
+  /**
+   * <p>main.</p>
+   *
+   * @param args an array of {@link java.lang.String} objects.
+   * @throws java.io.IOException if any.
+   * @throws java.security.GeneralSecurityException if any.
+   */
   public static void main(String[] args) throws IOException, GeneralSecurityException {
     Logger logger = new Logger(CheckConfig.class);
     GenericOptionsParser optionsParser =

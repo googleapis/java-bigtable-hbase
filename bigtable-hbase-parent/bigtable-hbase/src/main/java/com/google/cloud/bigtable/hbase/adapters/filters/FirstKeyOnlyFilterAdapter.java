@@ -23,9 +23,13 @@ import java.io.IOException;
 
 /**
  * Adapter for FirstKeyOnlyFilter to RowFilter.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class FirstKeyOnlyFilterAdapter implements TypedFilterAdapter<FirstKeyOnlyFilter> {
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, FirstKeyOnlyFilter filter)
       throws IOException {
@@ -34,6 +38,7 @@ public class FirstKeyOnlyFilterAdapter implements TypedFilterAdapter<FirstKeyOnl
         .build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(FilterAdapterContext context,
       FirstKeyOnlyFilter filter) {

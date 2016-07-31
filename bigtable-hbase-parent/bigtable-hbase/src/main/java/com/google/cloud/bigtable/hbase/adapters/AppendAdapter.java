@@ -28,9 +28,13 @@ import java.util.Map;
 
 /**
  * Adapter for HBase Appends operations to Bigtable ReadModifyWriteRowRequest.Builder.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class AppendAdapter implements OperationAdapter<Append, ReadModifyWriteRowRequest.Builder> {
 
+  /** {@inheritDoc} */
   @Override
   public ReadModifyWriteRowRequest.Builder adapt(Append operation) {
     ReadModifyWriteRowRequest.Builder result = ReadModifyWriteRowRequest.newBuilder();

@@ -48,6 +48,9 @@ import com.google.common.annotations.VisibleForTesting;
  * the Bigtable endpoints are OAuth2 based. It uses the OAuth AccessToken to get the token value and
  * next refresh time. The refresh is scheduled asynchronously.
  * </p>
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor {
 
@@ -158,6 +161,13 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
   private final RetryOptions retryOptions;
   private final Logger logger;
 
+  /**
+   * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
+   *
+   * @param scheduler a {@link java.util.concurrent.ExecutorService} object.
+   * @param credentials a {@link com.google.auth.oauth2.OAuth2Credentials} object.
+   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
+   */
   public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler,
       OAuth2Credentials credentials, RetryOptions retryOptions) {
     this(scheduler, credentials, retryOptions, LOG);
@@ -172,11 +182,15 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
     this.logger = Preconditions.checkNotNull(logger);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void updateHeaders(Metadata headers) throws Exception {
     headers.put(AUTHORIZATION_HEADER_KEY, getHeader());
   }
 
+  /**
+   * <p>asyncRefresh.</p>
+   */
   public void asyncRefresh() {
     executor.execute(new Runnable() {
       @Override
@@ -186,6 +200,11 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
     });
   }
 
+  /**
+   * <p>syncRefresh.</p>
+   *
+   * @throws java.io.IOException if any.
+   */
   public void syncRefresh() throws IOException {
     synchronized (isRefreshing) {
       if (!isRefreshing.get()) {
@@ -264,8 +283,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
 
   /**
    * <p>
-   * Calls {@link OAuth2Credentials#refreshAccessToken()}. In case of an IOException, retry the call
-   * as per the {@link BackOff} policy defined by {@link RetryOptions#createBackoff()}.
+   * Calls {@link com.google.auth.oauth2.OAuth2Credentials#refreshAccessToken()}. In case of an IOException, retry the call
+   * as per the {@link com.google.api.client.util.BackOff} policy defined by {@link com.google.cloud.bigtable.config.RetryOptions#createBackoff()}.
    * </p>
    * <p>
    * This method retries until one of the following conditions occurs:
@@ -276,7 +295,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
    * BackOff.STOP
    * <li>An interrupt occurs.
    * </ol>
-   * @return HeaderCacheElement containing either a valid {@link AccessToken} or an exception.
+   *
+   * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken} or an exception.
    */
   protected HeaderCacheElement refreshCredentialsWithRetry() {
     BackOff backoff = null;
@@ -322,9 +342,10 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
 
   /**
    * Sleep and/or determine if the backoff has timed out.
-   * @param backoff
+   *
+   * @param backoff a {@link com.google.api.client.util.BackOff} object.
    * @return RetryState indicating the current state of the retry logic.
-   * @throws IOException in some cases from {@link BackOff#nextBackOffMillis()}
+   * @throws java.io.IOException in some cases from {@link com.google.api.client.util.BackOff#nextBackOffMillis()}
    */
   protected RetryState getRetryState(BackOff backoff) throws IOException{
     long nextBackOffMillis = backoff.nextBackOffMillis();

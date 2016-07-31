@@ -41,6 +41,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * A ResultScanner that attempts to resume the readRows call when it
  * encounters gRPC INTERNAL errors.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ResumingStreamingResultScanner extends AbstractBigtableResultScanner {
 
@@ -62,6 +65,13 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
   private ByteString lastFoundKey;
 
+  /**
+   * <p>Constructor for ResumingStreamingResultScanner.</p>
+   *
+   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
+   * @param originalRequest a {@link com.google.bigtable.v2.ReadRowsRequest} object.
+   * @param scannerFactory a {@link com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory} object.
+   */
   public ResumingStreamingResultScanner(
     RetryOptions retryOptions,
     ReadRowsRequest originalRequest,
@@ -82,6 +92,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     this.logger = logger;
   }
 
+  /** {@inheritDoc} */
   @Override
   public Row next() throws IOException {
     while (true) {
@@ -162,11 +173,13 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public int available() {
     return currentDelegate.available();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
     currentDelegate.close();

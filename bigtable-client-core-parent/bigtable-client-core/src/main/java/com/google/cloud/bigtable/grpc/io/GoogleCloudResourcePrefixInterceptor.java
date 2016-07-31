@@ -20,18 +20,29 @@ import io.grpc.Metadata;
 /**
  * Adds a header ("google-cloud-resource-prefix") that usually contains a fully qualified instance
  * or table name.
+ *
+ * @author sduskis
+ * @version $Id: $Id
+ * @since 0.9.2
  */
 public class GoogleCloudResourcePrefixInterceptor implements HeaderInterceptor {
 
+  /** Constant <code>GRPC_RESOURCE_PREFIX_KEY</code> */
   public static final Metadata.Key<String> GRPC_RESOURCE_PREFIX_KEY =
       Metadata.Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER);
 
   private final String defaultValue;
   
+  /**
+   * <p>Constructor for GoogleCloudResourcePrefixInterceptor.</p>
+   *
+   * @param defaultValue a {@link java.lang.String} object.
+   */
   public GoogleCloudResourcePrefixInterceptor(String defaultValue) {
     this.defaultValue = defaultValue;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void updateHeaders(Metadata headers) throws Exception {
     if (!headers.containsKey(GRPC_RESOURCE_PREFIX_KEY)) {

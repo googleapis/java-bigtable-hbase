@@ -26,6 +26,9 @@ import com.google.bigtable.admin.v2.Table;
 
 /**
  * A client for the Cloud Bigtable Table Admin API.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface BigtableTableAdminClient {
 
@@ -34,31 +37,45 @@ public interface BigtableTableAdminClient {
    * Creates a new table, to be served from a specified cluster.
    * The table can be created with a full set of initial column families,
    * specified in the request.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.CreateTableRequest} object.
    */
   void createTable(CreateTableRequest request);
 
   /**
    * Gets the details of a table.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.GetTableRequest} object.
+   * @return a {@link com.google.bigtable.admin.v2.Table} object.
    */
   Table getTable(GetTableRequest request);
 
   /**
    * Lists the names of all tables served from a specified cluster.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.ListTablesRequest} object.
+   * @return a {@link com.google.bigtable.admin.v2.ListTablesResponse} object.
    */
   ListTablesResponse listTables(ListTablesRequest request);
 
   /**
    * Permanently deletes a specified table and all of its data.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.DeleteTableRequest} object.
    */
   void deleteTable(DeleteTableRequest request);
 
   /**
    * Creates, modifies or deletes a new column family within a specified table.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest} object.
    */
   void modifyColumnFamily(ModifyColumnFamiliesRequest request);
 
   /**
    * Permanently deletes all rows in a range.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.DropRowRangeRequest} object.
    */
   void dropRowRange(DropRowRangeRequest request);
 }

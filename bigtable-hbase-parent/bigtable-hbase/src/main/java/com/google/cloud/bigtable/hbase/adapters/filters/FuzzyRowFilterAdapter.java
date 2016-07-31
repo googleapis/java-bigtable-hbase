@@ -32,7 +32,10 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 
 /**
- * An adapter for {@link FuzzyRowFilter}.
+ * An adapter for {@link org.apache.hadoop.hbase.filter.FuzzyRowFilter}.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class FuzzyRowFilterAdapter implements TypedFilterAdapter<FuzzyRowFilter> {
   private static final RowFilter ALL_VALUES_FILTER =
@@ -52,6 +55,7 @@ public class FuzzyRowFilterAdapter implements TypedFilterAdapter<FuzzyRowFilter>
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, FuzzyRowFilter filter) throws IOException {
     Interleave.Builder interleaveBuilder = Interleave.newBuilder();
@@ -105,6 +109,7 @@ public class FuzzyRowFilterAdapter implements TypedFilterAdapter<FuzzyRowFilter>
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, FuzzyRowFilter filter) {

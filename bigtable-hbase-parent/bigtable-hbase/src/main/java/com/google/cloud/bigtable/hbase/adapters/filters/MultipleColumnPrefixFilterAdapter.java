@@ -28,10 +28,14 @@ import java.io.IOException;
 /**
  * An adapter to transform an HBase MultipleColumnPrefixFilter into a
  * Bigtable RowFilter with each column prefix in an interleaved stream.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class MultipleColumnPrefixFilterAdapter
     implements TypedFilterAdapter<MultipleColumnPrefixFilter> {
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(
       FilterAdapterContext context,
@@ -59,6 +63,7 @@ public class MultipleColumnPrefixFilterAdapter
         .build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context,

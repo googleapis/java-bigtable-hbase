@@ -29,6 +29,9 @@ import io.grpc.stub.StreamObserver;
 /**
  * Helper to read a queue of ResultQueueEntries and use the RowMergers to reconstruct
  * complete Row objects from the partial ReadRowsResponse objects.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ResponseQueueReader implements StreamObserver<Row> {
   protected final BlockingQueue<ResultQueueEntry<Row>> resultQueue;
@@ -36,6 +39,12 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
 
+  /**
+   * <p>Constructor for ResponseQueueReader.</p>
+   *
+   * @param readPartialRowTimeoutMillis a int.
+   * @param capacityCap a int.
+   */
   public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap) {
     this.resultQueue = new LinkedBlockingQueue<>(capacityCap);
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
@@ -43,8 +52,9 @@ public class ResponseQueueReader implements StreamObserver<Row> {
 
   /**
    * Get the next complete Row object from the response queue.
+   *
    * @return null if end-of-stream, otherwise a complete Row.
-   * @throws IOException On errors.
+   * @throws java.io.IOException On errors.
    */
   public synchronized Row getNextMergedRow() throws IOException {
     if (!lastResponseProcessed) {
@@ -62,6 +72,12 @@ public class ResponseQueueReader implements StreamObserver<Row> {
     return null;
   }
 
+  /**
+   * <p>getNext.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultQueueEntry} object.
+   * @throws java.io.IOException if any.
+   */
   protected ResultQueueEntry<Row> getNext() throws IOException {
     ResultQueueEntry<Row> queueEntry;
     try {
@@ -77,10 +93,16 @@ public class ResponseQueueReader implements StreamObserver<Row> {
     return queueEntry;
   }
 
+  /**
+   * <p>available.</p>
+   *
+   * @return a int.
+   */
   public int available() {
     return resultQueue.size();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onNext(Row row) {
     try {
@@ -91,6 +113,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onError(Throwable t) {
     try {
@@ -101,6 +124,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onCompleted() {
     try {

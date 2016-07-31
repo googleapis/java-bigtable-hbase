@@ -21,6 +21,9 @@ import java.util.concurrent.Executor;
 
 /**
  * A class for communicating that an operation has been or should be cancelled.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class CancellationToken {
 
@@ -28,6 +31,9 @@ public class CancellationToken {
 
   /**
    * Add a listener that will be fired if and when this token is cancelled.
+   *
+   * @param runnable a {@link java.lang.Runnable} object.
+   * @param executor a {@link java.util.concurrent.Executor} object.
    */
   public void addListener(Runnable runnable, Executor executor) {
     cancelledFuture.addListener(runnable, executor);

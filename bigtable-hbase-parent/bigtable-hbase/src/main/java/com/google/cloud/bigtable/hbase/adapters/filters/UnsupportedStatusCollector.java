@@ -22,11 +22,18 @@ import java.util.List;
 /**
  * An interface that classes should implement if they're able to contribute
  * meaningfully to collecting unsupported status objects from child filters.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface UnsupportedStatusCollector<S extends Filter> {
 
   /**
    * Collect FilterSupportStatuses from the filter Filter and all subfilters.
+   *
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   * @param filter a S object.
+   * @param unsupportedStatuses a {@link java.util.List} object.
    */
   void collectUnsupportedStatuses(
       FilterAdapterContext context,

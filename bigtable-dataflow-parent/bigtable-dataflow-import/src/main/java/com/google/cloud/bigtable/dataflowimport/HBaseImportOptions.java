@@ -20,20 +20,43 @@ import com.google.cloud.dataflow.sdk.options.Default;
 import com.google.cloud.dataflow.sdk.options.Description;
 
 /**
- * An extension of {@link CloudBigtableOptions} that contains additional configuration
+ * An extension of {@link com.google.cloud.bigtable.dataflow.CloudBigtableOptions} that contains additional configuration
  * for importing HBase sequence files into Cloud Bigtable.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface HBaseImportOptions extends CloudBigtableOptions {
+  /**
+   * <p>getFilePattern.</p>
+   *
+   * @return a {@link java.lang.String} object.
+   */
   @Description("Location of the input file(s). For example, '/path_to_data_dir/part-m*'"
       + " refers to all local files in the specified directory that match the file name pattern, "
       + "and gs://gcp_bucket/path_to_data_dir/my_data_file.dat refers to a single data file.")
   String getFilePattern();
 
+  /**
+   * <p>setFilePattern.</p>
+   *
+   * @param filePattern a {@link java.lang.String} object.
+   */
   void setFilePattern(String filePattern);
 
+  /**
+   * <p>isHBase094DataFormat.</p>
+   *
+   * @return a boolean.
+   */
   @Description("Set to True to indicate that the file format is HBase 0.94 or earlier.")
   @Default.Boolean(false)
   boolean isHBase094DataFormat();
 
+  /**
+   * <p>setHBase094DataFormat.</p>
+   *
+   * @param value a boolean.
+   */
   void setHBase094DataFormat(boolean value);
 }

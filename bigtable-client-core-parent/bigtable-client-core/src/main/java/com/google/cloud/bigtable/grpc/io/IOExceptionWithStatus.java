@@ -21,21 +21,39 @@ import java.io.IOException;
 
 /**
  * An IOException that carries a gRPC Status object.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class IOExceptionWithStatus extends IOException {
   private final Status status;
 
+  /**
+   * <p>Constructor for IOExceptionWithStatus.</p>
+   *
+   * @param message a {@link java.lang.String} object.
+   * @param cause a {@link java.lang.Throwable} object.
+   * @param status a {@link io.grpc.Status} object.
+   */
   public IOExceptionWithStatus(String message, Throwable cause, Status status) {
     super(message, cause);
     this.status = status;
   }
 
+  /**
+   * <p>Constructor for IOExceptionWithStatus.</p>
+   *
+   * @param message a {@link java.lang.String} object.
+   * @param status a {@link io.grpc.Status} object.
+   */
   public IOExceptionWithStatus(String message, Status status) {
     this(message, status.asRuntimeException(), status);
   }
 
   /**
    * Status from the provided OperationRuntimeException.
+   *
+   * @return a {@link io.grpc.Status} object.
    */
   public Status getStatus() {
     return status;

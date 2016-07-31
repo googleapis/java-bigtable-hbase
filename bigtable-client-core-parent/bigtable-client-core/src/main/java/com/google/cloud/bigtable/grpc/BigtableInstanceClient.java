@@ -30,11 +30,17 @@ import com.google.protobuf.Empty;
 
 /**
  * BigtableInstanceClient manages instances and clusters.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface BigtableInstanceClient {
   /**
-  * Create an instance within a project.
-  */
+   * Create an instance within a project.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.CreateInstanceRequest} object.
+   * @return a {@link com.google.longrunning.Operation} object.
+   */
   Operation createInstance(CreateInstanceRequest request);
 
   /**
@@ -42,39 +48,60 @@ public interface BigtableInstanceClient {
    * operation result at intervals as recommended by the API service.
    *
    * <p>{@link #createInstance(CreateInstanceRequest)} and {@link #updateCluster(Cluster)} will
-   * return a {@link Operation}. Use this method and pass in the {@link Operation}'s name in the
-   * request to see if the Operation is done via {@link Operation#getDone()}. The instance will not
+   * return a {@link com.google.longrunning.Operation}. Use this method and pass in the {@link com.google.longrunning.Operation}'s name in the
+   * request to see if the Operation is done via {@link com.google.longrunning.Operation#getDone()}. The instance will not
    * be available until that happens.
+   *
+   * @param request a {@link com.google.longrunning.GetOperationRequest} object.
+   * @return a {@link com.google.longrunning.Operation} object.
    */
   Operation getOperation(GetOperationRequest request);
 
   /**
    * Lists all instances in the given project.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.ListInstancesRequest} object.
+   * @return a {@link com.google.bigtable.admin.v2.ListInstancesResponse} object.
    */
   ListInstancesResponse listInstances(ListInstancesRequest request);
 
   /**
    * Updates an instance within a project.
+   *
+   * @param instance a {@link com.google.bigtable.admin.v2.Instance} object.
+   * @return a {@link com.google.bigtable.admin.v2.Instance} object.
    */
   Instance updateInstance(Instance instance);
 
   /**
    * Updates an instance within a project.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.DeleteInstanceRequest} object.
+   * @return a {@link com.google.protobuf.Empty} object.
    */
   Empty deleteInstance(DeleteInstanceRequest request);
 
   /**
    * Gets information about a cluster.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.GetClusterRequest} object.
+   * @return a {@link com.google.bigtable.admin.v2.Cluster} object.
    */
   Cluster getCluster(GetClusterRequest request);
 
   /**
    * Lists information about clusters in an instance.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.ListClustersRequest} object.
+   * @return a {@link com.google.bigtable.admin.v2.ListClustersResponse} object.
    */
   ListClustersResponse listCluster(ListClustersRequest request);
 
   /**
    * Updates a cluster within an instance.
+   *
+   * @param cluster a {@link com.google.bigtable.admin.v2.Cluster} object.
+   * @return a {@link com.google.longrunning.Operation} object.
    */
   Operation updateCluster(Cluster cluster);
 }

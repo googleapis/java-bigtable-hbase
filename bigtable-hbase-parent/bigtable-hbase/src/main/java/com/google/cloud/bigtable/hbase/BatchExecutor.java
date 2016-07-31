@@ -55,9 +55,13 @@ import com.google.protobuf.GeneratedMessage;
 
 /**
  * Class to help BigtableTable with batch operations on an BigtableClient.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BatchExecutor {
 
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BatchExecutor.class);
 
   /**
@@ -180,6 +184,12 @@ public class BatchExecutor {
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter requestAdapter;
 
+  /**
+   * <p>Constructor for BatchExecutor.</p>
+   *
+   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} object.
+   * @param requestAdapter a {@link com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter} object.
+   */
   public BatchExecutor(BigtableSession session, HBaseRequestAdapter requestAdapter) {
     this.session = session;
     this.asyncExecutor = session.createAsyncExecutor();
@@ -236,6 +246,14 @@ public class BatchExecutor {
       new IllegalArgumentException("Encountered unknown action type: " + row.getClass()));
   }
 
+  /**
+   * <p>batch.</p>
+   *
+   * @param actions a {@link java.util.List} object.
+   * @param results an array of {@link java.lang.Object} objects.
+   * @throws java.io.IOException if any.
+   * @throws java.lang.InterruptedException if any.
+   */
   public void batch(List<? extends Row> actions, @Nullable Object[] results)
       throws IOException, InterruptedException {
     if (results == null) {
@@ -284,6 +302,13 @@ public class BatchExecutor {
     }
   }
 
+  /**
+   * <p>batch.</p>
+   *
+   * @param actions a {@link java.util.List} object.
+   * @return an array of {@link org.apache.hadoop.hbase.client.Result} objects.
+   * @throws java.io.IOException if any.
+   */
   public Result[] batch(List<? extends Row> actions) throws IOException {
     try {
       Result[] results = new Result[actions.size()];
@@ -298,6 +323,13 @@ public class BatchExecutor {
   /**
    * Implementation of
    * {@link org.apache.hadoop.hbase.client.HTable#batchCallback(List, Object[], Batch.Callback)}
+   *
+   * @param actions a {@link java.util.List} object.
+   * @param results an array of {@link java.lang.Object} objects.
+   * @param callback a {@link org.apache.hadoop.hbase.client.coprocessor.Batch.Callback} object.
+   * @throws java.io.IOException if any.
+   * @throws java.lang.InterruptedException if any.
+   * @param <R> a R object.
    */
   public <R> void batchCallback(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
@@ -315,6 +347,10 @@ public class BatchExecutor {
 
   /**
    * Implementation of {@link org.apache.hadoop.hbase.client.Table#existsAll(List)}.
+   *
+   * @param gets a {@link java.util.List} object.
+   * @return an array of {@link java.lang.Boolean} objects.
+   * @throws java.io.IOException if any.
    */
   public Boolean[] exists(List<Get> gets) throws IOException {
     // get(gets) will throw if there are any errors:

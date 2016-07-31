@@ -24,18 +24,32 @@ import java.io.OutputStream;
 /**
  * Methods and constants to help build a bigtable reader expression
  * // TODO(AngusDavis): Move more ScanAdapter and FilterAdapter writing logic to here.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ReaderExpressionHelper {
+  /** Constant <code>ANY_BYTE="\\C"</code> */
   public static final String ANY_BYTE = "\\C";
+  /** Constant <code>ANY_BYTE_BYTES=Bytes.toBytes(ANY_BYTE)</code> */
   public static final byte[] ANY_BYTE_BYTES = Bytes.toBytes(ANY_BYTE);
+  /** Constant <code>ALL_QUALIFIERS="\\C*"</code> */
   public static final String ALL_QUALIFIERS = "\\C*";
+  /** Constant <code>ALL_QUALIFIERS_BYTES=Bytes.toBytes(ALL_QUALIFIERS)</code> */
   public static final byte[] ALL_QUALIFIERS_BYTES = Bytes.toBytes(ALL_QUALIFIERS);
+  /** Constant <code>ALL_FAMILIES=".*"</code> */
   public static final String ALL_FAMILIES = ".*";
+  /** Constant <code>ALL_FAMILIES_BYTES=Bytes.toBytes(ALL_FAMILIES)</code> */
   public static final byte[] ALL_FAMILIES_BYTES = Bytes.toBytes(ALL_FAMILIES);
+  /** Constant <code>ALL_VERSIONS="all"</code> */
   public static final String ALL_VERSIONS = "all";
+  /** Constant <code>ALL_VERSIONS_BYTES=Bytes.toBytes(ALL_VERSIONS)</code> */
   public static final byte[] ALL_VERSIONS_BYTES = Bytes.toBytes(ALL_VERSIONS);
+  /** Constant <code>LATEST_VERSION="latest"</code> */
   public static final String LATEST_VERSION = "latest";
+  /** Constant <code>INTERLEAVE_CHARACTERS=Bytes.toBytes(" + ")</code> */
   public static final byte[] INTERLEAVE_CHARACTERS = Bytes.toBytes(" + ");
+  /** Constant <code>PIPE_CHARACTER_BYTES=Bytes.toBytes(" | ")</code> */
   public static final byte[] PIPE_CHARACTER_BYTES = Bytes.toBytes(" | ");
   private final static byte[] NULL_CHARACTER_BYTES = Bytes.toBytes("\\x00");
 
@@ -45,6 +59,7 @@ public class ReaderExpressionHelper {
    *
    * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
    * @param outputStream A stream to write quoted output to
+   * @throws java.io.IOException if any.
    */
   public static void writeFilterQuotedExpression(byte[] unquoted, OutputStream outputStream)
       throws IOException{
@@ -57,14 +72,23 @@ public class ReaderExpressionHelper {
   /**
    * Write unquoted to the OutputStream applying both RE2:QuoteMeta and Bigtable reader
    * expression quoting.
+   *
    * @param outputStream A stream to write quoted output to
    * @param unquoted A byte-array, possibly containing bytes outside of the ASCII
+   * @throws java.io.IOException if any.
    */
   public static void writeQuotedExpression(OutputStream outputStream, byte[] unquoted)
       throws  IOException {
     writeQuotedRegularExpression(new QuoteFilterExpressionStream(outputStream), unquoted);
   }
 
+  /**
+   * <p>quoteRegularExpression.</p>
+   *
+   * @param unquoted an array of byte.
+   * @return an array of byte.
+   * @throws java.io.IOException if any.
+   */
   public static byte[] quoteRegularExpression(byte[] unquoted) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(unquoted.length * 2);
     writeQuotedRegularExpression(baos, unquoted);
@@ -73,6 +97,10 @@ public class ReaderExpressionHelper {
 
   /**
    * Write unquoted to the OutputStream applying RE2:QuoteMeta quoting.
+   *
+   * @param outputStream a {@link java.io.OutputStream} object.
+   * @param unquoted an array of byte.
+   * @throws java.io.IOException if any.
    */
   public static void writeQuotedRegularExpression(OutputStream outputStream, byte[] unquoted)
       throws IOException {

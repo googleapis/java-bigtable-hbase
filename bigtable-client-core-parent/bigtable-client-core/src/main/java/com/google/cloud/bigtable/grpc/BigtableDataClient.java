@@ -38,37 +38,55 @@ import io.grpc.CallOptions;
 
 /**
  * Interface to access v2 Bigtable data service methods.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public interface BigtableDataClient {
 
   /**
    * Mutate a row atomically.
+   *
+   * @param request a {@link com.google.bigtable.v2.MutateRowRequest} object.
+   * @return a {@link com.google.bigtable.v2.MutateRowResponse} object.
+   * @throws com.google.protobuf.ServiceException if any.
    */
   MutateRowResponse mutateRow(MutateRowRequest request) throws ServiceException;
 
   /**
    * Mutate a row atomically.
    *
-   * @return a {@link ListenableFuture} that will finish when
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
    * the mutation has completed.
+   * @param request a {@link com.google.bigtable.v2.MutateRowRequest} object.
    */
   ListenableFuture<MutateRowResponse> mutateRowAsync(MutateRowRequest request);
 
   /**
    * Mutates multiple rows in a batch. Each individual row is mutated atomically as in MutateRow,
    * but the entire batch is not executed atomically.
+   *
+   * @param request a {@link com.google.bigtable.v2.MutateRowsRequest} object.
+   * @return a {@link java.util.List} object.
+   * @throws com.google.protobuf.ServiceException if any.
    */
   List<MutateRowsResponse> mutateRows(MutateRowsRequest request) throws ServiceException;
 
   /**
    * Mutates multiple rows in a batch. Each individual row is mutated atomically as in MutateRow,
    * but the entire batch is not executed atomically.
-   * @return a {@link ListenableFuture} that will finish when the mutations have all been completed.
+   *
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when the mutations have all been completed.
+   * @param request a {@link com.google.bigtable.v2.MutateRowsRequest} object.
    */
   ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request);
 
   /**
    * Mutate a row atomically dependent on a precondition.
+   *
+   * @param request a {@link com.google.bigtable.v2.CheckAndMutateRowRequest} object.
+   * @return a {@link com.google.bigtable.v2.CheckAndMutateRowResponse} object.
+   * @throws com.google.protobuf.ServiceException if any.
    */
   CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request)
       throws ServiceException;
@@ -76,51 +94,68 @@ public interface BigtableDataClient {
   /**
    * Mutate a row atomically dependent on a precondition.
    *
-   * @return a {@link ListenableFuture} that will finish when
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
    * the mutation has completed.
+   * @param request a {@link com.google.bigtable.v2.CheckAndMutateRowRequest} object.
    */
   ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request);
 
   /**
    * Perform an atomic read-modify-write operation on a row.
+   *
+   * @param request a {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} object.
+   * @return a {@link com.google.bigtable.v2.ReadModifyWriteRowResponse} object.
    */
   ReadModifyWriteRowResponse readModifyWriteRow(ReadModifyWriteRowRequest request);
 
   /**
    * Perform an atomic read-modify-write operation on a row,
    *
-   * @return a {@link ListenableFuture} that will finish when
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
    * the mutation has completed.
+   * @param request a {@link com.google.bigtable.v2.ReadModifyWriteRowRequest} object.
    */
   ListenableFuture<ReadModifyWriteRowResponse> readModifyWriteRowAsync(ReadModifyWriteRowRequest request);
 
   /**
    * Sample row keys from a table.
+   *
+   * @param request a {@link com.google.bigtable.v2.SampleRowKeysRequest} object.
+   * @return a {@link com.google.common.collect.ImmutableList} object.
    */
   ImmutableList<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request);
 
   /**
    * Sample row keys from a table, returning a Future that will complete when the sampling has
    * completed.
+   *
+   * @param request a {@link com.google.bigtable.v2.SampleRowKeysRequest} object.
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} object.
    */
   ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(SampleRowKeysRequest request);
 
   /**
    * Perform a scan over rows.
+   *
+   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
+   * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
    */
   ResultScanner<Row> readRows(ReadRowsRequest request);
 
   /**
    * Read multiple Rows into an in-memory list.
    *
-   * @return a {@link ListenableFuture} that will finish when
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
    * all reads have completed.
+   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
    */
   ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request);
 
   /**
-   * Sets a {@link CallOptionsFactory} which creates {@link CallOptions}
+   * Sets a {@link com.google.cloud.bigtable.grpc.CallOptionsFactory} which creates {@link io.grpc.CallOptions}
+   *
+   * @param callOptionsFactory a {@link com.google.cloud.bigtable.grpc.CallOptionsFactory} object.
    */
   void setCallOptionsFactory(CallOptionsFactory callOptionsFactory);
 }

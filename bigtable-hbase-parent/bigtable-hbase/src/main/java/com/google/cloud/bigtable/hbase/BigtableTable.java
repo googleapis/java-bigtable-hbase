@@ -74,7 +74,14 @@ import com.google.protobuf.Message;
 import com.google.protobuf.Service;
 import com.google.protobuf.ServiceException;
 
+/**
+ * <p>BigtableTable class.</p>
+ *
+ * @author sduskis
+ * @version $Id: $Id
+ */
 public class BigtableTable implements Table {
+  /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableTable.class);
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
@@ -103,6 +110,9 @@ public class BigtableTable implements Table {
 
   /**
    * Constructed by BigtableConnection
+   *
+   * @param bigtableConnection a {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection} object.
+   * @param hbaseAdapter a {@link com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter} object.
    */
   public BigtableTable(AbstractBigtableConnection bigtableConnection,
       HBaseRequestAdapter hbaseAdapter) {
@@ -114,16 +124,19 @@ public class BigtableTable implements Table {
     this.tableName = hbaseAdapter.getTableName();
   }
 
+  /** {@inheritDoc} */
   @Override
   public TableName getName() {
     return this.tableName;
   }
 
+  /** {@inheritDoc} */
   @Override
   public final Configuration getConfiguration() {
     return this.bigtableConnection.getConfiguration();
   }
 
+  /** {@inheritDoc} */
   @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
     try (Admin admin = this.bigtableConnection.getAdmin()) {
@@ -131,6 +144,7 @@ public class BigtableTable implements Table {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean exists(Get get) throws IOException {
     LOG.trace("exists(Get)");
@@ -139,6 +153,7 @@ public class BigtableTable implements Table {
     return !result.isEmpty();
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean[] existsAll(List<Get> gets) throws IOException {
     LOG.trace("existsAll(Get)");
@@ -150,6 +165,7 @@ public class BigtableTable implements Table {
     return exists;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void batch(List<? extends Row> actions, Object[] results)
       throws IOException, InterruptedException {
@@ -157,9 +173,7 @@ public class BigtableTable implements Table {
     getBatchExecutor().batch(actions, results);
   }
 
-  /** 
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Deprecated
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
@@ -167,6 +181,7 @@ public class BigtableTable implements Table {
     return getBatchExecutor().batch(actions);
   }
 
+  /** {@inheritDoc} */
   @Override
   public <R> void batchCallback(List<? extends Row> actions, Object[] results,
       Batch.Callback<R> callback) throws IOException, InterruptedException {
@@ -174,9 +189,7 @@ public class BigtableTable implements Table {
     getBatchExecutor().batchCallback(actions, results, callback);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Deprecated
   @Override
   public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback)
@@ -187,12 +200,14 @@ public class BigtableTable implements Table {
     return results;
   }
 
+  /** {@inheritDoc} */
   @Override
   public Result[] get(List<Get> gets) throws IOException {
     LOG.trace("get(List<>)");
     return getBatchExecutor().batch(gets);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
@@ -204,6 +219,7 @@ public class BigtableTable implements Table {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
     try {
@@ -243,18 +259,21 @@ public class BigtableTable implements Table {
     return false;
   }
 
+  /** {@inheritDoc} */
   @Override
   public ResultScanner getScanner(byte[] family) throws IOException {
     LOG.trace("getScanner(byte[])");
     return getScanner(new Scan().addFamily(family));
   }
 
+  /** {@inheritDoc} */
   @Override
   public ResultScanner getScanner(byte[] family, byte[] qualifier) throws IOException {
     LOG.trace("getScanner(byte[], byte[])");
     return getScanner(new Scan().addColumn(family, qualifier));
   }
 
+  /** {@inheritDoc} */
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
@@ -266,18 +285,21 @@ public class BigtableTable implements Table {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void put(List<Put> puts) throws IOException {
     LOG.trace("put(List<Put>)");
     getBatchExecutor().batch(puts);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put)
       throws IOException {
     return checkAndPut(row, family, qualifier, CompareFilter.CompareOp.EQUAL, value, put);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
@@ -301,6 +323,7 @@ public class BigtableTable implements Table {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void delete(Delete delete) throws IOException {
     LOG.trace("delete(Delete)");
@@ -312,18 +335,21 @@ public class BigtableTable implements Table {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void delete(List<Delete> deletes) throws IOException {
     LOG.trace("delete(List<Delete>)");
     getBatchExecutor().batch(deletes);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value,
       Delete delete) throws IOException {
     return checkAndDelete(row, family, qualifier, CompareFilter.CompareOp.EQUAL, value, delete);
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
     CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
@@ -347,6 +373,7 @@ public class BigtableTable implements Table {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean checkAndMutate(
       final byte [] row, final byte [] family, final byte [] qualifier,
@@ -376,6 +403,7 @@ public class BigtableTable implements Table {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
@@ -387,6 +415,7 @@ public class BigtableTable implements Table {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public Result append(Append append) throws IOException {
     LOG.trace("append(Append)");
@@ -406,6 +435,7 @@ public class BigtableTable implements Table {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public Result increment(Increment increment) throws IOException {
     LOG.trace("increment(Increment)");
@@ -429,6 +459,7 @@ public class BigtableTable implements Table {
         t);
   }
 
+  /** {@inheritDoc} */
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
       throws IOException {
@@ -450,6 +481,7 @@ public class BigtableTable implements Table {
     return Bytes.toLong(CellUtil.cloneValue(cell));
   }
 
+  /** {@inheritDoc} */
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount,
       Durability durability) throws IOException {
@@ -457,17 +489,20 @@ public class BigtableTable implements Table {
     return incrementColumnValue(row, family, qualifier, amount);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
     // TODO: shutdown the executor.
   }
 
+  /** {@inheritDoc} */
   @Override
   public CoprocessorRpcChannel coprocessorService(byte[] row) {
     LOG.error("Unsupported coprocessorService(byte[]) called.");
     throw new UnsupportedOperationException();  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> service, byte[] startKey,
       byte[] endKey, Batch.Call<T, R> callable) throws ServiceException, Throwable {
@@ -475,6 +510,7 @@ public class BigtableTable implements Table {
     throw new UnsupportedOperationException();  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public <T extends Service, R> void coprocessorService(Class<T> service, byte[] startKey,
       byte[] endKey, Batch.Call<T, R> callable, Batch.Callback<R> callback)
@@ -484,6 +520,7 @@ public class BigtableTable implements Table {
     throw new UnsupportedOperationException();  // TODO
   }
 
+  /** {@inheritDoc} */
   @Deprecated
   @Override
   public long getWriteBufferSize() {
@@ -491,6 +528,7 @@ public class BigtableTable implements Table {
     throw new UnsupportedOperationException();  // TODO
   }
 
+  /** {@inheritDoc} */
   @Deprecated
   @Override
   public void setWriteBufferSize(long writeBufferSize) throws IOException {
@@ -498,6 +536,7 @@ public class BigtableTable implements Table {
     throw new UnsupportedOperationException();  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public <R extends Message> Map<byte[], R> batchCoprocessorService(
       Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes2,
@@ -507,6 +546,7 @@ public class BigtableTable implements Table {
     throw new UnsupportedOperationException();  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public <R extends Message> void batchCoprocessorService(
       Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes2,
@@ -516,6 +556,7 @@ public class BigtableTable implements Table {
     throw new UnsupportedOperationException();  // TODO
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(BigtableTable.class)
@@ -527,6 +568,13 @@ public class BigtableTable implements Table {
         .toString();
   }
 
+  /**
+   * <p>wasMutationApplied.</p>
+   *
+   * @param requestBuilder a {@link com.google.bigtable.v2.CheckAndMutateRowRequest.Builder} object.
+   * @param response a {@link com.google.bigtable.v2.CheckAndMutateRowResponse} object.
+   * @return a boolean.
+   */
   protected boolean wasMutationApplied(
       CheckAndMutateRowRequest.Builder requestBuilder,
       CheckAndMutateRowResponse response) {
@@ -539,6 +587,19 @@ public class BigtableTable implements Table {
         && !response.getPredicateMatched());
   }
 
+  /**
+   * <p>makeConditionalMutationRequestBuilder.</p>
+   *
+   * @param row an array of byte.
+   * @param family an array of byte.
+   * @param qualifier an array of byte.
+   * @param compareOp a {@link org.apache.hadoop.hbase.filter.CompareFilter.CompareOp} object.
+   * @param value an array of byte.
+   * @param actionRow an array of byte.
+   * @param mutations a {@link java.util.List} object.
+   * @return a {@link com.google.bigtable.v2.CheckAndMutateRowRequest.Builder} object.
+   * @throws java.io.IOException if any.
+   */
   protected CheckAndMutateRowRequest.Builder makeConditionalMutationRequestBuilder(
       byte[] row,
       byte[] family,
@@ -603,6 +664,11 @@ public class BigtableTable implements Table {
         Bytes.toStringBinary(rowKey));
   }
 
+  /**
+   * <p>Getter for the field <code>batchExecutor</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.hbase.BatchExecutor} object.
+   */
   protected synchronized BatchExecutor getBatchExecutor() {
     if (batchExecutor == null) {
       batchExecutor = new BatchExecutor(this.bigtableConnection.getSession(), hbaseAdapter);

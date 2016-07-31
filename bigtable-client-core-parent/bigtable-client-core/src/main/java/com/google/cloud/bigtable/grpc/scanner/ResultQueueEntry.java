@@ -31,16 +31,36 @@ import java.util.Objects;
  */
 abstract class ResultQueueEntry<T> {
 
+  /**
+   * <p>fromResponse.</p>
+   *
+   * @param response a T object.
+   * @param <T> a T object.
+   * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultQueueEntry} object.
+   */
   public static <T> ResultQueueEntry<T> fromResponse(T response) {
     Preconditions.checkArgument(response != null, "Response may not be null");
     return new ResponseResultQueueEntry<T>(response);
   }
 
+  /**
+   * <p>fromThrowable.</p>
+   *
+   * @param throwable a {@link java.lang.Throwable} object.
+   * @param <T> a T object.
+   * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultQueueEntry} object.
+   */
   public static <T> ResultQueueEntry<T> fromThrowable(Throwable throwable) {
     Preconditions.checkArgument(throwable != null, "Throwable may not be null");
     return new ExceptionResultQueueEntry<T>(throwable);
   }
 
+  /**
+   * <p>completionMarker.</p>
+   *
+   * @param <T> a T object.
+   * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultQueueEntry} object.
+   */
   @SuppressWarnings("unchecked")
   public static <T> ResultQueueEntry<T> completionMarker() {
     return COMPLETION_ENTRY;
@@ -127,7 +147,18 @@ abstract class ResultQueueEntry<T> {
     }
   };
 
+  /**
+   * <p>isCompletionMarker.</p>
+   *
+   * @return a boolean.
+   */
   public abstract boolean isCompletionMarker();
 
+  /**
+   * <p>getResponseOrThrow.</p>
+   *
+   * @return a T object.
+   * @throws java.io.IOException if any.
+   */
   public abstract T getResponseOrThrow() throws IOException;
 }

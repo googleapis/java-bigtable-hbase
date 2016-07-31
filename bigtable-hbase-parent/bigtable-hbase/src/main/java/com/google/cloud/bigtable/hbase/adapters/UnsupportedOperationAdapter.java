@@ -21,21 +21,28 @@ import org.apache.hadoop.hbase.client.Operation;
 
 /**
  * An adapter that throws an Unsupported exception when its adapt method is invoked.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class UnsupportedOperationAdapter<T extends Operation>
     implements OperationAdapter<T, MutateRowRequest.Builder> {
 
   private final String operationDescription;
 
+  /**
+   * <p>Constructor for UnsupportedOperationAdapter.</p>
+   *
+   * @param operationDescription a {@link java.lang.String} object.
+   */
   public UnsupportedOperationAdapter(String operationDescription) {
     this.operationDescription = operationDescription;
   }
 
   /**
-   * Adapt a single HBase Operation to a single Bigtable generated message.
+   * {@inheritDoc}
    *
-   * @param operation The HBase operation to convert.
-   * @return An equivalent Bigtable
+   * Adapt a single HBase Operation to a single Bigtable generated message.
    */
   @Override
   public MutateRowRequest.Builder adapt(T operation) {

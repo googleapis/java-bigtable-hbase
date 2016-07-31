@@ -63,6 +63,9 @@ import java.util.Map;
  *   p.run();
  * }
  * </pre>
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class HBaseImportIO {
   // Needed for HBase 0.94 format. Copied from ResultSerialization.IMPORT_FORMAT_VER.
@@ -93,7 +96,10 @@ public class HBaseImportIO {
       FS_ABSTRACT_FILESYSTEM_GS_IMPL, GoogleHadoopFS.class.getName());
 
   /**
-   * Returns a {@link BoundedSource} from an HBase Sequence File for an import pipeline.
+   * Returns a {@link com.google.cloud.dataflow.sdk.io.BoundedSource} from an HBase Sequence File for an import pipeline.
+   *
+   * @param options a {@link com.google.cloud.bigtable.dataflowimport.HBaseImportOptions} object.
+   * @return a {@link com.google.cloud.dataflow.sdk.io.BoundedSource} object.
    */
   @SuppressWarnings("unchecked")
   public static BoundedSource<
@@ -115,8 +121,10 @@ public class HBaseImportIO {
   }
 
   /**
-   * Returns a {@link PTransform} that converts {@link Result}s into
-   * {@link Mutation}s.
+   * Returns a {@link com.google.cloud.dataflow.sdk.transforms.PTransform} that converts {@link org.apache.hadoop.hbase.client.Result}s into
+   * {@link org.apache.hadoop.hbase.client.Mutation}s.
+   *
+   * @return a {@link com.google.cloud.dataflow.sdk.transforms.PTransform} object.
    */
   public static PTransform<
       PCollection<? extends KV<ImmutableBytesWritable, Result>>,

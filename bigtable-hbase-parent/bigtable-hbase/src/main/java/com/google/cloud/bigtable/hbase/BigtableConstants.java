@@ -26,6 +26,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Constants related to Bigtable.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableConstants {
 

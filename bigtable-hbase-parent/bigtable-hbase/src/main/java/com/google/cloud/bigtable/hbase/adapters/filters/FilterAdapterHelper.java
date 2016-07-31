@@ -24,6 +24,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Helpers for filter adapters.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class FilterAdapterHelper {
 
@@ -38,6 +41,9 @@ public class FilterAdapterHelper {
   /**
    * Extract a single family name from a FilterAdapterContext. Throws if there
    * is not exactly 1 family present in the scan.
+   *
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   * @return a {@link java.lang.String} object.
    */
   public static String getSingleFamilyName(FilterAdapterContext context) {
     Preconditions.checkState(
@@ -48,6 +54,9 @@ public class FilterAdapterHelper {
 
   /**
    * Extract a regular expression from a RegexStringComparator.
+   *
+   * @param comparator a {@link org.apache.hadoop.hbase.filter.RegexStringComparator} object.
+   * @return a {@link java.lang.String} object.
    */
   public static String extractRegexPattern(RegexStringComparator comparator) {
     return Bytes.toString(comparator.getValue());

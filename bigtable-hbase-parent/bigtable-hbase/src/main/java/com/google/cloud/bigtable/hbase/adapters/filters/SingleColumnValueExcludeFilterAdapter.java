@@ -29,6 +29,9 @@ import java.io.IOException;
 
 /**
  * Adapter for the {@link org.apache.hadoop.hbase.filter.SingleColumnValueFilter}
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class SingleColumnValueExcludeFilterAdapter
     implements TypedFilterAdapter<SingleColumnValueExcludeFilter> {
@@ -41,10 +44,16 @@ public class SingleColumnValueExcludeFilterAdapter
 
   private final SingleColumnValueFilterAdapter delegateAdapter;
 
+  /**
+   * <p>Constructor for SingleColumnValueExcludeFilterAdapter.</p>
+   *
+   * @param delegateAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.SingleColumnValueFilterAdapter} object.
+   */
   public SingleColumnValueExcludeFilterAdapter(SingleColumnValueFilterAdapter delegateAdapter) {
     this.delegateAdapter = delegateAdapter;
   }
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, SingleColumnValueExcludeFilter filter)
       throws IOException {
@@ -80,6 +89,7 @@ public class SingleColumnValueExcludeFilterAdapter
         .build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, SingleColumnValueExcludeFilter filter) {

@@ -48,11 +48,16 @@ import java.util.Map;
 
 /**
  * An adapter for converting an HBase Filter into Bigtable RowFilter objects
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class FilterAdapter {
 
   /**
    * Create a new FilterAdapter
+   *
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter} object.
    */
   public static FilterAdapter buildAdapter() {
     FilterAdapter adapter = new FilterAdapter();
@@ -136,6 +141,11 @@ public class FilterAdapter {
 
   /**
    * Adapt an HBase filter into a Cloud Bigtable Rowfilter.
+   *
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   * @param filter a {@link org.apache.hadoop.hbase.filter.Filter} object.
+   * @return a {@link com.google.common.base.Optional} object.
+   * @throws java.io.IOException if any.
    */
   public Optional<RowFilter> adaptFilter(FilterAdapterContext context, Filter filter)
       throws IOException {
@@ -146,6 +156,9 @@ public class FilterAdapter {
   /**
    * Throw a new UnsupportedFilterException if the given filter cannot be adapted to bigtable
    * reader expressions.
+   *
+   * @param scan a {@link org.apache.hadoop.hbase.client.Scan} object.
+   * @param filter a {@link org.apache.hadoop.hbase.filter.Filter} object.
    */
   public void throwIfUnsupportedFilter(Scan scan, Filter filter) {
     List<FilterSupportStatus> filterSupportStatuses = new ArrayList<>();
@@ -158,9 +171,11 @@ public class FilterAdapter {
 
   /**
    * Recursively collect all unsupported filters contained in Filter (which may be a FilterList)
+   *
    * @param filter The filter to inspect
    * @param statuses A mutable list of status into which we will add any that indicate an
    * unsupported Filter was found.
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
    */
   public void collectUnsupportedStatuses(
       FilterAdapterContext context, Filter filter, List<FilterSupportStatus> statuses) {
@@ -175,6 +190,9 @@ public class FilterAdapter {
   /**
    * Get the adapter for the given Filter or throw an UnsupportedFilterException if one is not
    * available.
+   *
+   * @param filter a {@link org.apache.hadoop.hbase.filter.Filter} object.
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.filters.SingleFilterAdapter} object.
    */
   protected SingleFilterAdapter<?> getAdapterForFilterOrThrow(Filter filter) {
     if (adapterMap.containsKey(filter.getClass())) {

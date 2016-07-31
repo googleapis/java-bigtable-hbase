@@ -29,21 +29,39 @@ import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
 
 /**
  * Manages all Adapters
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public final class Adapters {
+  /** Constant <code>ROW_ADAPTER</code> */
   public static final RowAdapter ROW_ADAPTER = new RowAdapter();
+  /** Constant <code>APPEND_ADAPTER</code> */
   public static final AppendAdapter APPEND_ADAPTER = new AppendAdapter();
+  /** Constant <code>INCREMENT_ADAPTER</code> */
   public static final IncrementAdapter INCREMENT_ADAPTER = new IncrementAdapter();
+  /** Constant <code>DELETE_ADAPTER</code> */
   public static final DeleteAdapter DELETE_ADAPTER = new DeleteAdapter();
+  /** Constant <code>FILTER_ADAPTER</code> */
   public static final FilterAdapter FILTER_ADAPTER = FilterAdapter.buildAdapter();
+  /** Constant <code>SCAN_ADAPTER</code> */
   public static final ScanAdapter SCAN_ADAPTER =  new ScanAdapter(FILTER_ADAPTER);
+  /** Constant <code>BIGTABLE_RESULT_SCAN_ADAPTER</code> */
   public static final BigtableResultScannerAdapter BIGTABLE_RESULT_SCAN_ADAPTER =
       new BigtableResultScannerAdapter(ROW_ADAPTER);
+  /** Constant <code>BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER</code> */
   public static final BigtableWhileMatchResultScannerAdapter
       BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER =
       new BigtableWhileMatchResultScannerAdapter(ROW_ADAPTER);
+  /** Constant <code>GET_ADAPTER</code> */
   public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
 
+  /**
+   * <p>createMutationsAdapter.</p>
+   *
+   * @param putAdapter a {@link com.google.cloud.bigtable.hbase.adapters.PutAdapter} object.
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.MutationAdapter} object.
+   */
   public static MutationAdapter createMutationsAdapter(PutAdapter putAdapter) {
     return new MutationAdapter(
       DELETE_ADAPTER,
@@ -52,6 +70,13 @@ public final class Adapters {
       new UnsupportedOperationAdapter<Append>("append"));
   }
 
+  /**
+   * <p>createPutAdapter.</p>
+   *
+   * @param config a {@link org.apache.hadoop.conf.Configuration} object.
+   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.PutAdapter} object.
+   */
   public static PutAdapter createPutAdapter(Configuration config, BigtableOptions options) {
     boolean setClientTimestamp = !options.getRetryOptions().allowRetriesWithoutTimestamp();
     return new PutAdapter(config.getInt("hbase.client.keyvalue.maxsize", -1), setClientTimestamp);

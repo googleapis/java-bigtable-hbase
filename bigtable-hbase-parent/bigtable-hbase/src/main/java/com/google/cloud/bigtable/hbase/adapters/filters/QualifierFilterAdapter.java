@@ -31,6 +31,9 @@ import java.io.IOException;
 
 /**
  * Adapter for qualifier filters.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class QualifierFilterAdapter implements TypedFilterAdapter<QualifierFilter> {
 
@@ -44,6 +47,7 @@ public class QualifierFilterAdapter implements TypedFilterAdapter<QualifierFilte
           "QualifierFilter must have a BinaryComparator with any "
               + "CompareOp or a RegexStringComparator with a EQUAL COmpareOp.");
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, QualifierFilter filter)
       throws IOException {
@@ -153,6 +157,7 @@ public class QualifierFilterAdapter implements TypedFilterAdapter<QualifierFilte
         && CompareOp.EQUAL.equals(filter.getOperator());
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, QualifierFilter filter) {

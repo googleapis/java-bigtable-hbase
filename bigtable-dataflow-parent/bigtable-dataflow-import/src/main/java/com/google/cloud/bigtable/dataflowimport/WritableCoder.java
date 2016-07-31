@@ -47,18 +47,29 @@ import java.util.List;
  * </pre>
  *
  * @param <T> the type of elements handled by this coder
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class WritableCoder<T extends Writable> extends StandardCoder<T> {
   private static final long serialVersionUID = 0L;
 
   /**
    * Returns a {@code WritableCoder} instance for the provided element class.
-   * @param <T> the element type
+   *
+   * @param clazz a {@link java.lang.Class} object.
+   * @return a {@link com.google.cloud.bigtable.dataflowimport.WritableCoder} object.
    */
   public static <T extends Writable> WritableCoder<T> of(Class<T> clazz) {
     return new WritableCoder<>(clazz);
   }
 
+  /**
+   * <p>of.</p>
+   *
+   * @param classType a {@link java.lang.String} object.
+   * @return a {@link com.google.cloud.bigtable.dataflowimport.WritableCoder} object.
+   * @throws java.lang.ClassNotFoundException if any.
+   */
   @JsonCreator
   @SuppressWarnings("unchecked")
   public static WritableCoder<?> of(@JsonProperty("type") String classType)
@@ -73,15 +84,22 @@ public class WritableCoder<T extends Writable> extends StandardCoder<T> {
 
   private final Class<T> type;
 
+  /**
+   * <p>Constructor for WritableCoder.</p>
+   *
+   * @param type a {@link java.lang.Class} object.
+   */
   public WritableCoder(Class<T> type) {
     this.type = type;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void encode(T value, OutputStream outStream, Context context) throws IOException {
     value.write(new DataOutputStream(outStream));
   }
 
+  /** {@inheritDoc} */
   @Override
   public T decode(InputStream inStream, Context context) throws IOException {
     try {
@@ -93,11 +111,13 @@ public class WritableCoder<T extends Writable> extends StandardCoder<T> {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<Coder<?>> getCoderArguments() {
     return null;
   }
 
+  /** {@inheritDoc} */
   @Override
   public CloudObject asCloudObject() {
     CloudObject result = super.asCloudObject();
@@ -105,6 +125,7 @@ public class WritableCoder<T extends Writable> extends StandardCoder<T> {
     return result;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void verifyDeterministic() throws NonDeterministicException {
     throw new NonDeterministicException(this,

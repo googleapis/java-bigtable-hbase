@@ -36,6 +36,9 @@ import com.google.common.collect.ImmutableList;
 
 /**
  * Simple factory for creating OAuth Credential objects for use with Bigtable.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class CredentialFactory {
 
@@ -80,6 +83,10 @@ public class CredentialFactory {
   /**
    * Returns shared httpTransport instance; initializes httpTransport if it hasn't already been
    * initialized.
+   *
+   * @return a {@link com.google.api.client.http.HttpTransport} object.
+   * @throws java.io.IOException if any.
+   * @throws java.security.GeneralSecurityException if any.
    */
   public static synchronized HttpTransport getHttpTransport()
       throws IOException, GeneralSecurityException {
@@ -91,7 +98,12 @@ public class CredentialFactory {
 
   /**
    * Look up a Credentials object based on a configuration of credentials described in a
-   * {@link CredentialOptions}.
+   * {@link com.google.cloud.bigtable.config.CredentialOptions}.
+   *
+   * @param options a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
+   * @return a {@link com.google.auth.Credentials} object.
+   * @throws java.io.IOException if any.
+   * @throws java.security.GeneralSecurityException if any.
    */
   public static Credentials getCredentials(CredentialOptions options) throws IOException,
       GeneralSecurityException {
@@ -126,6 +138,10 @@ public class CredentialFactory {
    * Initializes OAuth2 credential using preconfigured ServiceAccount settings on the local
    * GCE VM. See: <a href="https://developers.google.com/compute/docs/authentication"
    * >Authenticating from Google Compute Engine</a>.
+   *
+   * @return a {@link com.google.auth.Credentials} object.
+   * @throws java.io.IOException if any.
+   * @throws java.security.GeneralSecurityException if any.
    */
   public static Credentials getCredentialFromMetadataServiceAccount()
       throws IOException, GeneralSecurityException {
@@ -139,6 +155,9 @@ public class CredentialFactory {
    *
    * @param serviceAccountEmail Email address of the service account associated with the keyfile.
    * @param privateKeyFile Full local path to private keyfile.
+   * @return a {@link com.google.auth.Credentials} object.
+   * @throws java.io.IOException if any.
+   * @throws java.security.GeneralSecurityException if any.
    */
   public static Credentials getCredentialFromPrivateKeyServiceAccount(
       String serviceAccountEmail, String privateKeyFile)
@@ -155,6 +174,9 @@ public class CredentialFactory {
    * @param serviceAccountEmail Email address of the service account associated with the keyfile.
    * @param privateKeyFile Full local path to private keyfile.
    * @param scopes List of well-formed desired scopes to use with the credential.
+   * @return a {@link com.google.auth.Credentials} object.
+   * @throws java.io.IOException if any.
+   * @throws java.security.GeneralSecurityException if any.
    */
   public static Credentials getCredentialFromPrivateKeyServiceAccount(
       String serviceAccountEmail, String privateKeyFile, List<String> scopes)
@@ -175,6 +197,10 @@ public class CredentialFactory {
    * credentials:
    * <a href="https://developers.google.com/accounts/docs/application-default-credentials" >
    * Application Default Credentials</a>.
+   *
+   * @return a {@link com.google.auth.Credentials} object.
+   * @throws java.io.IOException if any.
+   * @throws java.security.GeneralSecurityException if any.
    */
   public static Credentials getApplicationDefaultCredential() throws IOException,
       GeneralSecurityException {
@@ -184,6 +210,11 @@ public class CredentialFactory {
 
   /**
    * Initializes OAuth2 application default credentials based on an inputStream.
+   *
+   * @param inputStream a {@link java.io.InputStream} object.
+   * @return a {@link com.google.auth.Credentials} object.
+   * @throws java.io.IOException if any.
+   * @throws java.security.GeneralSecurityException if any.
    */
   public static Credentials getInputStreamCredential(InputStream inputStream) throws IOException,
       GeneralSecurityException {

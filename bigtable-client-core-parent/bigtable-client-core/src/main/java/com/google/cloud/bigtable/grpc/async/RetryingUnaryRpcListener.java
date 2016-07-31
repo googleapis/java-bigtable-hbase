@@ -26,7 +26,10 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 /**
- * A {@link AsyncFunction} that retries a {@link BigtableAsyncRpc} request.
+ * A {@link com.google.common.util.concurrent.AsyncFunction} that retries a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} request.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class RetryingUnaryRpcListener<RequestT, ResponseT>
     extends AbstractRetryingRpcListener<RequestT, ResponseT, ResponseT> {
@@ -35,18 +38,30 @@ public class RetryingUnaryRpcListener<RequestT, ResponseT>
 
   private ResponseT value;
 
+  /**
+   * <p>Constructor for RetryingUnaryRpcListener.</p>
+   *
+   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
+   * @param request a RequestT object.
+   * @param retryableRpc a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
+   * @param callOptions a {@link io.grpc.CallOptions} object.
+   * @param executorService a {@link java.util.concurrent.ScheduledExecutorService} object.
+   * @param metadata a {@link io.grpc.Metadata} object.
+   */
   public RetryingUnaryRpcListener(RetryOptions retryOptions, RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, CallOptions callOptions,
       ScheduledExecutorService executorService, Metadata metadata) {
     super(retryOptions, request, retryableRpc, callOptions, executorService, metadata);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onMessage(ResponseT message) {
     value = message;
     completionFuture.set(value);
   }
 
+  /** {@inheritDoc} */
   @Override
   protected void onOK() {
     if (value == null) {

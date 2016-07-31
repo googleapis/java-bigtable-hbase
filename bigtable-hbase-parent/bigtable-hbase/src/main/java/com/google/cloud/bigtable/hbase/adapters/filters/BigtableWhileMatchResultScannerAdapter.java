@@ -30,8 +30,11 @@ import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import java.io.IOException;
 
 /**
- * Adapt a Bigtable ResultScanner to an HBase Result Scanner. Stops when {@link WhileMatchFilter}
+ * Adapt a Bigtable ResultScanner to an HBase Result Scanner. Stops when {@link org.apache.hadoop.hbase.filter.WhileMatchFilter}
  * filters out the remaining rows.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableWhileMatchResultScannerAdapter {
 
@@ -40,10 +43,21 @@ public class BigtableWhileMatchResultScannerAdapter {
 
   final ResponseAdapter<Row, Result> rowAdapter;
 
+  /**
+   * <p>Constructor for BigtableWhileMatchResultScannerAdapter.</p>
+   *
+   * @param rowAdapter a {@link com.google.cloud.bigtable.hbase.adapters.ResponseAdapter} object.
+   */
   public BigtableWhileMatchResultScannerAdapter(ResponseAdapter<Row, Result> rowAdapter) {
     this.rowAdapter = rowAdapter;
   }
 
+  /**
+   * <p>adapt.</p>
+   *
+   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
+   * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
+   */
   public ResultScanner adapt(
       final com.google.cloud.bigtable.grpc.scanner.ResultScanner<Row> bigtableResultScanner) {
     return new AbstractClientScanner() {

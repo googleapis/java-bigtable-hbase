@@ -30,17 +30,21 @@ import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 /**
- * An adapter for row key filters using comparators and operators. 
+ * An adapter for row key filters using comparators and operators.
  * <p>
- * Note that regular expression comparators are passed as is. This means some 
- * users may need to modify their queries to adhere to the RE2 syntax. 
+ * Note that regular expression comparators are passed as is. This means some
+ * users may need to modify their queries to adhere to the RE2 syntax.
  * <p>
- * Currently only the regular expression operator with the EQUAL operator is 
+ * Currently only the regular expression operator with the EQUAL operator is
  * supported.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class RowFilterAdapter implements 
   TypedFilterAdapter<org.apache.hadoop.hbase.filter.RowFilter> {
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context,
       org.apache.hadoop.hbase.filter.RowFilter filter) throws IOException {
@@ -67,6 +71,7 @@ public class RowFilterAdapter implements
     return builder.build();
   }
   
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, 

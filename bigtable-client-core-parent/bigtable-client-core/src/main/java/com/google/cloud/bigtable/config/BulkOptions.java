@@ -23,11 +23,15 @@ import com.google.common.base.Preconditions;
 
 /**
  * An immutable class providing access to bulk related configuration options for Bigtable.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BulkOptions implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
+  /** Constant <code>BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT=2</code> */
   public static final int BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT = 2;
 
   /**
@@ -46,10 +50,12 @@ public class BulkOptions implements Serializable {
 
 
   // Default rpc count per channel.
+  /** Constant <code>BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT=50</code> */
   public static final int BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT = 50;
 
   // This is the maximum accumulated size of uncompleted requests that we allow before throttling.
   // Default to 10% of available memory with a max of 1GB.
+  /** Constant <code>BIGTABLE_MAX_MEMORY_DEFAULT=(long) Math.min(1 &lt;&lt; 30, (Runtime.getRuntime().maxMemory() * 0.1d))</code> */
   public static final long BIGTABLE_MAX_MEMORY_DEFAULT =
       (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
 
@@ -159,30 +165,61 @@ public class BulkOptions implements Serializable {
     this.maxMemory = maxMemory;
   }
 
+  /**
+   * <p>Getter for the field <code>asyncMutatorCount</code>.</p>
+   *
+   * @return a int.
+   */
   public int getAsyncMutatorCount() {
     return asyncMutatorCount;
   }
 
+  /**
+   * <p>useBulkApi.</p>
+   *
+   * @return a boolean.
+   */
   public boolean useBulkApi() {
     return useBulkApi;
   }
 
+  /**
+   * <p>Getter for the field <code>bulkMaxRowKeyCount</code>.</p>
+   *
+   * @return a int.
+   */
   public int getBulkMaxRowKeyCount() {
     return bulkMaxRowKeyCount;
   }
 
+  /**
+   * <p>Getter for the field <code>bulkMaxRequestSize</code>.</p>
+   *
+   * @return a long.
+   */
   public long getBulkMaxRequestSize() {
     return bulkMaxRequestSize;
   }
 
+  /**
+   * <p>Getter for the field <code>maxInflightRpcs</code>.</p>
+   *
+   * @return a int.
+   */
   public int getMaxInflightRpcs() {
     return maxInflightRpcs;
   }
 
+  /**
+   * <p>Getter for the field <code>maxMemory</code>.</p>
+   *
+   * @return a long.
+   */
   public long getMaxMemory() {
     return maxMemory;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (obj == this) {
@@ -200,6 +237,7 @@ public class BulkOptions implements Serializable {
         && (maxMemory == other.maxMemory);
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -213,6 +251,11 @@ public class BulkOptions implements Serializable {
         .toString();
   }
 
+  /**
+   * <p>toBuilder.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.config.BulkOptions.Builder} object.
+   */
   public Builder toBuilder() {
     return new Builder(this);
   }

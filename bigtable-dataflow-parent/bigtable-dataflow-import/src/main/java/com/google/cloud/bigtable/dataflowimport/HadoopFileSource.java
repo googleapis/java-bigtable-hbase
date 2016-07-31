@@ -65,7 +65,7 @@ import javax.annotation.Nullable;
  *
  * <p>To read a {@link com.google.cloud.dataflow.sdk.values.PCollection} of
  * {@link com.google.cloud.dataflow.sdk.values.KV} key-value pairs from one or more
- * Hadoop files, use {@link HadoopFileSource#from} to specify the path(s) of the files to
+ * Hadoop files, use {@link com.google.cloud.bigtable.dataflowimport.HadoopFileSource#from} to specify the path(s) of the files to
  * read, the Hadoop {@link org.apache.hadoop.mapreduce.lib.input.FileInputFormat}, the
  * key class and the value class.
  *
@@ -80,7 +80,7 @@ import javax.annotation.Nullable;
  * }
  * </pre>
  *
- * <p>The {@link HadoopFileSource#readFrom} method is a convenience method
+ * <p>The {@link com.google.cloud.bigtable.dataflowimport.HadoopFileSource#readFrom} method is a convenience method
  * that returns a read transform. For example:
  *
  * <pre>
@@ -91,12 +91,14 @@ import javax.annotation.Nullable;
  * </pre>
  *
  * Implementation note: Since Hadoop's {@link org.apache.hadoop.mapreduce.lib.input.FileInputFormat}
- * determines the input splits, this class extends {@link BoundedSource} rather than
+ * determines the input splits, this class extends {@link com.google.cloud.dataflow.sdk.io.BoundedSource} rather than
  * {@link com.google.cloud.dataflow.sdk.io.OffsetBasedSource}, since the latter
  * dictates input splits.
-
+ *
  * @param <K> The type of keys to be read from the source.
  * @param <V> The type of values to be read from the source.
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   private static final long serialVersionUID = 0L;
@@ -121,6 +123,12 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    * with the given file name or pattern ("glob") using the given Hadoop
    * {@link org.apache.hadoop.mapreduce.lib.input.FileInputFormat},
    * with key-value types specified by the given key class and value class.
+   *
+   * @param filepattern a {@link java.lang.String} object.
+   * @param formatClass a {@link java.lang.Class} object.
+   * @param keyClass a {@link java.lang.Class} object.
+   * @param valueClass a {@link java.lang.Class} object.
+   * @return a {@link com.google.cloud.dataflow.sdk.io.Read.Bounded} object.
    */
   public static <K, V, T extends FileInputFormat<K, V>> Read.Bounded<KV<K, V>> readFrom(
       String filepattern, Class<T> formatClass, Class<K> keyClass, Class<V> valueClass) {
@@ -131,6 +139,12 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    * Creates a {@code HadoopFileSource} that reads from the given file name or pattern ("glob")
    * using the given Hadoop {@link org.apache.hadoop.mapreduce.lib.input.FileInputFormat},
    * with key-value types specified by the given key class and value class.
+   *
+   * @param filepattern a {@link java.lang.String} object.
+   * @param formatClass a {@link java.lang.Class} object.
+   * @param keyClass a {@link java.lang.Class} object.
+   * @param valueClass a {@link java.lang.Class} object.
+   * @return a {@link com.google.cloud.bigtable.dataflowimport.HadoopFileSource} object.
    */
   public static <K, V, T extends FileInputFormat<K, V>> HadoopFileSource<K, V> from(
       String filepattern, Class<T> formatClass, Class<K> keyClass, Class<V> valueClass) {
@@ -144,6 +158,14 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    * with key-value types specified by the given key class and value class. The {@code source}
    * also returns a user-provided output coder and passes on additonal configuration parameters
    * to the deserializer.
+   *
+   * @param filepattern a {@link java.lang.String} object.
+   * @param formatClass a {@link java.lang.Class} object.
+   * @param keyClass a {@link java.lang.Class} object.
+   * @param valueClass a {@link java.lang.Class} object.
+   * @param overrideOutputCoder a {@link com.google.cloud.dataflow.sdk.coders.Coder} object.
+   * @param serializationProperties a {@link java.util.Map} object.
+   * @return a {@link com.google.cloud.bigtable.dataflowimport.HadoopFileSource} object.
    */
   public static <K, V, T extends FileInputFormat<K, V>> HadoopFileSource<K, V> from(
       String filepattern, Class<T> formatClass, Class<K> keyClass, Class<V> valueClass,
@@ -166,6 +188,8 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    * <p>When {@code isRemoteFile} is {@code true}, this class would not try to access
    * google cloud storage from off the cloud, sidestepping the problem. When the program is staged
    * on cloud this flag is not carried over and file accesses would be allowed.
+   *
+   * @param isRemoteFile a boolean.
    */
   public static void setIsRemoteFileFromLaunchSite(boolean isRemoteFile) {
     isRemoteFileFromLaunchSite = isRemoteFile;
@@ -199,22 +223,43 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
         ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(serializationProperties);
   }
 
+  /**
+   * <p>Getter for the field <code>filepattern</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
+   */
   public String getFilepattern() {
     return filepattern;
   }
 
+  /**
+   * <p>Getter for the field <code>formatClass</code>.</p>
+   *
+   * @return a {@link java.lang.Class} object.
+   */
   public Class<? extends FileInputFormat<?, ?>> getFormatClass() {
     return formatClass;
   }
 
+  /**
+   * <p>Getter for the field <code>keyClass</code>.</p>
+   *
+   * @return a {@link java.lang.Class} object.
+   */
   public Class<K> getKeyClass() {
     return keyClass;
   }
 
+  /**
+   * <p>Getter for the field <code>valueClass</code>.</p>
+   *
+   * @return a {@link java.lang.Class} object.
+   */
   public Class<V> getValueClass() {
     return valueClass;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void validate() {
     Preconditions.checkNotNull(filepattern,
@@ -227,6 +272,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
         "need to set the value class of a HadoopFileSource");
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<? extends BoundedSource<KV<K, V>>> splitIntoBundles(long desiredBundleSizeBytes,
       PipelineOptions options) throws Exception {
@@ -260,6 +306,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     return createFormat(job).getSplits(job);
   }
 
+  /** {@inheritDoc} */
   @Override
   public BoundedReader<KV<K, V>> createReader(PipelineOptions options) throws IOException {
     this.validate();
@@ -272,6 +319,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public Coder<KV<K, V>> getDefaultOutputCoder() {
     if (overrideOutputCoder != null) {
@@ -306,6 +354,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
 
   // BoundedSource
 
+  /** {@inheritDoc} */
   @Override
   public long getEstimatedSizeBytes(PipelineOptions options) {
     if (isRemoteFileFromLaunchSite) {
@@ -335,6 +384,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     return stat;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean producesSortedKeys(PipelineOptions options) throws Exception {
     return false;

@@ -24,29 +24,48 @@ import com.google.common.collect.ImmutableList;
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
 
+/**
+ * <p>RetryingCollectingClientCallListener class.</p>
+ *
+ * @author sduskis
+ * @version $Id: $Id
+ */
 public class RetryingCollectingClientCallListener<RequestT, ResponseT>
     extends AbstractRetryingRpcListener<RequestT, ResponseT, List<ResponseT>> {
 
   private ImmutableList.Builder<ResponseT> buffer;
 
+  /**
+   * <p>Constructor for RetryingCollectingClientCallListener.</p>
+   *
+   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
+   * @param request a RequestT object.
+   * @param retryableRpc a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
+   * @param callOptions a {@link io.grpc.CallOptions} object.
+   * @param executorService a {@link java.util.concurrent.ScheduledExecutorService} object.
+   * @param metadata a {@link io.grpc.Metadata} object.
+   */
   public RetryingCollectingClientCallListener(RetryOptions retryOptions, RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, CallOptions callOptions,
       ScheduledExecutorService executorService, Metadata metadata) {
     super(retryOptions, request, retryableRpc, callOptions, executorService, metadata);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run() {
     buffer = new ImmutableList.Builder<>();
     super.run();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onMessage(ResponseT message) {
     call.request(1);
     buffer.add(message);
   }
 
+  /** {@inheritDoc} */
   @Override
   protected void onOK() {
     completionFuture.set(buffer.build());

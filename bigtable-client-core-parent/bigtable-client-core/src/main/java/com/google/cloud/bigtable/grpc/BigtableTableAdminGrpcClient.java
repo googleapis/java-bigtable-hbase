@@ -29,40 +29,54 @@ import io.grpc.Channel;
 
 /**
  * A gRPC client for accessing the Bigtable Table Admin API.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   private final BigtableTableAdminGrpc.BigtableTableAdminBlockingStub blockingStub;
 
+  /**
+   * <p>Constructor for BigtableTableAdminGrpcClient.</p>
+   *
+   * @param channel a {@link io.grpc.Channel} object.
+   */
   public BigtableTableAdminGrpcClient(Channel channel) {
     blockingStub = BigtableTableAdminGrpc.newBlockingStub(channel);
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListTablesResponse listTables(ListTablesRequest request) {
     return blockingStub.listTables(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Table getTable(GetTableRequest request) {
     return blockingStub.getTable(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void createTable(CreateTableRequest request) {
     blockingStub.createTable(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void modifyColumnFamily(ModifyColumnFamiliesRequest request) {
     blockingStub.modifyColumnFamilies(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void deleteTable(DeleteTableRequest request) {
     blockingStub.deleteTable(request);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void dropRowRange(DropRowRangeRequest request) {
     blockingStub.dropRowRange(request);

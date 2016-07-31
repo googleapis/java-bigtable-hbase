@@ -27,6 +27,9 @@ import java.io.IOException;
 
 /**
  * Adapter to convert a ColumnPaginationFilter to a RowFilter.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ColumnPaginationFilterAdapter implements TypedFilterAdapter<ColumnPaginationFilter> {
 
@@ -35,6 +38,7 @@ public class ColumnPaginationFilterAdapter implements TypedFilterAdapter<ColumnP
           "ColumnPaginationFilter requires specifying a single column family for the Scan "
               + "when specifying a qualifier as the column offset.");
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, ColumnPaginationFilter filter)
       throws IOException {
@@ -82,6 +86,7 @@ public class ColumnPaginationFilterAdapter implements TypedFilterAdapter<ColumnP
     return RowFilter.newBuilder().setChain(builder).build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context,

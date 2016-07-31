@@ -25,6 +25,9 @@ import java.util.List;
 
 /**
  * A class that provides untyped-to-typed access to TypedFilterAdapter instances.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class SingleFilterAdapter<T extends Filter> {
 
@@ -32,12 +35,25 @@ public class SingleFilterAdapter<T extends Filter> {
   private final TypedFilterAdapter<T> adapter;
   private final UnsupportedStatusCollector<T> unsupportedStatusCollector;
 
+  /**
+   * <p>Constructor for SingleFilterAdapter.</p>
+   *
+   * @param filterClass a {@link java.lang.Class} object.
+   * @param adapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.TypedFilterAdapter} object.
+   */
   public SingleFilterAdapter(
       Class<T> filterClass,
       TypedFilterAdapter<T> adapter) {
     this(filterClass, adapter, new SingleFilterStatusCollector<>(adapter));
   }
 
+  /**
+   * <p>Constructor for SingleFilterAdapter.</p>
+   *
+   * @param filterClass a {@link java.lang.Class} object.
+   * @param adapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.TypedFilterAdapter} object.
+   * @param unsupportedStatusCollector a {@link com.google.cloud.bigtable.hbase.adapters.filters.UnsupportedStatusCollector} object.
+   */
   public SingleFilterAdapter(
       Class<T> filterClass,
       TypedFilterAdapter<T> adapter,
@@ -49,6 +65,11 @@ public class SingleFilterAdapter<T extends Filter> {
 
   /**
    * Adapt the untyped hbaseFilter instance into a RowFilter.
+   *
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   * @param hbaseFilter a {@link org.apache.hadoop.hbase.filter.Filter} object.
+   * @return a {@link com.google.bigtable.v2.RowFilter} object.
+   * @throws java.io.IOException if any.
    */
   public RowFilter adapt(FilterAdapterContext context, Filter hbaseFilter)
       throws IOException {
@@ -58,6 +79,10 @@ public class SingleFilterAdapter<T extends Filter> {
 
   /**
    * Determine if the untyped filter is supported.
+   *
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   * @param hbaseFilter a {@link org.apache.hadoop.hbase.filter.Filter} object.
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterSupportStatus} object.
    */
   public FilterSupportStatus isSupported(FilterAdapterContext context, Filter hbaseFilter) {
     Preconditions.checkArgument(isFilterAProperSublcass(hbaseFilter));
@@ -66,6 +91,10 @@ public class SingleFilterAdapter<T extends Filter> {
 
   /**
    * Collect unsupported status objects into the given list.
+   *
+   * @param context a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext} object.
+   * @param filter a {@link org.apache.hadoop.hbase.filter.Filter} object.
+   * @param statuses a {@link java.util.List} object.
    */
   public void collectUnsupportedStatuses(
       FilterAdapterContext context,
@@ -83,6 +112,12 @@ public class SingleFilterAdapter<T extends Filter> {
     return (T)filter;
   }
 
+  /**
+   * <p>getTypedFilter.</p>
+   *
+   * @param filter a {@link org.apache.hadoop.hbase.filter.Filter} object.
+   * @return a T object.
+   */
   protected T getTypedFilter(Filter filter) {
     if (isFilterAProperSublcass(filter)) {
       return unchecked(filter);
@@ -94,6 +129,12 @@ public class SingleFilterAdapter<T extends Filter> {
             filter.getClass().getCanonicalName()));
   }
 
+  /**
+   * <p>isFilterAProperSublcass.</p>
+   *
+   * @param filter a {@link org.apache.hadoop.hbase.filter.Filter} object.
+   * @return a boolean.
+   */
   protected boolean isFilterAProperSublcass(Filter filter) {
     return filterClass.isAssignableFrom(filter.getClass());
   }

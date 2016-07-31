@@ -31,10 +31,14 @@ import java.util.NavigableMap;
 
 /**
  * Adapter for HBase Increment operations to Bigtable ReadModifyWriteRowRequest.Builder.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class IncrementAdapter
     implements OperationAdapter<Increment, ReadModifyWriteRowRequest.Builder>{
 
+  /** {@inheritDoc} */
   @Override
   public ReadModifyWriteRowRequest.Builder adapt(Increment operation) {
     if (!operation.getTimeRange().isAllTime()) {

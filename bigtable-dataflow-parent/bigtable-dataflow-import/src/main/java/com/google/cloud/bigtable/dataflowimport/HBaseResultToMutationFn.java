@@ -76,6 +76,7 @@ class HBaseResultToMutationFn
     logger = log;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void processElement(ProcessContext context) throws Exception {
     KV<ImmutableBytesWritable, Result> kv = context.element();

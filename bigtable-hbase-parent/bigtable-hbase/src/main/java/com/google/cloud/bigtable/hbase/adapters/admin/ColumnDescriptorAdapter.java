@@ -37,8 +37,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Adapt a single instance of an HBase {@link HColumnDescriptor} to
- * an instance of {@link ColumnFamily}
+ * Adapt a single instance of an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor} to
+ * an instance of {@link com.google.bigtable.admin.v2.ColumnFamily}
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ColumnDescriptorAdapter {
 
@@ -83,6 +86,9 @@ public class ColumnDescriptorAdapter {
 
   /**
    * Build a list of configuration keys that we don't know how to handle
+   *
+   * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
+   * @return a {@link java.util.List} object.
    */
   public static List<String> getUnknownFeatures(HColumnDescriptor columnDescriptor) {
     List<String> unknownFeatures = new ArrayList<String>();
@@ -99,6 +105,9 @@ public class ColumnDescriptorAdapter {
 
   /**
    * Build a Map of configuration keys and values describing configuration values we don't support.
+   *
+   * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
+   * @return a {@link java.util.Map} object.
    */
   public static Map<String, String> getUnsupportedFeatures(HColumnDescriptor columnDescriptor) {
     Map<String, String> unsupportedConfiguration = new HashMap<String, String>();
@@ -115,8 +124,10 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * Throw an {@link UnsupportedOperationException} if the column descriptor cannot be adapted due
+   * Throw an {@link java.lang.UnsupportedOperationException} if the column descriptor cannot be adapted due
    * to it having unknown configuration keys.
+   *
+   * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
    */
   public static void throwIfRequestingUnknownFeatures(HColumnDescriptor columnDescriptor) {
     List<String> unknownFeatures = getUnknownFeatures(columnDescriptor);
@@ -129,8 +140,10 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * Throw an {@link UnsupportedOperationException} if the column descriptor cannot be adapted due
+   * Throw an {@link java.lang.UnsupportedOperationException} if the column descriptor cannot be adapted due
    * to it having configuration values that are not supported.
+   *
+   * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
    */
   public static void throwIfRequestingUnsupportedFeatures(HColumnDescriptor columnDescriptor) {
     Map<String, String> unsupportedConfiguration = getUnsupportedFeatures(columnDescriptor);
@@ -148,7 +161,10 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * Construct an Bigtable {@link GcRule} from the given column descriptor.
+   * Construct an Bigtable {@link com.google.bigtable.admin.v2.GcRule} from the given column descriptor.
+   *
+   * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
+   * @return a {@link com.google.bigtable.admin.v2.GcRule} object.
    */
   public static GcRule buildGarbageCollectionRule(HColumnDescriptor columnDescriptor) {
     int maxVersions = columnDescriptor.getMaxVersions();
@@ -244,6 +260,12 @@ public class ColumnDescriptorAdapter {
     }
   }
 
+  /**
+   * <p>processIntersection.</p>
+   *
+   * @param gcRule a {@link com.google.bigtable.admin.v2.GcRule} object.
+   * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
+   */
   protected static void processIntersection(GcRule gcRule, HColumnDescriptor columnDescriptor) {
     // minVersions and maxAge are set.
     List<GcRule> intersectionRules = gcRule.getIntersection().getRulesList();
@@ -279,12 +301,15 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * <p>Adapt a single instance of an HBase {@link HColumnDescriptor} to
+   * <p>Adapt a single instance of an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor} to
    * an instance of {@link com.google.bigtable.admin.v2.ColumnFamily.Builder}.</p>
    *
    * <p>NOTE: This method does not set the name of the ColumnFamily.Builder.  The assumption is
    * that the CreateTableRequest or CreateColumFamilyRequest takes care of the naming.  As of now
    * (3/11/2015), the server insists on having a blank name.</p>
+   *
+   * @param columnDescriptor a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
+   * @return a {@link com.google.bigtable.admin.v2.ColumnFamily.Builder} object.
    */
   public ColumnFamily.Builder adapt(HColumnDescriptor columnDescriptor) {
     throwIfRequestingUnknownFeatures(columnDescriptor);
@@ -299,8 +324,12 @@ public class ColumnDescriptorAdapter {
   }
 
   /**
-   * Convert a Bigtable {@link ColumnFamily} to an HBase {@link HColumnDescriptor}.
+   * Convert a Bigtable {@link com.google.bigtable.admin.v2.ColumnFamily} to an HBase {@link org.apache.hadoop.hbase.HColumnDescriptor}.
    * See {@link #convertGarbageCollectionRule(GcRule, HColumnDescriptor)} for more info.
+   *
+   * @param familyName a {@link java.lang.String} object.
+   * @param columnFamily a {@link com.google.bigtable.admin.v2.ColumnFamily} object.
+   * @return a {@link org.apache.hadoop.hbase.HColumnDescriptor} object.
    */
   public HColumnDescriptor adapt(String familyName, ColumnFamily columnFamily) {
     HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(familyName);

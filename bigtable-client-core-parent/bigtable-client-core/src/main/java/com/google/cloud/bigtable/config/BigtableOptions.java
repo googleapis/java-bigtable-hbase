@@ -26,6 +26,9 @@ import com.google.common.base.Strings;
 
 /**
  * An immutable class providing access to configuration options for Bigtable.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 //TODO: Perhaps break this down into smaller options objects?
 public class BigtableOptions implements Serializable {
@@ -35,15 +38,21 @@ public class BigtableOptions implements Serializable {
   // If set to a host:port address, this environment variable will configure the client to connect
   // to a Bigtable emulator running at the given address with plaintext negotiation.
   // TODO: Link to emulator documentation when available.
+  /** Constant <code>BIGTABLE_EMULATOR_HOST_ENV_VAR="bigtableadmin.googleapis.com"</code> */
   public static final String BIGTABLE_EMULATOR_HOST_ENV_VAR = "BIGTABLE_EMULATOR_HOST";
 
+  /** Constant <code>BIGTABLE_TABLE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
   public static final String BIGTABLE_TABLE_ADMIN_HOST_DEFAULT =
       "bigtableadmin.googleapis.com";
+  /** Constant <code>BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT="bigtableadmin.googleapis.com"</code> */
   public static final String BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT =
       "bigtableadmin.googleapis.com";
+  /** Constant <code>BIGTABLE_DATA_HOST_DEFAULT="bigtable.googleapis.com"</code> */
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
+  /** Constant <code>BIGTABLE_PORT_DEFAULT=443</code> */
   public static final int BIGTABLE_PORT_DEFAULT = 443;
 
+  /** Constant <code>BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT=getDefaultDataChannelCount()</code> */
   public static final int BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT = getDefaultDataChannelCount();
 
   private static final Logger LOG = new Logger(BigtableOptions.class);
@@ -312,32 +321,63 @@ public class BigtableOptions implements Serializable {
         instanceAdminHost);
   }
 
+  /**
+   * <p>Getter for the field <code>projectId</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
+   */
   public String getProjectId() {
     return projectId;
   }
 
+  /**
+   * <p>Getter for the field <code>dataHost</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
+   */
   public String getDataHost() {
     return dataHost;
   }
 
+  /**
+   * <p>Getter for the field <code>tableAdminHost</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
+   */
   public String getTableAdminHost() {
     return tableAdminHost;
   }
 
+  /**
+   * <p>Getter for the field <code>instanceAdminHost</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
+   */
   public String getInstanceAdminHost() {
     return instanceAdminHost;
   }
 
+  /**
+   * <p>Getter for the field <code>instanceId</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
+   */
   public String getInstanceId() {
     return instanceId;
   }
 
+  /**
+   * <p>Getter for the field <code>port</code>.</p>
+   *
+   * @return a int.
+   */
   public int getPort() {
     return port;
   }
 
   /**
    * Get the credential this object was constructed with. May be null.
+   *
    * @return Null to indicate no credentials, otherwise, the Credentials object.
    */
   public CredentialOptions getCredentialOptions() {
@@ -347,6 +387,8 @@ public class BigtableOptions implements Serializable {
   /**
    * Gets the user-agent to be appended to User-Agent header when creating new streams
    * for the channel.
+   *
+   * @return a {@link java.lang.String} object.
    */
   public String getUserAgent() {
     return userAgent;
@@ -354,6 +396,8 @@ public class BigtableOptions implements Serializable {
 
   /**
    * Options controlling retries.
+   *
+   * @return a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    */
   public RetryOptions getRetryOptions() {
     return retryOptions;
@@ -361,27 +405,50 @@ public class BigtableOptions implements Serializable {
 
   /**
    * The number of data channels to create.
+   *
+   * @return a int.
    */
   public int getChannelCount() {
     return dataChannelCount;
   }
 
+  /**
+   * <p>Getter for the field <code>instanceName</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.grpc.BigtableInstanceName} object.
+   */
   public BigtableInstanceName getInstanceName() {
     return instanceName;
   }
 
+  /**
+   * <p>Getter for the field <code>bulkOptions</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.config.BulkOptions} object.
+   */
   public BulkOptions getBulkOptions() {
     return bulkOptions;
   }
 
+  /**
+   * <p>usePlaintextNegotiation.</p>
+   *
+   * @return a boolean.
+   */
   public boolean usePlaintextNegotiation() {
     return usePlaintextNegotiation;
   }
 
+  /**
+   * <p>Getter for the field <code>callOptionsConfig</code>.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.config.CallOptionsConfig} object.
+   */
   public CallOptionsConfig getCallOptionsConfig() {
     return callOptionsConfig;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
     if (obj == null || obj.getClass() != BigtableOptions.class) {
@@ -406,6 +473,7 @@ public class BigtableOptions implements Serializable {
         && Objects.equals(callOptionsConfig, other.callOptionsConfig);
   }
 
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -426,6 +494,11 @@ public class BigtableOptions implements Serializable {
         .toString();
   }
 
+  /**
+   * <p>toBuilder.</p>
+   *
+   * @return a {@link com.google.cloud.bigtable.config.BigtableOptions.Builder} object.
+   */
   public Builder toBuilder() {
     return new Builder(this);
   }

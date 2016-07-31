@@ -25,9 +25,13 @@ import java.io.IOException;
 /**
  * Adapter for the ColumnCountGetFilter.
  * This filter does not work properly with Scans.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ColumnCountGetFilterAdapter implements TypedFilterAdapter<ColumnCountGetFilter> {
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, ColumnCountGetFilter filter)
       throws IOException {
@@ -44,6 +48,7 @@ public class ColumnCountGetFilterAdapter implements TypedFilterAdapter<ColumnCou
         .build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(FilterAdapterContext context,
       ColumnCountGetFilter filter) {

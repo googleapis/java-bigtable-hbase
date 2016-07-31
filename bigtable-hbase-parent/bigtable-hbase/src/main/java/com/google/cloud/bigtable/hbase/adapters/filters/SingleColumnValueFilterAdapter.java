@@ -30,6 +30,9 @@ import com.google.cloud.bigtable.util.ByteStringer;
 
 /**
  * Adapt SingleColumnValueFilter instances into bigtable RowFilters.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class SingleColumnValueFilterAdapter implements TypedFilterAdapter<SingleColumnValueFilter> {
 
@@ -38,10 +41,16 @@ public class SingleColumnValueFilterAdapter implements TypedFilterAdapter<Single
           .setCellsPerColumnLimitFilter(Integer.MAX_VALUE)
           .build();
   private final ValueFilterAdapter delegateAdapter;
+  /**
+   * <p>Constructor for SingleColumnValueFilterAdapter.</p>
+   *
+   * @param delegateAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.ValueFilterAdapter} object.
+   */
   public SingleColumnValueFilterAdapter(ValueFilterAdapter delegateAdapter) {
     this.delegateAdapter = delegateAdapter;
   }
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, SingleColumnValueFilter filter)
       throws IOException {
@@ -120,6 +129,7 @@ public class SingleColumnValueFilterAdapter implements TypedFilterAdapter<Single
         .build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, SingleColumnValueFilter filter) {

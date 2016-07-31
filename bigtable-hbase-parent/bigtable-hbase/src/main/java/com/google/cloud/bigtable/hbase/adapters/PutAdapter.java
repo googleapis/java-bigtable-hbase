@@ -35,21 +35,36 @@ import java.util.Map.Entry;
 
 /**
  * Adapt an HBase Put Operation into an Bigtable RowMutation
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builder> {
   private final int maxKeyValueSize;
   private final boolean setClientTimestamp;
 
+  /**
+   * <p>Constructor for PutAdapter.</p>
+   *
+   * @param maxKeyValueSize a int.
+   */
   public PutAdapter(int maxKeyValueSize) {
     this.maxKeyValueSize = maxKeyValueSize;
     this.setClientTimestamp = true;
   }
 
+  /**
+   * <p>Constructor for PutAdapter.</p>
+   *
+   * @param maxKeyValueSize a int.
+   * @param setClientTimestamp a boolean.
+   */
   public PutAdapter(int maxKeyValueSize, boolean setClientTimestamp) {
     this.maxKeyValueSize = maxKeyValueSize;
     this.setClientTimestamp = setClientTimestamp;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MutateRowRequest.Builder adapt(Put operation) {
 
@@ -108,6 +123,13 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
         .addAllMutations(mutations);
   }
 
+  /**
+   * <p>adapt.</p>
+   *
+   * @param request a {@link com.google.bigtable.v2.MutateRowRequest} object.
+   * @return a {@link org.apache.hadoop.hbase.client.Put} object.
+   * @throws java.io.IOException if any.
+   */
   public Put adapt(MutateRowRequest request) throws IOException {
     if (request.getMutationsCount() == 0) {
       throw new IllegalArgumentException("No columns to insert");

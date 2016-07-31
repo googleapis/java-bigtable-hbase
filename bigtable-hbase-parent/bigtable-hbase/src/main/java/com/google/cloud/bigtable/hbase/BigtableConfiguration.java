@@ -22,6 +22,9 @@ import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 
 /**
  * This class provides a simplified mechanism of creating a programmatic Bigtable Connection.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableConfiguration {
   private static final String[] CONNECTION_CLASS_NAMES = {
@@ -44,6 +47,13 @@ public class BigtableConfiguration {
     return null;
   }
 
+  /**
+   * <p>configure.</p>
+   *
+   * @param projectId a {@link java.lang.String} object.
+   * @param instanceId a {@link java.lang.String} object.
+   * @return a {@link org.apache.hadoop.conf.Configuration} object.
+   */
   public static Configuration configure(String projectId, String instanceId) {
     Configuration config = new Configuration(false);
     config.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
@@ -51,10 +61,23 @@ public class BigtableConfiguration {
     return config;
   }
 
+  /**
+   * <p>connect.</p>
+   *
+   * @param projectId a {@link java.lang.String} object.
+   * @param instanceId a {@link java.lang.String} object.
+   * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
+   */
   public static Connection connect(String projectId, String instanceId) {
     return connect(configure(projectId, instanceId));
   }
 
+  /**
+   * <p>connect.</p>
+   *
+   * @param conf a {@link org.apache.hadoop.conf.Configuration} object.
+   * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
+   */
   public static Connection connect(Configuration conf) {
     Preconditions.checkState(CONNECTION_CLASS != null,
         "Could not find an appropriate BigtableConnection class");

@@ -22,14 +22,22 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 
 /**
- * HBase 1.0 specific implementation of {@link AbstractBigtableConnection}.
- * 
+ * HBase 1.0 specific implementation of {@link org.apache.hadoop.hbase.client.AbstractBigtableConnection}.
+ *
  * @see com.google.cloud.bigtable.hbase1_0.BigtableConnection which is now the cannonical
  *  implementation.
+ * @author sduskis
+ * @version $Id: $Id
  */
 @Deprecated
 public class BigtableConnection extends com.google.cloud.bigtable.hbase1_0.BigtableConnection {
 
+  /**
+   * <p>Constructor for BigtableConnection.</p>
+   *
+   * @param conf a {@link org.apache.hadoop.conf.Configuration} object.
+   * @throws java.io.IOException if any.
+   */
   public BigtableConnection(Configuration conf) throws IOException {
     super(conf);
   }

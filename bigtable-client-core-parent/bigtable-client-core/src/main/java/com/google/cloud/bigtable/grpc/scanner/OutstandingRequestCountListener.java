@@ -23,25 +23,36 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 /**
- * A {@link io.grpc.ClientCall.Listener} that wraps a {@link StreamObserver} and decrements
+ * A {@link io.grpc.ClientCall.Listener} that wraps a {@link io.grpc.stub.StreamObserver} and decrements
  * outstandingRequestCount when a message is received.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class OutstandingRequestCountListener<ResponseT> extends ClientCall.Listener<ResponseT> {
   private StreamObserver<ResponseT> observer;
   private AtomicInteger outstandingRequestCount;
 
+  /**
+   * <p>Constructor for OutstandingRequestCountListener.</p>
+   *
+   * @param observer a {@link io.grpc.stub.StreamObserver} object.
+   * @param outstandingRequestCount a {@link java.util.concurrent.atomic.AtomicInteger} object.
+   */
   public OutstandingRequestCountListener(StreamObserver<ResponseT> observer,
       AtomicInteger outstandingRequestCount) {
     this.outstandingRequestCount = outstandingRequestCount;
     this.observer = observer;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onMessage(ResponseT response) {
     outstandingRequestCount.decrementAndGet();
     observer.onNext(response);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
     if (status.isOk()) {

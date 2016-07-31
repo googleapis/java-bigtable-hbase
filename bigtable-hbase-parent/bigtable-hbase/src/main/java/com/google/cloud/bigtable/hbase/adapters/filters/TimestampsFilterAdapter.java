@@ -25,10 +25,14 @@ import org.apache.hadoop.hbase.filter.TimestampsFilter;
 /**
  * Convert a TimestampsFilter into a RowFilter containing
  * interleaved timestamp range filters.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class TimestampsFilterAdapter
     implements TypedFilterAdapter<TimestampsFilter> {
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, TimestampsFilter filter) {
     Interleave.Builder interleaveBuilder =
@@ -53,6 +57,7 @@ public class TimestampsFilterAdapter
     return RowFilter.newBuilder().setInterleave(interleaveBuilder).build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context,

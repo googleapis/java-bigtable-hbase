@@ -19,10 +19,19 @@ import java.io.IOException;
 
 /**
  * An Exception that is thrown when an operation fails, even in the face of retries.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableRetriesExhaustedException extends IOException {
   private static final long serialVersionUID = 6905598607595217072L;
 
+  /**
+   * <p>Constructor for BigtableRetriesExhaustedException.</p>
+   *
+   * @param message a {@link java.lang.String} object.
+   * @param cause a {@link java.lang.Throwable} object.
+   */
   public BigtableRetriesExhaustedException(String message, Throwable cause) {
     super(message, cause);
   }

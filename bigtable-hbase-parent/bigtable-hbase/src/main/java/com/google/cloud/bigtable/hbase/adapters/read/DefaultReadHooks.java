@@ -20,15 +20,20 @@ import com.google.common.base.Function;
 import com.google.common.base.Functions;
 
 /**
- * Default implementation of {@link ReadHooks}.
+ * Default implementation of {@link com.google.cloud.bigtable.hbase.adapters.read.ReadHooks}.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class DefaultReadHooks implements ReadHooks {
   private Function<ReadRowsRequest, ReadRowsRequest> preSendHook = Functions.identity();
+  /** {@inheritDoc} */
   @Override
   public void composePreSendHook(Function<ReadRowsRequest, ReadRowsRequest> newHook) {
     preSendHook = Functions.compose(newHook, preSendHook);
   }
 
+  /** {@inheritDoc} */
   @Override
   public ReadRowsRequest applyPreSendHook(ReadRowsRequest readRowsRequest) {
     return preSendHook.apply(readRowsRequest);

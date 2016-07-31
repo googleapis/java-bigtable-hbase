@@ -78,12 +78,16 @@ import com.google.protobuf.ServiceException;
  * <p>
  * Most of the methods are unary (single response). The only exception is ReadRows which is a
  * streaming call.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private static final Logger LOG = new Logger(BigtableDataGrpcClient.class);
 
   // Retryable Predicates
+  /** Constant <code>IS_RETRYABLE_MUTATION</code> */
   @VisibleForTesting
   public static final Predicate<MutateRowRequest> IS_RETRYABLE_MUTATION =
       new Predicate<MutateRowRequest>() {
@@ -94,6 +98,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         }
       };
 
+  /** Constant <code>ARE_RETRYABLE_MUTATIONS</code> */
   @VisibleForTesting
   public static final Predicate<MutateRowsRequest> ARE_RETRYABLE_MUTATIONS =
       new Predicate<MutateRowsRequest>() {
@@ -111,6 +116,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         }
       };
 
+  /** Constant <code>IS_RETRYABLE_CHECK_AND_MUTATE</code> */
   @VisibleForTesting
   public static final Predicate<CheckAndMutateRowRequest> IS_RETRYABLE_CHECK_AND_MUTATE =
       new Predicate<CheckAndMutateRowRequest>() {
@@ -164,6 +170,13 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final BigtableAsyncRpc<CheckAndMutateRowRequest, CheckAndMutateRowResponse> checkAndMutateRpc;
   private final BigtableAsyncRpc<ReadModifyWriteRowRequest, ReadModifyWriteRowResponse> readWriteModifyRpc;
 
+  /**
+   * <p>Constructor for BigtableDataGrpcClient.</p>
+   *
+   * @param channelPool a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
+   * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
+   * @param bigtableOptions a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   */
   public BigtableDataGrpcClient(
       ChannelPool channelPool,
       ScheduledExecutorService retryExecutorService,
@@ -211,6 +224,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
             Predicates.<ReadModifyWriteRowRequest> alwaysFalse());
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setCallOptionsFactory(CallOptionsFactory callOptionsFactory) {
     this.callOptionsFactory = callOptionsFactory;
@@ -224,61 +238,72 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public MutateRowResponse mutateRow(MutateRowRequest request) throws ServiceException {
     return getBlockingUnaryResult(request, mutateRowRpc, request.getTableName());
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListenableFuture<MutateRowResponse> mutateRowAsync(MutateRowRequest request) {
     return getUnaryFuture(request, mutateRowRpc, request.getTableName());
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<MutateRowsResponse> mutateRows(MutateRowsRequest request) throws ServiceException {
     return getBlockingStreamingResult(request, mutateRowsRpc, request.getTableName());
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<MutateRowsResponse>> mutateRowsAsync(MutateRowsRequest request) {
     return getStreamingFuture(request, mutateRowsRpc, request.getTableName());
   }
 
+  /** {@inheritDoc} */
   @Override
   public CheckAndMutateRowResponse checkAndMutateRow(CheckAndMutateRowRequest request)
       throws ServiceException {
     return getBlockingUnaryResult(request, checkAndMutateRpc, request.getTableName());
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListenableFuture<CheckAndMutateRowResponse> checkAndMutateRowAsync(
       CheckAndMutateRowRequest request) {
     return getUnaryFuture(request, checkAndMutateRpc, request.getTableName());
   }
 
+  /** {@inheritDoc} */
   @Override
   public ReadModifyWriteRowResponse readModifyWriteRow(ReadModifyWriteRowRequest request) {
     return getBlockingUnaryResult(request, readWriteModifyRpc, request.getTableName());
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListenableFuture<ReadModifyWriteRowResponse> readModifyWriteRowAsync(
       ReadModifyWriteRowRequest request) {
     return getUnaryFuture(request, readWriteModifyRpc, request.getTableName());
   }
 
+  /** {@inheritDoc} */
   @Override
   public ImmutableList<SampleRowKeysResponse> sampleRowKeys(SampleRowKeysRequest request) {
     return ImmutableList.copyOf(
         getBlockingStreamingResult(request, sampleRowKeysAsync, request.getTableName()));
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(
       SampleRowKeysRequest request) {
     return getStreamingFuture(request, sampleRowKeysAsync, request.getTableName());
   }
 
+  /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request) {
     return Futures.transform(getStreamingFuture(request, readRowsAsync, request.getTableName()),
@@ -286,6 +311,16 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   // Helper methods
+  /**
+   * <p>getStreamingFuture.</p>
+   *
+   * @param request a ReqT object.
+   * @param rpc a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
+   * @param tableName a {@link java.lang.String} object.
+   * @param <ReqT> a ReqT object.
+   * @param <RespT> a RespT object.
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} object.
+   */
   protected <ReqT, RespT> ListenableFuture<List<RespT>> getStreamingFuture(ReqT request,
       BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
     return getCompletionFuture(createStreamingListener(request, rpc, tableName));
@@ -358,6 +393,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   // Scanner methods
 
+  /** {@inheritDoc} */
   @Override
   public ResultScanner<Row> readRows(ReadRowsRequest request) {
     // Delegate all resumable operations to the scanner. It will request a non-resumable

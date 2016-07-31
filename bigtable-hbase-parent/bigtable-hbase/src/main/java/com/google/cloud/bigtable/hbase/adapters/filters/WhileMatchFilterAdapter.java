@@ -34,7 +34,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Adapter for {@link WhileMatchFilter}.
+ * Adapter for {@link org.apache.hadoop.hbase.filter.WhileMatchFilter}.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class WhileMatchFilterAdapter implements TypedFilterAdapter<WhileMatchFilter> {
   
@@ -43,16 +46,23 @@ public class WhileMatchFilterAdapter implements TypedFilterAdapter<WhileMatchFil
 
   private final FilterAdapter subFilterAdapter;
 
+  /**
+   * <p>Constructor for WhileMatchFilterAdapter.</p>
+   *
+   * @param subFilterAdapter a {@link com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter} object.
+   */
   public WhileMatchFilterAdapter(FilterAdapter subFilterAdapter) {
     this.subFilterAdapter = subFilterAdapter;
   }
 
   /**
+   * {@inheritDoc}
+   *
    * Adapt {@link WhileMatchFilter} as follow:
-   *                
+   *
    *                |
-   *                V          
-   *       +--------+--------+    
+   *                V
+   *       +--------+--------+
    *       |                 |
    *       |                 |
    * label('id-in')  wrappedFilter.filter()
@@ -60,7 +70,7 @@ public class WhileMatchFilterAdapter implements TypedFilterAdapter<WhileMatchFil
    *       |                 |
    *     sink()        +-----+-----+
    *       +           |           |
-   *            label('id-out')  all()    
+   *            label('id-out')  all()
    *                   |           |
    *                 sink()        |
    *                   +           v
@@ -129,6 +139,7 @@ public class WhileMatchFilterAdapter implements TypedFilterAdapter<WhileMatchFil
     return rowFilter;
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context, WhileMatchFilter filter) {

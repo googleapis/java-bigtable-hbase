@@ -22,6 +22,9 @@ import java.util.List;
 
 /**
  * An exception thrown when attempting to adapt unsupported filters.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class UnsupportedFilterException extends UnsupportedOperationException {
   /**
@@ -31,6 +34,11 @@ public class UnsupportedFilterException extends UnsupportedOperationException {
   private static Joiner STATUS_JOINER = Joiner.on(", ");
   private final List<FilterSupportStatus> filterSupportStatuses;
 
+  /**
+   * <p>Constructor for UnsupportedFilterException.</p>
+   *
+   * @param filterSupportStatuses a {@link java.util.List} object.
+   */
   public UnsupportedFilterException(List<FilterSupportStatus> filterSupportStatuses) {
     super(String.format(
         "Unsupported filters encountered: %s",
@@ -42,6 +50,8 @@ public class UnsupportedFilterException extends UnsupportedOperationException {
 
   /**
    * The failed FilterSupportStatus instances containing reason messages.
+   *
+   * @return a {@link java.util.List} object.
    */
   public List<FilterSupportStatus> getFilterSupportStatuses() {
     return filterSupportStatuses;

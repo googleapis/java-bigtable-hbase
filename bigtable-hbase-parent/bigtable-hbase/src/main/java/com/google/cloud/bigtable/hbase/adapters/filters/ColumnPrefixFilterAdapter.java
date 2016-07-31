@@ -26,10 +26,14 @@ import java.io.IOException;
 
 /**
  * Adapter for a single ColumnPrefixFilter to a Cloud Bigtable RowFilter.
+ *
+ * @author sduskis
+ * @version $Id: $Id
  */
 public class ColumnPrefixFilterAdapter implements TypedFilterAdapter<ColumnPrefixFilter> {
   ReaderExpressionHelper readerExpressionHelper = new ReaderExpressionHelper();
 
+  /** {@inheritDoc} */
   @Override
   public RowFilter adapt(FilterAdapterContext context, ColumnPrefixFilter filter)
       throws IOException {
@@ -48,6 +52,7 @@ public class ColumnPrefixFilterAdapter implements TypedFilterAdapter<ColumnPrefi
         .build();
   }
 
+  /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
       FilterAdapterContext context,
