@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 
@@ -79,6 +80,7 @@ public interface BigtableAsyncUtilities {
     @Override
     public <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncUnaryRpc(
         final MethodDescriptor<RequestT, ResponseT> method, final Predicate<RequestT> isRetryable) {
+      final BigtableAsyncRpc.RpcMetrics metrics = RpcMetrics.createRpcMetrics(method);
       return new BigtableAsyncRpc<RequestT, ResponseT>() {
         @Override
         public ClientCall<RequestT, ResponseT> call(RequestT request,
@@ -95,6 +97,11 @@ public interface BigtableAsyncUtilities {
         public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
           return method;
         }
+
+        @Override
+        public BigtableAsyncRpc.RpcMetrics getRpcMetrics() {
+          return metrics;
+        }
       };
     }
 
@@ -102,6 +109,7 @@ public interface BigtableAsyncUtilities {
     public <RequestT, ResponseT>
         BigtableAsyncRpc<RequestT, ResponseT> createStreamingAsyncRpc(
             final MethodDescriptor<RequestT, ResponseT> method) {
+      final BigtableAsyncRpc.RpcMetrics metrics = RpcMetrics.createRpcMetrics(method);
       return new BigtableAsyncRpc<RequestT, ResponseT>() {
 
         @Override
@@ -118,6 +126,11 @@ public interface BigtableAsyncUtilities {
         @Override
         public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
           return method;
+        }
+
+        @Override
+        public BigtableAsyncRpc.RpcMetrics getRpcMetrics() {
+          return metrics;
         }
       };
     }

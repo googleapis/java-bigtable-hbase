@@ -60,6 +60,7 @@ limitations under the License.
         <netty.version>4.1.1.Final</netty.version>
         <guava.version>19.0</guava.version>
         <google.auth.library.version>0.4.0</google.auth.library.version>
+        <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
 
         <!-- Values for integration testing. Set these in ~/.m2/settings.xml or
              via command-line -D flags. -->
@@ -352,6 +353,13 @@ limitations under the License.
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
             </dependency>
+
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>${dropwizard.metrics.version}</version>
+            </dependency>
+
 
             <!-- HBase dependencies -->
             <dependency>

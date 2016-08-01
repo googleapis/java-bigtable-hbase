@@ -20,20 +20,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
-
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
+import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
-import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -84,6 +82,8 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
   protected final GrpcFuture<ResultT> completionFuture = new GrpcFuture<>();
   protected ClientCall<RequestT, ResponseT> call;
+  private Timer.Context operationTimerContext;
+  private Timer.Context rpcTimerContext;
 
   /**
    * <p>Constructor for AbstractRetryingRpcListener.</p>
@@ -113,7 +113,9 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
+    rpcTimerContext.close();
     if (status.isOk()) {
+      operationTimerContext.close();
       onOK();
     } else {
       Status.Code code = status.getCode();
@@ -121,7 +123,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
           && rpc.isRetryable(request)) {
         backOffAndRetry(status);
       } else {
-        completionFuture.setException(status.asRuntimeException());
+        handleNonRetriableException(status.asRuntimeException());
       }
     }
   }
@@ -135,9 +137,10 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     long nextBackOff = getNextBackoff();
     failedCount += 1;
     if (nextBackOff == BackOff.STOP) {
+      operationTimerContext.close();
       String message = String.format("Exhausted retries after %d failures.", failedCount);
       StatusRuntimeException cause = status.asRuntimeException();
-      completionFuture.setException(new BigtableRetriesExhaustedException(message, cause));
+      handleNonRetriableException(new BigtableRetriesExhaustedException(message, cause));
       return;
     }
     LOG.info("Retrying failed call. Failure #%d, got: %s", status.getCause(), failedCount, status);
@@ -151,7 +154,14 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     }
     call = null;
 
+    rpc.getRpcMetrics().incrementRetries();
     retryExecutorService.schedule(this, nextBackOff, TimeUnit.MILLISECONDS);
+  }
+
+  private void handleNonRetriableException(Exception e) {
+    this.operationTimerContext.close();
+    this.rpc.getRpcMetrics().incrementFailureCount();
+    completionFuture.setException(e);
   }
 
   private long getNextBackoff() {
@@ -182,9 +192,15 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
    */
   @Override
   public void run() {
+    this.rpcTimerContext = this.rpc.getRpcMetrics().timeRpc();
     Metadata metadata = new Metadata();
     metadata.merge(originalMetadata);
     this.call = rpc.call(request, this, callOptions, metadata);
+  }
+
+  public void start() {
+    this.operationTimerContext = this.rpc.getRpcMetrics().timeOperation();
+    run();
   }
 
   /**
