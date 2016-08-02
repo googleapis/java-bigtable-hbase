@@ -143,7 +143,7 @@ public class ChannelPoolTest {
     ChannelPool pool = new ChannelPool(null, factory);
     pool.ensureChannelCount(5);
     for (ManagedChannel managedChannel : factory.channels) {
-      when(managedChannel.isTerminated()).thenReturn(true);
+      when(managedChannel.isTerminated()).thenReturn(false);
     }
     pool.awaitTermination(500, TimeUnit.MILLISECONDS);
     for (ManagedChannel managedChannel : factory.channels) {

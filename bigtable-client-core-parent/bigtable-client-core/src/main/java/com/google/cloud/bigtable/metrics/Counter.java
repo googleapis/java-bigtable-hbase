@@ -20,4 +20,6 @@ package com.google.cloud.bigtable.metrics;
  */
 public interface Counter {
   void inc();
+
+  void dec();
 }
