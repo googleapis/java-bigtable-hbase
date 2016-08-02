@@ -66,11 +66,11 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
       return rpcTimer.time();
     }
 
-    void incrementRetries() {
+    public void incrementRetries() {
       retryCounter.inc();
     }
 
-    void incrementFailureCount() {
+    public void incrementFailureCount() {
       failureCounter.inc();
     }
   }

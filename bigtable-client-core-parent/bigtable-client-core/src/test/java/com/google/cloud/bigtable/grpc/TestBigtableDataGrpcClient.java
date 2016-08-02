@@ -120,13 +120,17 @@ public class TestBigtableDataGrpcClient {
         new Answer<BigtableAsyncRpc>() {
           @Override
           public BigtableAsyncRpc answer(InvocationOnMock invocation) throws Throwable {
-            String fullMethodName =
-                invocation.getArgumentAt(0, MethodDescriptor.class).getFullMethodName();
-            predicates.put(fullMethodName, invocation.getArgumentAt(1, Predicate.class));
+            MethodDescriptor descriptor = invocation.getArgumentAt(0, MethodDescriptor.class);
+            String fullMethodName = descriptor.getFullMethodName();
+            if (invocation.getArguments().length > 1) {
+              predicates.put(fullMethodName, invocation.getArgumentAt(1, Predicate.class));
+            }
             return mockBigtableRpc;
           }
         };
     when(mockAsyncUtilities.createAsyncUnaryRpc(any(MethodDescriptor.class), any(Predicate.class)))
+        .thenAnswer(answer);
+    when(mockAsyncUtilities.createStreamingAsyncRpc(any(MethodDescriptor.class)))
         .thenAnswer(answer);
 
     tableMetadata = new Metadata();

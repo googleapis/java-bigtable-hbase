@@ -40,12 +40,14 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
 
+import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
@@ -81,6 +83,9 @@ public class ResumingStreamingResultScannerTest {
   BigtableResultScannerFactory<ReadRowsRequest, Row> mockScannerFactory;
   @Mock
   Logger logger;
+
+  static BigtableAsyncRpc.RpcMetrics metrics =
+      BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.METHOD_READ_ROWS);
 
   private static final int MAX_SCAN_TIMEOUT_RETRIES = 3;
   private static ReadRowsRequest readRowsRequest = createRequest(createRowRangeClosedStart(blank, blank));
@@ -217,7 +222,7 @@ public class ResumingStreamingResultScannerTest {
     afterFailureStub.thenReturn(mockScannerPostResume);
 
     ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        originalRequest, mockScannerFactory, logger);
+        originalRequest, mockScannerFactory, metrics, logger);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -297,9 +302,8 @@ public class ResumingStreamingResultScannerTest {
     when(mockScannerFactory.createScanner(any(ReadRowsRequest.class)))
         .thenReturn(mockScanner);
 
-    ResumingStreamingResultScanner scanner =
-        new ResumingStreamingResultScanner(retryOptions, readRowsRequest, mockScannerFactory,
-            logger);
+    ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
+        readRowsRequest, mockScannerFactory, metrics, logger);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -352,8 +356,8 @@ public class ResumingStreamingResultScannerTest {
     when(mockScannerFactory.createScanner(eq(expectedResumeRequest))).thenReturn(afterError2Mock,
       mockScannerPostResume);
 
-    ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(
-        retryOptions, readRowsRequest, mockScannerFactory, logger);
+    ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
+        readRowsRequest, mockScannerFactory, metrics, logger);
 
     when(mockScanner.next())
         .thenReturn(row1)
@@ -400,8 +404,8 @@ public class ResumingStreamingResultScannerTest {
 
     when(mockScannerFactory.createScanner(any(ReadRowsRequest.class))).thenReturn(mockScanner);
 
-    try (ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(
-        retryOptions, readRowsRequest, mockScannerFactory, logger)){
+    try (ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
+        readRowsRequest, mockScannerFactory, metrics, logger)) {
 
       verify(mockScannerFactory, times(1))
           .createScanner(eq(readRowsRequest));
@@ -436,8 +440,8 @@ public class ResumingStreamingResultScannerTest {
     when(mockScannerFactory.createScanner(any(ReadRowsRequest.class))).thenReturn(mockScanner);
 
     ReadRowsRequest originalRequest = createKeysRequest(Arrays.asList(key1, key2, key3));
-    try(ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        originalRequest, mockScannerFactory, logger)){
+    try (ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
+        originalRequest, mockScannerFactory, metrics, logger)) {
 
       when(mockScanner.next())
           .thenThrow(new IOExceptionWithStatus("Test", Status.INTERNAL))
@@ -493,8 +497,8 @@ public class ResumingStreamingResultScannerTest {
 
     ReadRowsRequest originalRequest = ReadRowsRequest.newBuilder().setRows(fullRowSet).build();
     ReadRowsRequest filteredRequest = ReadRowsRequest.newBuilder().setRows(filteredRowSet).build();
-    try(ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
-        originalRequest, mockScannerFactory, logger)){
+    try (ResumingStreamingResultScanner scanner = new ResumingStreamingResultScanner(retryOptions,
+        originalRequest, mockScannerFactory, metrics, logger)) {
 
       when(mockScanner.next())
           .thenReturn(row1)
