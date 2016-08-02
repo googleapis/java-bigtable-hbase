@@ -8,57 +8,57 @@ public interface ZoneOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A permanent unique identifier for the zone.
    * Values are of the form projects/&lt;project&gt;/zones/[a-z][-a-z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A permanent unique identifier for the zone.
    * Values are of the form projects/&lt;project&gt;/zones/[a-z][-a-z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>optional string display_name = 2;</code>
-   *
    * <pre>
    * The name of this zone as it appears in UIs.
    * </pre>
+   *
+   * <code>optional string display_name = 2;</code>
    */
   java.lang.String getDisplayName();
   /**
-   * <code>optional string display_name = 2;</code>
-   *
    * <pre>
    * The name of this zone as it appears in UIs.
    * </pre>
+   *
+   * <code>optional string display_name = 2;</code>
    */
   com.google.protobuf.ByteString
       getDisplayNameBytes();
 
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
-   *
    * <pre>
    * The current state of this zone.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
    */
   int getStatusValue();
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
-   *
    * <pre>
    * The current state of this zone.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
    */
   com.google.bigtable.admin.cluster.v1.Zone.Status getStatus();
 }

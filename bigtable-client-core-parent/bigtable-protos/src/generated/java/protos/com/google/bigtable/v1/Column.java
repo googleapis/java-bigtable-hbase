@@ -4,11 +4,11 @@
 package com.google.bigtable.v1;
 
 /**
- * Protobuf type {@code google.bigtable.v1.Column}
- *
  * <pre>
  * Specifies (some of) the contents of a single row/column of a table.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v1.Column}
  */
 public  final class Column extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class Column extends
   }
   private Column(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -63,11 +64,10 @@ public  final class Column extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
         cells_ = java.util.Collections.unmodifiableList(cells_);
@@ -91,8 +91,6 @@ public  final class Column extends
   public static final int QUALIFIER_FIELD_NUMBER = 1;
   private com.google.protobuf.ByteString qualifier_;
   /**
-   * <code>optional bytes qualifier = 1;</code>
-   *
    * <pre>
    * The unique key which identifies this column within its family. This is the
    * same key that's used to identify the column in, for example, a RowFilter
@@ -100,6 +98,8 @@ public  final class Column extends
    * May contain any byte string, including the empty string, up to 16kiB in
    * length.
    * </pre>
+   *
+   * <code>optional bytes qualifier = 1;</code>
    */
   public com.google.protobuf.ByteString getQualifier() {
     return qualifier_;
@@ -108,52 +108,52 @@ public  final class Column extends
   public static final int CELLS_FIELD_NUMBER = 2;
   private java.util.List<com.google.bigtable.v1.Cell> cells_;
   /**
-   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-   *
    * <pre>
    * Must not be empty. Sorted in order of decreasing "timestamp_micros".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
    */
   public java.util.List<com.google.bigtable.v1.Cell> getCellsList() {
     return cells_;
   }
   /**
-   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-   *
    * <pre>
    * Must not be empty. Sorted in order of decreasing "timestamp_micros".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
    */
   public java.util.List<? extends com.google.bigtable.v1.CellOrBuilder> 
       getCellsOrBuilderList() {
     return cells_;
   }
   /**
-   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-   *
    * <pre>
    * Must not be empty. Sorted in order of decreasing "timestamp_micros".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
    */
   public int getCellsCount() {
     return cells_.size();
   }
   /**
-   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-   *
    * <pre>
    * Must not be empty. Sorted in order of decreasing "timestamp_micros".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
    */
   public com.google.bigtable.v1.Cell getCells(int index) {
     return cells_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-   *
    * <pre>
    * Must not be empty. Sorted in order of decreasing "timestamp_micros".
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
    */
   public com.google.bigtable.v1.CellOrBuilder getCellsOrBuilder(
       int index) {
@@ -221,34 +221,40 @@ public  final class Column extends
   }
   public static com.google.bigtable.v1.Column parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.Column parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.Column parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.Column parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.Column parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.Column parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -270,11 +276,11 @@ public  final class Column extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v1.Column}
-   *
    * <pre>
    * Specifies (some of) the contents of a single row/column of a table.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v1.Column}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -413,7 +419,7 @@ public  final class Column extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v1.Column) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -425,8 +431,6 @@ public  final class Column extends
 
     private com.google.protobuf.ByteString qualifier_ = com.google.protobuf.ByteString.EMPTY;
     /**
-     * <code>optional bytes qualifier = 1;</code>
-     *
      * <pre>
      * The unique key which identifies this column within its family. This is the
      * same key that's used to identify the column in, for example, a RowFilter
@@ -434,13 +438,13 @@ public  final class Column extends
      * May contain any byte string, including the empty string, up to 16kiB in
      * length.
      * </pre>
+     *
+     * <code>optional bytes qualifier = 1;</code>
      */
     public com.google.protobuf.ByteString getQualifier() {
       return qualifier_;
     }
     /**
-     * <code>optional bytes qualifier = 1;</code>
-     *
      * <pre>
      * The unique key which identifies this column within its family. This is the
      * same key that's used to identify the column in, for example, a RowFilter
@@ -448,6 +452,8 @@ public  final class Column extends
      * May contain any byte string, including the empty string, up to 16kiB in
      * length.
      * </pre>
+     *
+     * <code>optional bytes qualifier = 1;</code>
      */
     public Builder setQualifier(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -459,8 +465,6 @@ public  final class Column extends
       return this;
     }
     /**
-     * <code>optional bytes qualifier = 1;</code>
-     *
      * <pre>
      * The unique key which identifies this column within its family. This is the
      * same key that's used to identify the column in, for example, a RowFilter
@@ -468,6 +472,8 @@ public  final class Column extends
      * May contain any byte string, including the empty string, up to 16kiB in
      * length.
      * </pre>
+     *
+     * <code>optional bytes qualifier = 1;</code>
      */
     public Builder clearQualifier() {
       
@@ -489,11 +495,11 @@ public  final class Column extends
         com.google.bigtable.v1.Cell, com.google.bigtable.v1.Cell.Builder, com.google.bigtable.v1.CellOrBuilder> cellsBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public java.util.List<com.google.bigtable.v1.Cell> getCellsList() {
       if (cellsBuilder_ == null) {
@@ -503,11 +509,11 @@ public  final class Column extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public int getCellsCount() {
       if (cellsBuilder_ == null) {
@@ -517,11 +523,11 @@ public  final class Column extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public com.google.bigtable.v1.Cell getCells(int index) {
       if (cellsBuilder_ == null) {
@@ -531,11 +537,11 @@ public  final class Column extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public Builder setCells(
         int index, com.google.bigtable.v1.Cell value) {
@@ -552,11 +558,11 @@ public  final class Column extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public Builder setCells(
         int index, com.google.bigtable.v1.Cell.Builder builderForValue) {
@@ -570,11 +576,11 @@ public  final class Column extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public Builder addCells(com.google.bigtable.v1.Cell value) {
       if (cellsBuilder_ == null) {
@@ -590,11 +596,11 @@ public  final class Column extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public Builder addCells(
         int index, com.google.bigtable.v1.Cell value) {
@@ -611,11 +617,11 @@ public  final class Column extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public Builder addCells(
         com.google.bigtable.v1.Cell.Builder builderForValue) {
@@ -629,11 +635,11 @@ public  final class Column extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public Builder addCells(
         int index, com.google.bigtable.v1.Cell.Builder builderForValue) {
@@ -647,11 +653,11 @@ public  final class Column extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public Builder addAllCells(
         java.lang.Iterable<? extends com.google.bigtable.v1.Cell> values) {
@@ -666,11 +672,11 @@ public  final class Column extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public Builder clearCells() {
       if (cellsBuilder_ == null) {
@@ -683,11 +689,11 @@ public  final class Column extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public Builder removeCells(int index) {
       if (cellsBuilder_ == null) {
@@ -700,22 +706,22 @@ public  final class Column extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public com.google.bigtable.v1.Cell.Builder getCellsBuilder(
         int index) {
       return getCellsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public com.google.bigtable.v1.CellOrBuilder getCellsOrBuilder(
         int index) {
@@ -725,11 +731,11 @@ public  final class Column extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public java.util.List<? extends com.google.bigtable.v1.CellOrBuilder> 
          getCellsOrBuilderList() {
@@ -740,22 +746,22 @@ public  final class Column extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public com.google.bigtable.v1.Cell.Builder addCellsBuilder() {
       return getCellsFieldBuilder().addBuilder(
           com.google.bigtable.v1.Cell.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public com.google.bigtable.v1.Cell.Builder addCellsBuilder(
         int index) {
@@ -763,11 +769,11 @@ public  final class Column extends
           index, com.google.bigtable.v1.Cell.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
-     *
      * <pre>
      * Must not be empty. Sorted in order of decreasing "timestamp_micros".
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
      */
     public java.util.List<com.google.bigtable.v1.Cell.Builder> 
          getCellsBuilderList() {
@@ -817,16 +823,7 @@ public  final class Column extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new Column(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

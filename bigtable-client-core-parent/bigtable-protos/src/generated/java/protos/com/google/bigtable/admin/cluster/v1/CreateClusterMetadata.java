@@ -4,12 +4,12 @@
 package com.google.bigtable.admin.cluster.v1;
 
 /**
- * Protobuf type {@code google.bigtable.admin.cluster.v1.CreateClusterMetadata}
- *
  * <pre>
  * Metadata type for the operation returned by
  * BigtableClusterService.CreateCluster.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.cluster.v1.CreateClusterMetadata}
  */
 public  final class CreateClusterMetadata extends
     com.google.protobuf.GeneratedMessage implements
@@ -29,7 +29,8 @@ public  final class CreateClusterMetadata extends
   }
   private CreateClusterMetadata(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -88,11 +89,10 @@ public  final class CreateClusterMetadata extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -112,31 +112,31 @@ public  final class CreateClusterMetadata extends
   public static final int ORIGINAL_REQUEST_FIELD_NUMBER = 1;
   private com.google.bigtable.admin.cluster.v1.CreateClusterRequest originalRequest_;
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-   *
    * <pre>
    * The request which prompted the creation of this operation.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
    */
   public boolean hasOriginalRequest() {
     return originalRequest_ != null;
   }
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-   *
    * <pre>
    * The request which prompted the creation of this operation.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
    */
   public com.google.bigtable.admin.cluster.v1.CreateClusterRequest getOriginalRequest() {
     return originalRequest_ == null ? com.google.bigtable.admin.cluster.v1.CreateClusterRequest.getDefaultInstance() : originalRequest_;
   }
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-   *
    * <pre>
    * The request which prompted the creation of this operation.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
    */
   public com.google.bigtable.admin.cluster.v1.CreateClusterRequestOrBuilder getOriginalRequestOrBuilder() {
     return getOriginalRequest();
@@ -145,31 +145,31 @@ public  final class CreateClusterMetadata extends
   public static final int REQUEST_TIME_FIELD_NUMBER = 2;
   private com.google.protobuf.Timestamp requestTime_;
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-   *
    * <pre>
    * The time at which original_request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   public boolean hasRequestTime() {
     return requestTime_ != null;
   }
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-   *
    * <pre>
    * The time at which original_request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   public com.google.protobuf.Timestamp getRequestTime() {
     return requestTime_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : requestTime_;
   }
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-   *
    * <pre>
    * The time at which original_request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   public com.google.protobuf.TimestampOrBuilder getRequestTimeOrBuilder() {
     return getRequestTime();
@@ -178,31 +178,31 @@ public  final class CreateClusterMetadata extends
   public static final int FINISH_TIME_FIELD_NUMBER = 3;
   private com.google.protobuf.Timestamp finishTime_;
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   public boolean hasFinishTime() {
     return finishTime_ != null;
   }
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   public com.google.protobuf.Timestamp getFinishTime() {
     return finishTime_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : finishTime_;
   }
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   public com.google.protobuf.TimestampOrBuilder getFinishTimeOrBuilder() {
     return getFinishTime();
@@ -276,34 +276,40 @@ public  final class CreateClusterMetadata extends
   }
   public static com.google.bigtable.admin.cluster.v1.CreateClusterMetadata parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.cluster.v1.CreateClusterMetadata parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.cluster.v1.CreateClusterMetadata parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.cluster.v1.CreateClusterMetadata parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.cluster.v1.CreateClusterMetadata parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.cluster.v1.CreateClusterMetadata parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -325,12 +331,12 @@ public  final class CreateClusterMetadata extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.cluster.v1.CreateClusterMetadata}
-   *
    * <pre>
    * Metadata type for the operation returned by
    * BigtableClusterService.CreateCluster.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.cluster.v1.CreateClusterMetadata}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -460,7 +466,7 @@ public  final class CreateClusterMetadata extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.cluster.v1.CreateClusterMetadata) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -473,21 +479,21 @@ public  final class CreateClusterMetadata extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.cluster.v1.CreateClusterRequest, com.google.bigtable.admin.cluster.v1.CreateClusterRequest.Builder, com.google.bigtable.admin.cluster.v1.CreateClusterRequestOrBuilder> originalRequestBuilder_;
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-     *
      * <pre>
      * The request which prompted the creation of this operation.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
      */
     public boolean hasOriginalRequest() {
       return originalRequestBuilder_ != null || originalRequest_ != null;
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-     *
      * <pre>
      * The request which prompted the creation of this operation.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
      */
     public com.google.bigtable.admin.cluster.v1.CreateClusterRequest getOriginalRequest() {
       if (originalRequestBuilder_ == null) {
@@ -497,11 +503,11 @@ public  final class CreateClusterMetadata extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-     *
      * <pre>
      * The request which prompted the creation of this operation.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
      */
     public Builder setOriginalRequest(com.google.bigtable.admin.cluster.v1.CreateClusterRequest value) {
       if (originalRequestBuilder_ == null) {
@@ -517,11 +523,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-     *
      * <pre>
      * The request which prompted the creation of this operation.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
      */
     public Builder setOriginalRequest(
         com.google.bigtable.admin.cluster.v1.CreateClusterRequest.Builder builderForValue) {
@@ -535,11 +541,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-     *
      * <pre>
      * The request which prompted the creation of this operation.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
      */
     public Builder mergeOriginalRequest(com.google.bigtable.admin.cluster.v1.CreateClusterRequest value) {
       if (originalRequestBuilder_ == null) {
@@ -557,11 +563,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-     *
      * <pre>
      * The request which prompted the creation of this operation.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
      */
     public Builder clearOriginalRequest() {
       if (originalRequestBuilder_ == null) {
@@ -575,11 +581,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-     *
      * <pre>
      * The request which prompted the creation of this operation.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
      */
     public com.google.bigtable.admin.cluster.v1.CreateClusterRequest.Builder getOriginalRequestBuilder() {
       
@@ -587,11 +593,11 @@ public  final class CreateClusterMetadata extends
       return getOriginalRequestFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-     *
      * <pre>
      * The request which prompted the creation of this operation.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
      */
     public com.google.bigtable.admin.cluster.v1.CreateClusterRequestOrBuilder getOriginalRequestOrBuilder() {
       if (originalRequestBuilder_ != null) {
@@ -602,11 +608,11 @@ public  final class CreateClusterMetadata extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-     *
      * <pre>
      * The request which prompted the creation of this operation.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.cluster.v1.CreateClusterRequest, com.google.bigtable.admin.cluster.v1.CreateClusterRequest.Builder, com.google.bigtable.admin.cluster.v1.CreateClusterRequestOrBuilder> 
@@ -626,21 +632,21 @@ public  final class CreateClusterMetadata extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> requestTimeBuilder_;
     /**
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-     *
      * <pre>
      * The time at which original_request was received.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public boolean hasRequestTime() {
       return requestTimeBuilder_ != null || requestTime_ != null;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-     *
      * <pre>
      * The time at which original_request was received.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public com.google.protobuf.Timestamp getRequestTime() {
       if (requestTimeBuilder_ == null) {
@@ -650,11 +656,11 @@ public  final class CreateClusterMetadata extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-     *
      * <pre>
      * The time at which original_request was received.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public Builder setRequestTime(com.google.protobuf.Timestamp value) {
       if (requestTimeBuilder_ == null) {
@@ -670,11 +676,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-     *
      * <pre>
      * The time at which original_request was received.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public Builder setRequestTime(
         com.google.protobuf.Timestamp.Builder builderForValue) {
@@ -688,11 +694,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-     *
      * <pre>
      * The time at which original_request was received.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public Builder mergeRequestTime(com.google.protobuf.Timestamp value) {
       if (requestTimeBuilder_ == null) {
@@ -710,11 +716,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-     *
      * <pre>
      * The time at which original_request was received.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public Builder clearRequestTime() {
       if (requestTimeBuilder_ == null) {
@@ -728,11 +734,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-     *
      * <pre>
      * The time at which original_request was received.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public com.google.protobuf.Timestamp.Builder getRequestTimeBuilder() {
       
@@ -740,11 +746,11 @@ public  final class CreateClusterMetadata extends
       return getRequestTimeFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-     *
      * <pre>
      * The time at which original_request was received.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public com.google.protobuf.TimestampOrBuilder getRequestTimeOrBuilder() {
       if (requestTimeBuilder_ != null) {
@@ -755,11 +761,11 @@ public  final class CreateClusterMetadata extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-     *
      * <pre>
      * The time at which original_request was received.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
@@ -779,21 +785,21 @@ public  final class CreateClusterMetadata extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> finishTimeBuilder_;
     /**
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-     *
      * <pre>
      * The time at which this operation failed or was completed successfully.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public boolean hasFinishTime() {
       return finishTimeBuilder_ != null || finishTime_ != null;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-     *
      * <pre>
      * The time at which this operation failed or was completed successfully.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public com.google.protobuf.Timestamp getFinishTime() {
       if (finishTimeBuilder_ == null) {
@@ -803,11 +809,11 @@ public  final class CreateClusterMetadata extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-     *
      * <pre>
      * The time at which this operation failed or was completed successfully.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public Builder setFinishTime(com.google.protobuf.Timestamp value) {
       if (finishTimeBuilder_ == null) {
@@ -823,11 +829,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-     *
      * <pre>
      * The time at which this operation failed or was completed successfully.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public Builder setFinishTime(
         com.google.protobuf.Timestamp.Builder builderForValue) {
@@ -841,11 +847,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-     *
      * <pre>
      * The time at which this operation failed or was completed successfully.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public Builder mergeFinishTime(com.google.protobuf.Timestamp value) {
       if (finishTimeBuilder_ == null) {
@@ -863,11 +869,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-     *
      * <pre>
      * The time at which this operation failed or was completed successfully.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public Builder clearFinishTime() {
       if (finishTimeBuilder_ == null) {
@@ -881,11 +887,11 @@ public  final class CreateClusterMetadata extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-     *
      * <pre>
      * The time at which this operation failed or was completed successfully.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public com.google.protobuf.Timestamp.Builder getFinishTimeBuilder() {
       
@@ -893,11 +899,11 @@ public  final class CreateClusterMetadata extends
       return getFinishTimeFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-     *
      * <pre>
      * The time at which this operation failed or was completed successfully.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public com.google.protobuf.TimestampOrBuilder getFinishTimeOrBuilder() {
       if (finishTimeBuilder_ != null) {
@@ -908,11 +914,11 @@ public  final class CreateClusterMetadata extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-     *
      * <pre>
      * The time at which this operation failed or was completed successfully.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
@@ -957,16 +963,7 @@ public  final class CreateClusterMetadata extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new CreateClusterMetadata(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

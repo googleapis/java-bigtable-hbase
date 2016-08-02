@@ -9,69 +9,77 @@ package com.google.bigtable.admin.cluster.v1;
 public enum StorageType
     implements com.google.protobuf.ProtocolMessageEnum {
   /**
-   * <code>STORAGE_UNSPECIFIED = 0;</code>
-   *
    * <pre>
    * The storage type used is unspecified.
    * </pre>
-   */
-  STORAGE_UNSPECIFIED(0, 0),
-  /**
-   * <code>STORAGE_SSD = 1;</code>
    *
+   * <code>STORAGE_UNSPECIFIED = 0;</code>
+   */
+  STORAGE_UNSPECIFIED(0),
+  /**
    * <pre>
    * Data will be stored in SSD, providing low and consistent latencies.
    * </pre>
-   */
-  STORAGE_SSD(1, 1),
-  /**
-   * <code>STORAGE_HDD = 2;</code>
    *
+   * <code>STORAGE_SSD = 1;</code>
+   */
+  STORAGE_SSD(1),
+  /**
    * <pre>
    * Data will be stored in HDD, providing high and less predictable
    * latencies.
    * </pre>
+   *
+   * <code>STORAGE_HDD = 2;</code>
    */
-  STORAGE_HDD(2, 2),
-  UNRECOGNIZED(-1, -1),
+  STORAGE_HDD(2),
+  UNRECOGNIZED(-1),
   ;
 
   /**
-   * <code>STORAGE_UNSPECIFIED = 0;</code>
-   *
    * <pre>
    * The storage type used is unspecified.
    * </pre>
+   *
+   * <code>STORAGE_UNSPECIFIED = 0;</code>
    */
   public static final int STORAGE_UNSPECIFIED_VALUE = 0;
   /**
-   * <code>STORAGE_SSD = 1;</code>
-   *
    * <pre>
    * Data will be stored in SSD, providing low and consistent latencies.
    * </pre>
+   *
+   * <code>STORAGE_SSD = 1;</code>
    */
   public static final int STORAGE_SSD_VALUE = 1;
   /**
-   * <code>STORAGE_HDD = 2;</code>
-   *
    * <pre>
    * Data will be stored in HDD, providing high and less predictable
    * latencies.
    * </pre>
+   *
+   * <code>STORAGE_HDD = 2;</code>
    */
   public static final int STORAGE_HDD_VALUE = 2;
 
 
   public final int getNumber() {
-    if (index == -1) {
+    if (this == UNRECOGNIZED) {
       throw new java.lang.IllegalArgumentException(
           "Can't get the number of an unknown enum value.");
     }
     return value;
   }
 
+  /**
+   * @deprecated Use {@link #forNumber(int)} instead.
+   */
+  @java.lang.Deprecated
   public static StorageType valueOf(int value) {
+    return forNumber(value);
+  }
+
+  public static StorageType forNumber(int value) {
     switch (value) {
       case 0: return STORAGE_UNSPECIFIED;
       case 1: return STORAGE_SSD;
@@ -88,13 +96,13 @@ public enum StorageType
       StorageType> internalValueMap =
         new com.google.protobuf.Internal.EnumLiteMap<StorageType>() {
           public StorageType findValueByNumber(int number) {
-            return StorageType.valueOf(number);
+            return StorageType.forNumber(number);
           }
         };
 
   public final com.google.protobuf.Descriptors.EnumValueDescriptor
       getValueDescriptor() {
-    return getDescriptor().getValues().get(index);
+    return getDescriptor().getValues().get(ordinal());
   }
   public final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptorForType() {
@@ -120,11 +128,9 @@ public enum StorageType
     return VALUES[desc.getIndex()];
   }
 
-  private final int index;
   private final int value;
 
-  private StorageType(int index, int value) {
-    this.index = index;
+  private StorageType(int value) {
     this.value = value;
   }
 

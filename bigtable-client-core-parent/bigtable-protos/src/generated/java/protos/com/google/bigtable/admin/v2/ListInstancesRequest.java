@@ -4,11 +4,11 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.ListInstancesRequest}
- *
  * <pre>
  * Request message for BigtableInstanceAdmin.ListInstances.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.ListInstancesRequest}
  */
 public  final class ListInstancesRequest extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class ListInstancesRequest extends
   }
   private ListInstancesRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -62,11 +63,10 @@ public  final class ListInstancesRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -86,12 +86,12 @@ public  final class ListInstancesRequest extends
   public static final int PARENT_FIELD_NUMBER = 1;
   private volatile java.lang.Object parent_;
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the project for which a list of instances is requested.
    * Values are of the form projects/&lt;project&gt;
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public java.lang.String getParent() {
     java.lang.Object ref = parent_;
@@ -106,12 +106,12 @@ public  final class ListInstancesRequest extends
     }
   }
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the project for which a list of instances is requested.
    * Values are of the form projects/&lt;project&gt;
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public com.google.protobuf.ByteString
       getParentBytes() {
@@ -130,11 +130,11 @@ public  final class ListInstancesRequest extends
   public static final int PAGE_TOKEN_FIELD_NUMBER = 2;
   private volatile java.lang.Object pageToken_;
   /**
-   * <code>optional string page_token = 2;</code>
-   *
    * <pre>
    * The value of `next_page_token` returned by a previous call.
    * </pre>
+   *
+   * <code>optional string page_token = 2;</code>
    */
   public java.lang.String getPageToken() {
     java.lang.Object ref = pageToken_;
@@ -149,11 +149,11 @@ public  final class ListInstancesRequest extends
     }
   }
   /**
-   * <code>optional string page_token = 2;</code>
-   *
    * <pre>
    * The value of `next_page_token` returned by a previous call.
    * </pre>
+   *
+   * <code>optional string page_token = 2;</code>
    */
   public com.google.protobuf.ByteString
       getPageTokenBytes() {
@@ -228,34 +228,40 @@ public  final class ListInstancesRequest extends
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -277,11 +283,11 @@ public  final class ListInstancesRequest extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.ListInstancesRequest}
-   *
    * <pre>
    * Request message for BigtableInstanceAdmin.ListInstances.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.ListInstancesRequest}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -383,7 +389,7 @@ public  final class ListInstancesRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.ListInstancesRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -394,12 +400,12 @@ public  final class ListInstancesRequest extends
 
     private java.lang.Object parent_ = "";
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the project for which a list of instances is requested.
      * Values are of the form projects/&lt;project&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public java.lang.String getParent() {
       java.lang.Object ref = parent_;
@@ -414,12 +420,12 @@ public  final class ListInstancesRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the project for which a list of instances is requested.
      * Values are of the form projects/&lt;project&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public com.google.protobuf.ByteString
         getParentBytes() {
@@ -435,12 +441,12 @@ public  final class ListInstancesRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the project for which a list of instances is requested.
      * Values are of the form projects/&lt;project&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParent(
         java.lang.String value) {
@@ -453,12 +459,12 @@ public  final class ListInstancesRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the project for which a list of instances is requested.
      * Values are of the form projects/&lt;project&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder clearParent() {
       
@@ -467,12 +473,12 @@ public  final class ListInstancesRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the project for which a list of instances is requested.
      * Values are of the form projects/&lt;project&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
@@ -488,11 +494,11 @@ public  final class ListInstancesRequest extends
 
     private java.lang.Object pageToken_ = "";
     /**
-     * <code>optional string page_token = 2;</code>
-     *
      * <pre>
      * The value of `next_page_token` returned by a previous call.
      * </pre>
+     *
+     * <code>optional string page_token = 2;</code>
      */
     public java.lang.String getPageToken() {
       java.lang.Object ref = pageToken_;
@@ -507,11 +513,11 @@ public  final class ListInstancesRequest extends
       }
     }
     /**
-     * <code>optional string page_token = 2;</code>
-     *
      * <pre>
      * The value of `next_page_token` returned by a previous call.
      * </pre>
+     *
+     * <code>optional string page_token = 2;</code>
      */
     public com.google.protobuf.ByteString
         getPageTokenBytes() {
@@ -527,11 +533,11 @@ public  final class ListInstancesRequest extends
       }
     }
     /**
-     * <code>optional string page_token = 2;</code>
-     *
      * <pre>
      * The value of `next_page_token` returned by a previous call.
      * </pre>
+     *
+     * <code>optional string page_token = 2;</code>
      */
     public Builder setPageToken(
         java.lang.String value) {
@@ -544,11 +550,11 @@ public  final class ListInstancesRequest extends
       return this;
     }
     /**
-     * <code>optional string page_token = 2;</code>
-     *
      * <pre>
      * The value of `next_page_token` returned by a previous call.
      * </pre>
+     *
+     * <code>optional string page_token = 2;</code>
      */
     public Builder clearPageToken() {
       
@@ -557,11 +563,11 @@ public  final class ListInstancesRequest extends
       return this;
     }
     /**
-     * <code>optional string page_token = 2;</code>
-     *
      * <pre>
      * The value of `next_page_token` returned by a previous call.
      * </pre>
+     *
+     * <code>optional string page_token = 2;</code>
      */
     public Builder setPageTokenBytes(
         com.google.protobuf.ByteString value) {
@@ -604,16 +610,7 @@ public  final class ListInstancesRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ListInstancesRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

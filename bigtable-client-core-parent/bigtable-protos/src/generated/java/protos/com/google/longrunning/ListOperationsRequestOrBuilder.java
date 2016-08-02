@@ -8,64 +8,64 @@ public interface ListOperationsRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 4;</code>
-   *
    * <pre>
    * The name of the operation collection.
    * </pre>
+   *
+   * <code>optional string name = 4;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 4;</code>
-   *
    * <pre>
    * The name of the operation collection.
    * </pre>
+   *
+   * <code>optional string name = 4;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>optional string filter = 1;</code>
-   *
    * <pre>
    * The standard List filter.
    * </pre>
+   *
+   * <code>optional string filter = 1;</code>
    */
   java.lang.String getFilter();
   /**
-   * <code>optional string filter = 1;</code>
-   *
    * <pre>
    * The standard List filter.
    * </pre>
+   *
+   * <code>optional string filter = 1;</code>
    */
   com.google.protobuf.ByteString
       getFilterBytes();
 
   /**
-   * <code>optional int32 page_size = 2;</code>
-   *
    * <pre>
    * The standard List page size.
    * </pre>
+   *
+   * <code>optional int32 page_size = 2;</code>
    */
   int getPageSize();
 
   /**
-   * <code>optional string page_token = 3;</code>
-   *
    * <pre>
    * The standard List page token.
    * </pre>
+   *
+   * <code>optional string page_token = 3;</code>
    */
   java.lang.String getPageToken();
   /**
-   * <code>optional string page_token = 3;</code>
-   *
    * <pre>
    * The standard List page token.
    * </pre>
+   *
+   * <code>optional string page_token = 3;</code>
    */
   com.google.protobuf.ByteString
       getPageTokenBytes();

@@ -19,7 +19,7 @@ public final class BigtableZeroCopyByteStringUtil {
    * @return a {@link com.google.protobuf.ByteString} object.
    */
   public static ByteString wrap(final byte[] array) {
-    return new LiteralByteString(array);
+    return ByteString.wrap(array);
   }
 
   /**
@@ -31,7 +31,7 @@ public final class BigtableZeroCopyByteStringUtil {
    * @return a {@link com.google.protobuf.ByteString} object.
    */
   public static ByteString wrap(final byte[] array, int offset, int length) {
-    return new BoundedByteString(array, offset, length);
+    return ByteString.wrap(array, offset, length);
   }
 
   /**
@@ -44,10 +44,7 @@ public final class BigtableZeroCopyByteStringUtil {
    * @return an array of byte.
    */
   public static byte[] zeroCopyGetBytes(final ByteString buf) {
-    if (buf.getClass() == LiteralByteString.class) {
-      return ((LiteralByteString) buf).bytes;
-    } else {
-      return buf.toByteArray();
-    }
+    // TODO: See if there is a new way to get the underlying byte[] without being too hacky.
+    return buf.toByteArray();
   }
 }

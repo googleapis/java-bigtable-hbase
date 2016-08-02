@@ -8,52 +8,52 @@ public interface UndeleteClusterMetadataOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 1;</code>
-   *
    * <pre>
    * The time at which the original request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 1;</code>
    */
   boolean hasRequestTime();
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 1;</code>
-   *
    * <pre>
    * The time at which the original request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 1;</code>
    */
   com.google.protobuf.Timestamp getRequestTime();
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 1;</code>
-   *
    * <pre>
    * The time at which the original request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 1;</code>
    */
   com.google.protobuf.TimestampOrBuilder getRequestTimeOrBuilder();
 
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 2;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 2;</code>
    */
   boolean hasFinishTime();
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 2;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 2;</code>
    */
   com.google.protobuf.Timestamp getFinishTime();
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 2;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 2;</code>
    */
   com.google.protobuf.TimestampOrBuilder getFinishTimeOrBuilder();
 }

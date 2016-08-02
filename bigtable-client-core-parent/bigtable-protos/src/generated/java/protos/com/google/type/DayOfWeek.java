@@ -4,156 +4,164 @@
 package com.google.type;
 
 /**
- * Protobuf enum {@code google.type.DayOfWeek}
- *
  * <pre>
  * Represents a day of week.
  * </pre>
+ *
+ * Protobuf enum {@code google.type.DayOfWeek}
  */
 public enum DayOfWeek
     implements com.google.protobuf.ProtocolMessageEnum {
   /**
-   * <code>DAY_OF_WEEK_UNSPECIFIED = 0;</code>
-   *
    * <pre>
    * The unspecified day-of-week.
    * </pre>
-   */
-  DAY_OF_WEEK_UNSPECIFIED(0, 0),
-  /**
-   * <code>MONDAY = 1;</code>
    *
+   * <code>DAY_OF_WEEK_UNSPECIFIED = 0;</code>
+   */
+  DAY_OF_WEEK_UNSPECIFIED(0),
+  /**
    * <pre>
    * The day-of-week of Monday.
    * </pre>
-   */
-  MONDAY(1, 1),
-  /**
-   * <code>TUESDAY = 2;</code>
    *
+   * <code>MONDAY = 1;</code>
+   */
+  MONDAY(1),
+  /**
    * <pre>
    * The day-of-week of Tuesday.
    * </pre>
-   */
-  TUESDAY(2, 2),
-  /**
-   * <code>WEDNESDAY = 3;</code>
    *
+   * <code>TUESDAY = 2;</code>
+   */
+  TUESDAY(2),
+  /**
    * <pre>
    * The day-of-week of Wednesday.
    * </pre>
-   */
-  WEDNESDAY(3, 3),
-  /**
-   * <code>THURSDAY = 4;</code>
    *
+   * <code>WEDNESDAY = 3;</code>
+   */
+  WEDNESDAY(3),
+  /**
    * <pre>
    * The day-of-week of Thursday.
    * </pre>
-   */
-  THURSDAY(4, 4),
-  /**
-   * <code>FRIDAY = 5;</code>
    *
+   * <code>THURSDAY = 4;</code>
+   */
+  THURSDAY(4),
+  /**
    * <pre>
    * The day-of-week of Friday.
    * </pre>
-   */
-  FRIDAY(5, 5),
-  /**
-   * <code>SATURDAY = 6;</code>
    *
+   * <code>FRIDAY = 5;</code>
+   */
+  FRIDAY(5),
+  /**
    * <pre>
    * The day-of-week of Saturday.
    * </pre>
-   */
-  SATURDAY(6, 6),
-  /**
-   * <code>SUNDAY = 7;</code>
    *
+   * <code>SATURDAY = 6;</code>
+   */
+  SATURDAY(6),
+  /**
    * <pre>
    * The day-of-week of Sunday.
    * </pre>
+   *
+   * <code>SUNDAY = 7;</code>
    */
-  SUNDAY(7, 7),
-  UNRECOGNIZED(-1, -1),
+  SUNDAY(7),
+  UNRECOGNIZED(-1),
   ;
 
   /**
-   * <code>DAY_OF_WEEK_UNSPECIFIED = 0;</code>
-   *
    * <pre>
    * The unspecified day-of-week.
    * </pre>
+   *
+   * <code>DAY_OF_WEEK_UNSPECIFIED = 0;</code>
    */
   public static final int DAY_OF_WEEK_UNSPECIFIED_VALUE = 0;
   /**
-   * <code>MONDAY = 1;</code>
-   *
    * <pre>
    * The day-of-week of Monday.
    * </pre>
+   *
+   * <code>MONDAY = 1;</code>
    */
   public static final int MONDAY_VALUE = 1;
   /**
-   * <code>TUESDAY = 2;</code>
-   *
    * <pre>
    * The day-of-week of Tuesday.
    * </pre>
+   *
+   * <code>TUESDAY = 2;</code>
    */
   public static final int TUESDAY_VALUE = 2;
   /**
-   * <code>WEDNESDAY = 3;</code>
-   *
    * <pre>
    * The day-of-week of Wednesday.
    * </pre>
+   *
+   * <code>WEDNESDAY = 3;</code>
    */
   public static final int WEDNESDAY_VALUE = 3;
   /**
-   * <code>THURSDAY = 4;</code>
-   *
    * <pre>
    * The day-of-week of Thursday.
    * </pre>
+   *
+   * <code>THURSDAY = 4;</code>
    */
   public static final int THURSDAY_VALUE = 4;
   /**
-   * <code>FRIDAY = 5;</code>
-   *
    * <pre>
    * The day-of-week of Friday.
    * </pre>
+   *
+   * <code>FRIDAY = 5;</code>
    */
   public static final int FRIDAY_VALUE = 5;
   /**
-   * <code>SATURDAY = 6;</code>
-   *
    * <pre>
    * The day-of-week of Saturday.
    * </pre>
+   *
+   * <code>SATURDAY = 6;</code>
    */
   public static final int SATURDAY_VALUE = 6;
   /**
-   * <code>SUNDAY = 7;</code>
-   *
    * <pre>
    * The day-of-week of Sunday.
    * </pre>
+   *
+   * <code>SUNDAY = 7;</code>
    */
   public static final int SUNDAY_VALUE = 7;
 
 
   public final int getNumber() {
-    if (index == -1) {
+    if (this == UNRECOGNIZED) {
       throw new java.lang.IllegalArgumentException(
           "Can't get the number of an unknown enum value.");
     }
     return value;
   }
 
+  /**
+   * @deprecated Use {@link #forNumber(int)} instead.
+   */
+  @java.lang.Deprecated
   public static DayOfWeek valueOf(int value) {
+    return forNumber(value);
+  }
+
+  public static DayOfWeek forNumber(int value) {
     switch (value) {
       case 0: return DAY_OF_WEEK_UNSPECIFIED;
       case 1: return MONDAY;
@@ -175,13 +183,13 @@ public enum DayOfWeek
       DayOfWeek> internalValueMap =
         new com.google.protobuf.Internal.EnumLiteMap<DayOfWeek>() {
           public DayOfWeek findValueByNumber(int number) {
-            return DayOfWeek.valueOf(number);
+            return DayOfWeek.forNumber(number);
           }
         };
 
   public final com.google.protobuf.Descriptors.EnumValueDescriptor
       getValueDescriptor() {
-    return getDescriptor().getValues().get(index);
+    return getDescriptor().getValues().get(ordinal());
   }
   public final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptorForType() {
@@ -207,11 +215,9 @@ public enum DayOfWeek
     return VALUES[desc.getIndex()];
   }
 
-  private final int index;
   private final int value;
 
-  private DayOfWeek(int index, int value) {
-    this.index = index;
+  private DayOfWeek(int value) {
     this.value = value;
   }
 

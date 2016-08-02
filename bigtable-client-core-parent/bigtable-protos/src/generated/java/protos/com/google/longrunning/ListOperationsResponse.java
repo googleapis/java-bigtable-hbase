@@ -4,11 +4,11 @@
 package com.google.longrunning;
 
 /**
- * Protobuf type {@code google.longrunning.ListOperationsResponse}
- *
  * <pre>
  * The response message for [Operations.ListOperations][google.longrunning.Operations.ListOperations].
  * </pre>
+ *
+ * Protobuf type {@code google.longrunning.ListOperationsResponse}
  */
 public  final class ListOperationsResponse extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class ListOperationsResponse extends
   }
   private ListOperationsResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -64,11 +65,10 @@ public  final class ListOperationsResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         operations_ = java.util.Collections.unmodifiableList(operations_);
@@ -92,52 +92,52 @@ public  final class ListOperationsResponse extends
   public static final int OPERATIONS_FIELD_NUMBER = 1;
   private java.util.List<com.google.longrunning.Operation> operations_;
   /**
-   * <code>repeated .google.longrunning.Operation operations = 1;</code>
-   *
    * <pre>
    * A list of operations that match the specified filter in the request.
    * </pre>
+   *
+   * <code>repeated .google.longrunning.Operation operations = 1;</code>
    */
   public java.util.List<com.google.longrunning.Operation> getOperationsList() {
     return operations_;
   }
   /**
-   * <code>repeated .google.longrunning.Operation operations = 1;</code>
-   *
    * <pre>
    * A list of operations that match the specified filter in the request.
    * </pre>
+   *
+   * <code>repeated .google.longrunning.Operation operations = 1;</code>
    */
   public java.util.List<? extends com.google.longrunning.OperationOrBuilder> 
       getOperationsOrBuilderList() {
     return operations_;
   }
   /**
-   * <code>repeated .google.longrunning.Operation operations = 1;</code>
-   *
    * <pre>
    * A list of operations that match the specified filter in the request.
    * </pre>
+   *
+   * <code>repeated .google.longrunning.Operation operations = 1;</code>
    */
   public int getOperationsCount() {
     return operations_.size();
   }
   /**
-   * <code>repeated .google.longrunning.Operation operations = 1;</code>
-   *
    * <pre>
    * A list of operations that match the specified filter in the request.
    * </pre>
+   *
+   * <code>repeated .google.longrunning.Operation operations = 1;</code>
    */
   public com.google.longrunning.Operation getOperations(int index) {
     return operations_.get(index);
   }
   /**
-   * <code>repeated .google.longrunning.Operation operations = 1;</code>
-   *
    * <pre>
    * A list of operations that match the specified filter in the request.
    * </pre>
+   *
+   * <code>repeated .google.longrunning.Operation operations = 1;</code>
    */
   public com.google.longrunning.OperationOrBuilder getOperationsOrBuilder(
       int index) {
@@ -147,11 +147,11 @@ public  final class ListOperationsResponse extends
   public static final int NEXT_PAGE_TOKEN_FIELD_NUMBER = 2;
   private volatile java.lang.Object nextPageToken_;
   /**
-   * <code>optional string next_page_token = 2;</code>
-   *
    * <pre>
    * The standard List next-page token.
    * </pre>
+   *
+   * <code>optional string next_page_token = 2;</code>
    */
   public java.lang.String getNextPageToken() {
     java.lang.Object ref = nextPageToken_;
@@ -166,11 +166,11 @@ public  final class ListOperationsResponse extends
     }
   }
   /**
-   * <code>optional string next_page_token = 2;</code>
-   *
    * <pre>
    * The standard List next-page token.
    * </pre>
+   *
+   * <code>optional string next_page_token = 2;</code>
    */
   public com.google.protobuf.ByteString
       getNextPageTokenBytes() {
@@ -246,34 +246,40 @@ public  final class ListOperationsResponse extends
   }
   public static com.google.longrunning.ListOperationsResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.longrunning.ListOperationsResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.longrunning.ListOperationsResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.longrunning.ListOperationsResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.longrunning.ListOperationsResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.longrunning.ListOperationsResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -295,11 +301,11 @@ public  final class ListOperationsResponse extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.longrunning.ListOperationsResponse}
-   *
    * <pre>
    * The response message for [Operations.ListOperations][google.longrunning.Operations.ListOperations].
    * </pre>
+   *
+   * Protobuf type {@code google.longrunning.ListOperationsResponse}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -439,7 +445,7 @@ public  final class ListOperationsResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.longrunning.ListOperationsResponse) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -462,11 +468,11 @@ public  final class ListOperationsResponse extends
         com.google.longrunning.Operation, com.google.longrunning.Operation.Builder, com.google.longrunning.OperationOrBuilder> operationsBuilder_;
 
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public java.util.List<com.google.longrunning.Operation> getOperationsList() {
       if (operationsBuilder_ == null) {
@@ -476,11 +482,11 @@ public  final class ListOperationsResponse extends
       }
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public int getOperationsCount() {
       if (operationsBuilder_ == null) {
@@ -490,11 +496,11 @@ public  final class ListOperationsResponse extends
       }
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public com.google.longrunning.Operation getOperations(int index) {
       if (operationsBuilder_ == null) {
@@ -504,11 +510,11 @@ public  final class ListOperationsResponse extends
       }
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public Builder setOperations(
         int index, com.google.longrunning.Operation value) {
@@ -525,11 +531,11 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public Builder setOperations(
         int index, com.google.longrunning.Operation.Builder builderForValue) {
@@ -543,11 +549,11 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public Builder addOperations(com.google.longrunning.Operation value) {
       if (operationsBuilder_ == null) {
@@ -563,11 +569,11 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public Builder addOperations(
         int index, com.google.longrunning.Operation value) {
@@ -584,11 +590,11 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public Builder addOperations(
         com.google.longrunning.Operation.Builder builderForValue) {
@@ -602,11 +608,11 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public Builder addOperations(
         int index, com.google.longrunning.Operation.Builder builderForValue) {
@@ -620,11 +626,11 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public Builder addAllOperations(
         java.lang.Iterable<? extends com.google.longrunning.Operation> values) {
@@ -639,11 +645,11 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public Builder clearOperations() {
       if (operationsBuilder_ == null) {
@@ -656,11 +662,11 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public Builder removeOperations(int index) {
       if (operationsBuilder_ == null) {
@@ -673,22 +679,22 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public com.google.longrunning.Operation.Builder getOperationsBuilder(
         int index) {
       return getOperationsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public com.google.longrunning.OperationOrBuilder getOperationsOrBuilder(
         int index) {
@@ -698,11 +704,11 @@ public  final class ListOperationsResponse extends
       }
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public java.util.List<? extends com.google.longrunning.OperationOrBuilder> 
          getOperationsOrBuilderList() {
@@ -713,22 +719,22 @@ public  final class ListOperationsResponse extends
       }
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public com.google.longrunning.Operation.Builder addOperationsBuilder() {
       return getOperationsFieldBuilder().addBuilder(
           com.google.longrunning.Operation.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public com.google.longrunning.Operation.Builder addOperationsBuilder(
         int index) {
@@ -736,11 +742,11 @@ public  final class ListOperationsResponse extends
           index, com.google.longrunning.Operation.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.longrunning.Operation operations = 1;</code>
-     *
      * <pre>
      * A list of operations that match the specified filter in the request.
      * </pre>
+     *
+     * <code>repeated .google.longrunning.Operation operations = 1;</code>
      */
     public java.util.List<com.google.longrunning.Operation.Builder> 
          getOperationsBuilderList() {
@@ -763,11 +769,11 @@ public  final class ListOperationsResponse extends
 
     private java.lang.Object nextPageToken_ = "";
     /**
-     * <code>optional string next_page_token = 2;</code>
-     *
      * <pre>
      * The standard List next-page token.
      * </pre>
+     *
+     * <code>optional string next_page_token = 2;</code>
      */
     public java.lang.String getNextPageToken() {
       java.lang.Object ref = nextPageToken_;
@@ -782,11 +788,11 @@ public  final class ListOperationsResponse extends
       }
     }
     /**
-     * <code>optional string next_page_token = 2;</code>
-     *
      * <pre>
      * The standard List next-page token.
      * </pre>
+     *
+     * <code>optional string next_page_token = 2;</code>
      */
     public com.google.protobuf.ByteString
         getNextPageTokenBytes() {
@@ -802,11 +808,11 @@ public  final class ListOperationsResponse extends
       }
     }
     /**
-     * <code>optional string next_page_token = 2;</code>
-     *
      * <pre>
      * The standard List next-page token.
      * </pre>
+     *
+     * <code>optional string next_page_token = 2;</code>
      */
     public Builder setNextPageToken(
         java.lang.String value) {
@@ -819,11 +825,11 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>optional string next_page_token = 2;</code>
-     *
      * <pre>
      * The standard List next-page token.
      * </pre>
+     *
+     * <code>optional string next_page_token = 2;</code>
      */
     public Builder clearNextPageToken() {
       
@@ -832,11 +838,11 @@ public  final class ListOperationsResponse extends
       return this;
     }
     /**
-     * <code>optional string next_page_token = 2;</code>
-     *
      * <pre>
      * The standard List next-page token.
      * </pre>
+     *
+     * <code>optional string next_page_token = 2;</code>
      */
     public Builder setNextPageTokenBytes(
         com.google.protobuf.ByteString value) {
@@ -879,16 +885,7 @@ public  final class ListOperationsResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ListOperationsResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

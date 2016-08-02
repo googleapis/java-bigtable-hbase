@@ -8,45 +8,45 @@ public interface ListZonesResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-   *
    * <pre>
    * The list of requested zones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
    */
   java.util.List<com.google.bigtable.admin.cluster.v1.Zone> 
       getZonesList();
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-   *
    * <pre>
    * The list of requested zones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
    */
   com.google.bigtable.admin.cluster.v1.Zone getZones(int index);
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-   *
    * <pre>
    * The list of requested zones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
    */
   int getZonesCount();
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-   *
    * <pre>
    * The list of requested zones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
    */
   java.util.List<? extends com.google.bigtable.admin.cluster.v1.ZoneOrBuilder> 
       getZonesOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
-   *
    * <pre>
    * The list of requested zones.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.cluster.v1.Zone zones = 1;</code>
    */
   com.google.bigtable.admin.cluster.v1.ZoneOrBuilder getZonesOrBuilder(
       int index);

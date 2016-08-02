@@ -4,12 +4,12 @@
 package com.google.longrunning;
 
 /**
- * Protobuf type {@code google.longrunning.Operation}
- *
  * <pre>
  * This resource represents a long-running operation that is the result of a
  * network API call.
  * </pre>
+ *
+ * Protobuf type {@code google.longrunning.Operation}
  */
 public  final class Operation extends
     com.google.protobuf.GeneratedMessage implements
@@ -31,7 +31,8 @@ public  final class Operation extends
   }
   private Operation(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -103,11 +104,10 @@ public  final class Operation extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -131,17 +131,24 @@ public  final class Operation extends
     ERROR(4),
     RESPONSE(5),
     RESULT_NOT_SET(0);
-    private int value = 0;
+    private final int value;
     private ResultCase(int value) {
       this.value = value;
     }
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static ResultCase valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static ResultCase forNumber(int value) {
       switch (value) {
         case 4: return ERROR;
         case 5: return RESPONSE;
         case 0: return RESULT_NOT_SET;
-        default: throw new java.lang.IllegalArgumentException(
-          "Value is undefined for this oneof enum.");
+        default: return null;
       }
     }
     public int getNumber() {
@@ -151,19 +158,19 @@ public  final class Operation extends
 
   public ResultCase
   getResultCase() {
-    return ResultCase.valueOf(
+    return ResultCase.forNumber(
         resultCase_);
   }
 
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The name of the operation resource, which is only unique within the same
    * service that originally returns it.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -178,12 +185,12 @@ public  final class Operation extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The name of the operation resource, which is only unique within the same
    * service that originally returns it.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -202,40 +209,40 @@ public  final class Operation extends
   public static final int METADATA_FIELD_NUMBER = 2;
   private com.google.protobuf.Any metadata_;
   /**
-   * <code>optional .google.protobuf.Any metadata = 2;</code>
-   *
    * <pre>
    * Some service-specific metadata associated with the operation.  It typically
    * contains progress information and common metadata such as create time.
    * Some services may not provide such metadata.  Any method that returns a
    * long-running operation should document the metadata type, if any.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Any metadata = 2;</code>
    */
   public boolean hasMetadata() {
     return metadata_ != null;
   }
   /**
-   * <code>optional .google.protobuf.Any metadata = 2;</code>
-   *
    * <pre>
    * Some service-specific metadata associated with the operation.  It typically
    * contains progress information and common metadata such as create time.
    * Some services may not provide such metadata.  Any method that returns a
    * long-running operation should document the metadata type, if any.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Any metadata = 2;</code>
    */
   public com.google.protobuf.Any getMetadata() {
     return metadata_ == null ? com.google.protobuf.Any.getDefaultInstance() : metadata_;
   }
   /**
-   * <code>optional .google.protobuf.Any metadata = 2;</code>
-   *
    * <pre>
    * Some service-specific metadata associated with the operation.  It typically
    * contains progress information and common metadata such as create time.
    * Some services may not provide such metadata.  Any method that returns a
    * long-running operation should document the metadata type, if any.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Any metadata = 2;</code>
    */
   public com.google.protobuf.AnyOrBuilder getMetadataOrBuilder() {
     return getMetadata();
@@ -244,12 +251,12 @@ public  final class Operation extends
   public static final int DONE_FIELD_NUMBER = 3;
   private boolean done_;
   /**
-   * <code>optional bool done = 3;</code>
-   *
    * <pre>
    * If the value is false, it means the operation is still in progress.
    * If true, the operation is completed and the `result` is available.
    * </pre>
+   *
+   * <code>optional bool done = 3;</code>
    */
   public boolean getDone() {
     return done_;
@@ -257,11 +264,11 @@ public  final class Operation extends
 
   public static final int ERROR_FIELD_NUMBER = 4;
   /**
-   * <code>optional .google.rpc.Status error = 4;</code>
-   *
    * <pre>
    * The error result of the operation in case of failure.
    * </pre>
+   *
+   * <code>optional .google.rpc.Status error = 4;</code>
    */
   public com.google.rpc.Status getError() {
     if (resultCase_ == 4) {
@@ -270,11 +277,11 @@ public  final class Operation extends
     return com.google.rpc.Status.getDefaultInstance();
   }
   /**
-   * <code>optional .google.rpc.Status error = 4;</code>
-   *
    * <pre>
    * The error result of the operation in case of failure.
    * </pre>
+   *
+   * <code>optional .google.rpc.Status error = 4;</code>
    */
   public com.google.rpc.StatusOrBuilder getErrorOrBuilder() {
     if (resultCase_ == 4) {
@@ -285,8 +292,6 @@ public  final class Operation extends
 
   public static final int RESPONSE_FIELD_NUMBER = 5;
   /**
-   * <code>optional .google.protobuf.Any response = 5;</code>
-   *
    * <pre>
    * The normal response of the operation in case of success.  If the original
    * method returns no data on success, such as `Delete`, the response will be
@@ -297,6 +302,8 @@ public  final class Operation extends
    * is `TakeSnapshot()`, the inferred response type will be
    * `TakeSnapshotResponse`.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Any response = 5;</code>
    */
   public com.google.protobuf.Any getResponse() {
     if (resultCase_ == 5) {
@@ -305,8 +312,6 @@ public  final class Operation extends
     return com.google.protobuf.Any.getDefaultInstance();
   }
   /**
-   * <code>optional .google.protobuf.Any response = 5;</code>
-   *
    * <pre>
    * The normal response of the operation in case of success.  If the original
    * method returns no data on success, such as `Delete`, the response will be
@@ -317,6 +322,8 @@ public  final class Operation extends
    * is `TakeSnapshot()`, the inferred response type will be
    * `TakeSnapshotResponse`.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Any response = 5;</code>
    */
   public com.google.protobuf.AnyOrBuilder getResponseOrBuilder() {
     if (resultCase_ == 5) {
@@ -406,34 +413,40 @@ public  final class Operation extends
   }
   public static com.google.longrunning.Operation parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.longrunning.Operation parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.longrunning.Operation parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.longrunning.Operation parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.longrunning.Operation parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.longrunning.Operation parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -455,12 +468,12 @@ public  final class Operation extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.longrunning.Operation}
-   *
    * <pre>
    * This resource represents a long-running operation that is the result of a
    * network API call.
    * </pre>
+   *
+   * Protobuf type {@code google.longrunning.Operation}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -605,7 +618,7 @@ public  final class Operation extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.longrunning.Operation) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -617,7 +630,7 @@ public  final class Operation extends
     private java.lang.Object result_;
     public ResultCase
         getResultCase() {
-      return ResultCase.valueOf(
+      return ResultCase.forNumber(
           resultCase_);
     }
 
@@ -631,12 +644,12 @@ public  final class Operation extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The name of the operation resource, which is only unique within the same
      * service that originally returns it.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -651,12 +664,12 @@ public  final class Operation extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The name of the operation resource, which is only unique within the same
      * service that originally returns it.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -672,12 +685,12 @@ public  final class Operation extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The name of the operation resource, which is only unique within the same
      * service that originally returns it.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -690,12 +703,12 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The name of the operation resource, which is only unique within the same
      * service that originally returns it.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -704,12 +717,12 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The name of the operation resource, which is only unique within the same
      * service that originally returns it.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -727,27 +740,27 @@ public  final class Operation extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> metadataBuilder_;
     /**
-     * <code>optional .google.protobuf.Any metadata = 2;</code>
-     *
      * <pre>
      * Some service-specific metadata associated with the operation.  It typically
      * contains progress information and common metadata such as create time.
      * Some services may not provide such metadata.  Any method that returns a
      * long-running operation should document the metadata type, if any.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any metadata = 2;</code>
      */
     public boolean hasMetadata() {
       return metadataBuilder_ != null || metadata_ != null;
     }
     /**
-     * <code>optional .google.protobuf.Any metadata = 2;</code>
-     *
      * <pre>
      * Some service-specific metadata associated with the operation.  It typically
      * contains progress information and common metadata such as create time.
      * Some services may not provide such metadata.  Any method that returns a
      * long-running operation should document the metadata type, if any.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any metadata = 2;</code>
      */
     public com.google.protobuf.Any getMetadata() {
       if (metadataBuilder_ == null) {
@@ -757,14 +770,14 @@ public  final class Operation extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Any metadata = 2;</code>
-     *
      * <pre>
      * Some service-specific metadata associated with the operation.  It typically
      * contains progress information and common metadata such as create time.
      * Some services may not provide such metadata.  Any method that returns a
      * long-running operation should document the metadata type, if any.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any metadata = 2;</code>
      */
     public Builder setMetadata(com.google.protobuf.Any value) {
       if (metadataBuilder_ == null) {
@@ -780,14 +793,14 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Any metadata = 2;</code>
-     *
      * <pre>
      * Some service-specific metadata associated with the operation.  It typically
      * contains progress information and common metadata such as create time.
      * Some services may not provide such metadata.  Any method that returns a
      * long-running operation should document the metadata type, if any.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any metadata = 2;</code>
      */
     public Builder setMetadata(
         com.google.protobuf.Any.Builder builderForValue) {
@@ -801,14 +814,14 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Any metadata = 2;</code>
-     *
      * <pre>
      * Some service-specific metadata associated with the operation.  It typically
      * contains progress information and common metadata such as create time.
      * Some services may not provide such metadata.  Any method that returns a
      * long-running operation should document the metadata type, if any.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any metadata = 2;</code>
      */
     public Builder mergeMetadata(com.google.protobuf.Any value) {
       if (metadataBuilder_ == null) {
@@ -826,14 +839,14 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Any metadata = 2;</code>
-     *
      * <pre>
      * Some service-specific metadata associated with the operation.  It typically
      * contains progress information and common metadata such as create time.
      * Some services may not provide such metadata.  Any method that returns a
      * long-running operation should document the metadata type, if any.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any metadata = 2;</code>
      */
     public Builder clearMetadata() {
       if (metadataBuilder_ == null) {
@@ -847,14 +860,14 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Any metadata = 2;</code>
-     *
      * <pre>
      * Some service-specific metadata associated with the operation.  It typically
      * contains progress information and common metadata such as create time.
      * Some services may not provide such metadata.  Any method that returns a
      * long-running operation should document the metadata type, if any.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any metadata = 2;</code>
      */
     public com.google.protobuf.Any.Builder getMetadataBuilder() {
       
@@ -862,14 +875,14 @@ public  final class Operation extends
       return getMetadataFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.protobuf.Any metadata = 2;</code>
-     *
      * <pre>
      * Some service-specific metadata associated with the operation.  It typically
      * contains progress information and common metadata such as create time.
      * Some services may not provide such metadata.  Any method that returns a
      * long-running operation should document the metadata type, if any.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any metadata = 2;</code>
      */
     public com.google.protobuf.AnyOrBuilder getMetadataOrBuilder() {
       if (metadataBuilder_ != null) {
@@ -880,14 +893,14 @@ public  final class Operation extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Any metadata = 2;</code>
-     *
      * <pre>
      * Some service-specific metadata associated with the operation.  It typically
      * contains progress information and common metadata such as create time.
      * Some services may not provide such metadata.  Any method that returns a
      * long-running operation should document the metadata type, if any.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any metadata = 2;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
@@ -905,23 +918,23 @@ public  final class Operation extends
 
     private boolean done_ ;
     /**
-     * <code>optional bool done = 3;</code>
-     *
      * <pre>
      * If the value is false, it means the operation is still in progress.
      * If true, the operation is completed and the `result` is available.
      * </pre>
+     *
+     * <code>optional bool done = 3;</code>
      */
     public boolean getDone() {
       return done_;
     }
     /**
-     * <code>optional bool done = 3;</code>
-     *
      * <pre>
      * If the value is false, it means the operation is still in progress.
      * If true, the operation is completed and the `result` is available.
      * </pre>
+     *
+     * <code>optional bool done = 3;</code>
      */
     public Builder setDone(boolean value) {
       
@@ -930,12 +943,12 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional bool done = 3;</code>
-     *
      * <pre>
      * If the value is false, it means the operation is still in progress.
      * If true, the operation is completed and the `result` is available.
      * </pre>
+     *
+     * <code>optional bool done = 3;</code>
      */
     public Builder clearDone() {
       
@@ -947,11 +960,11 @@ public  final class Operation extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder> errorBuilder_;
     /**
-     * <code>optional .google.rpc.Status error = 4;</code>
-     *
      * <pre>
      * The error result of the operation in case of failure.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status error = 4;</code>
      */
     public com.google.rpc.Status getError() {
       if (errorBuilder_ == null) {
@@ -967,11 +980,11 @@ public  final class Operation extends
       }
     }
     /**
-     * <code>optional .google.rpc.Status error = 4;</code>
-     *
      * <pre>
      * The error result of the operation in case of failure.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status error = 4;</code>
      */
     public Builder setError(com.google.rpc.Status value) {
       if (errorBuilder_ == null) {
@@ -987,11 +1000,11 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.rpc.Status error = 4;</code>
-     *
      * <pre>
      * The error result of the operation in case of failure.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status error = 4;</code>
      */
     public Builder setError(
         com.google.rpc.Status.Builder builderForValue) {
@@ -1005,11 +1018,11 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.rpc.Status error = 4;</code>
-     *
      * <pre>
      * The error result of the operation in case of failure.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status error = 4;</code>
      */
     public Builder mergeError(com.google.rpc.Status value) {
       if (errorBuilder_ == null) {
@@ -1031,11 +1044,11 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.rpc.Status error = 4;</code>
-     *
      * <pre>
      * The error result of the operation in case of failure.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status error = 4;</code>
      */
     public Builder clearError() {
       if (errorBuilder_ == null) {
@@ -1054,21 +1067,21 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.rpc.Status error = 4;</code>
-     *
      * <pre>
      * The error result of the operation in case of failure.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status error = 4;</code>
      */
     public com.google.rpc.Status.Builder getErrorBuilder() {
       return getErrorFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.rpc.Status error = 4;</code>
-     *
      * <pre>
      * The error result of the operation in case of failure.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status error = 4;</code>
      */
     public com.google.rpc.StatusOrBuilder getErrorOrBuilder() {
       if ((resultCase_ == 4) && (errorBuilder_ != null)) {
@@ -1081,11 +1094,11 @@ public  final class Operation extends
       }
     }
     /**
-     * <code>optional .google.rpc.Status error = 4;</code>
-     *
      * <pre>
      * The error result of the operation in case of failure.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status error = 4;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder> 
@@ -1109,8 +1122,6 @@ public  final class Operation extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> responseBuilder_;
     /**
-     * <code>optional .google.protobuf.Any response = 5;</code>
-     *
      * <pre>
      * The normal response of the operation in case of success.  If the original
      * method returns no data on success, such as `Delete`, the response will be
@@ -1121,6 +1132,8 @@ public  final class Operation extends
      * is `TakeSnapshot()`, the inferred response type will be
      * `TakeSnapshotResponse`.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any response = 5;</code>
      */
     public com.google.protobuf.Any getResponse() {
       if (responseBuilder_ == null) {
@@ -1136,8 +1149,6 @@ public  final class Operation extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Any response = 5;</code>
-     *
      * <pre>
      * The normal response of the operation in case of success.  If the original
      * method returns no data on success, such as `Delete`, the response will be
@@ -1148,6 +1159,8 @@ public  final class Operation extends
      * is `TakeSnapshot()`, the inferred response type will be
      * `TakeSnapshotResponse`.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any response = 5;</code>
      */
     public Builder setResponse(com.google.protobuf.Any value) {
       if (responseBuilder_ == null) {
@@ -1163,8 +1176,6 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Any response = 5;</code>
-     *
      * <pre>
      * The normal response of the operation in case of success.  If the original
      * method returns no data on success, such as `Delete`, the response will be
@@ -1175,6 +1186,8 @@ public  final class Operation extends
      * is `TakeSnapshot()`, the inferred response type will be
      * `TakeSnapshotResponse`.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any response = 5;</code>
      */
     public Builder setResponse(
         com.google.protobuf.Any.Builder builderForValue) {
@@ -1188,8 +1201,6 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Any response = 5;</code>
-     *
      * <pre>
      * The normal response of the operation in case of success.  If the original
      * method returns no data on success, such as `Delete`, the response will be
@@ -1200,6 +1211,8 @@ public  final class Operation extends
      * is `TakeSnapshot()`, the inferred response type will be
      * `TakeSnapshotResponse`.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any response = 5;</code>
      */
     public Builder mergeResponse(com.google.protobuf.Any value) {
       if (responseBuilder_ == null) {
@@ -1221,8 +1234,6 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Any response = 5;</code>
-     *
      * <pre>
      * The normal response of the operation in case of success.  If the original
      * method returns no data on success, such as `Delete`, the response will be
@@ -1233,6 +1244,8 @@ public  final class Operation extends
      * is `TakeSnapshot()`, the inferred response type will be
      * `TakeSnapshotResponse`.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any response = 5;</code>
      */
     public Builder clearResponse() {
       if (responseBuilder_ == null) {
@@ -1251,8 +1264,6 @@ public  final class Operation extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Any response = 5;</code>
-     *
      * <pre>
      * The normal response of the operation in case of success.  If the original
      * method returns no data on success, such as `Delete`, the response will be
@@ -1263,13 +1274,13 @@ public  final class Operation extends
      * is `TakeSnapshot()`, the inferred response type will be
      * `TakeSnapshotResponse`.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any response = 5;</code>
      */
     public com.google.protobuf.Any.Builder getResponseBuilder() {
       return getResponseFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.protobuf.Any response = 5;</code>
-     *
      * <pre>
      * The normal response of the operation in case of success.  If the original
      * method returns no data on success, such as `Delete`, the response will be
@@ -1280,6 +1291,8 @@ public  final class Operation extends
      * is `TakeSnapshot()`, the inferred response type will be
      * `TakeSnapshotResponse`.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any response = 5;</code>
      */
     public com.google.protobuf.AnyOrBuilder getResponseOrBuilder() {
       if ((resultCase_ == 5) && (responseBuilder_ != null)) {
@@ -1292,8 +1305,6 @@ public  final class Operation extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Any response = 5;</code>
-     *
      * <pre>
      * The normal response of the operation in case of success.  If the original
      * method returns no data on success, such as `Delete`, the response will be
@@ -1304,6 +1315,8 @@ public  final class Operation extends
      * is `TakeSnapshot()`, the inferred response type will be
      * `TakeSnapshotResponse`.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Any response = 5;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
@@ -1353,16 +1366,7 @@ public  final class Operation extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new Operation(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

@@ -8,77 +8,77 @@ public interface CreateClusterMetadataOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-   *
    * <pre>
    * The request which prompted the creation of this operation.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
    */
   boolean hasOriginalRequest();
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-   *
    * <pre>
    * The request which prompted the creation of this operation.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
    */
   com.google.bigtable.admin.cluster.v1.CreateClusterRequest getOriginalRequest();
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
-   *
    * <pre>
    * The request which prompted the creation of this operation.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.CreateClusterRequest original_request = 1;</code>
    */
   com.google.bigtable.admin.cluster.v1.CreateClusterRequestOrBuilder getOriginalRequestOrBuilder();
 
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-   *
    * <pre>
    * The time at which original_request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   boolean hasRequestTime();
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-   *
    * <pre>
    * The time at which original_request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   com.google.protobuf.Timestamp getRequestTime();
   /**
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
-   *
    * <pre>
    * The time at which original_request was received.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   com.google.protobuf.TimestampOrBuilder getRequestTimeOrBuilder();
 
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   boolean hasFinishTime();
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   com.google.protobuf.Timestamp getFinishTime();
   /**
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
-   *
    * <pre>
    * The time at which this operation failed or was completed successfully.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   com.google.protobuf.TimestampOrBuilder getFinishTimeOrBuilder();
 }

@@ -4,11 +4,11 @@
 package com.google.bigtable.admin.table.v1;
 
 /**
- * Protobuf type {@code google.bigtable.admin.table.v1.ColumnFamily}
- *
  * <pre>
  * A set of columns within a table which share a common configuration.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.table.v1.ColumnFamily}
  */
 public  final class ColumnFamily extends
     com.google.protobuf.GeneratedMessage implements
@@ -30,7 +30,8 @@ public  final class ColumnFamily extends
   }
   private ColumnFamily(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -75,11 +76,10 @@ public  final class ColumnFamily extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -99,13 +99,13 @@ public  final class ColumnFamily extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
    * The last segment is the same as the "name" field in
    * google.bigtable.v1.Family.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -120,13 +120,13 @@ public  final class ColumnFamily extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
    * The last segment is the same as the "name" field in
    * google.bigtable.v1.Family.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -145,8 +145,6 @@ public  final class ColumnFamily extends
   public static final int GC_EXPRESSION_FIELD_NUMBER = 2;
   private volatile java.lang.Object gcExpression_;
   /**
-   * <code>optional string gc_expression = 2;</code>
-   *
    * <pre>
    * Garbage collection expression specified by the following grammar:
    *   GC = EXPR
@@ -171,6 +169,8 @@ public  final class ColumnFamily extends
    * it's possible for reads to return a cell even if it matches the active GC
    * expression for its family.
    * </pre>
+   *
+   * <code>optional string gc_expression = 2;</code>
    */
   public java.lang.String getGcExpression() {
     java.lang.Object ref = gcExpression_;
@@ -185,8 +185,6 @@ public  final class ColumnFamily extends
     }
   }
   /**
-   * <code>optional string gc_expression = 2;</code>
-   *
    * <pre>
    * Garbage collection expression specified by the following grammar:
    *   GC = EXPR
@@ -211,6 +209,8 @@ public  final class ColumnFamily extends
    * it's possible for reads to return a cell even if it matches the active GC
    * expression for its family.
    * </pre>
+   *
+   * <code>optional string gc_expression = 2;</code>
    */
   public com.google.protobuf.ByteString
       getGcExpressionBytes() {
@@ -229,8 +229,6 @@ public  final class ColumnFamily extends
   public static final int GC_RULE_FIELD_NUMBER = 3;
   private com.google.bigtable.admin.table.v1.GcRule gcRule_;
   /**
-   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-   *
    * <pre>
    * Garbage collection rule specified as a protobuf.
    * Supersedes `gc_expression`.
@@ -239,13 +237,13 @@ public  final class ColumnFamily extends
    * so it's possible for reads to return a cell even if it matches the active
    * GC expression for its family.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
    */
   public boolean hasGcRule() {
     return gcRule_ != null;
   }
   /**
-   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-   *
    * <pre>
    * Garbage collection rule specified as a protobuf.
    * Supersedes `gc_expression`.
@@ -254,13 +252,13 @@ public  final class ColumnFamily extends
    * so it's possible for reads to return a cell even if it matches the active
    * GC expression for its family.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
    */
   public com.google.bigtable.admin.table.v1.GcRule getGcRule() {
     return gcRule_ == null ? com.google.bigtable.admin.table.v1.GcRule.getDefaultInstance() : gcRule_;
   }
   /**
-   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-   *
    * <pre>
    * Garbage collection rule specified as a protobuf.
    * Supersedes `gc_expression`.
@@ -269,6 +267,8 @@ public  final class ColumnFamily extends
    * so it's possible for reads to return a cell even if it matches the active
    * GC expression for its family.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
    */
   public com.google.bigtable.admin.table.v1.GcRuleOrBuilder getGcRuleOrBuilder() {
     return getGcRule();
@@ -340,34 +340,40 @@ public  final class ColumnFamily extends
   }
   public static com.google.bigtable.admin.table.v1.ColumnFamily parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.ColumnFamily parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.table.v1.ColumnFamily parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.ColumnFamily parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.table.v1.ColumnFamily parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.ColumnFamily parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -389,11 +395,11 @@ public  final class ColumnFamily extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.table.v1.ColumnFamily}
-   *
    * <pre>
    * A set of columns within a table which share a common configuration.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.table.v1.ColumnFamily}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -509,7 +515,7 @@ public  final class ColumnFamily extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.table.v1.ColumnFamily) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -520,13 +526,13 @@ public  final class ColumnFamily extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
      * The last segment is the same as the "name" field in
      * google.bigtable.v1.Family.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -541,13 +547,13 @@ public  final class ColumnFamily extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
      * The last segment is the same as the "name" field in
      * google.bigtable.v1.Family.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -563,13 +569,13 @@ public  final class ColumnFamily extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
      * The last segment is the same as the "name" field in
      * google.bigtable.v1.Family.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -582,13 +588,13 @@ public  final class ColumnFamily extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
      * The last segment is the same as the "name" field in
      * google.bigtable.v1.Family.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -597,13 +603,13 @@ public  final class ColumnFamily extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
      * The last segment is the same as the "name" field in
      * google.bigtable.v1.Family.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -619,8 +625,6 @@ public  final class ColumnFamily extends
 
     private java.lang.Object gcExpression_ = "";
     /**
-     * <code>optional string gc_expression = 2;</code>
-     *
      * <pre>
      * Garbage collection expression specified by the following grammar:
      *   GC = EXPR
@@ -645,6 +649,8 @@ public  final class ColumnFamily extends
      * it's possible for reads to return a cell even if it matches the active GC
      * expression for its family.
      * </pre>
+     *
+     * <code>optional string gc_expression = 2;</code>
      */
     public java.lang.String getGcExpression() {
       java.lang.Object ref = gcExpression_;
@@ -659,8 +665,6 @@ public  final class ColumnFamily extends
       }
     }
     /**
-     * <code>optional string gc_expression = 2;</code>
-     *
      * <pre>
      * Garbage collection expression specified by the following grammar:
      *   GC = EXPR
@@ -685,6 +689,8 @@ public  final class ColumnFamily extends
      * it's possible for reads to return a cell even if it matches the active GC
      * expression for its family.
      * </pre>
+     *
+     * <code>optional string gc_expression = 2;</code>
      */
     public com.google.protobuf.ByteString
         getGcExpressionBytes() {
@@ -700,8 +706,6 @@ public  final class ColumnFamily extends
       }
     }
     /**
-     * <code>optional string gc_expression = 2;</code>
-     *
      * <pre>
      * Garbage collection expression specified by the following grammar:
      *   GC = EXPR
@@ -726,6 +730,8 @@ public  final class ColumnFamily extends
      * it's possible for reads to return a cell even if it matches the active GC
      * expression for its family.
      * </pre>
+     *
+     * <code>optional string gc_expression = 2;</code>
      */
     public Builder setGcExpression(
         java.lang.String value) {
@@ -738,8 +744,6 @@ public  final class ColumnFamily extends
       return this;
     }
     /**
-     * <code>optional string gc_expression = 2;</code>
-     *
      * <pre>
      * Garbage collection expression specified by the following grammar:
      *   GC = EXPR
@@ -764,6 +768,8 @@ public  final class ColumnFamily extends
      * it's possible for reads to return a cell even if it matches the active GC
      * expression for its family.
      * </pre>
+     *
+     * <code>optional string gc_expression = 2;</code>
      */
     public Builder clearGcExpression() {
       
@@ -772,8 +778,6 @@ public  final class ColumnFamily extends
       return this;
     }
     /**
-     * <code>optional string gc_expression = 2;</code>
-     *
      * <pre>
      * Garbage collection expression specified by the following grammar:
      *   GC = EXPR
@@ -798,6 +802,8 @@ public  final class ColumnFamily extends
      * it's possible for reads to return a cell even if it matches the active GC
      * expression for its family.
      * </pre>
+     *
+     * <code>optional string gc_expression = 2;</code>
      */
     public Builder setGcExpressionBytes(
         com.google.protobuf.ByteString value) {
@@ -815,8 +821,6 @@ public  final class ColumnFamily extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.table.v1.GcRule, com.google.bigtable.admin.table.v1.GcRule.Builder, com.google.bigtable.admin.table.v1.GcRuleOrBuilder> gcRuleBuilder_;
     /**
-     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-     *
      * <pre>
      * Garbage collection rule specified as a protobuf.
      * Supersedes `gc_expression`.
@@ -825,13 +829,13 @@ public  final class ColumnFamily extends
      * so it's possible for reads to return a cell even if it matches the active
      * GC expression for its family.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
      */
     public boolean hasGcRule() {
       return gcRuleBuilder_ != null || gcRule_ != null;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-     *
      * <pre>
      * Garbage collection rule specified as a protobuf.
      * Supersedes `gc_expression`.
@@ -840,6 +844,8 @@ public  final class ColumnFamily extends
      * so it's possible for reads to return a cell even if it matches the active
      * GC expression for its family.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
      */
     public com.google.bigtable.admin.table.v1.GcRule getGcRule() {
       if (gcRuleBuilder_ == null) {
@@ -849,8 +855,6 @@ public  final class ColumnFamily extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-     *
      * <pre>
      * Garbage collection rule specified as a protobuf.
      * Supersedes `gc_expression`.
@@ -859,6 +863,8 @@ public  final class ColumnFamily extends
      * so it's possible for reads to return a cell even if it matches the active
      * GC expression for its family.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
      */
     public Builder setGcRule(com.google.bigtable.admin.table.v1.GcRule value) {
       if (gcRuleBuilder_ == null) {
@@ -874,8 +880,6 @@ public  final class ColumnFamily extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-     *
      * <pre>
      * Garbage collection rule specified as a protobuf.
      * Supersedes `gc_expression`.
@@ -884,6 +888,8 @@ public  final class ColumnFamily extends
      * so it's possible for reads to return a cell even if it matches the active
      * GC expression for its family.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
      */
     public Builder setGcRule(
         com.google.bigtable.admin.table.v1.GcRule.Builder builderForValue) {
@@ -897,8 +903,6 @@ public  final class ColumnFamily extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-     *
      * <pre>
      * Garbage collection rule specified as a protobuf.
      * Supersedes `gc_expression`.
@@ -907,6 +911,8 @@ public  final class ColumnFamily extends
      * so it's possible for reads to return a cell even if it matches the active
      * GC expression for its family.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
      */
     public Builder mergeGcRule(com.google.bigtable.admin.table.v1.GcRule value) {
       if (gcRuleBuilder_ == null) {
@@ -924,8 +930,6 @@ public  final class ColumnFamily extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-     *
      * <pre>
      * Garbage collection rule specified as a protobuf.
      * Supersedes `gc_expression`.
@@ -934,6 +938,8 @@ public  final class ColumnFamily extends
      * so it's possible for reads to return a cell even if it matches the active
      * GC expression for its family.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
      */
     public Builder clearGcRule() {
       if (gcRuleBuilder_ == null) {
@@ -947,8 +953,6 @@ public  final class ColumnFamily extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-     *
      * <pre>
      * Garbage collection rule specified as a protobuf.
      * Supersedes `gc_expression`.
@@ -957,6 +961,8 @@ public  final class ColumnFamily extends
      * so it's possible for reads to return a cell even if it matches the active
      * GC expression for its family.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
      */
     public com.google.bigtable.admin.table.v1.GcRule.Builder getGcRuleBuilder() {
       
@@ -964,8 +970,6 @@ public  final class ColumnFamily extends
       return getGcRuleFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-     *
      * <pre>
      * Garbage collection rule specified as a protobuf.
      * Supersedes `gc_expression`.
@@ -974,6 +978,8 @@ public  final class ColumnFamily extends
      * so it's possible for reads to return a cell even if it matches the active
      * GC expression for its family.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
      */
     public com.google.bigtable.admin.table.v1.GcRuleOrBuilder getGcRuleOrBuilder() {
       if (gcRuleBuilder_ != null) {
@@ -984,8 +990,6 @@ public  final class ColumnFamily extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-     *
      * <pre>
      * Garbage collection rule specified as a protobuf.
      * Supersedes `gc_expression`.
@@ -994,6 +998,8 @@ public  final class ColumnFamily extends
      * so it's possible for reads to return a cell even if it matches the active
      * GC expression for its family.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.table.v1.GcRule, com.google.bigtable.admin.table.v1.GcRule.Builder, com.google.bigtable.admin.table.v1.GcRuleOrBuilder> 
@@ -1038,16 +1044,7 @@ public  final class ColumnFamily extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ColumnFamily(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

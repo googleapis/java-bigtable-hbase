@@ -8,26 +8,24 @@ public interface MutateRowsRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table to which the mutations should be applied.
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table to which the mutations should be applied.
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();
 
   /**
-   * <code>repeated .google.bigtable.v1.MutateRowsRequest.Entry entries = 2;</code>
-   *
    * <pre>
    * The row keys/mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
@@ -35,12 +33,12 @@ public interface MutateRowsRequestOrBuilder extends
    * At least one entry must be specified, and in total the entries may
    * contain at most 100000 mutations.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.MutateRowsRequest.Entry entries = 2;</code>
    */
   java.util.List<com.google.bigtable.v1.MutateRowsRequest.Entry> 
       getEntriesList();
   /**
-   * <code>repeated .google.bigtable.v1.MutateRowsRequest.Entry entries = 2;</code>
-   *
    * <pre>
    * The row keys/mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
@@ -48,11 +46,11 @@ public interface MutateRowsRequestOrBuilder extends
    * At least one entry must be specified, and in total the entries may
    * contain at most 100000 mutations.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.MutateRowsRequest.Entry entries = 2;</code>
    */
   com.google.bigtable.v1.MutateRowsRequest.Entry getEntries(int index);
   /**
-   * <code>repeated .google.bigtable.v1.MutateRowsRequest.Entry entries = 2;</code>
-   *
    * <pre>
    * The row keys/mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
@@ -60,11 +58,11 @@ public interface MutateRowsRequestOrBuilder extends
    * At least one entry must be specified, and in total the entries may
    * contain at most 100000 mutations.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.MutateRowsRequest.Entry entries = 2;</code>
    */
   int getEntriesCount();
   /**
-   * <code>repeated .google.bigtable.v1.MutateRowsRequest.Entry entries = 2;</code>
-   *
    * <pre>
    * The row keys/mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
@@ -72,12 +70,12 @@ public interface MutateRowsRequestOrBuilder extends
    * At least one entry must be specified, and in total the entries may
    * contain at most 100000 mutations.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.MutateRowsRequest.Entry entries = 2;</code>
    */
   java.util.List<? extends com.google.bigtable.v1.MutateRowsRequest.EntryOrBuilder> 
       getEntriesOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.v1.MutateRowsRequest.Entry entries = 2;</code>
-   *
    * <pre>
    * The row keys/mutations to be applied in bulk.
    * Each entry is applied as an atomic mutation, but the entries may be
@@ -85,6 +83,8 @@ public interface MutateRowsRequestOrBuilder extends
    * At least one entry must be specified, and in total the entries may
    * contain at most 100000 mutations.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v1.MutateRowsRequest.Entry entries = 2;</code>
    */
   com.google.bigtable.v1.MutateRowsRequest.EntryOrBuilder getEntriesOrBuilder(
       int index);

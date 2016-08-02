@@ -8,50 +8,50 @@ public interface ListTablesResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested cluster.
    * At present, only the names of the tables are populated.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
    */
   java.util.List<com.google.bigtable.admin.table.v1.Table> 
       getTablesList();
   /**
-   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested cluster.
    * At present, only the names of the tables are populated.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
    */
   com.google.bigtable.admin.table.v1.Table getTables(int index);
   /**
-   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested cluster.
    * At present, only the names of the tables are populated.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
    */
   int getTablesCount();
   /**
-   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested cluster.
    * At present, only the names of the tables are populated.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
    */
   java.util.List<? extends com.google.bigtable.admin.table.v1.TableOrBuilder> 
       getTablesOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested cluster.
    * At present, only the names of the tables are populated.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
    */
   com.google.bigtable.admin.table.v1.TableOrBuilder getTablesOrBuilder(
       int index);

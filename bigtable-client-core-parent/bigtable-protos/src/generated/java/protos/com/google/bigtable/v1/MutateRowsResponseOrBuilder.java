@@ -8,8 +8,6 @@ public interface MutateRowsResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
-   *
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
@@ -17,12 +15,12 @@ public interface MutateRowsResponseOrBuilder extends
    * for one Entry to fail due to an error with another Entry. In the event
    * that this occurs, the same error will be reported for both entries.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Status statuses = 1;</code>
    */
   java.util.List<com.google.rpc.Status> 
       getStatusesList();
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
-   *
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
@@ -30,11 +28,11 @@ public interface MutateRowsResponseOrBuilder extends
    * for one Entry to fail due to an error with another Entry. In the event
    * that this occurs, the same error will be reported for both entries.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Status statuses = 1;</code>
    */
   com.google.rpc.Status getStatuses(int index);
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
-   *
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
@@ -42,11 +40,11 @@ public interface MutateRowsResponseOrBuilder extends
    * for one Entry to fail due to an error with another Entry. In the event
    * that this occurs, the same error will be reported for both entries.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Status statuses = 1;</code>
    */
   int getStatusesCount();
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
-   *
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
@@ -54,12 +52,12 @@ public interface MutateRowsResponseOrBuilder extends
    * for one Entry to fail due to an error with another Entry. In the event
    * that this occurs, the same error will be reported for both entries.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Status statuses = 1;</code>
    */
   java.util.List<? extends com.google.rpc.StatusOrBuilder> 
       getStatusesOrBuilderList();
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
-   *
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
@@ -67,6 +65,8 @@ public interface MutateRowsResponseOrBuilder extends
    * for one Entry to fail due to an error with another Entry. In the event
    * that this occurs, the same error will be reported for both entries.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Status statuses = 1;</code>
    */
   com.google.rpc.StatusOrBuilder getStatusesOrBuilder(
       int index);

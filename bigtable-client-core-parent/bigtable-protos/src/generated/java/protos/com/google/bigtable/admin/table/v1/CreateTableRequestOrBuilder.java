@@ -8,74 +8,72 @@ public interface CreateTableRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the cluster in which to create the new table.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the cluster in which to create the new table.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>optional string table_id = 2;</code>
-   *
    * <pre>
    * The name by which the new table should be referred to within the cluster,
    * e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
    * </pre>
+   *
+   * <code>optional string table_id = 2;</code>
    */
   java.lang.String getTableId();
   /**
-   * <code>optional string table_id = 2;</code>
-   *
    * <pre>
    * The name by which the new table should be referred to within the cluster,
    * e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
    * </pre>
+   *
+   * <code>optional string table_id = 2;</code>
    */
   com.google.protobuf.ByteString
       getTableIdBytes();
 
   /**
-   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-   *
    * <pre>
    * The Table to create. The `name` field of the Table and all of its
    * ColumnFamilies must be left blank, and will be populated in the response.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
    */
   boolean hasTable();
   /**
-   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-   *
    * <pre>
    * The Table to create. The `name` field of the Table and all of its
    * ColumnFamilies must be left blank, and will be populated in the response.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
    */
   com.google.bigtable.admin.table.v1.Table getTable();
   /**
-   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-   *
    * <pre>
    * The Table to create. The `name` field of the Table and all of its
    * ColumnFamilies must be left blank, and will be populated in the response.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
    */
   com.google.bigtable.admin.table.v1.TableOrBuilder getTableOrBuilder();
 
   /**
-   * <code>repeated string initial_split_keys = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -92,12 +90,12 @@ public interface CreateTableRequestOrBuilder extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated string initial_split_keys = 4;</code>
    */
   com.google.protobuf.ProtocolStringList
       getInitialSplitKeysList();
   /**
-   * <code>repeated string initial_split_keys = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -114,11 +112,11 @@ public interface CreateTableRequestOrBuilder extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated string initial_split_keys = 4;</code>
    */
   int getInitialSplitKeysCount();
   /**
-   * <code>repeated string initial_split_keys = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -135,11 +133,11 @@ public interface CreateTableRequestOrBuilder extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated string initial_split_keys = 4;</code>
    */
   java.lang.String getInitialSplitKeys(int index);
   /**
-   * <code>repeated string initial_split_keys = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -156,6 +154,8 @@ public interface CreateTableRequestOrBuilder extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated string initial_split_keys = 4;</code>
    */
   com.google.protobuf.ByteString
       getInitialSplitKeysBytes(int index);

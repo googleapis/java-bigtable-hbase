@@ -4,11 +4,11 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.ListTablesRequest}
- *
  * <pre>
  * Request message for [google.bigtable.admin.v2.BigtableTableAdmin.ListTables][google.bigtable.admin.v2.BigtableTableAdmin.ListTables]
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.ListTablesRequest}
  */
 public  final class ListTablesRequest extends
     com.google.protobuf.GeneratedMessage implements
@@ -31,7 +31,8 @@ public  final class ListTablesRequest extends
   }
   private ListTablesRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -69,11 +70,10 @@ public  final class ListTablesRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -93,12 +93,12 @@ public  final class ListTablesRequest extends
   public static final int PARENT_FIELD_NUMBER = 1;
   private volatile java.lang.Object parent_;
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the instance for which tables should be listed.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public java.lang.String getParent() {
     java.lang.Object ref = parent_;
@@ -113,12 +113,12 @@ public  final class ListTablesRequest extends
     }
   }
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the instance for which tables should be listed.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public com.google.protobuf.ByteString
       getParentBytes() {
@@ -137,37 +137,37 @@ public  final class ListTablesRequest extends
   public static final int VIEW_FIELD_NUMBER = 2;
   private int view_;
   /**
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
-   *
    * <pre>
    * The view to be applied to the returned tables' fields.
    * Defaults to NAME_ONLY if unspecified (no others are currently supported).
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   public int getViewValue() {
     return view_;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
-   *
    * <pre>
    * The view to be applied to the returned tables' fields.
    * Defaults to NAME_ONLY if unspecified (no others are currently supported).
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   public com.google.bigtable.admin.v2.Table.View getView() {
-    com.google.bigtable.admin.v2.Table.View result = com.google.bigtable.admin.v2.Table.View.valueOf(view_);
+    com.google.bigtable.admin.v2.Table.View result = com.google.bigtable.admin.v2.Table.View.forNumber(view_);
     return result == null ? com.google.bigtable.admin.v2.Table.View.UNRECOGNIZED : result;
   }
 
   public static final int PAGE_TOKEN_FIELD_NUMBER = 3;
   private volatile java.lang.Object pageToken_;
   /**
-   * <code>optional string page_token = 3;</code>
-   *
    * <pre>
    * The value of `next_page_token` returned by a previous call.
    * </pre>
+   *
+   * <code>optional string page_token = 3;</code>
    */
   public java.lang.String getPageToken() {
     java.lang.Object ref = pageToken_;
@@ -182,11 +182,11 @@ public  final class ListTablesRequest extends
     }
   }
   /**
-   * <code>optional string page_token = 3;</code>
-   *
    * <pre>
    * The value of `next_page_token` returned by a previous call.
    * </pre>
+   *
+   * <code>optional string page_token = 3;</code>
    */
   public com.google.protobuf.ByteString
       getPageTokenBytes() {
@@ -268,34 +268,40 @@ public  final class ListTablesRequest extends
   }
   public static com.google.bigtable.admin.v2.ListTablesRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListTablesRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ListTablesRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListTablesRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ListTablesRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListTablesRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -317,11 +323,11 @@ public  final class ListTablesRequest extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.ListTablesRequest}
-   *
    * <pre>
    * Request message for [google.bigtable.admin.v2.BigtableTableAdmin.ListTables][google.bigtable.admin.v2.BigtableTableAdmin.ListTables]
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.ListTablesRequest}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -429,7 +435,7 @@ public  final class ListTablesRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.ListTablesRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -440,12 +446,12 @@ public  final class ListTablesRequest extends
 
     private java.lang.Object parent_ = "";
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance for which tables should be listed.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public java.lang.String getParent() {
       java.lang.Object ref = parent_;
@@ -460,12 +466,12 @@ public  final class ListTablesRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance for which tables should be listed.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public com.google.protobuf.ByteString
         getParentBytes() {
@@ -481,12 +487,12 @@ public  final class ListTablesRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance for which tables should be listed.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParent(
         java.lang.String value) {
@@ -499,12 +505,12 @@ public  final class ListTablesRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance for which tables should be listed.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder clearParent() {
       
@@ -513,12 +519,12 @@ public  final class ListTablesRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance for which tables should be listed.
      * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
@@ -534,23 +540,23 @@ public  final class ListTablesRequest extends
 
     private int view_ = 0;
     /**
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
-     *
      * <pre>
      * The view to be applied to the returned tables' fields.
      * Defaults to NAME_ONLY if unspecified (no others are currently supported).
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public int getViewValue() {
       return view_;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
-     *
      * <pre>
      * The view to be applied to the returned tables' fields.
      * Defaults to NAME_ONLY if unspecified (no others are currently supported).
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public Builder setViewValue(int value) {
       view_ = value;
@@ -558,24 +564,24 @@ public  final class ListTablesRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
-     *
      * <pre>
      * The view to be applied to the returned tables' fields.
      * Defaults to NAME_ONLY if unspecified (no others are currently supported).
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public com.google.bigtable.admin.v2.Table.View getView() {
-      com.google.bigtable.admin.v2.Table.View result = com.google.bigtable.admin.v2.Table.View.valueOf(view_);
+      com.google.bigtable.admin.v2.Table.View result = com.google.bigtable.admin.v2.Table.View.forNumber(view_);
       return result == null ? com.google.bigtable.admin.v2.Table.View.UNRECOGNIZED : result;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
-     *
      * <pre>
      * The view to be applied to the returned tables' fields.
      * Defaults to NAME_ONLY if unspecified (no others are currently supported).
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public Builder setView(com.google.bigtable.admin.v2.Table.View value) {
       if (value == null) {
@@ -587,12 +593,12 @@ public  final class ListTablesRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
-     *
      * <pre>
      * The view to be applied to the returned tables' fields.
      * Defaults to NAME_ONLY if unspecified (no others are currently supported).
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
      */
     public Builder clearView() {
       
@@ -603,11 +609,11 @@ public  final class ListTablesRequest extends
 
     private java.lang.Object pageToken_ = "";
     /**
-     * <code>optional string page_token = 3;</code>
-     *
      * <pre>
      * The value of `next_page_token` returned by a previous call.
      * </pre>
+     *
+     * <code>optional string page_token = 3;</code>
      */
     public java.lang.String getPageToken() {
       java.lang.Object ref = pageToken_;
@@ -622,11 +628,11 @@ public  final class ListTablesRequest extends
       }
     }
     /**
-     * <code>optional string page_token = 3;</code>
-     *
      * <pre>
      * The value of `next_page_token` returned by a previous call.
      * </pre>
+     *
+     * <code>optional string page_token = 3;</code>
      */
     public com.google.protobuf.ByteString
         getPageTokenBytes() {
@@ -642,11 +648,11 @@ public  final class ListTablesRequest extends
       }
     }
     /**
-     * <code>optional string page_token = 3;</code>
-     *
      * <pre>
      * The value of `next_page_token` returned by a previous call.
      * </pre>
+     *
+     * <code>optional string page_token = 3;</code>
      */
     public Builder setPageToken(
         java.lang.String value) {
@@ -659,11 +665,11 @@ public  final class ListTablesRequest extends
       return this;
     }
     /**
-     * <code>optional string page_token = 3;</code>
-     *
      * <pre>
      * The value of `next_page_token` returned by a previous call.
      * </pre>
+     *
+     * <code>optional string page_token = 3;</code>
      */
     public Builder clearPageToken() {
       
@@ -672,11 +678,11 @@ public  final class ListTablesRequest extends
       return this;
     }
     /**
-     * <code>optional string page_token = 3;</code>
-     *
      * <pre>
      * The value of `next_page_token` returned by a previous call.
      * </pre>
+     *
+     * <code>optional string page_token = 3;</code>
      */
     public Builder setPageTokenBytes(
         com.google.protobuf.ByteString value) {
@@ -719,16 +725,7 @@ public  final class ListTablesRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ListTablesRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

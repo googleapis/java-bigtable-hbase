@@ -4,8 +4,6 @@
 package com.google.rpc;
 
 /**
- * Protobuf enum {@code google.rpc.Code}
- *
  * <pre>
  * The canonical error codes for Google APIs.
  * Warnings:
@@ -17,30 +15,30 @@ package com.google.rpc;
  * `OUT_OF_RANGE` over `FAILED_PRECONDITION` if both codes apply.
  * Similarly prefer `NOT_FOUND` or `ALREADY_EXISTS` over `FAILED_PRECONDITION`.
  * </pre>
+ *
+ * Protobuf enum {@code google.rpc.Code}
  */
 public enum Code
     implements com.google.protobuf.ProtocolMessageEnum {
   /**
-   * <code>OK = 0;</code>
-   *
    * <pre>
    * Not an error; returned on success
    * HTTP Mapping: 200 OK
    * </pre>
-   */
-  OK(0, 0),
-  /**
-   * <code>CANCELLED = 1;</code>
    *
+   * <code>OK = 0;</code>
+   */
+  OK(0),
+  /**
    * <pre>
    * The operation was cancelled, typically by the caller.
    * HTTP Mapping: 499 Client Closed Request
    * </pre>
-   */
-  CANCELLED(1, 1),
-  /**
-   * <code>UNKNOWN = 2;</code>
    *
+   * <code>CANCELLED = 1;</code>
+   */
+  CANCELLED(1),
+  /**
    * <pre>
    * Unknown error.  For example, this error may be returned when
    * a `Status` value received from another address space belongs to
@@ -49,11 +47,11 @@ public enum Code
    * may be converted to this error.
    * HTTP Mapping: 500 Internal Server Error
    * </pre>
-   */
-  UNKNOWN(2, 2),
-  /**
-   * <code>INVALID_ARGUMENT = 3;</code>
    *
+   * <code>UNKNOWN = 2;</code>
+   */
+  UNKNOWN(2),
+  /**
    * <pre>
    * The client specified an invalid argument.  Note that this differs
    * from `FAILED_PRECONDITION`.  `INVALID_ARGUMENT` indicates arguments
@@ -61,11 +59,11 @@ public enum Code
    * (e.g., a malformed file name).
    * HTTP Mapping: 400 Bad Request
    * </pre>
-   */
-  INVALID_ARGUMENT(3, 3),
-  /**
-   * <code>DEADLINE_EXCEEDED = 4;</code>
    *
+   * <code>INVALID_ARGUMENT = 3;</code>
+   */
+  INVALID_ARGUMENT(3),
+  /**
    * <pre>
    * The deadline expired before the operation could complete. For operations
    * that change the state of the system, this error may be returned
@@ -74,32 +72,32 @@ public enum Code
    * enough for the deadline to expire.
    * HTTP Mapping: 504 Gateway Timeout
    * </pre>
-   */
-  DEADLINE_EXCEEDED(4, 4),
-  /**
-   * <code>NOT_FOUND = 5;</code>
    *
+   * <code>DEADLINE_EXCEEDED = 4;</code>
+   */
+  DEADLINE_EXCEEDED(4),
+  /**
    * <pre>
    * Some requested entity (e.g., file or directory) was not found.
    * For privacy reasons, this code *might* be returned when the client
    * does not have the access rights to the entity.
    * HTTP Mapping: 404 Not Found
    * </pre>
-   */
-  NOT_FOUND(5, 5),
-  /**
-   * <code>ALREADY_EXISTS = 6;</code>
    *
+   * <code>NOT_FOUND = 5;</code>
+   */
+  NOT_FOUND(5),
+  /**
    * <pre>
    * The entity that a client attempted to create (e.g., file or directory)
    * already exists.
    * HTTP Mapping: 409 Conflict
    * </pre>
-   */
-  ALREADY_EXISTS(6, 6),
-  /**
-   * <code>PERMISSION_DENIED = 7;</code>
    *
+   * <code>ALREADY_EXISTS = 6;</code>
+   */
+  ALREADY_EXISTS(6),
+  /**
    * <pre>
    * The caller does not have permission to execute the specified
    * operation. `PERMISSION_DENIED` must not be used for rejections
@@ -109,31 +107,31 @@ public enum Code
    * instead for those errors).
    * HTTP Mapping: 403 Forbidden
    * </pre>
-   */
-  PERMISSION_DENIED(7, 7),
-  /**
-   * <code>UNAUTHENTICATED = 16;</code>
    *
+   * <code>PERMISSION_DENIED = 7;</code>
+   */
+  PERMISSION_DENIED(7),
+  /**
    * <pre>
    * The request does not have valid authentication credentials for the
    * operation.
    * HTTP Mapping: 401 Unauthorized
    * </pre>
-   */
-  UNAUTHENTICATED(8, 16),
-  /**
-   * <code>RESOURCE_EXHAUSTED = 8;</code>
    *
+   * <code>UNAUTHENTICATED = 16;</code>
+   */
+  UNAUTHENTICATED(16),
+  /**
    * <pre>
    * Some resource has been exhausted, perhaps a per-user quota, or
    * perhaps the entire file system is out of space.
    * HTTP Mapping: 429 Too Many Requests
    * </pre>
-   */
-  RESOURCE_EXHAUSTED(9, 8),
-  /**
-   * <code>FAILED_PRECONDITION = 9;</code>
    *
+   * <code>RESOURCE_EXHAUSTED = 8;</code>
+   */
+  RESOURCE_EXHAUSTED(8),
+  /**
    * <pre>
    * The operation was rejected because the system is not in a state
    * required for the operation's execution.  For example, the directory
@@ -159,11 +157,11 @@ public enum Code
    * Etag-related headers in the request, it may choose to return 412
    * instead of 400 for this error code.
    * </pre>
-   */
-  FAILED_PRECONDITION(10, 9),
-  /**
-   * <code>ABORTED = 10;</code>
    *
+   * <code>FAILED_PRECONDITION = 9;</code>
+   */
+  FAILED_PRECONDITION(9),
+  /**
    * <pre>
    * The operation was aborted, typically due to a concurrency issue such as
    * a sequencer check failure or transaction abort.
@@ -171,11 +169,11 @@ public enum Code
    * `ABORTED`, and `UNAVAILABLE`.
    * HTTP Mapping: 409 Conflict
    * </pre>
-   */
-  ABORTED(11, 10),
-  /**
-   * <code>OUT_OF_RANGE = 11;</code>
    *
+   * <code>ABORTED = 10;</code>
+   */
+  ABORTED(10),
+  /**
    * <pre>
    * The operation was attempted past the valid range.  E.g., seeking or
    * reading past end-of-file.
@@ -192,32 +190,32 @@ public enum Code
    * they are done.
    * HTTP Mapping: 400 Bad Request
    * </pre>
-   */
-  OUT_OF_RANGE(12, 11),
-  /**
-   * <code>UNIMPLEMENTED = 12;</code>
    *
+   * <code>OUT_OF_RANGE = 11;</code>
+   */
+  OUT_OF_RANGE(11),
+  /**
    * <pre>
    * The operation is not implemented or is not supported/enabled in this
    * service.
    * HTTP Mapping: 501 Not Implemented
    * </pre>
-   */
-  UNIMPLEMENTED(13, 12),
-  /**
-   * <code>INTERNAL = 13;</code>
    *
+   * <code>UNIMPLEMENTED = 12;</code>
+   */
+  UNIMPLEMENTED(12),
+  /**
    * <pre>
    * Internal errors.  This means that some invariants expected by the
    * underlying system have been broken.  This error code is reserved
    * for serious errors.
    * HTTP Mapping: 500 Internal Server Error
    * </pre>
-   */
-  INTERNAL(14, 13),
-  /**
-   * <code>UNAVAILABLE = 14;</code>
    *
+   * <code>INTERNAL = 13;</code>
+   */
+  INTERNAL(13),
+  /**
    * <pre>
    * The service is currently unavailable.  This is most likely a
    * transient condition, which can be corrected by retrying with
@@ -226,41 +224,41 @@ public enum Code
    * `ABORTED`, and `UNAVAILABLE`.
    * HTTP Mapping: 503 Service Unavailable
    * </pre>
-   */
-  UNAVAILABLE(15, 14),
-  /**
-   * <code>DATA_LOSS = 15;</code>
    *
+   * <code>UNAVAILABLE = 14;</code>
+   */
+  UNAVAILABLE(14),
+  /**
    * <pre>
    * Unrecoverable data loss or corruption.
    * HTTP Mapping: 500 Internal Server Error
    * </pre>
+   *
+   * <code>DATA_LOSS = 15;</code>
    */
-  DATA_LOSS(16, 15),
-  UNRECOGNIZED(-1, -1),
+  DATA_LOSS(15),
+  UNRECOGNIZED(-1),
   ;
 
   /**
-   * <code>OK = 0;</code>
-   *
    * <pre>
    * Not an error; returned on success
    * HTTP Mapping: 200 OK
    * </pre>
+   *
+   * <code>OK = 0;</code>
    */
   public static final int OK_VALUE = 0;
   /**
-   * <code>CANCELLED = 1;</code>
-   *
    * <pre>
    * The operation was cancelled, typically by the caller.
    * HTTP Mapping: 499 Client Closed Request
    * </pre>
+   *
+   * <code>CANCELLED = 1;</code>
    */
   public static final int CANCELLED_VALUE = 1;
   /**
-   * <code>UNKNOWN = 2;</code>
-   *
    * <pre>
    * Unknown error.  For example, this error may be returned when
    * a `Status` value received from another address space belongs to
@@ -269,11 +267,11 @@ public enum Code
    * may be converted to this error.
    * HTTP Mapping: 500 Internal Server Error
    * </pre>
+   *
+   * <code>UNKNOWN = 2;</code>
    */
   public static final int UNKNOWN_VALUE = 2;
   /**
-   * <code>INVALID_ARGUMENT = 3;</code>
-   *
    * <pre>
    * The client specified an invalid argument.  Note that this differs
    * from `FAILED_PRECONDITION`.  `INVALID_ARGUMENT` indicates arguments
@@ -281,11 +279,11 @@ public enum Code
    * (e.g., a malformed file name).
    * HTTP Mapping: 400 Bad Request
    * </pre>
+   *
+   * <code>INVALID_ARGUMENT = 3;</code>
    */
   public static final int INVALID_ARGUMENT_VALUE = 3;
   /**
-   * <code>DEADLINE_EXCEEDED = 4;</code>
-   *
    * <pre>
    * The deadline expired before the operation could complete. For operations
    * that change the state of the system, this error may be returned
@@ -294,32 +292,32 @@ public enum Code
    * enough for the deadline to expire.
    * HTTP Mapping: 504 Gateway Timeout
    * </pre>
+   *
+   * <code>DEADLINE_EXCEEDED = 4;</code>
    */
   public static final int DEADLINE_EXCEEDED_VALUE = 4;
   /**
-   * <code>NOT_FOUND = 5;</code>
-   *
    * <pre>
    * Some requested entity (e.g., file or directory) was not found.
    * For privacy reasons, this code *might* be returned when the client
    * does not have the access rights to the entity.
    * HTTP Mapping: 404 Not Found
    * </pre>
+   *
+   * <code>NOT_FOUND = 5;</code>
    */
   public static final int NOT_FOUND_VALUE = 5;
   /**
-   * <code>ALREADY_EXISTS = 6;</code>
-   *
    * <pre>
    * The entity that a client attempted to create (e.g., file or directory)
    * already exists.
    * HTTP Mapping: 409 Conflict
    * </pre>
+   *
+   * <code>ALREADY_EXISTS = 6;</code>
    */
   public static final int ALREADY_EXISTS_VALUE = 6;
   /**
-   * <code>PERMISSION_DENIED = 7;</code>
-   *
    * <pre>
    * The caller does not have permission to execute the specified
    * operation. `PERMISSION_DENIED` must not be used for rejections
@@ -329,31 +327,31 @@ public enum Code
    * instead for those errors).
    * HTTP Mapping: 403 Forbidden
    * </pre>
+   *
+   * <code>PERMISSION_DENIED = 7;</code>
    */
   public static final int PERMISSION_DENIED_VALUE = 7;
   /**
-   * <code>UNAUTHENTICATED = 16;</code>
-   *
    * <pre>
    * The request does not have valid authentication credentials for the
    * operation.
    * HTTP Mapping: 401 Unauthorized
    * </pre>
+   *
+   * <code>UNAUTHENTICATED = 16;</code>
    */
   public static final int UNAUTHENTICATED_VALUE = 16;
   /**
-   * <code>RESOURCE_EXHAUSTED = 8;</code>
-   *
    * <pre>
    * Some resource has been exhausted, perhaps a per-user quota, or
    * perhaps the entire file system is out of space.
    * HTTP Mapping: 429 Too Many Requests
    * </pre>
+   *
+   * <code>RESOURCE_EXHAUSTED = 8;</code>
    */
   public static final int RESOURCE_EXHAUSTED_VALUE = 8;
   /**
-   * <code>FAILED_PRECONDITION = 9;</code>
-   *
    * <pre>
    * The operation was rejected because the system is not in a state
    * required for the operation's execution.  For example, the directory
@@ -379,11 +377,11 @@ public enum Code
    * Etag-related headers in the request, it may choose to return 412
    * instead of 400 for this error code.
    * </pre>
+   *
+   * <code>FAILED_PRECONDITION = 9;</code>
    */
   public static final int FAILED_PRECONDITION_VALUE = 9;
   /**
-   * <code>ABORTED = 10;</code>
-   *
    * <pre>
    * The operation was aborted, typically due to a concurrency issue such as
    * a sequencer check failure or transaction abort.
@@ -391,11 +389,11 @@ public enum Code
    * `ABORTED`, and `UNAVAILABLE`.
    * HTTP Mapping: 409 Conflict
    * </pre>
+   *
+   * <code>ABORTED = 10;</code>
    */
   public static final int ABORTED_VALUE = 10;
   /**
-   * <code>OUT_OF_RANGE = 11;</code>
-   *
    * <pre>
    * The operation was attempted past the valid range.  E.g., seeking or
    * reading past end-of-file.
@@ -412,32 +410,32 @@ public enum Code
    * they are done.
    * HTTP Mapping: 400 Bad Request
    * </pre>
+   *
+   * <code>OUT_OF_RANGE = 11;</code>
    */
   public static final int OUT_OF_RANGE_VALUE = 11;
   /**
-   * <code>UNIMPLEMENTED = 12;</code>
-   *
    * <pre>
    * The operation is not implemented or is not supported/enabled in this
    * service.
    * HTTP Mapping: 501 Not Implemented
    * </pre>
+   *
+   * <code>UNIMPLEMENTED = 12;</code>
    */
   public static final int UNIMPLEMENTED_VALUE = 12;
   /**
-   * <code>INTERNAL = 13;</code>
-   *
    * <pre>
    * Internal errors.  This means that some invariants expected by the
    * underlying system have been broken.  This error code is reserved
    * for serious errors.
    * HTTP Mapping: 500 Internal Server Error
    * </pre>
+   *
+   * <code>INTERNAL = 13;</code>
    */
   public static final int INTERNAL_VALUE = 13;
   /**
-   * <code>UNAVAILABLE = 14;</code>
-   *
    * <pre>
    * The service is currently unavailable.  This is most likely a
    * transient condition, which can be corrected by retrying with
@@ -446,28 +444,38 @@ public enum Code
    * `ABORTED`, and `UNAVAILABLE`.
    * HTTP Mapping: 503 Service Unavailable
    * </pre>
+   *
+   * <code>UNAVAILABLE = 14;</code>
    */
   public static final int UNAVAILABLE_VALUE = 14;
   /**
-   * <code>DATA_LOSS = 15;</code>
-   *
    * <pre>
    * Unrecoverable data loss or corruption.
    * HTTP Mapping: 500 Internal Server Error
    * </pre>
+   *
+   * <code>DATA_LOSS = 15;</code>
    */
   public static final int DATA_LOSS_VALUE = 15;
 
 
   public final int getNumber() {
-    if (index == -1) {
+    if (this == UNRECOGNIZED) {
       throw new java.lang.IllegalArgumentException(
           "Can't get the number of an unknown enum value.");
     }
     return value;
   }
 
+  /**
+   * @deprecated Use {@link #forNumber(int)} instead.
+   */
+  @java.lang.Deprecated
   public static Code valueOf(int value) {
+    return forNumber(value);
+  }
+
+  public static Code forNumber(int value) {
     switch (value) {
       case 0: return OK;
       case 1: return CANCELLED;
@@ -498,13 +506,13 @@ public enum Code
       Code> internalValueMap =
         new com.google.protobuf.Internal.EnumLiteMap<Code>() {
           public Code findValueByNumber(int number) {
-            return Code.valueOf(number);
+            return Code.forNumber(number);
           }
         };
 
   public final com.google.protobuf.Descriptors.EnumValueDescriptor
       getValueDescriptor() {
-    return getDescriptor().getValues().get(index);
+    return getDescriptor().getValues().get(ordinal());
   }
   public final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptorForType() {
@@ -530,11 +538,9 @@ public enum Code
     return VALUES[desc.getIndex()];
   }
 
-  private final int index;
   private final int value;
 
-  private Code(int index, int value) {
-    this.index = index;
+  private Code(int value) {
     this.value = value;
   }
 

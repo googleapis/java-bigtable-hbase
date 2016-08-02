@@ -8,40 +8,40 @@ public interface TimeOfDayOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional int32 hours = 1;</code>
-   *
    * <pre>
    * Hours of day in 24 hour format. Should be from 0 to 23. An API may choose
    * to allow the value "24:00:00" for scenarios like business closing time.
    * </pre>
+   *
+   * <code>optional int32 hours = 1;</code>
    */
   int getHours();
 
   /**
-   * <code>optional int32 minutes = 2;</code>
-   *
    * <pre>
    * Minutes of hour of day. Must be from 0 to 59.
    * </pre>
+   *
+   * <code>optional int32 minutes = 2;</code>
    */
   int getMinutes();
 
   /**
-   * <code>optional int32 seconds = 3;</code>
-   *
    * <pre>
    * Seconds of minutes of the time. Must normally be from 0 to 59. An API may
    * allow the value 60 if it allows leap-seconds.
    * </pre>
+   *
+   * <code>optional int32 seconds = 3;</code>
    */
   int getSeconds();
 
   /**
-   * <code>optional int32 nanos = 4;</code>
-   *
    * <pre>
    * Fractions of seconds in nanoseconds. Must be from 0 to 999,999,999.
    * </pre>
+   *
+   * <code>optional int32 nanos = 4;</code>
    */
   int getNanos();
 }

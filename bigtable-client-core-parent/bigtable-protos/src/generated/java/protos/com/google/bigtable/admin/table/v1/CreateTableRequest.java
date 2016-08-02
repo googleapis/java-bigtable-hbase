@@ -27,7 +27,8 @@ public  final class CreateTableRequest extends
   }
   private CreateTableRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -81,11 +82,10 @@ public  final class CreateTableRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
         initialSplitKeys_ = initialSplitKeys_.getUnmodifiableView();
@@ -109,11 +109,11 @@ public  final class CreateTableRequest extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the cluster in which to create the new table.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -128,11 +128,11 @@ public  final class CreateTableRequest extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the cluster in which to create the new table.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -151,12 +151,12 @@ public  final class CreateTableRequest extends
   public static final int TABLE_ID_FIELD_NUMBER = 2;
   private volatile java.lang.Object tableId_;
   /**
-   * <code>optional string table_id = 2;</code>
-   *
    * <pre>
    * The name by which the new table should be referred to within the cluster,
    * e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
    * </pre>
+   *
+   * <code>optional string table_id = 2;</code>
    */
   public java.lang.String getTableId() {
     java.lang.Object ref = tableId_;
@@ -171,12 +171,12 @@ public  final class CreateTableRequest extends
     }
   }
   /**
-   * <code>optional string table_id = 2;</code>
-   *
    * <pre>
    * The name by which the new table should be referred to within the cluster,
    * e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
    * </pre>
+   *
+   * <code>optional string table_id = 2;</code>
    */
   public com.google.protobuf.ByteString
       getTableIdBytes() {
@@ -195,34 +195,34 @@ public  final class CreateTableRequest extends
   public static final int TABLE_FIELD_NUMBER = 3;
   private com.google.bigtable.admin.table.v1.Table table_;
   /**
-   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-   *
    * <pre>
    * The Table to create. The `name` field of the Table and all of its
    * ColumnFamilies must be left blank, and will be populated in the response.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
    */
   public boolean hasTable() {
     return table_ != null;
   }
   /**
-   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-   *
    * <pre>
    * The Table to create. The `name` field of the Table and all of its
    * ColumnFamilies must be left blank, and will be populated in the response.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
    */
   public com.google.bigtable.admin.table.v1.Table getTable() {
     return table_ == null ? com.google.bigtable.admin.table.v1.Table.getDefaultInstance() : table_;
   }
   /**
-   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-   *
    * <pre>
    * The Table to create. The `name` field of the Table and all of its
    * ColumnFamilies must be left blank, and will be populated in the response.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
    */
   public com.google.bigtable.admin.table.v1.TableOrBuilder getTableOrBuilder() {
     return getTable();
@@ -231,8 +231,6 @@ public  final class CreateTableRequest extends
   public static final int INITIAL_SPLIT_KEYS_FIELD_NUMBER = 4;
   private com.google.protobuf.LazyStringList initialSplitKeys_;
   /**
-   * <code>repeated string initial_split_keys = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -249,14 +247,14 @@ public  final class CreateTableRequest extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated string initial_split_keys = 4;</code>
    */
   public com.google.protobuf.ProtocolStringList
       getInitialSplitKeysList() {
     return initialSplitKeys_;
   }
   /**
-   * <code>repeated string initial_split_keys = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -273,13 +271,13 @@ public  final class CreateTableRequest extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated string initial_split_keys = 4;</code>
    */
   public int getInitialSplitKeysCount() {
     return initialSplitKeys_.size();
   }
   /**
-   * <code>repeated string initial_split_keys = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -296,13 +294,13 @@ public  final class CreateTableRequest extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated string initial_split_keys = 4;</code>
    */
   public java.lang.String getInitialSplitKeys(int index) {
     return initialSplitKeys_.get(index);
   }
   /**
-   * <code>repeated string initial_split_keys = 4;</code>
-   *
    * <pre>
    * The optional list of row keys that will be used to initially split the
    * table into several tablets (Tablets are similar to HBase regions).
@@ -319,6 +317,8 @@ public  final class CreateTableRequest extends
    *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
    *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
    * </pre>
+   *
+   * <code>repeated string initial_split_keys = 4;</code>
    */
   public com.google.protobuf.ByteString
       getInitialSplitKeysBytes(int index) {
@@ -402,34 +402,40 @@ public  final class CreateTableRequest extends
   }
   public static com.google.bigtable.admin.table.v1.CreateTableRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.CreateTableRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.table.v1.CreateTableRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.CreateTableRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.table.v1.CreateTableRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.CreateTableRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -587,7 +593,7 @@ public  final class CreateTableRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.table.v1.CreateTableRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -599,11 +605,11 @@ public  final class CreateTableRequest extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the cluster in which to create the new table.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -618,11 +624,11 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the cluster in which to create the new table.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -638,11 +644,11 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the cluster in which to create the new table.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -655,11 +661,11 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the cluster in which to create the new table.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -668,11 +674,11 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the cluster in which to create the new table.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -688,12 +694,12 @@ public  final class CreateTableRequest extends
 
     private java.lang.Object tableId_ = "";
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the cluster,
      * e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public java.lang.String getTableId() {
       java.lang.Object ref = tableId_;
@@ -708,12 +714,12 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the cluster,
      * e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public com.google.protobuf.ByteString
         getTableIdBytes() {
@@ -729,12 +735,12 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the cluster,
      * e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public Builder setTableId(
         java.lang.String value) {
@@ -747,12 +753,12 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the cluster,
      * e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public Builder clearTableId() {
       
@@ -761,12 +767,12 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the cluster,
      * e.g. "foobar" rather than "&lt;cluster_name&gt;/tables/foobar".
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public Builder setTableIdBytes(
         com.google.protobuf.ByteString value) {
@@ -784,23 +790,23 @@ public  final class CreateTableRequest extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.table.v1.Table, com.google.bigtable.admin.table.v1.Table.Builder, com.google.bigtable.admin.table.v1.TableOrBuilder> tableBuilder_;
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create. The `name` field of the Table and all of its
      * ColumnFamilies must be left blank, and will be populated in the response.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
      */
     public boolean hasTable() {
       return tableBuilder_ != null || table_ != null;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create. The `name` field of the Table and all of its
      * ColumnFamilies must be left blank, and will be populated in the response.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
      */
     public com.google.bigtable.admin.table.v1.Table getTable() {
       if (tableBuilder_ == null) {
@@ -810,12 +816,12 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create. The `name` field of the Table and all of its
      * ColumnFamilies must be left blank, and will be populated in the response.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
      */
     public Builder setTable(com.google.bigtable.admin.table.v1.Table value) {
       if (tableBuilder_ == null) {
@@ -831,12 +837,12 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create. The `name` field of the Table and all of its
      * ColumnFamilies must be left blank, and will be populated in the response.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
      */
     public Builder setTable(
         com.google.bigtable.admin.table.v1.Table.Builder builderForValue) {
@@ -850,12 +856,12 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create. The `name` field of the Table and all of its
      * ColumnFamilies must be left blank, and will be populated in the response.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
      */
     public Builder mergeTable(com.google.bigtable.admin.table.v1.Table value) {
       if (tableBuilder_ == null) {
@@ -873,12 +879,12 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create. The `name` field of the Table and all of its
      * ColumnFamilies must be left blank, and will be populated in the response.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
      */
     public Builder clearTable() {
       if (tableBuilder_ == null) {
@@ -892,12 +898,12 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create. The `name` field of the Table and all of its
      * ColumnFamilies must be left blank, and will be populated in the response.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
      */
     public com.google.bigtable.admin.table.v1.Table.Builder getTableBuilder() {
       
@@ -905,12 +911,12 @@ public  final class CreateTableRequest extends
       return getTableFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create. The `name` field of the Table and all of its
      * ColumnFamilies must be left blank, and will be populated in the response.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
      */
     public com.google.bigtable.admin.table.v1.TableOrBuilder getTableOrBuilder() {
       if (tableBuilder_ != null) {
@@ -921,12 +927,12 @@ public  final class CreateTableRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
-     *
      * <pre>
      * The Table to create. The `name` field of the Table and all of its
      * ColumnFamilies must be left blank, and will be populated in the response.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.table.v1.Table table = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.table.v1.Table, com.google.bigtable.admin.table.v1.Table.Builder, com.google.bigtable.admin.table.v1.TableOrBuilder> 
@@ -950,8 +956,6 @@ public  final class CreateTableRequest extends
        }
     }
     /**
-     * <code>repeated string initial_split_keys = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -968,14 +972,14 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated string initial_split_keys = 4;</code>
      */
     public com.google.protobuf.ProtocolStringList
         getInitialSplitKeysList() {
       return initialSplitKeys_.getUnmodifiableView();
     }
     /**
-     * <code>repeated string initial_split_keys = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -992,13 +996,13 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated string initial_split_keys = 4;</code>
      */
     public int getInitialSplitKeysCount() {
       return initialSplitKeys_.size();
     }
     /**
-     * <code>repeated string initial_split_keys = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1015,13 +1019,13 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated string initial_split_keys = 4;</code>
      */
     public java.lang.String getInitialSplitKeys(int index) {
       return initialSplitKeys_.get(index);
     }
     /**
-     * <code>repeated string initial_split_keys = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1038,14 +1042,14 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated string initial_split_keys = 4;</code>
      */
     public com.google.protobuf.ByteString
         getInitialSplitKeysBytes(int index) {
       return initialSplitKeys_.getByteString(index);
     }
     /**
-     * <code>repeated string initial_split_keys = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1062,6 +1066,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated string initial_split_keys = 4;</code>
      */
     public Builder setInitialSplitKeys(
         int index, java.lang.String value) {
@@ -1074,8 +1080,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated string initial_split_keys = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1092,6 +1096,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated string initial_split_keys = 4;</code>
      */
     public Builder addInitialSplitKeys(
         java.lang.String value) {
@@ -1104,8 +1110,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated string initial_split_keys = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1122,6 +1126,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated string initial_split_keys = 4;</code>
      */
     public Builder addAllInitialSplitKeys(
         java.lang.Iterable<java.lang.String> values) {
@@ -1132,8 +1138,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated string initial_split_keys = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1150,6 +1154,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated string initial_split_keys = 4;</code>
      */
     public Builder clearInitialSplitKeys() {
       initialSplitKeys_ = com.google.protobuf.LazyStringArrayList.EMPTY;
@@ -1158,8 +1164,6 @@ public  final class CreateTableRequest extends
       return this;
     }
     /**
-     * <code>repeated string initial_split_keys = 4;</code>
-     *
      * <pre>
      * The optional list of row keys that will be used to initially split the
      * table into several tablets (Tablets are similar to HBase regions).
@@ -1176,6 +1180,8 @@ public  final class CreateTableRequest extends
      *    - Tablet 4 [customer_2, other)      =&gt; {"customer_2"}.
      *    - Tablet 5 [other, )                =&gt; {"other", "zz"}.
      * </pre>
+     *
+     * <code>repeated string initial_split_keys = 4;</code>
      */
     public Builder addInitialSplitKeysBytes(
         com.google.protobuf.ByteString value) {
@@ -1218,16 +1224,7 @@ public  final class CreateTableRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new CreateTableRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

@@ -4,11 +4,11 @@
 package com.google.bigtable.v2;
 
 /**
- * Protobuf type {@code google.bigtable.v2.MutateRowsResponse}
- *
  * <pre>
  * Response message for BigtableService.MutateRows.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v2.MutateRowsResponse}
  */
 public  final class MutateRowsResponse extends
     com.google.protobuf.GeneratedMessage implements
@@ -29,7 +29,8 @@ public  final class MutateRowsResponse extends
   }
   private MutateRowsResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -57,11 +58,10 @@ public  final class MutateRowsResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         entries_ = java.util.Collections.unmodifiableList(entries_);
@@ -86,46 +86,46 @@ public  final class MutateRowsResponse extends
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional int64 index = 1;</code>
-     *
      * <pre>
      * The index into the original request's `entries` list of the Entry
      * for which a result is being reported.
      * </pre>
+     *
+     * <code>optional int64 index = 1;</code>
      */
     long getIndex();
 
     /**
-     * <code>optional .google.rpc.Status status = 2;</code>
-     *
      * <pre>
      * The result of the request Entry identified by `index`.
      * Depending on how requests are batched during execution, it is possible
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status status = 2;</code>
      */
     boolean hasStatus();
     /**
-     * <code>optional .google.rpc.Status status = 2;</code>
-     *
      * <pre>
      * The result of the request Entry identified by `index`.
      * Depending on how requests are batched during execution, it is possible
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status status = 2;</code>
      */
     com.google.rpc.Status getStatus();
     /**
-     * <code>optional .google.rpc.Status status = 2;</code>
-     *
      * <pre>
      * The result of the request Entry identified by `index`.
      * Depending on how requests are batched during execution, it is possible
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status status = 2;</code>
      */
     com.google.rpc.StatusOrBuilder getStatusOrBuilder();
   }
@@ -151,7 +151,8 @@ public  final class MutateRowsResponse extends
     }
     private Entry(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       this();
       int mutable_bitField0_ = 0;
       try {
@@ -189,11 +190,10 @@ public  final class MutateRowsResponse extends
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
       } finally {
         makeExtensionsImmutable();
       }
@@ -213,12 +213,12 @@ public  final class MutateRowsResponse extends
     public static final int INDEX_FIELD_NUMBER = 1;
     private long index_;
     /**
-     * <code>optional int64 index = 1;</code>
-     *
      * <pre>
      * The index into the original request's `entries` list of the Entry
      * for which a result is being reported.
      * </pre>
+     *
+     * <code>optional int64 index = 1;</code>
      */
     public long getIndex() {
       return index_;
@@ -227,40 +227,40 @@ public  final class MutateRowsResponse extends
     public static final int STATUS_FIELD_NUMBER = 2;
     private com.google.rpc.Status status_;
     /**
-     * <code>optional .google.rpc.Status status = 2;</code>
-     *
      * <pre>
      * The result of the request Entry identified by `index`.
      * Depending on how requests are batched during execution, it is possible
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status status = 2;</code>
      */
     public boolean hasStatus() {
       return status_ != null;
     }
     /**
-     * <code>optional .google.rpc.Status status = 2;</code>
-     *
      * <pre>
      * The result of the request Entry identified by `index`.
      * Depending on how requests are batched during execution, it is possible
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status status = 2;</code>
      */
     public com.google.rpc.Status getStatus() {
       return status_ == null ? com.google.rpc.Status.getDefaultInstance() : status_;
     }
     /**
-     * <code>optional .google.rpc.Status status = 2;</code>
-     *
      * <pre>
      * The result of the request Entry identified by `index`.
      * Depending on how requests are batched during execution, it is possible
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>optional .google.rpc.Status status = 2;</code>
      */
     public com.google.rpc.StatusOrBuilder getStatusOrBuilder() {
       return getStatus();
@@ -327,34 +327,40 @@ public  final class MutateRowsResponse extends
     }
     public static com.google.bigtable.v2.MutateRowsResponse.Entry parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v2.MutateRowsResponse.Entry parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.v2.MutateRowsResponse.Entry parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v2.MutateRowsResponse.Entry parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.v2.MutateRowsResponse.Entry parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v2.MutateRowsResponse.Entry parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
     public Builder newBuilderForType() { return newBuilder(); }
@@ -484,7 +490,7 @@ public  final class MutateRowsResponse extends
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (com.google.bigtable.v2.MutateRowsResponse.Entry) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -495,23 +501,23 @@ public  final class MutateRowsResponse extends
 
       private long index_ ;
       /**
-       * <code>optional int64 index = 1;</code>
-       *
        * <pre>
        * The index into the original request's `entries` list of the Entry
        * for which a result is being reported.
        * </pre>
+       *
+       * <code>optional int64 index = 1;</code>
        */
       public long getIndex() {
         return index_;
       }
       /**
-       * <code>optional int64 index = 1;</code>
-       *
        * <pre>
        * The index into the original request's `entries` list of the Entry
        * for which a result is being reported.
        * </pre>
+       *
+       * <code>optional int64 index = 1;</code>
        */
       public Builder setIndex(long value) {
         
@@ -520,12 +526,12 @@ public  final class MutateRowsResponse extends
         return this;
       }
       /**
-       * <code>optional int64 index = 1;</code>
-       *
        * <pre>
        * The index into the original request's `entries` list of the Entry
        * for which a result is being reported.
        * </pre>
+       *
+       * <code>optional int64 index = 1;</code>
        */
       public Builder clearIndex() {
         
@@ -538,27 +544,27 @@ public  final class MutateRowsResponse extends
       private com.google.protobuf.SingleFieldBuilder<
           com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder> statusBuilder_;
       /**
-       * <code>optional .google.rpc.Status status = 2;</code>
-       *
        * <pre>
        * The result of the request Entry identified by `index`.
        * Depending on how requests are batched during execution, it is possible
        * for one Entry to fail due to an error with another Entry. In the event
        * that this occurs, the same error will be reported for both entries.
        * </pre>
+       *
+       * <code>optional .google.rpc.Status status = 2;</code>
        */
       public boolean hasStatus() {
         return statusBuilder_ != null || status_ != null;
       }
       /**
-       * <code>optional .google.rpc.Status status = 2;</code>
-       *
        * <pre>
        * The result of the request Entry identified by `index`.
        * Depending on how requests are batched during execution, it is possible
        * for one Entry to fail due to an error with another Entry. In the event
        * that this occurs, the same error will be reported for both entries.
        * </pre>
+       *
+       * <code>optional .google.rpc.Status status = 2;</code>
        */
       public com.google.rpc.Status getStatus() {
         if (statusBuilder_ == null) {
@@ -568,14 +574,14 @@ public  final class MutateRowsResponse extends
         }
       }
       /**
-       * <code>optional .google.rpc.Status status = 2;</code>
-       *
        * <pre>
        * The result of the request Entry identified by `index`.
        * Depending on how requests are batched during execution, it is possible
        * for one Entry to fail due to an error with another Entry. In the event
        * that this occurs, the same error will be reported for both entries.
        * </pre>
+       *
+       * <code>optional .google.rpc.Status status = 2;</code>
        */
       public Builder setStatus(com.google.rpc.Status value) {
         if (statusBuilder_ == null) {
@@ -591,14 +597,14 @@ public  final class MutateRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.rpc.Status status = 2;</code>
-       *
        * <pre>
        * The result of the request Entry identified by `index`.
        * Depending on how requests are batched during execution, it is possible
        * for one Entry to fail due to an error with another Entry. In the event
        * that this occurs, the same error will be reported for both entries.
        * </pre>
+       *
+       * <code>optional .google.rpc.Status status = 2;</code>
        */
       public Builder setStatus(
           com.google.rpc.Status.Builder builderForValue) {
@@ -612,14 +618,14 @@ public  final class MutateRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.rpc.Status status = 2;</code>
-       *
        * <pre>
        * The result of the request Entry identified by `index`.
        * Depending on how requests are batched during execution, it is possible
        * for one Entry to fail due to an error with another Entry. In the event
        * that this occurs, the same error will be reported for both entries.
        * </pre>
+       *
+       * <code>optional .google.rpc.Status status = 2;</code>
        */
       public Builder mergeStatus(com.google.rpc.Status value) {
         if (statusBuilder_ == null) {
@@ -637,14 +643,14 @@ public  final class MutateRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.rpc.Status status = 2;</code>
-       *
        * <pre>
        * The result of the request Entry identified by `index`.
        * Depending on how requests are batched during execution, it is possible
        * for one Entry to fail due to an error with another Entry. In the event
        * that this occurs, the same error will be reported for both entries.
        * </pre>
+       *
+       * <code>optional .google.rpc.Status status = 2;</code>
        */
       public Builder clearStatus() {
         if (statusBuilder_ == null) {
@@ -658,14 +664,14 @@ public  final class MutateRowsResponse extends
         return this;
       }
       /**
-       * <code>optional .google.rpc.Status status = 2;</code>
-       *
        * <pre>
        * The result of the request Entry identified by `index`.
        * Depending on how requests are batched during execution, it is possible
        * for one Entry to fail due to an error with another Entry. In the event
        * that this occurs, the same error will be reported for both entries.
        * </pre>
+       *
+       * <code>optional .google.rpc.Status status = 2;</code>
        */
       public com.google.rpc.Status.Builder getStatusBuilder() {
         
@@ -673,14 +679,14 @@ public  final class MutateRowsResponse extends
         return getStatusFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .google.rpc.Status status = 2;</code>
-       *
        * <pre>
        * The result of the request Entry identified by `index`.
        * Depending on how requests are batched during execution, it is possible
        * for one Entry to fail due to an error with another Entry. In the event
        * that this occurs, the same error will be reported for both entries.
        * </pre>
+       *
+       * <code>optional .google.rpc.Status status = 2;</code>
        */
       public com.google.rpc.StatusOrBuilder getStatusOrBuilder() {
         if (statusBuilder_ != null) {
@@ -691,14 +697,14 @@ public  final class MutateRowsResponse extends
         }
       }
       /**
-       * <code>optional .google.rpc.Status status = 2;</code>
-       *
        * <pre>
        * The result of the request Entry identified by `index`.
        * Depending on how requests are batched during execution, it is possible
        * for one Entry to fail due to an error with another Entry. In the event
        * that this occurs, the same error will be reported for both entries.
        * </pre>
+       *
+       * <code>optional .google.rpc.Status status = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder> 
@@ -743,16 +749,7 @@ public  final class MutateRowsResponse extends
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
           return new Entry(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
       }
     };
 
@@ -774,52 +771,52 @@ public  final class MutateRowsResponse extends
   public static final int ENTRIES_FIELD_NUMBER = 1;
   private java.util.List<com.google.bigtable.v2.MutateRowsResponse.Entry> entries_;
   /**
-   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-   *
    * <pre>
    * One or more results for Entries from the batch request.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    */
   public java.util.List<com.google.bigtable.v2.MutateRowsResponse.Entry> getEntriesList() {
     return entries_;
   }
   /**
-   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-   *
    * <pre>
    * One or more results for Entries from the batch request.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    */
   public java.util.List<? extends com.google.bigtable.v2.MutateRowsResponse.EntryOrBuilder> 
       getEntriesOrBuilderList() {
     return entries_;
   }
   /**
-   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-   *
    * <pre>
    * One or more results for Entries from the batch request.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    */
   public int getEntriesCount() {
     return entries_.size();
   }
   /**
-   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-   *
    * <pre>
    * One or more results for Entries from the batch request.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    */
   public com.google.bigtable.v2.MutateRowsResponse.Entry getEntries(int index) {
     return entries_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-   *
    * <pre>
    * One or more results for Entries from the batch request.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    */
   public com.google.bigtable.v2.MutateRowsResponse.EntryOrBuilder getEntriesOrBuilder(
       int index) {
@@ -880,34 +877,40 @@ public  final class MutateRowsResponse extends
   }
   public static com.google.bigtable.v2.MutateRowsResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.MutateRowsResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.MutateRowsResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.MutateRowsResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.MutateRowsResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.MutateRowsResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -929,11 +932,11 @@ public  final class MutateRowsResponse extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v2.MutateRowsResponse}
-   *
    * <pre>
    * Response message for BigtableService.MutateRows.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v2.MutateRowsResponse}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -1064,7 +1067,7 @@ public  final class MutateRowsResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.MutateRowsResponse) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -1087,11 +1090,11 @@ public  final class MutateRowsResponse extends
         com.google.bigtable.v2.MutateRowsResponse.Entry, com.google.bigtable.v2.MutateRowsResponse.Entry.Builder, com.google.bigtable.v2.MutateRowsResponse.EntryOrBuilder> entriesBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public java.util.List<com.google.bigtable.v2.MutateRowsResponse.Entry> getEntriesList() {
       if (entriesBuilder_ == null) {
@@ -1101,11 +1104,11 @@ public  final class MutateRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public int getEntriesCount() {
       if (entriesBuilder_ == null) {
@@ -1115,11 +1118,11 @@ public  final class MutateRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public com.google.bigtable.v2.MutateRowsResponse.Entry getEntries(int index) {
       if (entriesBuilder_ == null) {
@@ -1129,11 +1132,11 @@ public  final class MutateRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public Builder setEntries(
         int index, com.google.bigtable.v2.MutateRowsResponse.Entry value) {
@@ -1150,11 +1153,11 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public Builder setEntries(
         int index, com.google.bigtable.v2.MutateRowsResponse.Entry.Builder builderForValue) {
@@ -1168,11 +1171,11 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public Builder addEntries(com.google.bigtable.v2.MutateRowsResponse.Entry value) {
       if (entriesBuilder_ == null) {
@@ -1188,11 +1191,11 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public Builder addEntries(
         int index, com.google.bigtable.v2.MutateRowsResponse.Entry value) {
@@ -1209,11 +1212,11 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public Builder addEntries(
         com.google.bigtable.v2.MutateRowsResponse.Entry.Builder builderForValue) {
@@ -1227,11 +1230,11 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public Builder addEntries(
         int index, com.google.bigtable.v2.MutateRowsResponse.Entry.Builder builderForValue) {
@@ -1245,11 +1248,11 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public Builder addAllEntries(
         java.lang.Iterable<? extends com.google.bigtable.v2.MutateRowsResponse.Entry> values) {
@@ -1264,11 +1267,11 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public Builder clearEntries() {
       if (entriesBuilder_ == null) {
@@ -1281,11 +1284,11 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public Builder removeEntries(int index) {
       if (entriesBuilder_ == null) {
@@ -1298,22 +1301,22 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public com.google.bigtable.v2.MutateRowsResponse.Entry.Builder getEntriesBuilder(
         int index) {
       return getEntriesFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public com.google.bigtable.v2.MutateRowsResponse.EntryOrBuilder getEntriesOrBuilder(
         int index) {
@@ -1323,11 +1326,11 @@ public  final class MutateRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public java.util.List<? extends com.google.bigtable.v2.MutateRowsResponse.EntryOrBuilder> 
          getEntriesOrBuilderList() {
@@ -1338,22 +1341,22 @@ public  final class MutateRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public com.google.bigtable.v2.MutateRowsResponse.Entry.Builder addEntriesBuilder() {
       return getEntriesFieldBuilder().addBuilder(
           com.google.bigtable.v2.MutateRowsResponse.Entry.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public com.google.bigtable.v2.MutateRowsResponse.Entry.Builder addEntriesBuilder(
         int index) {
@@ -1361,11 +1364,11 @@ public  final class MutateRowsResponse extends
           index, com.google.bigtable.v2.MutateRowsResponse.Entry.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-     *
      * <pre>
      * One or more results for Entries from the batch request.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
      */
     public java.util.List<com.google.bigtable.v2.MutateRowsResponse.Entry.Builder> 
          getEntriesBuilderList() {
@@ -1415,16 +1418,7 @@ public  final class MutateRowsResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new MutateRowsResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

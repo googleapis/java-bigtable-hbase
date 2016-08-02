@@ -8,30 +8,28 @@ public interface ColumnFamilyOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
    * The last segment is the same as the "name" field in
    * google.bigtable.v1.Family.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A unique identifier of the form &lt;table_name&gt;/columnFamilies/[-_.a-zA-Z0-9]+
    * The last segment is the same as the "name" field in
    * google.bigtable.v1.Family.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>optional string gc_expression = 2;</code>
-   *
    * <pre>
    * Garbage collection expression specified by the following grammar:
    *   GC = EXPR
@@ -56,11 +54,11 @@ public interface ColumnFamilyOrBuilder extends
    * it's possible for reads to return a cell even if it matches the active GC
    * expression for its family.
    * </pre>
+   *
+   * <code>optional string gc_expression = 2;</code>
    */
   java.lang.String getGcExpression();
   /**
-   * <code>optional string gc_expression = 2;</code>
-   *
    * <pre>
    * Garbage collection expression specified by the following grammar:
    *   GC = EXPR
@@ -85,13 +83,13 @@ public interface ColumnFamilyOrBuilder extends
    * it's possible for reads to return a cell even if it matches the active GC
    * expression for its family.
    * </pre>
+   *
+   * <code>optional string gc_expression = 2;</code>
    */
   com.google.protobuf.ByteString
       getGcExpressionBytes();
 
   /**
-   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-   *
    * <pre>
    * Garbage collection rule specified as a protobuf.
    * Supersedes `gc_expression`.
@@ -100,11 +98,11 @@ public interface ColumnFamilyOrBuilder extends
    * so it's possible for reads to return a cell even if it matches the active
    * GC expression for its family.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
    */
   boolean hasGcRule();
   /**
-   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-   *
    * <pre>
    * Garbage collection rule specified as a protobuf.
    * Supersedes `gc_expression`.
@@ -113,11 +111,11 @@ public interface ColumnFamilyOrBuilder extends
    * so it's possible for reads to return a cell even if it matches the active
    * GC expression for its family.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
    */
   com.google.bigtable.admin.table.v1.GcRule getGcRule();
   /**
-   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
-   *
    * <pre>
    * Garbage collection rule specified as a protobuf.
    * Supersedes `gc_expression`.
@@ -126,6 +124,8 @@ public interface ColumnFamilyOrBuilder extends
    * so it's possible for reads to return a cell even if it matches the active
    * GC expression for its family.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.GcRule gc_rule = 3;</code>
    */
   com.google.bigtable.admin.table.v1.GcRuleOrBuilder getGcRuleOrBuilder();
 }

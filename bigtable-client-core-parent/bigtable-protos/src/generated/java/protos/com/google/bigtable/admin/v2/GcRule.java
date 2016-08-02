@@ -4,11 +4,11 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.GcRule}
- *
  * <pre>
  * Rule for determining which cells to delete during garbage collection.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.GcRule}
  */
 public  final class GcRule extends
     com.google.protobuf.GeneratedMessage implements
@@ -28,7 +28,8 @@ public  final class GcRule extends
   }
   private GcRule(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -95,11 +96,10 @@ public  final class GcRule extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -121,55 +121,55 @@ public  final class GcRule extends
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Only delete cells which would be deleted by every element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     java.util.List<com.google.bigtable.admin.v2.GcRule> 
         getRulesList();
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Only delete cells which would be deleted by every element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     com.google.bigtable.admin.v2.GcRule getRules(int index);
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Only delete cells which would be deleted by every element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     int getRulesCount();
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Only delete cells which would be deleted by every element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     java.util.List<? extends com.google.bigtable.admin.v2.GcRuleOrBuilder> 
         getRulesOrBuilderList();
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Only delete cells which would be deleted by every element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     com.google.bigtable.admin.v2.GcRuleOrBuilder getRulesOrBuilder(
         int index);
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.GcRule.Intersection}
-   *
    * <pre>
    * A GcRule which deletes cells matching all of the given rules.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.GcRule.Intersection}
    */
   public  static final class Intersection extends
       com.google.protobuf.GeneratedMessage implements
@@ -190,7 +190,8 @@ public  final class GcRule extends
     }
     private Intersection(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       this();
       int mutable_bitField0_ = 0;
       try {
@@ -218,11 +219,10 @@ public  final class GcRule extends
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
           rules_ = java.util.Collections.unmodifiableList(rules_);
@@ -245,52 +245,52 @@ public  final class GcRule extends
     public static final int RULES_FIELD_NUMBER = 1;
     private java.util.List<com.google.bigtable.admin.v2.GcRule> rules_;
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Only delete cells which would be deleted by every element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     public java.util.List<com.google.bigtable.admin.v2.GcRule> getRulesList() {
       return rules_;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Only delete cells which would be deleted by every element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     public java.util.List<? extends com.google.bigtable.admin.v2.GcRuleOrBuilder> 
         getRulesOrBuilderList() {
       return rules_;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Only delete cells which would be deleted by every element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     public int getRulesCount() {
       return rules_.size();
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Only delete cells which would be deleted by every element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     public com.google.bigtable.admin.v2.GcRule getRules(int index) {
       return rules_.get(index);
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Only delete cells which would be deleted by every element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     public com.google.bigtable.admin.v2.GcRuleOrBuilder getRulesOrBuilder(
         int index) {
@@ -351,34 +351,40 @@ public  final class GcRule extends
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
     public Builder newBuilderForType() { return newBuilder(); }
@@ -400,11 +406,11 @@ public  final class GcRule extends
       return builder;
     }
     /**
-     * Protobuf type {@code google.bigtable.admin.v2.GcRule.Intersection}
-     *
      * <pre>
      * A GcRule which deletes cells matching all of the given rules.
      * </pre>
+     *
+     * Protobuf type {@code google.bigtable.admin.v2.GcRule.Intersection}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -535,7 +541,7 @@ public  final class GcRule extends
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (com.google.bigtable.admin.v2.GcRule.Intersection) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -558,11 +564,11 @@ public  final class GcRule extends
           com.google.bigtable.admin.v2.GcRule, com.google.bigtable.admin.v2.GcRule.Builder, com.google.bigtable.admin.v2.GcRuleOrBuilder> rulesBuilder_;
 
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public java.util.List<com.google.bigtable.admin.v2.GcRule> getRulesList() {
         if (rulesBuilder_ == null) {
@@ -572,11 +578,11 @@ public  final class GcRule extends
         }
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public int getRulesCount() {
         if (rulesBuilder_ == null) {
@@ -586,11 +592,11 @@ public  final class GcRule extends
         }
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public com.google.bigtable.admin.v2.GcRule getRules(int index) {
         if (rulesBuilder_ == null) {
@@ -600,11 +606,11 @@ public  final class GcRule extends
         }
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder setRules(
           int index, com.google.bigtable.admin.v2.GcRule value) {
@@ -621,11 +627,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder setRules(
           int index, com.google.bigtable.admin.v2.GcRule.Builder builderForValue) {
@@ -639,11 +645,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder addRules(com.google.bigtable.admin.v2.GcRule value) {
         if (rulesBuilder_ == null) {
@@ -659,11 +665,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder addRules(
           int index, com.google.bigtable.admin.v2.GcRule value) {
@@ -680,11 +686,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder addRules(
           com.google.bigtable.admin.v2.GcRule.Builder builderForValue) {
@@ -698,11 +704,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder addRules(
           int index, com.google.bigtable.admin.v2.GcRule.Builder builderForValue) {
@@ -716,11 +722,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder addAllRules(
           java.lang.Iterable<? extends com.google.bigtable.admin.v2.GcRule> values) {
@@ -735,11 +741,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder clearRules() {
         if (rulesBuilder_ == null) {
@@ -752,11 +758,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder removeRules(int index) {
         if (rulesBuilder_ == null) {
@@ -769,22 +775,22 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public com.google.bigtable.admin.v2.GcRule.Builder getRulesBuilder(
           int index) {
         return getRulesFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public com.google.bigtable.admin.v2.GcRuleOrBuilder getRulesOrBuilder(
           int index) {
@@ -794,11 +800,11 @@ public  final class GcRule extends
         }
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public java.util.List<? extends com.google.bigtable.admin.v2.GcRuleOrBuilder> 
            getRulesOrBuilderList() {
@@ -809,22 +815,22 @@ public  final class GcRule extends
         }
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public com.google.bigtable.admin.v2.GcRule.Builder addRulesBuilder() {
         return getRulesFieldBuilder().addBuilder(
             com.google.bigtable.admin.v2.GcRule.getDefaultInstance());
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public com.google.bigtable.admin.v2.GcRule.Builder addRulesBuilder(
           int index) {
@@ -832,11 +838,11 @@ public  final class GcRule extends
             index, com.google.bigtable.admin.v2.GcRule.getDefaultInstance());
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Only delete cells which would be deleted by every element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public java.util.List<com.google.bigtable.admin.v2.GcRule.Builder> 
            getRulesBuilderList() {
@@ -886,16 +892,7 @@ public  final class GcRule extends
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
           return new Intersection(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
       }
     };
 
@@ -919,55 +916,55 @@ public  final class GcRule extends
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Delete cells which would be deleted by any element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     java.util.List<com.google.bigtable.admin.v2.GcRule> 
         getRulesList();
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Delete cells which would be deleted by any element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     com.google.bigtable.admin.v2.GcRule getRules(int index);
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Delete cells which would be deleted by any element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     int getRulesCount();
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Delete cells which would be deleted by any element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     java.util.List<? extends com.google.bigtable.admin.v2.GcRuleOrBuilder> 
         getRulesOrBuilderList();
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Delete cells which would be deleted by any element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     com.google.bigtable.admin.v2.GcRuleOrBuilder getRulesOrBuilder(
         int index);
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.GcRule.Union}
-   *
    * <pre>
    * A GcRule which deletes cells matching any of the given rules.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.GcRule.Union}
    */
   public  static final class Union extends
       com.google.protobuf.GeneratedMessage implements
@@ -988,7 +985,8 @@ public  final class GcRule extends
     }
     private Union(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       this();
       int mutable_bitField0_ = 0;
       try {
@@ -1016,11 +1014,10 @@ public  final class GcRule extends
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
           rules_ = java.util.Collections.unmodifiableList(rules_);
@@ -1043,52 +1040,52 @@ public  final class GcRule extends
     public static final int RULES_FIELD_NUMBER = 1;
     private java.util.List<com.google.bigtable.admin.v2.GcRule> rules_;
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Delete cells which would be deleted by any element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     public java.util.List<com.google.bigtable.admin.v2.GcRule> getRulesList() {
       return rules_;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Delete cells which would be deleted by any element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     public java.util.List<? extends com.google.bigtable.admin.v2.GcRuleOrBuilder> 
         getRulesOrBuilderList() {
       return rules_;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Delete cells which would be deleted by any element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     public int getRulesCount() {
       return rules_.size();
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Delete cells which would be deleted by any element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     public com.google.bigtable.admin.v2.GcRule getRules(int index) {
       return rules_.get(index);
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-     *
      * <pre>
      * Delete cells which would be deleted by any element of `rules`.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
      */
     public com.google.bigtable.admin.v2.GcRuleOrBuilder getRulesOrBuilder(
         int index) {
@@ -1149,34 +1146,40 @@ public  final class GcRule extends
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
     public Builder newBuilderForType() { return newBuilder(); }
@@ -1198,11 +1201,11 @@ public  final class GcRule extends
       return builder;
     }
     /**
-     * Protobuf type {@code google.bigtable.admin.v2.GcRule.Union}
-     *
      * <pre>
      * A GcRule which deletes cells matching any of the given rules.
      * </pre>
+     *
+     * Protobuf type {@code google.bigtable.admin.v2.GcRule.Union}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -1333,7 +1336,7 @@ public  final class GcRule extends
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (com.google.bigtable.admin.v2.GcRule.Union) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -1356,11 +1359,11 @@ public  final class GcRule extends
           com.google.bigtable.admin.v2.GcRule, com.google.bigtable.admin.v2.GcRule.Builder, com.google.bigtable.admin.v2.GcRuleOrBuilder> rulesBuilder_;
 
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public java.util.List<com.google.bigtable.admin.v2.GcRule> getRulesList() {
         if (rulesBuilder_ == null) {
@@ -1370,11 +1373,11 @@ public  final class GcRule extends
         }
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public int getRulesCount() {
         if (rulesBuilder_ == null) {
@@ -1384,11 +1387,11 @@ public  final class GcRule extends
         }
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public com.google.bigtable.admin.v2.GcRule getRules(int index) {
         if (rulesBuilder_ == null) {
@@ -1398,11 +1401,11 @@ public  final class GcRule extends
         }
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder setRules(
           int index, com.google.bigtable.admin.v2.GcRule value) {
@@ -1419,11 +1422,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder setRules(
           int index, com.google.bigtable.admin.v2.GcRule.Builder builderForValue) {
@@ -1437,11 +1440,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder addRules(com.google.bigtable.admin.v2.GcRule value) {
         if (rulesBuilder_ == null) {
@@ -1457,11 +1460,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder addRules(
           int index, com.google.bigtable.admin.v2.GcRule value) {
@@ -1478,11 +1481,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder addRules(
           com.google.bigtable.admin.v2.GcRule.Builder builderForValue) {
@@ -1496,11 +1499,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder addRules(
           int index, com.google.bigtable.admin.v2.GcRule.Builder builderForValue) {
@@ -1514,11 +1517,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder addAllRules(
           java.lang.Iterable<? extends com.google.bigtable.admin.v2.GcRule> values) {
@@ -1533,11 +1536,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder clearRules() {
         if (rulesBuilder_ == null) {
@@ -1550,11 +1553,11 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public Builder removeRules(int index) {
         if (rulesBuilder_ == null) {
@@ -1567,22 +1570,22 @@ public  final class GcRule extends
         return this;
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public com.google.bigtable.admin.v2.GcRule.Builder getRulesBuilder(
           int index) {
         return getRulesFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public com.google.bigtable.admin.v2.GcRuleOrBuilder getRulesOrBuilder(
           int index) {
@@ -1592,11 +1595,11 @@ public  final class GcRule extends
         }
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public java.util.List<? extends com.google.bigtable.admin.v2.GcRuleOrBuilder> 
            getRulesOrBuilderList() {
@@ -1607,22 +1610,22 @@ public  final class GcRule extends
         }
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public com.google.bigtable.admin.v2.GcRule.Builder addRulesBuilder() {
         return getRulesFieldBuilder().addBuilder(
             com.google.bigtable.admin.v2.GcRule.getDefaultInstance());
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public com.google.bigtable.admin.v2.GcRule.Builder addRulesBuilder(
           int index) {
@@ -1630,11 +1633,11 @@ public  final class GcRule extends
             index, com.google.bigtable.admin.v2.GcRule.getDefaultInstance());
       }
       /**
-       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
-       *
        * <pre>
        * Delete cells which would be deleted by any element of `rules`.
        * </pre>
+       *
+       * <code>repeated .google.bigtable.admin.v2.GcRule rules = 1;</code>
        */
       public java.util.List<com.google.bigtable.admin.v2.GcRule.Builder> 
            getRulesBuilderList() {
@@ -1684,16 +1687,7 @@ public  final class GcRule extends
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
           return new Union(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
       }
     };
 
@@ -1721,19 +1715,26 @@ public  final class GcRule extends
     INTERSECTION(3),
     UNION(4),
     RULE_NOT_SET(0);
-    private int value = 0;
+    private final int value;
     private RuleCase(int value) {
       this.value = value;
     }
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static RuleCase valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static RuleCase forNumber(int value) {
       switch (value) {
         case 1: return MAX_NUM_VERSIONS;
         case 2: return MAX_AGE;
         case 3: return INTERSECTION;
         case 4: return UNION;
         case 0: return RULE_NOT_SET;
-        default: throw new java.lang.IllegalArgumentException(
-          "Value is undefined for this oneof enum.");
+        default: return null;
       }
     }
     public int getNumber() {
@@ -1743,17 +1744,17 @@ public  final class GcRule extends
 
   public RuleCase
   getRuleCase() {
-    return RuleCase.valueOf(
+    return RuleCase.forNumber(
         ruleCase_);
   }
 
   public static final int MAX_NUM_VERSIONS_FIELD_NUMBER = 1;
   /**
-   * <code>optional int32 max_num_versions = 1;</code>
-   *
    * <pre>
    * Delete all cells in a column except the most recent N.
    * </pre>
+   *
+   * <code>optional int32 max_num_versions = 1;</code>
    */
   public int getMaxNumVersions() {
     if (ruleCase_ == 1) {
@@ -1764,13 +1765,13 @@ public  final class GcRule extends
 
   public static final int MAX_AGE_FIELD_NUMBER = 2;
   /**
-   * <code>optional .google.protobuf.Duration max_age = 2;</code>
-   *
    * <pre>
    * Delete cells in a column older than the given age.
    * Values must be at least one millisecond, and will be truncated to
    * microsecond granularity.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Duration max_age = 2;</code>
    */
   public com.google.protobuf.Duration getMaxAge() {
     if (ruleCase_ == 2) {
@@ -1779,13 +1780,13 @@ public  final class GcRule extends
     return com.google.protobuf.Duration.getDefaultInstance();
   }
   /**
-   * <code>optional .google.protobuf.Duration max_age = 2;</code>
-   *
    * <pre>
    * Delete cells in a column older than the given age.
    * Values must be at least one millisecond, and will be truncated to
    * microsecond granularity.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Duration max_age = 2;</code>
    */
   public com.google.protobuf.DurationOrBuilder getMaxAgeOrBuilder() {
     if (ruleCase_ == 2) {
@@ -1796,11 +1797,11 @@ public  final class GcRule extends
 
   public static final int INTERSECTION_FIELD_NUMBER = 3;
   /**
-   * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
-   *
    * <pre>
    * Delete cells that would be deleted by every nested rule.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
    */
   public com.google.bigtable.admin.v2.GcRule.Intersection getIntersection() {
     if (ruleCase_ == 3) {
@@ -1809,11 +1810,11 @@ public  final class GcRule extends
     return com.google.bigtable.admin.v2.GcRule.Intersection.getDefaultInstance();
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
-   *
    * <pre>
    * Delete cells that would be deleted by every nested rule.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
    */
   public com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder getIntersectionOrBuilder() {
     if (ruleCase_ == 3) {
@@ -1824,11 +1825,11 @@ public  final class GcRule extends
 
   public static final int UNION_FIELD_NUMBER = 4;
   /**
-   * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
-   *
    * <pre>
    * Delete cells that would be deleted by any nested rule.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
    */
   public com.google.bigtable.admin.v2.GcRule.Union getUnion() {
     if (ruleCase_ == 4) {
@@ -1837,11 +1838,11 @@ public  final class GcRule extends
     return com.google.bigtable.admin.v2.GcRule.Union.getDefaultInstance();
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
-   *
    * <pre>
    * Delete cells that would be deleted by any nested rule.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
    */
   public com.google.bigtable.admin.v2.GcRule.UnionOrBuilder getUnionOrBuilder() {
     if (ruleCase_ == 4) {
@@ -1927,34 +1928,40 @@ public  final class GcRule extends
   }
   public static com.google.bigtable.admin.v2.GcRule parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.GcRule parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.GcRule parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.GcRule parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.GcRule parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.GcRule parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -1976,11 +1983,11 @@ public  final class GcRule extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.GcRule}
-   *
    * <pre>
    * Rule for determining which cells to delete during garbage collection.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.GcRule}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -2116,7 +2123,7 @@ public  final class GcRule extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.GcRule) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -2128,7 +2135,7 @@ public  final class GcRule extends
     private java.lang.Object rule_;
     public RuleCase
         getRuleCase() {
-      return RuleCase.valueOf(
+      return RuleCase.forNumber(
           ruleCase_);
     }
 
@@ -2141,11 +2148,11 @@ public  final class GcRule extends
 
 
     /**
-     * <code>optional int32 max_num_versions = 1;</code>
-     *
      * <pre>
      * Delete all cells in a column except the most recent N.
      * </pre>
+     *
+     * <code>optional int32 max_num_versions = 1;</code>
      */
     public int getMaxNumVersions() {
       if (ruleCase_ == 1) {
@@ -2154,11 +2161,11 @@ public  final class GcRule extends
       return 0;
     }
     /**
-     * <code>optional int32 max_num_versions = 1;</code>
-     *
      * <pre>
      * Delete all cells in a column except the most recent N.
      * </pre>
+     *
+     * <code>optional int32 max_num_versions = 1;</code>
      */
     public Builder setMaxNumVersions(int value) {
       ruleCase_ = 1;
@@ -2167,11 +2174,11 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional int32 max_num_versions = 1;</code>
-     *
      * <pre>
      * Delete all cells in a column except the most recent N.
      * </pre>
+     *
+     * <code>optional int32 max_num_versions = 1;</code>
      */
     public Builder clearMaxNumVersions() {
       if (ruleCase_ == 1) {
@@ -2185,13 +2192,13 @@ public  final class GcRule extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> maxAgeBuilder_;
     /**
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
-     *
      * <pre>
      * Delete cells in a column older than the given age.
      * Values must be at least one millisecond, and will be truncated to
      * microsecond granularity.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration max_age = 2;</code>
      */
     public com.google.protobuf.Duration getMaxAge() {
       if (maxAgeBuilder_ == null) {
@@ -2207,13 +2214,13 @@ public  final class GcRule extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
-     *
      * <pre>
      * Delete cells in a column older than the given age.
      * Values must be at least one millisecond, and will be truncated to
      * microsecond granularity.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration max_age = 2;</code>
      */
     public Builder setMaxAge(com.google.protobuf.Duration value) {
       if (maxAgeBuilder_ == null) {
@@ -2229,13 +2236,13 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
-     *
      * <pre>
      * Delete cells in a column older than the given age.
      * Values must be at least one millisecond, and will be truncated to
      * microsecond granularity.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration max_age = 2;</code>
      */
     public Builder setMaxAge(
         com.google.protobuf.Duration.Builder builderForValue) {
@@ -2249,13 +2256,13 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
-     *
      * <pre>
      * Delete cells in a column older than the given age.
      * Values must be at least one millisecond, and will be truncated to
      * microsecond granularity.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration max_age = 2;</code>
      */
     public Builder mergeMaxAge(com.google.protobuf.Duration value) {
       if (maxAgeBuilder_ == null) {
@@ -2277,13 +2284,13 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
-     *
      * <pre>
      * Delete cells in a column older than the given age.
      * Values must be at least one millisecond, and will be truncated to
      * microsecond granularity.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration max_age = 2;</code>
      */
     public Builder clearMaxAge() {
       if (maxAgeBuilder_ == null) {
@@ -2302,25 +2309,25 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
-     *
      * <pre>
      * Delete cells in a column older than the given age.
      * Values must be at least one millisecond, and will be truncated to
      * microsecond granularity.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration max_age = 2;</code>
      */
     public com.google.protobuf.Duration.Builder getMaxAgeBuilder() {
       return getMaxAgeFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
-     *
      * <pre>
      * Delete cells in a column older than the given age.
      * Values must be at least one millisecond, and will be truncated to
      * microsecond granularity.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration max_age = 2;</code>
      */
     public com.google.protobuf.DurationOrBuilder getMaxAgeOrBuilder() {
       if ((ruleCase_ == 2) && (maxAgeBuilder_ != null)) {
@@ -2333,13 +2340,13 @@ public  final class GcRule extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Duration max_age = 2;</code>
-     *
      * <pre>
      * Delete cells in a column older than the given age.
      * Values must be at least one millisecond, and will be truncated to
      * microsecond granularity.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration max_age = 2;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> 
@@ -2363,11 +2370,11 @@ public  final class GcRule extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.v2.GcRule.Intersection, com.google.bigtable.admin.v2.GcRule.Intersection.Builder, com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder> intersectionBuilder_;
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by every nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.Intersection getIntersection() {
       if (intersectionBuilder_ == null) {
@@ -2383,11 +2390,11 @@ public  final class GcRule extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by every nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public Builder setIntersection(com.google.bigtable.admin.v2.GcRule.Intersection value) {
       if (intersectionBuilder_ == null) {
@@ -2403,11 +2410,11 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by every nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public Builder setIntersection(
         com.google.bigtable.admin.v2.GcRule.Intersection.Builder builderForValue) {
@@ -2421,11 +2428,11 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by every nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public Builder mergeIntersection(com.google.bigtable.admin.v2.GcRule.Intersection value) {
       if (intersectionBuilder_ == null) {
@@ -2447,11 +2454,11 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by every nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public Builder clearIntersection() {
       if (intersectionBuilder_ == null) {
@@ -2470,21 +2477,21 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by every nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.Intersection.Builder getIntersectionBuilder() {
       return getIntersectionFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by every nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder getIntersectionOrBuilder() {
       if ((ruleCase_ == 3) && (intersectionBuilder_ != null)) {
@@ -2497,11 +2504,11 @@ public  final class GcRule extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by every nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.v2.GcRule.Intersection, com.google.bigtable.admin.v2.GcRule.Intersection.Builder, com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder> 
@@ -2525,11 +2532,11 @@ public  final class GcRule extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.v2.GcRule.Union, com.google.bigtable.admin.v2.GcRule.Union.Builder, com.google.bigtable.admin.v2.GcRule.UnionOrBuilder> unionBuilder_;
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by any nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.Union getUnion() {
       if (unionBuilder_ == null) {
@@ -2545,11 +2552,11 @@ public  final class GcRule extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by any nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public Builder setUnion(com.google.bigtable.admin.v2.GcRule.Union value) {
       if (unionBuilder_ == null) {
@@ -2565,11 +2572,11 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by any nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public Builder setUnion(
         com.google.bigtable.admin.v2.GcRule.Union.Builder builderForValue) {
@@ -2583,11 +2590,11 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by any nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public Builder mergeUnion(com.google.bigtable.admin.v2.GcRule.Union value) {
       if (unionBuilder_ == null) {
@@ -2609,11 +2616,11 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by any nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public Builder clearUnion() {
       if (unionBuilder_ == null) {
@@ -2632,21 +2639,21 @@ public  final class GcRule extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by any nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.Union.Builder getUnionBuilder() {
       return getUnionFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by any nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     public com.google.bigtable.admin.v2.GcRule.UnionOrBuilder getUnionOrBuilder() {
       if ((ruleCase_ == 4) && (unionBuilder_ != null)) {
@@ -2659,11 +2666,11 @@ public  final class GcRule extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
-     *
      * <pre>
      * Delete cells that would be deleted by any nested rule.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.v2.GcRule.Union, com.google.bigtable.admin.v2.GcRule.Union.Builder, com.google.bigtable.admin.v2.GcRule.UnionOrBuilder> 
@@ -2713,16 +2720,7 @@ public  final class GcRule extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new GcRule(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

@@ -32,8 +32,6 @@ public interface ReadRowsResponseOrBuilder extends
       int index);
 
   /**
-   * <code>optional bytes last_scanned_row_key = 2;</code>
-   *
    * <pre>
    * Optionally the server might return the row key of the last row it
    * has scanned.  The client can use this to construct a more
@@ -43,6 +41,8 @@ public interface ReadRowsResponseOrBuilder extends
    * lot of data that was filtered out since the last committed row
    * key, allowing the client to skip that work on a retry.
    * </pre>
+   *
+   * <code>optional bytes last_scanned_row_key = 2;</code>
    */
   com.google.protobuf.ByteString getLastScannedRowKey();
 }

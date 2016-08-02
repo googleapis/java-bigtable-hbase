@@ -25,7 +25,8 @@ public  final class ListTablesResponse extends
   }
   private ListTablesResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -53,11 +54,10 @@ public  final class ListTablesResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         tables_ = java.util.Collections.unmodifiableList(tables_);
@@ -80,57 +80,57 @@ public  final class ListTablesResponse extends
   public static final int TABLES_FIELD_NUMBER = 1;
   private java.util.List<com.google.bigtable.admin.table.v1.Table> tables_;
   /**
-   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested cluster.
    * At present, only the names of the tables are populated.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
    */
   public java.util.List<com.google.bigtable.admin.table.v1.Table> getTablesList() {
     return tables_;
   }
   /**
-   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested cluster.
    * At present, only the names of the tables are populated.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
    */
   public java.util.List<? extends com.google.bigtable.admin.table.v1.TableOrBuilder> 
       getTablesOrBuilderList() {
     return tables_;
   }
   /**
-   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested cluster.
    * At present, only the names of the tables are populated.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
    */
   public int getTablesCount() {
     return tables_.size();
   }
   /**
-   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested cluster.
    * At present, only the names of the tables are populated.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
    */
   public com.google.bigtable.admin.table.v1.Table getTables(int index) {
     return tables_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested cluster.
    * At present, only the names of the tables are populated.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
    */
   public com.google.bigtable.admin.table.v1.TableOrBuilder getTablesOrBuilder(
       int index) {
@@ -191,34 +191,40 @@ public  final class ListTablesResponse extends
   }
   public static com.google.bigtable.admin.table.v1.ListTablesResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.ListTablesResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.table.v1.ListTablesResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.ListTablesResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.table.v1.ListTablesResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.table.v1.ListTablesResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -371,7 +377,7 @@ public  final class ListTablesResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.table.v1.ListTablesResponse) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -394,12 +400,12 @@ public  final class ListTablesResponse extends
         com.google.bigtable.admin.table.v1.Table, com.google.bigtable.admin.table.v1.Table.Builder, com.google.bigtable.admin.table.v1.TableOrBuilder> tablesBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public java.util.List<com.google.bigtable.admin.table.v1.Table> getTablesList() {
       if (tablesBuilder_ == null) {
@@ -409,12 +415,12 @@ public  final class ListTablesResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public int getTablesCount() {
       if (tablesBuilder_ == null) {
@@ -424,12 +430,12 @@ public  final class ListTablesResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public com.google.bigtable.admin.table.v1.Table getTables(int index) {
       if (tablesBuilder_ == null) {
@@ -439,12 +445,12 @@ public  final class ListTablesResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public Builder setTables(
         int index, com.google.bigtable.admin.table.v1.Table value) {
@@ -461,12 +467,12 @@ public  final class ListTablesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public Builder setTables(
         int index, com.google.bigtable.admin.table.v1.Table.Builder builderForValue) {
@@ -480,12 +486,12 @@ public  final class ListTablesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public Builder addTables(com.google.bigtable.admin.table.v1.Table value) {
       if (tablesBuilder_ == null) {
@@ -501,12 +507,12 @@ public  final class ListTablesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public Builder addTables(
         int index, com.google.bigtable.admin.table.v1.Table value) {
@@ -523,12 +529,12 @@ public  final class ListTablesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public Builder addTables(
         com.google.bigtable.admin.table.v1.Table.Builder builderForValue) {
@@ -542,12 +548,12 @@ public  final class ListTablesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public Builder addTables(
         int index, com.google.bigtable.admin.table.v1.Table.Builder builderForValue) {
@@ -561,12 +567,12 @@ public  final class ListTablesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public Builder addAllTables(
         java.lang.Iterable<? extends com.google.bigtable.admin.table.v1.Table> values) {
@@ -581,12 +587,12 @@ public  final class ListTablesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public Builder clearTables() {
       if (tablesBuilder_ == null) {
@@ -599,12 +605,12 @@ public  final class ListTablesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public Builder removeTables(int index) {
       if (tablesBuilder_ == null) {
@@ -617,24 +623,24 @@ public  final class ListTablesResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public com.google.bigtable.admin.table.v1.Table.Builder getTablesBuilder(
         int index) {
       return getTablesFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public com.google.bigtable.admin.table.v1.TableOrBuilder getTablesOrBuilder(
         int index) {
@@ -644,12 +650,12 @@ public  final class ListTablesResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public java.util.List<? extends com.google.bigtable.admin.table.v1.TableOrBuilder> 
          getTablesOrBuilderList() {
@@ -660,24 +666,24 @@ public  final class ListTablesResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public com.google.bigtable.admin.table.v1.Table.Builder addTablesBuilder() {
       return getTablesFieldBuilder().addBuilder(
           com.google.bigtable.admin.table.v1.Table.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public com.google.bigtable.admin.table.v1.Table.Builder addTablesBuilder(
         int index) {
@@ -685,12 +691,12 @@ public  final class ListTablesResponse extends
           index, com.google.bigtable.admin.table.v1.Table.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
-     *
      * <pre>
      * The tables present in the requested cluster.
      * At present, only the names of the tables are populated.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.table.v1.Table tables = 1;</code>
      */
     public java.util.List<com.google.bigtable.admin.table.v1.Table.Builder> 
          getTablesBuilderList() {
@@ -740,16 +746,7 @@ public  final class ListTablesResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ListTablesResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

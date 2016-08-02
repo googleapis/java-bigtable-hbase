@@ -4,12 +4,12 @@
 package com.google.bigtable.admin.cluster.v1;
 
 /**
- * Protobuf type {@code google.bigtable.admin.cluster.v1.Zone}
- *
  * <pre>
  * A physical location in which a particular project can allocate Cloud BigTable
  * resources.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.cluster.v1.Zone}
  */
 public  final class Zone extends
     com.google.protobuf.GeneratedMessage implements
@@ -32,7 +32,8 @@ public  final class Zone extends
   }
   private Zone(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -70,11 +71,10 @@ public  final class Zone extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -92,92 +92,100 @@ public  final class Zone extends
   }
 
   /**
-   * Protobuf enum {@code google.bigtable.admin.cluster.v1.Zone.Status}
-   *
    * <pre>
    * Possible states of a zone.
    * </pre>
+   *
+   * Protobuf enum {@code google.bigtable.admin.cluster.v1.Zone.Status}
    */
   public enum Status
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
-     * <code>UNKNOWN = 0;</code>
-     *
      * <pre>
      * The state of the zone is unknown or unspecified.
      * </pre>
-     */
-    UNKNOWN(0, 0),
-    /**
-     * <code>OK = 1;</code>
      *
+     * <code>UNKNOWN = 0;</code>
+     */
+    UNKNOWN(0),
+    /**
      * <pre>
      * The zone is in a good state.
      * </pre>
-     */
-    OK(1, 1),
-    /**
-     * <code>PLANNED_MAINTENANCE = 2;</code>
      *
+     * <code>OK = 1;</code>
+     */
+    OK(1),
+    /**
      * <pre>
      * The zone is down for planned maintenance.
      * </pre>
-     */
-    PLANNED_MAINTENANCE(2, 2),
-    /**
-     * <code>EMERGENCY_MAINENANCE = 3;</code>
      *
+     * <code>PLANNED_MAINTENANCE = 2;</code>
+     */
+    PLANNED_MAINTENANCE(2),
+    /**
      * <pre>
      * The zone is down for emergency or unplanned maintenance.
      * </pre>
+     *
+     * <code>EMERGENCY_MAINENANCE = 3;</code>
      */
-    EMERGENCY_MAINENANCE(3, 3),
-    UNRECOGNIZED(-1, -1),
+    EMERGENCY_MAINENANCE(3),
+    UNRECOGNIZED(-1),
     ;
 
     /**
-     * <code>UNKNOWN = 0;</code>
-     *
      * <pre>
      * The state of the zone is unknown or unspecified.
      * </pre>
+     *
+     * <code>UNKNOWN = 0;</code>
      */
     public static final int UNKNOWN_VALUE = 0;
     /**
-     * <code>OK = 1;</code>
-     *
      * <pre>
      * The zone is in a good state.
      * </pre>
+     *
+     * <code>OK = 1;</code>
      */
     public static final int OK_VALUE = 1;
     /**
-     * <code>PLANNED_MAINTENANCE = 2;</code>
-     *
      * <pre>
      * The zone is down for planned maintenance.
      * </pre>
+     *
+     * <code>PLANNED_MAINTENANCE = 2;</code>
      */
     public static final int PLANNED_MAINTENANCE_VALUE = 2;
     /**
-     * <code>EMERGENCY_MAINENANCE = 3;</code>
-     *
      * <pre>
      * The zone is down for emergency or unplanned maintenance.
      * </pre>
+     *
+     * <code>EMERGENCY_MAINENANCE = 3;</code>
      */
     public static final int EMERGENCY_MAINENANCE_VALUE = 3;
 
 
     public final int getNumber() {
-      if (index == -1) {
+      if (this == UNRECOGNIZED) {
         throw new java.lang.IllegalArgumentException(
             "Can't get the number of an unknown enum value.");
       }
       return value;
     }
 
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static Status valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static Status forNumber(int value) {
       switch (value) {
         case 0: return UNKNOWN;
         case 1: return OK;
@@ -195,13 +203,13 @@ public  final class Zone extends
         Status> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<Status>() {
             public Status findValueByNumber(int number) {
-              return Status.valueOf(number);
+              return Status.forNumber(number);
             }
           };
 
     public final com.google.protobuf.Descriptors.EnumValueDescriptor
         getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
+      return getDescriptor().getValues().get(ordinal());
     }
     public final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptorForType() {
@@ -226,11 +234,9 @@ public  final class Zone extends
       return VALUES[desc.getIndex()];
     }
 
-    private final int index;
     private final int value;
 
-    private Status(int index, int value) {
-      this.index = index;
+    private Status(int value) {
       this.value = value;
     }
 
@@ -240,12 +246,12 @@ public  final class Zone extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A permanent unique identifier for the zone.
    * Values are of the form projects/&lt;project&gt;/zones/[a-z][-a-z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -260,12 +266,12 @@ public  final class Zone extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A permanent unique identifier for the zone.
    * Values are of the form projects/&lt;project&gt;/zones/[a-z][-a-z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -284,11 +290,11 @@ public  final class Zone extends
   public static final int DISPLAY_NAME_FIELD_NUMBER = 2;
   private volatile java.lang.Object displayName_;
   /**
-   * <code>optional string display_name = 2;</code>
-   *
    * <pre>
    * The name of this zone as it appears in UIs.
    * </pre>
+   *
+   * <code>optional string display_name = 2;</code>
    */
   public java.lang.String getDisplayName() {
     java.lang.Object ref = displayName_;
@@ -303,11 +309,11 @@ public  final class Zone extends
     }
   }
   /**
-   * <code>optional string display_name = 2;</code>
-   *
    * <pre>
    * The name of this zone as it appears in UIs.
    * </pre>
+   *
+   * <code>optional string display_name = 2;</code>
    */
   public com.google.protobuf.ByteString
       getDisplayNameBytes() {
@@ -326,24 +332,24 @@ public  final class Zone extends
   public static final int STATUS_FIELD_NUMBER = 3;
   private int status_;
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
-   *
    * <pre>
    * The current state of this zone.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
    */
   public int getStatusValue() {
     return status_;
   }
   /**
-   * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
-   *
    * <pre>
    * The current state of this zone.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
    */
   public com.google.bigtable.admin.cluster.v1.Zone.Status getStatus() {
-    com.google.bigtable.admin.cluster.v1.Zone.Status result = com.google.bigtable.admin.cluster.v1.Zone.Status.valueOf(status_);
+    com.google.bigtable.admin.cluster.v1.Zone.Status result = com.google.bigtable.admin.cluster.v1.Zone.Status.forNumber(status_);
     return result == null ? com.google.bigtable.admin.cluster.v1.Zone.Status.UNRECOGNIZED : result;
   }
 
@@ -413,34 +419,40 @@ public  final class Zone extends
   }
   public static com.google.bigtable.admin.cluster.v1.Zone parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.cluster.v1.Zone parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.cluster.v1.Zone parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.cluster.v1.Zone parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.cluster.v1.Zone parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.cluster.v1.Zone parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -462,12 +474,12 @@ public  final class Zone extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.cluster.v1.Zone}
-   *
    * <pre>
    * A physical location in which a particular project can allocate Cloud BigTable
    * resources.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.cluster.v1.Zone}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -575,7 +587,7 @@ public  final class Zone extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.cluster.v1.Zone) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -586,12 +598,12 @@ public  final class Zone extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A permanent unique identifier for the zone.
      * Values are of the form projects/&lt;project&gt;/zones/[a-z][-a-z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -606,12 +618,12 @@ public  final class Zone extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A permanent unique identifier for the zone.
      * Values are of the form projects/&lt;project&gt;/zones/[a-z][-a-z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -627,12 +639,12 @@ public  final class Zone extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A permanent unique identifier for the zone.
      * Values are of the form projects/&lt;project&gt;/zones/[a-z][-a-z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -645,12 +657,12 @@ public  final class Zone extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A permanent unique identifier for the zone.
      * Values are of the form projects/&lt;project&gt;/zones/[a-z][-a-z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -659,12 +671,12 @@ public  final class Zone extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * A permanent unique identifier for the zone.
      * Values are of the form projects/&lt;project&gt;/zones/[a-z][-a-z0-9]*
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -680,11 +692,11 @@ public  final class Zone extends
 
     private java.lang.Object displayName_ = "";
     /**
-     * <code>optional string display_name = 2;</code>
-     *
      * <pre>
      * The name of this zone as it appears in UIs.
      * </pre>
+     *
+     * <code>optional string display_name = 2;</code>
      */
     public java.lang.String getDisplayName() {
       java.lang.Object ref = displayName_;
@@ -699,11 +711,11 @@ public  final class Zone extends
       }
     }
     /**
-     * <code>optional string display_name = 2;</code>
-     *
      * <pre>
      * The name of this zone as it appears in UIs.
      * </pre>
+     *
+     * <code>optional string display_name = 2;</code>
      */
     public com.google.protobuf.ByteString
         getDisplayNameBytes() {
@@ -719,11 +731,11 @@ public  final class Zone extends
       }
     }
     /**
-     * <code>optional string display_name = 2;</code>
-     *
      * <pre>
      * The name of this zone as it appears in UIs.
      * </pre>
+     *
+     * <code>optional string display_name = 2;</code>
      */
     public Builder setDisplayName(
         java.lang.String value) {
@@ -736,11 +748,11 @@ public  final class Zone extends
       return this;
     }
     /**
-     * <code>optional string display_name = 2;</code>
-     *
      * <pre>
      * The name of this zone as it appears in UIs.
      * </pre>
+     *
+     * <code>optional string display_name = 2;</code>
      */
     public Builder clearDisplayName() {
       
@@ -749,11 +761,11 @@ public  final class Zone extends
       return this;
     }
     /**
-     * <code>optional string display_name = 2;</code>
-     *
      * <pre>
      * The name of this zone as it appears in UIs.
      * </pre>
+     *
+     * <code>optional string display_name = 2;</code>
      */
     public Builder setDisplayNameBytes(
         com.google.protobuf.ByteString value) {
@@ -769,21 +781,21 @@ public  final class Zone extends
 
     private int status_ = 0;
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
-     *
      * <pre>
      * The current state of this zone.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
      */
     public int getStatusValue() {
       return status_;
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
-     *
      * <pre>
      * The current state of this zone.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
      */
     public Builder setStatusValue(int value) {
       status_ = value;
@@ -791,22 +803,22 @@ public  final class Zone extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
-     *
      * <pre>
      * The current state of this zone.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
      */
     public com.google.bigtable.admin.cluster.v1.Zone.Status getStatus() {
-      com.google.bigtable.admin.cluster.v1.Zone.Status result = com.google.bigtable.admin.cluster.v1.Zone.Status.valueOf(status_);
+      com.google.bigtable.admin.cluster.v1.Zone.Status result = com.google.bigtable.admin.cluster.v1.Zone.Status.forNumber(status_);
       return result == null ? com.google.bigtable.admin.cluster.v1.Zone.Status.UNRECOGNIZED : result;
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
-     *
      * <pre>
      * The current state of this zone.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
      */
     public Builder setStatus(com.google.bigtable.admin.cluster.v1.Zone.Status value) {
       if (value == null) {
@@ -818,11 +830,11 @@ public  final class Zone extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
-     *
      * <pre>
      * The current state of this zone.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.cluster.v1.Zone.Status status = 3;</code>
      */
     public Builder clearStatus() {
       
@@ -860,16 +872,7 @@ public  final class Zone extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new Zone(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

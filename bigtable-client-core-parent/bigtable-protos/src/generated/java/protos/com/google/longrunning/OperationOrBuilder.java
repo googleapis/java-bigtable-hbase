@@ -8,89 +8,87 @@ public interface OperationOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The name of the operation resource, which is only unique within the same
    * service that originally returns it.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The name of the operation resource, which is only unique within the same
    * service that originally returns it.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>optional .google.protobuf.Any metadata = 2;</code>
-   *
    * <pre>
    * Some service-specific metadata associated with the operation.  It typically
    * contains progress information and common metadata such as create time.
    * Some services may not provide such metadata.  Any method that returns a
    * long-running operation should document the metadata type, if any.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Any metadata = 2;</code>
    */
   boolean hasMetadata();
   /**
-   * <code>optional .google.protobuf.Any metadata = 2;</code>
-   *
    * <pre>
    * Some service-specific metadata associated with the operation.  It typically
    * contains progress information and common metadata such as create time.
    * Some services may not provide such metadata.  Any method that returns a
    * long-running operation should document the metadata type, if any.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Any metadata = 2;</code>
    */
   com.google.protobuf.Any getMetadata();
   /**
-   * <code>optional .google.protobuf.Any metadata = 2;</code>
-   *
    * <pre>
    * Some service-specific metadata associated with the operation.  It typically
    * contains progress information and common metadata such as create time.
    * Some services may not provide such metadata.  Any method that returns a
    * long-running operation should document the metadata type, if any.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Any metadata = 2;</code>
    */
   com.google.protobuf.AnyOrBuilder getMetadataOrBuilder();
 
   /**
-   * <code>optional bool done = 3;</code>
-   *
    * <pre>
    * If the value is false, it means the operation is still in progress.
    * If true, the operation is completed and the `result` is available.
    * </pre>
+   *
+   * <code>optional bool done = 3;</code>
    */
   boolean getDone();
 
   /**
-   * <code>optional .google.rpc.Status error = 4;</code>
-   *
    * <pre>
    * The error result of the operation in case of failure.
    * </pre>
+   *
+   * <code>optional .google.rpc.Status error = 4;</code>
    */
   com.google.rpc.Status getError();
   /**
-   * <code>optional .google.rpc.Status error = 4;</code>
-   *
    * <pre>
    * The error result of the operation in case of failure.
    * </pre>
+   *
+   * <code>optional .google.rpc.Status error = 4;</code>
    */
   com.google.rpc.StatusOrBuilder getErrorOrBuilder();
 
   /**
-   * <code>optional .google.protobuf.Any response = 5;</code>
-   *
    * <pre>
    * The normal response of the operation in case of success.  If the original
    * method returns no data on success, such as `Delete`, the response will be
@@ -101,11 +99,11 @@ public interface OperationOrBuilder extends
    * is `TakeSnapshot()`, the inferred response type will be
    * `TakeSnapshotResponse`.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Any response = 5;</code>
    */
   com.google.protobuf.Any getResponse();
   /**
-   * <code>optional .google.protobuf.Any response = 5;</code>
-   *
    * <pre>
    * The normal response of the operation in case of success.  If the original
    * method returns no data on success, such as `Delete`, the response will be
@@ -116,6 +114,8 @@ public interface OperationOrBuilder extends
    * is `TakeSnapshot()`, the inferred response type will be
    * `TakeSnapshotResponse`.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Any response = 5;</code>
    */
   com.google.protobuf.AnyOrBuilder getResponseOrBuilder();
 

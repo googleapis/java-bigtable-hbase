@@ -4,12 +4,12 @@
 package com.google.rpc;
 
 /**
- * Protobuf type {@code google.rpc.RequestInfo}
- *
  * <pre>
  * Contains metadata about the request that clients can attach when filing a bug
  * or providing other forms of feedback.
  * </pre>
+ *
+ * Protobuf type {@code google.rpc.RequestInfo}
  */
 public  final class RequestInfo extends
     com.google.protobuf.GeneratedMessage implements
@@ -31,7 +31,8 @@ public  final class RequestInfo extends
   }
   private RequestInfo(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -63,11 +64,10 @@ public  final class RequestInfo extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -87,12 +87,12 @@ public  final class RequestInfo extends
   public static final int REQUEST_ID_FIELD_NUMBER = 1;
   private volatile java.lang.Object requestId_;
   /**
-   * <code>optional string request_id = 1;</code>
-   *
    * <pre>
    * An opaque string that should only be interpreted by the service generating
    * it. For example, it can be used to identify requests in the service's logs.
    * </pre>
+   *
+   * <code>optional string request_id = 1;</code>
    */
   public java.lang.String getRequestId() {
     java.lang.Object ref = requestId_;
@@ -107,12 +107,12 @@ public  final class RequestInfo extends
     }
   }
   /**
-   * <code>optional string request_id = 1;</code>
-   *
    * <pre>
    * An opaque string that should only be interpreted by the service generating
    * it. For example, it can be used to identify requests in the service's logs.
    * </pre>
+   *
+   * <code>optional string request_id = 1;</code>
    */
   public com.google.protobuf.ByteString
       getRequestIdBytes() {
@@ -131,12 +131,12 @@ public  final class RequestInfo extends
   public static final int SERVING_DATA_FIELD_NUMBER = 2;
   private volatile java.lang.Object servingData_;
   /**
-   * <code>optional string serving_data = 2;</code>
-   *
    * <pre>
    * Any data that was used to serve this request. For example, an encrypted
    * stack trace that can be sent back to the service provider for debugging.
    * </pre>
+   *
+   * <code>optional string serving_data = 2;</code>
    */
   public java.lang.String getServingData() {
     java.lang.Object ref = servingData_;
@@ -151,12 +151,12 @@ public  final class RequestInfo extends
     }
   }
   /**
-   * <code>optional string serving_data = 2;</code>
-   *
    * <pre>
    * Any data that was used to serve this request. For example, an encrypted
    * stack trace that can be sent back to the service provider for debugging.
    * </pre>
+   *
+   * <code>optional string serving_data = 2;</code>
    */
   public com.google.protobuf.ByteString
       getServingDataBytes() {
@@ -231,34 +231,40 @@ public  final class RequestInfo extends
   }
   public static com.google.rpc.RequestInfo parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.RequestInfo parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.RequestInfo parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.rpc.RequestInfo parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.RequestInfo parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.RequestInfo parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -280,12 +286,12 @@ public  final class RequestInfo extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.rpc.RequestInfo}
-   *
    * <pre>
    * Contains metadata about the request that clients can attach when filing a bug
    * or providing other forms of feedback.
    * </pre>
+   *
+   * Protobuf type {@code google.rpc.RequestInfo}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -387,7 +393,7 @@ public  final class RequestInfo extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.rpc.RequestInfo) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -398,12 +404,12 @@ public  final class RequestInfo extends
 
     private java.lang.Object requestId_ = "";
     /**
-     * <code>optional string request_id = 1;</code>
-     *
      * <pre>
      * An opaque string that should only be interpreted by the service generating
      * it. For example, it can be used to identify requests in the service's logs.
      * </pre>
+     *
+     * <code>optional string request_id = 1;</code>
      */
     public java.lang.String getRequestId() {
       java.lang.Object ref = requestId_;
@@ -418,12 +424,12 @@ public  final class RequestInfo extends
       }
     }
     /**
-     * <code>optional string request_id = 1;</code>
-     *
      * <pre>
      * An opaque string that should only be interpreted by the service generating
      * it. For example, it can be used to identify requests in the service's logs.
      * </pre>
+     *
+     * <code>optional string request_id = 1;</code>
      */
     public com.google.protobuf.ByteString
         getRequestIdBytes() {
@@ -439,12 +445,12 @@ public  final class RequestInfo extends
       }
     }
     /**
-     * <code>optional string request_id = 1;</code>
-     *
      * <pre>
      * An opaque string that should only be interpreted by the service generating
      * it. For example, it can be used to identify requests in the service's logs.
      * </pre>
+     *
+     * <code>optional string request_id = 1;</code>
      */
     public Builder setRequestId(
         java.lang.String value) {
@@ -457,12 +463,12 @@ public  final class RequestInfo extends
       return this;
     }
     /**
-     * <code>optional string request_id = 1;</code>
-     *
      * <pre>
      * An opaque string that should only be interpreted by the service generating
      * it. For example, it can be used to identify requests in the service's logs.
      * </pre>
+     *
+     * <code>optional string request_id = 1;</code>
      */
     public Builder clearRequestId() {
       
@@ -471,12 +477,12 @@ public  final class RequestInfo extends
       return this;
     }
     /**
-     * <code>optional string request_id = 1;</code>
-     *
      * <pre>
      * An opaque string that should only be interpreted by the service generating
      * it. For example, it can be used to identify requests in the service's logs.
      * </pre>
+     *
+     * <code>optional string request_id = 1;</code>
      */
     public Builder setRequestIdBytes(
         com.google.protobuf.ByteString value) {
@@ -492,12 +498,12 @@ public  final class RequestInfo extends
 
     private java.lang.Object servingData_ = "";
     /**
-     * <code>optional string serving_data = 2;</code>
-     *
      * <pre>
      * Any data that was used to serve this request. For example, an encrypted
      * stack trace that can be sent back to the service provider for debugging.
      * </pre>
+     *
+     * <code>optional string serving_data = 2;</code>
      */
     public java.lang.String getServingData() {
       java.lang.Object ref = servingData_;
@@ -512,12 +518,12 @@ public  final class RequestInfo extends
       }
     }
     /**
-     * <code>optional string serving_data = 2;</code>
-     *
      * <pre>
      * Any data that was used to serve this request. For example, an encrypted
      * stack trace that can be sent back to the service provider for debugging.
      * </pre>
+     *
+     * <code>optional string serving_data = 2;</code>
      */
     public com.google.protobuf.ByteString
         getServingDataBytes() {
@@ -533,12 +539,12 @@ public  final class RequestInfo extends
       }
     }
     /**
-     * <code>optional string serving_data = 2;</code>
-     *
      * <pre>
      * Any data that was used to serve this request. For example, an encrypted
      * stack trace that can be sent back to the service provider for debugging.
      * </pre>
+     *
+     * <code>optional string serving_data = 2;</code>
      */
     public Builder setServingData(
         java.lang.String value) {
@@ -551,12 +557,12 @@ public  final class RequestInfo extends
       return this;
     }
     /**
-     * <code>optional string serving_data = 2;</code>
-     *
      * <pre>
      * Any data that was used to serve this request. For example, an encrypted
      * stack trace that can be sent back to the service provider for debugging.
      * </pre>
+     *
+     * <code>optional string serving_data = 2;</code>
      */
     public Builder clearServingData() {
       
@@ -565,12 +571,12 @@ public  final class RequestInfo extends
       return this;
     }
     /**
-     * <code>optional string serving_data = 2;</code>
-     *
      * <pre>
      * Any data that was used to serve this request. For example, an encrypted
      * stack trace that can be sent back to the service provider for debugging.
      * </pre>
+     *
+     * <code>optional string serving_data = 2;</code>
      */
     public Builder setServingDataBytes(
         com.google.protobuf.ByteString value) {
@@ -613,16 +619,7 @@ public  final class RequestInfo extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new RequestInfo(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

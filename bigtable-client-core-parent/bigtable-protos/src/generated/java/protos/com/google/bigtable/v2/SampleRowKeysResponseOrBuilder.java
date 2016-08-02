@@ -8,8 +8,6 @@ public interface SampleRowKeysResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional bytes row_key = 1;</code>
-   *
    * <pre>
    * Sorted streamed sequence of sample row keys in the table. The table might
    * have contents before the first row key in the list and after the last one,
@@ -19,18 +17,20 @@ public interface SampleRowKeysResponseOrBuilder extends
    * from, and users should therefore not make any assumptions about the row key
    * structure that are specific to their use case.
    * </pre>
+   *
+   * <code>optional bytes row_key = 1;</code>
    */
   com.google.protobuf.ByteString getRowKey();
 
   /**
-   * <code>optional int64 offset_bytes = 2;</code>
-   *
    * <pre>
    * Approximate total storage space used by all rows in the table which precede
    * `row_key`. Buffering the contents of all rows between two subsequent
    * samples would require space roughly equal to the difference in their
    * `offset_bytes` fields.
    * </pre>
+   *
+   * <code>optional int64 offset_bytes = 2;</code>
    */
   long getOffsetBytes();
 }

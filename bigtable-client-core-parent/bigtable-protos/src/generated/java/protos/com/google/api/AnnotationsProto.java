@@ -11,11 +11,11 @@ public final class AnnotationsProto {
   }
   public static final int HTTP_FIELD_NUMBER = 72295728;
   /**
-   * <code>extend .google.protobuf.MethodOptions { ... }</code>
-   *
    * <pre>
    * See `HttpRule`.
    * </pre>
+   *
+   * <code>extend .google.protobuf.MethodOptions { ... }</code>
    */
   public static final
     com.google.protobuf.GeneratedMessage.GeneratedExtension<
@@ -29,7 +29,7 @@ public final class AnnotationsProto {
       getDescriptor() {
     return descriptor;
   }
-  private static com.google.protobuf.Descriptors.FileDescriptor
+  private static  com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
     java.lang.String[] descriptorData = {

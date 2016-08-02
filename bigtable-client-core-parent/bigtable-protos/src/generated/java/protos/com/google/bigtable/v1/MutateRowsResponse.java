@@ -4,11 +4,11 @@
 package com.google.bigtable.v1;
 
 /**
- * Protobuf type {@code google.bigtable.v1.MutateRowsResponse}
- *
  * <pre>
  * Response message for BigtableService.MutateRows.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v1.MutateRowsResponse}
  */
 public  final class MutateRowsResponse extends
     com.google.protobuf.GeneratedMessage implements
@@ -29,7 +29,8 @@ public  final class MutateRowsResponse extends
   }
   private MutateRowsResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -57,11 +58,10 @@ public  final class MutateRowsResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         statuses_ = java.util.Collections.unmodifiableList(statuses_);
@@ -84,8 +84,6 @@ public  final class MutateRowsResponse extends
   public static final int STATUSES_FIELD_NUMBER = 1;
   private java.util.List<com.google.rpc.Status> statuses_;
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
-   *
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
@@ -93,13 +91,13 @@ public  final class MutateRowsResponse extends
    * for one Entry to fail due to an error with another Entry. In the event
    * that this occurs, the same error will be reported for both entries.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Status statuses = 1;</code>
    */
   public java.util.List<com.google.rpc.Status> getStatusesList() {
     return statuses_;
   }
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
-   *
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
@@ -107,14 +105,14 @@ public  final class MutateRowsResponse extends
    * for one Entry to fail due to an error with another Entry. In the event
    * that this occurs, the same error will be reported for both entries.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Status statuses = 1;</code>
    */
   public java.util.List<? extends com.google.rpc.StatusOrBuilder> 
       getStatusesOrBuilderList() {
     return statuses_;
   }
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
-   *
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
@@ -122,13 +120,13 @@ public  final class MutateRowsResponse extends
    * for one Entry to fail due to an error with another Entry. In the event
    * that this occurs, the same error will be reported for both entries.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Status statuses = 1;</code>
    */
   public int getStatusesCount() {
     return statuses_.size();
   }
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
-   *
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
@@ -136,13 +134,13 @@ public  final class MutateRowsResponse extends
    * for one Entry to fail due to an error with another Entry. In the event
    * that this occurs, the same error will be reported for both entries.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Status statuses = 1;</code>
    */
   public com.google.rpc.Status getStatuses(int index) {
     return statuses_.get(index);
   }
   /**
-   * <code>repeated .google.rpc.Status statuses = 1;</code>
-   *
    * <pre>
    * The results for each Entry from the request, presented in the order
    * in which the entries were originally given.
@@ -150,6 +148,8 @@ public  final class MutateRowsResponse extends
    * for one Entry to fail due to an error with another Entry. In the event
    * that this occurs, the same error will be reported for both entries.
    * </pre>
+   *
+   * <code>repeated .google.rpc.Status statuses = 1;</code>
    */
   public com.google.rpc.StatusOrBuilder getStatusesOrBuilder(
       int index) {
@@ -210,34 +210,40 @@ public  final class MutateRowsResponse extends
   }
   public static com.google.bigtable.v1.MutateRowsResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.MutateRowsResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.MutateRowsResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.MutateRowsResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v1.MutateRowsResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v1.MutateRowsResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -259,11 +265,11 @@ public  final class MutateRowsResponse extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v1.MutateRowsResponse}
-   *
    * <pre>
    * Response message for BigtableService.MutateRows.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v1.MutateRowsResponse}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -394,7 +400,7 @@ public  final class MutateRowsResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v1.MutateRowsResponse) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -417,8 +423,6 @@ public  final class MutateRowsResponse extends
         com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder> statusesBuilder_;
 
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -426,6 +430,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public java.util.List<com.google.rpc.Status> getStatusesList() {
       if (statusesBuilder_ == null) {
@@ -435,8 +441,6 @@ public  final class MutateRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -444,6 +448,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public int getStatusesCount() {
       if (statusesBuilder_ == null) {
@@ -453,8 +459,6 @@ public  final class MutateRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -462,6 +466,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public com.google.rpc.Status getStatuses(int index) {
       if (statusesBuilder_ == null) {
@@ -471,8 +477,6 @@ public  final class MutateRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -480,6 +484,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public Builder setStatuses(
         int index, com.google.rpc.Status value) {
@@ -496,8 +502,6 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -505,6 +509,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public Builder setStatuses(
         int index, com.google.rpc.Status.Builder builderForValue) {
@@ -518,8 +524,6 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -527,6 +531,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public Builder addStatuses(com.google.rpc.Status value) {
       if (statusesBuilder_ == null) {
@@ -542,8 +548,6 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -551,6 +555,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public Builder addStatuses(
         int index, com.google.rpc.Status value) {
@@ -567,8 +573,6 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -576,6 +580,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public Builder addStatuses(
         com.google.rpc.Status.Builder builderForValue) {
@@ -589,8 +595,6 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -598,6 +602,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public Builder addStatuses(
         int index, com.google.rpc.Status.Builder builderForValue) {
@@ -611,8 +617,6 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -620,6 +624,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public Builder addAllStatuses(
         java.lang.Iterable<? extends com.google.rpc.Status> values) {
@@ -634,8 +640,6 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -643,6 +647,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public Builder clearStatuses() {
       if (statusesBuilder_ == null) {
@@ -655,8 +661,6 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -664,6 +668,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public Builder removeStatuses(int index) {
       if (statusesBuilder_ == null) {
@@ -676,8 +682,6 @@ public  final class MutateRowsResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -685,14 +689,14 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public com.google.rpc.Status.Builder getStatusesBuilder(
         int index) {
       return getStatusesFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -700,6 +704,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public com.google.rpc.StatusOrBuilder getStatusesOrBuilder(
         int index) {
@@ -709,8 +715,6 @@ public  final class MutateRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -718,6 +722,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public java.util.List<? extends com.google.rpc.StatusOrBuilder> 
          getStatusesOrBuilderList() {
@@ -728,8 +734,6 @@ public  final class MutateRowsResponse extends
       }
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -737,14 +741,14 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public com.google.rpc.Status.Builder addStatusesBuilder() {
       return getStatusesFieldBuilder().addBuilder(
           com.google.rpc.Status.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -752,6 +756,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public com.google.rpc.Status.Builder addStatusesBuilder(
         int index) {
@@ -759,8 +765,6 @@ public  final class MutateRowsResponse extends
           index, com.google.rpc.Status.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.rpc.Status statuses = 1;</code>
-     *
      * <pre>
      * The results for each Entry from the request, presented in the order
      * in which the entries were originally given.
@@ -768,6 +772,8 @@ public  final class MutateRowsResponse extends
      * for one Entry to fail due to an error with another Entry. In the event
      * that this occurs, the same error will be reported for both entries.
      * </pre>
+     *
+     * <code>repeated .google.rpc.Status statuses = 1;</code>
      */
     public java.util.List<com.google.rpc.Status.Builder> 
          getStatusesBuilderList() {
@@ -817,16 +823,7 @@ public  final class MutateRowsResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new MutateRowsResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

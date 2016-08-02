@@ -8,54 +8,54 @@ public interface DebugInfoOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated string stack_entries = 1;</code>
-   *
    * <pre>
    * The stack trace entries indicating where the error occurred.
    * </pre>
+   *
+   * <code>repeated string stack_entries = 1;</code>
    */
   com.google.protobuf.ProtocolStringList
       getStackEntriesList();
   /**
-   * <code>repeated string stack_entries = 1;</code>
-   *
    * <pre>
    * The stack trace entries indicating where the error occurred.
    * </pre>
+   *
+   * <code>repeated string stack_entries = 1;</code>
    */
   int getStackEntriesCount();
   /**
-   * <code>repeated string stack_entries = 1;</code>
-   *
    * <pre>
    * The stack trace entries indicating where the error occurred.
    * </pre>
+   *
+   * <code>repeated string stack_entries = 1;</code>
    */
   java.lang.String getStackEntries(int index);
   /**
-   * <code>repeated string stack_entries = 1;</code>
-   *
    * <pre>
    * The stack trace entries indicating where the error occurred.
    * </pre>
+   *
+   * <code>repeated string stack_entries = 1;</code>
    */
   com.google.protobuf.ByteString
       getStackEntriesBytes(int index);
 
   /**
-   * <code>optional string detail = 2;</code>
-   *
    * <pre>
    * Additional debugging information provided by the server.
    * </pre>
+   *
+   * <code>optional string detail = 2;</code>
    */
   java.lang.String getDetail();
   /**
-   * <code>optional string detail = 2;</code>
-   *
    * <pre>
    * Additional debugging information provided by the server.
    * </pre>
+   *
+   * <code>optional string detail = 2;</code>
    */
   com.google.protobuf.ByteString
       getDetailBytes();

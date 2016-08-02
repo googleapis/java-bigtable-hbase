@@ -8,84 +8,84 @@ public interface TableOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A unique identifier of the form
    * &lt;cluster_name&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * A unique identifier of the form
    * &lt;cluster_name&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-   *
    * <pre>
    * If this Table is in the process of being created, the Operation used to
    * track its progress. As long as this operation is present, the Table will
    * not accept any Table Admin or Read/Write requests.
    * </pre>
+   *
+   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
    */
   boolean hasCurrentOperation();
   /**
-   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-   *
    * <pre>
    * If this Table is in the process of being created, the Operation used to
    * track its progress. As long as this operation is present, the Table will
    * not accept any Table Admin or Read/Write requests.
    * </pre>
+   *
+   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
    */
   com.google.longrunning.Operation getCurrentOperation();
   /**
-   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
-   *
    * <pre>
    * If this Table is in the process of being created, the Operation used to
    * track its progress. As long as this operation is present, the Table will
    * not accept any Table Admin or Read/Write requests.
    * </pre>
+   *
+   * <code>optional .google.longrunning.Operation current_operation = 2;</code>
    */
   com.google.longrunning.OperationOrBuilder getCurrentOperationOrBuilder();
 
   /**
-   * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
-   *
    * <pre>
    * The column families configured for this table, mapped by column family id.
    * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.table.v1.ColumnFamily&gt; column_families = 3;</code>
    */
   java.util.Map<java.lang.String, com.google.bigtable.admin.table.v1.ColumnFamily>
   getColumnFamilies();
 
   /**
-   * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
-   *
    * <pre>
    * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
    * this table. Timestamps not matching the granularity will be rejected.
    * Cannot be changed once the table is created.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
    */
   int getGranularityValue();
   /**
-   * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
-   *
    * <pre>
    * The granularity (e.g. MILLIS, MICROS) at which timestamps are stored in
    * this table. Timestamps not matching the granularity will be rejected.
    * Cannot be changed once the table is created.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.table.v1.Table.TimestampGranularity granularity = 4;</code>
    */
   com.google.bigtable.admin.table.v1.Table.TimestampGranularity getGranularity();
 }

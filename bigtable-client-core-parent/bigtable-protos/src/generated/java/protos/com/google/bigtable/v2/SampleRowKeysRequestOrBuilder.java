@@ -8,23 +8,23 @@ public interface SampleRowKeysRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table from which to sample row keys.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table from which to sample row keys.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();

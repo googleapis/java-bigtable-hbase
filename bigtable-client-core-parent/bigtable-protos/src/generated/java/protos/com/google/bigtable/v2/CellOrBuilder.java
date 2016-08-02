@@ -8,8 +8,6 @@ public interface CellOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional int64 timestamp_micros = 1;</code>
-   *
    * <pre>
    * The cell's stored timestamp, which also uniquely identifies it within
    * its column.
@@ -18,51 +16,53 @@ public interface CellOrBuilder extends
    * example, a table which specifies millisecond granularity will only allow
    * values of `timestamp_micros` which are multiples of 1000.
    * </pre>
+   *
+   * <code>optional int64 timestamp_micros = 1;</code>
    */
   long getTimestampMicros();
 
   /**
-   * <code>optional bytes value = 2;</code>
-   *
    * <pre>
    * The value stored in the cell.
    * May contain any byte string, including the empty string, up to 100MiB in
    * length.
    * </pre>
+   *
+   * <code>optional bytes value = 2;</code>
    */
   com.google.protobuf.ByteString getValue();
 
   /**
-   * <code>repeated string labels = 3;</code>
-   *
    * <pre>
    * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
+   *
+   * <code>repeated string labels = 3;</code>
    */
   com.google.protobuf.ProtocolStringList
       getLabelsList();
   /**
-   * <code>repeated string labels = 3;</code>
-   *
    * <pre>
    * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
+   *
+   * <code>repeated string labels = 3;</code>
    */
   int getLabelsCount();
   /**
-   * <code>repeated string labels = 3;</code>
-   *
    * <pre>
    * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
+   *
+   * <code>repeated string labels = 3;</code>
    */
   java.lang.String getLabels(int index);
   /**
-   * <code>repeated string labels = 3;</code>
-   *
    * <pre>
    * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
+   *
+   * <code>repeated string labels = 3;</code>
    */
   com.google.protobuf.ByteString
       getLabelsBytes(int index);

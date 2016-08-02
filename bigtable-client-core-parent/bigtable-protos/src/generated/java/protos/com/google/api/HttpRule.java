@@ -4,8 +4,6 @@
 package com.google.api;
 
 /**
- * Protobuf type {@code google.api.HttpRule}
- *
  * <pre>
  * `HttpRule` defines the mapping of an RPC method to one or more HTTP
  * REST APIs.  The mapping determines what portions of the request
@@ -157,6 +155,8 @@ package com.google.api;
  * a given URL path rule. The wild-card rule is useful for services that provide
  * content to Web (HTML) clients.
  * </pre>
+ *
+ * Protobuf type {@code google.api.HttpRule}
  */
 public  final class HttpRule extends
     com.google.protobuf.GeneratedMessage implements
@@ -178,7 +178,8 @@ public  final class HttpRule extends
   }
   private HttpRule(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -256,11 +257,10 @@ public  final class HttpRule extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
         additionalBindings_ = java.util.Collections.unmodifiableList(additionalBindings_);
@@ -292,11 +292,19 @@ public  final class HttpRule extends
     PATCH(6),
     CUSTOM(8),
     PATTERN_NOT_SET(0);
-    private int value = 0;
+    private final int value;
     private PatternCase(int value) {
       this.value = value;
     }
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static PatternCase valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static PatternCase forNumber(int value) {
       switch (value) {
         case 2: return GET;
         case 3: return PUT;
@@ -305,8 +313,7 @@ public  final class HttpRule extends
         case 6: return PATCH;
         case 8: return CUSTOM;
         case 0: return PATTERN_NOT_SET;
-        default: throw new java.lang.IllegalArgumentException(
-          "Value is undefined for this oneof enum.");
+        default: return null;
       }
     }
     public int getNumber() {
@@ -316,17 +323,17 @@ public  final class HttpRule extends
 
   public PatternCase
   getPatternCase() {
-    return PatternCase.valueOf(
+    return PatternCase.forNumber(
         patternCase_);
   }
 
   public static final int GET_FIELD_NUMBER = 2;
   /**
-   * <code>optional string get = 2;</code>
-   *
    * <pre>
    * Used for listing and getting information about resources.
    * </pre>
+   *
+   * <code>optional string get = 2;</code>
    */
   public java.lang.String getGet() {
     java.lang.Object ref = "";
@@ -346,11 +353,11 @@ public  final class HttpRule extends
     }
   }
   /**
-   * <code>optional string get = 2;</code>
-   *
    * <pre>
    * Used for listing and getting information about resources.
    * </pre>
+   *
+   * <code>optional string get = 2;</code>
    */
   public com.google.protobuf.ByteString
       getGetBytes() {
@@ -373,11 +380,11 @@ public  final class HttpRule extends
 
   public static final int PUT_FIELD_NUMBER = 3;
   /**
-   * <code>optional string put = 3;</code>
-   *
    * <pre>
    * Used for updating a resource.
    * </pre>
+   *
+   * <code>optional string put = 3;</code>
    */
   public java.lang.String getPut() {
     java.lang.Object ref = "";
@@ -397,11 +404,11 @@ public  final class HttpRule extends
     }
   }
   /**
-   * <code>optional string put = 3;</code>
-   *
    * <pre>
    * Used for updating a resource.
    * </pre>
+   *
+   * <code>optional string put = 3;</code>
    */
   public com.google.protobuf.ByteString
       getPutBytes() {
@@ -424,11 +431,11 @@ public  final class HttpRule extends
 
   public static final int POST_FIELD_NUMBER = 4;
   /**
-   * <code>optional string post = 4;</code>
-   *
    * <pre>
    * Used for creating a resource.
    * </pre>
+   *
+   * <code>optional string post = 4;</code>
    */
   public java.lang.String getPost() {
     java.lang.Object ref = "";
@@ -448,11 +455,11 @@ public  final class HttpRule extends
     }
   }
   /**
-   * <code>optional string post = 4;</code>
-   *
    * <pre>
    * Used for creating a resource.
    * </pre>
+   *
+   * <code>optional string post = 4;</code>
    */
   public com.google.protobuf.ByteString
       getPostBytes() {
@@ -475,11 +482,11 @@ public  final class HttpRule extends
 
   public static final int DELETE_FIELD_NUMBER = 5;
   /**
-   * <code>optional string delete = 5;</code>
-   *
    * <pre>
    * Used for deleting a resource.
    * </pre>
+   *
+   * <code>optional string delete = 5;</code>
    */
   public java.lang.String getDelete() {
     java.lang.Object ref = "";
@@ -499,11 +506,11 @@ public  final class HttpRule extends
     }
   }
   /**
-   * <code>optional string delete = 5;</code>
-   *
    * <pre>
    * Used for deleting a resource.
    * </pre>
+   *
+   * <code>optional string delete = 5;</code>
    */
   public com.google.protobuf.ByteString
       getDeleteBytes() {
@@ -526,11 +533,11 @@ public  final class HttpRule extends
 
   public static final int PATCH_FIELD_NUMBER = 6;
   /**
-   * <code>optional string patch = 6;</code>
-   *
    * <pre>
    * Used for updating a resource.
    * </pre>
+   *
+   * <code>optional string patch = 6;</code>
    */
   public java.lang.String getPatch() {
     java.lang.Object ref = "";
@@ -550,11 +557,11 @@ public  final class HttpRule extends
     }
   }
   /**
-   * <code>optional string patch = 6;</code>
-   *
    * <pre>
    * Used for updating a resource.
    * </pre>
+   *
+   * <code>optional string patch = 6;</code>
    */
   public com.google.protobuf.ByteString
       getPatchBytes() {
@@ -577,11 +584,11 @@ public  final class HttpRule extends
 
   public static final int CUSTOM_FIELD_NUMBER = 8;
   /**
-   * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-   *
    * <pre>
    * Custom pattern is used for defining custom verbs.
    * </pre>
+   *
+   * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
    */
   public com.google.api.CustomHttpPattern getCustom() {
     if (patternCase_ == 8) {
@@ -590,11 +597,11 @@ public  final class HttpRule extends
     return com.google.api.CustomHttpPattern.getDefaultInstance();
   }
   /**
-   * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-   *
    * <pre>
    * Custom pattern is used for defining custom verbs.
    * </pre>
+   *
+   * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
    */
   public com.google.api.CustomHttpPatternOrBuilder getCustomOrBuilder() {
     if (patternCase_ == 8) {
@@ -606,13 +613,13 @@ public  final class HttpRule extends
   public static final int BODY_FIELD_NUMBER = 7;
   private volatile java.lang.Object body_;
   /**
-   * <code>optional string body = 7;</code>
-   *
    * <pre>
    * The name of the request field whose value is mapped to the HTTP body, or
    * `*` for mapping all fields not captured by the path pattern to the HTTP
    * body. NOTE: the referred field must not be a repeated field.
    * </pre>
+   *
+   * <code>optional string body = 7;</code>
    */
   public java.lang.String getBody() {
     java.lang.Object ref = body_;
@@ -627,13 +634,13 @@ public  final class HttpRule extends
     }
   }
   /**
-   * <code>optional string body = 7;</code>
-   *
    * <pre>
    * The name of the request field whose value is mapped to the HTTP body, or
    * `*` for mapping all fields not captured by the path pattern to the HTTP
    * body. NOTE: the referred field must not be a repeated field.
    * </pre>
+   *
+   * <code>optional string body = 7;</code>
    */
   public com.google.protobuf.ByteString
       getBodyBytes() {
@@ -652,62 +659,62 @@ public  final class HttpRule extends
   public static final int ADDITIONAL_BINDINGS_FIELD_NUMBER = 11;
   private java.util.List<com.google.api.HttpRule> additionalBindings_;
   /**
-   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-   *
    * <pre>
    * Additional HTTP bindings for the selector. Nested bindings must
    * not contain an `additional_bindings` field themselves (that is,
    * the nesting may only be one level deep).
    * </pre>
+   *
+   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    */
   public java.util.List<com.google.api.HttpRule> getAdditionalBindingsList() {
     return additionalBindings_;
   }
   /**
-   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-   *
    * <pre>
    * Additional HTTP bindings for the selector. Nested bindings must
    * not contain an `additional_bindings` field themselves (that is,
    * the nesting may only be one level deep).
    * </pre>
+   *
+   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    */
   public java.util.List<? extends com.google.api.HttpRuleOrBuilder> 
       getAdditionalBindingsOrBuilderList() {
     return additionalBindings_;
   }
   /**
-   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-   *
    * <pre>
    * Additional HTTP bindings for the selector. Nested bindings must
    * not contain an `additional_bindings` field themselves (that is,
    * the nesting may only be one level deep).
    * </pre>
+   *
+   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    */
   public int getAdditionalBindingsCount() {
     return additionalBindings_.size();
   }
   /**
-   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-   *
    * <pre>
    * Additional HTTP bindings for the selector. Nested bindings must
    * not contain an `additional_bindings` field themselves (that is,
    * the nesting may only be one level deep).
    * </pre>
+   *
+   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    */
   public com.google.api.HttpRule getAdditionalBindings(int index) {
     return additionalBindings_.get(index);
   }
   /**
-   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-   *
    * <pre>
    * Additional HTTP bindings for the selector. Nested bindings must
    * not contain an `additional_bindings` field themselves (that is,
    * the nesting may only be one level deep).
    * </pre>
+   *
+   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    */
   public com.google.api.HttpRuleOrBuilder getAdditionalBindingsOrBuilder(
       int index) {
@@ -811,34 +818,40 @@ public  final class HttpRule extends
   }
   public static com.google.api.HttpRule parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.api.HttpRule parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.api.HttpRule parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.api.HttpRule parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.api.HttpRule parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.api.HttpRule parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -860,8 +873,6 @@ public  final class HttpRule extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.api.HttpRule}
-   *
    * <pre>
    * `HttpRule` defines the mapping of an RPC method to one or more HTTP
    * REST APIs.  The mapping determines what portions of the request
@@ -1013,6 +1024,8 @@ public  final class HttpRule extends
    * a given URL path rule. The wild-card rule is useful for services that provide
    * content to Web (HTML) clients.
    * </pre>
+   *
+   * Protobuf type {@code google.api.HttpRule}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -1216,7 +1229,7 @@ public  final class HttpRule extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.api.HttpRule) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -1228,7 +1241,7 @@ public  final class HttpRule extends
     private java.lang.Object pattern_;
     public PatternCase
         getPatternCase() {
-      return PatternCase.valueOf(
+      return PatternCase.forNumber(
           patternCase_);
     }
 
@@ -1242,11 +1255,11 @@ public  final class HttpRule extends
     private int bitField0_;
 
     /**
-     * <code>optional string get = 2;</code>
-     *
      * <pre>
      * Used for listing and getting information about resources.
      * </pre>
+     *
+     * <code>optional string get = 2;</code>
      */
     public java.lang.String getGet() {
       java.lang.Object ref = "";
@@ -1266,11 +1279,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string get = 2;</code>
-     *
      * <pre>
      * Used for listing and getting information about resources.
      * </pre>
+     *
+     * <code>optional string get = 2;</code>
      */
     public com.google.protobuf.ByteString
         getGetBytes() {
@@ -1291,11 +1304,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string get = 2;</code>
-     *
      * <pre>
      * Used for listing and getting information about resources.
      * </pre>
+     *
+     * <code>optional string get = 2;</code>
      */
     public Builder setGet(
         java.lang.String value) {
@@ -1308,11 +1321,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string get = 2;</code>
-     *
      * <pre>
      * Used for listing and getting information about resources.
      * </pre>
+     *
+     * <code>optional string get = 2;</code>
      */
     public Builder clearGet() {
       if (patternCase_ == 2) {
@@ -1323,11 +1336,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string get = 2;</code>
-     *
      * <pre>
      * Used for listing and getting information about resources.
      * </pre>
+     *
+     * <code>optional string get = 2;</code>
      */
     public Builder setGetBytes(
         com.google.protobuf.ByteString value) {
@@ -1342,11 +1355,11 @@ public  final class HttpRule extends
     }
 
     /**
-     * <code>optional string put = 3;</code>
-     *
      * <pre>
      * Used for updating a resource.
      * </pre>
+     *
+     * <code>optional string put = 3;</code>
      */
     public java.lang.String getPut() {
       java.lang.Object ref = "";
@@ -1366,11 +1379,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string put = 3;</code>
-     *
      * <pre>
      * Used for updating a resource.
      * </pre>
+     *
+     * <code>optional string put = 3;</code>
      */
     public com.google.protobuf.ByteString
         getPutBytes() {
@@ -1391,11 +1404,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string put = 3;</code>
-     *
      * <pre>
      * Used for updating a resource.
      * </pre>
+     *
+     * <code>optional string put = 3;</code>
      */
     public Builder setPut(
         java.lang.String value) {
@@ -1408,11 +1421,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string put = 3;</code>
-     *
      * <pre>
      * Used for updating a resource.
      * </pre>
+     *
+     * <code>optional string put = 3;</code>
      */
     public Builder clearPut() {
       if (patternCase_ == 3) {
@@ -1423,11 +1436,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string put = 3;</code>
-     *
      * <pre>
      * Used for updating a resource.
      * </pre>
+     *
+     * <code>optional string put = 3;</code>
      */
     public Builder setPutBytes(
         com.google.protobuf.ByteString value) {
@@ -1442,11 +1455,11 @@ public  final class HttpRule extends
     }
 
     /**
-     * <code>optional string post = 4;</code>
-     *
      * <pre>
      * Used for creating a resource.
      * </pre>
+     *
+     * <code>optional string post = 4;</code>
      */
     public java.lang.String getPost() {
       java.lang.Object ref = "";
@@ -1466,11 +1479,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string post = 4;</code>
-     *
      * <pre>
      * Used for creating a resource.
      * </pre>
+     *
+     * <code>optional string post = 4;</code>
      */
     public com.google.protobuf.ByteString
         getPostBytes() {
@@ -1491,11 +1504,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string post = 4;</code>
-     *
      * <pre>
      * Used for creating a resource.
      * </pre>
+     *
+     * <code>optional string post = 4;</code>
      */
     public Builder setPost(
         java.lang.String value) {
@@ -1508,11 +1521,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string post = 4;</code>
-     *
      * <pre>
      * Used for creating a resource.
      * </pre>
+     *
+     * <code>optional string post = 4;</code>
      */
     public Builder clearPost() {
       if (patternCase_ == 4) {
@@ -1523,11 +1536,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string post = 4;</code>
-     *
      * <pre>
      * Used for creating a resource.
      * </pre>
+     *
+     * <code>optional string post = 4;</code>
      */
     public Builder setPostBytes(
         com.google.protobuf.ByteString value) {
@@ -1542,11 +1555,11 @@ public  final class HttpRule extends
     }
 
     /**
-     * <code>optional string delete = 5;</code>
-     *
      * <pre>
      * Used for deleting a resource.
      * </pre>
+     *
+     * <code>optional string delete = 5;</code>
      */
     public java.lang.String getDelete() {
       java.lang.Object ref = "";
@@ -1566,11 +1579,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string delete = 5;</code>
-     *
      * <pre>
      * Used for deleting a resource.
      * </pre>
+     *
+     * <code>optional string delete = 5;</code>
      */
     public com.google.protobuf.ByteString
         getDeleteBytes() {
@@ -1591,11 +1604,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string delete = 5;</code>
-     *
      * <pre>
      * Used for deleting a resource.
      * </pre>
+     *
+     * <code>optional string delete = 5;</code>
      */
     public Builder setDelete(
         java.lang.String value) {
@@ -1608,11 +1621,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string delete = 5;</code>
-     *
      * <pre>
      * Used for deleting a resource.
      * </pre>
+     *
+     * <code>optional string delete = 5;</code>
      */
     public Builder clearDelete() {
       if (patternCase_ == 5) {
@@ -1623,11 +1636,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string delete = 5;</code>
-     *
      * <pre>
      * Used for deleting a resource.
      * </pre>
+     *
+     * <code>optional string delete = 5;</code>
      */
     public Builder setDeleteBytes(
         com.google.protobuf.ByteString value) {
@@ -1642,11 +1655,11 @@ public  final class HttpRule extends
     }
 
     /**
-     * <code>optional string patch = 6;</code>
-     *
      * <pre>
      * Used for updating a resource.
      * </pre>
+     *
+     * <code>optional string patch = 6;</code>
      */
     public java.lang.String getPatch() {
       java.lang.Object ref = "";
@@ -1666,11 +1679,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string patch = 6;</code>
-     *
      * <pre>
      * Used for updating a resource.
      * </pre>
+     *
+     * <code>optional string patch = 6;</code>
      */
     public com.google.protobuf.ByteString
         getPatchBytes() {
@@ -1691,11 +1704,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string patch = 6;</code>
-     *
      * <pre>
      * Used for updating a resource.
      * </pre>
+     *
+     * <code>optional string patch = 6;</code>
      */
     public Builder setPatch(
         java.lang.String value) {
@@ -1708,11 +1721,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string patch = 6;</code>
-     *
      * <pre>
      * Used for updating a resource.
      * </pre>
+     *
+     * <code>optional string patch = 6;</code>
      */
     public Builder clearPatch() {
       if (patternCase_ == 6) {
@@ -1723,11 +1736,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string patch = 6;</code>
-     *
      * <pre>
      * Used for updating a resource.
      * </pre>
+     *
+     * <code>optional string patch = 6;</code>
      */
     public Builder setPatchBytes(
         com.google.protobuf.ByteString value) {
@@ -1744,11 +1757,11 @@ public  final class HttpRule extends
     private com.google.protobuf.SingleFieldBuilder<
         com.google.api.CustomHttpPattern, com.google.api.CustomHttpPattern.Builder, com.google.api.CustomHttpPatternOrBuilder> customBuilder_;
     /**
-     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-     *
      * <pre>
      * Custom pattern is used for defining custom verbs.
      * </pre>
+     *
+     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
      */
     public com.google.api.CustomHttpPattern getCustom() {
       if (customBuilder_ == null) {
@@ -1764,11 +1777,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-     *
      * <pre>
      * Custom pattern is used for defining custom verbs.
      * </pre>
+     *
+     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
      */
     public Builder setCustom(com.google.api.CustomHttpPattern value) {
       if (customBuilder_ == null) {
@@ -1784,11 +1797,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-     *
      * <pre>
      * Custom pattern is used for defining custom verbs.
      * </pre>
+     *
+     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
      */
     public Builder setCustom(
         com.google.api.CustomHttpPattern.Builder builderForValue) {
@@ -1802,11 +1815,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-     *
      * <pre>
      * Custom pattern is used for defining custom verbs.
      * </pre>
+     *
+     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
      */
     public Builder mergeCustom(com.google.api.CustomHttpPattern value) {
       if (customBuilder_ == null) {
@@ -1828,11 +1841,11 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-     *
      * <pre>
      * Custom pattern is used for defining custom verbs.
      * </pre>
+     *
+     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
      */
     public Builder clearCustom() {
       if (customBuilder_ == null) {
@@ -1851,21 +1864,21 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-     *
      * <pre>
      * Custom pattern is used for defining custom verbs.
      * </pre>
+     *
+     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
      */
     public com.google.api.CustomHttpPattern.Builder getCustomBuilder() {
       return getCustomFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-     *
      * <pre>
      * Custom pattern is used for defining custom verbs.
      * </pre>
+     *
+     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
      */
     public com.google.api.CustomHttpPatternOrBuilder getCustomOrBuilder() {
       if ((patternCase_ == 8) && (customBuilder_ != null)) {
@@ -1878,11 +1891,11 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-     *
      * <pre>
      * Custom pattern is used for defining custom verbs.
      * </pre>
+     *
+     * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         com.google.api.CustomHttpPattern, com.google.api.CustomHttpPattern.Builder, com.google.api.CustomHttpPatternOrBuilder> 
@@ -1905,13 +1918,13 @@ public  final class HttpRule extends
 
     private java.lang.Object body_ = "";
     /**
-     * <code>optional string body = 7;</code>
-     *
      * <pre>
      * The name of the request field whose value is mapped to the HTTP body, or
      * `*` for mapping all fields not captured by the path pattern to the HTTP
      * body. NOTE: the referred field must not be a repeated field.
      * </pre>
+     *
+     * <code>optional string body = 7;</code>
      */
     public java.lang.String getBody() {
       java.lang.Object ref = body_;
@@ -1926,13 +1939,13 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string body = 7;</code>
-     *
      * <pre>
      * The name of the request field whose value is mapped to the HTTP body, or
      * `*` for mapping all fields not captured by the path pattern to the HTTP
      * body. NOTE: the referred field must not be a repeated field.
      * </pre>
+     *
+     * <code>optional string body = 7;</code>
      */
     public com.google.protobuf.ByteString
         getBodyBytes() {
@@ -1948,13 +1961,13 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>optional string body = 7;</code>
-     *
      * <pre>
      * The name of the request field whose value is mapped to the HTTP body, or
      * `*` for mapping all fields not captured by the path pattern to the HTTP
      * body. NOTE: the referred field must not be a repeated field.
      * </pre>
+     *
+     * <code>optional string body = 7;</code>
      */
     public Builder setBody(
         java.lang.String value) {
@@ -1967,13 +1980,13 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string body = 7;</code>
-     *
      * <pre>
      * The name of the request field whose value is mapped to the HTTP body, or
      * `*` for mapping all fields not captured by the path pattern to the HTTP
      * body. NOTE: the referred field must not be a repeated field.
      * </pre>
+     *
+     * <code>optional string body = 7;</code>
      */
     public Builder clearBody() {
       
@@ -1982,13 +1995,13 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>optional string body = 7;</code>
-     *
      * <pre>
      * The name of the request field whose value is mapped to the HTTP body, or
      * `*` for mapping all fields not captured by the path pattern to the HTTP
      * body. NOTE: the referred field must not be a repeated field.
      * </pre>
+     *
+     * <code>optional string body = 7;</code>
      */
     public Builder setBodyBytes(
         com.google.protobuf.ByteString value) {
@@ -2015,13 +2028,13 @@ public  final class HttpRule extends
         com.google.api.HttpRule, com.google.api.HttpRule.Builder, com.google.api.HttpRuleOrBuilder> additionalBindingsBuilder_;
 
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public java.util.List<com.google.api.HttpRule> getAdditionalBindingsList() {
       if (additionalBindingsBuilder_ == null) {
@@ -2031,13 +2044,13 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public int getAdditionalBindingsCount() {
       if (additionalBindingsBuilder_ == null) {
@@ -2047,13 +2060,13 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public com.google.api.HttpRule getAdditionalBindings(int index) {
       if (additionalBindingsBuilder_ == null) {
@@ -2063,13 +2076,13 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public Builder setAdditionalBindings(
         int index, com.google.api.HttpRule value) {
@@ -2086,13 +2099,13 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public Builder setAdditionalBindings(
         int index, com.google.api.HttpRule.Builder builderForValue) {
@@ -2106,13 +2119,13 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public Builder addAdditionalBindings(com.google.api.HttpRule value) {
       if (additionalBindingsBuilder_ == null) {
@@ -2128,13 +2141,13 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public Builder addAdditionalBindings(
         int index, com.google.api.HttpRule value) {
@@ -2151,13 +2164,13 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public Builder addAdditionalBindings(
         com.google.api.HttpRule.Builder builderForValue) {
@@ -2171,13 +2184,13 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public Builder addAdditionalBindings(
         int index, com.google.api.HttpRule.Builder builderForValue) {
@@ -2191,13 +2204,13 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public Builder addAllAdditionalBindings(
         java.lang.Iterable<? extends com.google.api.HttpRule> values) {
@@ -2212,13 +2225,13 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public Builder clearAdditionalBindings() {
       if (additionalBindingsBuilder_ == null) {
@@ -2231,13 +2244,13 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public Builder removeAdditionalBindings(int index) {
       if (additionalBindingsBuilder_ == null) {
@@ -2250,26 +2263,26 @@ public  final class HttpRule extends
       return this;
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public com.google.api.HttpRule.Builder getAdditionalBindingsBuilder(
         int index) {
       return getAdditionalBindingsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public com.google.api.HttpRuleOrBuilder getAdditionalBindingsOrBuilder(
         int index) {
@@ -2279,13 +2292,13 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public java.util.List<? extends com.google.api.HttpRuleOrBuilder> 
          getAdditionalBindingsOrBuilderList() {
@@ -2296,26 +2309,26 @@ public  final class HttpRule extends
       }
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public com.google.api.HttpRule.Builder addAdditionalBindingsBuilder() {
       return getAdditionalBindingsFieldBuilder().addBuilder(
           com.google.api.HttpRule.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public com.google.api.HttpRule.Builder addAdditionalBindingsBuilder(
         int index) {
@@ -2323,13 +2336,13 @@ public  final class HttpRule extends
           index, com.google.api.HttpRule.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-     *
      * <pre>
      * Additional HTTP bindings for the selector. Nested bindings must
      * not contain an `additional_bindings` field themselves (that is,
      * the nesting may only be one level deep).
      * </pre>
+     *
+     * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
      */
     public java.util.List<com.google.api.HttpRule.Builder> 
          getAdditionalBindingsBuilderList() {
@@ -2379,16 +2392,7 @@ public  final class HttpRule extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new HttpRule(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

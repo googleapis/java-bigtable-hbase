@@ -4,14 +4,14 @@
 package com.google.bigtable.v2;
 
 /**
- * Protobuf type {@code google.bigtable.v2.ColumnRange}
- *
  * <pre>
  * Specifies a contiguous range of columns within a single column family.
  * The range spans from &amp;lt;column_family&amp;gt;:&amp;lt;start_qualifier&amp;gt; to
  * &amp;lt;column_family&amp;gt;:&amp;lt;end_qualifier&amp;gt;, where both bounds can be either
  * inclusive or exclusive.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v2.ColumnRange}
  */
 public  final class ColumnRange extends
     com.google.protobuf.GeneratedMessage implements
@@ -32,7 +32,8 @@ public  final class ColumnRange extends
   }
   private ColumnRange(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -78,11 +79,10 @@ public  final class ColumnRange extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -106,17 +106,24 @@ public  final class ColumnRange extends
     START_QUALIFIER_CLOSED(2),
     START_QUALIFIER_OPEN(3),
     STARTQUALIFIER_NOT_SET(0);
-    private int value = 0;
+    private final int value;
     private StartQualifierCase(int value) {
       this.value = value;
     }
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static StartQualifierCase valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static StartQualifierCase forNumber(int value) {
       switch (value) {
         case 2: return START_QUALIFIER_CLOSED;
         case 3: return START_QUALIFIER_OPEN;
         case 0: return STARTQUALIFIER_NOT_SET;
-        default: throw new java.lang.IllegalArgumentException(
-          "Value is undefined for this oneof enum.");
+        default: return null;
       }
     }
     public int getNumber() {
@@ -126,7 +133,7 @@ public  final class ColumnRange extends
 
   public StartQualifierCase
   getStartQualifierCase() {
-    return StartQualifierCase.valueOf(
+    return StartQualifierCase.forNumber(
         startQualifierCase_);
   }
 
@@ -137,17 +144,24 @@ public  final class ColumnRange extends
     END_QUALIFIER_CLOSED(4),
     END_QUALIFIER_OPEN(5),
     ENDQUALIFIER_NOT_SET(0);
-    private int value = 0;
+    private final int value;
     private EndQualifierCase(int value) {
       this.value = value;
     }
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static EndQualifierCase valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static EndQualifierCase forNumber(int value) {
       switch (value) {
         case 4: return END_QUALIFIER_CLOSED;
         case 5: return END_QUALIFIER_OPEN;
         case 0: return ENDQUALIFIER_NOT_SET;
-        default: throw new java.lang.IllegalArgumentException(
-          "Value is undefined for this oneof enum.");
+        default: return null;
       }
     }
     public int getNumber() {
@@ -157,18 +171,18 @@ public  final class ColumnRange extends
 
   public EndQualifierCase
   getEndQualifierCase() {
-    return EndQualifierCase.valueOf(
+    return EndQualifierCase.forNumber(
         endQualifierCase_);
   }
 
   public static final int FAMILY_NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object familyName_;
   /**
-   * <code>optional string family_name = 1;</code>
-   *
    * <pre>
    * The name of the column family within which this range falls.
    * </pre>
+   *
+   * <code>optional string family_name = 1;</code>
    */
   public java.lang.String getFamilyName() {
     java.lang.Object ref = familyName_;
@@ -183,11 +197,11 @@ public  final class ColumnRange extends
     }
   }
   /**
-   * <code>optional string family_name = 1;</code>
-   *
    * <pre>
    * The name of the column family within which this range falls.
    * </pre>
+   *
+   * <code>optional string family_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getFamilyNameBytes() {
@@ -205,11 +219,11 @@ public  final class ColumnRange extends
 
   public static final int START_QUALIFIER_CLOSED_FIELD_NUMBER = 2;
   /**
-   * <code>optional bytes start_qualifier_closed = 2;</code>
-   *
    * <pre>
    * Used when giving an inclusive lower bound for the range.
    * </pre>
+   *
+   * <code>optional bytes start_qualifier_closed = 2;</code>
    */
   public com.google.protobuf.ByteString getStartQualifierClosed() {
     if (startQualifierCase_ == 2) {
@@ -220,11 +234,11 @@ public  final class ColumnRange extends
 
   public static final int START_QUALIFIER_OPEN_FIELD_NUMBER = 3;
   /**
-   * <code>optional bytes start_qualifier_open = 3;</code>
-   *
    * <pre>
    * Used when giving an exclusive lower bound for the range.
    * </pre>
+   *
+   * <code>optional bytes start_qualifier_open = 3;</code>
    */
   public com.google.protobuf.ByteString getStartQualifierOpen() {
     if (startQualifierCase_ == 3) {
@@ -235,11 +249,11 @@ public  final class ColumnRange extends
 
   public static final int END_QUALIFIER_CLOSED_FIELD_NUMBER = 4;
   /**
-   * <code>optional bytes end_qualifier_closed = 4;</code>
-   *
    * <pre>
    * Used when giving an inclusive upper bound for the range.
    * </pre>
+   *
+   * <code>optional bytes end_qualifier_closed = 4;</code>
    */
   public com.google.protobuf.ByteString getEndQualifierClosed() {
     if (endQualifierCase_ == 4) {
@@ -250,11 +264,11 @@ public  final class ColumnRange extends
 
   public static final int END_QUALIFIER_OPEN_FIELD_NUMBER = 5;
   /**
-   * <code>optional bytes end_qualifier_open = 5;</code>
-   *
    * <pre>
    * Used when giving an exclusive upper bound for the range.
    * </pre>
+   *
+   * <code>optional bytes end_qualifier_open = 5;</code>
    */
   public com.google.protobuf.ByteString getEndQualifierOpen() {
     if (endQualifierCase_ == 5) {
@@ -352,34 +366,40 @@ public  final class ColumnRange extends
   }
   public static com.google.bigtable.v2.ColumnRange parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ColumnRange parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ColumnRange parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ColumnRange parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ColumnRange parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ColumnRange parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -401,14 +421,14 @@ public  final class ColumnRange extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v2.ColumnRange}
-   *
    * <pre>
    * Specifies a contiguous range of columns within a single column family.
    * The range spans from &amp;lt;column_family&amp;gt;:&amp;lt;start_qualifier&amp;gt; to
    * &amp;lt;column_family&amp;gt;:&amp;lt;end_qualifier&amp;gt;, where both bounds can be either
    * inclusive or exclusive.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v2.ColumnRange}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
@@ -547,7 +567,7 @@ public  final class ColumnRange extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.ColumnRange) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -559,7 +579,7 @@ public  final class ColumnRange extends
     private java.lang.Object startQualifier_;
     public StartQualifierCase
         getStartQualifierCase() {
-      return StartQualifierCase.valueOf(
+      return StartQualifierCase.forNumber(
           startQualifierCase_);
     }
 
@@ -574,7 +594,7 @@ public  final class ColumnRange extends
     private java.lang.Object endQualifier_;
     public EndQualifierCase
         getEndQualifierCase() {
-      return EndQualifierCase.valueOf(
+      return EndQualifierCase.forNumber(
           endQualifierCase_);
     }
 
@@ -588,11 +608,11 @@ public  final class ColumnRange extends
 
     private java.lang.Object familyName_ = "";
     /**
-     * <code>optional string family_name = 1;</code>
-     *
      * <pre>
      * The name of the column family within which this range falls.
      * </pre>
+     *
+     * <code>optional string family_name = 1;</code>
      */
     public java.lang.String getFamilyName() {
       java.lang.Object ref = familyName_;
@@ -607,11 +627,11 @@ public  final class ColumnRange extends
       }
     }
     /**
-     * <code>optional string family_name = 1;</code>
-     *
      * <pre>
      * The name of the column family within which this range falls.
      * </pre>
+     *
+     * <code>optional string family_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getFamilyNameBytes() {
@@ -627,11 +647,11 @@ public  final class ColumnRange extends
       }
     }
     /**
-     * <code>optional string family_name = 1;</code>
-     *
      * <pre>
      * The name of the column family within which this range falls.
      * </pre>
+     *
+     * <code>optional string family_name = 1;</code>
      */
     public Builder setFamilyName(
         java.lang.String value) {
@@ -644,11 +664,11 @@ public  final class ColumnRange extends
       return this;
     }
     /**
-     * <code>optional string family_name = 1;</code>
-     *
      * <pre>
      * The name of the column family within which this range falls.
      * </pre>
+     *
+     * <code>optional string family_name = 1;</code>
      */
     public Builder clearFamilyName() {
       
@@ -657,11 +677,11 @@ public  final class ColumnRange extends
       return this;
     }
     /**
-     * <code>optional string family_name = 1;</code>
-     *
      * <pre>
      * The name of the column family within which this range falls.
      * </pre>
+     *
+     * <code>optional string family_name = 1;</code>
      */
     public Builder setFamilyNameBytes(
         com.google.protobuf.ByteString value) {
@@ -676,11 +696,11 @@ public  final class ColumnRange extends
     }
 
     /**
-     * <code>optional bytes start_qualifier_closed = 2;</code>
-     *
      * <pre>
      * Used when giving an inclusive lower bound for the range.
      * </pre>
+     *
+     * <code>optional bytes start_qualifier_closed = 2;</code>
      */
     public com.google.protobuf.ByteString getStartQualifierClosed() {
       if (startQualifierCase_ == 2) {
@@ -689,11 +709,11 @@ public  final class ColumnRange extends
       return com.google.protobuf.ByteString.EMPTY;
     }
     /**
-     * <code>optional bytes start_qualifier_closed = 2;</code>
-     *
      * <pre>
      * Used when giving an inclusive lower bound for the range.
      * </pre>
+     *
+     * <code>optional bytes start_qualifier_closed = 2;</code>
      */
     public Builder setStartQualifierClosed(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -705,11 +725,11 @@ public  final class ColumnRange extends
       return this;
     }
     /**
-     * <code>optional bytes start_qualifier_closed = 2;</code>
-     *
      * <pre>
      * Used when giving an inclusive lower bound for the range.
      * </pre>
+     *
+     * <code>optional bytes start_qualifier_closed = 2;</code>
      */
     public Builder clearStartQualifierClosed() {
       if (startQualifierCase_ == 2) {
@@ -721,11 +741,11 @@ public  final class ColumnRange extends
     }
 
     /**
-     * <code>optional bytes start_qualifier_open = 3;</code>
-     *
      * <pre>
      * Used when giving an exclusive lower bound for the range.
      * </pre>
+     *
+     * <code>optional bytes start_qualifier_open = 3;</code>
      */
     public com.google.protobuf.ByteString getStartQualifierOpen() {
       if (startQualifierCase_ == 3) {
@@ -734,11 +754,11 @@ public  final class ColumnRange extends
       return com.google.protobuf.ByteString.EMPTY;
     }
     /**
-     * <code>optional bytes start_qualifier_open = 3;</code>
-     *
      * <pre>
      * Used when giving an exclusive lower bound for the range.
      * </pre>
+     *
+     * <code>optional bytes start_qualifier_open = 3;</code>
      */
     public Builder setStartQualifierOpen(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -750,11 +770,11 @@ public  final class ColumnRange extends
       return this;
     }
     /**
-     * <code>optional bytes start_qualifier_open = 3;</code>
-     *
      * <pre>
      * Used when giving an exclusive lower bound for the range.
      * </pre>
+     *
+     * <code>optional bytes start_qualifier_open = 3;</code>
      */
     public Builder clearStartQualifierOpen() {
       if (startQualifierCase_ == 3) {
@@ -766,11 +786,11 @@ public  final class ColumnRange extends
     }
 
     /**
-     * <code>optional bytes end_qualifier_closed = 4;</code>
-     *
      * <pre>
      * Used when giving an inclusive upper bound for the range.
      * </pre>
+     *
+     * <code>optional bytes end_qualifier_closed = 4;</code>
      */
     public com.google.protobuf.ByteString getEndQualifierClosed() {
       if (endQualifierCase_ == 4) {
@@ -779,11 +799,11 @@ public  final class ColumnRange extends
       return com.google.protobuf.ByteString.EMPTY;
     }
     /**
-     * <code>optional bytes end_qualifier_closed = 4;</code>
-     *
      * <pre>
      * Used when giving an inclusive upper bound for the range.
      * </pre>
+     *
+     * <code>optional bytes end_qualifier_closed = 4;</code>
      */
     public Builder setEndQualifierClosed(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -795,11 +815,11 @@ public  final class ColumnRange extends
       return this;
     }
     /**
-     * <code>optional bytes end_qualifier_closed = 4;</code>
-     *
      * <pre>
      * Used when giving an inclusive upper bound for the range.
      * </pre>
+     *
+     * <code>optional bytes end_qualifier_closed = 4;</code>
      */
     public Builder clearEndQualifierClosed() {
       if (endQualifierCase_ == 4) {
@@ -811,11 +831,11 @@ public  final class ColumnRange extends
     }
 
     /**
-     * <code>optional bytes end_qualifier_open = 5;</code>
-     *
      * <pre>
      * Used when giving an exclusive upper bound for the range.
      * </pre>
+     *
+     * <code>optional bytes end_qualifier_open = 5;</code>
      */
     public com.google.protobuf.ByteString getEndQualifierOpen() {
       if (endQualifierCase_ == 5) {
@@ -824,11 +844,11 @@ public  final class ColumnRange extends
       return com.google.protobuf.ByteString.EMPTY;
     }
     /**
-     * <code>optional bytes end_qualifier_open = 5;</code>
-     *
      * <pre>
      * Used when giving an exclusive upper bound for the range.
      * </pre>
+     *
+     * <code>optional bytes end_qualifier_open = 5;</code>
      */
     public Builder setEndQualifierOpen(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -840,11 +860,11 @@ public  final class ColumnRange extends
       return this;
     }
     /**
-     * <code>optional bytes end_qualifier_open = 5;</code>
-     *
      * <pre>
      * Used when giving an exclusive upper bound for the range.
      * </pre>
+     *
+     * <code>optional bytes end_qualifier_open = 5;</code>
      */
     public Builder clearEndQualifierOpen() {
       if (endQualifierCase_ == 5) {
@@ -884,16 +904,7 @@ public  final class ColumnRange extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ColumnRange(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 
