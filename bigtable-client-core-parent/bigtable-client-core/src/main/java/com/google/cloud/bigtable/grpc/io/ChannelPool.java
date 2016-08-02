@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -57,6 +58,24 @@ public class ChannelPool extends ManagedChannel {
    */
   protected static Counter ACTIVE_CHANNEL_COUNTER;
 
+  /**
+   * A factory for creating ManagedChannels to be used in a {@link ChannelPool}.
+   *
+   * @author sduskis
+   *
+   */
+  public interface ChannelFactory {
+    ManagedChannel create() throws IOException;
+  }
+
+
+  /**
+   * There's a classloading vs. user configuration timing issue. A user should have the opportunity
+   * to configure metrics gathering even if the class loader loads the ChannelPool. If a user turns
+   * on metrics after this class is loaded, these metrics should not have the NULL
+   * implementation.
+   * @return
+   */
   protected synchronized static Counter getActiveChannelCounter() {
     if (ACTIVE_CHANNEL_COUNTER == null) {
       ACTIVE_CHANNEL_COUNTER = BigtableClientMetrics.createCounter("ChannelPool.active.count");
@@ -64,19 +83,30 @@ public class ChannelPool extends ManagedChannel {
     return ACTIVE_CHANNEL_COUNTER;
   }
 
-  public interface ChannelFactory {
-    ManagedChannel create() throws IOException;
-  }
-
+  /**
+   * Contains a {@link ManagedChannel} and metrics for the channel
+   * @author sduskis
+   *
+   */
   private static class ChannelAndMetrics {
     final ManagedChannel channel;
     // a uniquely named timer for this channel's latency
     final Timer timer;
 
+    private final AtomicBoolean active = new AtomicBoolean(true);
+
     public ChannelAndMetrics(ManagedChannel channel) {
       this.channel = channel;
       this.timer = BigtableClientMetrics.createTimer(
         "ChannelPool.channel." + ChannelIdGenerator.incrementAndGet() + ".latency");
+      getActiveChannelCounter().inc();
+    }
+
+    public synchronized void markInactive(){
+      boolean previouslyActive = active.getAndSet(false);
+      if (previouslyActive) {
+        getActiveChannelCounter().dec();
+      }
     }
   }
 
@@ -97,9 +127,8 @@ public class ChannelPool extends ManagedChannel {
    */
   public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
       throws IOException {
-    getActiveChannelCounter().inc();
     this.factory = factory;
-    final ChannelAndMetrics channelAndMetrics = createChannelAndMetrics();
+    ChannelAndMetrics channelAndMetrics = new ChannelAndMetrics(factory.create());
     this.channels.set(ImmutableList.of(channelAndMetrics));
     authority = channelAndMetrics.channel.authority();
     if (headerInterceptors == null) {
@@ -109,13 +138,9 @@ public class ChannelPool extends ManagedChannel {
     }
   }
 
-  private ChannelAndMetrics createChannelAndMetrics() throws IOException {
-    return new ChannelAndMetrics(factory.create());
-  }
-
   /**
    * Makes sure that the number of channels is at least as big as the specified capacity.  This
-   * method is only synchornized when the pool has to be expanded.
+   * method is only synchronized when the pool has to be expanded.
    *
    * @param capacity The minimum number of channels required for the RPCs of the ChannelPool's
    * clients.
@@ -128,16 +153,27 @@ public class ChannelPool extends ManagedChannel {
     if (channels.get().size() < capacity) {
       synchronized (this) {
         if (channels.get().size() < capacity) {
-          Counter counter = getActiveChannelCounter();
           List<ChannelAndMetrics> newChannelList = new ArrayList<>(channels.get());
           while(newChannelList.size() < capacity) {
-            newChannelList.add(createChannelAndMetrics());
-            counter.inc();
+            newChannelList.add(new ChannelAndMetrics(factory.create()));
           }
           setChannels(newChannelList);
         }
       }
     }
+  }
+
+  /**
+   * Performs a simple round robin on the list of {@link ChannelAndMetrics}s in the {@code channels}
+   * list. This method should not be synchronized, if possible, to reduce bottlenecks.
+   *
+   * @return A {@link ChannelAndMetrics} that can be used for a single RPC call.
+   */
+  private ChannelAndMetrics getNextChannel() {
+    int currentRequestNum = requestCount.getAndIncrement();
+    ImmutableList<ChannelAndMetrics> channelsList = channels.get();
+    int index = Math.abs(currentRequestNum % channelsList.size());
+    return channelsList.get(index);
   }
 
   /** {@inheritDoc} */
@@ -159,12 +195,9 @@ public class ChannelPool extends ManagedChannel {
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
     Preconditions.checkState(!shutdown, "Cannot perform operations on a closed connection");
-    int currentRequestNum = requestCount.getAndIncrement();
-    ImmutableList<ChannelAndMetrics> channelsList = channels.get();
-    int index = Math.abs(currentRequestNum % channelsList.size());
-    ChannelAndMetrics channelAndMetrics = channelsList.get(index);
-    final Context timeContext = channelAndMetrics.timer.time();
-    ClientCall<ReqT, RespT> delegate = channelAndMetrics.channel.newCall(methodDescriptor, callOptions);
+    ChannelAndMetrics channelWrapper = getNextChannel();
+    final Context timerContext = channelWrapper.timer.time();
+    ClientCall<ReqT, RespT> delegate = channelWrapper.channel.newCall(methodDescriptor, callOptions);
     return new CheckedForwardingClientCall<ReqT, RespT>(delegate) {
       @Override
       protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
@@ -172,7 +205,7 @@ public class ChannelPool extends ManagedChannel {
         for (HeaderInterceptor interceptor : headerInterceptors) {
           interceptor.updateHeaders(headers);
         }
-        ClientCall.Listener<RespT> wrappedListener = wrap(responseListener, timeContext);
+        ClientCall.Listener<RespT> wrappedListener = wrap(responseListener, timerContext);
         delegate().start(wrappedListener, headers);
       }
     };
@@ -230,8 +263,9 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public synchronized ManagedChannel shutdown() {
-    for (ChannelAndMetrics channelContainer : channels.get()) {
-      channelContainer.channel.shutdown();
+    for (ChannelAndMetrics channelWrapper : channels.get()) {
+      channelWrapper.channel.shutdown();
+      channelWrapper.markInactive();
     }
     this.shutdown = true;
     return this;
@@ -257,12 +291,11 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public ManagedChannel shutdownNow() {
-    Counter counter = getActiveChannelCounter();
     for (ChannelAndMetrics channelWrapper : channels.get()) {
       ManagedChannel channel = channelWrapper.channel;
       if (!channel.isTerminated()) {
         channel.shutdownNow();
-        counter.dec();
+        channelWrapper.markInactive();
       }
     }
     return this;
@@ -272,7 +305,6 @@ public class ChannelPool extends ManagedChannel {
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     long endTimeNanos = System.nanoTime() + unit.toNanos(timeout);
-    Counter counter = getActiveChannelCounter();
     for (ChannelAndMetrics channelWrapper : channels.get()) {
       ManagedChannel channel = channelWrapper.channel;
       if (channel.isTerminated()) {
@@ -283,7 +315,7 @@ public class ChannelPool extends ManagedChannel {
         break;
       }
       channel.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
-      counter.dec();
+      channelWrapper.markInactive();
     }
 
     return isTerminated();
