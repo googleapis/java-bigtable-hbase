@@ -51,20 +51,23 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
   private static final Logger LOG = new Logger(ResumingStreamingResultScanner.class);
 
-  private final BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory;
-  private final ReadRowsRequest originalRequest;
+  // Member variables from the constructor.
   private final RetryOptions retryOptions;
+  private final ReadRowsRequest originalRequest;
+  private final BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory;
+  private final RpcMetrics rpcMetrics;
+  private final Logger logger;
+
+  // Internal member variables.
+
+  // The number of times we've retried after a timeout
+  private AtomicInteger timeoutRetryCount = null;
 
   private BackOff currentErrorBackoff;
   private ResultScanner<Row> currentDelegate;
   private Sleeper sleeper = Sleeper.DEFAULT;
   // The number of rows read so far.
   private long rowCount = 0;
-  // The number of times we've retried after a timeout
-  private AtomicInteger timeoutRetryCount = new AtomicInteger();
-  private RpcMetrics rpcMetrics;
-
-  private final Logger logger;
 
   private ByteString lastFoundKey;
 
@@ -137,14 +140,14 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     logger.info("The client could not get a response in %d ms. Retrying the scan.",
       retryOptions.getReadPartialRowTimeoutMillis());
 
-    if (timeoutRetryCount == null) {
-      timeoutRetryCount = new AtomicInteger();
-    }
-
     // Reset the error backoff in case we encountered this timeout after an error.
     // Otherwise, we will likely have already exceeded the max elapsed time for the backoff
     // and won't retry after the next error.
     currentErrorBackoff = null;
+
+    if (timeoutRetryCount == null) {
+      timeoutRetryCount = new AtomicInteger();
+    }
 
     if (timeoutRetryCount.incrementAndGet() <= retryOptions.getMaxScanTimeoutRetries()) {
       reissueRequest();
