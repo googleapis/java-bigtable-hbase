@@ -149,12 +149,12 @@ public final class BigtableClientMetrics {
       return new Timer() {
 
         @Override
-        public Context time() {
-          final com.codahale.metrics.Timer.Context context = timer.time();
+        public Timer.Context time() {
+          final com.codahale.metrics.Timer.Context timerContext = timer.time();
           return new Context() {
             @Override
             public void close() {
-              context.close();
+              timerContext.close();
             }
           };
         }
