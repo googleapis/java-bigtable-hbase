@@ -73,6 +73,10 @@ public final class BigtableClientMetrics {
     @Override
     public void inc() {
     }
+
+    @Override
+    public void dec() {
+    }
   };
 
   private static final Timer NULL_TIMER = new Timer() {
@@ -121,6 +125,11 @@ public final class BigtableClientMetrics {
         @Override
         public void inc() {
           counter.inc();
+        }
+
+        @Override
+        public void dec() {
+          counter.dec();
         }
       };
     } else {
