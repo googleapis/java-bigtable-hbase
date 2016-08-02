@@ -127,6 +127,7 @@ limitations under the License.
                                     <include>com.twitter:hpack</include>
                                     <include>io.netty:*</include>
                                     <include>io.grpc:*</include>
+                                    <include>io.dropwizard.metrics:metrics-core</include>
                                 </includes>
                             </artifactSet>
                             <relocations>

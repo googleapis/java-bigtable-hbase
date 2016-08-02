@@ -79,6 +79,10 @@ public class TestBigtableDataGrpcClient {
   private static final GoogleCloudResourcePrefixInterceptor interceptor =
       new GoogleCloudResourcePrefixInterceptor("Value we don't want");
 
+
+  private static final BigtableAsyncRpc.RpcMetrics metrics =
+      BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.METHOD_READ_ROWS);
+
   @Mock
   ChannelPool mockChannelPool;
 
@@ -110,6 +114,7 @@ public class TestBigtableDataGrpcClient {
     when(mockChannelPool.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(mockClientCall);
 
+    when(mockBigtableRpc.getRpcMetrics()).thenReturn(metrics);
     predicates = new HashMap<>();
     Answer<BigtableAsyncRpc> answer =
         new Answer<BigtableAsyncRpc>() {

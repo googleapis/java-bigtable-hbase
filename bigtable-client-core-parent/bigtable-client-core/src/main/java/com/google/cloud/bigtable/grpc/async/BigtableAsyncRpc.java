@@ -15,6 +15,12 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
+import static com.google.cloud.bigtable.metrics.BigtableClientMetrics.createCounter;
+import static com.google.cloud.bigtable.metrics.BigtableClientMetrics.createTimer;
+
+import com.google.cloud.bigtable.metrics.Counter;
+import com.google.cloud.bigtable.metrics.Timer;
+
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
@@ -28,6 +34,47 @@ import io.grpc.MethodDescriptor;
  * @version $Id: $Id
  */
 public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
+
+  public static class RpcMetrics {
+    private final Timer operationTimer;
+    private final Timer rpcTimer;
+    private final Counter retryCounter;
+    private final Counter failureCounter;
+
+    public static RpcMetrics createRpcMetrics(MethodDescriptor<?, ?> descriptor) {
+      String fullMethodName = descriptor.getFullMethodName();
+      return new RpcMetrics(
+          createTimer(fullMethodName + ".operation.latency"),
+          createTimer(fullMethodName + ".rpc.latency"),
+          createCounter(fullMethodName + ".retry.count"),
+          createCounter(fullMethodName + ".failure.count"));
+    }
+
+    private RpcMetrics(
+        Timer operationTimer, Timer rpcTimer, Counter retryCounter, Counter failureCounter) {
+      this.operationTimer = operationTimer;
+      this.rpcTimer = rpcTimer;
+      this.retryCounter = retryCounter;
+      this.failureCounter = failureCounter;
+    }
+
+    public Timer.Context timeOperation() {
+      return operationTimer.time();
+    }
+
+    public Timer.Context timeRpc() {
+      return rpcTimer.time();
+    }
+
+    void incrementRetries() {
+      retryCounter.inc();
+    }
+
+    void incrementFailureCount() {
+      failureCounter.inc();
+    }
+  }
+
   /**
    * Creates a {@link io.grpc.ClientCall}.
    *
@@ -54,4 +101,6 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
    * @return {@link io.grpc.MethodDescriptor} that describes the logical endpoint.
    */
   MethodDescriptor<REQUEST, RESPONSE> getMethodDescriptor();
+
+  RpcMetrics getRpcMetrics();
 }

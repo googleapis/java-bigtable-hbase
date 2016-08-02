@@ -101,6 +101,10 @@ limitations under the License.
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>

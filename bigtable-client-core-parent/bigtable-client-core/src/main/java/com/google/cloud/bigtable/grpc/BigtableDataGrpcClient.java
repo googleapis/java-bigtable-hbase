@@ -360,14 +360,14 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private static <ReqT, RespT, OutputT> ListenableFuture<OutputT>
       getCompletionFuture(AbstractRetryingRpcListener<ReqT, RespT, OutputT> listener) {
-    listener.run();
+    listener.start();
     return listener.getCompletionFuture();
   }
 
   private static <ReqT, RespT, OutputT> OutputT getBlockingResult(
       AbstractRetryingRpcListener<ReqT, RespT, OutputT> listener) {
     try {
-      listener.run();
+      listener.start();
       return listener.getCompletionFuture().get();
     } catch (InterruptedException e) {
       listener.cancel();
