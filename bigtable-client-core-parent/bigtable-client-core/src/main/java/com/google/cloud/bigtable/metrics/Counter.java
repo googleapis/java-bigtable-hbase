@@ -16,10 +16,8 @@
 package com.google.cloud.bigtable.metrics;
 
 /**
- * Wrapper around a Dropwizard Metrics {@link com.codahale.metrics.Counter}.
- * @author sduskis
+ * An incrementing counter metric.
  */
 public interface Counter {
-
   void inc();
 }

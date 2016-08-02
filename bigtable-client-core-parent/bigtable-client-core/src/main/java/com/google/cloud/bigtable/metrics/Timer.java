@@ -18,17 +18,15 @@ package com.google.cloud.bigtable.metrics;
 import java.io.Closeable;
 
 /**
- * Wrapper around a DropwizardMetrics {@link com.codahale.metrics.Timer}.
- *
- * @author sduskis
- *
+ * A timer metric which aggregates timing durations and provides duration statistics, plus
+ * throughput statistics.
  */
 public interface Timer {
 
   /**
-   * Wrapper around {@link com.codahale.metrics.Timer.Context}
-   * @author sduskis
+   * A timing context.
    *
+   * @see Timer#time()
    */
   interface Context extends Closeable {
     @Override
@@ -38,5 +36,11 @@ public interface Timer {
     public void close();
   }
 
+  /**
+   * Returns a new {@link Context}.
+   *
+   * @return a new {@link Context}
+   * @see Context
+   */
   Context time();
 }
