@@ -88,29 +88,109 @@ public class ChannelPool extends ManagedChannel {
    * @author sduskis
    *
    */
-  private static class ChannelAndMetrics {
-    final ManagedChannel channel;
+  private class InstrumentedChannel extends ManagedChannel {
+    private final ManagedChannel delegate;
     // a uniquely named timer for this channel's latency
-    final Timer timer;
+    private final Timer timer;
 
     private final AtomicBoolean active = new AtomicBoolean(true);
 
-    public ChannelAndMetrics(ManagedChannel channel) {
-      this.channel = channel;
+    public InstrumentedChannel(ManagedChannel channel) {
+      this.delegate = channel;
       this.timer = BigtableClientMetrics.createTimer(
         "ChannelPool.channel." + ChannelIdGenerator.incrementAndGet() + ".latency");
       getActiveChannelCounter().inc();
     }
 
-    public synchronized void markInactive(){
+    private synchronized void markInactive(){
       boolean previouslyActive = active.getAndSet(false);
       if (previouslyActive) {
         getActiveChannelCounter().dec();
       }
     }
+
+    @Override
+    public ManagedChannel shutdown() {
+      markInactive();
+      return delegate.shutdown();
+    }
+
+    @Override
+    public boolean isShutdown() {
+      return delegate.isShutdown();
+    }
+
+    @Override
+    public boolean isTerminated() {
+      return delegate.isTerminated();
+    }
+
+    @Override
+    public ManagedChannel shutdownNow() {
+      markInactive();
+      return delegate.shutdownNow();
+    }
+
+    @Override
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+      markInactive();
+      return delegate.awaitTermination(timeout, unit);
+    }
+
+    @Override
+    public <ReqT, RespT> ClientCall<ReqT, RespT>
+        newCall(MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
+      final Context timerContext = timer.time();
+      return new CheckedForwardingClientCall<ReqT, RespT>(delegate.newCall(methodDescriptor, callOptions)) {
+        @Override
+        protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
+            throws Exception {
+          for (HeaderInterceptor interceptor : headerInterceptors) {
+            interceptor.updateHeaders(headers);
+          }
+          ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext);
+          delegate().start(timingListener, headers);
+        }
+      };
+    }
+
+    protected <RespT> ClientCall.Listener<RespT> wrap(final ClientCall.Listener<RespT> delegate,
+        final Context timeContext) {
+      return new ClientCall.Listener<RespT>() {
+
+        @Override
+        public void onHeaders(Metadata headers) {
+          delegate.onHeaders(headers);
+        }
+
+        @Override
+        public void onMessage(RespT message) {
+          delegate.onMessage(message);
+        }
+
+        @Override
+        public void onClose(Status status, Metadata trailers) {
+          try {
+            delegate.onClose(status, trailers);
+          } finally {
+            timeContext.close();
+          }
+        }
+
+        @Override
+        public void onReady() {
+          delegate.onReady();
+        }
+      };
+    }
+
+    @Override
+    public String authority() {
+      return delegate.authority();
+    }
   }
 
-  private final AtomicReference<ImmutableList<ChannelAndMetrics>> channels = new AtomicReference<>();
+  private final AtomicReference<ImmutableList<InstrumentedChannel>> channels = new AtomicReference<>();
   private final AtomicInteger requestCount = new AtomicInteger();
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
   private final ChannelFactory factory;
@@ -128,9 +208,9 @@ public class ChannelPool extends ManagedChannel {
   public ChannelPool(List<HeaderInterceptor> headerInterceptors, ChannelFactory factory)
       throws IOException {
     this.factory = factory;
-    ChannelAndMetrics channelAndMetrics = new ChannelAndMetrics(factory.create());
-    this.channels.set(ImmutableList.of(channelAndMetrics));
-    authority = channelAndMetrics.channel.authority();
+    InstrumentedChannel channel = new InstrumentedChannel(factory.create());
+    this.channels.set(ImmutableList.of(channel));
+    authority = channel.authority();
     if (headerInterceptors == null) {
       this.headerInterceptors = ImmutableList.of();
     } else {
@@ -153,9 +233,9 @@ public class ChannelPool extends ManagedChannel {
     if (channels.get().size() < capacity) {
       synchronized (this) {
         if (channels.get().size() < capacity) {
-          List<ChannelAndMetrics> newChannelList = new ArrayList<>(channels.get());
+          List<InstrumentedChannel> newChannelList = new ArrayList<>(channels.get());
           while(newChannelList.size() < capacity) {
-            newChannelList.add(new ChannelAndMetrics(factory.create()));
+            newChannelList.add(new InstrumentedChannel(factory.create()));
           }
           setChannels(newChannelList);
         }
@@ -164,14 +244,14 @@ public class ChannelPool extends ManagedChannel {
   }
 
   /**
-   * Performs a simple round robin on the list of {@link ChannelAndMetrics}s in the {@code channels}
+   * Performs a simple round robin on the list of {@link InstrumentedChannel}s in the {@code channels}
    * list. This method should not be synchronized, if possible, to reduce bottlenecks.
    *
-   * @return A {@link ChannelAndMetrics} that can be used for a single RPC call.
+   * @return A {@link InstrumentedChannel} that can be used for a single RPC call.
    */
-  private ChannelAndMetrics getNextChannel() {
+  private InstrumentedChannel getNextChannel() {
     int currentRequestNum = requestCount.getAndIncrement();
-    ImmutableList<ChannelAndMetrics> channelsList = channels.get();
+    ImmutableList<InstrumentedChannel> channelsList = channels.get();
     int index = Math.abs(currentRequestNum % channelsList.size());
     return channelsList.get(index);
   }
@@ -184,61 +264,17 @@ public class ChannelPool extends ManagedChannel {
 
   /**
    * {@inheritDoc}
-   *
+   * <P>
    * Create a {@link ClientCall} on a Channel from the pool chosen in a round-robin fashion to the
-   * remote operation specified by the given {@link MethodDescriptor}. The returned {@link
-   * ClientCall} does not trigger any remote behavior until {@link
-   * ClientCall#start(ClientCall.Listener, Metadata)} is
-   * invoked.
+   * remote operation specified by the given {@link MethodDescriptor}. The returned
+   * {@link ClientCall} does not trigger any remote behavior until
+   * {@link ClientCall#start(ClientCall.Listener, io.grpc.Metadata)} is invoked.
    */
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
     Preconditions.checkState(!shutdown, "Cannot perform operations on a closed connection");
-    ChannelAndMetrics channelWrapper = getNextChannel();
-    final Context timerContext = channelWrapper.timer.time();
-    ClientCall<ReqT, RespT> delegate = channelWrapper.channel.newCall(methodDescriptor, callOptions);
-    return new CheckedForwardingClientCall<ReqT, RespT>(delegate) {
-      @Override
-      protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
-          throws Exception {
-        for (HeaderInterceptor interceptor : headerInterceptors) {
-          interceptor.updateHeaders(headers);
-        }
-        ClientCall.Listener<RespT> wrappedListener = wrap(responseListener, timerContext);
-        delegate().start(wrappedListener, headers);
-      }
-    };
-  }
-
-  protected <RespT> ClientCall.Listener<RespT> wrap(final ClientCall.Listener<RespT> delegate,
-      final Context timeContext) {
-    return new ClientCall.Listener<RespT>() {
-
-      @Override
-      public void onHeaders(Metadata headers) {
-        delegate.onHeaders(headers);
-      }
-
-      @Override
-      public void onMessage(RespT message) {
-        delegate.onMessage(message);
-      }
-
-      @Override
-      public void onClose(Status status, Metadata trailers) {
-        try {
-          delegate.onClose(status, trailers);
-        } finally {
-          timeContext.close();
-        }
-      }
-
-      @Override
-      public void onReady() {
-        delegate.onReady();
-      }
-    };
+    return getNextChannel().newCall(methodDescriptor, callOptions);
   }
 
   /**
@@ -247,7 +283,7 @@ public class ChannelPool extends ManagedChannel {
    *
    * @param newChannelList A {@link List} of {@link ManagedChannel}s to set to the {@code channels}
    */
-  private void setChannels(List<ChannelAndMetrics> newChannelList) {
+  private void setChannels(List<InstrumentedChannel> newChannelList) {
     channels.set(ImmutableList.copyOf(newChannelList));
   }
 
@@ -263,9 +299,8 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public synchronized ManagedChannel shutdown() {
-    for (ChannelAndMetrics channelWrapper : channels.get()) {
-      channelWrapper.channel.shutdown();
-      channelWrapper.markInactive();
+    for (InstrumentedChannel channelWrapper : channels.get()) {
+      channelWrapper.shutdown();
     }
     this.shutdown = true;
     return this;
@@ -280,8 +315,8 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public boolean isTerminated() {
-    for (ChannelAndMetrics channelWrapper: channels.get()) {
-      if (!channelWrapper.channel.isTerminated()) {
+    for (InstrumentedChannel channel : channels.get()) {
+      if (!channel.isTerminated()) {
         return false;
       }
     }
@@ -291,11 +326,9 @@ public class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public ManagedChannel shutdownNow() {
-    for (ChannelAndMetrics channelWrapper : channels.get()) {
-      ManagedChannel channel = channelWrapper.channel;
+    for (InstrumentedChannel channel : channels.get()) {
       if (!channel.isTerminated()) {
         channel.shutdownNow();
-        channelWrapper.markInactive();
       }
     }
     return this;
@@ -305,8 +338,7 @@ public class ChannelPool extends ManagedChannel {
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     long endTimeNanos = System.nanoTime() + unit.toNanos(timeout);
-    for (ChannelAndMetrics channelWrapper : channels.get()) {
-      ManagedChannel channel = channelWrapper.channel;
+    for (InstrumentedChannel channel : channels.get()) {
       if (channel.isTerminated()) {
         continue;
       }
@@ -315,7 +347,6 @@ public class ChannelPool extends ManagedChannel {
         break;
       }
       channel.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
-      channelWrapper.markInactive();
     }
 
     return isTerminated();
