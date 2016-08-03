@@ -141,7 +141,7 @@ public final class BigtableClientMetrics {
    * Creates a named {Timer Counter}.
    *
    * @param name
-   * @return a Dropwizard Metrics {@link com.codahale.metrics.Timer} or {@link BigtableClientMetrics#NULL_Timer}.
+   * @return a Dropwizard Metrics {@link com.codahale.metrics.Timer} or {@link BigtableClientMetrics#NULL_TIMER}.
    */
   public static Timer createTimer(String name) {
     if (getClientStats() != null) {
