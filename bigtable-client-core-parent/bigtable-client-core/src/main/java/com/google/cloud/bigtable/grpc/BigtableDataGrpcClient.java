@@ -411,12 +411,20 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   private ResultScanner<Row> streamRows(ReadRowsRequest request) {
+    Timer.Context timerContext = readRowsAsync.getRpcMetrics().timeRpc();
+
     expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
 
-    Timer.Context timerContext = readRowsAsync.getRpcMetrics().timeRpc();
     ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
         channelPool.newCall(BigtableGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
 
+    return new StreamingBigtableResultScanner(
+        createReader(request, readRowsCall),
+        createCancellationToken(readRowsCall, timerContext));
+  }
+
+  protected ResponseQueueReader createReader(ReadRowsRequest request,
+      ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall) {
     ResponseQueueReader responseQueueReader = new ResponseQueueReader(
         retryOptions.getReadPartialRowTimeoutMillis(), retryOptions.getStreamingBufferSize());
 
@@ -425,8 +433,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         new StreamObserverAdapter<>(readRowsCall, rowMerger);
     asyncUtilities.asyncServerStreamingCall(readRowsCall, request, listener,
       createMetadata(request.getTableName()));
-    CancellationToken cancellationToken = createCancellationToken(readRowsCall, timerContext);
-    return new StreamingBigtableResultScanner(responseQueueReader, cancellationToken);
+    return responseQueueReader;
   }
 
   private CancellationToken

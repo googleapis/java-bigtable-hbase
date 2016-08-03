@@ -114,37 +114,45 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   @Override
   public void onClose(Status status, Metadata trailers) {
     rpcTimerContext.close();
-    if (status.isOk()) {
+
+    Status.Code code = status.getCode();
+
+    // OK
+    if (code == Status.Code.OK) {
       operationTimerContext.close();
       onOK();
-    } else {
-      Status.Code code = status.getCode();
-      if (retryOptions.enableRetries() && retryOptions.isRetryable(code)
-          && rpc.isRetryable(request)) {
-        backOffAndRetry(status);
-      } else {
-        handleNonRetriableException(status.asRuntimeException());
-      }
-    }
-  }
-
-  /**
-   * <p>onOK.</p>
-   */
-  protected abstract void onOK();
-
-  private void backOffAndRetry(Status status) {
-    long nextBackOff = getNextBackoff();
-    failedCount += 1;
-    if (nextBackOff == BackOff.STOP) {
-      operationTimerContext.close();
-      String message = String.format("Exhausted retries after %d failures.", failedCount);
-      StatusRuntimeException cause = status.asRuntimeException();
-      handleNonRetriableException(new BigtableRetriesExhaustedException(message, cause));
       return;
     }
+
+    // Non retry scenario
+    if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)
+        || !rpc.isRetryable(request)) {
+      this.rpc.getRpcMetrics().incrementFailureCount();
+      this.operationTimerContext.close();
+      completionFuture.setException(status.asRuntimeException());
+      return;
+    }
+
+    // Attempt retry with backoff
+    long nextBackOff = getNextBackoff();
+    failedCount += 1;
+
+    // Backoffs timed out.
+    if (nextBackOff == BackOff.STOP) {
+      operationTimerContext.close();
+      this.rpc.getRpcMetrics().incrementRetriesExhastedCounter();
+      this.operationTimerContext.close();
+
+      String message = String.format("Exhausted retries after %d failures.", failedCount);
+      StatusRuntimeException cause = status.asRuntimeException();
+      completionFuture.setException(new BigtableRetriesExhaustedException(message, cause));
+      return;
+    }
+
+    // Perform Retry
     LOG.info("Retrying failed call. Failure #%d, got: %s", status.getCause(), failedCount, status);
 
+    // TODO: This is probably not needed.  Consider removing the cancel here.
     if (this.call != null) {
       call.cancel(
           String.format(
@@ -158,11 +166,11 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     retryExecutorService.schedule(this, nextBackOff, TimeUnit.MILLISECONDS);
   }
 
-  private void handleNonRetriableException(Exception e) {
-    this.operationTimerContext.close();
-    this.rpc.getRpcMetrics().incrementFailureCount();
-    completionFuture.setException(e);
-  }
+  /**
+   * A subclass has the opportunity to perform the final operations it needs now that the RPC is
+   * successfully complete.
+   */
+  protected abstract void onOK();
 
   private long getNextBackoff() {
     if (this.currentBackoff == null) {
@@ -171,8 +179,8 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     try {
       return currentBackoff.nextBackOffMillis();
     } catch (IOException e) {
+      return BackOff.STOP;
     }
-    return BackOff.STOP;
   }
 
   /**

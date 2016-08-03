@@ -153,7 +153,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
       reissueRequest();
     }
     else {
-      rpcMetrics.incrementFailureCount();
+      rpcMetrics.incrementRetriesExhastedCounter();
       throw new BigtableRetriesExhaustedException(
           "Exhausted streaming retries after too many timeouts", rte);
     }
@@ -167,23 +167,23 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     }
 
     Status.Code code = ioe.getStatus().getCode();
-    if (retryOptions.isRetryable(code)) {
-      logger.info("Reissuing scan after receiving error with status: %s.", ioe, code.name());
-      if (currentErrorBackoff == null) {
-        currentErrorBackoff = retryOptions.createBackoff();
-      }
-      long nextBackOffMillis = currentErrorBackoff.nextBackOffMillis();
-      if (nextBackOffMillis == BackOff.STOP) {
-        rpcMetrics.incrementFailureCount();
-        throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", ioe);
-      }
-
-      sleep(nextBackOffMillis);
-      reissueRequest();
-    } else {
+    if (!retryOptions.isRetryable(code)) {
       rpcMetrics.incrementFailureCount();
       throw ioe;
     }
+
+    logger.info("Reissuing scan after receiving error with status: %s.", ioe, code.name());
+    if (currentErrorBackoff == null) {
+      currentErrorBackoff = retryOptions.createBackoff();
+    }
+    long nextBackOffMillis = currentErrorBackoff.nextBackOffMillis();
+    if (nextBackOffMillis == BackOff.STOP) {
+      rpcMetrics.incrementRetriesExhastedCounter();
+      throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", ioe);
+    }
+
+    sleep(nextBackOffMillis);
+    reissueRequest();
   }
 
   /** {@inheritDoc} */
@@ -199,7 +199,6 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   }
 
   private void reissueRequest() {
-    rpcMetrics.incrementRetries();
     ReadRowsRequest.Builder newRequest = ReadRowsRequest.newBuilder()
         .setRows(filterRows())
         .setTableName(originalRequest.getTableName());
@@ -218,6 +217,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
       newRequest.setRowsLimit(numRowsLimit);
     }
 
+    rpcMetrics.incrementRetries();
     currentDelegate = scannerFactory.createScanner(newRequest.build());
   }
 
