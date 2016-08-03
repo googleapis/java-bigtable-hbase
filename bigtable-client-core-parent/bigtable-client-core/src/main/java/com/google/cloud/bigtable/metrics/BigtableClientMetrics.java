@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.metrics;
 
+import com.codahale.metrics.Counting;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Reporter;
 import com.codahale.metrics.Slf4jReporter;
@@ -42,13 +45,24 @@ public final class BigtableClientMetrics {
     Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
     if (logger.isTraceEnabled()) {
       enable();
+      MetricFilter nonZeroMatcher = new MetricFilter() {
+        @Override
+        public boolean matches(String name, Metric metric) {
+          if (metric instanceof Counting) {
+            Counting counter = (Counting) metric;
+            return counter.getCount() > 0;
+          }
+          return true;
+        }
+      };
       final Slf4jReporter reporter =
           Slf4jReporter.forRegistry(getClientStats())
               .outputTo(logger)
               .convertRatesTo(TimeUnit.SECONDS)
               .convertDurationsTo(TimeUnit.MILLISECONDS)
+              .filter(nonZeroMatcher)
               .build();
-      reporter.start(1, TimeUnit.MINUTES);
+      reporter.start(5, TimeUnit.MINUTES);
     }
   }
 
