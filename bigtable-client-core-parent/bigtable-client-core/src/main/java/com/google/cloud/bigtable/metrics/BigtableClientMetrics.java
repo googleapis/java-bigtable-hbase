@@ -63,7 +63,7 @@ public final class BigtableClientMetrics {
               .convertDurationsTo(TimeUnit.MILLISECONDS)
               .filter(nonZeroMatcher)
               .build();
-      reporter.start(1, TimeUnit.MINUTES);
+      reporter.start(5, TimeUnit.MINUTES);
     }
   }
 
