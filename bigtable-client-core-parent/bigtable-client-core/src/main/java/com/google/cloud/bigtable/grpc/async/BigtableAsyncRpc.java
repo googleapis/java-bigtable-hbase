@@ -40,6 +40,7 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
     private final Timer rpcTimer;
     private final Counter retryCounter;
     private final Counter failureCounter;
+    private final Counter retriesExhastedCounter;
 
     public static RpcMetrics createRpcMetrics(MethodDescriptor<?, ?> descriptor) {
       String fullMethodName = descriptor.getFullMethodName();
@@ -47,15 +48,18 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
           createTimer(fullMethodName + ".operation.latency"),
           createTimer(fullMethodName + ".rpc.latency"),
           createCounter(fullMethodName + ".retry.count"),
-          createCounter(fullMethodName + ".failure.count"));
+          createCounter(fullMethodName + ".failure.count"),
+          createCounter(fullMethodName + ".retries.exhausted.count")
+          );
     }
 
-    private RpcMetrics(
-        Timer operationTimer, Timer rpcTimer, Counter retryCounter, Counter failureCounter) {
+    private RpcMetrics(Timer operationTimer, Timer rpcTimer, Counter retryCounter,
+        Counter failureCounter, Counter retriesExhastedCounter) {
       this.operationTimer = operationTimer;
       this.rpcTimer = rpcTimer;
       this.retryCounter = retryCounter;
       this.failureCounter = failureCounter;
+      this.retriesExhastedCounter = retriesExhastedCounter;
     }
 
     public Timer.Context timeOperation() {
@@ -66,12 +70,16 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
       return rpcTimer.time();
     }
 
-    void incrementRetries() {
+    public void incrementRetries() {
       retryCounter.inc();
     }
 
-    void incrementFailureCount() {
+    public void incrementFailureCount() {
       failureCounter.inc();
+    }
+
+    public void incrementRetriesExhastedCounter() {
+      retriesExhastedCounter.inc();
     }
   }
 

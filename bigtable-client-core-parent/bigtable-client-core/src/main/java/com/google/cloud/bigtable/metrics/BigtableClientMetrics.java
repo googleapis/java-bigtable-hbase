@@ -21,6 +21,7 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Reporter;
 import com.codahale.metrics.Slf4jReporter;
+
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,12 +149,12 @@ public final class BigtableClientMetrics {
       return new Timer() {
 
         @Override
-        public Context time() {
-          final com.codahale.metrics.Timer.Context context = timer.time();
+        public Timer.Context time() {
+          final com.codahale.metrics.Timer.Context timerContext = timer.time();
           return new Context() {
             @Override
             public void close() {
-              context.close();
+              timerContext.close();
             }
           };
         }
