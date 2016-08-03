@@ -61,7 +61,6 @@ import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.grpc.scanner.StreamObserverAdapter;
 import com.google.cloud.bigtable.grpc.scanner.StreamingBigtableResultScanner;
 import com.google.cloud.bigtable.metrics.Timer;
-import com.google.cloud.bigtable.metrics.Timer.Context;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -381,7 +380,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }
   }
 
-
   /**
    * Creates a {@link Metadata} that contains pertinent headers.
    */
@@ -436,14 +434,15 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return responseQueueReader;
   }
 
-  private CancellationToken
-      createCancellationToken(final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall, final Context timeContext) {
+  private CancellationToken createCancellationToken(
+      final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall,
+      final Timer.Context timerContext) {
     // If the scanner is closed before we're done streaming, we want to cancel the RPC.
     CancellationToken cancellationToken = new CancellationToken();
     cancellationToken.addListener(new Runnable() {
       @Override
       public void run() {
-        timeContext.close();
+        timerContext.close();
         readRowsCall.cancel("User requested cancelation.", null);
       }
     }, MoreExecutors.directExecutor());
