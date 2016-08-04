@@ -4,11 +4,11 @@ Bigger than a data warehouse, fast enough for real-time access, and less expensi
 
 ### Overview
 
-Google Cloud Bigtable offers you a fast, fully managed, almost infinitely scalable NoSQL database service that's ideal for web, mobile, and IoT applications requiring terabytes to petabytes of data. Unlike comparable market offerings, Cloud Bigtable doesn't require you to sacrifice speed, scale, or cost efficiency when your applications grow. Cloud Bigtable has been battle-tested at Google for more than 10 years—it's the database driving major applications such as Google Analytics and Gmail.
+Google Cloud Bigtable offers you a fast, fully managed, almost infinitely scalable NoSQL database service that's ideal for web, mobile, and IoT applications requiring terabytes to petabytes of data. Unlike comparable market offerings, Cloud Bigtable doesn't require you to sacrifice speed, scale, or cost efficiency when your applications grow. The Bigtable service that Cloud Bigtable relies upon has been battle-tested at Google for more than 10 years—it's the database driving major applications such as Google Analytics and Gmail.
 
 ### Fully Managed
 
-Cloud Bigtable is a high-availability, fully managed NoSQL database service. Google's experienced engineers work around the clock to keep your Cloud Bigtable servers up and running. With Cloud Bigtable, you'll spend more time developing valuable applications and less time architecting solutions that scale.
+Cloud Bigtable is fully managed NoSQL database service that offers 99.5% availability in a single cluster. Google's experienced engineers work around the clock to keep your Cloud Bigtable servers up and running. With Cloud Bigtable, you'll spend more time developing valuable applications and less time architecting solutions that scale.
 
 ### Fully Integrated
 
