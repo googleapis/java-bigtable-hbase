@@ -87,12 +87,11 @@ limitations under the License.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.1</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.9.1</version>
+                <version>1.12</version>
                 <executions>
                     <execution>
                         <phase>generate-sources</phase>
@@ -123,7 +122,7 @@ limitations under the License.
                     <plugin>
                         <groupId>com.google.protobuf.tools</groupId>
                         <artifactId>maven-protoc-plugin</artifactId>
-                        <version>0.4.2</version>
+                        <version>0.5.0</version>
                         <configuration>
                             <!-- The version of protoc must match protobuf-java. If you don't depend
                                 on protobuf-java directly, you will be transitively depending on the protobuf-java
