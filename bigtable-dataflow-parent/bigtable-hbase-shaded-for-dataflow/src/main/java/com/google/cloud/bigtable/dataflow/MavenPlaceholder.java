@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.clooud.bigtable.dataflow;
+package com.google.cloud.bigtable.dataflow;
 
 /**
  * This class is here to force generation of source javadoc jars so that the maven release process

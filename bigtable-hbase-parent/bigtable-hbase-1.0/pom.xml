@@ -37,7 +37,7 @@ limitations under the License.
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>bigtable-hbase</artifactId>
+            <artifactId>bigtable-hbase-shaded</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -66,48 +66,6 @@ limitations under the License.
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.google.cloud.bigtable.mapreduce.Driver</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>1.4</version>
-                <executions>
-                    <execution>
-                        <id>enforce-banned-dependencies</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <bannedDependencies>
-                                    <excludes>
-                                        <exclude>com.google.guava:guava-jdk5:*</exclude>
-                                        <exclude>io.grpc:grpc-all:*</exclude>
-                                        <exclude>io.netty:netty-all:*</exclude>
-                                        <exclude>io.netty:netty:*</exclude>
-                                        <exclude>org.slf4j:lf4j-log4j12:*</exclude>
-                                    </excludes>
-                                    <includes>
-                                        <include>com.google.guava:guava:${guava.version}</include>
-                                        <include>io.netty:*:${netty.version}</include>
-                                    </includes>
-                                </bannedDependencies>
-                           </rules>
-                          <fail>true</fail>
-                      </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -145,60 +103,9 @@ limitations under the License.
                             <createDependencyReducedPom>true</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <include>com.fasterxml.jackson.core:*</include>
-                                    <include>com.google.cloud.bigtable:bigtable-protos</include>
-                                    <include>com.google.cloud.bigtable:bigtable-client-core</include>
-                                    <include>com.google.cloud.bigtable:bigtable-hbase</include>
-                                    <include>com.google.api-client:*</include>
-                                    <include>com.google.auth:*</include>
-                                    <include>com.google.guava:guava</include>
-                                    <include>com.google.http-client:*</include>
-                                    <include>com.google.oauth-client:*</include>
-                                    <include>com.google.protobuf:*</include>
-                                    <include>com.twitter:hpack</include>
-                                    <include>io.netty:*</include>
-                                    <include>io.grpc:*</include>
-                                    <include>io.dropwizard.metrics:metrics-core</include>
+                                    <include>com.google.cloud.bigtable:bigtable-hbase-shaded</include>
                                 </includes>
                             </artifactSet>
-                            <relocations>
-                                <relocation>
-                                    <pattern>com.fasterxml</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.faster.xml</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.api</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.api</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.auth</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.auth</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.common</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.common</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.thirdparty</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.thirdparty</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.protobuf</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.google.protobuf</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.twitter</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.com.twitter</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>io.grpc</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>io.netty</pattern>
-                                    <shadedPattern>com.google.bigtable.repackaged.io.netty</shadedPattern>
-                                </relocation>
-                            </relocations>
                         </configuration>
                     </execution>
                 </executions>

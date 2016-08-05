@@ -20,7 +20,7 @@ limitations under the License.
     </parent>
 
     <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-dataflow-tools</artifactId>
+    <artifactId>bigtable-hbase-shaded-for-dataflow</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>

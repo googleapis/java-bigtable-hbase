@@ -31,7 +31,7 @@ limitations under the License.
     </description>
 
     <modules>
-        <module>bigtable-hbase-dataflow-tools</module>
+        <module>bigtable-hbase-shaded-for-dataflow</module>
         <module>bigtable-hbase-dataflow</module>
         <module>bigtable-dataflow-import</module>
     </modules>
