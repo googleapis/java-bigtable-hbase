@@ -1,8 +1,6 @@
 ## Google Cloud Bigtable Client
 
-[![build.status](https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client.svg)](https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client/builds)
-
-[![ghit.me](https://ghit.me/badge.svg?repo=GoogleCloudPlatform/cloud-bigtable-client)](https://ghit.me/repo/GoogleCloudPlatform/cloud-bigtable-client)
+[![build.status](https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client.svg)](https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client/builds) [![ghit.me](https://ghit.me/badge.svg?repo=GoogleCloudPlatform/cloud-bigtable-client)](https://ghit.me/repo/GoogleCloudPlatform/cloud-bigtable-client)
 
 Bigger than a data warehouse, fast enough for real-time access, and less expensive than running virtual machines. The world-renowned database that powers Google is now available to you worldwide.
 
