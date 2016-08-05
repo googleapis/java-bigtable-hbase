@@ -500,7 +500,8 @@ public class CloudBigtableIO {
         byte[] startKey, byte[] stopKey) throws IOException {
       Preconditions.checkState(desiredBundleSizeBytes > 0);
       int splitCount = (int) Math.ceil((double) (regionSize) / (double) (desiredBundleSizeBytes));
-      if (splitCount < 2 || stopKey.length == 0) {
+
+      if (splitCount < 2 || stopKey.length == 0 || Bytes.compareTo(startKey,stopKey) >= 0) {
         return Collections.singletonList(createSourceWithKeys(startKey, stopKey, regionSize));
       } else {
         if (stopKey.length > 0) {
