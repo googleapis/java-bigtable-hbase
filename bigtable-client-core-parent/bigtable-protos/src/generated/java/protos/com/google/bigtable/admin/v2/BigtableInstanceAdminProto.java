@@ -6,72 +6,78 @@ package com.google.bigtable.admin.v2;
 public final class BigtableInstanceAdminProto {
   private BigtableInstanceAdminProto() {}
   public static void registerAllExtensions(
+      com.google.protobuf.ExtensionRegistryLite registry) {
+  }
+
+  public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions(
+        (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_CreateInstanceRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_CreateInstanceRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_CreateInstanceRequest_ClustersEntry_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_CreateInstanceRequest_ClustersEntry_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_GetInstanceRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_GetInstanceRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_ListInstancesRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_ListInstancesRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_ListInstancesResponse_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_ListInstancesResponse_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_DeleteInstanceRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_DeleteInstanceRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_CreateClusterRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_CreateClusterRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_GetClusterRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_GetClusterRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_ListClustersRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_ListClustersRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_ListClustersResponse_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_ListClustersResponse_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_DeleteClusterRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_DeleteClusterRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
@@ -182,79 +188,79 @@ public final class BigtableInstanceAdminProto {
     internal_static_google_bigtable_admin_v2_CreateInstanceRequest_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_google_bigtable_admin_v2_CreateInstanceRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_CreateInstanceRequest_descriptor,
         new java.lang.String[] { "Parent", "InstanceId", "Instance", "Clusters", });
     internal_static_google_bigtable_admin_v2_CreateInstanceRequest_ClustersEntry_descriptor =
       internal_static_google_bigtable_admin_v2_CreateInstanceRequest_descriptor.getNestedTypes().get(0);
     internal_static_google_bigtable_admin_v2_CreateInstanceRequest_ClustersEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_CreateInstanceRequest_ClustersEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_google_bigtable_admin_v2_GetInstanceRequest_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_google_bigtable_admin_v2_GetInstanceRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_GetInstanceRequest_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_google_bigtable_admin_v2_ListInstancesRequest_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_google_bigtable_admin_v2_ListInstancesRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_ListInstancesRequest_descriptor,
         new java.lang.String[] { "Parent", "PageToken", });
     internal_static_google_bigtable_admin_v2_ListInstancesResponse_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_google_bigtable_admin_v2_ListInstancesResponse_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_ListInstancesResponse_descriptor,
         new java.lang.String[] { "Instances", "FailedLocations", "NextPageToken", });
     internal_static_google_bigtable_admin_v2_DeleteInstanceRequest_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_google_bigtable_admin_v2_DeleteInstanceRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_DeleteInstanceRequest_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_google_bigtable_admin_v2_CreateClusterRequest_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_google_bigtable_admin_v2_CreateClusterRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_CreateClusterRequest_descriptor,
         new java.lang.String[] { "Parent", "ClusterId", "Cluster", });
     internal_static_google_bigtable_admin_v2_GetClusterRequest_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_google_bigtable_admin_v2_GetClusterRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_GetClusterRequest_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_google_bigtable_admin_v2_ListClustersRequest_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_google_bigtable_admin_v2_ListClustersRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_ListClustersRequest_descriptor,
         new java.lang.String[] { "Parent", "PageToken", });
     internal_static_google_bigtable_admin_v2_ListClustersResponse_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_google_bigtable_admin_v2_ListClustersResponse_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_ListClustersResponse_descriptor,
         new java.lang.String[] { "Clusters", "FailedLocations", "NextPageToken", });
     internal_static_google_bigtable_admin_v2_DeleteClusterRequest_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_google_bigtable_admin_v2_DeleteClusterRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_DeleteClusterRequest_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_descriptor =
       getDescriptor().getMessageTypes().get(10);
     internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_descriptor,
         new java.lang.String[] { "OriginalRequest", "RequestTime", "FinishTime", });
     internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_descriptor =
       getDescriptor().getMessageTypes().get(11);
     internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_descriptor,
         new java.lang.String[] { "OriginalRequest", "RequestTime", "FinishTime", });
     com.google.protobuf.ExtensionRegistry registry =

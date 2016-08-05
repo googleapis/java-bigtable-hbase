@@ -6,82 +6,88 @@ package com.google.bigtable.v2;
 public final class BigtableProto {
   private BigtableProto() {}
   public static void registerAllExtensions(
+      com.google.protobuf.ExtensionRegistryLite registry) {
+  }
+
+  public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions(
+        (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ReadRowsRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_ReadRowsRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ReadRowsResponse_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_ReadRowsResponse_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ReadRowsResponse_CellChunk_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_ReadRowsResponse_CellChunk_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_SampleRowKeysRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_SampleRowKeysRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_SampleRowKeysResponse_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_SampleRowKeysResponse_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_MutateRowRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_MutateRowRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_MutateRowResponse_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_MutateRowResponse_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_MutateRowsRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_MutateRowsRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_MutateRowsRequest_Entry_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_MutateRowsRequest_Entry_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_MutateRowsResponse_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_MutateRowsResponse_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_MutateRowsResponse_Entry_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_MutateRowsResponse_Entry_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_CheckAndMutateRowRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_CheckAndMutateRowRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_CheckAndMutateRowResponse_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_CheckAndMutateRowResponse_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ReadModifyWriteRowRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_ReadModifyWriteRowRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ReadModifyWriteRowResponse_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_ReadModifyWriteRowResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
@@ -184,91 +190,91 @@ public final class BigtableProto {
     internal_static_google_bigtable_v2_ReadRowsRequest_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_google_bigtable_v2_ReadRowsRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_ReadRowsRequest_descriptor,
         new java.lang.String[] { "TableName", "Rows", "Filter", "RowsLimit", });
     internal_static_google_bigtable_v2_ReadRowsResponse_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_google_bigtable_v2_ReadRowsResponse_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_ReadRowsResponse_descriptor,
         new java.lang.String[] { "Chunks", "LastScannedRowKey", });
     internal_static_google_bigtable_v2_ReadRowsResponse_CellChunk_descriptor =
       internal_static_google_bigtable_v2_ReadRowsResponse_descriptor.getNestedTypes().get(0);
     internal_static_google_bigtable_v2_ReadRowsResponse_CellChunk_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_ReadRowsResponse_CellChunk_descriptor,
         new java.lang.String[] { "RowKey", "FamilyName", "Qualifier", "TimestampMicros", "Labels", "Value", "ValueSize", "ResetRow", "CommitRow", "RowStatus", });
     internal_static_google_bigtable_v2_SampleRowKeysRequest_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_google_bigtable_v2_SampleRowKeysRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_SampleRowKeysRequest_descriptor,
         new java.lang.String[] { "TableName", });
     internal_static_google_bigtable_v2_SampleRowKeysResponse_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_google_bigtable_v2_SampleRowKeysResponse_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_SampleRowKeysResponse_descriptor,
         new java.lang.String[] { "RowKey", "OffsetBytes", });
     internal_static_google_bigtable_v2_MutateRowRequest_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_google_bigtable_v2_MutateRowRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_MutateRowRequest_descriptor,
         new java.lang.String[] { "TableName", "RowKey", "Mutations", });
     internal_static_google_bigtable_v2_MutateRowResponse_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_google_bigtable_v2_MutateRowResponse_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_MutateRowResponse_descriptor,
         new java.lang.String[] { });
     internal_static_google_bigtable_v2_MutateRowsRequest_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_google_bigtable_v2_MutateRowsRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_MutateRowsRequest_descriptor,
         new java.lang.String[] { "TableName", "Entries", });
     internal_static_google_bigtable_v2_MutateRowsRequest_Entry_descriptor =
       internal_static_google_bigtable_v2_MutateRowsRequest_descriptor.getNestedTypes().get(0);
     internal_static_google_bigtable_v2_MutateRowsRequest_Entry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_MutateRowsRequest_Entry_descriptor,
         new java.lang.String[] { "RowKey", "Mutations", });
     internal_static_google_bigtable_v2_MutateRowsResponse_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_google_bigtable_v2_MutateRowsResponse_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_MutateRowsResponse_descriptor,
         new java.lang.String[] { "Entries", });
     internal_static_google_bigtable_v2_MutateRowsResponse_Entry_descriptor =
       internal_static_google_bigtable_v2_MutateRowsResponse_descriptor.getNestedTypes().get(0);
     internal_static_google_bigtable_v2_MutateRowsResponse_Entry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_MutateRowsResponse_Entry_descriptor,
         new java.lang.String[] { "Index", "Status", });
     internal_static_google_bigtable_v2_CheckAndMutateRowRequest_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_google_bigtable_v2_CheckAndMutateRowRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_CheckAndMutateRowRequest_descriptor,
         new java.lang.String[] { "TableName", "RowKey", "PredicateFilter", "TrueMutations", "FalseMutations", });
     internal_static_google_bigtable_v2_CheckAndMutateRowResponse_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_google_bigtable_v2_CheckAndMutateRowResponse_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_CheckAndMutateRowResponse_descriptor,
         new java.lang.String[] { "PredicateMatched", });
     internal_static_google_bigtable_v2_ReadModifyWriteRowRequest_descriptor =
       getDescriptor().getMessageTypes().get(10);
     internal_static_google_bigtable_v2_ReadModifyWriteRowRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_ReadModifyWriteRowRequest_descriptor,
         new java.lang.String[] { "TableName", "RowKey", "Rules", });
     internal_static_google_bigtable_v2_ReadModifyWriteRowResponse_descriptor =
       getDescriptor().getMessageTypes().get(11);
     internal_static_google_bigtable_v2_ReadModifyWriteRowResponse_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_ReadModifyWriteRowResponse_descriptor,
         new java.lang.String[] { "Row", });
     com.google.protobuf.ExtensionRegistry registry =

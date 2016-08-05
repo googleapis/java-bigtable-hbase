@@ -6,7 +6,13 @@ package com.google.bigtable.admin.v2;
 public final class CommonProto {
   private CommonProto() {}
   public static void registerAllExtensions(
+      com.google.protobuf.ExtensionRegistryLite registry) {
+  }
+
+  public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions(
+        (com.google.protobuf.ExtensionRegistryLite) registry);
   }
 
   public static com.google.protobuf.Descriptors.FileDescriptor

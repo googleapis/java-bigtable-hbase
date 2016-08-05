@@ -11,11 +11,11 @@ package com.google.bigtable.admin.v2;
  * Protobuf type {@code google.bigtable.admin.v2.ListInstancesRequest}
  */
 public  final class ListInstancesRequest extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.ListInstancesRequest)
     ListInstancesRequestOrBuilder {
   // Use ListInstancesRequest.newBuilder() to construct.
-  private ListInstancesRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private ListInstancesRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private ListInstancesRequest() {
@@ -76,7 +76,7 @@ public  final class ListInstancesRequest extends
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListInstancesRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListInstancesRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -182,10 +182,10 @@ public  final class ListInstancesRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getParentBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, parent_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, parent_);
     }
     if (!getPageTokenBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 2, pageToken_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, pageToken_);
     }
   }
 
@@ -195,16 +195,50 @@ public  final class ListInstancesRequest extends
 
     size = 0;
     if (!getParentBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, parent_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, parent_);
     }
     if (!getPageTokenBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, pageToken_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, pageToken_);
     }
     memoizedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.ListInstancesRequest)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.ListInstancesRequest other = (com.google.bigtable.admin.v2.ListInstancesRequest) obj;
+
+    boolean result = true;
+    result = result && getParent()
+        .equals(other.getParent());
+    result = result && getPageToken()
+        .equals(other.getPageToken());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + PARENT_FIELD_NUMBER;
+    hash = (53 * hash) + getParent().hashCode();
+    hash = (37 * hash) + PAGE_TOKEN_FIELD_NUMBER;
+    hash = (53 * hash) + getPageToken().hashCode();
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -228,39 +262,39 @@ public  final class ListInstancesRequest extends
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListInstancesRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -278,7 +312,7 @@ public  final class ListInstancesRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -290,7 +324,7 @@ public  final class ListInstancesRequest extends
    * Protobuf type {@code google.bigtable.admin.v2.ListInstancesRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.ListInstancesRequest)
       com.google.bigtable.admin.v2.ListInstancesRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -298,7 +332,7 @@ public  final class ListInstancesRequest extends
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListInstancesRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListInstancesRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -311,12 +345,13 @@ public  final class ListInstancesRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -353,6 +388,32 @@ public  final class ListInstancesRequest extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.ListInstancesRequest) {
         return mergeFrom((com.google.bigtable.admin.v2.ListInstancesRequest)other);

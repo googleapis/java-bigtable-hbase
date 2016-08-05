@@ -11,11 +11,11 @@ package com.google.longrunning;
  * Protobuf type {@code google.longrunning.ListOperationsRequest}
  */
 public  final class ListOperationsRequest extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.longrunning.ListOperationsRequest)
     ListOperationsRequestOrBuilder {
   // Use ListOperationsRequest.newBuilder() to construct.
-  private ListOperationsRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private ListOperationsRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private ListOperationsRequest() {
@@ -89,7 +89,7 @@ public  final class ListOperationsRequest extends
     return com.google.longrunning.OperationsProto.internal_static_google_longrunning_ListOperationsRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.longrunning.OperationsProto.internal_static_google_longrunning_ListOperationsRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -248,16 +248,16 @@ public  final class ListOperationsRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getFilterBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, filter_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, filter_);
     }
     if (pageSize_ != 0) {
       output.writeInt32(2, pageSize_);
     }
     if (!getPageTokenBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 3, pageToken_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, pageToken_);
     }
     if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 4, name_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, name_);
     }
   }
 
@@ -267,23 +267,65 @@ public  final class ListOperationsRequest extends
 
     size = 0;
     if (!getFilterBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, filter_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, filter_);
     }
     if (pageSize_ != 0) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(2, pageSize_);
     }
     if (!getPageTokenBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(3, pageToken_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, pageToken_);
     }
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(4, name_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, name_);
     }
     memoizedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.longrunning.ListOperationsRequest)) {
+      return super.equals(obj);
+    }
+    com.google.longrunning.ListOperationsRequest other = (com.google.longrunning.ListOperationsRequest) obj;
+
+    boolean result = true;
+    result = result && getName()
+        .equals(other.getName());
+    result = result && getFilter()
+        .equals(other.getFilter());
+    result = result && (getPageSize()
+        == other.getPageSize());
+    result = result && getPageToken()
+        .equals(other.getPageToken());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getName().hashCode();
+    hash = (37 * hash) + FILTER_FIELD_NUMBER;
+    hash = (53 * hash) + getFilter().hashCode();
+    hash = (37 * hash) + PAGE_SIZE_FIELD_NUMBER;
+    hash = (53 * hash) + getPageSize();
+    hash = (37 * hash) + PAGE_TOKEN_FIELD_NUMBER;
+    hash = (53 * hash) + getPageToken().hashCode();
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.longrunning.ListOperationsRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -307,39 +349,39 @@ public  final class ListOperationsRequest extends
   }
   public static com.google.longrunning.ListOperationsRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.longrunning.ListOperationsRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.longrunning.ListOperationsRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.longrunning.ListOperationsRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.longrunning.ListOperationsRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.longrunning.ListOperationsRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -357,7 +399,7 @@ public  final class ListOperationsRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -369,7 +411,7 @@ public  final class ListOperationsRequest extends
    * Protobuf type {@code google.longrunning.ListOperationsRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.longrunning.ListOperationsRequest)
       com.google.longrunning.ListOperationsRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -377,7 +419,7 @@ public  final class ListOperationsRequest extends
       return com.google.longrunning.OperationsProto.internal_static_google_longrunning_ListOperationsRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.longrunning.OperationsProto.internal_static_google_longrunning_ListOperationsRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -390,12 +432,13 @@ public  final class ListOperationsRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -438,6 +481,32 @@ public  final class ListOperationsRequest extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.longrunning.ListOperationsRequest) {
         return mergeFrom((com.google.longrunning.ListOperationsRequest)other);

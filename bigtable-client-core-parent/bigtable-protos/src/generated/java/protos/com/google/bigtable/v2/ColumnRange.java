@@ -14,11 +14,11 @@ package com.google.bigtable.v2;
  * Protobuf type {@code google.bigtable.v2.ColumnRange}
  */
 public  final class ColumnRange extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.ColumnRange)
     ColumnRangeOrBuilder {
   // Use ColumnRange.newBuilder() to construct.
-  private ColumnRange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private ColumnRange(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private ColumnRange() {
@@ -92,7 +92,7 @@ public  final class ColumnRange extends
     return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ColumnRange_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ColumnRange_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -290,7 +290,7 @@ public  final class ColumnRange extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getFamilyNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, familyName_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, familyName_);
     }
     if (startQualifierCase_ == 2) {
       output.writeBytes(
@@ -316,7 +316,7 @@ public  final class ColumnRange extends
 
     size = 0;
     if (!getFamilyNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, familyName_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, familyName_);
     }
     if (startQualifierCase_ == 2) {
       size += com.google.protobuf.CodedOutputStream
@@ -343,6 +343,90 @@ public  final class ColumnRange extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.v2.ColumnRange)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.v2.ColumnRange other = (com.google.bigtable.v2.ColumnRange) obj;
+
+    boolean result = true;
+    result = result && getFamilyName()
+        .equals(other.getFamilyName());
+    result = result && getStartQualifierCase().equals(
+        other.getStartQualifierCase());
+    if (!result) return false;
+    switch (startQualifierCase_) {
+      case 2:
+        result = result && getStartQualifierClosed()
+            .equals(other.getStartQualifierClosed());
+        break;
+      case 3:
+        result = result && getStartQualifierOpen()
+            .equals(other.getStartQualifierOpen());
+        break;
+      case 0:
+      default:
+    }
+    result = result && getEndQualifierCase().equals(
+        other.getEndQualifierCase());
+    if (!result) return false;
+    switch (endQualifierCase_) {
+      case 4:
+        result = result && getEndQualifierClosed()
+            .equals(other.getEndQualifierClosed());
+        break;
+      case 5:
+        result = result && getEndQualifierOpen()
+            .equals(other.getEndQualifierOpen());
+        break;
+      case 0:
+      default:
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + FAMILY_NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getFamilyName().hashCode();
+    switch (startQualifierCase_) {
+      case 2:
+        hash = (37 * hash) + START_QUALIFIER_CLOSED_FIELD_NUMBER;
+        hash = (53 * hash) + getStartQualifierClosed().hashCode();
+        break;
+      case 3:
+        hash = (37 * hash) + START_QUALIFIER_OPEN_FIELD_NUMBER;
+        hash = (53 * hash) + getStartQualifierOpen().hashCode();
+        break;
+      case 0:
+      default:
+    }
+    switch (endQualifierCase_) {
+      case 4:
+        hash = (37 * hash) + END_QUALIFIER_CLOSED_FIELD_NUMBER;
+        hash = (53 * hash) + getEndQualifierClosed().hashCode();
+        break;
+      case 5:
+        hash = (37 * hash) + END_QUALIFIER_OPEN_FIELD_NUMBER;
+        hash = (53 * hash) + getEndQualifierOpen().hashCode();
+        break;
+      case 0:
+      default:
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.v2.ColumnRange parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -366,39 +450,39 @@ public  final class ColumnRange extends
   }
   public static com.google.bigtable.v2.ColumnRange parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ColumnRange parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ColumnRange parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ColumnRange parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ColumnRange parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ColumnRange parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -416,7 +500,7 @@ public  final class ColumnRange extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -431,7 +515,7 @@ public  final class ColumnRange extends
    * Protobuf type {@code google.bigtable.v2.ColumnRange}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.ColumnRange)
       com.google.bigtable.v2.ColumnRangeOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -439,7 +523,7 @@ public  final class ColumnRange extends
       return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ColumnRange_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ColumnRange_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -452,12 +536,13 @@ public  final class ColumnRange extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -509,6 +594,32 @@ public  final class ColumnRange extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.ColumnRange) {
         return mergeFrom((com.google.bigtable.v2.ColumnRange)other);

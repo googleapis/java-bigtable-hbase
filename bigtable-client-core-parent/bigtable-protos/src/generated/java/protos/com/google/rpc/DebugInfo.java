@@ -11,11 +11,11 @@ package com.google.rpc;
  * Protobuf type {@code google.rpc.DebugInfo}
  */
 public  final class DebugInfo extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.rpc.DebugInfo)
     DebugInfoOrBuilder {
   // Use DebugInfo.newBuilder() to construct.
-  private DebugInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private DebugInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private DebugInfo() {
@@ -82,7 +82,7 @@ public  final class DebugInfo extends
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_DebugInfo_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_DebugInfo_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -190,10 +190,10 @@ public  final class DebugInfo extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     for (int i = 0; i < stackEntries_.size(); i++) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, stackEntries_.getRaw(i));
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, stackEntries_.getRaw(i));
     }
     if (!getDetailBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 2, detail_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, detail_);
     }
   }
 
@@ -211,13 +211,49 @@ public  final class DebugInfo extends
       size += 1 * getStackEntriesList().size();
     }
     if (!getDetailBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, detail_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, detail_);
     }
     memoizedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.rpc.DebugInfo)) {
+      return super.equals(obj);
+    }
+    com.google.rpc.DebugInfo other = (com.google.rpc.DebugInfo) obj;
+
+    boolean result = true;
+    result = result && getStackEntriesList()
+        .equals(other.getStackEntriesList());
+    result = result && getDetail()
+        .equals(other.getDetail());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    if (getStackEntriesCount() > 0) {
+      hash = (37 * hash) + STACK_ENTRIES_FIELD_NUMBER;
+      hash = (53 * hash) + getStackEntriesList().hashCode();
+    }
+    hash = (37 * hash) + DETAIL_FIELD_NUMBER;
+    hash = (53 * hash) + getDetail().hashCode();
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.rpc.DebugInfo parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -241,39 +277,39 @@ public  final class DebugInfo extends
   }
   public static com.google.rpc.DebugInfo parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.DebugInfo parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.DebugInfo parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.rpc.DebugInfo parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.DebugInfo parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.DebugInfo parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -291,7 +327,7 @@ public  final class DebugInfo extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -303,7 +339,7 @@ public  final class DebugInfo extends
    * Protobuf type {@code google.rpc.DebugInfo}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.rpc.DebugInfo)
       com.google.rpc.DebugInfoOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -311,7 +347,7 @@ public  final class DebugInfo extends
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_DebugInfo_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_DebugInfo_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -324,12 +360,13 @@ public  final class DebugInfo extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -373,6 +410,32 @@ public  final class DebugInfo extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.rpc.DebugInfo) {
         return mergeFrom((com.google.rpc.DebugInfo)other);

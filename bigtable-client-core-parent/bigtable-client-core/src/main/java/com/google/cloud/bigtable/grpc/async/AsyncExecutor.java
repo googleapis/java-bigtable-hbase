@@ -32,7 +32,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 
 /**
  * This class provides management of asynchronous Bigtable RPCs. It ensures that there aren't too
@@ -270,7 +270,7 @@ public class AsyncExecutor {
     return call(READ_ROWS_ASYNC, request);
   }
 
-  private <RequestT extends GeneratedMessage, ResponseT> ListenableFuture<ResponseT> call(
+  private <RequestT extends GeneratedMessageV3, ResponseT> ListenableFuture<ResponseT> call(
       AsyncCall<RequestT, ResponseT> rpc, RequestT request) throws InterruptedException {
     // Wait until both the memory and rpc count maximum requirements are achieved before getting a
     // unique id used to track this request.
@@ -278,7 +278,7 @@ public class AsyncExecutor {
     return call(rpc, request, id);
   }
 
-  private <ResponseT, RequestT extends GeneratedMessage> ListenableFuture<ResponseT>
+  private <ResponseT, RequestT extends GeneratedMessageV3> ListenableFuture<ResponseT>
       call(AsyncCall<RequestT, ResponseT> rpc, RequestT request, long id) {
     ListenableFuture<ResponseT> future;
     try {

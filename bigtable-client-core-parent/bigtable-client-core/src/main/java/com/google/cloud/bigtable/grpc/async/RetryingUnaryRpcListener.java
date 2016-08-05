@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.grpc.async;
 import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.common.util.concurrent.AsyncFunction;
 
 import io.grpc.CallOptions;
 import io.grpc.Metadata;

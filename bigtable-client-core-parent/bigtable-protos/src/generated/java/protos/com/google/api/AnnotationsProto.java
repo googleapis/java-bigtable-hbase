@@ -6,8 +6,14 @@ package com.google.api;
 public final class AnnotationsProto {
   private AnnotationsProto() {}
   public static void registerAllExtensions(
-      com.google.protobuf.ExtensionRegistry registry) {
+      com.google.protobuf.ExtensionRegistryLite registry) {
     registry.add(com.google.api.AnnotationsProto.http);
+  }
+
+  public static void registerAllExtensions(
+      com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions(
+        (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   public static final int HTTP_FIELD_NUMBER = 72295728;
   /**

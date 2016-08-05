@@ -6,102 +6,108 @@ package com.google.bigtable.v2;
 public final class DataProto {
   private DataProto() {}
   public static void registerAllExtensions(
+      com.google.protobuf.ExtensionRegistryLite registry) {
+  }
+
+  public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions(
+        (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Row_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_Row_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Family_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_Family_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Column_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_Column_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Cell_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_Cell_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowRange_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_RowRange_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowSet_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_RowSet_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ColumnRange_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_ColumnRange_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_TimestampRange_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_TimestampRange_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ValueRange_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_ValueRange_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowFilter_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_RowFilter_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowFilter_Chain_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_RowFilter_Chain_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowFilter_Interleave_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_RowFilter_Interleave_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_RowFilter_Condition_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_RowFilter_Condition_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Mutation_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_Mutation_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Mutation_SetCell_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_Mutation_SetCell_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Mutation_DeleteFromColumn_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_Mutation_DeleteFromColumn_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Mutation_DeleteFromFamily_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_Mutation_DeleteFromFamily_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_Mutation_DeleteFromRow_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_Mutation_DeleteFromRow_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_v2_ReadModifyWriteRule_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_bigtable_v2_ReadModifyWriteRule_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
@@ -200,115 +206,115 @@ public final class DataProto {
     internal_static_google_bigtable_v2_Row_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_google_bigtable_v2_Row_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_Row_descriptor,
         new java.lang.String[] { "Key", "Families", });
     internal_static_google_bigtable_v2_Family_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_google_bigtable_v2_Family_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_Family_descriptor,
         new java.lang.String[] { "Name", "Columns", });
     internal_static_google_bigtable_v2_Column_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_google_bigtable_v2_Column_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_Column_descriptor,
         new java.lang.String[] { "Qualifier", "Cells", });
     internal_static_google_bigtable_v2_Cell_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_google_bigtable_v2_Cell_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_Cell_descriptor,
         new java.lang.String[] { "TimestampMicros", "Value", "Labels", });
     internal_static_google_bigtable_v2_RowRange_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_google_bigtable_v2_RowRange_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_RowRange_descriptor,
         new java.lang.String[] { "StartKeyClosed", "StartKeyOpen", "EndKeyOpen", "EndKeyClosed", "StartKey", "EndKey", });
     internal_static_google_bigtable_v2_RowSet_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_google_bigtable_v2_RowSet_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_RowSet_descriptor,
         new java.lang.String[] { "RowKeys", "RowRanges", });
     internal_static_google_bigtable_v2_ColumnRange_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_google_bigtable_v2_ColumnRange_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_ColumnRange_descriptor,
         new java.lang.String[] { "FamilyName", "StartQualifierClosed", "StartQualifierOpen", "EndQualifierClosed", "EndQualifierOpen", "StartQualifier", "EndQualifier", });
     internal_static_google_bigtable_v2_TimestampRange_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_google_bigtable_v2_TimestampRange_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_TimestampRange_descriptor,
         new java.lang.String[] { "StartTimestampMicros", "EndTimestampMicros", });
     internal_static_google_bigtable_v2_ValueRange_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_google_bigtable_v2_ValueRange_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_ValueRange_descriptor,
         new java.lang.String[] { "StartValueClosed", "StartValueOpen", "EndValueClosed", "EndValueOpen", "StartValue", "EndValue", });
     internal_static_google_bigtable_v2_RowFilter_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_google_bigtable_v2_RowFilter_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_RowFilter_descriptor,
         new java.lang.String[] { "Chain", "Interleave", "Condition", "Sink", "PassAllFilter", "BlockAllFilter", "RowKeyRegexFilter", "RowSampleFilter", "FamilyNameRegexFilter", "ColumnQualifierRegexFilter", "ColumnRangeFilter", "TimestampRangeFilter", "ValueRegexFilter", "ValueRangeFilter", "CellsPerRowOffsetFilter", "CellsPerRowLimitFilter", "CellsPerColumnLimitFilter", "StripValueTransformer", "ApplyLabelTransformer", "Filter", });
     internal_static_google_bigtable_v2_RowFilter_Chain_descriptor =
       internal_static_google_bigtable_v2_RowFilter_descriptor.getNestedTypes().get(0);
     internal_static_google_bigtable_v2_RowFilter_Chain_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_RowFilter_Chain_descriptor,
         new java.lang.String[] { "Filters", });
     internal_static_google_bigtable_v2_RowFilter_Interleave_descriptor =
       internal_static_google_bigtable_v2_RowFilter_descriptor.getNestedTypes().get(1);
     internal_static_google_bigtable_v2_RowFilter_Interleave_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_RowFilter_Interleave_descriptor,
         new java.lang.String[] { "Filters", });
     internal_static_google_bigtable_v2_RowFilter_Condition_descriptor =
       internal_static_google_bigtable_v2_RowFilter_descriptor.getNestedTypes().get(2);
     internal_static_google_bigtable_v2_RowFilter_Condition_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_RowFilter_Condition_descriptor,
         new java.lang.String[] { "PredicateFilter", "TrueFilter", "FalseFilter", });
     internal_static_google_bigtable_v2_Mutation_descriptor =
       getDescriptor().getMessageTypes().get(10);
     internal_static_google_bigtable_v2_Mutation_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_Mutation_descriptor,
         new java.lang.String[] { "SetCell", "DeleteFromColumn", "DeleteFromFamily", "DeleteFromRow", "Mutation", });
     internal_static_google_bigtable_v2_Mutation_SetCell_descriptor =
       internal_static_google_bigtable_v2_Mutation_descriptor.getNestedTypes().get(0);
     internal_static_google_bigtable_v2_Mutation_SetCell_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_Mutation_SetCell_descriptor,
         new java.lang.String[] { "FamilyName", "ColumnQualifier", "TimestampMicros", "Value", });
     internal_static_google_bigtable_v2_Mutation_DeleteFromColumn_descriptor =
       internal_static_google_bigtable_v2_Mutation_descriptor.getNestedTypes().get(1);
     internal_static_google_bigtable_v2_Mutation_DeleteFromColumn_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_Mutation_DeleteFromColumn_descriptor,
         new java.lang.String[] { "FamilyName", "ColumnQualifier", "TimeRange", });
     internal_static_google_bigtable_v2_Mutation_DeleteFromFamily_descriptor =
       internal_static_google_bigtable_v2_Mutation_descriptor.getNestedTypes().get(2);
     internal_static_google_bigtable_v2_Mutation_DeleteFromFamily_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_Mutation_DeleteFromFamily_descriptor,
         new java.lang.String[] { "FamilyName", });
     internal_static_google_bigtable_v2_Mutation_DeleteFromRow_descriptor =
       internal_static_google_bigtable_v2_Mutation_descriptor.getNestedTypes().get(3);
     internal_static_google_bigtable_v2_Mutation_DeleteFromRow_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_Mutation_DeleteFromRow_descriptor,
         new java.lang.String[] { });
     internal_static_google_bigtable_v2_ReadModifyWriteRule_descriptor =
       getDescriptor().getMessageTypes().get(11);
     internal_static_google_bigtable_v2_ReadModifyWriteRule_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_bigtable_v2_ReadModifyWriteRule_descriptor,
         new java.lang.String[] { "FamilyName", "ColumnQualifier", "AppendValue", "IncrementAmount", "Rule", });
   }

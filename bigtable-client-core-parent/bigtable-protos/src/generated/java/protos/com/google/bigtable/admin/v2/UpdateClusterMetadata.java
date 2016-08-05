@@ -11,11 +11,11 @@ package com.google.bigtable.admin.v2;
  * Protobuf type {@code google.bigtable.admin.v2.UpdateClusterMetadata}
  */
 public  final class UpdateClusterMetadata extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.UpdateClusterMetadata)
     UpdateClusterMetadataOrBuilder {
   // Use UpdateClusterMetadata.newBuilder() to construct.
-  private UpdateClusterMetadata(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private UpdateClusterMetadata(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private UpdateClusterMetadata() {
@@ -101,7 +101,7 @@ public  final class UpdateClusterMetadata extends
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -252,6 +252,59 @@ public  final class UpdateClusterMetadata extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.UpdateClusterMetadata)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.UpdateClusterMetadata other = (com.google.bigtable.admin.v2.UpdateClusterMetadata) obj;
+
+    boolean result = true;
+    result = result && (hasOriginalRequest() == other.hasOriginalRequest());
+    if (hasOriginalRequest()) {
+      result = result && getOriginalRequest()
+          .equals(other.getOriginalRequest());
+    }
+    result = result && (hasRequestTime() == other.hasRequestTime());
+    if (hasRequestTime()) {
+      result = result && getRequestTime()
+          .equals(other.getRequestTime());
+    }
+    result = result && (hasFinishTime() == other.hasFinishTime());
+    if (hasFinishTime()) {
+      result = result && getFinishTime()
+          .equals(other.getFinishTime());
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    if (hasOriginalRequest()) {
+      hash = (37 * hash) + ORIGINAL_REQUEST_FIELD_NUMBER;
+      hash = (53 * hash) + getOriginalRequest().hashCode();
+    }
+    if (hasRequestTime()) {
+      hash = (37 * hash) + REQUEST_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + getRequestTime().hashCode();
+    }
+    if (hasFinishTime()) {
+      hash = (37 * hash) + FINISH_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + getFinishTime().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.UpdateClusterMetadata parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -275,39 +328,39 @@ public  final class UpdateClusterMetadata extends
   }
   public static com.google.bigtable.admin.v2.UpdateClusterMetadata parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.UpdateClusterMetadata parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.UpdateClusterMetadata parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.UpdateClusterMetadata parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.UpdateClusterMetadata parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.UpdateClusterMetadata parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -325,7 +378,7 @@ public  final class UpdateClusterMetadata extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -337,7 +390,7 @@ public  final class UpdateClusterMetadata extends
    * Protobuf type {@code google.bigtable.admin.v2.UpdateClusterMetadata}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.UpdateClusterMetadata)
       com.google.bigtable.admin.v2.UpdateClusterMetadataOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -345,7 +398,7 @@ public  final class UpdateClusterMetadata extends
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_UpdateClusterMetadata_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -358,12 +411,13 @@ public  final class UpdateClusterMetadata extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -427,6 +481,32 @@ public  final class UpdateClusterMetadata extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.UpdateClusterMetadata) {
         return mergeFrom((com.google.bigtable.admin.v2.UpdateClusterMetadata)other);
@@ -474,7 +554,7 @@ public  final class UpdateClusterMetadata extends
     }
 
     private com.google.bigtable.admin.v2.Cluster originalRequest_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.Cluster, com.google.bigtable.admin.v2.Cluster.Builder, com.google.bigtable.admin.v2.ClusterOrBuilder> originalRequestBuilder_;
     /**
      * <pre>
@@ -612,11 +692,11 @@ public  final class UpdateClusterMetadata extends
      *
      * <code>optional .google.bigtable.admin.v2.Cluster original_request = 1;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.Cluster, com.google.bigtable.admin.v2.Cluster.Builder, com.google.bigtable.admin.v2.ClusterOrBuilder> 
         getOriginalRequestFieldBuilder() {
       if (originalRequestBuilder_ == null) {
-        originalRequestBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        originalRequestBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.bigtable.admin.v2.Cluster, com.google.bigtable.admin.v2.Cluster.Builder, com.google.bigtable.admin.v2.ClusterOrBuilder>(
                 getOriginalRequest(),
                 getParentForChildren(),
@@ -627,7 +707,7 @@ public  final class UpdateClusterMetadata extends
     }
 
     private com.google.protobuf.Timestamp requestTime_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> requestTimeBuilder_;
     /**
      * <pre>
@@ -765,11 +845,11 @@ public  final class UpdateClusterMetadata extends
      *
      * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
         getRequestTimeFieldBuilder() {
       if (requestTimeBuilder_ == null) {
-        requestTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        requestTimeBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
                 getRequestTime(),
                 getParentForChildren(),
@@ -780,7 +860,7 @@ public  final class UpdateClusterMetadata extends
     }
 
     private com.google.protobuf.Timestamp finishTime_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> finishTimeBuilder_;
     /**
      * <pre>
@@ -918,11 +998,11 @@ public  final class UpdateClusterMetadata extends
      *
      * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
         getFinishTimeFieldBuilder() {
       if (finishTimeBuilder_ == null) {
-        finishTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        finishTimeBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
                 getFinishTime(),
                 getParentForChildren(),

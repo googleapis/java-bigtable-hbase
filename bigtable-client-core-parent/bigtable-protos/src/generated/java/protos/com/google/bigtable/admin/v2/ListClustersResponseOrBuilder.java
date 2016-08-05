@@ -61,7 +61,7 @@ public interface ListClustersResponseOrBuilder extends
    *
    * <code>repeated string failed_locations = 2;</code>
    */
-  com.google.protobuf.ProtocolStringList
+  java.util.List<java.lang.String>
       getFailedLocationsList();
   /**
    * <pre>

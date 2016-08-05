@@ -34,8 +34,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ServiceException;
 
-import io.grpc.CallOptions;
-
 /**
  * Interface to access v2 Bigtable data service methods.
  *

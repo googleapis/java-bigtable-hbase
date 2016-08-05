@@ -109,11 +109,11 @@ package com.google.type;
  * Protobuf type {@code google.type.Color}
  */
 public  final class Color extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.type.Color)
     ColorOrBuilder {
   // Use Color.newBuilder() to construct.
-  private Color(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private Color(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private Color() {
@@ -191,7 +191,7 @@ public  final class Color extends
     return com.google.type.ColorProto.internal_static_google_type_Color_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.type.ColorProto.internal_static_google_type_Color_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -346,6 +346,62 @@ public  final class Color extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.type.Color)) {
+      return super.equals(obj);
+    }
+    com.google.type.Color other = (com.google.type.Color) obj;
+
+    boolean result = true;
+    result = result && (
+        java.lang.Float.floatToIntBits(getRed())
+        == java.lang.Float.floatToIntBits(
+            other.getRed()));
+    result = result && (
+        java.lang.Float.floatToIntBits(getGreen())
+        == java.lang.Float.floatToIntBits(
+            other.getGreen()));
+    result = result && (
+        java.lang.Float.floatToIntBits(getBlue())
+        == java.lang.Float.floatToIntBits(
+            other.getBlue()));
+    result = result && (hasAlpha() == other.hasAlpha());
+    if (hasAlpha()) {
+      result = result && getAlpha()
+          .equals(other.getAlpha());
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + RED_FIELD_NUMBER;
+    hash = (53 * hash) + java.lang.Float.floatToIntBits(
+        getRed());
+    hash = (37 * hash) + GREEN_FIELD_NUMBER;
+    hash = (53 * hash) + java.lang.Float.floatToIntBits(
+        getGreen());
+    hash = (37 * hash) + BLUE_FIELD_NUMBER;
+    hash = (53 * hash) + java.lang.Float.floatToIntBits(
+        getBlue());
+    if (hasAlpha()) {
+      hash = (37 * hash) + ALPHA_FIELD_NUMBER;
+      hash = (53 * hash) + getAlpha().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.type.Color parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -369,39 +425,39 @@ public  final class Color extends
   }
   public static com.google.type.Color parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.type.Color parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.type.Color parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.type.Color parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.type.Color parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.type.Color parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -419,7 +475,7 @@ public  final class Color extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -529,7 +585,7 @@ public  final class Color extends
    * Protobuf type {@code google.type.Color}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.type.Color)
       com.google.type.ColorOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -537,7 +593,7 @@ public  final class Color extends
       return com.google.type.ColorProto.internal_static_google_type_Color_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.type.ColorProto.internal_static_google_type_Color_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -550,12 +606,13 @@ public  final class Color extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -606,6 +663,32 @@ public  final class Color extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.type.Color) {
         return mergeFrom((com.google.type.Color)other);
@@ -770,7 +853,7 @@ public  final class Color extends
     }
 
     private com.google.protobuf.FloatValue alpha_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.FloatValue, com.google.protobuf.FloatValue.Builder, com.google.protobuf.FloatValueOrBuilder> alphaBuilder_;
     /**
      * <pre>
@@ -980,11 +1063,11 @@ public  final class Color extends
      *
      * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.FloatValue, com.google.protobuf.FloatValue.Builder, com.google.protobuf.FloatValueOrBuilder> 
         getAlphaFieldBuilder() {
       if (alphaBuilder_ == null) {
-        alphaBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        alphaBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.FloatValue, com.google.protobuf.FloatValue.Builder, com.google.protobuf.FloatValueOrBuilder>(
                 getAlpha(),
                 getParentForChildren(),

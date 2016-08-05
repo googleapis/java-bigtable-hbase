@@ -11,11 +11,11 @@ package com.google.bigtable.v2;
  * Protobuf type {@code google.bigtable.v2.MutateRowsRequest}
  */
 public  final class MutateRowsRequest extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.MutateRowsRequest)
     MutateRowsRequestOrBuilder {
   // Use MutateRowsRequest.newBuilder() to construct.
-  private MutateRowsRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private MutateRowsRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private MutateRowsRequest() {
@@ -59,7 +59,8 @@ public  final class MutateRowsRequest extends
               entries_ = new java.util.ArrayList<com.google.bigtable.v2.MutateRowsRequest.Entry>();
               mutable_bitField0_ |= 0x00000002;
             }
-            entries_.add(input.readMessage(com.google.bigtable.v2.MutateRowsRequest.Entry.parser(), extensionRegistry));
+            entries_.add(
+                input.readMessage(com.google.bigtable.v2.MutateRowsRequest.Entry.parser(), extensionRegistry));
             break;
           }
         }
@@ -81,7 +82,7 @@ public  final class MutateRowsRequest extends
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowsRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowsRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -164,11 +165,11 @@ public  final class MutateRowsRequest extends
    * Protobuf type {@code google.bigtable.v2.MutateRowsRequest.Entry}
    */
   public  static final class Entry extends
-      com.google.protobuf.GeneratedMessage implements
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:google.bigtable.v2.MutateRowsRequest.Entry)
       EntryOrBuilder {
     // Use Entry.newBuilder() to construct.
-    private Entry(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private Entry(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private Entry() {
@@ -211,7 +212,8 @@ public  final class MutateRowsRequest extends
                 mutations_ = new java.util.ArrayList<com.google.bigtable.v2.Mutation>();
                 mutable_bitField0_ |= 0x00000002;
               }
-              mutations_.add(input.readMessage(com.google.bigtable.v2.Mutation.parser(), extensionRegistry));
+              mutations_.add(
+                  input.readMessage(com.google.bigtable.v2.Mutation.parser(), extensionRegistry));
               break;
             }
           }
@@ -233,7 +235,7 @@ public  final class MutateRowsRequest extends
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowsRequest_Entry_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowsRequest_Entry_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -362,6 +364,42 @@ public  final class MutateRowsRequest extends
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.google.bigtable.v2.MutateRowsRequest.Entry)) {
+        return super.equals(obj);
+      }
+      com.google.bigtable.v2.MutateRowsRequest.Entry other = (com.google.bigtable.v2.MutateRowsRequest.Entry) obj;
+
+      boolean result = true;
+      result = result && getRowKey()
+          .equals(other.getRowKey());
+      result = result && getMutationsList()
+          .equals(other.getMutationsList());
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (37 * hash) + ROW_KEY_FIELD_NUMBER;
+      hash = (53 * hash) + getRowKey().hashCode();
+      if (getMutationsCount() > 0) {
+        hash = (37 * hash) + MUTATIONS_FIELD_NUMBER;
+        hash = (53 * hash) + getMutationsList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
     public static com.google.bigtable.v2.MutateRowsRequest.Entry parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -385,39 +423,39 @@ public  final class MutateRowsRequest extends
     }
     public static com.google.bigtable.v2.MutateRowsRequest.Entry parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v2.MutateRowsRequest.Entry parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.v2.MutateRowsRequest.Entry parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v2.MutateRowsRequest.Entry parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.v2.MutateRowsRequest.Entry parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.v2.MutateRowsRequest.Entry parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
@@ -435,7 +473,7 @@ public  final class MutateRowsRequest extends
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -443,7 +481,7 @@ public  final class MutateRowsRequest extends
      * Protobuf type {@code google.bigtable.v2.MutateRowsRequest.Entry}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:google.bigtable.v2.MutateRowsRequest.Entry)
         com.google.bigtable.v2.MutateRowsRequest.EntryOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -451,7 +489,7 @@ public  final class MutateRowsRequest extends
         return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowsRequest_Entry_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowsRequest_Entry_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -464,12 +502,13 @@ public  final class MutateRowsRequest extends
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
           getMutationsFieldBuilder();
         }
       }
@@ -522,6 +561,32 @@ public  final class MutateRowsRequest extends
         return result;
       }
 
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof com.google.bigtable.v2.MutateRowsRequest.Entry) {
           return mergeFrom((com.google.bigtable.v2.MutateRowsRequest.Entry)other);
@@ -555,7 +620,7 @@ public  final class MutateRowsRequest extends
               mutations_ = other.mutations_;
               bitField0_ = (bitField0_ & ~0x00000002);
               mutationsBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getMutationsFieldBuilder() : null;
             } else {
               mutationsBuilder_.addAllMessages(other.mutations_);
@@ -639,7 +704,7 @@ public  final class MutateRowsRequest extends
          }
       }
 
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder> mutationsBuilder_;
 
       /**
@@ -981,11 +1046,11 @@ public  final class MutateRowsRequest extends
            getMutationsBuilderList() {
         return getMutationsFieldBuilder().getBuilderList();
       }
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder> 
           getMutationsFieldBuilder() {
         if (mutationsBuilder_ == null) {
-          mutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+          mutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder>(
                   mutations_,
                   ((bitField0_ & 0x00000002) == 0x00000002),
@@ -1175,7 +1240,7 @@ public  final class MutateRowsRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getTableNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, tableName_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, tableName_);
     }
     for (int i = 0; i < entries_.size(); i++) {
       output.writeMessage(2, entries_.get(i));
@@ -1188,7 +1253,7 @@ public  final class MutateRowsRequest extends
 
     size = 0;
     if (!getTableNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, tableName_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, tableName_);
     }
     for (int i = 0; i < entries_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
@@ -1199,6 +1264,42 @@ public  final class MutateRowsRequest extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.v2.MutateRowsRequest)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.v2.MutateRowsRequest other = (com.google.bigtable.v2.MutateRowsRequest) obj;
+
+    boolean result = true;
+    result = result && getTableName()
+        .equals(other.getTableName());
+    result = result && getEntriesList()
+        .equals(other.getEntriesList());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + TABLE_NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getTableName().hashCode();
+    if (getEntriesCount() > 0) {
+      hash = (37 * hash) + ENTRIES_FIELD_NUMBER;
+      hash = (53 * hash) + getEntriesList().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.v2.MutateRowsRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -1222,39 +1323,39 @@ public  final class MutateRowsRequest extends
   }
   public static com.google.bigtable.v2.MutateRowsRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.MutateRowsRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.MutateRowsRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.MutateRowsRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.MutateRowsRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.MutateRowsRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -1272,7 +1373,7 @@ public  final class MutateRowsRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -1284,7 +1385,7 @@ public  final class MutateRowsRequest extends
    * Protobuf type {@code google.bigtable.v2.MutateRowsRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.MutateRowsRequest)
       com.google.bigtable.v2.MutateRowsRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -1292,7 +1393,7 @@ public  final class MutateRowsRequest extends
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowsRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowsRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -1305,12 +1406,13 @@ public  final class MutateRowsRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
         getEntriesFieldBuilder();
       }
     }
@@ -1363,6 +1465,32 @@ public  final class MutateRowsRequest extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.MutateRowsRequest) {
         return mergeFrom((com.google.bigtable.v2.MutateRowsRequest)other);
@@ -1397,7 +1525,7 @@ public  final class MutateRowsRequest extends
             entries_ = other.entries_;
             bitField0_ = (bitField0_ & ~0x00000002);
             entriesBuilder_ = 
-              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getEntriesFieldBuilder() : null;
           } else {
             entriesBuilder_.addAllMessages(other.entries_);
@@ -1529,7 +1657,7 @@ public  final class MutateRowsRequest extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.bigtable.v2.MutateRowsRequest.Entry, com.google.bigtable.v2.MutateRowsRequest.Entry.Builder, com.google.bigtable.v2.MutateRowsRequest.EntryOrBuilder> entriesBuilder_;
 
     /**
@@ -1889,11 +2017,11 @@ public  final class MutateRowsRequest extends
          getEntriesBuilderList() {
       return getEntriesFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.bigtable.v2.MutateRowsRequest.Entry, com.google.bigtable.v2.MutateRowsRequest.Entry.Builder, com.google.bigtable.v2.MutateRowsRequest.EntryOrBuilder> 
         getEntriesFieldBuilder() {
       if (entriesBuilder_ == null) {
-        entriesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+        entriesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
             com.google.bigtable.v2.MutateRowsRequest.Entry, com.google.bigtable.v2.MutateRowsRequest.Entry.Builder, com.google.bigtable.v2.MutateRowsRequest.EntryOrBuilder>(
                 entries_,
                 ((bitField0_ & 0x00000002) == 0x00000002),

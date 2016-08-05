@@ -12,11 +12,11 @@ package com.google.bigtable.v2;
  * Protobuf type {@code google.bigtable.v2.ReadModifyWriteRule}
  */
 public  final class ReadModifyWriteRule extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.ReadModifyWriteRule)
     ReadModifyWriteRuleOrBuilder {
   // Use ReadModifyWriteRule.newBuilder() to construct.
-  private ReadModifyWriteRule(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private ReadModifyWriteRule(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private ReadModifyWriteRule() {
@@ -86,7 +86,7 @@ public  final class ReadModifyWriteRule extends
     return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ReadModifyWriteRule_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ReadModifyWriteRule_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -238,7 +238,7 @@ public  final class ReadModifyWriteRule extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getFamilyNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, familyName_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, familyName_);
     }
     if (!columnQualifier_.isEmpty()) {
       output.writeBytes(2, columnQualifier_);
@@ -259,7 +259,7 @@ public  final class ReadModifyWriteRule extends
 
     size = 0;
     if (!getFamilyNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, familyName_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, familyName_);
     }
     if (!columnQualifier_.isEmpty()) {
       size += com.google.protobuf.CodedOutputStream
@@ -280,6 +280,68 @@ public  final class ReadModifyWriteRule extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.v2.ReadModifyWriteRule)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.v2.ReadModifyWriteRule other = (com.google.bigtable.v2.ReadModifyWriteRule) obj;
+
+    boolean result = true;
+    result = result && getFamilyName()
+        .equals(other.getFamilyName());
+    result = result && getColumnQualifier()
+        .equals(other.getColumnQualifier());
+    result = result && getRuleCase().equals(
+        other.getRuleCase());
+    if (!result) return false;
+    switch (ruleCase_) {
+      case 3:
+        result = result && getAppendValue()
+            .equals(other.getAppendValue());
+        break;
+      case 4:
+        result = result && (getIncrementAmount()
+            == other.getIncrementAmount());
+        break;
+      case 0:
+      default:
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + FAMILY_NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getFamilyName().hashCode();
+    hash = (37 * hash) + COLUMN_QUALIFIER_FIELD_NUMBER;
+    hash = (53 * hash) + getColumnQualifier().hashCode();
+    switch (ruleCase_) {
+      case 3:
+        hash = (37 * hash) + APPEND_VALUE_FIELD_NUMBER;
+        hash = (53 * hash) + getAppendValue().hashCode();
+        break;
+      case 4:
+        hash = (37 * hash) + INCREMENT_AMOUNT_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+            getIncrementAmount());
+        break;
+      case 0:
+      default:
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.v2.ReadModifyWriteRule parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -303,39 +365,39 @@ public  final class ReadModifyWriteRule extends
   }
   public static com.google.bigtable.v2.ReadModifyWriteRule parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRule parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRule parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRule parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRule parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRule parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -353,7 +415,7 @@ public  final class ReadModifyWriteRule extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -366,7 +428,7 @@ public  final class ReadModifyWriteRule extends
    * Protobuf type {@code google.bigtable.v2.ReadModifyWriteRule}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.ReadModifyWriteRule)
       com.google.bigtable.v2.ReadModifyWriteRuleOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -374,7 +436,7 @@ public  final class ReadModifyWriteRule extends
       return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ReadModifyWriteRule_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ReadModifyWriteRule_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -387,12 +449,13 @@ public  final class ReadModifyWriteRule extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -438,6 +501,32 @@ public  final class ReadModifyWriteRule extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.ReadModifyWriteRule) {
         return mergeFrom((com.google.bigtable.v2.ReadModifyWriteRule)other);

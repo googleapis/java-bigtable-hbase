@@ -11,11 +11,11 @@ package com.google.bigtable.v2;
  * Protobuf type {@code google.bigtable.v2.ValueRange}
  */
 public  final class ValueRange extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.ValueRange)
     ValueRangeOrBuilder {
   // Use ValueRange.newBuilder() to construct.
-  private ValueRange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private ValueRange(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private ValueRange() {
@@ -82,7 +82,7 @@ public  final class ValueRange extends
     return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ValueRange_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ValueRange_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -285,6 +285,86 @@ public  final class ValueRange extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.v2.ValueRange)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.v2.ValueRange other = (com.google.bigtable.v2.ValueRange) obj;
+
+    boolean result = true;
+    result = result && getStartValueCase().equals(
+        other.getStartValueCase());
+    if (!result) return false;
+    switch (startValueCase_) {
+      case 1:
+        result = result && getStartValueClosed()
+            .equals(other.getStartValueClosed());
+        break;
+      case 2:
+        result = result && getStartValueOpen()
+            .equals(other.getStartValueOpen());
+        break;
+      case 0:
+      default:
+    }
+    result = result && getEndValueCase().equals(
+        other.getEndValueCase());
+    if (!result) return false;
+    switch (endValueCase_) {
+      case 3:
+        result = result && getEndValueClosed()
+            .equals(other.getEndValueClosed());
+        break;
+      case 4:
+        result = result && getEndValueOpen()
+            .equals(other.getEndValueOpen());
+        break;
+      case 0:
+      default:
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    switch (startValueCase_) {
+      case 1:
+        hash = (37 * hash) + START_VALUE_CLOSED_FIELD_NUMBER;
+        hash = (53 * hash) + getStartValueClosed().hashCode();
+        break;
+      case 2:
+        hash = (37 * hash) + START_VALUE_OPEN_FIELD_NUMBER;
+        hash = (53 * hash) + getStartValueOpen().hashCode();
+        break;
+      case 0:
+      default:
+    }
+    switch (endValueCase_) {
+      case 3:
+        hash = (37 * hash) + END_VALUE_CLOSED_FIELD_NUMBER;
+        hash = (53 * hash) + getEndValueClosed().hashCode();
+        break;
+      case 4:
+        hash = (37 * hash) + END_VALUE_OPEN_FIELD_NUMBER;
+        hash = (53 * hash) + getEndValueOpen().hashCode();
+        break;
+      case 0:
+      default:
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.v2.ValueRange parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -308,39 +388,39 @@ public  final class ValueRange extends
   }
   public static com.google.bigtable.v2.ValueRange parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ValueRange parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ValueRange parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ValueRange parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ValueRange parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ValueRange parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -358,7 +438,7 @@ public  final class ValueRange extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -370,7 +450,7 @@ public  final class ValueRange extends
    * Protobuf type {@code google.bigtable.v2.ValueRange}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.ValueRange)
       com.google.bigtable.v2.ValueRangeOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -378,7 +458,7 @@ public  final class ValueRange extends
       return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ValueRange_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_ValueRange_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -391,12 +471,13 @@ public  final class ValueRange extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -445,6 +526,32 @@ public  final class ValueRange extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.ValueRange) {
         return mergeFrom((com.google.bigtable.v2.ValueRange)other);

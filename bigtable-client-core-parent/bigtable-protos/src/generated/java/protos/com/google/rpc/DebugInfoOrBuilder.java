@@ -14,7 +14,7 @@ public interface DebugInfoOrBuilder extends
    *
    * <code>repeated string stack_entries = 1;</code>
    */
-  com.google.protobuf.ProtocolStringList
+  java.util.List<java.lang.String>
       getStackEntriesList();
   /**
    * <pre>
