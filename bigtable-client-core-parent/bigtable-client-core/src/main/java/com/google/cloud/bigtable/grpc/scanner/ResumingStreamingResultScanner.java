@@ -77,7 +77,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @param originalRequest a {@link com.google.bigtable.v2.ReadRowsRequest} object.
    * @param scannerFactory a {@link com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory} object.
-   * @param rpcMetrics a{@link BigtableAsyncRpc.RpcMetrics} object to keep track of retries and failures.
+   * @param rpcMetrics a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics} object to keep track of retries and failures.
    */
   public ResumingStreamingResultScanner(
     RetryOptions retryOptions,

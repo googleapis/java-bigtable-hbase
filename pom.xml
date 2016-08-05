@@ -625,6 +625,29 @@ limitations under the License.
                     <artifactId>maven-eclipse-plugin</artifactId>
                     <version>2.10</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.10.4</version>
+                    <configuration>
+                        <!--
+                        javadoc excluded packages:
+                            com.google.cloud.bigtable.dataflow{import,}     (Breaks with javadoc:aggregate, handled separately)
+                            com.google.clooud.*                             (Ignore, a hack/workaround for separate maven issue)
+                        -->
+                        <excludePackageNames>com.google.cloud.bigtable.dataflow:com.google.cloud.bigtable.dataflowimport:com.google.clooud</excludePackageNames>
+                        <detectLinks />
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>aggregate-jar</goal>
+                            </goals>
+                            <phase>package</phase>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -632,6 +655,9 @@ limitations under the License.
         <profile>
             <id>doclint-java8-disable</id>
             <activation>
+                <property>
+                    <name>!doclint</name>
+                </property>
                 <jdk>[1.8,)</jdk>
             </activation>
             <properties>
@@ -652,28 +678,6 @@ limitations under the License.
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.4</version>
-                        <configuration>
-                            <!--
-                              javadoc excluded packages:
-                                com.google.bigtable.v1 (Deprecated)
-                            -->
-                            <excludePackageNames>com.google.bigtable.v1</excludePackageNames>
-                            <detectLinks />
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                                <phase>package</phase>
                             </execution>
                         </executions>
                     </plugin>
