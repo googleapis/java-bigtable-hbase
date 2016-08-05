@@ -1,3 +1,6 @@
+
+[Build status](https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client.svg "Build Status")
+
 ## Google Cloud Bigtable Client
 
 Bigger than a data warehouse, fast enough for real-time access, and less expensive than running virtual machines. The world-renowned database that powers Google is now available to you worldwide.
