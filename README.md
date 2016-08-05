@@ -1,4 +1,4 @@
-# [Google Cloud Bigtable Java Client](https://cloud.google.com/bigtable/docs/bigtable-and-hbase)
+# [Google Cloud Bigtable HBase client for Java](https://cloud.google.com/bigtable/docs/bigtable-and-hbase)
 
 [![build.status](https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client.svg)](https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client/builds) [![ghit.me](https://ghit.me/badge.svg?repo=GoogleCloudPlatform/cloud-bigtable-client)](https://ghit.me/repo/GoogleCloudPlatform/cloud-bigtable-client)
 
