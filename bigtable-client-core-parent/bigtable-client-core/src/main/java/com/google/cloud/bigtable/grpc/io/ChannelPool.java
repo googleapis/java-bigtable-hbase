@@ -74,7 +74,6 @@ public class ChannelPool extends ManagedChannel {
    * to configure metrics gathering even if the class loader loads the ChannelPool. If a user turns
    * on metrics after this class is loaded, these metrics should not have the NULL
    * implementation.
-   * @return
    */
   protected synchronized static Counter getActiveChannelCounter() {
     if (ACTIVE_CHANNEL_COUNTER == null) {
