@@ -22,8 +22,8 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.google.bigtable.admin.table.v1.CreateTableRequest;
-import com.google.bigtable.admin.table.v1.ListTablesRequest;
+import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 
 @RunWith(JUnit4.class)
@@ -44,15 +44,15 @@ public class TestBigtableInstanceName {
   @Test
   public void testListTablesRequest() {
     ListTablesRequest.Builder builder = ListTablesRequest.newBuilder();
-    builder.setName(bigtableInstanceName.toString());
-    Assert.assertEquals(instanceName, builder.getName());
+    builder.setParent(bigtableInstanceName.toString());
+    Assert.assertEquals(instanceName, builder.getParent());
   }
 
   @Test
   public void testCreateTablesRequest() {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
-    builder.setName(bigtableInstanceName.toString());
-    Assert.assertEquals(instanceName, builder.getName());
+    builder.setParent(bigtableInstanceName.toString());
+    Assert.assertEquals(instanceName, builder.getParent());
   }
 
   @Test
