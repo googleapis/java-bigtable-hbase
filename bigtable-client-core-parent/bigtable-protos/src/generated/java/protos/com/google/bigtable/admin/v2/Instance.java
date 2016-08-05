@@ -14,11 +14,11 @@ package com.google.bigtable.admin.v2;
  * Protobuf type {@code google.bigtable.admin.v2.Instance}
  */
 public  final class Instance extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.Instance)
     InstanceOrBuilder {
   // Use Instance.newBuilder() to construct.
-  private Instance(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private Instance(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private Instance() {
@@ -86,7 +86,7 @@ public  final class Instance extends
     return com.google.bigtable.admin.v2.InstanceProto.internal_static_google_bigtable_admin_v2_Instance_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.InstanceProto.internal_static_google_bigtable_admin_v2_Instance_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -344,7 +344,7 @@ public  final class Instance extends
    * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    */
   public com.google.bigtable.admin.v2.Instance.State getState() {
-    com.google.bigtable.admin.v2.Instance.State result = com.google.bigtable.admin.v2.Instance.State.forNumber(state_);
+    com.google.bigtable.admin.v2.Instance.State result = com.google.bigtable.admin.v2.Instance.State.valueOf(state_);
     return result == null ? com.google.bigtable.admin.v2.Instance.State.UNRECOGNIZED : result;
   }
 
@@ -361,10 +361,10 @@ public  final class Instance extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
     }
     if (!getDisplayNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 2, displayName_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, displayName_);
     }
     if (state_ != com.google.bigtable.admin.v2.Instance.State.STATE_NOT_KNOWN.getNumber()) {
       output.writeEnum(3, state_);
@@ -377,10 +377,10 @@ public  final class Instance extends
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
     }
     if (!getDisplayNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, displayName_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, displayName_);
     }
     if (state_ != com.google.bigtable.admin.v2.Instance.State.STATE_NOT_KNOWN.getNumber()) {
       size += com.google.protobuf.CodedOutputStream
@@ -391,6 +391,43 @@ public  final class Instance extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.Instance)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.Instance other = (com.google.bigtable.admin.v2.Instance) obj;
+
+    boolean result = true;
+    result = result && getName()
+        .equals(other.getName());
+    result = result && getDisplayName()
+        .equals(other.getDisplayName());
+    result = result && state_ == other.state_;
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getName().hashCode();
+    hash = (37 * hash) + DISPLAY_NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getDisplayName().hashCode();
+    hash = (37 * hash) + STATE_FIELD_NUMBER;
+    hash = (53 * hash) + state_;
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.Instance parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -414,39 +451,39 @@ public  final class Instance extends
   }
   public static com.google.bigtable.admin.v2.Instance parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Instance parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Instance parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Instance parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Instance parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Instance parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -464,7 +501,7 @@ public  final class Instance extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -479,7 +516,7 @@ public  final class Instance extends
    * Protobuf type {@code google.bigtable.admin.v2.Instance}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.Instance)
       com.google.bigtable.admin.v2.InstanceOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -487,7 +524,7 @@ public  final class Instance extends
       return com.google.bigtable.admin.v2.InstanceProto.internal_static_google_bigtable_admin_v2_Instance_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.InstanceProto.internal_static_google_bigtable_admin_v2_Instance_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -500,12 +537,13 @@ public  final class Instance extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -545,6 +583,32 @@ public  final class Instance extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.Instance) {
         return mergeFrom((com.google.bigtable.admin.v2.Instance)other);
@@ -822,7 +886,7 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public com.google.bigtable.admin.v2.Instance.State getState() {
-      com.google.bigtable.admin.v2.Instance.State result = com.google.bigtable.admin.v2.Instance.State.forNumber(state_);
+      com.google.bigtable.admin.v2.Instance.State result = com.google.bigtable.admin.v2.Instance.State.valueOf(state_);
       return result == null ? com.google.bigtable.admin.v2.Instance.State.UNRECOGNIZED : result;
     }
     /**

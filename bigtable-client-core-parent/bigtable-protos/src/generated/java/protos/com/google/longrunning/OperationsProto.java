@@ -6,37 +6,43 @@ package com.google.longrunning;
 public final class OperationsProto {
   private OperationsProto() {}
   public static void registerAllExtensions(
+      com.google.protobuf.ExtensionRegistryLite registry) {
+  }
+
+  public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions(
+        (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_longrunning_Operation_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_longrunning_Operation_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_longrunning_GetOperationRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_longrunning_GetOperationRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_longrunning_ListOperationsRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_longrunning_ListOperationsRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_longrunning_ListOperationsResponse_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_longrunning_ListOperationsResponse_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_longrunning_CancelOperationRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_longrunning_CancelOperationRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_longrunning_DeleteOperationRequest_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_longrunning_DeleteOperationRequest_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
@@ -98,37 +104,37 @@ public final class OperationsProto {
     internal_static_google_longrunning_Operation_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_google_longrunning_Operation_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_longrunning_Operation_descriptor,
         new java.lang.String[] { "Name", "Metadata", "Done", "Error", "Response", "Result", });
     internal_static_google_longrunning_GetOperationRequest_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_google_longrunning_GetOperationRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_longrunning_GetOperationRequest_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_google_longrunning_ListOperationsRequest_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_google_longrunning_ListOperationsRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_longrunning_ListOperationsRequest_descriptor,
         new java.lang.String[] { "Name", "Filter", "PageSize", "PageToken", });
     internal_static_google_longrunning_ListOperationsResponse_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_google_longrunning_ListOperationsResponse_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_longrunning_ListOperationsResponse_descriptor,
         new java.lang.String[] { "Operations", "NextPageToken", });
     internal_static_google_longrunning_CancelOperationRequest_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_google_longrunning_CancelOperationRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_longrunning_CancelOperationRequest_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_google_longrunning_DeleteOperationRequest_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_google_longrunning_DeleteOperationRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_longrunning_DeleteOperationRequest_descriptor,
         new java.lang.String[] { "Name", });
     com.google.protobuf.ExtensionRegistry registry =

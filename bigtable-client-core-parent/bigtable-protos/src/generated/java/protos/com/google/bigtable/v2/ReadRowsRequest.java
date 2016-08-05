@@ -11,11 +11,11 @@ package com.google.bigtable.v2;
  * Protobuf type {@code google.bigtable.v2.ReadRowsRequest}
  */
 public  final class ReadRowsRequest extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.ReadRowsRequest)
     ReadRowsRequestOrBuilder {
   // Use ReadRowsRequest.newBuilder() to construct.
-  private ReadRowsRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private ReadRowsRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private ReadRowsRequest() {
@@ -101,7 +101,7 @@ public  final class ReadRowsRequest extends
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_ReadRowsRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_ReadRowsRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -250,7 +250,7 @@ public  final class ReadRowsRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getTableNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, tableName_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, tableName_);
     }
     if (rows_ != null) {
       output.writeMessage(2, getRows());
@@ -269,7 +269,7 @@ public  final class ReadRowsRequest extends
 
     size = 0;
     if (!getTableNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, tableName_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, tableName_);
     }
     if (rows_ != null) {
       size += com.google.protobuf.CodedOutputStream
@@ -288,6 +288,59 @@ public  final class ReadRowsRequest extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.v2.ReadRowsRequest)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.v2.ReadRowsRequest other = (com.google.bigtable.v2.ReadRowsRequest) obj;
+
+    boolean result = true;
+    result = result && getTableName()
+        .equals(other.getTableName());
+    result = result && (hasRows() == other.hasRows());
+    if (hasRows()) {
+      result = result && getRows()
+          .equals(other.getRows());
+    }
+    result = result && (hasFilter() == other.hasFilter());
+    if (hasFilter()) {
+      result = result && getFilter()
+          .equals(other.getFilter());
+    }
+    result = result && (getRowsLimit()
+        == other.getRowsLimit());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + TABLE_NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getTableName().hashCode();
+    if (hasRows()) {
+      hash = (37 * hash) + ROWS_FIELD_NUMBER;
+      hash = (53 * hash) + getRows().hashCode();
+    }
+    if (hasFilter()) {
+      hash = (37 * hash) + FILTER_FIELD_NUMBER;
+      hash = (53 * hash) + getFilter().hashCode();
+    }
+    hash = (37 * hash) + ROWS_LIMIT_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getRowsLimit());
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.v2.ReadRowsRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -311,39 +364,39 @@ public  final class ReadRowsRequest extends
   }
   public static com.google.bigtable.v2.ReadRowsRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadRowsRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ReadRowsRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadRowsRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ReadRowsRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadRowsRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -361,7 +414,7 @@ public  final class ReadRowsRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -373,7 +426,7 @@ public  final class ReadRowsRequest extends
    * Protobuf type {@code google.bigtable.v2.ReadRowsRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.ReadRowsRequest)
       com.google.bigtable.v2.ReadRowsRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -381,7 +434,7 @@ public  final class ReadRowsRequest extends
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_ReadRowsRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_ReadRowsRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -394,12 +447,13 @@ public  final class ReadRowsRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -458,6 +512,32 @@ public  final class ReadRowsRequest extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.ReadRowsRequest) {
         return mergeFrom((com.google.bigtable.v2.ReadRowsRequest)other);
@@ -608,7 +688,7 @@ public  final class ReadRowsRequest extends
     }
 
     private com.google.bigtable.v2.RowSet rows_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowSet, com.google.bigtable.v2.RowSet.Builder, com.google.bigtable.v2.RowSetOrBuilder> rowsBuilder_;
     /**
      * <pre>
@@ -746,11 +826,11 @@ public  final class ReadRowsRequest extends
      *
      * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowSet, com.google.bigtable.v2.RowSet.Builder, com.google.bigtable.v2.RowSetOrBuilder> 
         getRowsFieldBuilder() {
       if (rowsBuilder_ == null) {
-        rowsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        rowsBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.bigtable.v2.RowSet, com.google.bigtable.v2.RowSet.Builder, com.google.bigtable.v2.RowSetOrBuilder>(
                 getRows(),
                 getParentForChildren(),
@@ -761,7 +841,7 @@ public  final class ReadRowsRequest extends
     }
 
     private com.google.bigtable.v2.RowFilter filter_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder> filterBuilder_;
     /**
      * <pre>
@@ -908,11 +988,11 @@ public  final class ReadRowsRequest extends
      *
      * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder> 
         getFilterFieldBuilder() {
       if (filterBuilder_ == null) {
-        filterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        filterBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder>(
                 getFilter(),
                 getParentForChildren(),

@@ -51,7 +51,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 
 /**
  * Class to help BigtableTable with batch operations on an BigtableClient.
@@ -85,7 +85,7 @@ public class BatchExecutor {
    * A callback for ListenableFutures issued as a result of an RPC
    * @param <T> The type of message the hbase callback requires.
    */
-  static class RpcResultFutureCallback<T> implements FutureCallback<GeneratedMessage> {
+  static class RpcResultFutureCallback<T> implements FutureCallback<GeneratedMessageV3> {
     private final Row row;
     private final Batch.Callback<T> callback;
 
@@ -109,7 +109,7 @@ public class BatchExecutor {
 
     @SuppressWarnings("unchecked")
     @Override
-    public final void onSuccess(GeneratedMessage message) {
+    public final void onSuccess(GeneratedMessageV3 message) {
       try {
         Result result = Result.EMPTY_RESULT;
         if (message instanceof com.google.bigtable.v2.Row) {
@@ -154,7 +154,7 @@ public class BatchExecutor {
       this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
     }
 
-    public ListenableFuture<? extends GeneratedMessage> mutateRowAsync(MutateRowRequest request)
+    public ListenableFuture<? extends GeneratedMessageV3> mutateRowAsync(MutateRowRequest request)
         throws InterruptedException {
       if (!options.getBulkOptions().useBulkApi()) {
         return asyncExecutor.mutateRowAsync(request);
@@ -163,7 +163,7 @@ public class BatchExecutor {
       }
     }
 
-    public ListenableFuture<? extends GeneratedMessage> readRowsAsync(ReadRowsRequest request)
+    public ListenableFuture<? extends GeneratedMessageV3> readRowsAsync(ReadRowsRequest request)
         throws InterruptedException {
       if (!options.getBulkOptions().useBulkApi()) {
         return Futures.transform(asyncExecutor.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
@@ -222,7 +222,7 @@ public class BatchExecutor {
     return resultFuture;
   }
 
-  private ListenableFuture<? extends GeneratedMessage>
+  private ListenableFuture<? extends GeneratedMessageV3>
       issueAsyncRequest(BulkOperation bulkOperation, Row row) {
     try {
       if (row instanceof Get) {

@@ -14,11 +14,11 @@ package com.google.rpc;
  * Protobuf type {@code google.rpc.Help}
  */
 public  final class Help extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.rpc.Help)
     HelpOrBuilder {
   // Use Help.newBuilder() to construct.
-  private Help(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private Help(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private Help() {
@@ -55,7 +55,8 @@ public  final class Help extends
               links_ = new java.util.ArrayList<com.google.rpc.Help.Link>();
               mutable_bitField0_ |= 0x00000001;
             }
-            links_.add(input.readMessage(com.google.rpc.Help.Link.parser(), extensionRegistry));
+            links_.add(
+                input.readMessage(com.google.rpc.Help.Link.parser(), extensionRegistry));
             break;
           }
         }
@@ -77,7 +78,7 @@ public  final class Help extends
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_Help_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_Help_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -132,11 +133,11 @@ public  final class Help extends
    * Protobuf type {@code google.rpc.Help.Link}
    */
   public  static final class Link extends
-      com.google.protobuf.GeneratedMessage implements
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:google.rpc.Help.Link)
       LinkOrBuilder {
     // Use Link.newBuilder() to construct.
-    private Link(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private Link(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private Link() {
@@ -197,7 +198,7 @@ public  final class Help extends
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_Help_Link_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_Help_Link_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -301,10 +302,10 @@ public  final class Help extends
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (!getDescriptionBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 1, description_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, description_);
       }
       if (!getUrlBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 2, url_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, url_);
       }
     }
 
@@ -314,16 +315,50 @@ public  final class Help extends
 
       size = 0;
       if (!getDescriptionBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, description_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, description_);
       }
       if (!getUrlBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, url_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, url_);
       }
       memoizedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.google.rpc.Help.Link)) {
+        return super.equals(obj);
+      }
+      com.google.rpc.Help.Link other = (com.google.rpc.Help.Link) obj;
+
+      boolean result = true;
+      result = result && getDescription()
+          .equals(other.getDescription());
+      result = result && getUrl()
+          .equals(other.getUrl());
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (37 * hash) + DESCRIPTION_FIELD_NUMBER;
+      hash = (53 * hash) + getDescription().hashCode();
+      hash = (37 * hash) + URL_FIELD_NUMBER;
+      hash = (53 * hash) + getUrl().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
     public static com.google.rpc.Help.Link parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -347,39 +382,39 @@ public  final class Help extends
     }
     public static com.google.rpc.Help.Link parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.rpc.Help.Link parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.rpc.Help.Link parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.rpc.Help.Link parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.rpc.Help.Link parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.rpc.Help.Link parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
@@ -397,7 +432,7 @@ public  final class Help extends
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -409,7 +444,7 @@ public  final class Help extends
      * Protobuf type {@code google.rpc.Help.Link}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:google.rpc.Help.Link)
         com.google.rpc.Help.LinkOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -417,7 +452,7 @@ public  final class Help extends
         return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_Help_Link_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_Help_Link_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -430,12 +465,13 @@ public  final class Help extends
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
         }
       }
       public Builder clear() {
@@ -472,6 +508,32 @@ public  final class Help extends
         return result;
       }
 
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof com.google.rpc.Help.Link) {
           return mergeFrom((com.google.rpc.Help.Link)other);
@@ -829,6 +891,38 @@ public  final class Help extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.rpc.Help)) {
+      return super.equals(obj);
+    }
+    com.google.rpc.Help other = (com.google.rpc.Help) obj;
+
+    boolean result = true;
+    result = result && getLinksList()
+        .equals(other.getLinksList());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    if (getLinksCount() > 0) {
+      hash = (37 * hash) + LINKS_FIELD_NUMBER;
+      hash = (53 * hash) + getLinksList().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.rpc.Help parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -852,39 +946,39 @@ public  final class Help extends
   }
   public static com.google.rpc.Help parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.Help parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.Help parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.rpc.Help parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.Help parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.Help parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -902,7 +996,7 @@ public  final class Help extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -917,7 +1011,7 @@ public  final class Help extends
    * Protobuf type {@code google.rpc.Help}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.rpc.Help)
       com.google.rpc.HelpOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -925,7 +1019,7 @@ public  final class Help extends
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_Help_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_Help_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -938,12 +1032,13 @@ public  final class Help extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
         getLinksFieldBuilder();
       }
     }
@@ -991,6 +1086,32 @@ public  final class Help extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.rpc.Help) {
         return mergeFrom((com.google.rpc.Help)other);
@@ -1021,7 +1142,7 @@ public  final class Help extends
             links_ = other.links_;
             bitField0_ = (bitField0_ & ~0x00000001);
             linksBuilder_ = 
-              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getLinksFieldBuilder() : null;
           } else {
             linksBuilder_.addAllMessages(other.links_);
@@ -1064,7 +1185,7 @@ public  final class Help extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.rpc.Help.Link, com.google.rpc.Help.Link.Builder, com.google.rpc.Help.LinkOrBuilder> linksBuilder_;
 
     /**
@@ -1352,11 +1473,11 @@ public  final class Help extends
          getLinksBuilderList() {
       return getLinksFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.rpc.Help.Link, com.google.rpc.Help.Link.Builder, com.google.rpc.Help.LinkOrBuilder> 
         getLinksFieldBuilder() {
       if (linksBuilder_ == null) {
-        linksBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+        linksBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
             com.google.rpc.Help.Link, com.google.rpc.Help.Link.Builder, com.google.rpc.Help.LinkOrBuilder>(
                 links_,
                 ((bitField0_ & 0x00000001) == 0x00000001),

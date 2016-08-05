@@ -20,8 +20,6 @@ import java.io.Serializable;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
-import io.grpc.CallOptions;
-
 /**
  * Experimental options to turn on timeout options. {@link io.grpc.CallOptions} supports other settings as
  * well, which this configuration object could help set.

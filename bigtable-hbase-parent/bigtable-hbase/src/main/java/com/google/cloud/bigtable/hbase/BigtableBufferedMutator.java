@@ -51,7 +51,7 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 
 /**
  * Bigtable's {@link org.apache.hadoop.hbase.client.BufferedMutator} implementation.
@@ -331,7 +331,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * @param future a {@link com.google.common.util.concurrent.ListenableFuture} object.
    * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
    */
-  protected void addExceptionCallback(ListenableFuture<? extends GeneratedMessage> future,
+  protected void addExceptionCallback(ListenableFuture<? extends GeneratedMessageV3> future,
       Mutation mutation) {
     Futures.addCallback(future, new ExceptionCallback(mutation));
   }
@@ -353,7 +353,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private ListenableFuture<? extends GeneratedMessage> issueRequestDetails(Mutation mutation,
+  private ListenableFuture<? extends GeneratedMessageV3> issueRequestDetails(Mutation mutation,
       long operationId) {
     try {
       if (mutation == null) {
@@ -419,7 +419,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private class ExceptionCallback implements FutureCallback<GeneratedMessage> {
+  private class ExceptionCallback implements FutureCallback<GeneratedMessageV3> {
     private final Row mutation;
 
     public ExceptionCallback(Row mutation) {
@@ -432,7 +432,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
 
     @Override
-    public void onSuccess(GeneratedMessage ignored) {
+    public void onSuccess(GeneratedMessageV3 ignored) {
     }
   }
 

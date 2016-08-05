@@ -12,11 +12,11 @@ package com.google.longrunning;
  * Protobuf type {@code google.longrunning.Operation}
  */
 public  final class Operation extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.longrunning.Operation)
     OperationOrBuilder {
   // Use Operation.newBuilder() to construct.
-  private Operation(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private Operation(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private Operation() {
@@ -117,7 +117,7 @@ public  final class Operation extends
     return com.google.longrunning.OperationsProto.internal_static_google_longrunning_Operation_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.longrunning.OperationsProto.internal_static_google_longrunning_Operation_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -345,7 +345,7 @@ public  final class Operation extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
     }
     if (metadata_ != null) {
       output.writeMessage(2, getMetadata());
@@ -367,7 +367,7 @@ public  final class Operation extends
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
     }
     if (metadata_ != null) {
       size += com.google.protobuf.CodedOutputStream
@@ -390,6 +390,77 @@ public  final class Operation extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.longrunning.Operation)) {
+      return super.equals(obj);
+    }
+    com.google.longrunning.Operation other = (com.google.longrunning.Operation) obj;
+
+    boolean result = true;
+    result = result && getName()
+        .equals(other.getName());
+    result = result && (hasMetadata() == other.hasMetadata());
+    if (hasMetadata()) {
+      result = result && getMetadata()
+          .equals(other.getMetadata());
+    }
+    result = result && (getDone()
+        == other.getDone());
+    result = result && getResultCase().equals(
+        other.getResultCase());
+    if (!result) return false;
+    switch (resultCase_) {
+      case 4:
+        result = result && getError()
+            .equals(other.getError());
+        break;
+      case 5:
+        result = result && getResponse()
+            .equals(other.getResponse());
+        break;
+      case 0:
+      default:
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getName().hashCode();
+    if (hasMetadata()) {
+      hash = (37 * hash) + METADATA_FIELD_NUMBER;
+      hash = (53 * hash) + getMetadata().hashCode();
+    }
+    hash = (37 * hash) + DONE_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getDone());
+    switch (resultCase_) {
+      case 4:
+        hash = (37 * hash) + ERROR_FIELD_NUMBER;
+        hash = (53 * hash) + getError().hashCode();
+        break;
+      case 5:
+        hash = (37 * hash) + RESPONSE_FIELD_NUMBER;
+        hash = (53 * hash) + getResponse().hashCode();
+        break;
+      case 0:
+      default:
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.longrunning.Operation parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -413,39 +484,39 @@ public  final class Operation extends
   }
   public static com.google.longrunning.Operation parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.longrunning.Operation parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.longrunning.Operation parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.longrunning.Operation parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.longrunning.Operation parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.longrunning.Operation parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -463,7 +534,7 @@ public  final class Operation extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -476,7 +547,7 @@ public  final class Operation extends
    * Protobuf type {@code google.longrunning.Operation}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.longrunning.Operation)
       com.google.longrunning.OperationOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -484,7 +555,7 @@ public  final class Operation extends
       return com.google.longrunning.OperationsProto.internal_static_google_longrunning_Operation_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.longrunning.OperationsProto.internal_static_google_longrunning_Operation_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -497,12 +568,13 @@ public  final class Operation extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -567,6 +639,32 @@ public  final class Operation extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.longrunning.Operation) {
         return mergeFrom((com.google.longrunning.Operation)other);
@@ -737,7 +835,7 @@ public  final class Operation extends
     }
 
     private com.google.protobuf.Any metadata_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> metadataBuilder_;
     /**
      * <pre>
@@ -902,11 +1000,11 @@ public  final class Operation extends
      *
      * <code>optional .google.protobuf.Any metadata = 2;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
         getMetadataFieldBuilder() {
       if (metadataBuilder_ == null) {
-        metadataBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        metadataBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>(
                 getMetadata(),
                 getParentForChildren(),
@@ -957,7 +1055,7 @@ public  final class Operation extends
       return this;
     }
 
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder> errorBuilder_;
     /**
      * <pre>
@@ -1100,14 +1198,14 @@ public  final class Operation extends
      *
      * <code>optional .google.rpc.Status error = 4;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder> 
         getErrorFieldBuilder() {
       if (errorBuilder_ == null) {
         if (!(resultCase_ == 4)) {
           result_ = com.google.rpc.Status.getDefaultInstance();
         }
-        errorBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        errorBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.rpc.Status, com.google.rpc.Status.Builder, com.google.rpc.StatusOrBuilder>(
                 (com.google.rpc.Status) result_,
                 getParentForChildren(),
@@ -1119,7 +1217,7 @@ public  final class Operation extends
       return errorBuilder_;
     }
 
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> responseBuilder_;
     /**
      * <pre>
@@ -1318,14 +1416,14 @@ public  final class Operation extends
      *
      * <code>optional .google.protobuf.Any response = 5;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
         getResponseFieldBuilder() {
       if (responseBuilder_ == null) {
         if (!(resultCase_ == 5)) {
           result_ = com.google.protobuf.Any.getDefaultInstance();
         }
-        responseBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        responseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>(
                 (com.google.protobuf.Any) result_,
                 getParentForChildren(),

@@ -19,11 +19,11 @@ package com.google.rpc;
  * Protobuf type {@code google.rpc.QuotaFailure}
  */
 public  final class QuotaFailure extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.rpc.QuotaFailure)
     QuotaFailureOrBuilder {
   // Use QuotaFailure.newBuilder() to construct.
-  private QuotaFailure(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private QuotaFailure(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private QuotaFailure() {
@@ -60,7 +60,8 @@ public  final class QuotaFailure extends
               violations_ = new java.util.ArrayList<com.google.rpc.QuotaFailure.Violation>();
               mutable_bitField0_ |= 0x00000001;
             }
-            violations_.add(input.readMessage(com.google.rpc.QuotaFailure.Violation.parser(), extensionRegistry));
+            violations_.add(
+                input.readMessage(com.google.rpc.QuotaFailure.Violation.parser(), extensionRegistry));
             break;
           }
         }
@@ -82,7 +83,7 @@ public  final class QuotaFailure extends
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -152,11 +153,11 @@ public  final class QuotaFailure extends
    * Protobuf type {@code google.rpc.QuotaFailure.Violation}
    */
   public  static final class Violation extends
-      com.google.protobuf.GeneratedMessage implements
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:google.rpc.QuotaFailure.Violation)
       ViolationOrBuilder {
     // Use Violation.newBuilder() to construct.
-    private Violation(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private Violation(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private Violation() {
@@ -217,7 +218,7 @@ public  final class QuotaFailure extends
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_Violation_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_Violation_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -335,10 +336,10 @@ public  final class QuotaFailure extends
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (!getSubjectBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 1, subject_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, subject_);
       }
       if (!getDescriptionBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 2, description_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, description_);
       }
     }
 
@@ -348,16 +349,50 @@ public  final class QuotaFailure extends
 
       size = 0;
       if (!getSubjectBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, subject_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, subject_);
       }
       if (!getDescriptionBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, description_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, description_);
       }
       memoizedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.google.rpc.QuotaFailure.Violation)) {
+        return super.equals(obj);
+      }
+      com.google.rpc.QuotaFailure.Violation other = (com.google.rpc.QuotaFailure.Violation) obj;
+
+      boolean result = true;
+      result = result && getSubject()
+          .equals(other.getSubject());
+      result = result && getDescription()
+          .equals(other.getDescription());
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (37 * hash) + SUBJECT_FIELD_NUMBER;
+      hash = (53 * hash) + getSubject().hashCode();
+      hash = (37 * hash) + DESCRIPTION_FIELD_NUMBER;
+      hash = (53 * hash) + getDescription().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
     public static com.google.rpc.QuotaFailure.Violation parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -381,39 +416,39 @@ public  final class QuotaFailure extends
     }
     public static com.google.rpc.QuotaFailure.Violation parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.rpc.QuotaFailure.Violation parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.rpc.QuotaFailure.Violation parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.rpc.QuotaFailure.Violation parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.rpc.QuotaFailure.Violation parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.rpc.QuotaFailure.Violation parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
@@ -431,7 +466,7 @@ public  final class QuotaFailure extends
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -444,7 +479,7 @@ public  final class QuotaFailure extends
      * Protobuf type {@code google.rpc.QuotaFailure.Violation}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:google.rpc.QuotaFailure.Violation)
         com.google.rpc.QuotaFailure.ViolationOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -452,7 +487,7 @@ public  final class QuotaFailure extends
         return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_Violation_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_Violation_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -465,12 +500,13 @@ public  final class QuotaFailure extends
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
         }
       }
       public Builder clear() {
@@ -507,6 +543,32 @@ public  final class QuotaFailure extends
         return result;
       }
 
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof com.google.rpc.QuotaFailure.Violation) {
           return mergeFrom((com.google.rpc.QuotaFailure.Violation)other);
@@ -899,6 +961,38 @@ public  final class QuotaFailure extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.rpc.QuotaFailure)) {
+      return super.equals(obj);
+    }
+    com.google.rpc.QuotaFailure other = (com.google.rpc.QuotaFailure) obj;
+
+    boolean result = true;
+    result = result && getViolationsList()
+        .equals(other.getViolationsList());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    if (getViolationsCount() > 0) {
+      hash = (37 * hash) + VIOLATIONS_FIELD_NUMBER;
+      hash = (53 * hash) + getViolationsList().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.rpc.QuotaFailure parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -922,39 +1016,39 @@ public  final class QuotaFailure extends
   }
   public static com.google.rpc.QuotaFailure parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.QuotaFailure parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.QuotaFailure parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.rpc.QuotaFailure parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.QuotaFailure parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.QuotaFailure parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -972,7 +1066,7 @@ public  final class QuotaFailure extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -992,7 +1086,7 @@ public  final class QuotaFailure extends
    * Protobuf type {@code google.rpc.QuotaFailure}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.rpc.QuotaFailure)
       com.google.rpc.QuotaFailureOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -1000,7 +1094,7 @@ public  final class QuotaFailure extends
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -1013,12 +1107,13 @@ public  final class QuotaFailure extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
         getViolationsFieldBuilder();
       }
     }
@@ -1066,6 +1161,32 @@ public  final class QuotaFailure extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.rpc.QuotaFailure) {
         return mergeFrom((com.google.rpc.QuotaFailure)other);
@@ -1096,7 +1217,7 @@ public  final class QuotaFailure extends
             violations_ = other.violations_;
             bitField0_ = (bitField0_ & ~0x00000001);
             violationsBuilder_ = 
-              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getViolationsFieldBuilder() : null;
           } else {
             violationsBuilder_.addAllMessages(other.violations_);
@@ -1139,7 +1260,7 @@ public  final class QuotaFailure extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.rpc.QuotaFailure.Violation, com.google.rpc.QuotaFailure.Violation.Builder, com.google.rpc.QuotaFailure.ViolationOrBuilder> violationsBuilder_;
 
     /**
@@ -1427,11 +1548,11 @@ public  final class QuotaFailure extends
          getViolationsBuilderList() {
       return getViolationsFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.rpc.QuotaFailure.Violation, com.google.rpc.QuotaFailure.Violation.Builder, com.google.rpc.QuotaFailure.ViolationOrBuilder> 
         getViolationsFieldBuilder() {
       if (violationsBuilder_ == null) {
-        violationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+        violationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
             com.google.rpc.QuotaFailure.Violation, com.google.rpc.QuotaFailure.Violation.Builder, com.google.rpc.QuotaFailure.ViolationOrBuilder>(
                 violations_,
                 ((bitField0_ & 0x00000001) == 0x00000001),

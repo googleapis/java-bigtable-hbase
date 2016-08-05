@@ -11,11 +11,11 @@ package com.google.rpc;
  * Protobuf type {@code google.rpc.ResourceInfo}
  */
 public  final class ResourceInfo extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.rpc.ResourceInfo)
     ResourceInfoOrBuilder {
   // Use ResourceInfo.newBuilder() to construct.
-  private ResourceInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private ResourceInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private ResourceInfo() {
@@ -90,7 +90,7 @@ public  final class ResourceInfo extends
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_ResourceInfo_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_ResourceInfo_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -294,16 +294,16 @@ public  final class ResourceInfo extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getResourceTypeBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, resourceType_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, resourceType_);
     }
     if (!getResourceNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 2, resourceName_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, resourceName_);
     }
     if (!getOwnerBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 3, owner_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, owner_);
     }
     if (!getDescriptionBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 4, description_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, description_);
     }
   }
 
@@ -313,22 +313,64 @@ public  final class ResourceInfo extends
 
     size = 0;
     if (!getResourceTypeBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, resourceType_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, resourceType_);
     }
     if (!getResourceNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, resourceName_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, resourceName_);
     }
     if (!getOwnerBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(3, owner_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, owner_);
     }
     if (!getDescriptionBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(4, description_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, description_);
     }
     memoizedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.rpc.ResourceInfo)) {
+      return super.equals(obj);
+    }
+    com.google.rpc.ResourceInfo other = (com.google.rpc.ResourceInfo) obj;
+
+    boolean result = true;
+    result = result && getResourceType()
+        .equals(other.getResourceType());
+    result = result && getResourceName()
+        .equals(other.getResourceName());
+    result = result && getOwner()
+        .equals(other.getOwner());
+    result = result && getDescription()
+        .equals(other.getDescription());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + RESOURCE_TYPE_FIELD_NUMBER;
+    hash = (53 * hash) + getResourceType().hashCode();
+    hash = (37 * hash) + RESOURCE_NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getResourceName().hashCode();
+    hash = (37 * hash) + OWNER_FIELD_NUMBER;
+    hash = (53 * hash) + getOwner().hashCode();
+    hash = (37 * hash) + DESCRIPTION_FIELD_NUMBER;
+    hash = (53 * hash) + getDescription().hashCode();
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.rpc.ResourceInfo parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -352,39 +394,39 @@ public  final class ResourceInfo extends
   }
   public static com.google.rpc.ResourceInfo parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.ResourceInfo parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.ResourceInfo parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.rpc.ResourceInfo parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.ResourceInfo parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.ResourceInfo parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -402,7 +444,7 @@ public  final class ResourceInfo extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -414,7 +456,7 @@ public  final class ResourceInfo extends
    * Protobuf type {@code google.rpc.ResourceInfo}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.rpc.ResourceInfo)
       com.google.rpc.ResourceInfoOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -422,7 +464,7 @@ public  final class ResourceInfo extends
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_ResourceInfo_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_ResourceInfo_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -435,12 +477,13 @@ public  final class ResourceInfo extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -483,6 +526,32 @@ public  final class ResourceInfo extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.rpc.ResourceInfo) {
         return mergeFrom((com.google.rpc.ResourceInfo)other);

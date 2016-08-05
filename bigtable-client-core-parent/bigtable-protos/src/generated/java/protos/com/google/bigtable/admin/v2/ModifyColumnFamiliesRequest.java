@@ -11,11 +11,11 @@ package com.google.bigtable.admin.v2;
  * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest}
  */
 public  final class ModifyColumnFamiliesRequest extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.ModifyColumnFamiliesRequest)
     ModifyColumnFamiliesRequestOrBuilder {
   // Use ModifyColumnFamiliesRequest.newBuilder() to construct.
-  private ModifyColumnFamiliesRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private ModifyColumnFamiliesRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private ModifyColumnFamiliesRequest() {
@@ -59,7 +59,8 @@ public  final class ModifyColumnFamiliesRequest extends
               modifications_ = new java.util.ArrayList<com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification>();
               mutable_bitField0_ |= 0x00000002;
             }
-            modifications_.add(input.readMessage(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.parser(), extensionRegistry));
+            modifications_.add(
+                input.readMessage(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.parser(), extensionRegistry));
             break;
           }
         }
@@ -81,7 +82,7 @@ public  final class ModifyColumnFamiliesRequest extends
     return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_ModifyColumnFamiliesRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_ModifyColumnFamiliesRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -168,11 +169,11 @@ public  final class ModifyColumnFamiliesRequest extends
    * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification}
    */
   public  static final class Modification extends
-      com.google.protobuf.GeneratedMessage implements
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification)
       ModificationOrBuilder {
     // Use Modification.newBuilder() to construct.
-    private Modification(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private Modification(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private Modification() {
@@ -259,7 +260,7 @@ public  final class ModifyColumnFamiliesRequest extends
       return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_ModifyColumnFamiliesRequest_Modification_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_ModifyColumnFamiliesRequest_Modification_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -437,7 +438,7 @@ public  final class ModifyColumnFamiliesRequest extends
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (!getIdBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 1, id_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, id_);
       }
       if (modCase_ == 2) {
         output.writeMessage(2, (com.google.bigtable.admin.v2.ColumnFamily) mod_);
@@ -457,7 +458,7 @@ public  final class ModifyColumnFamiliesRequest extends
 
       size = 0;
       if (!getIdBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, id_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, id_);
       }
       if (modCase_ == 2) {
         size += com.google.protobuf.CodedOutputStream
@@ -477,6 +478,72 @@ public  final class ModifyColumnFamiliesRequest extends
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification)) {
+        return super.equals(obj);
+      }
+      com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification other = (com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification) obj;
+
+      boolean result = true;
+      result = result && getId()
+          .equals(other.getId());
+      result = result && getModCase().equals(
+          other.getModCase());
+      if (!result) return false;
+      switch (modCase_) {
+        case 2:
+          result = result && getCreate()
+              .equals(other.getCreate());
+          break;
+        case 3:
+          result = result && getUpdate()
+              .equals(other.getUpdate());
+          break;
+        case 4:
+          result = result && (getDrop()
+              == other.getDrop());
+          break;
+        case 0:
+        default:
+      }
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (37 * hash) + ID_FIELD_NUMBER;
+      hash = (53 * hash) + getId().hashCode();
+      switch (modCase_) {
+        case 2:
+          hash = (37 * hash) + CREATE_FIELD_NUMBER;
+          hash = (53 * hash) + getCreate().hashCode();
+          break;
+        case 3:
+          hash = (37 * hash) + UPDATE_FIELD_NUMBER;
+          hash = (53 * hash) + getUpdate().hashCode();
+          break;
+        case 4:
+          hash = (37 * hash) + DROP_FIELD_NUMBER;
+          hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+              getDrop());
+          break;
+        case 0:
+        default:
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -500,39 +567,39 @@ public  final class ModifyColumnFamiliesRequest extends
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
@@ -550,7 +617,7 @@ public  final class ModifyColumnFamiliesRequest extends
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -562,7 +629,7 @@ public  final class ModifyColumnFamiliesRequest extends
      * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification)
         com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -570,7 +637,7 @@ public  final class ModifyColumnFamiliesRequest extends
         return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_ModifyColumnFamiliesRequest_Modification_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_ModifyColumnFamiliesRequest_Modification_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -583,12 +650,13 @@ public  final class ModifyColumnFamiliesRequest extends
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
         }
       }
       public Builder clear() {
@@ -642,6 +710,32 @@ public  final class ModifyColumnFamiliesRequest extends
         return result;
       }
 
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification) {
           return mergeFrom((com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification)other);
@@ -804,7 +898,7 @@ public  final class ModifyColumnFamiliesRequest extends
         return this;
       }
 
-      private com.google.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilderV3<
           com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder> createBuilder_;
       /**
        * <pre>
@@ -955,14 +1049,14 @@ public  final class ModifyColumnFamiliesRequest extends
        *
        * <code>optional .google.bigtable.admin.v2.ColumnFamily create = 2;</code>
        */
-      private com.google.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilderV3<
           com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder> 
           getCreateFieldBuilder() {
         if (createBuilder_ == null) {
           if (!(modCase_ == 2)) {
             mod_ = com.google.bigtable.admin.v2.ColumnFamily.getDefaultInstance();
           }
-          createBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          createBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
               com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder>(
                   (com.google.bigtable.admin.v2.ColumnFamily) mod_,
                   getParentForChildren(),
@@ -974,7 +1068,7 @@ public  final class ModifyColumnFamiliesRequest extends
         return createBuilder_;
       }
 
-      private com.google.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilderV3<
           com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder> updateBuilder_;
       /**
        * <pre>
@@ -1125,14 +1219,14 @@ public  final class ModifyColumnFamiliesRequest extends
        *
        * <code>optional .google.bigtable.admin.v2.ColumnFamily update = 3;</code>
        */
-      private com.google.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilderV3<
           com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder> 
           getUpdateFieldBuilder() {
         if (updateBuilder_ == null) {
           if (!(modCase_ == 3)) {
             mod_ = com.google.bigtable.admin.v2.ColumnFamily.getDefaultInstance();
           }
-          updateBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          updateBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
               com.google.bigtable.admin.v2.ColumnFamily, com.google.bigtable.admin.v2.ColumnFamily.Builder, com.google.bigtable.admin.v2.ColumnFamilyOrBuilder>(
                   (com.google.bigtable.admin.v2.ColumnFamily) mod_,
                   getParentForChildren(),
@@ -1365,7 +1459,7 @@ public  final class ModifyColumnFamiliesRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
     }
     for (int i = 0; i < modifications_.size(); i++) {
       output.writeMessage(2, modifications_.get(i));
@@ -1378,7 +1472,7 @@ public  final class ModifyColumnFamiliesRequest extends
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
     }
     for (int i = 0; i < modifications_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
@@ -1389,6 +1483,42 @@ public  final class ModifyColumnFamiliesRequest extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest other = (com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest) obj;
+
+    boolean result = true;
+    result = result && getName()
+        .equals(other.getName());
+    result = result && getModificationsList()
+        .equals(other.getModificationsList());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getName().hashCode();
+    if (getModificationsCount() > 0) {
+      hash = (37 * hash) + MODIFICATIONS_FIELD_NUMBER;
+      hash = (53 * hash) + getModificationsList().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -1412,39 +1542,39 @@ public  final class ModifyColumnFamiliesRequest extends
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -1462,7 +1592,7 @@ public  final class ModifyColumnFamiliesRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -1474,7 +1604,7 @@ public  final class ModifyColumnFamiliesRequest extends
    * Protobuf type {@code google.bigtable.admin.v2.ModifyColumnFamiliesRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.ModifyColumnFamiliesRequest)
       com.google.bigtable.admin.v2.ModifyColumnFamiliesRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -1482,7 +1612,7 @@ public  final class ModifyColumnFamiliesRequest extends
       return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_ModifyColumnFamiliesRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_ModifyColumnFamiliesRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -1495,12 +1625,13 @@ public  final class ModifyColumnFamiliesRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
         getModificationsFieldBuilder();
       }
     }
@@ -1553,6 +1684,32 @@ public  final class ModifyColumnFamiliesRequest extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest) {
         return mergeFrom((com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest)other);
@@ -1587,7 +1744,7 @@ public  final class ModifyColumnFamiliesRequest extends
             modifications_ = other.modifications_;
             bitField0_ = (bitField0_ & ~0x00000002);
             modificationsBuilder_ = 
-              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getModificationsFieldBuilder() : null;
           } else {
             modificationsBuilder_.addAllMessages(other.modifications_);
@@ -1724,7 +1881,7 @@ public  final class ModifyColumnFamiliesRequest extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder> modificationsBuilder_;
 
     /**
@@ -2066,11 +2223,11 @@ public  final class ModifyColumnFamiliesRequest extends
          getModificationsBuilderList() {
       return getModificationsFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder> 
         getModificationsFieldBuilder() {
       if (modificationsBuilder_ == null) {
-        modificationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+        modificationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
             com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification.Builder, com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder>(
                 modifications_,
                 ((bitField0_ & 0x00000002) == 0x00000002),

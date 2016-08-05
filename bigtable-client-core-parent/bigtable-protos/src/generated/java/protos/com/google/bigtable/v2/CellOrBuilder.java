@@ -39,7 +39,7 @@ public interface CellOrBuilder extends
    *
    * <code>repeated string labels = 3;</code>
    */
-  com.google.protobuf.ProtocolStringList
+  java.util.List<java.lang.String>
       getLabelsList();
   /**
    * <pre>

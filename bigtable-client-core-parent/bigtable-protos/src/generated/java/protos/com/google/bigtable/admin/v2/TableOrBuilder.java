@@ -40,8 +40,60 @@ public interface TableOrBuilder extends
    *
    * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
    */
+  int getColumnFamiliesCount();
+  /**
+   * <pre>
+   * The column families configured for this table, mapped by column family ID.
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+  boolean containsColumnFamilies(
+      java.lang.String key);
+  /**
+   * Use {@link #getColumnFamiliesMap()} instead.
+   */
+  @java.lang.Deprecated
   java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
   getColumnFamilies();
+  /**
+   * <pre>
+   * The column families configured for this table, mapped by column family ID.
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+  java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
+  getColumnFamiliesMap();
+  /**
+   * <pre>
+   * The column families configured for this table, mapped by column family ID.
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+
+  com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrDefault(
+      java.lang.String key,
+      com.google.bigtable.admin.v2.ColumnFamily defaultValue);
+  /**
+   * <pre>
+   * The column families configured for this table, mapped by column family ID.
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+
+  com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrThrow(
+      java.lang.String key);
 
   /**
    * <pre>

@@ -6,17 +6,23 @@ package com.google.api;
 public final class HttpProto {
   private HttpProto() {}
   public static void registerAllExtensions(
+      com.google.protobuf.ExtensionRegistryLite registry) {
+  }
+
+  public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions(
+        (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_api_HttpRule_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_api_HttpRule_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_api_CustomHttpPattern_descriptor;
   static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_api_CustomHttpPattern_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
@@ -52,13 +58,13 @@ public final class HttpProto {
     internal_static_google_api_HttpRule_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_google_api_HttpRule_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_api_HttpRule_descriptor,
         new java.lang.String[] { "Get", "Put", "Post", "Delete", "Patch", "Custom", "Body", "AdditionalBindings", "Pattern", });
     internal_static_google_api_CustomHttpPattern_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_google_api_CustomHttpPattern_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_api_CustomHttpPattern_descriptor,
         new java.lang.String[] { "Kind", "Path", });
   }

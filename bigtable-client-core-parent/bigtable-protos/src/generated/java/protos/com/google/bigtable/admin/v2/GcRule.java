@@ -11,11 +11,11 @@ package com.google.bigtable.admin.v2;
  * Protobuf type {@code google.bigtable.admin.v2.GcRule}
  */
 public  final class GcRule extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.GcRule)
     GcRuleOrBuilder {
   // Use GcRule.newBuilder() to construct.
-  private GcRule(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private GcRule(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private GcRule() {
@@ -109,7 +109,7 @@ public  final class GcRule extends
     return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -172,11 +172,11 @@ public  final class GcRule extends
    * Protobuf type {@code google.bigtable.admin.v2.GcRule.Intersection}
    */
   public  static final class Intersection extends
-      com.google.protobuf.GeneratedMessage implements
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.GcRule.Intersection)
       IntersectionOrBuilder {
     // Use Intersection.newBuilder() to construct.
-    private Intersection(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private Intersection(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private Intersection() {
@@ -213,7 +213,8 @@ public  final class GcRule extends
                 rules_ = new java.util.ArrayList<com.google.bigtable.admin.v2.GcRule>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              rules_.add(input.readMessage(com.google.bigtable.admin.v2.GcRule.parser(), extensionRegistry));
+              rules_.add(
+                  input.readMessage(com.google.bigtable.admin.v2.GcRule.parser(), extensionRegistry));
               break;
             }
           }
@@ -235,7 +236,7 @@ public  final class GcRule extends
       return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_Intersection_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_Intersection_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -328,6 +329,38 @@ public  final class GcRule extends
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.google.bigtable.admin.v2.GcRule.Intersection)) {
+        return super.equals(obj);
+      }
+      com.google.bigtable.admin.v2.GcRule.Intersection other = (com.google.bigtable.admin.v2.GcRule.Intersection) obj;
+
+      boolean result = true;
+      result = result && getRulesList()
+          .equals(other.getRulesList());
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      if (getRulesCount() > 0) {
+        hash = (37 * hash) + RULES_FIELD_NUMBER;
+        hash = (53 * hash) + getRulesList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -351,39 +384,39 @@ public  final class GcRule extends
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Intersection parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
@@ -401,7 +434,7 @@ public  final class GcRule extends
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -413,7 +446,7 @@ public  final class GcRule extends
      * Protobuf type {@code google.bigtable.admin.v2.GcRule.Intersection}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.GcRule.Intersection)
         com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -421,7 +454,7 @@ public  final class GcRule extends
         return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_Intersection_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_Intersection_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -434,12 +467,13 @@ public  final class GcRule extends
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
           getRulesFieldBuilder();
         }
       }
@@ -487,6 +521,32 @@ public  final class GcRule extends
         return result;
       }
 
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof com.google.bigtable.admin.v2.GcRule.Intersection) {
           return mergeFrom((com.google.bigtable.admin.v2.GcRule.Intersection)other);
@@ -517,7 +577,7 @@ public  final class GcRule extends
               rules_ = other.rules_;
               bitField0_ = (bitField0_ & ~0x00000001);
               rulesBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getRulesFieldBuilder() : null;
             } else {
               rulesBuilder_.addAllMessages(other.rules_);
@@ -560,7 +620,7 @@ public  final class GcRule extends
          }
       }
 
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           com.google.bigtable.admin.v2.GcRule, com.google.bigtable.admin.v2.GcRule.Builder, com.google.bigtable.admin.v2.GcRuleOrBuilder> rulesBuilder_;
 
       /**
@@ -848,11 +908,11 @@ public  final class GcRule extends
            getRulesBuilderList() {
         return getRulesFieldBuilder().getBuilderList();
       }
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           com.google.bigtable.admin.v2.GcRule, com.google.bigtable.admin.v2.GcRule.Builder, com.google.bigtable.admin.v2.GcRuleOrBuilder> 
           getRulesFieldBuilder() {
         if (rulesBuilder_ == null) {
-          rulesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+          rulesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               com.google.bigtable.admin.v2.GcRule, com.google.bigtable.admin.v2.GcRule.Builder, com.google.bigtable.admin.v2.GcRuleOrBuilder>(
                   rules_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
@@ -967,11 +1027,11 @@ public  final class GcRule extends
    * Protobuf type {@code google.bigtable.admin.v2.GcRule.Union}
    */
   public  static final class Union extends
-      com.google.protobuf.GeneratedMessage implements
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.GcRule.Union)
       UnionOrBuilder {
     // Use Union.newBuilder() to construct.
-    private Union(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private Union(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private Union() {
@@ -1008,7 +1068,8 @@ public  final class GcRule extends
                 rules_ = new java.util.ArrayList<com.google.bigtable.admin.v2.GcRule>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              rules_.add(input.readMessage(com.google.bigtable.admin.v2.GcRule.parser(), extensionRegistry));
+              rules_.add(
+                  input.readMessage(com.google.bigtable.admin.v2.GcRule.parser(), extensionRegistry));
               break;
             }
           }
@@ -1030,7 +1091,7 @@ public  final class GcRule extends
       return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_Union_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_Union_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -1123,6 +1184,38 @@ public  final class GcRule extends
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.google.bigtable.admin.v2.GcRule.Union)) {
+        return super.equals(obj);
+      }
+      com.google.bigtable.admin.v2.GcRule.Union other = (com.google.bigtable.admin.v2.GcRule.Union) obj;
+
+      boolean result = true;
+      result = result && getRulesList()
+          .equals(other.getRulesList());
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      if (getRulesCount() > 0) {
+        hash = (37 * hash) + RULES_FIELD_NUMBER;
+        hash = (53 * hash) + getRulesList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
     public static com.google.bigtable.admin.v2.GcRule.Union parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -1146,39 +1239,39 @@ public  final class GcRule extends
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
     public static com.google.bigtable.admin.v2.GcRule.Union parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessage
+      return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
@@ -1196,7 +1289,7 @@ public  final class GcRule extends
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -1208,7 +1301,7 @@ public  final class GcRule extends
      * Protobuf type {@code google.bigtable.admin.v2.GcRule.Union}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.GcRule.Union)
         com.google.bigtable.admin.v2.GcRule.UnionOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -1216,7 +1309,7 @@ public  final class GcRule extends
         return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_Union_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_Union_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -1229,12 +1322,13 @@ public  final class GcRule extends
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
           getRulesFieldBuilder();
         }
       }
@@ -1282,6 +1376,32 @@ public  final class GcRule extends
         return result;
       }
 
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof com.google.bigtable.admin.v2.GcRule.Union) {
           return mergeFrom((com.google.bigtable.admin.v2.GcRule.Union)other);
@@ -1312,7 +1432,7 @@ public  final class GcRule extends
               rules_ = other.rules_;
               bitField0_ = (bitField0_ & ~0x00000001);
               rulesBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getRulesFieldBuilder() : null;
             } else {
               rulesBuilder_.addAllMessages(other.rules_);
@@ -1355,7 +1475,7 @@ public  final class GcRule extends
          }
       }
 
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           com.google.bigtable.admin.v2.GcRule, com.google.bigtable.admin.v2.GcRule.Builder, com.google.bigtable.admin.v2.GcRuleOrBuilder> rulesBuilder_;
 
       /**
@@ -1643,11 +1763,11 @@ public  final class GcRule extends
            getRulesBuilderList() {
         return getRulesFieldBuilder().getBuilderList();
       }
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           com.google.bigtable.admin.v2.GcRule, com.google.bigtable.admin.v2.GcRule.Builder, com.google.bigtable.admin.v2.GcRuleOrBuilder> 
           getRulesFieldBuilder() {
         if (rulesBuilder_ == null) {
-          rulesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+          rulesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               com.google.bigtable.admin.v2.GcRule, com.google.bigtable.admin.v2.GcRule.Builder, com.google.bigtable.admin.v2.GcRuleOrBuilder>(
                   rules_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
@@ -1905,6 +2025,75 @@ public  final class GcRule extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.GcRule)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.GcRule other = (com.google.bigtable.admin.v2.GcRule) obj;
+
+    boolean result = true;
+    result = result && getRuleCase().equals(
+        other.getRuleCase());
+    if (!result) return false;
+    switch (ruleCase_) {
+      case 1:
+        result = result && (getMaxNumVersions()
+            == other.getMaxNumVersions());
+        break;
+      case 2:
+        result = result && getMaxAge()
+            .equals(other.getMaxAge());
+        break;
+      case 3:
+        result = result && getIntersection()
+            .equals(other.getIntersection());
+        break;
+      case 4:
+        result = result && getUnion()
+            .equals(other.getUnion());
+        break;
+      case 0:
+      default:
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    switch (ruleCase_) {
+      case 1:
+        hash = (37 * hash) + MAX_NUM_VERSIONS_FIELD_NUMBER;
+        hash = (53 * hash) + getMaxNumVersions();
+        break;
+      case 2:
+        hash = (37 * hash) + MAX_AGE_FIELD_NUMBER;
+        hash = (53 * hash) + getMaxAge().hashCode();
+        break;
+      case 3:
+        hash = (37 * hash) + INTERSECTION_FIELD_NUMBER;
+        hash = (53 * hash) + getIntersection().hashCode();
+        break;
+      case 4:
+        hash = (37 * hash) + UNION_FIELD_NUMBER;
+        hash = (53 * hash) + getUnion().hashCode();
+        break;
+      case 0:
+      default:
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.GcRule parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -1928,39 +2117,39 @@ public  final class GcRule extends
   }
   public static com.google.bigtable.admin.v2.GcRule parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.GcRule parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.GcRule parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.GcRule parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.GcRule parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.GcRule parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -1978,7 +2167,7 @@ public  final class GcRule extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -1990,7 +2179,7 @@ public  final class GcRule extends
    * Protobuf type {@code google.bigtable.admin.v2.GcRule}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.GcRule)
       com.google.bigtable.admin.v2.GcRuleOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -1998,7 +2187,7 @@ public  final class GcRule extends
       return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_GcRule_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -2011,12 +2200,13 @@ public  final class GcRule extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -2074,6 +2264,32 @@ public  final class GcRule extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.GcRule) {
         return mergeFrom((com.google.bigtable.admin.v2.GcRule)other);
@@ -2189,7 +2405,7 @@ public  final class GcRule extends
       return this;
     }
 
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> maxAgeBuilder_;
     /**
      * <pre>
@@ -2348,14 +2564,14 @@ public  final class GcRule extends
      *
      * <code>optional .google.protobuf.Duration max_age = 2;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> 
         getMaxAgeFieldBuilder() {
       if (maxAgeBuilder_ == null) {
         if (!(ruleCase_ == 2)) {
           rule_ = com.google.protobuf.Duration.getDefaultInstance();
         }
-        maxAgeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        maxAgeBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder>(
                 (com.google.protobuf.Duration) rule_,
                 getParentForChildren(),
@@ -2367,7 +2583,7 @@ public  final class GcRule extends
       return maxAgeBuilder_;
     }
 
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.GcRule.Intersection, com.google.bigtable.admin.v2.GcRule.Intersection.Builder, com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder> intersectionBuilder_;
     /**
      * <pre>
@@ -2510,14 +2726,14 @@ public  final class GcRule extends
      *
      * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.GcRule.Intersection, com.google.bigtable.admin.v2.GcRule.Intersection.Builder, com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder> 
         getIntersectionFieldBuilder() {
       if (intersectionBuilder_ == null) {
         if (!(ruleCase_ == 3)) {
           rule_ = com.google.bigtable.admin.v2.GcRule.Intersection.getDefaultInstance();
         }
-        intersectionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        intersectionBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.bigtable.admin.v2.GcRule.Intersection, com.google.bigtable.admin.v2.GcRule.Intersection.Builder, com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder>(
                 (com.google.bigtable.admin.v2.GcRule.Intersection) rule_,
                 getParentForChildren(),
@@ -2529,7 +2745,7 @@ public  final class GcRule extends
       return intersectionBuilder_;
     }
 
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.GcRule.Union, com.google.bigtable.admin.v2.GcRule.Union.Builder, com.google.bigtable.admin.v2.GcRule.UnionOrBuilder> unionBuilder_;
     /**
      * <pre>
@@ -2672,14 +2888,14 @@ public  final class GcRule extends
      *
      * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.GcRule.Union, com.google.bigtable.admin.v2.GcRule.Union.Builder, com.google.bigtable.admin.v2.GcRule.UnionOrBuilder> 
         getUnionFieldBuilder() {
       if (unionBuilder_ == null) {
         if (!(ruleCase_ == 4)) {
           rule_ = com.google.bigtable.admin.v2.GcRule.Union.getDefaultInstance();
         }
-        unionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        unionBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.bigtable.admin.v2.GcRule.Union, com.google.bigtable.admin.v2.GcRule.Union.Builder, com.google.bigtable.admin.v2.GcRule.UnionOrBuilder>(
                 (com.google.bigtable.admin.v2.GcRule.Union) rule_,
                 getParentForChildren(),

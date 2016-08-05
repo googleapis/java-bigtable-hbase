@@ -12,11 +12,11 @@ package com.google.bigtable.admin.v2;
  * Protobuf type {@code google.bigtable.admin.v2.Table}
  */
 public  final class Table extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.Table)
     TableOrBuilder {
   // Use Table.newBuilder() to construct.
-  private Table(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private Table(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private Table() {
@@ -100,7 +100,7 @@ public  final class Table extends
             "Invalid map field number: " + number);
     }
   }
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Table_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -451,6 +451,10 @@ public  final class Table extends
     }
     return columnFamilies_;
   }
+
+  public int getColumnFamiliesCount() {
+    return internalGetColumnFamilies().getMap().size();
+  }
   /**
    * <pre>
    * The column families configured for this table, mapped by column family ID.
@@ -461,8 +465,68 @@ public  final class Table extends
    * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
    */
 
+  public boolean containsColumnFamilies(
+      java.lang.String key) {
+    if (key == null) { throw new java.lang.NullPointerException(); }
+    return internalGetColumnFamilies().getMap().containsKey(key);
+  }
+  /**
+   * Use {@link #getColumnFamiliesMap()} instead.
+   */
+  @java.lang.Deprecated
   public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> getColumnFamilies() {
+    return getColumnFamiliesMap();
+  }
+  /**
+   * <pre>
+   * The column families configured for this table, mapped by column family ID.
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+
+  public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> getColumnFamiliesMap() {
     return internalGetColumnFamilies().getMap();
+  }
+  /**
+   * <pre>
+   * The column families configured for this table, mapped by column family ID.
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+
+  public com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrDefault(
+      java.lang.String key,
+      com.google.bigtable.admin.v2.ColumnFamily defaultValue) {
+    if (key == null) { throw new java.lang.NullPointerException(); }
+    java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> map =
+        internalGetColumnFamilies().getMap();
+    return map.containsKey(key) ? map.get(key) : defaultValue;
+  }
+  /**
+   * <pre>
+   * The column families configured for this table, mapped by column family ID.
+   * Views: SCHEMA_VIEW, FULL
+   * &#64;CreationOnly
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+
+  public com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrThrow(
+      java.lang.String key) {
+    if (key == null) { throw new java.lang.NullPointerException(); }
+    java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> map =
+        internalGetColumnFamilies().getMap();
+    if (!map.containsKey(key)) {
+      throw new java.lang.IllegalArgumentException();
+    }
+    return map.get(key);
   }
 
   public static final int GRANULARITY_FIELD_NUMBER = 4;
@@ -493,7 +557,7 @@ public  final class Table extends
    * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   public com.google.bigtable.admin.v2.Table.TimestampGranularity getGranularity() {
-    com.google.bigtable.admin.v2.Table.TimestampGranularity result = com.google.bigtable.admin.v2.Table.TimestampGranularity.forNumber(granularity_);
+    com.google.bigtable.admin.v2.Table.TimestampGranularity result = com.google.bigtable.admin.v2.Table.TimestampGranularity.valueOf(granularity_);
     return result == null ? com.google.bigtable.admin.v2.Table.TimestampGranularity.UNRECOGNIZED : result;
   }
 
@@ -510,7 +574,7 @@ public  final class Table extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
     }
     for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> entry
          : internalGetColumnFamilies().getMap().entrySet()) {
@@ -532,7 +596,7 @@ public  final class Table extends
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
     }
     for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> entry
          : internalGetColumnFamilies().getMap().entrySet()) {
@@ -553,6 +617,45 @@ public  final class Table extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.Table)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.Table other = (com.google.bigtable.admin.v2.Table) obj;
+
+    boolean result = true;
+    result = result && getName()
+        .equals(other.getName());
+    result = result && internalGetColumnFamilies().equals(
+        other.internalGetColumnFamilies());
+    result = result && granularity_ == other.granularity_;
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getName().hashCode();
+    if (!internalGetColumnFamilies().getMap().isEmpty()) {
+      hash = (37 * hash) + COLUMN_FAMILIES_FIELD_NUMBER;
+      hash = (53 * hash) + internalGetColumnFamilies().hashCode();
+    }
+    hash = (37 * hash) + GRANULARITY_FIELD_NUMBER;
+    hash = (53 * hash) + granularity_;
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.Table parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -576,39 +679,39 @@ public  final class Table extends
   }
   public static com.google.bigtable.admin.v2.Table parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Table parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Table parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Table parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Table parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Table parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
+    return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
@@ -626,7 +729,7 @@ public  final class Table extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -639,7 +742,7 @@ public  final class Table extends
    * Protobuf type {@code google.bigtable.admin.v2.Table}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.Table)
       com.google.bigtable.admin.v2.TableOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -669,7 +772,7 @@ public  final class Table extends
               "Invalid map field number: " + number);
       }
     }
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Table_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -682,12 +785,13 @@ public  final class Table extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -730,6 +834,32 @@ public  final class Table extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.Table) {
         return mergeFrom((com.google.bigtable.admin.v2.Table)other);
@@ -903,6 +1033,10 @@ public  final class Table extends
       }
       return columnFamilies_;
     }
+
+    public int getColumnFamiliesCount() {
+      return internalGetColumnFamilies().getMap().size();
+    }
     /**
      * <pre>
      * The column families configured for this table, mapped by column family ID.
@@ -912,7 +1046,30 @@ public  final class Table extends
      *
      * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
      */
+
+    public boolean containsColumnFamilies(
+        java.lang.String key) {
+      if (key == null) { throw new java.lang.NullPointerException(); }
+      return internalGetColumnFamilies().getMap().containsKey(key);
+    }
+    /**
+     * Use {@link #getColumnFamiliesMap()} instead.
+     */
+    @java.lang.Deprecated
     public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> getColumnFamilies() {
+      return getColumnFamiliesMap();
+    }
+    /**
+     * <pre>
+     * The column families configured for this table, mapped by column family ID.
+     * Views: SCHEMA_VIEW, FULL
+     * &#64;CreationOnly
+     * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+     */
+
+    public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> getColumnFamiliesMap() {
       return internalGetColumnFamilies().getMap();
     }
     /**
@@ -924,6 +1081,60 @@ public  final class Table extends
      *
      * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
      */
+
+    public com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrDefault(
+        java.lang.String key,
+        com.google.bigtable.admin.v2.ColumnFamily defaultValue) {
+      if (key == null) { throw new java.lang.NullPointerException(); }
+      java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> map =
+          internalGetColumnFamilies().getMap();
+      return map.containsKey(key) ? map.get(key) : defaultValue;
+    }
+    /**
+     * <pre>
+     * The column families configured for this table, mapped by column family ID.
+     * Views: SCHEMA_VIEW, FULL
+     * &#64;CreationOnly
+     * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+     */
+
+    public com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrThrow(
+        java.lang.String key) {
+      if (key == null) { throw new java.lang.NullPointerException(); }
+      java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> map =
+          internalGetColumnFamilies().getMap();
+      if (!map.containsKey(key)) {
+        throw new java.lang.IllegalArgumentException();
+      }
+      return map.get(key);
+    }
+
+    public Builder clearColumnFamilies() {
+      getMutableColumnFamilies().clear();
+      return this;
+    }
+    /**
+     * <pre>
+     * The column families configured for this table, mapped by column family ID.
+     * Views: SCHEMA_VIEW, FULL
+     * &#64;CreationOnly
+     * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+     */
+
+    public Builder removeColumnFamilies(
+        java.lang.String key) {
+      if (key == null) { throw new java.lang.NullPointerException(); }
+      getMutableColumnFamilies().remove(key);
+      return this;
+    }
+    /**
+     * Use alternate mutation accessors instead.
+     */
+    @java.lang.Deprecated
     public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
     getMutableColumnFamilies() {
       return internalGetMutableColumnFamilies().getMutableMap();
@@ -937,6 +1148,24 @@ public  final class Table extends
      *
      * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
      */
+    public Builder putColumnFamilies(
+        java.lang.String key,
+        com.google.bigtable.admin.v2.ColumnFamily value) {
+      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (value == null) { throw new java.lang.NullPointerException(); }
+      getMutableColumnFamilies().put(key, value);
+      return this;
+    }
+    /**
+     * <pre>
+     * The column families configured for this table, mapped by column family ID.
+     * Views: SCHEMA_VIEW, FULL
+     * &#64;CreationOnly
+     * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+     */
+
     public Builder putAllColumnFamilies(
         java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> values) {
       getMutableColumnFamilies().putAll(values);
@@ -986,7 +1215,7 @@ public  final class Table extends
      * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public com.google.bigtable.admin.v2.Table.TimestampGranularity getGranularity() {
-      com.google.bigtable.admin.v2.Table.TimestampGranularity result = com.google.bigtable.admin.v2.Table.TimestampGranularity.forNumber(granularity_);
+      com.google.bigtable.admin.v2.Table.TimestampGranularity result = com.google.bigtable.admin.v2.Table.TimestampGranularity.valueOf(granularity_);
       return result == null ? com.google.bigtable.admin.v2.Table.TimestampGranularity.UNRECOGNIZED : result;
     }
     /**
