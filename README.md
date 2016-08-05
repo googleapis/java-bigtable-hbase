@@ -75,27 +75,9 @@ You can run the following command for Java 7:
         -Dgoogle.bigtable.project.id=[your cloud project id] \
         -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id] \
 
-## Deploying
-**TODO**
-
-### How to setup the deployment environment
-**TODO**
-
-
-### How to deploy
-**TODO**
-
-
-## Troubleshooting & useful tools
-**TODO**
-
-### Examples of common tasks
-**TODO**
-
 ## Contributing changes
 
 * See [CONTRIBUTING.md](CONTRIBUTING.md)
-
 
 ## Licensing
 
