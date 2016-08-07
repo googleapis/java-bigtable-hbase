@@ -27,7 +27,6 @@ import com.google.bigtable.v2.RowRange.StartKeyCase;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
 import com.google.common.annotations.VisibleForTesting;
@@ -72,12 +71,15 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   private ByteString lastFoundKey;
 
   /**
-   * <p>Constructor for ResumingStreamingResultScanner.</p>
-   *
+   * <p>
+   * Constructor for ResumingStreamingResultScanner.
+   * </p>
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @param originalRequest a {@link com.google.bigtable.v2.ReadRowsRequest} object.
-   * @param scannerFactory a {@link com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory} object.
-   * @param rpcMetrics a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics} object to keep track of retries and failures.
+   * @param scannerFactory a
+   *          {@link com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory} object.
+   * @param rpcMetrics a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics}
+   *          object to keep track of retries and failures.
    */
   public ResumingStreamingResultScanner(
     RetryOptions retryOptions,
