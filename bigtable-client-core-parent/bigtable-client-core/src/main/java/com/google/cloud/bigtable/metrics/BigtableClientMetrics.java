@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.metrics;
 
 import com.codahale.metrics.Reporter;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +58,7 @@ public final class BigtableClientMetrics {
   static {
     Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
     if (logger.isTraceEnabled()) {
-      setMetricRegistry(DropwizardMetricRegistry.createSlf4jReporter(logger, 1));
+      setMetricRegistry(DropwizardMetricRegistry.createSlf4jReporter(logger, 1, TimeUnit.MINUTES));
     }
   }
 

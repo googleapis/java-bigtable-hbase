@@ -15,8 +15,18 @@ public class DropwizardMetricRegistry implements MetricRegistry {
 
   private com.codahale.metrics.MetricRegistry registry;  
 
+  /**
+   * Creates a {@link DropwizardMetricRegistry} with an {@link Slf4jReporter}.  Only non-zero metrics
+   * will be logged to the {@link Slf4jReporter}.
+   * 
+   * @param logger The {@link Logger} to report to
+   * @param period the amount of time between polls
+   * @param unit   the unit for {@code period}
+   *
+   * @return the {@link DropwizardMetricRegistry}
+   */
   public static DropwizardMetricRegistry createSlf4jReporter(
-      Logger logger, int minutesBetweenReport) {
+      Logger logger, long period, TimeUnit unit) {
     // This adds a simple mechanism of enabling statistics via slf4j configuration.
     // More complex configuration is available programmatically.
     DropwizardMetricRegistry registry = new DropwizardMetricRegistry();
@@ -38,7 +48,7 @@ public class DropwizardMetricRegistry implements MetricRegistry {
             .convertDurationsTo(TimeUnit.MILLISECONDS)
             .filter(nonZeroMatcher)
             .build();
-    reporter.start(minutesBetweenReport, TimeUnit.MINUTES);
+    reporter.start(period, unit);
     return registry;
   }
 
