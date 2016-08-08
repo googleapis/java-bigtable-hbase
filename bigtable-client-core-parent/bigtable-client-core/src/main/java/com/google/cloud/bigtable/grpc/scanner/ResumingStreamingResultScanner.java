@@ -15,29 +15,15 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.api.client.util.BackOff;
-import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.Row;
-import com.google.bigtable.v2.RowRange;
-import com.google.bigtable.v2.RowRange.EndKeyCase;
-import com.google.bigtable.v2.RowRange.StartKeyCase;
-import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.protobuf.ByteString;
-
-import io.grpc.Status;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -52,32 +38,22 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   private static final Logger LOG = new Logger(ResumingStreamingResultScanner.class);
 
   // Member variables from the constructor.
-  private final RetryOptions retryOptions;
-  private final ReadRowsRequest originalRequest;
-  private final BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory;
-  private final RpcMetrics rpcMetrics;
-  private final Logger logger;
-
-  // Internal member variables.
-
-  // The number of times we've retried after a timeout
-  private AtomicInteger timeoutRetryCount = null;
-
-  private BackOff currentErrorBackoff;
+  private final ReadRowsRequestRetryHandler retryHandler;
   private ResultScanner<Row> currentDelegate;
-  private Sleeper sleeper = Sleeper.DEFAULT;
-  // The number of rows read so far.
-  private long rowCount = 0;
+  private final BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory;
 
-  private ByteString lastFoundKey;
+  private Logger logger;
 
   /**
-   * <p>Constructor for ResumingStreamingResultScanner.</p>
-   *
+   * <p>
+   * Constructor for ResumingStreamingResultScanner.
+   * </p>
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @param originalRequest a {@link com.google.bigtable.v2.ReadRowsRequest} object.
-   * @param scannerFactory a {@link com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory} object.
-   * @param rpcMetrics a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics} object to keep track of retries and failures.
+   * @param scannerFactory a
+   *          {@link com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory} object.
+   * @param rpcMetrics a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics}
+   *          object to keep track of retries and failures.
    */
   public ResumingStreamingResultScanner(
     RetryOptions retryOptions,
@@ -94,11 +70,10 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
       BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory,
       RpcMetrics rpcMetrics,
       Logger logger) {
-    this.originalRequest = originalRequest;
+    this.retryHandler = new ReadRowsRequestRetryHandler(retryOptions, originalRequest,
+        scannerFactory, rpcMetrics, logger);
     this.scannerFactory = scannerFactory;
     this.currentDelegate = scannerFactory.createScanner(originalRequest);
-    this.retryOptions = retryOptions;
-    this.rpcMetrics = rpcMetrics;
     this.logger = logger;
   }
 
@@ -108,82 +83,26 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     while (true) {
       try {
         Row result = currentDelegate.next();
-        if (result != null) {
-          updateLastFoundKey(result.getKey());
-          rowCount++;
-          // We've had at least one successful RPC, reset the backoff and retry counter
-          currentErrorBackoff = null;
-          timeoutRetryCount = null;
-        }
-
+        retryHandler.update(result);
         return result;
       } catch (ScanTimeoutException rte) {
-        handleScanTimeout(rte);
+        closeCurrentDelegate();
+        ReadRowsRequest newRequest = retryHandler.handleScanTimeout(rte);
+        currentDelegate = scannerFactory.createScanner(newRequest);
       } catch (IOExceptionWithStatus ioe) {
-        handleIOException(ioe);
+        closeCurrentDelegate();
+        ReadRowsRequest newRequest = retryHandler.handleIOException(ioe);
+        currentDelegate = scannerFactory.createScanner(newRequest);
       }
     }
   }
 
-  @VisibleForTesting
-  void updateLastFoundKey(ByteString key) {
-    this.lastFoundKey = key;
-  }
-
-  private void handleScanTimeout(ScanTimeoutException rte) throws IOException {
+  private void closeCurrentDelegate() {
     try {
       currentDelegate.close();
     } catch (IOException ioe) {
       logger.warn("Error closing scanner before reissuing request: ", ioe);
     }
-
-    logger.info("The client could not get a response in %d ms. Retrying the scan.",
-      retryOptions.getReadPartialRowTimeoutMillis());
-
-    // Reset the error backoff in case we encountered this timeout after an error.
-    // Otherwise, we will likely have already exceeded the max elapsed time for the backoff
-    // and won't retry after the next error.
-    currentErrorBackoff = null;
-
-    if (timeoutRetryCount == null) {
-      timeoutRetryCount = new AtomicInteger();
-    }
-
-    if (timeoutRetryCount.incrementAndGet() <= retryOptions.getMaxScanTimeoutRetries()) {
-      reissueRequest();
-    }
-    else {
-      rpcMetrics.incrementRetriesExhastedCounter();
-      throw new BigtableRetriesExhaustedException(
-          "Exhausted streaming retries after too many timeouts", rte);
-    }
-  }
-
-  private void handleIOException(IOExceptionWithStatus ioe) throws IOException {
-    try {
-      currentDelegate.close();
-    } catch (IOException e) {
-      logger.warn("Error closing scanner before reissuing request: ", e);
-    }
-
-    Status.Code code = ioe.getStatus().getCode();
-    if (!retryOptions.isRetryable(code)) {
-      rpcMetrics.incrementFailureCount();
-      throw ioe;
-    }
-
-    logger.info("Reissuing scan after receiving error with status: %s.", ioe, code.name());
-    if (currentErrorBackoff == null) {
-      currentErrorBackoff = retryOptions.createBackoff();
-    }
-    long nextBackOffMillis = currentErrorBackoff.nextBackOffMillis();
-    if (nextBackOffMillis == BackOff.STOP) {
-      rpcMetrics.incrementRetriesExhastedCounter();
-      throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", ioe);
-    }
-
-    sleep(nextBackOffMillis);
-    reissueRequest();
   }
 
   /** {@inheritDoc} */
@@ -196,82 +115,5 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   @Override
   public void close() throws IOException {
     currentDelegate.close();
-  }
-
-  private void reissueRequest() {
-    ReadRowsRequest.Builder newRequest = ReadRowsRequest.newBuilder()
-        .setRows(filterRows())
-        .setTableName(originalRequest.getTableName());
-
-    if (originalRequest.hasFilter()) {
-      newRequest.setFilter(originalRequest.getFilter());
-    }
-
-    // If the row limit is set, update it.
-    long numRowsLimit = originalRequest.getRowsLimit();
-    if (numRowsLimit > 0) {
-      // Updates the {@code numRowsLimit} by removing the number of rows already read.
-      numRowsLimit -= rowCount;
-
-      checkArgument(numRowsLimit > 0, "The remaining number of rows must be greater than 0.");
-      newRequest.setRowsLimit(numRowsLimit);
-    }
-
-    rpcMetrics.incrementRetries();
-    currentDelegate = scannerFactory.createScanner(newRequest.build());
-  }
-
-  @VisibleForTesting
-  RowSet filterRows() {
-    RowSet originalRows = originalRequest.getRows();
-    if (lastFoundKey == null) {
-      return originalRows;
-    }
-    RowSet.Builder rowSetBuilder = RowSet.newBuilder();
-    ByteBuffer lastFoundKeyByteBuffer = lastFoundKey.asReadOnlyByteBuffer();
-    for (ByteString key : originalRows.getRowKeysList()) {
-      if (lastFoundKeyByteBuffer.compareTo(key.asReadOnlyByteBuffer()) < 0) {
-        rowSetBuilder.addRowKeys(key);
-      }
-    }
-
-    for (RowRange rowRange : originalRows.getRowRangesList()) {
-      EndKeyCase endKeyCase = rowRange.getEndKeyCase();
-      if ((endKeyCase == EndKeyCase.END_KEY_CLOSED
-              && endKeyIsAlreadyRead(lastFoundKeyByteBuffer, rowRange.getEndKeyClosed()))
-          || (endKeyCase == EndKeyCase.END_KEY_OPEN
-              && endKeyIsAlreadyRead(lastFoundKeyByteBuffer, rowRange.getEndKeyOpen()))) {
-        continue;
-      }
-      RowRange newRange = rowRange;
-      StartKeyCase startKeyCase = rowRange.getStartKeyCase();
-      if ((startKeyCase == StartKeyCase.START_KEY_CLOSED
-              && lastFoundKeyByteBuffer.compareTo(
-                      rowRange.getStartKeyClosed().asReadOnlyByteBuffer())
-                  >= 0)
-          || (startKeyCase == StartKeyCase.START_KEY_OPEN
-              && lastFoundKeyByteBuffer.compareTo(rowRange.getStartKeyOpen().asReadOnlyByteBuffer())
-                  > 0)
-          || startKeyCase == StartKeyCase.STARTKEY_NOT_SET) {
-        newRange = rowRange.toBuilder().setStartKeyOpen(lastFoundKey).build();
-      }
-      rowSetBuilder.addRowRanges(newRange);
-    }
-
-    return rowSetBuilder.build();
-  }
-
-  private boolean endKeyIsAlreadyRead(ByteBuffer lastFoundKeyByteBuffer, ByteString endKey) {
-    return !endKey.isEmpty()
-        && lastFoundKeyByteBuffer.compareTo(endKey.asReadOnlyByteBuffer()) >= 0;
-  }
-
-  private void sleep(long millis) throws IOException {
-    try {
-      sleeper.sleep(millis);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while sleeping for resume", e);
-    }
   }
 }
