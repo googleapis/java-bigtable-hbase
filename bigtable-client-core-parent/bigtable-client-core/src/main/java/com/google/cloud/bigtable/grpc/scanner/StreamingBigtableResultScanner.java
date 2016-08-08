@@ -34,8 +34,10 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
 
   private final CancellationToken cancellationToken;
   private final ResponseQueueReader responseQueueReader;
-  private final Meter resultsMeter = BigtableClientMetrics.createMeter("scanner.results.meter");
-  private final Timer resultsTimer = BigtableClientMetrics.createTimer("scanner.results.timer");
+  private final Meter resultsMeter =
+      BigtableClientMetrics.getRegistry().createMeter("scanner.results.meter");
+  private final Timer resultsTimer =
+      BigtableClientMetrics.getRegistry().createTimer("scanner.results.timer");
 
   /**
    * <p>Constructor for StreamingBigtableResultScanner.</p>

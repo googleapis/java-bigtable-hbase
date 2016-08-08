@@ -185,7 +185,8 @@ public class BatchExecutor {
   protected final AsyncExecutor asyncExecutor;
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter requestAdapter;
-  protected final Timer batchTimer = BigtableClientMetrics.createTimer("BatchExecutor.batch.timer");
+  protected final Timer batchTimer =
+      BigtableClientMetrics.getRegistry().createTimer("BatchExecutor.batch.timer");
 
   /**
    * <p>Constructor for BatchExecutor.</p>
