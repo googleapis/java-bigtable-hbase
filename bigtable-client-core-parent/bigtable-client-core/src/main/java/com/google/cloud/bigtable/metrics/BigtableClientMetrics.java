@@ -69,7 +69,7 @@ public final class BigtableClientMetrics {
 
   // Null implementations of Counter and Timer
 
-  private static final Counter NULL_COUNTER = new Counter() {
+  public static final Counter NULL_COUNTER = new Counter() {
     @Override
     public void inc() {
     }
@@ -79,7 +79,7 @@ public final class BigtableClientMetrics {
     }
   };
 
-  private static final Timer NULL_TIMER = new Timer() {
+  public static final Timer NULL_TIMER = new Timer() {
     private Context NULL_CONTEXT = new Context() {
       @Override
       public void close() {
@@ -89,6 +89,16 @@ public final class BigtableClientMetrics {
     @Override
     public Context time() {
       return NULL_CONTEXT;
+    }
+  };
+
+  public static final Meter NULL_METER = new Meter() {
+    @Override
+    public void mark() {
+    }
+
+    @Override
+    public void mark(long size) {
     }
   };
 
@@ -138,7 +148,7 @@ public final class BigtableClientMetrics {
   }
 
   /**
-   * Creates a named {Timer Counter}.
+   * Creates a named {@link Timer}.
    *
    * @param name
    * @return a Dropwizard Metrics {@link com.codahale.metrics.Timer} or {@link BigtableClientMetrics#NULL_TIMER}.
@@ -161,6 +171,31 @@ public final class BigtableClientMetrics {
       };
     } else {
       return NULL_TIMER;
+    }
+  }
+
+  /**
+   * Creates a named {@link Meter}.
+   *
+   * @param name
+   * @return a Dropwizard Metrics {@link com.codahale.metrics.Meter} or {@link BigtableClientMetrics#NULL_METER}.
+   */
+  public static Meter createMeter(String name) {
+    if (getClientStats() != null) {
+      final com.codahale.metrics.Meter meter = getClientStats().meter(name);
+      return new Meter() {
+        @Override
+        public void mark() {
+          meter.mark();
+        }
+
+        @Override
+        public void mark(long size) {
+          meter.mark(size);
+        }
+      };
+    } else {
+      return NULL_METER;
     }
   }
 

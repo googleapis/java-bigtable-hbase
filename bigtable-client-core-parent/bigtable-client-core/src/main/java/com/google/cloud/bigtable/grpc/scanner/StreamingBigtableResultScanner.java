@@ -19,6 +19,9 @@ import java.io.IOException;
 
 import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.Meter;
+import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.Preconditions;
 
 /**
@@ -31,6 +34,8 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
 
   private final CancellationToken cancellationToken;
   private final ResponseQueueReader responseQueueReader;
+  private final Meter resultsMeter = BigtableClientMetrics.createMeter("scanner.results.meter");
+  private final Timer resultsTimer = BigtableClientMetrics.createTimer("scanner.results.timer");
 
   /**
    * <p>Constructor for StreamingBigtableResultScanner.</p>
@@ -48,7 +53,13 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   /** {@inheritDoc} */
   @Override
   public Row next() throws IOException {
-    return responseQueueReader.getNextMergedRow();
+    Timer.Context timerContext = resultsTimer.time();
+    Row row = responseQueueReader.getNextMergedRow();
+    if (row != null) {
+      resultsMeter.mark();
+    }
+    timerContext.close();
+    return row;
   }
 
   /** {@inheritDoc} */

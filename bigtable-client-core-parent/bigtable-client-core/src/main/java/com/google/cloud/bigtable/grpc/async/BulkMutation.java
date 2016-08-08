@@ -27,6 +27,8 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.Meter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -87,13 +89,16 @@ public class BulkMutation {
     private final MutateRowsRequest.Builder builder;
     private MutateRowsRequest request;
     private long approximateByteSize = 0l;
+    private Meter addMeter;
 
-    RequestManager(String tableName) {
+    RequestManager(String tableName, Meter addMeter) {
       this.builder = MutateRowsRequest.newBuilder().setTableName(tableName);
       this.approximateByteSize = tableName.length() + 2;
+      this.addMeter = addMeter;
     }
 
     void add(SettableFuture<MutateRowResponse> future, MutateRowsRequest.Entry entry) {
+      addMeter.mark();
       futures.add(future);
       builder.addEntries(entry);
       approximateByteSize += entry.getSerializedSize();
@@ -113,6 +118,9 @@ public class BulkMutation {
     private final int maxRowKeyCount;
     private final long maxRequestSize;
 
+    private final Meter mutationMeter = BigtableClientMetrics.createMeter("BulkMutations.mutation.added.meter");
+    private final Meter mutationRetryMeter = BigtableClientMetrics.createMeter("BulkMutations.mutation.retry.meter");
+
     private RequestManager currentRequestManager;
     private Long retryId;
     private BackOff currentBackoff;
@@ -125,7 +133,7 @@ public class BulkMutation {
         ScheduledExecutorService retryExecutorService,
         int maxRowKeyCount,
         long maxRequestSize) {
-      this.currentRequestManager = new RequestManager(tableName);
+      this.currentRequestManager = new RequestManager(tableName, mutationMeter);
       this.asyncExecutor = asyncExecutor;
       this.retryOptions = retryOptions;
       this.retryExecutorService = retryExecutorService;
@@ -200,7 +208,7 @@ public class BulkMutation {
 
       try {
         String tableName = currentRequestManager.request.getTableName();
-        RequestManager retryRequestManager = new RequestManager(tableName);
+        RequestManager retryRequestManager = new RequestManager(tableName, mutationRetryMeter);
 
         handleResponses(backoffTime, entries, retryRequestManager);
         handleExtraFutures(backoffTime, retryRequestManager, entries);
@@ -224,6 +232,7 @@ public class BulkMutation {
       } else {
         LOG.info("Retrying failed call. Failure #%d, got: %s", t, failedCount++,
           io.grpc.Status.fromThrowable(t));
+        mutationRetryMeter.mark(currentRequestManager.futures.size());
         retryExecutorService.schedule(this, backoffMs, TimeUnit.MILLISECONDS);
       }
     }
@@ -370,6 +379,7 @@ public class BulkMutation {
   private final ScheduledExecutorService retryExecutorService;
   private final int maxRowKeyCount;
   private final long maxRequestSize;
+  private final Meter batchMeter = BigtableClientMetrics.createMeter("BulkMutations.batch.meter");
 
   /**
    * <p>Constructor for BulkMutation.</p>
@@ -408,6 +418,7 @@ public class BulkMutation {
    */
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
     if (currentBatch == null) {
+      batchMeter.mark();
       currentBatch =
           new Batch(
               tableName,

@@ -46,6 +46,8 @@ import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -183,6 +185,7 @@ public class BatchExecutor {
   protected final AsyncExecutor asyncExecutor;
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter requestAdapter;
+  protected final Timer batchTimer = BigtableClientMetrics.createTimer("BatchExecutor.batch.timer");
 
   /**
    * <p>Constructor for BatchExecutor.</p>
@@ -261,6 +264,7 @@ public class BatchExecutor {
     }
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must have same dimensions as actions list.");
+    Timer.Context timerContext = batchTimer.time();
     List<ListenableFuture<?>> resultFutures = issueAsyncRowRequests(actions, results, null);
     try {
       // Don't want to throw an exception for failed futures, instead the place in results is
@@ -284,6 +288,8 @@ public class BatchExecutor {
     } catch (ExecutionException e) {
       LOG.error("Encountered exception in batch(List<>, Object[]).", e);
       throw new IOException("Batch error", e);
+    } finally {
+      timerContext.close();
     }
   }
 
@@ -335,6 +341,7 @@ public class BatchExecutor {
       Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
     Preconditions.checkArgument(results.length == actions.size(),
         "Result array must be the same length as actions.");
+    Timer.Context timerContext = batchTimer.time();
     try {
       // Don't want to throw an exception for failed futures, instead the place in results is
       // set to null.
@@ -342,6 +349,8 @@ public class BatchExecutor {
     } catch (ExecutionException e) {
       LOG.error("Encountered exception in batchCallback(List<>, Object[], Batch.Callback). ", e);
       throw new IOException("batchCallback error", e);
+    } finally {
+      timerContext.close();
     }
   }
 

@@ -67,6 +67,8 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.common.base.Function;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
@@ -83,6 +85,12 @@ import com.google.protobuf.ServiceException;
 public class BigtableTable implements Table {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableTable.class);
+
+  private static class TableMetrics {
+    Timer putTimer = BigtableClientMetrics.createTimer("BigtableTable.put.timer");
+    Timer getTimer = BigtableClientMetrics.createTimer("BigtableTable.get.timer");
+    Timer scanCreateTimer = BigtableClientMetrics.createTimer("BigtableTable.scanCreate.timer");
+  }
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
   // them (which they shouldn't since we built the filter), throw an exception.
@@ -107,6 +115,7 @@ public class BigtableTable implements Table {
   protected final BigtableDataClient client;
   private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
+  private TableMetrics metrics = new TableMetrics();
 
   /**
    * Constructed by BigtableConnection
@@ -211,19 +220,23 @@ public class BigtableTable implements Table {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
+    Timer.Context timerContext = metrics.getTimer.time();
     try (com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v2.Row> scanner =
         client.readRows(hbaseAdapter.adapt(get))) {
       return Adapters.ROW_ADAPTER.adaptResponse(scanner.next());
     } catch (Throwable t) {
       throw logAndCreateIOException("get", get.getRow(), t);
+    } finally {
+      timerContext.close();
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
+    LOG.trace("getScanner(Scan)");
+    Timer.Context timerContext = metrics.scanCreateTimer.time();
     try {
-      LOG.trace("getScanner(Scan)");
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v2.Row> scanner =
           client.readRows(hbaseAdapter.adapt(scan));
       if (hasWhileMatchFilter(scan.getFilter())) {
@@ -238,6 +251,8 @@ public class BigtableTable implements Table {
               options.getProjectId(),
               tableName.getQualifierAsString()),
           throwable);
+    } finally {
+      timerContext.close();
     }
   }
 
@@ -277,11 +292,14 @@ public class BigtableTable implements Table {
   @Override
   public void put(Put put) throws IOException {
     LOG.trace("put(Put)");
+    Timer.Context timerContext = metrics.putTimer.time();
     MutateRowRequest request = hbaseAdapter.adapt(put);
     try {
       client.mutateRow(request);
     } catch (Throwable t) {
       throw logAndCreateIOException("put", put.getRow(), t);
+    } finally {
+      timerContext.close();
     }
   }
 
