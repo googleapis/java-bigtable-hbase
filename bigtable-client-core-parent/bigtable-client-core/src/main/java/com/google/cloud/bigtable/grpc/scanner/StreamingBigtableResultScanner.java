@@ -53,13 +53,13 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   /** {@inheritDoc} */
   @Override
   public Row next() throws IOException {
-    resultsMeter.mark();
     Timer.Context timerContext = resultsTimer.time();
-    try {
-      return responseQueueReader.getNextMergedRow();
-    } finally {
-      timerContext.close();
+    Row row = responseQueueReader.getNextMergedRow();
+    if (row != null) {
+      resultsMeter.mark();
     }
+    timerContext.close();
+    return row;
   }
 
   /** {@inheritDoc} */
