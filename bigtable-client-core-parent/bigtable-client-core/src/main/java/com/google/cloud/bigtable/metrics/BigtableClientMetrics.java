@@ -15,13 +15,7 @@
  */
 package com.google.cloud.bigtable.metrics;
 
-import com.codahale.metrics.Counting;
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Reporter;
-import com.codahale.metrics.Slf4jReporter;
-
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,177 +23,45 @@ import org.slf4j.LoggerFactory;
 /**
  * Singleton Container for a {@link MetricRegistry}. The default behavior is to return
  * implementations that do nothing. Exporting of metrics can be turned on by either adding TRACE
- * level logging for this class, which will write out all metrics to a log file, or via a call to
- * {@link BigtableClientMetrics#enable} followed by a programmatic configuration of reporters as per
- * the instructions on <a href="http://metrics.dropwizard.io/3.1.0/getting-started/">the Dropwizards
- * Metrics Getting Started docs</a>.
+ * level logging for this class, which will write out all metrics to a log file. Alternatively, call
+ * {@link BigtableClientMetrics#setMetricRegistry(MetricRegistry)}.
+ *
+ * <p>We provide a {@link DropwizardMetricRegistry} which can be configured with a variety of {@link
+ * Reporter}s as per the instructions on <a
+ * href="http://metrics.dropwizard.io/3.1.0/getting-started/">the Dropwizards Metrics Getting
+ * Started docs</a>.
+ *
+ * <p>{@link BigtableClientMetrics#setMetricRegistry(MetricRegistry)} must be called before any
+ * Cloud Bigtable connections are created.
+ *
  * @author sduskis
+ * @version $Id: $Id
  */
 public final class BigtableClientMetrics {
 
-  private static MetricRegistry CLIENT_STATS;
+  private static MetricRegistry registry = MetricRegistry.NULL_METRICS_REGISTRY;
 
+  /**
+   * Sets a {@link MetricRegistry} to be used in all Bigtable connection created after the call.
+   * NOTE: this will not update any existing connections.
+   * @param registry
+   */
+  public static void setMetricRegistry(MetricRegistry registry) {
+    BigtableClientMetrics.registry = registry;
+  }
+
+  public static MetricRegistry getMetricRegistry() {
+    return registry;
+  }
+  
   // Simplistic initialization via slf4j
   static {
-    // This adds a simple mechanism of enabling statistics via slf4j configuration.
-    // More complex configuration is available programmatically.
     Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
     if (logger.isTraceEnabled()) {
-      enable();
-      MetricFilter nonZeroMatcher = new MetricFilter() {
-        @Override
-        public boolean matches(String name, Metric metric) {
-          if (metric instanceof Counting) {
-            Counting counter = (Counting) metric;
-            return counter.getCount() > 0;
-          }
-          return true;
-        }
-      };
-      final Slf4jReporter reporter =
-          Slf4jReporter.forRegistry(getClientStats())
-              .outputTo(logger)
-              .convertRatesTo(TimeUnit.SECONDS)
-              .convertDurationsTo(TimeUnit.MILLISECONDS)
-              .filter(nonZeroMatcher)
-              .build();
-      reporter.start(5, TimeUnit.MINUTES);
-    }
-  }
-
-  // Null implementations of Counter and Timer
-
-  public static final Counter NULL_COUNTER = new Counter() {
-    @Override
-    public void inc() {
-    }
-
-    @Override
-    public void dec() {
-    }
-  };
-
-  public static final Timer NULL_TIMER = new Timer() {
-    private Context NULL_CONTEXT = new Context() {
-      @Override
-      public void close() {
-      }
-    };
-
-    @Override
-    public Context time() {
-      return NULL_CONTEXT;
-    }
-  };
-
-  public static final Meter NULL_METER = new Meter() {
-    @Override
-    public void mark() {
-    }
-
-    @Override
-    public void mark(long size) {
-    }
-  };
-
-  /**
-   * Turn on client statistics gathering. This does not set up any {@link Reporter}s. See
-   * <a href="http://metrics.dropwizard.io/3.1.0/getting-started/">the Dropwizards Metrics Getting
-   * Started docs</a> for reporter options.
-   */
-  public synchronized static void enable() {
-    if (CLIENT_STATS == null) {
-      CLIENT_STATS = new MetricRegistry();
-    }
-  }
-
-  /**
-   * Gets the client statistics.  May be null if {@link BigtableClientMetrics#enable()} was not called.
-   *
-   * @return a MetricRegistry that contains the client statistics
-   */
-  public static MetricRegistry getClientStats() {
-    return CLIENT_STATS;
-  }
-
-  /**
-   * Creates a named {@link Counter}.
-   *
-   * @param name
-   * @return a Dropwizard Metrics {@link com.codahale.metrics.Counter} or {@link BigtableClientMetrics#NULL_COUNTER}.
-   */
-  public static Counter createCounter(String name) {
-    if (getClientStats() != null) {
-      final com.codahale.metrics.Counter counter = getClientStats().counter(name);
-      return new Counter() {
-        @Override
-        public void inc() {
-          counter.inc();
-        }
-
-        @Override
-        public void dec() {
-          counter.dec();
-        }
-      };
-    } else {
-      return NULL_COUNTER;
-    }
-  }
-
-  /**
-   * Creates a named {@link Timer}.
-   *
-   * @param name
-   * @return a Dropwizard Metrics {@link com.codahale.metrics.Timer} or {@link BigtableClientMetrics#NULL_TIMER}.
-   */
-  public static Timer createTimer(String name) {
-    if (getClientStats() != null) {
-      final com.codahale.metrics.Timer timer = getClientStats().timer(name);
-      return new Timer() {
-
-        @Override
-        public Timer.Context time() {
-          final com.codahale.metrics.Timer.Context timerContext = timer.time();
-          return new Context() {
-            @Override
-            public void close() {
-              timerContext.close();
-            }
-          };
-        }
-      };
-    } else {
-      return NULL_TIMER;
-    }
-  }
-
-  /**
-   * Creates a named {@link Meter}.
-   *
-   * @param name
-   * @return a Dropwizard Metrics {@link com.codahale.metrics.Meter} or {@link BigtableClientMetrics#NULL_METER}.
-   */
-  public static Meter createMeter(String name) {
-    if (getClientStats() != null) {
-      final com.codahale.metrics.Meter meter = getClientStats().meter(name);
-      return new Meter() {
-        @Override
-        public void mark() {
-          meter.mark();
-        }
-
-        @Override
-        public void mark(long size) {
-          meter.mark(size);
-        }
-      };
-    } else {
-      return NULL_METER;
+      setMetricRegistry(DropwizardMetricRegistry.createSlf4jReporter(logger, 1, TimeUnit.MINUTES));
     }
   }
 
   private BigtableClientMetrics(){
   }
 }
-

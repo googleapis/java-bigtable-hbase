@@ -87,9 +87,10 @@ public class BigtableTable implements Table {
   protected static final Logger LOG = new Logger(BigtableTable.class);
 
   private static class TableMetrics {
-    Timer putTimer = BigtableClientMetrics.createTimer("BigtableTable.put.timer");
-    Timer getTimer = BigtableClientMetrics.createTimer("BigtableTable.get.timer");
-    Timer scanCreateTimer = BigtableClientMetrics.createTimer("BigtableTable.scanCreate.timer");
+    Timer putTimer = BigtableClientMetrics.getMetricRegistry().createTimer("BigtableTable.put.timer");
+    Timer getTimer = BigtableClientMetrics.getMetricRegistry().createTimer("BigtableTable.get.timer");
+    Timer scanCreateTimer =
+        BigtableClientMetrics.getMetricRegistry().createTimer("BigtableTable.scanCreate.timer");
   }
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of

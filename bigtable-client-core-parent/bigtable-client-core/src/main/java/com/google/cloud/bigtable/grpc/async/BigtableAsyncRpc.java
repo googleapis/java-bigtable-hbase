@@ -15,10 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-import static com.google.cloud.bigtable.metrics.BigtableClientMetrics.createCounter;
-import static com.google.cloud.bigtable.metrics.BigtableClientMetrics.createTimer;
-
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Counter;
+import com.google.cloud.bigtable.metrics.MetricRegistry;
 import com.google.cloud.bigtable.metrics.Timer;
 
 import io.grpc.CallOptions;
@@ -44,12 +43,13 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
 
     public static RpcMetrics createRpcMetrics(MethodDescriptor<?, ?> descriptor) {
       String fullMethodName = descriptor.getFullMethodName();
+      MetricRegistry registry = BigtableClientMetrics.getMetricRegistry();
       return new RpcMetrics(
-          createTimer(fullMethodName + ".operation.latency"),
-          createTimer(fullMethodName + ".rpc.latency"),
-          createCounter(fullMethodName + ".retry.count"),
-          createCounter(fullMethodName + ".failure.count"),
-          createCounter(fullMethodName + ".retries.exhausted.count")
+          registry.createTimer(fullMethodName + ".operation.latency"),
+          registry.createTimer(fullMethodName + ".rpc.latency"),
+          registry.createCounter(fullMethodName + ".retry.count"),
+          registry.createCounter(fullMethodName + ".failure.count"),
+          registry.createCounter(fullMethodName + ".retries.exhausted.count")
           );
     }
 
