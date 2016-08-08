@@ -95,7 +95,6 @@ public class ReadRowsRequestRetryHandler {
     this.logger = logger;
   }
 
-  /** {@inheritDoc} */
   public void update(Row result) throws IOException {
     if (result != null) {
       updateLastFoundKey(result.getKey());
