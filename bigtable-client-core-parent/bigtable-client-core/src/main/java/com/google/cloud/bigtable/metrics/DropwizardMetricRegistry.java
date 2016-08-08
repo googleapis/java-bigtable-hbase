@@ -13,7 +13,8 @@ import org.slf4j.Logger;
  */
 public class DropwizardMetricRegistry implements MetricRegistry {
 
-  private com.codahale.metrics.MetricRegistry registry;  
+  private final com.codahale.metrics.MetricRegistry registry =
+      new com.codahale.metrics.MetricRegistry();
 
   /**
    * Creates a {@link DropwizardMetricRegistry} with an {@link Slf4jReporter}.  Only non-zero metrics
