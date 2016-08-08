@@ -119,9 +119,9 @@ public class BulkMutation {
     private final long maxRequestSize;
 
     private final Meter mutationMeter =
-        BigtableClientMetrics.getRegistry().createMeter("BulkMutations.mutation.added.meter");
+        BigtableClientMetrics.getMetricRegistry().createMeter("BulkMutations.mutation.added.meter");
     private final Meter mutationRetryMeter =
-        BigtableClientMetrics.getRegistry().createMeter("BulkMutations.mutation.retry.meter");
+        BigtableClientMetrics.getMetricRegistry().createMeter("BulkMutations.mutation.retry.meter");
 
     private RequestManager currentRequestManager;
     private Long retryId;
@@ -382,7 +382,7 @@ public class BulkMutation {
   private final int maxRowKeyCount;
   private final long maxRequestSize;
   private final Meter batchMeter =
-      BigtableClientMetrics.getRegistry().createMeter("BulkMutations.batch.meter");
+      BigtableClientMetrics.getMetricRegistry().createMeter("BulkMutations.batch.meter");
 
   /**
    * <p>Constructor for BulkMutation.</p>

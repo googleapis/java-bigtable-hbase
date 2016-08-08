@@ -6,7 +6,6 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Slf4jReporter;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A {@link MetricRegistry} that wraps a Dropwizard Metrics {@link
@@ -16,33 +15,33 @@ public class DropwizardMetricRegistry implements MetricRegistry {
 
   private com.codahale.metrics.MetricRegistry registry;  
 
-  public static void initializeForLogging() {
+  public static DropwizardMetricRegistry createSlf4jReporter(
+      Logger logger, int minutesBetweenReport) {
     // This adds a simple mechanism of enabling statistics via slf4j configuration.
     // More complex configuration is available programmatically.
-    Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
-    if (logger.isTraceEnabled()) {
-      DropwizardMetricRegistry registry = new DropwizardMetricRegistry();
-      MetricFilter nonZeroMatcher = new MetricFilter() {
-        @Override
-        public boolean matches(String name, Metric metric) {
-          if (metric instanceof Counting) {
-            Counting counter = (Counting) metric;
-            return counter.getCount() > 0;
+    DropwizardMetricRegistry registry = new DropwizardMetricRegistry();
+    MetricFilter nonZeroMatcher =
+        new MetricFilter() {
+          @Override
+          public boolean matches(String name, Metric metric) {
+            if (metric instanceof Counting) {
+              Counting counter = (Counting) metric;
+              return counter.getCount() > 0;
+            }
+            return true;
           }
-          return true;
-        }
-      };
-      final Slf4jReporter reporter =
-          Slf4jReporter.forRegistry(registry.getRegistry())
-              .outputTo(logger)
-              .convertRatesTo(TimeUnit.SECONDS)
-              .convertDurationsTo(TimeUnit.MILLISECONDS)
-              .filter(nonZeroMatcher)
-              .build();
-      reporter.start(1, TimeUnit.MINUTES);
-    }
+        };
+    final Slf4jReporter reporter =
+        Slf4jReporter.forRegistry(registry.getRegistry())
+            .outputTo(logger)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .filter(nonZeroMatcher)
+            .build();
+    reporter.start(minutesBetweenReport, TimeUnit.MINUTES);
+    return registry;
   }
-  
+
   /**
    * Creates a named {@link Counter} that wraps a Dropwizard Metrics {@link
    * com.codahale.metrics.Counter}.

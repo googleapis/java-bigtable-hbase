@@ -15,33 +15,52 @@
  */
 package com.google.cloud.bigtable.metrics;
 
+import com.codahale.metrics.Reporter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Singleton Container for a {@link MetricRegistry}. The default behavior is to return
  * implementations that do nothing. Exporting of metrics can be turned on by either adding TRACE
- * level logging for this class, which will write out all metrics to a log file, or via a call to
- * {@link BigtableClientMetrics#setMetricRegistry(MetricRegistry)}, configuration of reporters as per
- * the instructions on <a href="http://metrics.dropwizard.io/3.1.0/getting-started/">the Dropwizards
- * Metrics Getting Started docs</a>.
+ * level logging for this class, which will write out all metrics to a log file. Alternatively, call
+ * {@link BigtableClientMetrics#setMetricRegistry(MetricRegistry)}.
+ *
+ * <p>We provide a {@link DropwizardMetricRegistry} which can be configured with a variety of {@link
+ * Reporter}s as per the instructions on <a
+ * href="http://metrics.dropwizard.io/3.1.0/getting-started/">the Dropwizards Metrics Getting
+ * Started docs</a>.
+ *
+ * <p>{@link BigtableClientMetrics#setMetricRegistry(MetricRegistry)} must be called before any
+ * Cloud Bigtable connections are created.
+ *
  * @author sduskis
+ * @version $Id: $Id
  */
 public final class BigtableClientMetrics {
 
   private static MetricRegistry registry = MetricRegistry.NULL_METRICS_REGISTRY;
 
+  /**
+   * Sets a {@link MetricRegistry} to be used in all Bigtable connection created after the call.
+   * NOTE: this will not update any existing connections.
+   * @param registry
+   */
   public static void setMetricRegistry(MetricRegistry registry) {
     BigtableClientMetrics.registry = registry;
   }
-  
-  public static MetricRegistry getRegistry() {
+
+  public static MetricRegistry getMetricRegistry() {
     return registry;
   }
   
   // Simplistic initialization via slf4j
   static {
-    DropwizardMetricRegistry.initializeForLogging();
+    Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
+    if (logger.isTraceEnabled()) {
+      setMetricRegistry(DropwizardMetricRegistry.createSlf4jReporter(logger, 1));
+    }
   }
 
   private BigtableClientMetrics(){
   }
 }
-

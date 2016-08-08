@@ -43,7 +43,7 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
 
     public static RpcMetrics createRpcMetrics(MethodDescriptor<?, ?> descriptor) {
       String fullMethodName = descriptor.getFullMethodName();
-      MetricRegistry registry = BigtableClientMetrics.getRegistry();
+      MetricRegistry registry = BigtableClientMetrics.getMetricRegistry();
       return new RpcMetrics(
           registry.createTimer(fullMethodName + ".operation.latency"),
           registry.createTimer(fullMethodName + ".rpc.latency"),

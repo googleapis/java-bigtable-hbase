@@ -78,7 +78,7 @@ public class ChannelPool extends ManagedChannel {
   protected synchronized static Counter getActiveChannelCounter() {
     if (ACTIVE_CHANNEL_COUNTER == null) {
       ACTIVE_CHANNEL_COUNTER =
-          BigtableClientMetrics.getRegistry().createCounter("ChannelPool.active.count");
+          BigtableClientMetrics.getMetricRegistry().createCounter("ChannelPool.active.count");
     }
     return ACTIVE_CHANNEL_COUNTER;
   }
@@ -98,7 +98,7 @@ public class ChannelPool extends ManagedChannel {
     public InstrumentedChannel(ManagedChannel channel) {
       this.delegate = channel;
       this.timer =
-          BigtableClientMetrics.getRegistry()
+          BigtableClientMetrics.getMetricRegistry()
               .createTimer(
                   "ChannelPool.channel." + ChannelIdGenerator.incrementAndGet() + ".latency");
       getActiveChannelCounter().inc();
