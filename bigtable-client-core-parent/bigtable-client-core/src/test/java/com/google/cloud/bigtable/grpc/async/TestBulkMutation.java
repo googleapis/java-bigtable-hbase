@@ -121,9 +121,8 @@ public class TestBulkMutation {
   @Test
   public void testAdd() {
     MutateRowRequest mutateRowRequest = createRequest();
-    BulkMutation.RequestManager requestManager =
-        new BulkMutation.RequestManager(TABLE_NAME, BigtableClientMetrics
-            .getMetricRegistry(MetricLevel.Trace).createMeter("test.bulk.meter"));
+    BulkMutation.RequestManager requestManager = new BulkMutation.RequestManager(TABLE_NAME,
+        BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk.meter"));
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
     MutateRowsRequest expected = MutateRowsRequest.newBuilder()
         .setTableName(TABLE_NAME)

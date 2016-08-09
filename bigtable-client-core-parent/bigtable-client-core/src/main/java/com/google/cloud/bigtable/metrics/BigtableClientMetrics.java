@@ -74,6 +74,37 @@ public final class BigtableClientMetrics {
   }
 
   /**
+   * Creates a named {@link Counter}. This is a shortcut for
+   * {@link BigtableClientMetrics#getMetricRegistry(MetricLevel)}.
+   * {@link MetricRegistry#counter(String)}.
+   *
+   * @return a {@link Counter}
+   */
+  public static Counter counter(MetricLevel level, String name) {
+    return getMetricRegistry(level).counter(name);
+  }
+
+  /** Creates a named {@link Timer}. This is a shortcut for
+   * {@link BigtableClientMetrics#getMetricRegistry(MetricLevel)}.
+   * {@link MetricRegistry#timer(String)}.
+   *
+   * @return a {@link Timer}
+   */
+  public static Timer timer(MetricLevel level, String name) {
+    return getMetricRegistry(level).timer(name);
+  }
+
+  /** Creates a named {@link Meter}.  This is a shortcut for
+   * {@link BigtableClientMetrics#getMetricRegistry(MetricLevel)}.
+   * {@link MetricRegistry#meter(String)}.
+   *
+   * @return a {@link Meter}
+   */
+  public static Meter meter(MetricLevel level, String name) {
+    return getMetricRegistry(level).meter(name);
+  }
+
+  /**
    * Set a level at which to log.  By default, the value is {@link MetricLevel#Info}.
    *
    * @param levelToLog

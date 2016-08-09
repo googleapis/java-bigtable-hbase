@@ -20,13 +20,13 @@ package com.google.cloud.bigtable.metrics;
  */
 public interface MetricRegistry {
   /** Creates a named {@link Counter}. */
-  Counter createCounter(String name);
+  Counter counter(String name);
 
   /** Creates a named {@link Timer}. */
-  Timer createTimer(String name);
+  Timer timer(String name);
 
   /** Creates a named {@link Meter}. */
-  Meter createMeter(String name);
+  Meter meter(String name);
 
   /**
    * An implementation of {@link MetricRegistry} that doesn't actually track metrics, but doesn't
@@ -68,17 +68,17 @@ public interface MetricRegistry {
             };
 
         @Override
-        public Timer createTimer(String name) {
+        public Timer timer(String name) {
           return NULL_TIMER;
         }
 
         @Override
-        public Meter createMeter(String name) {
+        public Meter meter(String name) {
           return NULL_METER;
         }
 
         @Override
-        public Counter createCounter(String name) {
+        public Counter counter(String name) {
           return NULL_COUNTER;
         }
       };
