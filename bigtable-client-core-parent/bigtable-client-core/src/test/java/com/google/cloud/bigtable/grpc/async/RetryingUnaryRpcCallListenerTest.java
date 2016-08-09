@@ -60,12 +60,12 @@ import io.grpc.StatusRuntimeException;
  */
 @RunWith(JUnit4.class)
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class RetryingUnaryRpcListenerTest {
+public class RetryingUnaryRpcCallListenerTest {
 
   private static final BigtableAsyncRpc.RpcMetrics metrics =
       BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.METHOD_READ_ROWS);
 
-  private RetryingUnaryRpcListener underTest;
+  private RetryingUnaryRpcCallListener underTest;
 
   @Mock
   private BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readAsync;
@@ -91,7 +91,7 @@ public class RetryingUnaryRpcListenerTest {
 
     when(readAsync.getRpcMetrics()).thenReturn(metrics);
 
-    underTest = new RetryingUnaryRpcListener<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
+    underTest = new RetryingUnaryRpcCallListener<>(retryOptions, ReadRowsRequest.getDefaultInstance(),
         readAsync, CallOptions.DEFAULT, executorService, new Metadata());
 
     totalSleep = new AtomicLong();

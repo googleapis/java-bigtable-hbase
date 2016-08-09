@@ -30,7 +30,7 @@ import io.grpc.StatusRuntimeException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class RetryingUnaryRpcListener<RequestT, ResponseT>
+public class RetryingUnaryRpcCallListener<RequestT, ResponseT>
     extends AbstractRetryingRpcListener<RequestT, ResponseT, ResponseT> {
   final static StatusRuntimeException NO_VALUE_SET_EXCEPTION =
       Status.INTERNAL.withDescription("No value received for unary call").asRuntimeException();
@@ -47,7 +47,7 @@ public class RetryingUnaryRpcListener<RequestT, ResponseT>
    * @param executorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param metadata a {@link io.grpc.Metadata} object.
    */
-  public RetryingUnaryRpcListener(RetryOptions retryOptions, RequestT request,
+  public RetryingUnaryRpcCallListener(RetryOptions retryOptions, RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc, CallOptions callOptions,
       ScheduledExecutorService executorService, Metadata metadata) {
     super(retryOptions, request, retryableRpc, callOptions, executorService, metadata);
