@@ -37,9 +37,7 @@ public final class BigtableZeroCopyByteStringUtil {
   /**
    * Extracts the byte array from the given {@link com.google.protobuf.ByteString} without copy.
    *
-   * @param buf A buffer from which to extract the array. This buffer must be an instance of a
-   *          {@code LiteralByteString} in order to be efficient. {@link com.google.protobuf.ByteString#toByteArray()}
-   *          will be called for all other implementations, including subclasses.
+   * @param buf A buffer from which to extract the array.
    * @return an array of byte.
    */
   public static byte[] zeroCopyGetBytes(final ByteString buf) {

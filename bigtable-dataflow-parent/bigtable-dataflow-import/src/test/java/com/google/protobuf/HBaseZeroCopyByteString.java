@@ -56,8 +56,7 @@ public final class HBaseZeroCopyByteString  {
 
   /**
    * Extracts the byte array from the given {@link ByteString} without copy.
-   * @param buf A buffer from which to extract the array.  This buffer must be
-   * actually an instance of a {@code LiteralByteString}.
+   * @param buf A buffer from which to extract the array.
    * @return byte[] representation
    */
   public static byte[] zeroCopyGetBytes(final ByteString buf) {
