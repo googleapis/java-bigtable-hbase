@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc.async;
 
-
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.api.client.util.BackOff;
 import com.google.bigtable.v2.MutateRowRequest;
@@ -119,9 +119,9 @@ public class BulkMutation {
     private final long maxRequestSize;
 
     private final Meter mutationMeter =
-        BigtableClientMetrics.getMetricRegistry().createMeter("BulkMutations.mutation.added.meter");
+        BigtableClientMetrics.meter(MetricLevel.Info, "BulkMutations.mutation.added.meter");
     private final Meter mutationRetryMeter =
-        BigtableClientMetrics.getMetricRegistry().createMeter("BulkMutations.mutation.retry.meter");
+        BigtableClientMetrics.meter(MetricLevel.Info, "BulkMutations.mutation.retry.meter");
 
     private RequestManager currentRequestManager;
     private Long retryId;
@@ -382,7 +382,7 @@ public class BulkMutation {
   private final int maxRowKeyCount;
   private final long maxRequestSize;
   private final Meter batchMeter =
-      BigtableClientMetrics.getMetricRegistry().createMeter("BulkMutations.batch.meter");
+      BigtableClientMetrics.meter(MetricLevel.Info, "BulkMutations.batch.meter");
 
   /**
    * <p>Constructor for BulkMutation.</p>

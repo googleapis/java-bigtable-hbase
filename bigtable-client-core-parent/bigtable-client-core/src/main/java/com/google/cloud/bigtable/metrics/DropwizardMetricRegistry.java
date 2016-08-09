@@ -61,7 +61,7 @@ public class DropwizardMetricRegistry implements MetricRegistry {
    * @return a {@link Counter} that wraps a Dropwizard Metrics {@link com.codahale.metrics.Counter}
    */
   @Override
-  public Counter createCounter(String name) {
+  public Counter counter(String name) {
     final com.codahale.metrics.Counter counter = registry.counter(name);
     return new Counter() {
       @Override
@@ -84,7 +84,7 @@ public class DropwizardMetricRegistry implements MetricRegistry {
    * @return a {@link Timer} that wraps a Dropwizard Metrics {@link com.codahale.metrics.Timer}
    */
   @Override
-  public Timer createTimer(String name) {
+  public Timer timer(String name) {
     final com.codahale.metrics.Timer timer = registry.timer(name);
     return new Timer() {
 
@@ -109,7 +109,7 @@ public class DropwizardMetricRegistry implements MetricRegistry {
    * @return a {@link Meter} that wraps a Dropwizard Metrics {@link com.codahale.metrics.Meter}
    */
   @Override
-  public Meter createMeter(String name) {
+  public Meter meter(String name) {
     final com.codahale.metrics.Meter meter = registry.meter(name);
     return new Meter() {
       @Override
