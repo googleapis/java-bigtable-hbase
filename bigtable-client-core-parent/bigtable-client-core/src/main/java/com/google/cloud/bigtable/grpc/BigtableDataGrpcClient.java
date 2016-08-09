@@ -48,7 +48,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.async.RetryingCollectingClientCallListener;
-import com.google.cloud.bigtable.grpc.async.RetryingUnaryRpcListener;
+import com.google.cloud.bigtable.grpc.async.RetryingUnaryRpcCallListener;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingRpcListener;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
@@ -343,10 +343,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     return getBlockingResult(createUnaryListener(request, rpc, tableName));
   }
 
-  private <ReqT, RespT> RetryingUnaryRpcListener<ReqT, RespT> createUnaryListener(ReqT request,
+  private <ReqT, RespT> RetryingUnaryRpcCallListener<ReqT, RespT> createUnaryListener(ReqT request,
       BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    return new RetryingUnaryRpcListener<>(retryOptions, request, rpc, getCallOptions(request, rpc),
-        retryExecutorService, createMetadata(tableName));
+    return new RetryingUnaryRpcCallListener<>(retryOptions, request, rpc,
+        getCallOptions(request, rpc), retryExecutorService, createMetadata(tableName));
   }
 
   private <ReqT, RespT> RetryingCollectingClientCallListener<ReqT, RespT>
