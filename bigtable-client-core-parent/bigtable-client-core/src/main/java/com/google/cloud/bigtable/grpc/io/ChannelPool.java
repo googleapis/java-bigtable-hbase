@@ -27,6 +27,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Counter;
 import com.google.cloud.bigtable.metrics.Timer;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer.Context;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -77,8 +78,8 @@ public class ChannelPool extends ManagedChannel {
    */
   protected synchronized static Counter getActiveChannelCounter() {
     if (ACTIVE_CHANNEL_COUNTER == null) {
-      ACTIVE_CHANNEL_COUNTER =
-          BigtableClientMetrics.getMetricRegistry().createCounter("ChannelPool.active.count");
+      ACTIVE_CHANNEL_COUNTER = BigtableClientMetrics.getMetricRegistry(MetricLevel.Info)
+          .createCounter("ChannelPool.active.count");
     }
     return ACTIVE_CHANNEL_COUNTER;
   }
@@ -98,7 +99,7 @@ public class ChannelPool extends ManagedChannel {
     public InstrumentedChannel(ManagedChannel channel) {
       this.delegate = channel;
       this.timer =
-          BigtableClientMetrics.getMetricRegistry()
+          BigtableClientMetrics.getMetricRegistry(MetricLevel.Trace)
               .createTimer(
                   "ChannelPool.channel." + ChannelIdGenerator.incrementAndGet() + ".latency");
       getActiveChannelCounter().inc();

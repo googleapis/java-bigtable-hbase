@@ -52,6 +52,7 @@ import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -121,8 +122,8 @@ public class TestBulkMutation {
   public void testAdd() {
     MutateRowRequest mutateRowRequest = createRequest();
     BulkMutation.RequestManager requestManager =
-        new BulkMutation.RequestManager(
-            TABLE_NAME, BigtableClientMetrics.getMetricRegistry().createMeter("test.bulk.meter"));
+        new BulkMutation.RequestManager(TABLE_NAME, BigtableClientMetrics
+            .getMetricRegistry(MetricLevel.Trace).createMeter("test.bulk.meter"));
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
     MutateRowsRequest expected = MutateRowsRequest.newBuilder()
         .setTableName(TABLE_NAME)

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.metrics.BigtableClientMetrics.getMetricRegistry;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,7 +68,7 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.common.base.Function;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.ByteString;
@@ -87,10 +88,10 @@ public class BigtableTable implements Table {
   protected static final Logger LOG = new Logger(BigtableTable.class);
 
   private static class TableMetrics {
-    Timer putTimer = BigtableClientMetrics.getMetricRegistry().createTimer("BigtableTable.put.timer");
-    Timer getTimer = BigtableClientMetrics.getMetricRegistry().createTimer("BigtableTable.get.timer");
+    Timer putTimer = getMetricRegistry(MetricLevel.Info).createTimer("BigtableTable.put.timer");
+    Timer getTimer = getMetricRegistry(MetricLevel.Info).createTimer("BigtableTable.get.timer");
     Timer scanCreateTimer =
-        BigtableClientMetrics.getMetricRegistry().createTimer("BigtableTable.scanCreate.timer");
+        getMetricRegistry(MetricLevel.Trace).createTimer("BigtableTable.scanCreate.timer");
   }
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of

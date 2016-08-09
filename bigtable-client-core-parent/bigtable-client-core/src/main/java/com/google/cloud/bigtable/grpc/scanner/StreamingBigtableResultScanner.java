@@ -15,13 +15,15 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import static com.google.cloud.bigtable.metrics.BigtableClientMetrics.getMetricRegistry;
+
 import java.io.IOException;
 
 import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.base.Preconditions;
 
 /**
@@ -35,9 +37,9 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   private final CancellationToken cancellationToken;
   private final ResponseQueueReader responseQueueReader;
   private final Meter resultsMeter =
-      BigtableClientMetrics.getMetricRegistry().createMeter("scanner.results.meter");
+      getMetricRegistry(MetricLevel.Info).createMeter("scanner.results.meter");
   private final Timer resultsTimer =
-      BigtableClientMetrics.getMetricRegistry().createTimer("scanner.results.timer");
+      getMetricRegistry(MetricLevel.Debug).createTimer("scanner.results.timer");
 
   /**
    * <p>Constructor for StreamingBigtableResultScanner.</p>

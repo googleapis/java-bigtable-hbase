@@ -40,6 +40,21 @@ import org.slf4j.LoggerFactory;
 public final class BigtableClientMetrics {
 
   private static MetricRegistry registry = MetricRegistry.NULL_METRICS_REGISTRY;
+  private static MetricLevel levelToLog = MetricLevel.Info;
+
+  public enum MetricLevel {
+    Info(1), Debug(2), Trace(3);
+
+    private final int level;
+
+    MetricLevel(int level) {
+      this.level = level;
+    }
+
+    public int getLevel() {
+      return level;
+    }
+  }
 
   /**
    * Sets a {@link MetricRegistry} to be used in all Bigtable connection created after the call.
@@ -50,14 +65,27 @@ public final class BigtableClientMetrics {
     BigtableClientMetrics.registry = registry;
   }
 
-  public static MetricRegistry getMetricRegistry() {
-    return registry;
+  public static MetricRegistry getMetricRegistry(MetricLevel level) {
+    if (levelToLog.getLevel() <= level.getLevel()) {
+      return registry;
+    } else {
+      return MetricRegistry.NULL_METRICS_REGISTRY;
+    }
   }
-  
+
+  /**
+   * Set a level at which to log.  By default, the value is {@link MetricLevel#Info}.
+   *
+   * @param levelToLog
+   */
+  public static void setLevelToLog(MetricLevel levelToLog) {
+    BigtableClientMetrics.levelToLog = levelToLog;
+  }
+
   // Simplistic initialization via slf4j
   static {
     Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
-    if (logger.isTraceEnabled()) {
+    if (logger.isDebugEnabled()) {
       setMetricRegistry(DropwizardMetricRegistry.createSlf4jReporter(logger, 1, TimeUnit.MINUTES));
     }
   }

@@ -48,6 +48,7 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Timer;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -185,8 +186,8 @@ public class BatchExecutor {
   protected final AsyncExecutor asyncExecutor;
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter requestAdapter;
-  protected final Timer batchTimer =
-      BigtableClientMetrics.getMetricRegistry().createTimer("BatchExecutor.batch.timer");
+  protected final Timer batchTimer = BigtableClientMetrics.getMetricRegistry(MetricLevel.Debug)
+      .createTimer("BatchExecutor.batch.timer");
 
   /**
    * <p>Constructor for BatchExecutor.</p>
