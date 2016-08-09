@@ -71,7 +71,7 @@ public class ReadRowsRequestRetryHandler {
    * </p>
    * @param retryOptions a {@link RetryOptions} object.
    * @param originalRequest a {@link ReadRowsRequest} object.
-   * @param rpcMetrics a {@link BigtableAsyncRpc.RpcMetrics} object to keep track of retries and
+   * @param rpcMetrics a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics} object to keep track of retries and
    *          failures.
    * @param logger a {@link Logger} to log info messages about the state of retries.
    */
