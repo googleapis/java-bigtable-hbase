@@ -47,8 +47,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ReadRowsRequestRetryHandler {
 
-  private static final Logger LOG = new Logger(ReadRowsRequestRetryHandler.class);
-
   // Member variables from the constructor.
   private final RetryOptions retryOptions;
   private final ReadRowsRequest originalRequest;
@@ -68,27 +66,17 @@ public class ReadRowsRequestRetryHandler {
   private ByteString lastFoundKey;
 
   /**
-   * <p>Constructor for ResumingStreamingResultScanner.</p>
-   *
-   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
-   * @param originalRequest a {@link com.google.bigtable.v2.ReadRowsRequest} object.
-   * @param scannerFactory a {@link com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory} object.
-   * @param rpcMetrics a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics} object to keep track of retries and failures.
+   * <p>
+   * Constructor for ResumingStreamingResultScanner.
+   * </p>
+   * @param retryOptions a {@link RetryOptions} object.
+   * @param originalRequest a {@link ReadRowsRequest} object.
+   * @param rpcMetrics a {@link BigtableAsyncRpc.RpcMetrics} object to keep track of retries and
+   *          failures.
+   * @param logger a {@link Logger} to log info messages about the state of retries.
    */
-  public ReadRowsRequestRetryHandler(
-    RetryOptions retryOptions,
-    ReadRowsRequest originalRequest,
-    BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory,
-    RpcMetrics rpcMetrics) {
-    this(retryOptions, originalRequest, scannerFactory, rpcMetrics, LOG);
-  }
-
-  ReadRowsRequestRetryHandler(
-      RetryOptions retryOptions,
-      ReadRowsRequest originalRequest,
-      BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory,
-      RpcMetrics rpcMetrics,
-      Logger logger) {
+  public ReadRowsRequestRetryHandler(RetryOptions retryOptions, ReadRowsRequest originalRequest,
+      RpcMetrics rpcMetrics, Logger logger) {
     this.originalRequest = originalRequest;
     this.retryOptions = retryOptions;
     this.rpcMetrics = rpcMetrics;

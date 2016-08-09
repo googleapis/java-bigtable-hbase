@@ -71,7 +71,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
       RpcMetrics rpcMetrics,
       Logger logger) {
     this.retryHandler = new ReadRowsRequestRetryHandler(retryOptions, originalRequest,
-        scannerFactory, rpcMetrics, logger);
+        rpcMetrics, logger);
     this.scannerFactory = scannerFactory;
     this.currentDelegate = scannerFactory.createScanner(originalRequest);
     this.logger = logger;

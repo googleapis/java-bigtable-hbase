@@ -126,7 +126,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
     // Non retry scenario
     if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)
-        || !rpc.isRetryable(request)) {
+        || !rpc.isRetryable(getRetryRequest())) {
       this.rpc.getRpcMetrics().incrementFailureCount();
       this.operationTimerContext.close();
       completionFuture.setException(status.asRuntimeException());
@@ -203,7 +203,11 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     this.rpcTimerContext = this.rpc.getRpcMetrics().timeRpc();
     Metadata metadata = new Metadata();
     metadata.merge(originalMetadata);
-    this.call = rpc.call(request, this, callOptions, metadata);
+    this.call = rpc.call(getRetryRequest(), this, callOptions, metadata);
+  }
+
+  protected RequestT getRetryRequest() {
+    return request;
   }
 
   public void start() {
