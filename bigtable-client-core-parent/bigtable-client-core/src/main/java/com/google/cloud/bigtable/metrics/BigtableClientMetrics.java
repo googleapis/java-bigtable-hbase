@@ -113,6 +113,11 @@ public final class BigtableClientMetrics {
     BigtableClientMetrics.levelToLog = levelToLog;
   }
 
+  /** @return the levelToLog */
+  public static MetricLevel getLevelToLog() {
+    return levelToLog;
+  }
+
   // Simplistic initialization via slf4j
   static {
     Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
