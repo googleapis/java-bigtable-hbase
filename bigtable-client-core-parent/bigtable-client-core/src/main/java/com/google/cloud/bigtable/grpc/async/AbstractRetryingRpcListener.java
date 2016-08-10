@@ -139,7 +139,6 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
     // Backoffs timed out.
     if (nextBackOff == BackOff.STOP) {
-      operationTimerContext.close();
       this.rpc.getRpcMetrics().incrementRetriesExhastedCounter();
       this.operationTimerContext.close();
 
