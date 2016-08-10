@@ -66,7 +66,7 @@ public final class BigtableClientMetrics {
   }
 
   public static MetricRegistry getMetricRegistry(MetricLevel level) {
-    if (levelToLog.getLevel() <= level.getLevel()) {
+    if (levelToLog.getLevel() >= level.getLevel()) {
       return registry;
     } else {
       return MetricRegistry.NULL_METRICS_REGISTRY;
