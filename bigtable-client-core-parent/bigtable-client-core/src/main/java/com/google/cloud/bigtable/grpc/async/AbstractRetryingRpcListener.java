@@ -194,15 +194,17 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
   /**
    * {@inheritDoc}
    *
-   * Calls {@link BigtableAsyncRpc#call} with this as the listener so that
-   * retries happen correctly.
+   * <p>Calls {@link BigtableAsyncRpc#newCall(CallOptions)} and {@link
+   * BigtableAsyncRpc#start(ClientCall, Object, io.grpc.ClientCall.Listener, Metadata)} with this as
+   * the listener so that retries happen correctly.
    */
   @Override
   public void run() {
     this.rpcTimerContext = this.rpc.getRpcMetrics().timeRpc();
     Metadata metadata = new Metadata();
     metadata.merge(originalMetadata);
-    this.call = rpc.call(getRetryRequest(), this, callOptions, metadata);
+    this.call = rpc.newCall(callOptions);
+    rpc.start(this.call, getRetryRequest(), this, metadata);
   }
 
   protected RequestT getRetryRequest() {

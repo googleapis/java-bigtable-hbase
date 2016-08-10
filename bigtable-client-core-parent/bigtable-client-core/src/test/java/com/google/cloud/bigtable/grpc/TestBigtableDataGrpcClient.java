@@ -131,6 +131,7 @@ public class TestBigtableDataGrpcClient {
     when(mockAsyncUtilities.createAsyncRpc(any(MethodDescriptor.class), any(Predicate.class)))
         .thenAnswer(answer);
 
+    when(mockBigtableRpc.newCall(any(CallOptions.class))).thenReturn(mockClientCall);
     tableMetadata = new Metadata();
     tableMetadata.put(GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY, TABLE_NAME);
   }
@@ -231,20 +232,18 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testSingleRowRead() {
-    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder();
+    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
     requestBuilder.getRowsBuilder().addRowKeys(ByteString.copyFrom(new byte[0]));
     createClient(false).readRows(requestBuilder.build());
-    verify(mockChannelPool, times(1)).newCall(same(BigtableGrpc.METHOD_READ_ROWS),
-      same(CallOptions.DEFAULT));
+    verifyRequestCalled(requestBuilder.build());
   }
 
   @Test
   public void testMultiRowRead() {
-    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder();
+    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
     requestBuilder.getRowsBuilder().addRowRanges(RowRange.getDefaultInstance());
     createClient(false).readRows(requestBuilder.build());
-    verify(mockChannelPool, times(1)).newCall(same(BigtableGrpc.METHOD_READ_ROWS),
-      same(CallOptions.DEFAULT));
+    verifyRequestCalled(requestBuilder.build());
   }
 
   private void setResponse(final Object response) {
@@ -252,7 +251,7 @@ public class TestBigtableDataGrpcClient {
         new Answer<Void>() {
           @Override
           public Void answer(InvocationOnMock invocation) throws Throwable {
-            invocation.getArgumentAt(1, ClientCall.Listener.class).onMessage(response);
+            invocation.getArgumentAt(2, ClientCall.Listener.class).onMessage(response);
             Metadata metadata = invocation.getArgumentAt(3, Metadata.class);
             interceptor.updateHeaders(metadata);
             String headerValue =
@@ -263,15 +262,20 @@ public class TestBigtableDataGrpcClient {
         };
     doAnswer(answer)
         .when(mockBigtableRpc)
-        .call(any(), any(ClientCall.Listener.class), any(CallOptions.class), any(Metadata.class));
+        .start(same(mockClientCall),
+            any(),
+            any(ClientCall.Listener.class), 
+            any(Metadata.class));
   }
 
   private void verifyRequestCalled(Object request) {
     verify(mockBigtableRpc, times(1))
-        .call(
+        .newCall(any(CallOptions.class));
+    verify(mockBigtableRpc, times(1))
+        .start(
+            same(mockClientCall),
             eq(request),
             any(ClientCall.Listener.class),
-            any(CallOptions.class),
             any(Metadata.class));
   }
 }
