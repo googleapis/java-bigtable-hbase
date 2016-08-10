@@ -202,25 +202,27 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     this.asyncUtilities = asyncUtilities;
 
     this.sampleRowKeysAsync =
-        asyncUtilities.createStreamingAsyncRpc(
-            BigtableGrpc.METHOD_SAMPLE_ROW_KEYS);
+        asyncUtilities.createAsyncRpc(
+             BigtableGrpc.METHOD_SAMPLE_ROW_KEYS,
+             Predicates.<SampleRowKeysRequest> alwaysTrue());
     this.readRowsAsync =
-        asyncUtilities.createStreamingAsyncRpc(
-            BigtableGrpc.METHOD_READ_ROWS);
+        asyncUtilities.createAsyncRpc(
+            BigtableGrpc.METHOD_READ_ROWS,
+            Predicates.<ReadRowsRequest> alwaysTrue());
     this.mutateRowRpc =
-        asyncUtilities.createAsyncUnaryRpc(
+        asyncUtilities.createAsyncRpc(
             BigtableGrpc.METHOD_MUTATE_ROW,
             getMutationRetryableFunction(IS_RETRYABLE_MUTATION));
     this.mutateRowsRpc =
-        asyncUtilities.createAsyncUnaryRpc(
+        asyncUtilities.createAsyncRpc(
             BigtableGrpc.METHOD_MUTATE_ROWS,
             getMutationRetryableFunction(ARE_RETRYABLE_MUTATIONS));
     this.checkAndMutateRpc =
-        asyncUtilities.createAsyncUnaryRpc(
+        asyncUtilities.createAsyncRpc(
             BigtableGrpc.METHOD_CHECK_AND_MUTATE_ROW,
             getMutationRetryableFunction(IS_RETRYABLE_CHECK_AND_MUTATE));
     this.readWriteModifyRpc =
-        asyncUtilities.createAsyncUnaryRpc(
+        asyncUtilities.createAsyncRpc(
             BigtableGrpc.METHOD_READ_MODIFY_WRITE_ROW,
             Predicates.<ReadModifyWriteRowRequest> alwaysFalse());
   }

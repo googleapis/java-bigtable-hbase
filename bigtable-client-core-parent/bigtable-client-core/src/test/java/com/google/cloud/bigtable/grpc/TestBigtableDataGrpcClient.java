@@ -128,9 +128,7 @@ public class TestBigtableDataGrpcClient {
             return mockBigtableRpc;
           }
         };
-    when(mockAsyncUtilities.createAsyncUnaryRpc(any(MethodDescriptor.class), any(Predicate.class)))
-        .thenAnswer(answer);
-    when(mockAsyncUtilities.createStreamingAsyncRpc(any(MethodDescriptor.class)))
+    when(mockAsyncUtilities.createAsyncRpc(any(MethodDescriptor.class), any(Predicate.class)))
         .thenAnswer(answer);
 
     tableMetadata = new Metadata();

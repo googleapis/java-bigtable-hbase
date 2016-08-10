@@ -35,17 +35,6 @@ import io.grpc.MethodDescriptor;
 public interface BigtableAsyncUtilities {
 
   /**
-   * <p>createStreamingAsyncRpc.</p>
-   *
-   * @param method a {@link io.grpc.MethodDescriptor} object.
-   * @param <RequestT> a RequestT object.
-   * @param <ResponseT> a ResponseT object.
-   * @return a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
-   */
-  <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createStreamingAsyncRpc(
-      MethodDescriptor<RequestT, ResponseT> method);
-
-  /**
    * <p>createAsyncUnaryRpc.</p>
    *
    * @param method a {@link io.grpc.MethodDescriptor} object.
@@ -54,7 +43,7 @@ public interface BigtableAsyncUtilities {
    * @param <ResponseT> a ResponseT object.
    * @return a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
    */
-  <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncUnaryRpc(
+  <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncRpc(
       MethodDescriptor<RequestT, ResponseT> method, Predicate<RequestT> isRetryable);
 
   /**
@@ -78,49 +67,21 @@ public interface BigtableAsyncUtilities {
     }
 
     @Override
-    public <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncUnaryRpc(
+    public <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncRpc(
         final MethodDescriptor<RequestT, ResponseT> method, final Predicate<RequestT> isRetryable) {
       final BigtableAsyncRpc.RpcMetrics metrics = RpcMetrics.createRpcMetrics(method);
       return new BigtableAsyncRpc<RequestT, ResponseT>() {
         @Override
         public ClientCall<RequestT, ResponseT> call(RequestT request,
             ClientCall.Listener<ResponseT> listener, CallOptions callOptions, Metadata metadata) {
-          return createCall(channel, callOptions, method, request, listener, 1, metadata);
+          ClientCall<RequestT, ResponseT> call = channel.newCall(method, callOptions);
+          start(call, request, listener, 1, metadata);
+          return call;
         }
 
         @Override
         public boolean isRetryable(RequestT request) {
           return isRetryable.apply(request);
-        }
-
-        @Override
-        public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
-          return method;
-        }
-
-        @Override
-        public BigtableAsyncRpc.RpcMetrics getRpcMetrics() {
-          return metrics;
-        }
-      };
-    }
-
-    @Override
-    public <RequestT, ResponseT>
-        BigtableAsyncRpc<RequestT, ResponseT> createStreamingAsyncRpc(
-            final MethodDescriptor<RequestT, ResponseT> method) {
-      final BigtableAsyncRpc.RpcMetrics metrics = RpcMetrics.createRpcMetrics(method);
-      return new BigtableAsyncRpc<RequestT, ResponseT>() {
-
-        @Override
-        public boolean isRetryable(RequestT request) {
-          return true;
-        }
-
-        @Override
-        public ClientCall<RequestT, ResponseT> call(RequestT request,
-            ClientCall.Listener<ResponseT> listener, CallOptions callOptions, Metadata metadata) {
-          return createCall(channel, callOptions, method, request, listener, 1, metadata);
         }
 
         @Override
@@ -143,14 +104,6 @@ public interface BigtableAsyncUtilities {
       //
       // See ClientCalls.startCall() for more information.
       start(call, request, listener, 1, metadata);
-    }
-
-    private <RequestT, ResponseT> ClientCall<RequestT, ResponseT> createCall(Channel channel,
-        CallOptions callOptions, MethodDescriptor<RequestT, ResponseT> method, RequestT request,
-        ClientCall.Listener<ResponseT> listener, int count, Metadata metadata) {
-      ClientCall<RequestT, ResponseT> call = channel.newCall(method, callOptions);
-      start(call, request, listener, count, metadata);
-      return call;
     }
 
     private static <RequestT, ResponseT> void start(ClientCall<RequestT, ResponseT> call,
