@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
 
 @RunWith(JUnit4.class)
 public class TestKeyOnlyFilterAdapter {
@@ -37,7 +38,10 @@ public class TestKeyOnlyFilterAdapter {
   public void stripValuesIsApplied() throws IOException {
     KeyOnlyFilter filter = new KeyOnlyFilter();
     RowFilter rowFilter = filterAdapter.adapt(emptyScanContext, filter);
-    Assert.assertTrue(rowFilter.getStripValueTransformer());
+    Chain chain = rowFilter.getChain();
+    Assert.assertTrue(
+        chain.getFilters(0).getStripValueTransformer()
+            || chain.getFilters(1).getStripValueTransformer());
   }
 
   @Test
