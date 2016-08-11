@@ -42,13 +42,13 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
     private final Counter retriesExhastedCounter;
 
     public static RpcMetrics createRpcMetrics(MethodDescriptor<?, ?> descriptor) {
-      String fullMethodName = descriptor.getFullMethodName();
+      String prefix = "BigtableGrpc." + descriptor.getFullMethodName().split("/")[1];
       return new RpcMetrics(
-          BigtableClientMetrics.timer(MetricLevel.Info, fullMethodName + ".operation.latency"),
-          BigtableClientMetrics.timer(MetricLevel.Debug, fullMethodName + ".rpc.latency"),
-          BigtableClientMetrics.counter(MetricLevel.Info, fullMethodName + ".retry.count"),
-          BigtableClientMetrics.counter(MetricLevel.Info, fullMethodName + ".failure.count"),
-          BigtableClientMetrics.counter(MetricLevel.Info, fullMethodName + ".retries.exhausted.count"));
+          BigtableClientMetrics.timer(MetricLevel.Info, prefix + ".operation.latency"),
+          BigtableClientMetrics.timer(MetricLevel.Debug, prefix + ".rpc.latency"),
+          BigtableClientMetrics.counter(MetricLevel.Info, prefix + ".retries.performed"),
+          BigtableClientMetrics.counter(MetricLevel.Info, prefix + ".failure"),
+          BigtableClientMetrics.counter(MetricLevel.Info, prefix + ".retries.exhausted"));
     }
 
     private RpcMetrics(Timer operationTimer, Timer rpcTimer, Counter retryCounter,

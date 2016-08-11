@@ -63,6 +63,4 @@ public class BigtableConnection extends AbstractBigtableConnection {
         getBigtableTableAdminClient(), getDisabledTables()) {
     };
   }
-
-  
 }
