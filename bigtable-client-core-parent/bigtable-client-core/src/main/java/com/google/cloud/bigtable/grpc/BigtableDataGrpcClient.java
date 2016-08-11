@@ -160,7 +160,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         }
       };
 
-  private final BigtableAsyncUtilities asyncUtilities;
   private CallOptionsFactory callOptionsFactory = new CallOptionsFactory.Default();
 
   private final BigtableAsyncRpc<SampleRowKeysRequest, SampleRowKeysResponse> sampleRowKeysAsync;
@@ -199,7 +198,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     this.retryExecutorService = retryExecutorService;
     this.bigtableOptions = bigtableOptions;
     this.retryOptions = bigtableOptions.getRetryOptions();
-    this.asyncUtilities = asyncUtilities;
 
     this.sampleRowKeysAsync =
         asyncUtilities.createAsyncRpc(
@@ -415,25 +413,22 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
     expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
 
-    ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
-        channelPool.newCall(BigtableGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
+    // TODO: This should use getCallOptions(ReqT request, BigtableAsyncRpc<ReqT, ?> rpc) for Gets.
+    CallOptions callOptions = CallOptions.DEFAULT;
+    ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall = readRowsAsync.newCall(callOptions);
 
-    return new StreamingBigtableResultScanner(
-        createReader(request, readRowsCall),
-        createCancellationToken(readRowsCall, timerContext));
-  }
+    ResponseQueueReader reader =
+        new ResponseQueueReader(
+            retryOptions.getReadPartialRowTimeoutMillis(), retryOptions.getStreamingBufferSize());
 
-  protected ResponseQueueReader createReader(ReadRowsRequest request,
-      ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall) {
-    ResponseQueueReader responseQueueReader = new ResponseQueueReader(
-        retryOptions.getReadPartialRowTimeoutMillis(), retryOptions.getStreamingBufferSize());
-
-    StreamObserver<ReadRowsResponse> rowMerger = new RowMerger(responseQueueReader);
+    StreamObserver<ReadRowsResponse> rowMerger = new RowMerger(reader);
     ClientCall.Listener<ReadRowsResponse> listener =
         new StreamObserverAdapter<>(readRowsCall, rowMerger);
-    asyncUtilities.asyncServerStreamingCall(readRowsCall, request, listener,
-      createMetadata(request.getTableName()));
-    return responseQueueReader;
+
+    readRowsAsync.start(readRowsCall, request, listener, createMetadata(request.getTableName()));
+
+    CancellationToken cancellationToken = createCancellationToken(readRowsCall, timerContext);
+    return new StreamingBigtableResultScanner(reader, cancellationToken);
   }
 
   private CancellationToken createCancellationToken(

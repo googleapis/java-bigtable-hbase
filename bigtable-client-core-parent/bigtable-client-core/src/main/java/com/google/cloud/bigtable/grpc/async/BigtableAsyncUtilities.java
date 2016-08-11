@@ -23,6 +23,7 @@ import com.google.common.base.Throwables;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
@@ -46,19 +47,6 @@ public interface BigtableAsyncUtilities {
   <RequestT, ResponseT> BigtableAsyncRpc<RequestT, ResponseT> createAsyncRpc(
       MethodDescriptor<RequestT, ResponseT> method, Predicate<RequestT> isRetryable);
 
-  /**
-   * <p>asyncServerStreamingCall.</p>
-   *
-   * @param call a {@link io.grpc.ClientCall} object.
-   * @param request a RequestT object.
-   * @param listener a {@link io.grpc.ClientCall.Listener} object.
-   * @param metadata a {@link io.grpc.Metadata} object.
-   * @param <RequestT> a RequestT object.
-   * @param <ResponseT> a ResponseT object.
-   */
-  <RequestT, ResponseT> void asyncServerStreamingCall(ClientCall<RequestT, ResponseT> call,
-      RequestT request, ClientCall.Listener<ResponseT> listener, Metadata metadata);
-
   public static class Default implements BigtableAsyncUtilities {
     private final Channel channel;
 
@@ -71,14 +59,6 @@ public interface BigtableAsyncUtilities {
         final MethodDescriptor<RequestT, ResponseT> method, final Predicate<RequestT> isRetryable) {
       final BigtableAsyncRpc.RpcMetrics metrics = RpcMetrics.createRpcMetrics(method);
       return new BigtableAsyncRpc<RequestT, ResponseT>() {
-        @Override
-        public ClientCall<RequestT, ResponseT> call(RequestT request,
-            ClientCall.Listener<ResponseT> listener, CallOptions callOptions, Metadata metadata) {
-          ClientCall<RequestT, ResponseT> call = channel.newCall(method, callOptions);
-          start(call, request, listener, 1, metadata);
-          return call;
-        }
-
         @Override
         public boolean isRetryable(RequestT request) {
           return isRetryable.apply(request);
@@ -93,36 +73,34 @@ public interface BigtableAsyncUtilities {
         public BigtableAsyncRpc.RpcMetrics getRpcMetrics() {
           return metrics;
         }
+
+        @Override
+        public ClientCall<RequestT, ResponseT> newCall(CallOptions callOptions) {
+          return channel.newCall(method, callOptions);
+        }
+
+        @Override
+        public void start(
+            ClientCall<RequestT, ResponseT> call,
+            RequestT request,
+            Listener<ResponseT> listener,
+            Metadata metadata) {
+          call.start(listener, metadata);
+          call.request(1);
+          try {
+            call.sendMessage(request);
+          } catch (Throwable t) {
+            call.cancel("Exception in sendMessage.", t);
+            throw Throwables.propagate(t);
+          }
+          try {
+            call.halfClose();
+          } catch (Throwable t) {
+            call.cancel("Exception in halfClose.", t);
+            throw Throwables.propagate(t);
+          }
+        }
       };
-    }
-
-    @Override
-    public <RequestT, ResponseT> void asyncServerStreamingCall(ClientCall<RequestT, ResponseT> call,
-        RequestT request, ClientCall.Listener<ResponseT> listener, Metadata metadata) {
-      // gRPC treats streaming and unary calls differently for the number of responses to retrieve.
-      // See createAsyncUnaryRpc for how unary calls are handled.
-      //
-      // See ClientCalls.startCall() for more information.
-      start(call, request, listener, 1, metadata);
-    }
-
-    private static <RequestT, ResponseT> void start(ClientCall<RequestT, ResponseT> call,
-        RequestT request, ClientCall.Listener<ResponseT> listener, int requestCount,
-        Metadata metadata) {
-      call.start(listener, metadata);
-      call.request(requestCount);
-      try {
-        call.sendMessage(request);
-      } catch (Throwable t) {
-        call.cancel("Exception in sendMessage.", t);
-        throw Throwables.propagate(t);
-      }
-      try {
-        call.halfClose();
-      } catch (Throwable t) {
-        call.cancel("Exception in halfClose.", t);
-        throw Throwables.propagate(t);
-      }
     }
   }
 }
