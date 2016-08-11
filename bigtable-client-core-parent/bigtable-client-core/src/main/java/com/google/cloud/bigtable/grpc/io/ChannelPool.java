@@ -74,7 +74,6 @@ public class ChannelPool extends ManagedChannel {
     ManagedChannel create() throws IOException;
   }
 
-
   protected synchronized static Counter getActiveChannelCounter() {
     if (ACTIVE_CHANNEL_COUNTER == null) {
       ACTIVE_CHANNEL_COUNTER =
@@ -149,6 +148,7 @@ public class ChannelPool extends ManagedChannel {
     public <ReqT, RespT> ClientCall<ReqT, RespT>
         newCall(MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
       final Context timerContext = timer.time();
+      final AtomicBoolean decremented = new AtomicBoolean(false);
       return new CheckedForwardingClientCall<ReqT, RespT>(delegate.newCall(methodDescriptor, callOptions)) {
         @Override
         protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
@@ -156,21 +156,23 @@ public class ChannelPool extends ManagedChannel {
           for (HeaderInterceptor interceptor : headerInterceptors) {
             interceptor.updateHeaders(headers);
           }
-          ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext);
+          ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext, decremented);
           getActiveRPCCounter().inc();
           delegate().start(timingListener, headers);
         }
 
         @Override
         public void cancel(String message, Throwable cause) {
-          getActiveRPCCounter().dec();
+          if (!decremented.getAndSet(true)) {
+            getActiveRPCCounter().dec();
+          }
           super.cancel(message, cause);
         }
       };
     }
 
     protected <RespT> ClientCall.Listener<RespT> wrap(final ClientCall.Listener<RespT> delegate,
-        final Context timeContext) {
+        final Context timeContext, final AtomicBoolean decremented) {
       return new ClientCall.Listener<RespT>() {
 
         @Override
@@ -186,7 +188,9 @@ public class ChannelPool extends ManagedChannel {
         @Override
         public void onClose(Status status, Metadata trailers) {
           try {
-            getActiveRPCCounter().dec();
+            if (!decremented.getAndSet(true)) {
+              getActiveRPCCounter().dec();
+            }
             if (!status.isOk()) {
               BigtableClientMetrics
                   .counter(MetricLevel.Info, "RPC.Errors." + status.getCode().name()).inc();
