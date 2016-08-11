@@ -27,6 +27,8 @@ import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.BigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.base.MoreObjects;
 
 import org.apache.hadoop.conf.Configuration;
@@ -133,6 +135,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     this.batchPool = pool;
     this.closed = false;
     this.session = new BigtableSession(options);
+    BigtableClientMetrics.counter(MetricLevel.Info, "BigtableConnection.active").inc();
   }
 
   /** {@inheritDoc} */
@@ -283,6 +286,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         this.bufferedMutatorExecutorService = null;
       }
       this.closed = true;
+      BigtableClientMetrics.counter(MetricLevel.Info, "BigtableConnection.active").dec();
     }
   }
 

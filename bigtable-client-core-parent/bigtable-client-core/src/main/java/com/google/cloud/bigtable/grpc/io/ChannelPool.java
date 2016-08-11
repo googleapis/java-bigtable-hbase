@@ -60,6 +60,11 @@ public class ChannelPool extends ManagedChannel {
   protected static Counter ACTIVE_CHANNEL_COUNTER;
 
   /**
+   * Best effort counter of active RPCs.
+   */
+  protected static Counter ACTIVE_RPC_COUNTER;
+
+  /**
    * A factory for creating ManagedChannels to be used in a {@link ChannelPool}.
    *
    * @author sduskis
@@ -70,18 +75,20 @@ public class ChannelPool extends ManagedChannel {
   }
 
 
-  /**
-   * There's a classloading vs. user configuration timing issue. A user should have the opportunity
-   * to configure metrics gathering even if the class loader loads the ChannelPool. If a user turns
-   * on metrics after this class is loaded, these metrics should not have the NULL
-   * implementation.
-   */
   protected synchronized static Counter getActiveChannelCounter() {
     if (ACTIVE_CHANNEL_COUNTER == null) {
       ACTIVE_CHANNEL_COUNTER =
           BigtableClientMetrics.counter(MetricLevel.Info, "ChannelPool.active.count");
     }
     return ACTIVE_CHANNEL_COUNTER;
+  }
+
+  protected synchronized static Counter getActiveRPCCounter() {
+    if (ACTIVE_RPC_COUNTER == null) {
+      ACTIVE_RPC_COUNTER =
+          BigtableClientMetrics.counter(MetricLevel.Info, "RPC.active.count");
+    }
+    return ACTIVE_RPC_COUNTER;
   }
 
   /**
@@ -150,7 +157,14 @@ public class ChannelPool extends ManagedChannel {
             interceptor.updateHeaders(headers);
           }
           ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext);
+          getActiveRPCCounter().inc();
           delegate().start(timingListener, headers);
+        }
+
+        @Override
+        public void cancel(String message, Throwable cause) {
+          getActiveRPCCounter().dec();
+          super.cancel(message, cause);
         }
       };
     }
@@ -172,6 +186,11 @@ public class ChannelPool extends ManagedChannel {
         @Override
         public void onClose(Status status, Metadata trailers) {
           try {
+            getActiveRPCCounter().dec();
+            if (!status.isOk()) {
+              BigtableClientMetrics
+                  .counter(MetricLevel.Info, "RPC.Errors." + status.getCode().name()).inc();
+            }
             delegate.onClose(status, trailers);
           } finally {
             timeContext.close();
