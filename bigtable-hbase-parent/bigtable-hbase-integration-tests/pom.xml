@@ -24,7 +24,7 @@ limitations under the License.
     </parent>
 
     <artifactId>bigtable-hbase-integration-tests</artifactId>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
        This project contains test cases that ought to work for either bigtable-hbase or hbase proper.
