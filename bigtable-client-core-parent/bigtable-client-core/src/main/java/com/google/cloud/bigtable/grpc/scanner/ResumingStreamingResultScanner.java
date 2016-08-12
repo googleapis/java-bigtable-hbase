@@ -88,8 +88,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
       try {
         Row result = currentDelegate.next();
         if (result == null) {
-          closeRpcContext();
-          closeOperationContext();
+          close();
         } else {
           retryHandler.update(result);
         }
