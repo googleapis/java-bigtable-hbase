@@ -42,9 +42,9 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   private final Logger logger;
   private final RpcMetrics rpcMetrics;
 
-  private final Context operationContext;
-
   private ResultScanner<Row> currentDelegate;
+
+  private Context operationContext;
   private Context rpcContext;
 
   /**
@@ -58,11 +58,8 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
    * @param rpcMetrics a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics}
    *          object to keep track of retries and failures.
    */
-  public ResumingStreamingResultScanner(
-    RetryOptions retryOptions,
-    ReadRowsRequest originalRequest,
-    BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory,
-    RpcMetrics rpcMetrics) {
+  public ResumingStreamingResultScanner(RetryOptions retryOptions, ReadRowsRequest originalRequest,
+      BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory, RpcMetrics rpcMetrics) {
     this(retryOptions, originalRequest, scannerFactory, rpcMetrics, LOG);
   }
 
@@ -91,19 +88,19 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
       try {
         Row result = currentDelegate.next();
         if (result == null) {
-          rpcContext.close();
-          operationContext.close();
+          close();
+        } else {
+          retryHandler.update(result);
         }
-        retryHandler.update(result);
         return result;
       } catch (ScanTimeoutException rte) {
-        rpcContext.close();
+        closeRpcContext();
         closeCurrentDelegate();
         ReadRowsRequest newRequest = retryHandler.handleScanTimeout(rte);
         currentDelegate = scannerFactory.createScanner(newRequest);
         this.rpcContext = rpcMetrics.timeRpc();
       } catch (IOExceptionWithStatus ioe) {
-        rpcContext.close();
+        closeRpcContext();
         closeCurrentDelegate();
         ReadRowsRequest newRequest = retryHandler.handleIOException(ioe);
         currentDelegate = scannerFactory.createScanner(newRequest);
@@ -129,6 +126,22 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
+    closeRpcContext();
+    closeOperationContext();
     currentDelegate.close();
+  }
+
+  private void closeOperationContext() {
+    if (operationContext != null) {
+      operationContext.close();
+      operationContext = null;
+    }
+  }
+
+  private void closeRpcContext() {
+    if (rpcContext != null) {
+      rpcContext.close();
+      rpcContext = null;
+    }
   }
 }

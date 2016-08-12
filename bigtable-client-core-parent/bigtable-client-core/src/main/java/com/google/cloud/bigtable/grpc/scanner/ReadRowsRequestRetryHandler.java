@@ -84,13 +84,11 @@ public class ReadRowsRequestRetryHandler {
   }
 
   public void update(Row result) throws IOException {
-    if (result != null) {
-      updateLastFoundKey(result.getKey());
-      rowCount++;
-      // We've had at least one successful RPC, reset the backoff and retry counter
-      currentErrorBackoff = null;
-      timeoutRetryCount = null;
-    }
+    updateLastFoundKey(result.getKey());
+    rowCount++;
+    // We've had at least one successful RPC, reset the backoff and retry counter
+    currentErrorBackoff = null;
+    timeoutRetryCount = null;
   }
 
   void updateLastFoundKey(ByteString key) {
