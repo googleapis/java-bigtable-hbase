@@ -19,6 +19,7 @@ package com.google.cloud.bigtable.grpc;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
@@ -99,20 +100,21 @@ public class BigtableSession implements Closeable {
   static final String INSTANCE_ID_EMPTY_OR_NULL = "InstanceId must not be empty or null.";
   @VisibleForTesting
   static final String USER_AGENT_EMPTY_OR_NULL = "UserAgent must not be empty or null";
-  
-  private static final DnsNameResolverProvider DNS_NAME_RESOLVER_PROVIDER = new DnsNameResolverProvider();
-  private static final NameResolver.Factory NAMESPACE_FACTORY = new NameResolver.Factory() {
-    
-    @Override
-    public NameResolver newNameResolver(URI targetUri, Attributes params) {
-      return DNS_NAME_RESOLVER_PROVIDER.newNameResolver(targetUri, params);
-    }
-    
-    @Override
-    public String getDefaultScheme() {
-      return DNS_NAME_RESOLVER_PROVIDER.getDefaultScheme();
-    }
-  };
+
+  // This is needed when the host address is 
+//  private static final DnsNameResolverProvider DNS_NAME_RESOLVER_PROVIDER = new DnsNameResolverProvider();
+//  private static final NameResolver.Factory NAMESPACE_FACTORY = new NameResolver.Factory() {
+//    
+//    @Override
+//    public NameResolver newNameResolver(URI targetUri, Attributes params) {
+//      return DNS_NAME_RESOLVER_PROVIDER.newNameResolver(targetUri, params);
+//    }
+//    
+//    @Override
+//    public String getDefaultScheme() {
+//      return DNS_NAME_RESOLVER_PROVIDER.getDefaultScheme();
+//    }
+//  };
 
   static {
     performWarmup();
@@ -438,10 +440,13 @@ public class BigtableSession implements Closeable {
    * @throws java.io.IOException if any.
    */
   protected ChannelPool createChannelPool(final String hostString) throws IOException {
+    // TODO Go back to using host names once more extensive testing of the IPv6 issues.
+    final InetSocketAddress serverAddress =
+        new InetSocketAddress(InetAddress.getByName(hostString), options.getPort());
     ChannelPool.ChannelFactory channelFactory = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
-        return createNettyChannel(hostString, options);
+        return createNettyChannel(serverAddress, options);
       }
     };
     ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory);
@@ -457,15 +462,20 @@ public class BigtableSession implements Closeable {
    * @return a {@link io.grpc.ManagedChannel} object.
    * @throws java.io.IOException if any.
    */
-  public static ManagedChannel createNettyChannel(final String host, BigtableOptions options) throws IOException {
-    // TODO Go back to using host names once grpc 0.14.0 is out, which fixes bug
-    // when ipv6 address is available but not reachable.
+  public static ManagedChannel createNettyChannel(String host, BigtableOptions options) throws IOException {
+    // TODO Go back to using host names once more extensive testing of the IPv6 issues.
+    InetAddress address = InetAddress.getByName(host);
+    InetSocketAddress serverAddress = new InetSocketAddress(address, options.getPort());
+    return createNettyChannel(serverAddress, options);
+  }
+
+  private static ManagedChannel createNettyChannel(InetSocketAddress serverAddress,
+      BigtableOptions options) throws SSLException {
     NegotiationType negotiationType = options.usePlaintextNegotiation() ?
         NegotiationType.PLAINTEXT : NegotiationType.TLS;
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
     return NettyChannelBuilder
-        .forAddress(host,  options.getPort())
-        .nameResolverFactory(NAMESPACE_FACTORY)
+        .forAddress(serverAddress)
         .maxMessageSize(MAX_MESSAGE_SIZE)
         .sslContext(createSslContext())
         .eventLoopGroup(sharedPools.getElg())
