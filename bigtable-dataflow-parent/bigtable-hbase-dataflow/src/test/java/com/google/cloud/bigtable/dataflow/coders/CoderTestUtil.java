@@ -22,7 +22,7 @@ import java.io.IOException;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 
 /**
- * Simple tool to help with testing {@link BigtableConverter}s.
+ * Simple tool to help with testing {@link AtomicCoder}s.
  */
 public class CoderTestUtil {
 

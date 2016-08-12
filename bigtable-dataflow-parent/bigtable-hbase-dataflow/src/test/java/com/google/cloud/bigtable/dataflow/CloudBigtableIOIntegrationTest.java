@@ -16,6 +16,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -31,9 +32,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.google.bigtable.repackaged.com.google.cloud.config.Logger;
+import com.google.bigtable.repackaged.com.google.cloud.hbase1_0.BigtableConnection;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO.Source;
-import com.google.cloud.bigtable.hbase1_0.BigtableConnection;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
@@ -67,7 +68,7 @@ public class CloudBigtableIOIntegrationTest {
     return tableName;
   }
 
-  private static BigtableConnection connection;
+  private static Connection connection;
   private static CloudBigtableConfiguration config;
 
   @BeforeClass

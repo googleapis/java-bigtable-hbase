@@ -53,6 +53,7 @@ import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
@@ -63,7 +64,6 @@ import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteSt
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
@@ -121,8 +121,7 @@ import com.google.protobuf.ByteString;
  *   Read.from(CloudBigtableIO.read(
  *      new CloudBigtableScanConfiguration.Builder()
  *          .withProjectId("project-id")
- *          .withZoneId("zone-id")
- *          .withClusterId("cluster-id")
+ *          .withInstanceId("instance-id")
  *          .withTableId("table-id")
  *          .build())));
  * }
@@ -143,8 +142,7 @@ import com.google.protobuf.ByteString;
  *   CloudBigtableIO.writeToTable(
  *      new CloudBigtableScanConfiguration.Builder()
  *          .withProjectId("project-id")
- *          .withZoneId("zone-id")
- *          .withClusterId("cluster-id")
+ *          .withInstanceId("instance-id")
  *          .withTableId("table-id")
  *          .build()));
  * }
