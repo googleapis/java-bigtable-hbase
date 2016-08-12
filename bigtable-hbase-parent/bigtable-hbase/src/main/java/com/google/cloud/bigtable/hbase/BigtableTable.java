@@ -90,8 +90,6 @@ public class BigtableTable implements Table {
   private static class TableMetrics {
     Timer putTimer = BigtableClientMetrics.timer(MetricLevel.Info, "BigtableTable.put.timer");
     Timer getTimer = BigtableClientMetrics.timer(MetricLevel.Info, "BigtableTable.get.timer");
-    Timer scanCreateTimer =
-        BigtableClientMetrics.timer(MetricLevel.Trace, "BigtableTable.scanCreate.timer");
   }
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
@@ -237,7 +235,6 @@ public class BigtableTable implements Table {
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
-    Timer.Context timerContext = metrics.scanCreateTimer.time();
     try {
       com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v2.Row> scanner =
           client.readRows(hbaseAdapter.adapt(scan));
@@ -253,8 +250,6 @@ public class BigtableTable implements Table {
               options.getProjectId(),
               tableName.getQualifierAsString()),
           throwable);
-    } finally {
-      timerContext.close();
     }
   }
 
