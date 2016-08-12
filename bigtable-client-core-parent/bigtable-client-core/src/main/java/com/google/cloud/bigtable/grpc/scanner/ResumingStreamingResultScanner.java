@@ -21,15 +21,14 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
 import com.google.cloud.bigtable.grpc.io.IOExceptionWithStatus;
+import com.google.cloud.bigtable.metrics.Timer.Context;
 import com.google.common.annotations.VisibleForTesting;
 
 import java.io.IOException;
 
-
 /**
- * A ResultScanner that attempts to resume the readRows call when it
- * encounters gRPC INTERNAL errors.
- *
+ * A ResultScanner that attempts to resume the readRows call when it encounters gRPC INTERNAL
+ * errors.
  * @author sduskis
  * @version $Id: $Id
  */
@@ -39,10 +38,14 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
   // Member variables from the constructor.
   private final ReadRowsRequestRetryHandler retryHandler;
-  private ResultScanner<Row> currentDelegate;
   private final BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory;
+  private final Logger logger;
+  private final RpcMetrics rpcMetrics;
 
-  private Logger logger;
+  private final Context operationContext;
+
+  private ResultScanner<Row> currentDelegate;
+  private Context rpcContext;
 
   /**
    * <p>
@@ -70,11 +73,15 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
       BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory,
       RpcMetrics rpcMetrics,
       Logger logger) {
+    this.operationContext = rpcMetrics.timeOperation();
     this.retryHandler = new ReadRowsRequestRetryHandler(retryOptions, originalRequest,
         rpcMetrics, logger);
     this.scannerFactory = scannerFactory;
-    this.currentDelegate = scannerFactory.createScanner(originalRequest);
     this.logger = logger;
+    this.rpcMetrics = rpcMetrics;
+
+    this.currentDelegate = scannerFactory.createScanner(originalRequest);
+    this.rpcContext = rpcMetrics.timeRpc();
   }
 
   /** {@inheritDoc} */
@@ -83,16 +90,24 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     while (true) {
       try {
         Row result = currentDelegate.next();
+        if (result == null) {
+          rpcContext.close();
+          operationContext.close();
+        }
         retryHandler.update(result);
         return result;
       } catch (ScanTimeoutException rte) {
+        rpcContext.close();
         closeCurrentDelegate();
         ReadRowsRequest newRequest = retryHandler.handleScanTimeout(rte);
         currentDelegate = scannerFactory.createScanner(newRequest);
+        this.rpcContext = rpcMetrics.timeRpc();
       } catch (IOExceptionWithStatus ioe) {
+        rpcContext.close();
         closeCurrentDelegate();
         ReadRowsRequest newRequest = retryHandler.handleIOException(ioe);
         currentDelegate = scannerFactory.createScanner(newRequest);
+        this.rpcContext = rpcMetrics.timeRpc();
       }
     }
   }
