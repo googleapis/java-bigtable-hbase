@@ -74,18 +74,20 @@ public class ChannelPool extends ManagedChannel {
     ManagedChannel create() throws IOException;
   }
 
-  protected synchronized static Counter getActiveChannelCounter() {
+  protected static synchronized Counter getActiveChannelCounter() {
     if (ACTIVE_CHANNEL_COUNTER == null) {
       ACTIVE_CHANNEL_COUNTER =
-          BigtableClientMetrics.counter(MetricLevel.Info, "ChannelPool.active.count");
+          BigtableClientMetrics.counter(
+              MetricLevel.Info, "google-cloud-bigtable.channels.active.count");
     }
     return ACTIVE_CHANNEL_COUNTER;
   }
 
-  protected synchronized static Counter getActiveRPCCounter() {
+  protected static synchronized Counter getActiveRPCCounter() {
     if (ACTIVE_RPC_COUNTER == null) {
       ACTIVE_RPC_COUNTER =
-          BigtableClientMetrics.counter(MetricLevel.Info, "RPC.active.count");
+          BigtableClientMetrics.counter(
+              MetricLevel.Info, "google-cloud-bigtable.grpc.active.count");
     }
     return ACTIVE_RPC_COUNTER;
   }
@@ -104,8 +106,12 @@ public class ChannelPool extends ManagedChannel {
 
     public InstrumentedChannel(ManagedChannel channel) {
       this.delegate = channel;
-      this.timer = BigtableClientMetrics.timer(MetricLevel.Trace,
-        "ChannelPool.channel." + ChannelIdGenerator.incrementAndGet() + ".rpc.latency");
+      this.timer =
+          BigtableClientMetrics.timer(
+              MetricLevel.Trace,
+              "google-cloud-bigtable.channels.channel."
+                  + ChannelIdGenerator.incrementAndGet()
+                  + ".rpc.latency");
       getActiveChannelCounter().inc();
     }
 
@@ -192,8 +198,10 @@ public class ChannelPool extends ManagedChannel {
               getActiveRPCCounter().dec();
             }
             if (!status.isOk()) {
-              BigtableClientMetrics
-                  .counter(MetricLevel.Info, "RPC.Errors." + status.getCode().name()).inc();
+              BigtableClientMetrics.counter(
+                      MetricLevel.Info,
+                      "google-cloud-bigtable.rpc.errors." + status.getCode().name())
+                  .inc();
             }
             delegate.onClose(status, trailers);
           } finally {

@@ -42,7 +42,7 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
     private final Counter retriesExhastedCounter;
 
     public static RpcMetrics createRpcMetrics(MethodDescriptor<?, ?> descriptor) {
-      String prefix = "BigtableGrpc." + descriptor.getFullMethodName().split("/")[1];
+      String prefix = "google-cloud-bigtable.grpc." + descriptor.getFullMethodName().split("/")[1];
       return new RpcMetrics(
           BigtableClientMetrics.timer(MetricLevel.Info, prefix + ".operation.latency"),
           BigtableClientMetrics.timer(MetricLevel.Debug, prefix + ".rpc.latency"),

@@ -88,8 +88,8 @@ public class BigtableTable implements Table {
   protected static final Logger LOG = new Logger(BigtableTable.class);
 
   private static class TableMetrics {
-    Timer putTimer = BigtableClientMetrics.timer(MetricLevel.Info, "BigtableTable.put.timer");
-    Timer getTimer = BigtableClientMetrics.timer(MetricLevel.Info, "BigtableTable.get.timer");
+    Timer putTimer = BigtableClientMetrics.timer(MetricLevel.Info, "google-cloud-bigtable.table.put.timer");
+    Timer getTimer = BigtableClientMetrics.timer(MetricLevel.Info, "google-cloud-bigtable.table.get.timer");
   }
 
   // ReadHooks don't make sense from conditional mutations. If any filter attempts to make use of
