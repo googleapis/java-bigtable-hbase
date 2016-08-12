@@ -372,7 +372,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       return listener.getCompletionFuture().get();
     } catch (InterruptedException e) {
       listener.cancel();
-      Thread.currentThread().interrupt();
       throw Status.CANCELLED.withCause(e).asRuntimeException();
     } catch (ExecutionException e) {
       listener.cancel();
@@ -396,16 +395,12 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public ResultScanner<Row> readRows(ReadRowsRequest request) {
-    // Delegate all resumable operations to the scanner. It will request a non-resumable
-    // scanner during operation.
-    if (retryOptions.enableRetries()) {
-      // TODO(sduskis): Figure out a way to perform operation level metrics with the
-      // AbstractBigtableResultScanner implementations.
-      return new ResumingStreamingResultScanner(retryOptions, request, streamingScannerFactory,
-          readRowsAsync.getRpcMetrics());
-    } else {
-      return streamRows(request);
-    }
+    // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
+    // during operation.
+    // TODO(sduskis): Figure out a way to perform operation level metrics with the
+    // AbstractBigtableResultScanner implementations.
+    return new ResumingStreamingResultScanner(retryOptions, request, streamingScannerFactory,
+        readRowsAsync.getRpcMetrics());
   }
 
   private ResultScanner<Row> streamRows(ReadRowsRequest request) {

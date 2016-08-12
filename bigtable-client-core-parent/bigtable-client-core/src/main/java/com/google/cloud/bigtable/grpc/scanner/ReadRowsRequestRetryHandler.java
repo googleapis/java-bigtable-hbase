@@ -110,10 +110,10 @@ public class ReadRowsRequestRetryHandler {
       timeoutRetryCount = new AtomicInteger();
     }
 
-    if (timeoutRetryCount.incrementAndGet() <= retryOptions.getMaxScanTimeoutRetries()) {
+    if (retryOptions.enableRetries()
+        && timeoutRetryCount.incrementAndGet() <= retryOptions.getMaxScanTimeoutRetries()) {
       return updateRequest();
-    }
-    else {
+    } else {
       rpcMetrics.incrementRetriesExhastedCounter();
       throw new BigtableRetriesExhaustedException(
           "Exhausted streaming retries after too many timeouts", rte);
@@ -122,7 +122,7 @@ public class ReadRowsRequestRetryHandler {
 
   public ReadRowsRequest handleIOException(IOExceptionWithStatus ioe) throws IOException {
     Status.Code code = ioe.getStatus().getCode();
-    if (!retryOptions.isRetryable(code)) {
+    if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)) {
       rpcMetrics.incrementFailureCount();
       throw ioe;
     }
