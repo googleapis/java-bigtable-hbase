@@ -187,13 +187,14 @@ public class BatchExecutor {
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter requestAdapter;
   protected final Timer batchTimer =
-      BigtableClientMetrics.timer(MetricLevel.Debug, "BatchExecutor.batch.timer");
+      BigtableClientMetrics.timer(MetricLevel.Debug, "google-cloud-bigtable.batch.timer");
 
   /**
-   * <p>Constructor for BatchExecutor.</p>
+   * Constructor for BatchExecutor.
    *
    * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} object.
-   * @param requestAdapter a {@link com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter} object.
+   * @param requestAdapter a {@link com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter}
+   *     object.
    */
   public BatchExecutor(BigtableSession session, HBaseRequestAdapter requestAdapter) {
     this.session = session;

@@ -135,7 +135,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
     this.batchPool = pool;
     this.closed = false;
     this.session = new BigtableSession(options);
-    BigtableClientMetrics.counter(MetricLevel.Info, "BigtableConnection.active").inc();
+    BigtableClientMetrics.counter(MetricLevel.Info, "google-cloud-bigtable.connections.active")
+        .inc();
   }
 
   /** {@inheritDoc} */
@@ -286,7 +287,8 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
         this.bufferedMutatorExecutorService = null;
       }
       this.closed = true;
-      BigtableClientMetrics.counter(MetricLevel.Info, "BigtableConnection.active").dec();
+      BigtableClientMetrics.counter(MetricLevel.Info, "google-cloud-bigtable.connections.active")
+          .dec();
     }
   }
 

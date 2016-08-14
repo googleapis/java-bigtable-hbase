@@ -36,9 +36,9 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   private final CancellationToken cancellationToken;
   private final ResponseQueueReader responseQueueReader;
   private final Meter resultsMeter =
-      BigtableClientMetrics.meter(MetricLevel.Info, "scanner.results.meter");
+      BigtableClientMetrics.meter(MetricLevel.Info, "google-cloud-bigtable.scanner.results.meter");
   private final Timer resultsTimer =
-      BigtableClientMetrics.timer(MetricLevel.Debug, "scanner.results.timer");
+      BigtableClientMetrics.timer(MetricLevel.Debug, "google-cloud-bigtable.scanner.results.timer");
 
   /**
    * <p>Constructor for StreamingBigtableResultScanner.</p>
