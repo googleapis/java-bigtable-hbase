@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.dataflowimport.testing;
 
-import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.dataflowimport.HBaseImportOptions;
 import com.google.common.collect.Sets;
 

@@ -22,8 +22,8 @@ import java.util.Collections;
 
 import org.junit.Assert;
 
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.dataflow.CloudBigtableConfiguration;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
