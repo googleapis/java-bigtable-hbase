@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.cloud.bigtable.dataflow;
 
 import java.io.IOException;
@@ -40,9 +55,14 @@ import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.DoFnTester;
 
+/**
+ * Local tests that make sure that the core functionality works.
+ * @author sduskis
+ *
+ */
 public class CloudBigtableIOIntegrationTest {
-  private static final String BIGTABLE_PROJECT_KEY = "google.bigtable.project.id";
-  private static final String BIGTABLE_INSTANCE_KEY = "google.bigtable.instance.id";
+  public static final String BIGTABLE_PROJECT_KEY = "google.bigtable.project.id";
+  public static final String BIGTABLE_INSTANCE_KEY = "google.bigtable.instance.id";
 
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   public static final byte[] QUALIFIER1 = Bytes.toBytes("qualifier1");
