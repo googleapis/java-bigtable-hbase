@@ -20,10 +20,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
 import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.dataflowimport.testing.BigtableTableUtils.BigtableTableUtilsFactory;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.dataflowimport.testing.BigtableTableUtils;
 import com.google.cloud.bigtable.dataflowimport.testing.SequenceFileIoUtils;
 import com.google.cloud.dataflow.sdk.Pipeline;
