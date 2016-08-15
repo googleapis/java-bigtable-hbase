@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.dataflow;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
-
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
@@ -49,7 +47,7 @@ public class CloudBigtableTableConfigurationTest {
   }
 
   @Test
-  public void testHBaseConfig() throws IOException {
+  public void testHBaseConfig() {
     CloudBigtableTableConfiguration underTest = buildConfiguration();
 
     Configuration config = underTest.toHBaseConfig();

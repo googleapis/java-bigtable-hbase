@@ -15,18 +15,16 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
+import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
+import com.google.bigtable.repackaged.com.google.cloud.hbase1_0.BigtableConnection;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase1_0.BigtableConnection;
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Pubsub and other windowed sources can have a large quantity of bundles in short amounts of time.
