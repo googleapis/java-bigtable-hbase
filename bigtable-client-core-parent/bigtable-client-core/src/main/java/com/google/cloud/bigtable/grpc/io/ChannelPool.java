@@ -198,10 +198,8 @@ public class ChannelPool extends ManagedChannel {
               getActiveRPCCounter().dec();
             }
             if (!status.isOk()) {
-              BigtableClientMetrics.counter(
-                      MetricLevel.Info,
-                      "google-cloud-bigtable.rpc.errors." + status.getCode().name())
-                  .inc();
+              String meterName = "google-cloud-bigtable.rpc.errors." + status.getCode().name();
+              BigtableClientMetrics.meter(MetricLevel.Info, meterName).mark();
             }
             delegate.onClose(status, trailers);
           } finally {
