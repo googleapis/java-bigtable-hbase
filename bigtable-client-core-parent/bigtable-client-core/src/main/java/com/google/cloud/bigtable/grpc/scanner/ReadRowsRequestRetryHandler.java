@@ -112,7 +112,7 @@ public class ReadRowsRequestRetryHandler {
         && timeoutRetryCount.incrementAndGet() <= retryOptions.getMaxScanTimeoutRetries()) {
       return updateRequest();
     } else {
-      rpcMetrics.incrementRetriesExhastedCounter();
+      rpcMetrics.markRetriesExhasted();
       throw new BigtableRetriesExhaustedException(
           "Exhausted streaming retries after too many timeouts", rte);
     }
@@ -121,7 +121,7 @@ public class ReadRowsRequestRetryHandler {
   public ReadRowsRequest handleIOException(IOExceptionWithStatus ioe) throws IOException {
     Status.Code code = ioe.getStatus().getCode();
     if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)) {
-      rpcMetrics.incrementFailureCount();
+      rpcMetrics.markFailure();
       throw ioe;
     }
 
@@ -131,7 +131,7 @@ public class ReadRowsRequestRetryHandler {
     }
     long nextBackOffMillis = currentErrorBackoff.nextBackOffMillis();
     if (nextBackOffMillis == BackOff.STOP) {
-      rpcMetrics.incrementRetriesExhastedCounter();
+      rpcMetrics.markRetriesExhasted();
       throw new BigtableRetriesExhaustedException("Exhausted streaming retries.", ioe);
     }
 
@@ -158,7 +158,7 @@ public class ReadRowsRequestRetryHandler {
       newRequest.setRowsLimit(numRowsLimit);
     }
 
-    rpcMetrics.incrementRetries();
+    rpcMetrics.markRetry();
     return newRequest.build();
   }
 

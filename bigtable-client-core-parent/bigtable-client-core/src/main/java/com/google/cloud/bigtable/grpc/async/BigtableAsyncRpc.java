@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.grpc.async;
 
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
-import com.google.cloud.bigtable.metrics.Counter;
+import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
 
 import io.grpc.CallOptions;
@@ -37,27 +37,27 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
   public static class RpcMetrics {
     private final Timer operationTimer;
     private final Timer rpcTimer;
-    private final Counter retryCounter;
-    private final Counter failureCounter;
-    private final Counter retriesExhastedCounter;
+    private final Meter retryMeter;
+    private final Meter failureMeter;
+    private final Meter retriesExhastedMeter;
 
     public static RpcMetrics createRpcMetrics(MethodDescriptor<?, ?> descriptor) {
       String prefix = "google-cloud-bigtable.grpc." + descriptor.getFullMethodName().split("/")[1];
       return new RpcMetrics(
           BigtableClientMetrics.timer(MetricLevel.Info, prefix + ".operation.latency"),
           BigtableClientMetrics.timer(MetricLevel.Debug, prefix + ".rpc.latency"),
-          BigtableClientMetrics.counter(MetricLevel.Info, prefix + ".retries.performed"),
-          BigtableClientMetrics.counter(MetricLevel.Info, prefix + ".failure"),
-          BigtableClientMetrics.counter(MetricLevel.Info, prefix + ".retries.exhausted"));
+          BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".retries.performed"),
+          BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".failure"),
+          BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".retries.exhausted"));
     }
 
-    private RpcMetrics(Timer operationTimer, Timer rpcTimer, Counter retryCounter,
-        Counter failureCounter, Counter retriesExhastedCounter) {
+    private RpcMetrics(Timer operationTimer, Timer rpcTimer, Meter retryCounter,
+        Meter failureCounter, Meter retriesExhastedCounter) {
       this.operationTimer = operationTimer;
       this.rpcTimer = rpcTimer;
-      this.retryCounter = retryCounter;
-      this.failureCounter = failureCounter;
-      this.retriesExhastedCounter = retriesExhastedCounter;
+      this.retryMeter = retryCounter;
+      this.failureMeter = failureCounter;
+      this.retriesExhastedMeter = retriesExhastedCounter;
     }
 
     public Timer.Context timeOperation() {
@@ -68,16 +68,16 @@ public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
       return rpcTimer.time();
     }
 
-    public void incrementRetries() {
-      retryCounter.inc();
+    public void markRetry() {
+      retryMeter.mark();
     }
 
-    public void incrementFailureCount() {
-      failureCounter.inc();
+    public void markFailure() {
+      failureMeter.mark();
     }
 
-    public void incrementRetriesExhastedCounter() {
-      retriesExhastedCounter.inc();
+    public void markRetriesExhasted() {
+      retriesExhastedMeter.mark();
     }
   }
 

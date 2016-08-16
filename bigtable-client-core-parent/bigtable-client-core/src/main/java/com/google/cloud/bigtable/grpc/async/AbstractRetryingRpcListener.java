@@ -127,7 +127,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     // Non retry scenario
     if (!retryOptions.enableRetries() || !retryOptions.isRetryable(code)
         || !rpc.isRetryable(getRetryRequest())) {
-      this.rpc.getRpcMetrics().incrementFailureCount();
+      this.rpc.getRpcMetrics().markFailure();
       this.operationTimerContext.close();
       completionFuture.setException(status.asRuntimeException());
       return;
@@ -139,7 +139,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
 
     // Backoffs timed out.
     if (nextBackOff == BackOff.STOP) {
-      this.rpc.getRpcMetrics().incrementRetriesExhastedCounter();
+      this.rpc.getRpcMetrics().markRetriesExhasted();
       this.operationTimerContext.close();
 
       String message = String.format("Exhausted retries after %d failures.", failedCount);
@@ -161,7 +161,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     }
     call = null;
 
-    rpc.getRpcMetrics().incrementRetries();
+    rpc.getRpcMetrics().markRetry();
     retryExecutorService.schedule(this, nextBackOff, TimeUnit.MILLISECONDS);
   }
 
