@@ -72,7 +72,6 @@ import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
 import com.google.cloud.dataflow.sdk.io.range.ByteKey;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
-import com.google.cloud.dataflow.sdk.io.range.ByteKeyRangeTracker;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.transforms.Aggregator;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
@@ -748,7 +747,9 @@ public class CloudBigtableIO {
     private CloudBigtableIO.AbstractSource<Results> source;
     private final CloudBigtableScanConfiguration config;
     private final ScanIterator<Results> scanIterator;
-    private final ByteKeyRangeTracker rangeTracker;
+
+
+//    private final ByteKeyRangeTracker rangeTracker;
 
     private volatile BigtableSession session;
     private volatile ResultScanner<Row> scanner;
@@ -763,7 +764,7 @@ public class CloudBigtableIO {
       this.source = source;
       this.config = config;
       this.scanIterator = scanIterator;
-      rangeTracker = ByteKeyRangeTracker.of(source.getRange());
+//      rangeTracker = ByteKeyRangeTracker.of(source.getRange());
     }
 
     /**
@@ -774,9 +775,10 @@ public class CloudBigtableIO {
       current = scanIterator.next(scanner);
       rowsRead.addAndGet(scanIterator.getRowCount(current));
       boolean isComplete = scanIterator.isCompletionMarker(current);
-      if (!isComplete) {
-        rangeTracker.tryReturnRecordAt(true, ByteKey.of(scanIterator.getLatestKey(current)));
-      }
+      // TODO (sduskis): This needs to be fixed.  tryReturnRecordAt must be part of the return value.
+//      if (!isComplete) {
+//        rangeTracker.tryReturnRecordAt(true, ByteKey.of(scanIterator.getLatestKey(current)));
+//      }
       return !isComplete;
     }
 
@@ -826,59 +828,61 @@ public class CloudBigtableIO {
       return source;
     }
 
-    @Override
-    /**
-     * What percentage of the range is complete? This is the best guess based on the lexicographical
-     * ordering of the Reader's key range.
-     */
-    public final Double getFractionConsumed() {
-      return rangeTracker.getFractionConsumed();
-    }
+//    @Override
+//    /**
+//     * What percentage of the range is complete? This is the best guess based on the lexicographical
+//     * ordering of the Reader's key range.
+//     */
+//    public final Double getFractionConsumed() {
+//      return rangeTracker.getFractionConsumed();
+//    }
 
-    @Override
-    /**
-     * Attempt to split the work by some percent of the ByteKeyRange based on a lexicographical
-     * split (and not statistics about the underlying table, which would be better, but that
-     * information does not exist).
-     */
-    public final synchronized BoundedSource<Results> splitAtFraction(double fraction) {
-      ByteKeyRange originalRange = source.getRange();
-      ByteKey splitKey;
-      try {
-        splitKey = originalRange.interpolateKey(fraction);
-      } catch (IllegalArgumentException e) {
-        READER_LOG.info("%s: Failed to interpolate key for fraction %s.", originalRange,
-          fraction);
-        return null;
-      }
-      READER_LOG.debug("Proposing to split {} at fraction {} (key {})", rangeTracker, fraction,
-        splitKey);
-      long estimatedSizeBytes;
-      try {
-        estimatedSizeBytes = source.getEstimatedSizeBytes(null);
-      } catch (IOException e) {
-        return null;
-      }
-      byte[] originalStart = originalRange.getStartKey().getBytes();
-      byte[] originalEnd = originalRange.getEndKey().getBytes();
-      SourceWithKeys<Results> primary = source.createSourceWithKeys(originalStart,
-        splitKey.getBytes(), (long) (estimatedSizeBytes * fraction));
-      SourceWithKeys<Results> residual = source.createSourceWithKeys(splitKey.getBytes(),
-        originalEnd, (long) (estimatedSizeBytes * (1.0 - fraction)));
-      if (!rangeTracker.trySplitAtPosition(splitKey)) {
-        return null;
-      }
-      this.source = primary;
-      return residual;
-    }
+//    @Override
+//    /**
+//     * Attempt to split the work by some percent of the ByteKeyRange based on a lexicographical
+//     * split (and not statistics about the underlying table, which would be better, but that
+//     * information does not exist).
+//     */
+//    public final synchronized BoundedSource<Results> splitAtFraction(double fraction) {
+//      ByteKeyRange originalRange = source.getRange();
+//      ByteKey splitKey;
+//      try {
+//        splitKey = originalRange.interpolateKey(fraction);
+//      } catch (IllegalArgumentException e) {
+//        READER_LOG.info("%s: Failed to interpolate key for fraction %s.", originalRange,
+//          fraction);
+//        return null;
+//      }
+//      READER_LOG.debug("Proposing to split {} at fraction {} (key {})", rangeTracker, fraction,
+//        splitKey);
+//      long estimatedSizeBytes;
+//      try {
+//        estimatedSizeBytes = source.getEstimatedSizeBytes(null);
+//      } catch (IOException e) {
+//        return null;
+//      }
+//      byte[] originalStart = originalRange.getStartKey().getBytes();
+//      byte[] originalEnd = originalRange.getEndKey().getBytes();
+//      SourceWithKeys<Results> primary = source.createSourceWithKeys(originalStart,
+//        splitKey.getBytes(), (long) (estimatedSizeBytes * fraction));
+//      SourceWithKeys<Results> residual = source.createSourceWithKeys(splitKey.getBytes(),
+//        originalEnd, (long) (estimatedSizeBytes * (1.0 - fraction)));
+//      if (!rangeTracker.trySplitAtPosition(splitKey)) {
+//        return null;
+//      }
+//      this.source = primary;
+//      return residual;
+//    }
 
     @Override
     public String toString() {
       return String.format(
-          "Reader for: ['%s' - '%s'], range: %s",
-          Bytes.toStringBinary(config.getStartRow()),
-          Bytes.toStringBinary(config.getStopRow()),
-          rangeTracker);
+          "Reader for: ['%s' - '%s'], "
+//           + " range: %s"
+          , Bytes.toStringBinary(config.getStartRow()),
+          Bytes.toStringBinary(config.getStopRow())
+//         , rangeTracker
+          );
     }
   }
 
