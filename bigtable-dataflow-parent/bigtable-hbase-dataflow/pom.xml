@@ -102,12 +102,8 @@ limitations under the License.
                                     -->
                                     <forkCount>1</forkCount>
                                     <includes>
-                                        <include>**/CloudBigtableIOIntegrationTest.java</include>
+                                        <include>**/*IntegrationTest.java</include>
                                     </includes>
-                                    <reportNameSuffix>bigtable-server</reportNameSuffix>
-                                    <systemPropertyVariables>
-                                        <bigtable.test.extra.resources>bigtable-test.xml</bigtable.test.extra.resources>
-                                    </systemPropertyVariables>
                                 </configuration>
                             </execution>
                         </executions>
