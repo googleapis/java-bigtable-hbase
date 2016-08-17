@@ -186,8 +186,7 @@ public class BatchExecutor {
   protected final AsyncExecutor asyncExecutor;
   protected final BigtableOptions options;
   protected final HBaseRequestAdapter requestAdapter;
-  protected final Timer batchTimer =
-      BigtableClientMetrics.timer(MetricLevel.Debug, "google-cloud-bigtable.batch.timer");
+  protected final Timer batchTimer = BigtableClientMetrics.timer(MetricLevel.Debug, "batch.timer");
 
   /**
    * Constructor for BatchExecutor.

@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
  */
 public final class BigtableClientMetrics {
 
+  private static final String METRIC_PREFIX = "google-cloud-bigtable.";
   private static MetricRegistry registry = MetricRegistry.NULL_METRICS_REGISTRY;
   private static MetricLevel levelToLog = MetricLevel.Info;
 
@@ -81,7 +82,7 @@ public final class BigtableClientMetrics {
    * @return a {@link Counter}
    */
   public static Counter counter(MetricLevel level, String name) {
-    return getMetricRegistry(level).counter(name);
+    return getMetricRegistry(level).counter(METRIC_PREFIX + name);
   }
 
   /** Creates a named {@link Timer}. This is a shortcut for
@@ -91,7 +92,7 @@ public final class BigtableClientMetrics {
    * @return a {@link Timer}
    */
   public static Timer timer(MetricLevel level, String name) {
-    return getMetricRegistry(level).timer(name);
+    return getMetricRegistry(level).timer(METRIC_PREFIX + name);
   }
 
   /** Creates a named {@link Meter}.  This is a shortcut for
@@ -101,7 +102,7 @@ public final class BigtableClientMetrics {
    * @return a {@link Meter}
    */
   public static Meter meter(MetricLevel level, String name) {
-    return getMetricRegistry(level).meter(name);
+    return getMetricRegistry(level).meter(METRIC_PREFIX + name);
   }
 
   /**
