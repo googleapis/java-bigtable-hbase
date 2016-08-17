@@ -122,7 +122,7 @@ public class TestBulkMutation {
   public void testAdd() {
     MutateRowRequest mutateRowRequest = createRequest();
     BulkMutation.RequestManager requestManager = new BulkMutation.RequestManager(TABLE_NAME,
-        BigtableClientMetrics.meter(MetricLevel.Trace, "google-cloud-bigtable.test.bulk.meter"));
+        BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"));
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
     MutateRowsRequest expected = MutateRowsRequest.newBuilder()
         .setTableName(TABLE_NAME)
