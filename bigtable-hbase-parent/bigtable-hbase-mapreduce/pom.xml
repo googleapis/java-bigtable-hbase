@@ -65,6 +65,12 @@ limitations under the License.
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-1.1</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>${project.groupId}</groupId>
+                    <artifactId>bigtable-hbase-shaded</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>

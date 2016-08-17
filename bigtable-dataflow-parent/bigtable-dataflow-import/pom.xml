@@ -39,6 +39,12 @@ limitations under the License.
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-dataflow</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.cloud.bigtable</groupId>
+                    <artifactId>bigtable-hbase-shaded-for-dataflow</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <!-- Keeping guava dependency here so that third party code using this package

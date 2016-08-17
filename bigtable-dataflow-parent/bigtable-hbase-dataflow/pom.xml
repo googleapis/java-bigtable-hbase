@@ -37,6 +37,12 @@ limitations under the License.
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-shaded-for-dataflow</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.cloud.bigtable</groupId>
+                    <artifactId>bigtable-hbase-1.0</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
