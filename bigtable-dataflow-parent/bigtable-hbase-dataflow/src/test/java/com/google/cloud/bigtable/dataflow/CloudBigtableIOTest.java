@@ -82,7 +82,6 @@ public class CloudBigtableIOTest {
     when(underTest.getCoderRegistry()).thenReturn(registry);
     when(cbtOptions.as(any(Class.class))).thenReturn(cbtOptions);
     CloudBigtableIO.initializeForWrite(underTest);
-
   }
 
   private void checkRegistry(Class<? extends Mutation> mutationClass)
@@ -117,17 +116,12 @@ public class CloudBigtableIOTest {
     byte[] startKey = "abc d".getBytes();
     byte[] stopKey = "def g".getBytes();
     BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
-    assertEquals(
-      "Split start: 'abc d', end: 'def g', size: 10,"
-          + " range: ByteKeyRange{startKey=[6162632064], endKey=[6465662067]}",
-      sourceWithKeys.toString());
+    assertEquals("Split start: 'abc d', end: 'def g', size: 10.", sourceWithKeys.toString());
 
     startKey = new byte[]{0, 1, 2, 3, 4, 5};
     stopKey = new byte[]{104, 101, 108, 108, 111};  // hello
     sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
-    assertEquals(
-      "Split start: '\\x00\\x01\\x02\\x03\\x04\\x05', end: 'hello', size: 10,"
-          + " range: ByteKeyRange{startKey=[000102030405], endKey=[68656c6c6f]}",
+    assertEquals("Split start: '\\x00\\x01\\x02\\x03\\x04\\x05', end: 'hello', size: 10.",
       sourceWithKeys.toString());
   }
 
