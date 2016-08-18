@@ -20,17 +20,15 @@ public class DropwizardMetricRegistry implements MetricRegistry {
    * Creates a {@link DropwizardMetricRegistry} with an {@link Slf4jReporter}.  Only non-zero metrics
    * will be logged to the {@link Slf4jReporter}.
    * 
+   * @param registry The registry on which to add the reporter.
    * @param logger The {@link Logger} to report to
    * @param period the amount of time between polls
    * @param unit   the unit for {@code period}
    *
    * @return the {@link DropwizardMetricRegistry}
    */
-  public static DropwizardMetricRegistry createSlf4jReporter(
-      Logger logger, long period, TimeUnit unit) {
-    // This adds a simple mechanism of enabling statistics via slf4j configuration.
-    // More complex configuration is available programmatically.
-    DropwizardMetricRegistry registry = new DropwizardMetricRegistry();
+  public static void createSlf4jReporter(DropwizardMetricRegistry registry, Logger logger,
+      long period, TimeUnit unit) {
     MetricFilter nonZeroMatcher =
         new MetricFilter() {
           @Override
@@ -42,15 +40,13 @@ public class DropwizardMetricRegistry implements MetricRegistry {
             return true;
           }
         };
-    final Slf4jReporter reporter =
-        Slf4jReporter.forRegistry(registry.getRegistry())
-            .outputTo(logger)
-            .convertRatesTo(TimeUnit.SECONDS)
-            .convertDurationsTo(TimeUnit.MILLISECONDS)
-            .filter(nonZeroMatcher)
-            .build();
-    reporter.start(period, unit);
-    return registry;
+    Slf4jReporter.forRegistry(registry.getRegistry())
+        .outputTo(logger)
+        .convertRatesTo(TimeUnit.SECONDS)
+        .convertDurationsTo(TimeUnit.MILLISECONDS)
+        .filter(nonZeroMatcher)
+        .build()
+        .start(period, unit);
   }
 
   /**
