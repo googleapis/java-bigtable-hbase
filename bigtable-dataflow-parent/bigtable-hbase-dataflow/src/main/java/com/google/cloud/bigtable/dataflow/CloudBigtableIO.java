@@ -70,8 +70,6 @@ import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
-import com.google.cloud.dataflow.sdk.io.range.ByteKey;
-import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.transforms.Aggregator;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
@@ -82,7 +80,6 @@ import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 import com.google.cloud.dataflow.sdk.values.PDone;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.protobuf.ByteString;
 
 /**
  * <p>
@@ -197,14 +194,6 @@ public class CloudBigtableIO {
      * This is used to figure out how many results were read.  This is more useful for {@link Result}[].
      */
     long getRowCount(ResultOutputType result);
-
-    /**
-     * Get the key to use for liquid shading. This key will be used to determine the percentage of
-     * rows read from the range. That percentage will be used to calculate how much of the key range
-     * can be split off to another worker. For individual {@link Result} it will be the result's
-     * key. For an array of results, we should use the key from the last result.
-     */
-    ByteString getLatestKey(ResultOutputType result);
   }
 
   /**
@@ -214,9 +203,13 @@ public class CloudBigtableIO {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Result next(ResultScanner<Row> resultScanner) throws IOException {
+    public Result next(ResultScanner<Row> resultScanner)
+        throws IOException {
       Row row = resultScanner.next();
-      return row == null ? null : Adapters.ROW_ADAPTER.adaptResponse(row);
+      if (row == null) {
+        return null;
+      }
+      return Adapters.ROW_ADAPTER.adaptResponse(row);
     }
 
     @Override
@@ -227,11 +220,6 @@ public class CloudBigtableIO {
     @Override
     public long getRowCount(Result result) {
       return result == null ? 0 : 1;
-    }
-
-    @Override
-    public ByteString getLatestKey(Result result) {
-      return result == null ? null : ByteString.copyFrom(result.getRow());
     }
   };
 
@@ -247,13 +235,17 @@ public class CloudBigtableIO {
     }
 
     @Override
-    public Result[] next(ResultScanner<Row> resultScanner) throws IOException {
-      Row[] next = resultScanner.next(arraySize);
-      Result[] results = new Result[next.length];
-      for (int i = 0; i < next.length; i++) {
-        results[i] = Adapters.ROW_ADAPTER.adaptResponse(next[i]);
+    public Result[] next(ResultScanner<Row> resultScanner)
+        throws IOException {
+      List<Result> results = new ArrayList<>();
+      for (int i = 0; i < arraySize; i++) {
+        Row row = resultScanner.next();
+        if (row == null) {
+          break;
+        }
+        results.add(Adapters.ROW_ADAPTER.adaptResponse(row));
       }
-      return results;
+      return results.toArray(new Result[results.size()]);
     }
 
     @Override
@@ -264,18 +256,6 @@ public class CloudBigtableIO {
     @Override
     public long getRowCount(Result[] result) {
       return result == null ? 0 : result.length;
-    }
-
-    /**
-     * Get the key to use for liquid shading. This key will be used to determine the percentage of
-     * rows read from the range. That percentage will be used to calculate how much of the key range
-     * can be split off to another worker. For an array of results, we should use the key from the
-     * last result.
-     */
-    @Override
-    public ByteString getLatestKey(Result[] result) {
-      return isCompletionMarker(result) ? null
-          : ByteString.copyFrom(result[result.length - 1].getRow());
     }
   }
 
@@ -295,19 +275,16 @@ public class CloudBigtableIO {
     protected final CloudBigtableScanConfiguration configuration;
     protected final int coderTypeOrdinal;
     protected final ScanIterator<ResultOutputType> scanIterator;
-    protected final ByteKeyRange range;
 
     private transient List<SampleRowKeysResponse> sampleRowKeys;
 
     AbstractSource(
         CloudBigtableScanConfiguration configuration,
         CoderType coderType,
-        ScanIterator<ResultOutputType> scanIterator,
-        ByteKeyRange range) {
+        ScanIterator<ResultOutputType> scanIterator) {
       this.configuration = configuration;
       this.coderTypeOrdinal = coderType.ordinal();
       this.scanIterator = scanIterator;
-      this.range = range;
     }
 
     @SuppressWarnings("unchecked")
@@ -446,7 +423,7 @@ public class CloudBigtableIO {
      *
      * @param options The pipeline options.
      * @return The estimated size of the data, in bytes.
-     * @throws IOException 
+     * @throws IOException
      */
     @Override
     public long getEstimatedSizeBytes(PipelineOptions options) throws IOException {
@@ -518,14 +495,12 @@ public class CloudBigtableIO {
     }
 
     @VisibleForTesting
-    SourceWithKeys<ResultOutputType> createSourceWithKeys(byte[] startKey, byte[] stopKey, long size)
-         {
+    SourceWithKeys<ResultOutputType> createSourceWithKeys(byte[] startKey, byte[] stopKey,
+        long size) {
       CloudBigtableScanConfiguration updatedConfig =
           augmentConfiguration(configuration, startKey, stopKey);
-      ByteKeyRange range =
-          ByteKeyRange.of(ByteKey.copyFrom(startKey), ByteKey.copyFrom(stopKey));
       return new SourceWithKeys<>(updatedConfig, CoderType.values()[coderTypeOrdinal], scanIterator,
-          size, range);
+          size);
     }
 
     /**
@@ -537,10 +512,6 @@ public class CloudBigtableIO {
     public BoundedSource.BoundedReader<ResultOutputType> createReader(PipelineOptions options)
         throws IOException {
       return new CloudBigtableIO.Reader<>(this, configuration, scanIterator);
-    }
-
-    public ByteKeyRange getRange() {
-      return range;
     }
   }
 
@@ -554,9 +525,8 @@ public class CloudBigtableIO {
     Source(
         CloudBigtableScanConfiguration configuration,
         CoderType coderType,
-        ScanIterator<ResultOutputType> scanIterator,
-        ByteKeyRange range) {
-      super(configuration, coderType, scanIterator, range);
+        ScanIterator<ResultOutputType> scanIterator) {
+      super(configuration, coderType, scanIterator);
     }
 
     // TODO: Add a method on the server side that will be a more precise split based on server-side
@@ -660,9 +630,8 @@ public class CloudBigtableIO {
         CloudBigtableScanConfiguration configuration,
         CoderType coderType,
         ScanIterator<ResultOutputType> scanIterator,
-        long estimatedSize,
-        ByteKeyRange range) {
-      super(configuration, coderType, scanIterator, range);
+        long estimatedSize) {
+      super(configuration, coderType, scanIterator);
 
       byte[] startRow = configuration.getStartRow();
       byte[] stopRow = configuration.getStopRow();
@@ -730,12 +699,10 @@ public class CloudBigtableIO {
 
     @Override
     public String toString() {
-      return String.format(
-          "Split start: '%s', end: '%s', size: %d, range: %s",
-          Bytes.toStringBinary(configuration.getStartRow()),
-          Bytes.toStringBinary(configuration.getStopRow()),
-          estimatedSize,
-          range);
+      return String.format("Split start: '%s', end: '%s', size: %d.",
+        Bytes.toStringBinary(configuration.getStartRow()),
+        Bytes.toStringBinary(configuration.getStopRow()),
+        estimatedSize);
     }
   }
   /**
@@ -748,17 +715,14 @@ public class CloudBigtableIO {
     private final CloudBigtableScanConfiguration config;
     private final ScanIterator<Results> scanIterator;
 
-
     private volatile BigtableSession session;
     private volatile ResultScanner<Row> scanner;
     private volatile Results current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
 
-    private Reader(
-        CloudBigtableIO.AbstractSource<Results> source,
-        CloudBigtableScanConfiguration config,
-        ScanIterator<Results> scanIterator) {
+    private Reader(CloudBigtableIO.AbstractSource<Results> source,
+        CloudBigtableScanConfiguration config, ScanIterator<Results> scanIterator) {
       this.source = source;
       this.config = config;
       this.scanIterator = scanIterator;
@@ -822,9 +786,10 @@ public class CloudBigtableIO {
 
     @Override
     public String toString() {
-      return String.format("Reader for: ['%s' - '%s']",
-        Bytes.toStringBinary(config.getStartRow()),
-        Bytes.toStringBinary(config.getStopRow()));
+      return String.format(
+          "Reader for: ['%s' - '%s']",
+          Bytes.toStringBinary(config.getStartRow()),
+          Bytes.toStringBinary(config.getStopRow()));
     }
   }
 
@@ -1125,7 +1090,7 @@ public class CloudBigtableIO {
    */
   public static com.google.cloud.dataflow.sdk.io.BoundedSource<Result>
       read(CloudBigtableScanConfiguration config) {
-    return new Source<Result>(config, CoderType.RESULT, RESULT_ADVANCER, ByteKeyRange.ALL_KEYS);
+    return new Source<Result>(config, CoderType.RESULT, RESULT_ADVANCER);
   }
 
   /**
@@ -1137,8 +1102,7 @@ public class CloudBigtableIO {
    */
   public static com.google.cloud.dataflow.sdk.io.BoundedSource<Result[]>
       readBulk(CloudBigtableScanConfiguration config, int resultCount) {
-    return new Source<>(config, CoderType.RESULT_ARRAY, new ResultArrayIterator(resultCount),
-        ByteKeyRange.ALL_KEYS);
+    return new Source<>(config, CoderType.RESULT_ARRAY, new ResultArrayIterator(resultCount));
   }
 
   private static void checkNotNullOrEmpty(String value, String type) {
