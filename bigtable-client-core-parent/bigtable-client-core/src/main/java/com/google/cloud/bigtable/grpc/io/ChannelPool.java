@@ -77,14 +77,14 @@ public class ChannelPool extends ManagedChannel {
   protected static synchronized Counter getActiveChannelCounter() {
     if (ACTIVE_CHANNEL_COUNTER == null) {
       ACTIVE_CHANNEL_COUNTER =
-          BigtableClientMetrics.counter(MetricLevel.Info, "channels.active.count");
+          BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active.count");
     }
     return ACTIVE_CHANNEL_COUNTER;
   }
 
   protected static synchronized Counter getActiveRPCCounter() {
     if (ACTIVE_RPC_COUNTER == null) {
-      ACTIVE_RPC_COUNTER = BigtableClientMetrics.counter(MetricLevel.Info, "rpc.active.count");
+      ACTIVE_RPC_COUNTER = BigtableClientMetrics.counter(MetricLevel.Info, "grpc.rpc.active.count");
     }
     return ACTIVE_RPC_COUNTER;
   }
@@ -191,7 +191,7 @@ public class ChannelPool extends ManagedChannel {
               getActiveRPCCounter().dec();
             }
             if (!status.isOk()) {
-              BigtableClientMetrics.meter(MetricLevel.Info, "rpc.errors." + status.getCode().name())
+              BigtableClientMetrics.meter(MetricLevel.Info, "grpc.errors." + status.getCode().name())
                   .mark();
             }
             delegate.onClose(status, trailers);
