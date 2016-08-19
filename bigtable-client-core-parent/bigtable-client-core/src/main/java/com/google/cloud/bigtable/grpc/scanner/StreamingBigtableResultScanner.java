@@ -38,7 +38,7 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   private final Meter resultsMeter =
       BigtableClientMetrics.meter(MetricLevel.Info, "scanner.results.meter");
   private final Timer resultsTimer =
-      BigtableClientMetrics.timer(MetricLevel.Debug, "scanner.results.timer");
+      BigtableClientMetrics.timer(MetricLevel.Debug, "scanner.results.latency");
 
   /**
    * <p>Constructor for StreamingBigtableResultScanner.</p>
