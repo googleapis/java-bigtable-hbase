@@ -123,7 +123,18 @@ public final class BigtableClientMetrics {
   static {
     Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
     if (logger.isDebugEnabled()) {
-      setMetricRegistry(DropwizardMetricRegistry.createSlf4jReporter(logger, 1, TimeUnit.MINUTES));
+      if (registry == MetricRegistry.NULL_METRICS_REGISTRY) {
+        DropwizardMetricRegistry dropwizardRegistry = new DropwizardMetricRegistry();
+        registry = dropwizardRegistry;
+        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
+      } else if (registry instanceof DropwizardMetricRegistry) {
+        DropwizardMetricRegistry dropwizardRegistry = (DropwizardMetricRegistry) registry;
+        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
+      } else {
+        logger.info(
+          "Could not set up logging since the metrics registry is not a DropwizardMetricRegistry; it is a %s w.",
+          registry.getClass().getName());
+      }
     }
   }
 
