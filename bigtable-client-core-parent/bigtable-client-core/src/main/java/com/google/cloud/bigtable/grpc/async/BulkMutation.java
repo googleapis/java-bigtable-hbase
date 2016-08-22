@@ -119,9 +119,9 @@ public class BulkMutation {
     private final long maxRequestSize;
 
     private final Meter mutationMeter =
-        BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutation.added.meter");
+        BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.added");
     private final Meter mutationRetryMeter =
-        BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutation.retry.meter");
+        BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.retried");
 
     private RequestManager currentRequestManager;
     private Long retryId;
@@ -319,6 +319,7 @@ public class BulkMutation {
         setRetryComplete();
       } else {
         this.currentRequestManager = retryRequestManager;
+        mutationRetryMeter.mark(retryRequestManager.futures.size());
         LOG.info(
           "Retrying failed call. Failure #%d, got #%d failures",
           failedCount++,

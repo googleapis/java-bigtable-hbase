@@ -36,7 +36,7 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
   private final CancellationToken cancellationToken;
   private final ResponseQueueReader responseQueueReader;
   private final Meter resultsMeter =
-      BigtableClientMetrics.meter(MetricLevel.Info, "scanner.results.meter");
+      BigtableClientMetrics.meter(MetricLevel.Info, "scanner.results");
   private final Timer resultsTimer =
       BigtableClientMetrics.timer(MetricLevel.Debug, "scanner.results.latency");
 
