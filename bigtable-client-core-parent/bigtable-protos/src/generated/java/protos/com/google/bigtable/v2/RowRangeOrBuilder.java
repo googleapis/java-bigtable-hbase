@@ -27,7 +27,7 @@ public interface RowRangeOrBuilder extends
 
   /**
    * <pre>
-   * Used when giving an inclusive upper bound for the range.
+   * Used when giving an exclusive upper bound for the range.
    * </pre>
    *
    * <code>optional bytes end_key_open = 3;</code>
@@ -36,7 +36,7 @@ public interface RowRangeOrBuilder extends
 
   /**
    * <pre>
-   * Used when giving an exclusive upper bound for the range.
+   * Used when giving an inclusive upper bound for the range.
    * </pre>
    *
    * <code>optional bytes end_key_closed = 4;</code>
