@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Counter;
+import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer.Context;
@@ -53,16 +54,7 @@ public class ChannelPool extends ManagedChannel {
 
   private static final AtomicInteger ChannelIdGenerator = new AtomicInteger();
 
-  /**
-   * Best effort counter of active channels. There may be some cases where channel termination
-   * counting may not accurately be decremented.
-   */
-  protected static Counter ACTIVE_CHANNEL_COUNTER;
-
-  /**
-   * Best effort counter of active RPCs.
-   */
-  protected static Counter ACTIVE_RPC_COUNTER;
+  protected static Stats STATS;
 
   /**
    * A factory for creating ManagedChannels to be used in a {@link ChannelPool}.
@@ -74,19 +66,30 @@ public class ChannelPool extends ManagedChannel {
     ManagedChannel create() throws IOException;
   }
 
-  protected static synchronized Counter getActiveChannelCounter() {
-    if (ACTIVE_CHANNEL_COUNTER == null) {
-      ACTIVE_CHANNEL_COUNTER =
-          BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active.count");
-    }
-    return ACTIVE_CHANNEL_COUNTER;
+  private static class Stats {
+    /**
+     * Best effort counter of active channels. There may be some cases where channel termination
+     * counting may not accurately be decremented.
+     */
+    Counter ACTIVE_CHANNEL_COUNTER =
+        BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active");
+
+    /**
+     * Best effort counter of active RPCs.
+     */
+    Counter ACTIVE_RPC_COUNTER = BigtableClientMetrics.counter(MetricLevel.Info, "grpc.rpc.active");
+
+    /**
+     * Best effort counter of RPCs.
+     */
+    Meter RPC_METER = BigtableClientMetrics.meter(MetricLevel.Info, "grpc.rpc.performed");
   }
 
-  protected static synchronized Counter getActiveRPCCounter() {
-    if (ACTIVE_RPC_COUNTER == null) {
-      ACTIVE_RPC_COUNTER = BigtableClientMetrics.counter(MetricLevel.Info, "grpc.rpc.active.count");
+  protected static synchronized Stats getStats() {
+    if (STATS == null) {
+      STATS = new Stats();
     }
-    return ACTIVE_RPC_COUNTER;
+    return STATS;
   }
 
   /**
@@ -105,13 +108,13 @@ public class ChannelPool extends ManagedChannel {
       this.delegate = channel;
       this.timer = BigtableClientMetrics.timer(MetricLevel.Trace,
         "channels.channel" + ChannelIdGenerator.incrementAndGet() + ".rpc.latency");
-      getActiveChannelCounter().inc();
+      getStats().ACTIVE_CHANNEL_COUNTER.inc();
     }
 
     private synchronized void markInactive(){
       boolean previouslyActive = active.getAndSet(false);
       if (previouslyActive) {
-        getActiveChannelCounter().dec();
+        getStats().ACTIVE_CHANNEL_COUNTER.dec();
       }
     }
 
@@ -156,14 +159,15 @@ public class ChannelPool extends ManagedChannel {
             interceptor.updateHeaders(headers);
           }
           ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext, decremented);
-          getActiveRPCCounter().inc();
+          getStats().ACTIVE_RPC_COUNTER.inc();
+          getStats().RPC_METER.mark();
           delegate().start(timingListener, headers);
         }
 
         @Override
         public void cancel(String message, Throwable cause) {
           if (!decremented.getAndSet(true)) {
-            getActiveRPCCounter().dec();
+            getStats().ACTIVE_RPC_COUNTER.dec();
           }
           super.cancel(message, cause);
         }
@@ -188,7 +192,7 @@ public class ChannelPool extends ManagedChannel {
         public void onClose(Status status, Metadata trailers) {
           try {
             if (!decremented.getAndSet(true)) {
-              getActiveRPCCounter().dec();
+              getStats().ACTIVE_RPC_COUNTER.dec();
             }
             if (!status.isOk()) {
               BigtableClientMetrics.meter(MetricLevel.Info, "grpc.errors." + status.getCode().name())

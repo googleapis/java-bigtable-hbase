@@ -24,8 +24,6 @@ public class DropwizardMetricRegistry implements MetricRegistry {
    * @param logger The {@link Logger} to report to
    * @param period the amount of time between polls
    * @param unit   the unit for {@code period}
-   *
-   * @return the {@link DropwizardMetricRegistry}
    */
   public static void createSlf4jReporter(DropwizardMetricRegistry registry, Logger logger,
       long period, TimeUnit unit) {
