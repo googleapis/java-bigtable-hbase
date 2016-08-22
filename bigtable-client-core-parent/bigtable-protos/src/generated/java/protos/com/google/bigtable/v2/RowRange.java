@@ -198,7 +198,7 @@ public  final class RowRange extends
   public static final int END_KEY_OPEN_FIELD_NUMBER = 3;
   /**
    * <pre>
-   * Used when giving an inclusive upper bound for the range.
+   * Used when giving an exclusive upper bound for the range.
    * </pre>
    *
    * <code>optional bytes end_key_open = 3;</code>
@@ -213,7 +213,7 @@ public  final class RowRange extends
   public static final int END_KEY_CLOSED_FIELD_NUMBER = 4;
   /**
    * <pre>
-   * Used when giving an exclusive upper bound for the range.
+   * Used when giving an inclusive upper bound for the range.
    * </pre>
    *
    * <code>optional bytes end_key_closed = 4;</code>
@@ -737,7 +737,7 @@ public  final class RowRange extends
 
     /**
      * <pre>
-     * Used when giving an inclusive upper bound for the range.
+     * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
      * <code>optional bytes end_key_open = 3;</code>
@@ -750,7 +750,7 @@ public  final class RowRange extends
     }
     /**
      * <pre>
-     * Used when giving an inclusive upper bound for the range.
+     * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
      * <code>optional bytes end_key_open = 3;</code>
@@ -766,7 +766,7 @@ public  final class RowRange extends
     }
     /**
      * <pre>
-     * Used when giving an inclusive upper bound for the range.
+     * Used when giving an exclusive upper bound for the range.
      * </pre>
      *
      * <code>optional bytes end_key_open = 3;</code>
@@ -782,7 +782,7 @@ public  final class RowRange extends
 
     /**
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
      * <code>optional bytes end_key_closed = 4;</code>
@@ -795,7 +795,7 @@ public  final class RowRange extends
     }
     /**
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
      * <code>optional bytes end_key_closed = 4;</code>
@@ -811,7 +811,7 @@ public  final class RowRange extends
     }
     /**
      * <pre>
-     * Used when giving an exclusive upper bound for the range.
+     * Used when giving an inclusive upper bound for the range.
      * </pre>
      *
      * <code>optional bytes end_key_closed = 4;</code>

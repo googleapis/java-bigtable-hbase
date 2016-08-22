@@ -29,7 +29,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.0.0-pre2)",
+    value = "by gRPC proto compiler (version 1.0.0)",
     comments = "Source: google/longrunning/operations.proto")
 public class OperationsGrpc {
 
