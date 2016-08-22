@@ -20,7 +20,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -50,16 +49,15 @@ import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.util.ThreadPoolUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
-import io.grpc.Attributes;
 import io.grpc.ManagedChannel;
-import io.grpc.NameResolver;
-import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
@@ -100,21 +98,6 @@ public class BigtableSession implements Closeable {
   static final String INSTANCE_ID_EMPTY_OR_NULL = "InstanceId must not be empty or null.";
   @VisibleForTesting
   static final String USER_AGENT_EMPTY_OR_NULL = "UserAgent must not be empty or null";
-
-  // This is needed when the host address is 
-//  private static final DnsNameResolverProvider DNS_NAME_RESOLVER_PROVIDER = new DnsNameResolverProvider();
-//  private static final NameResolver.Factory NAMESPACE_FACTORY = new NameResolver.Factory() {
-//    
-//    @Override
-//    public NameResolver newNameResolver(URI targetUri, Attributes params) {
-//      return DNS_NAME_RESOLVER_PROVIDER.newNameResolver(targetUri, params);
-//    }
-//    
-//    @Override
-//    public String getDefaultScheme() {
-//      return DNS_NAME_RESOLVER_PROVIDER.getDefaultScheme();
-//    }
-//  };
 
   static {
     performWarmup();
@@ -308,6 +291,7 @@ public class BigtableSession implements Closeable {
     
     // Defer the creation of both the tableAdminClient until we need them.
 
+    BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
     initializeResourceLimiter(options);
   }
 
@@ -522,6 +506,7 @@ public class BigtableSession implements Closeable {
       }
     }
     managedChannels.clear();
+    BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").dec();
   }
 
   /**
