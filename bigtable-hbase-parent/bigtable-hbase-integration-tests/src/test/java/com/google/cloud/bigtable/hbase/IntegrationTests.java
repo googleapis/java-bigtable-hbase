@@ -151,6 +151,10 @@ public class IntegrationTests {
         setConfiguration(BASE_CONFIGURATION);
       }
       connection = ConnectionFactory.createConnection(configuration);
+      if (isBigtable()) {
+        // Cleanup.
+        connection.getAdmin().deleteTables("test_table-.*");
+      }
       createTable(TABLE_NAME);
     }
 
