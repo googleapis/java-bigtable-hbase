@@ -635,7 +635,7 @@ limitations under the License.
                             com.google.cloud.bigtable.dataflow{import,}     (Breaks with javadoc:aggregate, handled separately)
                             com.google.clooud.*                             (Ignore, a hack/workaround for separate maven issue)
                         -->
-                        <excludePackageNames>com.google.cloud.bigtable.dataflow:com.google.cloud.bigtable.dataflowimport:com.google.clooud</excludePackageNames>
+                        <excludePackageNames>com.google.clooud</excludePackageNames>
                         <detectLinks />
                     </configuration>
                     <executions>
