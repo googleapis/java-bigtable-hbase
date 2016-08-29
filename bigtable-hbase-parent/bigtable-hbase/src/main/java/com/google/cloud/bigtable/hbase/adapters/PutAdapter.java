@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import com.google.api.client.util.Clock;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.MutationCase;
@@ -42,6 +43,7 @@ import java.util.Map.Entry;
 public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builder> {
   private final int maxKeyValueSize;
   private final boolean setClientTimestamp;
+  public Clock clock = Clock.SYSTEM;
 
   /**
    * <p>Constructor for PutAdapter.</p>
@@ -74,7 +76,7 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
 
     // Bigtable uses a 1ms granularity. Use this timestamp if the Put does not have one specified to
     // make mutations idempotent.
-    long currentTimestampMicros = setClientTimestamp ? System.currentTimeMillis() * 1000 : -1;
+    long currentTimestampMicros = setClientTimestamp ? clock.currentTimeMillis() * 1000 : -1;
     final int rowLength = operation.getRow().length;
 
     List<Mutation> mutations = new ArrayList<>();
