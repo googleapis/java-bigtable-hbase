@@ -41,7 +41,11 @@ import com.google.cloud.dataflow.sdk.coders.CoderException;
 public class HBaseMutationCoder extends AtomicCoder<Mutation> {
 
   private static final long serialVersionUID = -3853654063196018580L;
-  private static final PutAdapter PUT_ADAPTER = new PutAdapter(Integer.MAX_VALUE);
+
+  // Don't force the time setting in the PutAdapter, since that can lead to inconsistent 
+  // encoding/decoding over time, which can cause Dataflow's MutationDetector to say that the 
+  // encoding is invalid.
+  final static PutAdapter PUT_ADAPTER = new PutAdapter(Integer.MAX_VALUE, false);
 
   @Override
   public void encode(Mutation mutation, OutputStream outStream, Coder.Context context)
