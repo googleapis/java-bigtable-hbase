@@ -42,8 +42,6 @@ public class RetryOptions implements Serializable {
 
   /** Constant <code>DEFAULT_STREAMING_BUFFER_SIZE=60</code> */
   public static int DEFAULT_STREAMING_BUFFER_SIZE = 60;
-  /** Constant <code>DEFAULT_STREAMING_BATCH_SIZE=DEFAULT_STREAMING_BUFFER_SIZE / 2</code> */
-  public static int DEFAULT_STREAMING_BATCH_SIZE = DEFAULT_STREAMING_BUFFER_SIZE / 2;
 
   /**
    * Flag indicating whether or not grpc retries should be enabled.
@@ -92,7 +90,6 @@ public class RetryOptions implements Serializable {
     private double backoffMultiplier = DEFAULT_BACKOFF_MULTIPLIER;
     private int maxElaspedBackoffMillis = DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS;
     private int streamingBufferSize = DEFAULT_STREAMING_BUFFER_SIZE;
-    private int streamingBatchSize = DEFAULT_STREAMING_BATCH_SIZE;
     private int readPartialRowTimeoutMillis = DEFAULT_READ_PARTIAL_ROW_TIMEOUT_MS;
     private int maxScanTimeoutRetries = DEFAULT_MAX_SCAN_TIMEOUT_RETRIES;
     private Set<Status.Code> statusToRetryOn = new HashSet<>(DEFAULT_ENABLE_GRPC_RETRIES_SET);
@@ -107,7 +104,6 @@ public class RetryOptions implements Serializable {
       this.backoffMultiplier = options.backoffMultiplier;
       this.maxElaspedBackoffMillis = options.maxElaspedBackoffMillis;
       this.streamingBufferSize = options.streamingBufferSize;
-      this.streamingBatchSize = options.streamingBatchSize;
       this.readPartialRowTimeoutMillis = options.readPartialRowTimeoutMillis;
       this.maxScanTimeoutRetries = options.maxScanTimeoutRetries;
       this.statusToRetryOn = new HashSet<>(options.statusToRetryOn);
@@ -167,14 +163,6 @@ public class RetryOptions implements Serializable {
     }
 
     /**
-     * Set the number of messages to request when scanning.
-     */
-    public Builder setStreamingBatchSize(int streamingBatchSize) {
-      this.streamingBatchSize = streamingBatchSize;
-      return this;
-    }
-
-    /**
      * Set the timeout in milliseconds for reading individual
      * ReadRowsResponse messages from a stream.
      */
@@ -216,7 +204,6 @@ public class RetryOptions implements Serializable {
           backoffMultiplier,
           maxElaspedBackoffMillis,
           streamingBufferSize,
-          streamingBatchSize,
           readPartialRowTimeoutMillis,
           maxScanTimeoutRetries,
           ImmutableSet.copyOf(statusToRetryOn));
@@ -229,7 +216,6 @@ public class RetryOptions implements Serializable {
   private final int maxElaspedBackoffMillis;
   private final double backoffMultiplier;
   private final int streamingBufferSize;
-  private final int streamingBatchSize;
   private final int readPartialRowTimeoutMillis;
   private final int maxScanTimeoutRetries;
   private final ImmutableSet<Code> statusToRetryOn;
@@ -255,7 +241,6 @@ public class RetryOptions implements Serializable {
       double backoffMultiplier,
       int maxElaspedBackoffMillis,
       int streamingBufferSize,
-      int streamingBatchSize,
       int readPartialRowTimeoutMillis,
       int maxScanTimeoutRetries,
       ImmutableSet<Code> statusToRetryOn) {
@@ -265,7 +250,6 @@ public class RetryOptions implements Serializable {
     this.maxElaspedBackoffMillis = maxElaspedBackoffMillis;
     this.backoffMultiplier = backoffMultiplier;
     this.streamingBufferSize = streamingBufferSize;
-    this.streamingBatchSize = streamingBatchSize;
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
     this.maxScanTimeoutRetries = maxScanTimeoutRetries;
     this.statusToRetryOn = statusToRetryOn;
@@ -332,15 +316,6 @@ public class RetryOptions implements Serializable {
    */
   public int getStreamingBufferSize() {
     return streamingBufferSize;
-  }
-
-  /**
-   * The number of messages to request when scanning.
-   *
-   * @return a int.
-   */
-  public int getStreamingBatchSize() {
-    return streamingBatchSize;
   }
 
   /**
@@ -411,7 +386,6 @@ public class RetryOptions implements Serializable {
         && maxElaspedBackoffMillis == other.maxElaspedBackoffMillis
         && backoffMultiplier == other.backoffMultiplier
         && streamingBufferSize == other.streamingBufferSize
-        && streamingBatchSize == other.streamingBatchSize
         && readPartialRowTimeoutMillis == other.readPartialRowTimeoutMillis
         && maxScanTimeoutRetries == other.maxScanTimeoutRetries;
   }
@@ -428,7 +402,6 @@ public class RetryOptions implements Serializable {
         .add("maxElaspedBackoffMillis", maxElaspedBackoffMillis)
         .add("backoffMultiplier", backoffMultiplier)
         .add("streamingBufferSize", streamingBufferSize)
-        .add("streamingBatchSize", streamingBatchSize)
         .add("readPartialRowTimeoutMillis", readPartialRowTimeoutMillis)
         .add("maxScanTimeoutRetries", maxScanTimeoutRetries)
         .toString();

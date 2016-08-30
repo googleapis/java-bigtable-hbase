@@ -157,11 +157,6 @@ public class BigtableOptionsFactory {
   public static final String READ_BUFFER_SIZE = "google.bigtable.grpc.read.streaming.buffer.size";
 
   /**
-   * Key to set the batch size of messages to request when scanning.
-   */
-  public static final String READ_BATCH_SIZE = "google.bigtable.grpc.read.streaming.batch.size";
-
-  /**
    * The number of grpc channels to open for asynchronous processing such as puts.
    */
   public static final String BIGTABLE_DATA_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
@@ -401,11 +396,6 @@ public class BigtableOptionsFactory {
       READ_BUFFER_SIZE, RetryOptions.DEFAULT_STREAMING_BUFFER_SIZE);
     LOG.debug("gRPC read buffer size (count): %d", streamingBufferSize);
     retryOptionsBuilder.setStreamingBufferSize(streamingBufferSize);
-
-    int streamingBatchSize = configuration.getInt(
-      READ_BATCH_SIZE, RetryOptions.DEFAULT_STREAMING_BATCH_SIZE);
-    LOG.debug("gRPC read batch size (count): %d", streamingBatchSize);
-    retryOptionsBuilder.setStreamingBatchSize(streamingBatchSize);
 
     int maxScanTimeoutRetries = configuration.getInt(
         MAX_SCAN_TIMEOUT_RETRIES, RetryOptions.DEFAULT_MAX_SCAN_TIMEOUT_RETRIES);
