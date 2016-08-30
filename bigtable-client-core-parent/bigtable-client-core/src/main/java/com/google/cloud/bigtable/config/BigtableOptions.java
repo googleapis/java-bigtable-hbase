@@ -203,6 +203,7 @@ public class BigtableOptions implements Serializable {
             " environment variable: " + emulatorHost);
       }
       setUsePlaintextNegotiation(true);
+      setCredentialOptions(CredentialOptions.nullCredential());
       setDataHost(hostPort[0]);
       setTableAdminHost(hostPort[0]);
       setInstanceAdminHost(hostPort[0]);
