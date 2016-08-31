@@ -102,6 +102,7 @@ public class TestBigtableOptions {
     Assert.assertEquals("localhost", options.getInstanceAdminHost());
     Assert.assertEquals("localhost", options.getTableAdminHost());
     Assert.assertTrue(options.usePlaintextNegotiation());
+    Assert.assertEquals(CredentialOptions.nullCredential(), options.getCredentialOptions());
 
     setTestEnv(oldEnv);
     options = new BigtableOptions.Builder()
@@ -112,6 +113,7 @@ public class TestBigtableOptions {
     Assert.assertEquals(BigtableOptions.BIGTABLE_INSTANCE_ADMIN_HOST_DEFAULT, options.getInstanceAdminHost());
     Assert.assertEquals(BigtableOptions.BIGTABLE_TABLE_ADMIN_HOST_DEFAULT, options.getTableAdminHost());
     Assert.assertFalse(options.usePlaintextNegotiation());
+    Assert.assertEquals(CredentialOptions.defaultCredentials(), options.getCredentialOptions());
   }
 
   /**
