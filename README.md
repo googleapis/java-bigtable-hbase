@@ -7,7 +7,7 @@ Bigger than a data warehouse, fast enough for real-time access, and less expensi
 
 ## Overview
 
-[Google Cloud Bigtable](https://cloud.google.com/bigtable/) offers you a fast, fully managed, almost infinitely scalable NoSQL database service that's ideal for web, mobile, and IoT applications requiring terabytes to petabytes of data. Unlike comparable market offerings, Cloud Bigtable doesn't require you to sacrifice speed, scale, or cost efficiency when your applications grow. The Bigtable service that Cloud Bigtable relies upon has been battle-tested at Google for more than 10 years—it's the database driving major applications such as Google Analytics and Gmail.
+[Google Cloud Bigtable](https://cloud.google.com/bigtable/) offers you a fast, fully managed, almost infinitely scalable NoSQL database service that's ideal for web, mobile, and IoT applications requiring terabytes to petabytes of data. Unlike comparable market offerings, Cloud Bigtable doesn't require you to sacrifice speed, scale, or cost efficiency when your applications grow. The Bigtable service that Cloud Bigtable relies upon has been battle-tested at Google for more than 10 years—it's the database driving major applications such as Search, Analytics, Maps and Gmail.
 
 ## Project setup, installation, and configuration
 
@@ -18,7 +18,7 @@ Bigger than a data warehouse, fast enough for real-time access, and less expensi
 
 ### Using the Java client
 
-* Add the appropriate [Cloud Bigtable artifact dependencies](http://mvnrepository.com/artifact/com.google.cloud.bigtable) to your [Maven project](https://cloud.google.com/bigtable/docs/using-maven), e.g.: 
+* Add the appropriate [Cloud Bigtable artifact dependencies](http://mvnrepository.com/artifact/com.google.cloud.bigtable) to your [Maven project](https://cloud.google.com/bigtable/docs/using-maven), e.g.:
  ```xml
   <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -31,25 +31,27 @@ Bigger than a data warehouse, fast enough for real-time access, and less expensi
       <artifactId>netty-tcnative-boringssl-static</artifactId>
       <version>1.1.33.Fork19</version>
   </dependency>
-``` 
-* Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples). 
+```
+* Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
 
 ## Testing
 1. Running `mvn clean install` will build and install Cloud Bigtable client artifacts to your local repository, and then run the unit tests.
-1. There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the Google Cloud SDK configuration step (see above). 
- 
-  Use the following command to run the integration tests:
-```sh
-  mvn clean integration-test \
-      -PbigtableIntegrationTest \
-      -Dgoogle.bigtable.project.id=[your cloud project id] \
-      -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
-```
+1. There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the Google Cloud SDK configuration step (see above).
+
+   Use the following command to run the integration tests:
+
+   ```sh
+   mvn clean integration-test \
+       -PbigtableIntegrationTest \
+       -Dgoogle.bigtable.project.id=[your cloud project id] \
+       -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
+   ```
 
 ## Contributing changes
 
-* See [CONTRIBUTING.md](CONTRIBUTING.md)
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute
+to this project.
 
-## Licensing
+## License
 
-* See [LICENSE](LICENSE)
+Apache 2.0; see [LICENSE](LICENSE) for details.
