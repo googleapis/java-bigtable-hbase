@@ -35,10 +35,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class TestBasicOps extends AbstractTest {
   /**
@@ -164,23 +160,14 @@ public class TestBasicOps extends AbstractTest {
   }
 
   @Test
-  /** Run a large value ten times for performance logging puproses */
+  /** Run a large value ten times for performance logging purposes */
   public void testPutAlmostTooBigValueTenTimes() throws IOException {
-    ExecutorService es = Executors.newCachedThreadPool();
-    try {
-      for (int i = 0; i < 10; i++) {
-        es.submit(new Callable<Void>() {
-          public Void call() throws Exception {
-            testPutGetDeleteExists(10 << 20, true, true); // 10 MB
-            return null;
-          };
-        });
-      }
-    } finally {
-      es.shutdown();
-      try {
-        es.awaitTermination(1, TimeUnit.MINUTES);
-      } catch (InterruptedException e) {
+    for (int i = 0; i < 10; i++) {
+      long start = System.currentTimeMillis();
+      testPutGetDeleteExists(10 << 20, true, true); // 10 MB
+      if (System.currentTimeMillis() - start > 5_000) {
+        // If this is a slow connection, don't bother doing a performance test.
+        break;
       }
     }
   }
@@ -206,11 +193,10 @@ public class TestBasicOps extends AbstractTest {
   private void
       testPutGetDelete(boolean doGet, byte[] rowKey, byte[] testQualifier, byte[] testValue)
           throws IOException {
+    Table table = getConnection().getTable(TABLE_NAME);
+
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
-    Table table = getConnection().getTable(TABLE_NAME);
-    print("Getting table took %d ms", stopwatch);
-
     // Put
     Put put = new Put(rowKey);
     put.addColumn(COLUMN_FAMILY, testQualifier, testValue);
