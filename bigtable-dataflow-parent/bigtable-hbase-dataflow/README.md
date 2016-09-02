@@ -1,7 +1,6 @@
 # Cloud Bigtable + Cloud Dataflow
 
-This project is an early release of integration of Cloud Bigtable with Cloud
-Dataflow. This implementation uses HBase classes for the integration.
+This project integrates Cloud Bigtable with Cloud Dataflow using the HBase API.
 
 See the [Cloud Bigtable Dataflow Examples Project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples/tree/master/java/dataflow-connector-examples) for more information about how to use Dataflow and run the examples.
 
@@ -68,7 +67,7 @@ scan.setFilter(new FirstKeyOnlyFilter());
 
 // CloudBigtableTableConfiguration contains the project, zone, cluster and table to connect to.
 // You can supply an optional Scan() to filter the rows that will be read.
-CloudBigtableScanConfiguration config = CloudBigtableScanConfiguration.fromCBTOptions(options);
+CloudBigtableScanConfiguration config = CloudBigtableScanConfiguration.fromCBTOptions(options, scan);
 
 Pipeline p = Pipeline.create(options);
 
