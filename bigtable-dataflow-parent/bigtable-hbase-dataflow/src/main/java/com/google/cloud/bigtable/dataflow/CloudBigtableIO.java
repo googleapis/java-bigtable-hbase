@@ -376,14 +376,14 @@ public class CloudBigtableIO {
         counter++;
         lastSeen = source;
         if (counter == numberToCombine) {
-          reducedSplits.add(createSourceWithKeys(start.getStartRow(), source.getStopRow(), size));
+          reducedSplits.add(createSourceWithKeys(start.getConfiguration().getStartRow(), source.getConfiguration().getStopRow(), size));
           counter = 0;
           size = 0;
           start = null;
         }
       }
       if (start != null) {
-        reducedSplits.add(createSourceWithKeys(start.getStartRow(), lastSeen.getStopRow(), size));
+        reducedSplits.add(createSourceWithKeys(start.getConfiguration().getStartRow(), lastSeen.getConfiguration().getStopRow(), size));
       }
       return reducedSplits;
     }
@@ -644,9 +644,9 @@ public class CloudBigtableIO {
         long estimatedSize) {
       super(configuration, coderType, scanIterator);
 
-      byte[] startRow = configuration.getStartRow();
       byte[] stopRow = configuration.getStopRow();
       if (stopRow.length > 0) {
+        byte[] startRow = configuration.getStartRow();
         if (Bytes.compareTo(startRow, stopRow) >= 0) {
           throw new IllegalArgumentException(String.format(
             "Source keys not in order: [%s, %s]", Bytes.toStringBinary(startRow),
@@ -695,48 +695,40 @@ public class CloudBigtableIO {
     public List<? extends BoundedSource<ResultOutputType>> splitIntoBundles(long desiredBundleSizeBytes,
         PipelineOptions options) throws Exception {
       List<? extends BoundedSource<ResultOutputType>> newSplits = split(estimatedSize,
-        desiredBundleSizeBytes, configuration.getStartRow(), configuration.getStopRow());
+        desiredBundleSizeBytes, getConfiguration().getStartRow(), getConfiguration().getStopRow());
       SOURCE_LOG.trace("Splitting split {} into {}", this, newSplits);
       return newSplits;
-    }
-
-    public byte[] getStartRow() {
-      return configuration.getStartRow();
-    }
-
-    public byte[] getStopRow() {
-      return configuration.getStopRow();
     }
 
     @Override
     public String toString() {
       return String.format("Split start: '%s', end: '%s', size: %d.",
-        Bytes.toStringBinary(configuration.getStartRow()),
-        Bytes.toStringBinary(configuration.getStopRow()),
+        Bytes.toStringBinary(getConfiguration().getStartRow()),
+        Bytes.toStringBinary(getConfiguration().getStopRow()),
         estimatedSize);
     }
   }
   /**
    * Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}.
    */
-  private static class Reader<Results> extends BoundedReader<Results> {
+  @VisibleForTesting
+  static class Reader<Results> extends BoundedReader<Results> {
     private static final Logger READER_LOG = LoggerFactory.getLogger(Reader.class);
 
     private CloudBigtableIO.AbstractSource<Results> source;
     private final ScanIterator<Results> scanIterator;
 
-    private volatile BigtableSession session;
-    private volatile ResultScanner<Row> scanner;
+    @VisibleForTesting volatile BigtableSession session;
+    @VisibleForTesting volatile ResultScanner<Row> scanner;
     private volatile Results current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
     private final ByteKeyRangeTracker rangeTracker;
 
-    private Reader(CloudBigtableIO.AbstractSource<Results> source,
-        ScanIterator<Results> scanIterator) {
+    Reader(AbstractSource<Results> source, ScanIterator<Results> scanIterator) {
       this.source = source;
       this.scanIterator = scanIterator;
-      this.rangeTracker = ByteKeyRangeTracker.of(source.configuration.toByteKeyRange());
+      this.rangeTracker = ByteKeyRangeTracker.of(source.getConfiguration().toByteKeyRange());
     }
 
     /**
@@ -756,15 +748,20 @@ public class CloudBigtableIO {
     @Override
     public boolean start() throws IOException {
       long connectionStart = System.currentTimeMillis();
-      Configuration hbaseConfig = source.configuration.toHBaseConfig();
-      hbaseConfig.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-      session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(hbaseConfig));
-      scanner = session.getDataClient().readRows(source.configuration.getRequest());
+      initializeScanner();
       workStart = System.currentTimeMillis();
       READER_LOG.info("{} Starting work. Creating Scanner took: {} ms.",
         this,
         workStart - connectionStart);
       return advance();
+    }
+
+    @VisibleForTesting
+    void initializeScanner() throws IOException {
+      Configuration hbaseConfig = source.configuration.toHBaseConfig();
+      hbaseConfig.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
+      session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(hbaseConfig));
+      scanner = session.getDataClient().readRows(source.configuration.getRequest());
     }
 
     @Override
