@@ -806,7 +806,7 @@ public class CloudBigtableIO {
       byte[] splitKeyBytes = splitKey.getBytes();
       SourceWithKeys<Results> residual = source.createSourceWithKeys(splitKeyBytes,
         range.getEndKey().getBytes(), estimatedSizeBytes - newEstimatedSize);
-      this.source = source.createSourceWithKeys(range.getStartKey().getBytes(), splitKeyBytes,
+      this.source = this.source.createSourceWithKeys(range.getStartKey().getBytes(), splitKeyBytes,
         newEstimatedSize);
       return residual;
     }
