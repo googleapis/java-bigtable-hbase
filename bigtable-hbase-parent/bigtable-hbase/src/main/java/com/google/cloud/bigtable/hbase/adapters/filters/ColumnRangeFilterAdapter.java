@@ -47,22 +47,24 @@ public class ColumnRangeFilterAdapter implements TypedFilterAdapter<ColumnRangeF
     ColumnRange.Builder rangeBuilder = ColumnRange.newBuilder();
     rangeBuilder.setFamilyName(Bytes.toString(familyName));
 
-    ByteString startQualifier = ByteString.copyFrom(filter.getMinColumn());
-    if (filter.getMinColumnInclusive()) {
-      rangeBuilder.setStartQualifierClosed(startQualifier);
-    } else {
-      rangeBuilder.setStartQualifierOpen(startQualifier);
+    if (filter.getMinColumn() != null) {
+      ByteString startQualifier = ByteString.copyFrom(filter.getMinColumn());
+      if (filter.getMinColumnInclusive()) {
+        rangeBuilder.setStartQualifierClosed(startQualifier);
+      } else {
+        rangeBuilder.setStartQualifierOpen(startQualifier);
+      }
     }
 
-    ByteString endQualifier = ByteString.copyFrom(filter.getMaxColumn());
-    if (filter.getMaxColumnInclusive()) {
-      rangeBuilder.setEndQualifierClosed(endQualifier);
-    } else {
-      rangeBuilder.setEndQualifierOpen(endQualifier);
+    if (filter.getMaxColumn() != null) {
+      ByteString endQualifier = ByteString.copyFrom(filter.getMaxColumn());
+      if (filter.getMaxColumnInclusive()) {
+        rangeBuilder.setEndQualifierClosed(endQualifier);
+      } else {
+        rangeBuilder.setEndQualifierOpen(endQualifier);
+      }
     }
-    return RowFilter.newBuilder()
-        .setColumnRangeFilter(rangeBuilder)
-        .build();
+    return RowFilter.newBuilder().setColumnRangeFilter(rangeBuilder).build();
   }
 
   /** {@inheritDoc} */
