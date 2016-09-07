@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
+
 import java.io.IOException;
-import java.util.Collections;
 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -51,27 +51,30 @@ public class CloudBigtableIOReaderTest {
   @Before
   public void setup(){
     MockitoAnnotations.initMocks(this);
-    when(mockSource.getConfiguration()).thenReturn(new CloudBigtableScanConfiguration.Builder()
-      .withProjectId("test")
-      .withInstanceId("test")
-      .withTableId("test").build());
+    CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
+        .withProjectId("test").withInstanceId("test").withTableId("test").build();
+    when(mockSource.getConfiguration()).thenReturn(config);
   }
 
   @Test
   public void testBasic() throws IOException {
-    CloudBigtableIO.Reader underTest = new CloudBigtableIO.Reader<Result>(mockSource, CloudBigtableIO.RESULT_ADVANCER) {
+    CloudBigtableIO.Reader<Result> underTest = new CloudBigtableIO.Reader<Result>(mockSource, CloudBigtableIO.RESULT_ADVANCER) {
       @Override
       void initializeScanner() throws IOException {
-        this.scanner = mockScanner;
-        this.session = mockSession;
+        setSession(mockSession);
+        setScanner(mockScanner);
       }
     };
 
     ByteString key = ByteString.copyFrom(Bytes.toBytes("a"));
-    when(mockScanner.next())
-        .thenReturn(Row.newBuilder().setKey(key).build());
+    when(mockScanner.next()).thenReturn(Row.newBuilder().setKey(key).build());
     Assert.assertTrue(underTest.start());
+    Assert.assertEquals(1, underTest.getRowsReadCount());
+
     when(mockScanner.next()).thenReturn(null);
     Assert.assertFalse(underTest.advance());
+    Assert.assertEquals(1, underTest.getRowsReadCount());
+
+    underTest.close();
   }
 }

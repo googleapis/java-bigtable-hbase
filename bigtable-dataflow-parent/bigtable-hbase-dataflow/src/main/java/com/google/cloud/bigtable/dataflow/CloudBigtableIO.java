@@ -509,9 +509,8 @@ public class CloudBigtableIO {
      * @return A reader for the table.
      */
     @Override
-    public BoundedSource.BoundedReader<ResultOutputType> createReader(PipelineOptions options)
-        throws IOException {
-      return new CloudBigtableIO.Reader<>(this, getConfiguration(), scanIterator);
+    public BoundedSource.BoundedReader<ResultOutputType> createReader(PipelineOptions options) {
+      return new CloudBigtableIO.Reader<>(this, scanIterator);
     }
 
     /**
@@ -716,37 +715,23 @@ public class CloudBigtableIO {
    * Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}.
    */
   @VisibleForTesting
-  static class Reader<Results> extends BoundedReader<Results> {
+  static class Reader<ResultOutputType> extends BoundedReader<ResultOutputType> {
     private static final Logger READER_LOG = LoggerFactory.getLogger(Reader.class);
 
-    private CloudBigtableIO.AbstractSource<Results> source;
-    private final CloudBigtableScanConfiguration config;
-    private final ScanIterator<Results> scanIterator;
+    private CloudBigtableIO.AbstractSource<ResultOutputType> source;
+    private final ScanIterator<ResultOutputType> scanIterator;
 
     private volatile BigtableSession session;
     private volatile ResultScanner<Row> scanner;
-    private volatile Results current;
+    private volatile ResultOutputType current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
 
     @VisibleForTesting
-    Reader(
-        CloudBigtableIO.AbstractSource<Results> source,
-        CloudBigtableScanConfiguration config,
-        ScanIterator<Results> scanIterator) {
+    Reader(CloudBigtableIO.AbstractSource<ResultOutputType> source,
+        ScanIterator<ResultOutputType> scanIterator) {
       this.source = source;
-      this.config = config;
       this.scanIterator = scanIterator;
-    }
-
-    /**
-     * Calls {@link ResultScanner#next()}.
-     */
-    @Override
-    public boolean advance() throws IOException {
-      current = scanIterator.next(scanner);
-      rowsRead.addAndGet(scanIterator.getRowCount(current));
-      return !scanIterator.isCompletionMarker(current);
     }
 
     /**
@@ -766,10 +751,30 @@ public class CloudBigtableIO {
 
     @VisibleForTesting
     void initializeScanner() throws IOException {
-      Configuration hbaseConfig = config.toHBaseConfig();
+      Configuration hbaseConfig = source.getConfiguration().toHBaseConfig();
       hbaseConfig.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
       session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(hbaseConfig));
-      scanner = session.getDataClient().readRows(config.getRequest());
+      scanner = session.getDataClient().readRows(source.getConfiguration().getRequest());
+    }
+
+    /**
+     * Calls {@link ResultScanner#next()}.
+     */
+    @Override
+    public boolean advance() throws IOException {
+      current = scanIterator.next(scanner);
+      rowsRead.addAndGet(scanIterator.getRowCount(current));
+      return !scanIterator.isCompletionMarker(current);
+    }
+
+    @VisibleForTesting
+    protected void setSession(BigtableSession session) {
+      this.session = session;
+    }
+
+    @VisibleForTesting
+    protected void setScanner(ResultScanner<Row> scanner) {
+      this.scanner = scanner;
     }
 
     /**
@@ -779,7 +784,7 @@ public class CloudBigtableIO {
     public void close() throws IOException {
       scanner.close();
       session.close();
-      long totalOps = rowsRead.get();
+      long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;
       long operationsPerSecond = totalOps * 1000 / elapsedTimeMs;
       READER_LOG.info(
@@ -790,22 +795,27 @@ public class CloudBigtableIO {
           operationsPerSecond);
     }
 
+    @VisibleForTesting
+    long getRowsReadCount() {
+      return rowsRead.get();
+    }
+
     @Override
-    public final Results getCurrent() throws NoSuchElementException {
+    public final ResultOutputType getCurrent() throws NoSuchElementException {
       return current;
     }
 
     @Override
-    public final synchronized BoundedSource<Results> getCurrentSource() {
+    public final synchronized BoundedSource<ResultOutputType> getCurrentSource() {
       return source;
     }
 
     @Override
     public String toString() {
-      return String.format(
-          "Reader for: ['%s' - '%s']",
-          Bytes.toStringBinary(config.getStartRow()),
-          Bytes.toStringBinary(config.getStopRow()));
+      CloudBigtableScanConfiguration configuration = source.getConfiguration();
+      return String.format("Reader for: ['%s' - '%s']",
+        Bytes.toStringBinary(configuration.getStartRow()),
+        Bytes.toStringBinary(configuration.getStopRow()));
     }
   }
 
