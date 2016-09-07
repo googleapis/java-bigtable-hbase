@@ -324,6 +324,26 @@ public class TestFilters extends AbstractTest {
     Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[1])));
     Assert.assertEquals("C", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[2])));
 
+    // Filter for "B" inclusive, until the end.
+    filter = new ColumnRangeFilter(Bytes.toBytes("B"), true, null, true);
+    get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
+    result = table.get(get);
+    Assert.assertEquals("Should return \"B\", \"BB\", \"C\", \"CC\"", 4, result.size());
+    Assert.assertEquals("B", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
+    Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[1])));
+    Assert.assertEquals("C", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[2])));
+    Assert.assertEquals("CC", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[3])));
+
+    // Filter for all until "BB"
+    filter = new ColumnRangeFilter(null, true, Bytes.toBytes("BB"), true);
+    get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
+    result = table.get(get);
+    Assert.assertEquals("Should return \"A\", \"AA\", \"BB\", \"BB\"", 4, result.size());
+    Assert.assertEquals("A", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
+    Assert.assertEquals("AA", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[1])));
+    Assert.assertEquals("B", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[2])));
+    Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[3])));
+
     table.close();
   }
 
