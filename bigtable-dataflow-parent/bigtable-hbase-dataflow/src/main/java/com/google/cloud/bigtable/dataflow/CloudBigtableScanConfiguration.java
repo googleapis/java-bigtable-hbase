@@ -25,6 +25,7 @@ import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.ReadH
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.dataflow.sdk.io.range.ByteKey;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 
@@ -196,14 +197,22 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @return The start row for this configuration.
    */
   public byte[] getStartRow() {
-    return request.getRows().getRowRanges(0).getStartKeyClosed().toByteArray();
+    return getStartRowByteString().toByteArray();
   }
 
   /**
    * @return The stop row for this configuration.
    */
   public byte[] getStopRow() {
-    return request.getRows().getRowRanges(0).getEndKeyOpen().toByteArray();
+    return getStopRowByteString().toByteArray();
+  }
+
+  ByteString getStartRowByteString() {
+    return request.getRows().getRowRanges(0).getStartKeyClosed();
+  }
+
+  ByteString getStopRowByteString() {
+    return request.getRows().getRowRanges(0).getEndKeyOpen();
   }
 
   @Override
@@ -234,6 +243,12 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   public ByteKeyRange toByteKeyRange() {
-    return ByteKeyRange.of(ByteKey.copyFrom(getStartRow()), ByteKey.copyFrom(getStopRow()));
+    return ByteKeyRange.of(toByteKey(getStartRowByteString()), toByteKey(getStopRowByteString()));
+  }
+
+  private static ByteKey toByteKey(ByteString key) {
+    return ByteKey.of(
+        com.google.protobuf.BigtableZeroCopyByteStringUtil.wrap(
+            BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(key)));
   }
 }
