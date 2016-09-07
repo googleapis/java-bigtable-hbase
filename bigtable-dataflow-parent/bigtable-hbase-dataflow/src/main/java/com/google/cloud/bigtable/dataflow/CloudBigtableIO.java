@@ -58,6 +58,8 @@ import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultArrayCoder;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
@@ -192,7 +194,7 @@ public class CloudBigtableIO {
      * Is the work complete? Checks for null in the case of {@link Result}, or empty in the case of
      * an array of Results.
      *
-     * @param The current result.
+     * @param result The current result.
      */
     boolean isCompletionMarker(ResultOutputType result);
 
@@ -204,33 +206,31 @@ public class CloudBigtableIO {
     long getRowCount(ResultOutputType result);
   }
 
-  /**
-   * Iterates the {@link ResultScanner} via {@link ResultScanner#next()}.
-   */
-  static final ScanIterator<Result> RESULT_ADVANCER = new ScanIterator<Result>() {
-    private static final long serialVersionUID = 1L;
+  /** Iterates the {@link ResultScanner} via {@link ResultScanner#next()}. */
+  static final ScanIterator<Result> RESULT_ADVANCER =
+      new ScanIterator<Result>() {
+        private static final long serialVersionUID = 1L;
 
-    @Override
-    public Result next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker)
-        throws IOException {
-      Row row = resultScanner.next();
-      if (row == null
-          || !rangeTracker.tryReturnRecordAt(true, ByteKey.copyFrom(row.getKey().toByteArray()))) {
-        return null;
-      }
-      return Adapters.ROW_ADAPTER.adaptResponse(row);
-    }
+        @Override
+        public Result next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker)
+            throws IOException {
+          Row row = resultScanner.next();
+          if (row == null || !rangeTracker.tryReturnRecordAt(true, toByteKey(row.getKey()))) {
+            return null;
+          }
+          return Adapters.ROW_ADAPTER.adaptResponse(row);
+        }
 
-    @Override
-    public boolean isCompletionMarker(Result result) {
-      return result == null;
-    }
+        @Override
+        public boolean isCompletionMarker(Result result) {
+          return result == null;
+        }
 
-    @Override
-    public long getRowCount(Result result) {
-      return result == null ? 0 : 1;
-    }
-  };
+        @Override
+        public long getRowCount(Result result) {
+          return result == null ? 0 : 1;
+        }
+      };
 
   /**
    * Iterates the {@link ResultScanner} via {@link ResultScanner#next(int)}.
@@ -253,7 +253,7 @@ public class CloudBigtableIO {
           // The scan completed.
           break;
         }
-        ByteKey key = ByteKey.copyFrom(row.getKey().toByteArray());
+        ByteKey key = toByteKey(row.getKey());
         if (!rangeTracker.tryReturnRecordAt(true, key)) {
           // A split occurred and the split key was before this key.
           break;
@@ -1170,5 +1170,11 @@ public class CloudBigtableIO {
   private static void validateConfig(CloudBigtableConfiguration configuration) {
     checkNotNullOrEmpty(configuration.getProjectId(), "projectId");
     checkNotNullOrEmpty(configuration.getInstanceId(), "instanceId");
+  }
+
+  static ByteKey toByteKey(ByteString key) {
+    return ByteKey.of(
+        com.google.protobuf.BigtableZeroCopyByteStringUtil.wrap(
+            BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(key)));
   }
 }
