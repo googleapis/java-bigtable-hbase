@@ -23,6 +23,11 @@ import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.DefaultReadHooks;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.ReadHooks;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowRange;
+import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.cloud.dataflow.sdk.io.range.ByteKey;
+import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 
 import java.util.Map;
 import java.util.Objects;
@@ -192,14 +197,22 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @return The start row for this configuration.
    */
   public byte[] getStartRow() {
-    return request.getRows().getRowRanges(0).getStartKeyClosed().toByteArray();
+    return getStartRowByteString().toByteArray();
   }
 
   /**
    * @return The stop row for this configuration.
    */
   public byte[] getStopRow() {
-    return request.getRows().getRowRanges(0).getEndKeyOpen().toByteArray();
+    return getStopRowByteString().toByteArray();
+  }
+
+  ByteString getStartRowByteString() {
+    return request.getRows().getRowRanges(0).getStartKeyClosed();
+  }
+
+  ByteString getStopRowByteString() {
+    return request.getRows().getRowRanges(0).getEndKeyOpen();
   }
 
   @Override
@@ -219,5 +232,23 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public void copyConfig(Builder builder) {
     super.copyConfig(builder);
     builder.withRequest(request);
+  }
+
+  public CloudBigtableScanConfiguration withKeys(byte[] startKey, byte[] stopKey) {
+    ReadRowsRequest.Builder builder = getRequest().toBuilder();
+    builder.getRowsBuilder().setRowRanges(0,
+      RowRange.newBuilder().setStartKeyClosed(BigtableZeroCopyByteStringUtil.wrap(startKey))
+          .setEndKeyOpen(BigtableZeroCopyByteStringUtil.wrap(stopKey)));
+    return toBuilder().withRequest(builder.build()).build();
+  }
+
+  public ByteKeyRange toByteKeyRange() {
+    return ByteKeyRange.of(toByteKey(getStartRowByteString()), toByteKey(getStopRowByteString()));
+  }
+
+  private static ByteKey toByteKey(ByteString key) {
+    return ByteKey.of(
+        com.google.protobuf.BigtableZeroCopyByteStringUtil.wrap(
+            BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(key)));
   }
 }

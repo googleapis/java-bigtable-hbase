@@ -15,9 +15,15 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
+<<<<<<< HEAD
+import static org.mockito.Mockito.*;
+import java.io.IOException;
+import java.util.Collections;
+=======
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+>>>>>>> master
 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -33,7 +39,11 @@ import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 
 /**
+<<<<<<< HEAD
+ * Tests for {@link BigtableIO.Read}
+=======
  * Tests for {@link CloudBigtableIO.Reader}.
+>>>>>>> master
  * @author sduskis
  *
  */
@@ -51,22 +61,46 @@ public class CloudBigtableIOReaderTest {
   @Before
   public void setup(){
     MockitoAnnotations.initMocks(this);
+<<<<<<< HEAD
+    when(mockSource.getConfiguration()).thenReturn(new CloudBigtableScanConfiguration.Builder()
+      .withProjectId("test")
+      .withInstanceId("test")
+      .withTableId("test").build());
+=======
     CloudBigtableScanConfiguration config = new CloudBigtableScanConfiguration.Builder()
         .withProjectId("test").withInstanceId("test").withTableId("test").build();
     when(mockSource.getConfiguration()).thenReturn(config);
+>>>>>>> master
   }
 
   @Test
   public void testBasic() throws IOException {
+<<<<<<< HEAD
+    CloudBigtableIO.Reader underTest = new CloudBigtableIO.Reader<Result>(mockSource, CloudBigtableIO.RESULT_ADVANCER) {
+      @Override
+      void initializeScanner() throws IOException {
+        this.scanner = mockScanner;
+        this.session = mockSession;
+=======
     CloudBigtableIO.Reader<Result> underTest = new CloudBigtableIO.Reader<Result>(mockSource, CloudBigtableIO.RESULT_ADVANCER) {
       @Override
       void initializeScanner() throws IOException {
         setSession(mockSession);
         setScanner(mockScanner);
+>>>>>>> master
       }
     };
 
     ByteString key = ByteString.copyFrom(Bytes.toBytes("a"));
+<<<<<<< HEAD
+    when(mockScanner.next())
+        .thenReturn(Row.newBuilder().setKey(key).build());
+    Assert.assertTrue(underTest.start());
+    when(mockScanner.next()).thenReturn(null);
+    Assert.assertFalse(underTest.advance());
+  }
+}
+=======
     when(mockScanner.next()).thenReturn(Row.newBuilder().setKey(key).build());
     Assert.assertTrue(underTest.start());
     Assert.assertEquals(1, underTest.getRowsReadCount());
@@ -78,3 +112,4 @@ public class CloudBigtableIOReaderTest {
     underTest.close();
   }
 }
+>>>>>>> master
