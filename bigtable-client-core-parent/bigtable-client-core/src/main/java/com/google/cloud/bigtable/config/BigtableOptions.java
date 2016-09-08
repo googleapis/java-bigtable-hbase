@@ -88,8 +88,8 @@ public class BigtableOptions implements Serializable {
     private RetryOptions retryOptions = new RetryOptions.Builder().build();
     private CallOptionsConfig callOptionsConfig = new CallOptionsConfig.Builder().build();
     // CredentialOptions.defaultCredentials() gets credentials from well known locations, such as
-    // the GCE metdata service or gcloud configuration in other environments. A user can also
-    // override the default behavior with P12 or JSon configuration.
+    // the Google Compute Engine metadata service or gcloud configuration in other environments. A
+    // user can also override the default behavior with P12 or JSON configuration.
     private CredentialOptions credentialOptions = CredentialOptions.defaultCredentials();
 
     public Builder() {

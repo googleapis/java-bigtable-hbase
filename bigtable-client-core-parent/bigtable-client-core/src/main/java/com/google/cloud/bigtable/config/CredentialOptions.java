@@ -28,14 +28,15 @@ import com.google.auth.Credentials;
  * </p>
  * <ol>
  * <li>DefaultCredentials - Initializes OAuth2 credential using preconfigured ServiceAccount
- * settings on the local GCE VM or GOOGLE_APPLICATION_CREDENTIALS environment variable or gcloud configured security. See: <a
- * href="https://developers.google.com/compute/docs/authentication">Authenticating from Google
- * Compute Engine</a> and <a
- * href="https://developers.google.com/accounts/docs/application-default-credentials" > Application
- * Default Credentials</a>.</li>
+ * settings on the local Google Compute Engine instance or GOOGLE_APPLICATION_CREDENTIALS
+ * environment variable or gcloud configured security. See: <a
+ * href="https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances"
+ * >Creating and Enabling Service Accounts for Instances</a> and <a
+ * href="https://developers.google.com/identity/protocols/application-default-credentials"
+ * >Application Default Credentials</a>.</li>
  * <li>P12 - Initializes OAuth2 credential from a private keyfile, as described in <a
- * href="https://code.google.com/p/google-api-java-client/wiki/OAuth2#Service_Accounts" > OAuth2
- * Service Accounts</a>.</li>
+ * href="https://developers.google.com/api-client-library/java/google-api-java-client/oauth2#service_accounts"
+ * >Service accounts</a>.</li>
  * <li>UserSupplied - User supplies a fully formed Credentials.
  * <li>None - used for unit testing</li>
  * </ol>
@@ -90,9 +91,10 @@ public class CredentialOptions implements Serializable {
    * gcloud/application_default_credentials.json file in the (User)/APPDATA/ directory on Windows or
    * ~/.config/ directory on other OSs .
    * </p>
-   * Initializes OAuth2 credential using preconfigured ServiceAccount settings on the local GCE VM.
-   * See: <a href="https://developers.google.com/compute/docs/authentication">Authenticating from
-   * Google Compute Engine</a>.
+   * Initializes OAuth2 credential using preconfigured ServiceAccount settings on the local Google
+   * Compute Engine VM. See:
+   * <a href="https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances"
+   * >Creating and Enabling Service Accounts for Instances</a>.
    *
    * @return a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
    */
@@ -102,8 +104,8 @@ public class CredentialOptions implements Serializable {
 
   /**
    * Initializes OAuth2 credential from a private keyfile, as described in <a
-   * href="https://code.google.com/p/google-api-java-client/wiki/OAuth2#Service_Accounts" > OAuth2
-   * Service Accounts</a>
+   * href="https://developers.google.com/api-client-library/java/google-api-java-client/oauth2#service_accounts"
+   * >Service accounts</a>.
    *
    * @param serviceAccount a {@link java.lang.String} object.
    * @param keyFile a {@link java.lang.String} object.

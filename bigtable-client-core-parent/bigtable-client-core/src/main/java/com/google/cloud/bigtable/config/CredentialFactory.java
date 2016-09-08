@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,8 +136,9 @@ public class CredentialFactory {
 
   /**
    * Initializes OAuth2 credential using preconfigured ServiceAccount settings on the local
-   * GCE VM. See: <a href="https://developers.google.com/compute/docs/authentication"
-   * >Authenticating from Google Compute Engine</a>.
+   * Google Compute Engine VM. See:
+   * <a href="https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances"
+   * >Creating and Enabling Service Accounts for Instances</a>.
    *
    * @return a {@link com.google.auth.Credentials} object.
    * @throws java.io.IOException if any.
@@ -150,8 +151,8 @@ public class CredentialFactory {
 
   /**
    * Initializes OAuth2 credential from a private keyfile, as described in
-   * <a href="https://code.google.com/p/google-api-java-client/wiki/OAuth2#Service_Accounts"
-   * > OAuth2 Service Accounts</a>.
+   * <a href="https://developers.google.com/api-client-library/java/google-api-java-client/oauth2#service_accounts"
+   * >Service accounts</a>.
    *
    * @param serviceAccountEmail Email address of the service account associated with the keyfile.
    * @param privateKeyFile Full local path to private keyfile.
@@ -168,8 +169,8 @@ public class CredentialFactory {
 
   /**
    * Initializes OAuth2 credential from a private keyfile, as described in
-   * <a href="https://code.google.com/p/google-api-java-client/wiki/OAuth2#Service_Accounts"
-   * > OAuth2 Service Accounts</a>.
+   * <a href="https://developers.google.com/api-client-library/java/google-api-java-client/oauth2#service_accounts"
+   * >Service accounts</a>.
    *
    * @param serviceAccountEmail Email address of the service account associated with the keyfile.
    * @param privateKeyFile Full local path to private keyfile.
@@ -195,7 +196,7 @@ public class CredentialFactory {
    * in. If a service account is to be used with JSON file, set the environment variable with name
    * "GOOGLE_APPLICATION_CREDENTIALS" to the JSON file path. For more details on application default
    * credentials:
-   * <a href="https://developers.google.com/accounts/docs/application-default-credentials" >
+   * <a href="https://developers.google.com/identity/protocols/application-default-credentials" >
    * Application Default Credentials</a>.
    *
    * @return a {@link com.google.auth.Credentials} object.
