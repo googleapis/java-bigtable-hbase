@@ -178,7 +178,8 @@ public class CloudBigtableIO {
    *
    * @param <ResultOutputType> is either a {@link Result} or {@link Result}[];
    */
-  private interface ScanIterator<ResultOutputType> extends Serializable {
+  @VisibleForTesting
+  interface ScanIterator<ResultOutputType> extends Serializable {
     /**
      * Get the next unit of work.
      */
