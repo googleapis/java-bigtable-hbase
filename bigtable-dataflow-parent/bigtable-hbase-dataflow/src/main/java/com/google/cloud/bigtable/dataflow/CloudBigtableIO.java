@@ -180,7 +180,8 @@ public class CloudBigtableIO {
    *
    * @param <ResultOutputType> is either a {@link Result} or {@link Result}[];
    */
-  private interface ScanIterator<ResultOutputType> extends Serializable {
+  @VisibleForTesting
+  interface ScanIterator<ResultOutputType> extends Serializable {
     /**
      * Get the next unit of work.
      *
@@ -313,8 +314,8 @@ public class CloudBigtableIO {
     protected List<SourceWithKeys<ResultOutputType>> getSplits(long desiredBundleSizeBytes) throws Exception {
       desiredBundleSizeBytes = Math.max(getEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
         desiredBundleSizeBytes);
-      byte[] scanStartKey = configuration.getStartRow();
-      byte[] scanEndKey = configuration.getStopRow();
+      byte[] scanStartKey = getConfiguration().getStartRow();
+      byte[] scanEndKey = getConfiguration().getStopRow();
       List<SourceWithKeys<ResultOutputType>> splits = new ArrayList<>();
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
@@ -405,10 +406,10 @@ public class CloudBigtableIO {
      */
     public synchronized List<SampleRowKeysResponse> getSampleRowKeys() throws IOException {
       if (sampleRowKeys == null) {
-        BigtableOptions bigtableOptions = configuration.toBigtableOptions();
+        BigtableOptions bigtableOptions = getConfiguration().toBigtableOptions();
         try (BigtableSession session = new BigtableSession(bigtableOptions)) {
           BigtableTableName tableName =
-              bigtableOptions.getInstanceName().toTableName(configuration.getTableId());
+              bigtableOptions.getInstanceName().toTableName(getConfiguration().getTableId());
           SampleRowKeysRequest request =
               SampleRowKeysRequest.newBuilder().setTableName(tableName.toString()).build();
           sampleRowKeys = session.getDataClient().sampleRowKeys(request);
@@ -427,7 +428,7 @@ public class CloudBigtableIO {
      */
     @Override
     public void validate() {
-      CloudBigtableIO.validateTableConfig(configuration);
+      CloudBigtableIO.validateTableConfig(getConfiguration());
     }
 
     /**
@@ -444,8 +445,8 @@ public class CloudBigtableIO {
     public long getEstimatedSizeBytes(PipelineOptions options) throws IOException {
       long totalEstimatedSizeBytes = 0;
 
-      byte[] scanStartKey = configuration.getStartRow();
-      byte[] scanEndKey = configuration.getStopRow();
+      byte[] scanStartKey = getConfiguration().getStartRow();
+      byte[] scanEndKey = getConfiguration().getStopRow();
 
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
@@ -597,8 +598,8 @@ public class CloudBigtableIO {
     public long getEstimatedSizeBytes(PipelineOptions options) throws IOException {
       long totalEstimatedSizeBytes = 0;
 
-      byte[] scanStartKey = configuration.getStartRow();
-      byte[] scanEndKey = configuration.getStopRow();
+      byte[] scanStartKey = getConfiguration().getStartRow();
+      byte[] scanEndKey = getConfiguration().getStopRow();
 
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
@@ -700,6 +701,14 @@ public class CloudBigtableIO {
       return newSplits;
     }
 
+    public byte[] getStartRow() {
+      return getConfiguration().getStartRow();
+    }
+
+    public byte[] getStopRow() {
+      return getConfiguration().getStopRow();
+    }
+
     @Override
     public String toString() {
       return String.format("Split start: '%s', end: '%s', size: %d.",
@@ -712,20 +721,22 @@ public class CloudBigtableIO {
    * Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}.
    */
   @VisibleForTesting
-  static class Reader<Results> extends BoundedReader<Results> {
+  static class Reader<ResultOutputType> extends BoundedReader<ResultOutputType> {
     private static final Logger READER_LOG = LoggerFactory.getLogger(Reader.class);
 
-    private CloudBigtableIO.AbstractSource<Results> source;
-    private final ScanIterator<Results> scanIterator;
+    private CloudBigtableIO.AbstractSource<ResultOutputType> source;
+    private final ScanIterator<ResultOutputType> scanIterator;
 
     @VisibleForTesting volatile BigtableSession session;
     @VisibleForTesting volatile ResultScanner<Row> scanner;
-    private volatile Results current;
+    private volatile ResultOutputType current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
     private final ByteKeyRangeTracker rangeTracker;
 
-    Reader(AbstractSource<Results> source, ScanIterator<Results> scanIterator) {
+    @VisibleForTesting
+    Reader(CloudBigtableIO.AbstractSource<ResultOutputType> source,
+        ScanIterator<ResultOutputType> scanIterator) {
       this.source = source;
       this.scanIterator = scanIterator;
       this.rangeTracker = ByteKeyRangeTracker.of(source.getConfiguration().toByteKeyRange());
@@ -775,7 +786,7 @@ public class CloudBigtableIO {
      * information does not exist).
      */
     @Override
-    public final synchronized BoundedSource<Results> splitAtFraction(double fraction) {
+    public final synchronized BoundedSource<ResultOutputType> splitAtFraction(double fraction) {
       ByteKey splitKey;
       final ByteKeyRange range = source.configuration.toByteKeyRange();
       try {
@@ -801,11 +812,21 @@ public class CloudBigtableIO {
       }
       long newEstimatedSize = (long) (fraction * estimatedSizeBytes);
       byte[] splitKeyBytes = splitKey.getBytes();
-      SourceWithKeys<Results> residual = source.createSourceWithKeys(splitKeyBytes,
+      SourceWithKeys<ResultOutputType> residual = source.createSourceWithKeys(splitKeyBytes,
         range.getEndKey().getBytes(), estimatedSizeBytes - newEstimatedSize);
       this.source = this.source.createSourceWithKeys(range.getStartKey().getBytes(), splitKeyBytes,
         newEstimatedSize);
       return residual;
+    }
+
+    @VisibleForTesting
+    protected void setSession(BigtableSession session) {
+      this.session = session;
+    }
+
+    @VisibleForTesting
+    protected void setScanner(ResultScanner<Row> scanner) {
+      this.scanner = scanner;
     }
 
     /**
@@ -815,7 +836,7 @@ public class CloudBigtableIO {
     public void close() throws IOException {
       scanner.close();
       session.close();
-      long totalOps = rowsRead.get();
+      long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;
       long operationsPerSecond = totalOps * 1000 / elapsedTimeMs;
       READER_LOG.info(
@@ -826,13 +847,18 @@ public class CloudBigtableIO {
           operationsPerSecond);
     }
 
+    @VisibleForTesting
+    long getRowsReadCount() {
+      return rowsRead.get();
+    }
+
     @Override
-    public final Results getCurrent() throws NoSuchElementException {
+    public final ResultOutputType getCurrent() throws NoSuchElementException {
       return current;
     }
 
     @Override
-    public final synchronized BoundedSource<Results> getCurrentSource() {
+    public final synchronized BoundedSource<ResultOutputType> getCurrentSource() {
       return source;
     }
 

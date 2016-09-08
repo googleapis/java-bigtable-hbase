@@ -275,7 +275,7 @@ public class TestFilters extends AbstractTest {
   /**
    * Requirement 9.4 - ColumnRangeFilter - select keys with columns between minColumn and maxColumn
    *
-   * Insert 5 cols: A, AA, B, BB, C, CC.  Test filtering on these columns with different
+   * Insert 6 cols: A, AA, B, BB, C, CC.  Test filtering on these columns with different
    * combinations of start/end keys being inclusive/exclusive.
    */
   @Test
@@ -283,48 +283,61 @@ public class TestFilters extends AbstractTest {
     // Initialize
     Table table = getTable();
     byte[] rowKey = dataHelper.randomData("testRow-");
-    Put put = new Put(rowKey);
-    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("A"), Bytes.toBytes("someval"));
-    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("AA"), Bytes.toBytes("someval"));
-    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("B"), Bytes.toBytes("someval"));
-    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("BB"), Bytes.toBytes("someval"));
-    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("C"), Bytes.toBytes("someval"));
-    put.addColumn(COLUMN_FAMILY, Bytes.toBytes("CC"), Bytes.toBytes("someval"));
-    table.put(put);
+    final byte[] value = Bytes.toBytes("someval");
+    table.put(new Put(rowKey)
+        .addColumn(COLUMN_FAMILY, Bytes.toBytes("A"), value)
+        .addColumn(COLUMN_FAMILY, Bytes.toBytes("AA"), value)
+        .addColumn(COLUMN_FAMILY, Bytes.toBytes("B"), value)
+        .addColumn(COLUMN_FAMILY, Bytes.toBytes("BB"), value)
+        .addColumn(COLUMN_FAMILY, Bytes.toBytes("C"), value)
+        .addColumn(COLUMN_FAMILY, Bytes.toBytes("CC"), value));
 
     // Filter for "B" exclusive, "C" exclusive
     Filter filter = new ColumnRangeFilter(Bytes.toBytes("B"), false, Bytes.toBytes("C"), false);
-    Get get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
-    Result result = table.get(get);
-    Assert.assertEquals("Should only return \"BB\"", 1, result.size());
-    Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
+    testColumnRangeFilterCells(table, rowKey, filter, "BB");
 
     // Filter for "B" exclusive, "C" inclusive
     filter = new ColumnRangeFilter(Bytes.toBytes("B"), false, Bytes.toBytes("C"), true);
-    get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
-    result = table.get(get);
-    Assert.assertEquals("Should return \"BB\", \"C\"", 2, result.size());
-    Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
-    Assert.assertEquals("C", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[1])));
+    testColumnRangeFilterCells(table, rowKey, filter, "BB", "C");
 
     // Filter for "B" inclusive, "C" exclusive
     filter = new ColumnRangeFilter(Bytes.toBytes("B"), true, Bytes.toBytes("C"), false);
-    get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
-    result = table.get(get);
-    Assert.assertEquals("Should return \"B\", \"BB\"", 2, result.size());
-    Assert.assertEquals("B", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
-    Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[1])));
+    testColumnRangeFilterCells(table, rowKey, filter, "B", "BB");
 
     // Filter for "B" inclusive, "C" inclusive
     filter = new ColumnRangeFilter(Bytes.toBytes("B"), true, Bytes.toBytes("C"), true);
-    get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
-    result = table.get(get);
-    Assert.assertEquals("Should return \"B\", \"BB\", \"C\"", 3, result.size());
-    Assert.assertEquals("B", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[0])));
-    Assert.assertEquals("BB", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[1])));
-    Assert.assertEquals("C", Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[2])));
+    testColumnRangeFilterCells(table, rowKey, filter, "B", "BB", "C");
+
+    // Filter for "B" inclusive, until the end.
+    filter = new ColumnRangeFilter(Bytes.toBytes("B"), true, null, true);
+    testColumnRangeFilterCells(table, rowKey, filter, "B", "BB", "C", "CC");
+
+    // Filter for all until "BB"
+    filter = new ColumnRangeFilter(null, true, Bytes.toBytes("BB"), true);
+    testColumnRangeFilterCells(table, rowKey, filter, "A", "AA", "B", "BB");
 
     table.close();
+  }
+
+  private static void testColumnRangeFilterCells(Table table, byte[] rowKey, Filter filter,
+      String... columnQualifiers) throws IOException {
+    Get get = new Get(rowKey).setFilter(filter).addFamily(COLUMN_FAMILY);
+    Result result = table.get(get);
+    Assert.assertEquals("Should return " + concat(columnQualifiers), columnQualifiers.length,
+      result.size());
+    for (int i = 0; i < columnQualifiers.length; i++) {
+      String qualifier = columnQualifiers[i];
+      Assert.assertEquals(qualifier, Bytes.toString(CellUtil.cloneQualifier(result.rawCells()[i])));
+    }
+  }
+
+  private static String concat(String... columnQualifiers) {
+    StringBuilder sb = new StringBuilder();
+    String prepend = "";
+    for (String qualifier : columnQualifiers) {
+      sb.append(prepend).append('"').append(qualifier).append('"');
+    }
+    return sb.toString();
   }
 
   /**

@@ -128,10 +128,16 @@ limitations under the License.
                             <overview>../overview.html</overview>
                             <bottom><![CDATA[<br>]]></bottom>
 
-                            <links>
-                                <link>https://cloud.google.com/dataflow/java-sdk/JavaDoc/</link>
-                                <link>https://hbase.apache.org/apidocs/</link>
-                            </links>
+                            <offlineLinks>
+                                <offlineLink>
+                                    <url>https://cloud.google.com/dataflow/java-sdk/JavaDoc/</url>
+                                    <location>${basedir}/javadoc/dataflow-docs</location>
+                                </offlineLink>
+                                <offlineLink>
+                                    <url>https://hbase.apache.org/apidocs/</url>
+                                    <location>${basedir}/javadoc/hbase-docs</location>
+                                </offlineLink>
+                            </offlineLinks>
                         </configuration>
                         <executions>
                             <execution>

@@ -24,8 +24,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
+import com.google.bigtable.v2.ColumnRange;
 import com.google.bigtable.v2.RowFilter;
+import com.google.protobuf.ByteString;
 
 @RunWith(JUnit4.class)
 public class TestColumnRangeFilterAdapter {
@@ -42,27 +43,51 @@ public class TestColumnRangeFilterAdapter {
   }
 
   @Test
-  public void testColumnRangeFilterWithASingleFamily() throws IOException {
+  public void testColumnRangeFilterWithASingleFamily_startAndEnd() throws IOException {
     ColumnRangeFilter filter = new ColumnRangeFilter(
         Bytes.toBytes("a"), true, Bytes.toBytes("b"), false);
     Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
     RowFilter rowFilter = filterAdapter.adapt(
         new FilterAdapterContext(familyScan, null), filter);
 
-    Assert.assertEquals(
-        "a",
-        Bytes.toString(
-            rowFilter
-                .getColumnRangeFilter()
-                .getStartQualifierClosed()
-                .toByteArray()));
+    ColumnRange columnRange = rowFilter.getColumnRangeFilter();
+    Assert.assertEquals(0, columnRange.getStartQualifierOpen().size());
+    Assert.assertEquals("a", toString(columnRange.getStartQualifierClosed()));
+    Assert.assertEquals("b", toString(columnRange.getEndQualifierOpen()));
+    Assert.assertEquals(0, columnRange.getEndQualifierClosed().size());
+  }
 
-    Assert.assertEquals(
-        "b",
-        Bytes.toString(
-            rowFilter
-                .getColumnRangeFilter()
-                .getEndQualifierOpen()
-                .toByteArray()));
+  @Test
+  public void testColumnRangeFilterWithASingleFamily_openStart() throws IOException {
+    ColumnRangeFilter filter = new ColumnRangeFilter(
+        null, true, Bytes.toBytes("b"), false);
+    Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
+    RowFilter rowFilter = filterAdapter.adapt(
+        new FilterAdapterContext(familyScan, null), filter);
+
+    ColumnRange columnRange = rowFilter.getColumnRangeFilter();
+    Assert.assertEquals(0, columnRange.getStartQualifierClosed().size());
+    Assert.assertEquals(0, columnRange.getStartQualifierOpen().size());
+    Assert.assertEquals("b", toString(columnRange.getEndQualifierOpen()));
+    Assert.assertEquals(0, columnRange.getEndQualifierClosed().size());
+  }
+
+  @Test
+  public void testColumnRangeFilterWithASingleFamily_openEnd() throws IOException {
+    ColumnRangeFilter filter = new ColumnRangeFilter(
+        Bytes.toBytes("a"), true, null, false);
+    Scan familyScan = new Scan().addFamily(Bytes.toBytes("foo"));
+    RowFilter rowFilter = filterAdapter.adapt(
+        new FilterAdapterContext(familyScan, null), filter);
+
+    ColumnRange columnRange = rowFilter.getColumnRangeFilter();
+    Assert.assertEquals("a", toString(columnRange.getStartQualifierClosed()));
+    Assert.assertEquals(0, columnRange.getStartQualifierOpen().size());
+    Assert.assertEquals(0, columnRange.getEndQualifierOpen().size());
+    Assert.assertEquals(0, columnRange.getEndQualifierClosed().size());
+  }
+
+  private static String toString(ByteString in) {
+    return Bytes.toString(in.toByteArray());
   }
 }
