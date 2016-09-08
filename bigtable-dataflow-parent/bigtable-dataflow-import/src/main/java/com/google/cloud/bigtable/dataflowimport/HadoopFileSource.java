@@ -181,9 +181,10 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    * <p>If a dataflow job using files on Google Cloud Storage is launched off the cloud
    * (e.g., from user's desktop), dataflow causes the source to access the files UNNECESSARILY
    * from the local host, which is bound to fail because gcs-connector is already configured to
-   * use GCE VM's authenticaton mechanism, which won't work for access from off the cloud. The
-   * resulting warnings are very confusing because it happens right before dataflow task-staging,
-   * which may take a long time. To the user the program may appear to have failed fatally.
+   * use the Google Compute Engine instance's authentication mechanism, which won't work for access
+   * from off the cloud. The resulting warnings are very confusing because it happens right before
+   * dataflow task-staging, which may take a long time. To the user the program may appear to have
+   * failed fatally.
    *
    * <p>When {@code isRemoteFile} is {@code true}, this class would not try to access
    * google cloud storage from off the cloud, sidestepping the problem. When the program is staged
