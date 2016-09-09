@@ -48,8 +48,8 @@ public class CloudBigtableScanConfigurationTest {
     Assert.assertEquals(PROJECT, serialized.getProjectId());
     Assert.assertEquals(INSTANCE, serialized.getInstanceId());
     Assert.assertEquals(TABLE, serialized.getTableId());
-    Assert.assertArrayEquals(START_ROW, serialized.getStartRow());
-    Assert.assertArrayEquals(STOP_ROW, serialized.getStopRow());
+    Assert.assertArrayEquals(START_ROW, serialized.getZeroCopyStartRow());
+    Assert.assertArrayEquals(STOP_ROW, serialized.getZeroCopyStopRow());
   }
 
   @Test

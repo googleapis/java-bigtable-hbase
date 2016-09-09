@@ -23,6 +23,10 @@ import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.DefaultReadHooks;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.ReadHooks;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowRange;
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowSet;
+import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 
 import java.util.Map;
 import java.util.Objects;
@@ -103,6 +107,25 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     public Builder withRequest(ReadRowsRequest request) {
       this.request = request;
       this.scan = null;
+      return this;
+    }
+
+    /**
+     * Internal API that allows a Source to configure the request with a new start/stop row range.
+     *
+     * @param startKey The first key, inclusive.
+     * @param stopKey The last key, exclusive.
+     *
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
+    Builder withKeys(byte[] startKey, byte[] stopKey) {
+      final ByteString start = BigtableZeroCopyByteStringUtil.wrap(startKey);
+      final ByteString stop = BigtableZeroCopyByteStringUtil.wrap(stopKey);
+      request =
+          request.toBuilder()
+              .setRows(RowSet.newBuilder().addRowRanges(
+                RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(stop).build()))
+              .build();
       return this;
     }
 
@@ -192,21 +215,47 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @return The start row for this configuration.
    */
   public byte[] getStartRow() {
-    return request.getRows().getRowRanges(0).getStartKeyClosed().toByteArray();
+    return getStartRowByteString().toByteArray();
   }
 
   /**
    * @return The stop row for this configuration.
    */
   public byte[] getStopRow() {
-    return request.getRows().getRowRanges(0).getEndKeyOpen().toByteArray();
+    return getStopRowByteString().toByteArray();
+  }
+
+
+  /**
+   * @return The start row for this configuration.
+   */
+  byte[] getZeroCopyStartRow() {
+    return BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(getStartRowByteString());
+  }
+
+  /**
+   * @return The stop row for this configuration.
+   */
+  byte[] getZeroCopyStopRow() {
+    return BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(getStopRowByteString());
+  }
+
+  ByteString getStartRowByteString() {
+    return getRowRange().getStartKeyClosed();
+  }
+
+  ByteString getStopRowByteString() {
+    return getRowRange().getEndKeyOpen();
+  }
+
+  RowRange getRowRange() {
+    return request.getRows().getRowRanges(0);
   }
 
   @Override
   public boolean equals(Object obj) {
     return super.equals(obj)
-        && Objects
-            .equals(request, ((CloudBigtableScanConfiguration) obj).request);
+        && Objects.equals(request, ((CloudBigtableScanConfiguration) obj).request);
   }
 
   @Override
