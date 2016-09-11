@@ -58,13 +58,14 @@ public class CloudBigtableIOReaderTest {
 
   @Test
   public void testBasic() throws IOException {
-    CloudBigtableIO.Reader<Result> underTest = new CloudBigtableIO.Reader<Result>(mockSource, CloudBigtableIO.RESULT_ADVANCER) {
-      @Override
-      void initializeScanner() throws IOException {
-        setSession(mockSession);
-        setScanner(mockScanner);
-      }
-    };
+    CloudBigtableIO.Reader<Result> underTest =
+        new CloudBigtableIO.Reader<Result>(mockSource, CloudBigtableIO.RESULT_ADVANCER) {
+          @Override
+          void initializeScanner() throws IOException {
+            setSession(mockSession);
+            setScanner(mockScanner);
+          }
+        };
 
     ByteString key = ByteString.copyFrom(Bytes.toBytes("a"));
     when(mockScanner.next()).thenReturn(Row.newBuilder().setKey(key).build());
