@@ -149,7 +149,7 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     }
 
     // Perform Retry
-    LOG.info("Retrying failed call. Failure #%d, got: %s", status.getCause(), failedCount, status);
+    LOG.info("Retrying failed call. Failure #%d, got: %s", failedCount, status);
 
     // TODO: This is probably not needed.  Consider removing the cancel here.
     if (this.call != null) {
