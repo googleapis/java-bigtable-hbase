@@ -67,6 +67,9 @@ import com.google.cloud.dataflow.sdk.coders.Coder;
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.BoundedSource.BoundedReader;
+import com.google.cloud.dataflow.sdk.io.range.ByteKey;
+import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
+import com.google.cloud.dataflow.sdk.io.range.ByteKeyRangeTracker;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.transforms.Aggregator;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
@@ -179,8 +182,11 @@ public class CloudBigtableIO {
   interface ScanIterator<ResultOutputType> extends Serializable {
     /**
      * Get the next unit of work.
+     *
+     * @param resultScanner The {@link ResultScanner} on which to operate.
+     * @param rangeTracker The {@link ByteKeyRangeTracker} that defines the range in which to get results.
      */
-    ResultOutputType next(ResultScanner<Row> resultScanner) throws IOException;
+    ResultOutputType next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker) throws IOException;
 
     /**
      * Is the work complete? Checks for null in the case of {@link Result}, or empty in the case of
@@ -201,9 +207,11 @@ public class CloudBigtableIO {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Result next(ResultScanner<Row> resultScanner) throws IOException {
+    public Result next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker)
+        throws IOException {
       Row row = resultScanner.next();
-      if (row == null) {
+      if (row == null
+          || !rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getKey()))) {
         return null;
       }
       return Adapters.ROW_ADAPTER.adaptResponse(row);
@@ -231,19 +239,27 @@ public class CloudBigtableIO {
       this.arraySize = arraySize;
     }
 
+
     @Override
-    public Result[] next(ResultScanner<Row> resultScanner)
+    public Result[] next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker)
         throws IOException {
       List<Result> results = new ArrayList<>();
       for (int i = 0; i < arraySize; i++) {
         Row row = resultScanner.next();
         if (row == null) {
+          // The scan completed.
+          break;
+        }
+        ByteKey key = ByteStringUtil.toByteKey(row.getKey());
+        if (!rangeTracker.tryReturnRecordAt(true, key)) {
+          // A split occurred and the split key was before this key.
           break;
         }
         results.add(Adapters.ROW_ADAPTER.adaptResponse(row));
       }
       return results.toArray(new Result[results.size()]);
     }
+
 
     @Override
     public boolean isCompletionMarker(Result[] result) {
@@ -712,12 +728,14 @@ public class CloudBigtableIO {
     private volatile ResultOutputType current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
+    private final ByteKeyRangeTracker rangeTracker;
 
     @VisibleForTesting
     Reader(CloudBigtableIO.AbstractSource<ResultOutputType> source,
         ScanIterator<ResultOutputType> scanIterator) {
       this.source = source;
       this.scanIterator = scanIterator;
+      this.rangeTracker = ByteKeyRangeTracker.of(source.getConfiguration().toByteKeyRange());
     }
 
     /**
@@ -748,9 +766,54 @@ public class CloudBigtableIO {
      */
     @Override
     public boolean advance() throws IOException {
-      current = scanIterator.next(scanner);
+      current = scanIterator.next(scanner, rangeTracker);
       rowsRead.addAndGet(scanIterator.getRowCount(current));
       return !scanIterator.isCompletionMarker(current);
+    }
+
+
+    @Override
+    public final Double getFractionConsumed() {
+      return rangeTracker.getFractionConsumed();
+    }
+
+    /**
+     * Attempt to split the work by some percent of the ByteKeyRange based on a lexicographical
+     * split (and not statistics about the underlying table, which would be better, but that
+     * information does not exist).
+     */
+    @Override
+    public final synchronized BoundedSource<ResultOutputType> splitAtFraction(double fraction) {
+      ByteKey splitKey;
+      final ByteKeyRange range = source.getConfiguration().toByteKeyRange();
+      try {
+        splitKey = range.interpolateKey(fraction);
+      } catch (IllegalArgumentException e) {
+        READER_LOG.info("%s: Failed to interpolate key for fraction %s.", range, fraction);
+        return null;
+      }
+
+      READER_LOG.debug("Proposing to split {} at fraction {} (key {})", rangeTracker, fraction,
+        splitKey);
+
+      if (!rangeTracker.trySplitAtPosition(splitKey)) {
+        return null;
+      }
+
+      long estimatedSizeBytes = -1;
+      try {
+        estimatedSizeBytes = source.getEstimatedSizeBytes(null);
+      } catch (IOException e) {
+        READER_LOG.info("%s: Failed to get estimated size for key for fraction %s.", range, fraction);
+        return null;
+      }
+      long newEstimatedSize = (long) (fraction * estimatedSizeBytes);
+      byte[] splitKeyBytes = splitKey.getBytes();
+      SourceWithKeys<ResultOutputType> residual = source.createSourceWithKeys(splitKeyBytes,
+        source.getConfiguration().getZeroCopyStopRow(), estimatedSizeBytes - newEstimatedSize);
+      this.source = this.source.createSourceWithKeys(
+        source.getConfiguration().getZeroCopyStartRow(), splitKeyBytes, newEstimatedSize);
+      return residual;
     }
 
     @VisibleForTesting

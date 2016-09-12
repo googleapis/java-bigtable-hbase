@@ -27,6 +27,7 @@ import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowRange
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowSet;
 import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 
 import java.util.Map;
 import java.util.Objects;
@@ -268,5 +269,16 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public void copyConfig(Builder builder) {
     super.copyConfig(builder);
     builder.withRequest(request);
+  }
+
+  /**
+   * Creates a {@link ByteKeyRange} representing the start and stop keys for this instance.
+   *
+   * @return A {@link ByteKeyRange}.
+   */
+  public ByteKeyRange toByteKeyRange() {
+    return ByteKeyRange.of(
+      ByteStringUtil.toByteKey(getStartRowByteString()),
+      ByteStringUtil.toByteKey(getStopRowByteString()));
   }
 }
