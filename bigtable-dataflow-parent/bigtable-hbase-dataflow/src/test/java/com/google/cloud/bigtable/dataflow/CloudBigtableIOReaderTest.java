@@ -33,7 +33,6 @@ import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRows
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration.Builder;
-import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.range.ByteKey;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRangeTracker;
@@ -123,7 +122,7 @@ public class CloudBigtableIOReaderTest {
   private void testTrackerAtKey(CloudBigtableIO.Reader<Result> underTest, ByteKeyRangeTracker tracker,
       final String key, final int count) throws IOException {
     setRowKey(key);
-    tracker.tryReturnRecordAt(false, ByteKey.copyFrom(key.getBytes()));
+    tracker.tryReturnRecordAt(true, ByteKey.copyFrom(key.getBytes()));
     Assert.assertTrue(underTest.start());
     Assert.assertEquals(count, underTest.getRowsReadCount());
     Assert.assertEquals(tracker.getFractionConsumed(),

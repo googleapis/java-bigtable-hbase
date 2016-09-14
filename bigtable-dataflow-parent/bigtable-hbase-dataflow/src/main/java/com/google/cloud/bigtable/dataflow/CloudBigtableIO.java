@@ -210,11 +210,11 @@ public class CloudBigtableIO {
     public Result next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker)
         throws IOException {
       Row row = resultScanner.next();
-      if (row == null
-          || !rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getKey()))) {
-        return null;
+      if (row != null
+          && rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getKey()))) {
+        return Adapters.ROW_ADAPTER.adaptResponse(row);
       }
-      return Adapters.ROW_ADAPTER.adaptResponse(row);
+      return null;
     }
 
     @Override
@@ -767,10 +767,14 @@ public class CloudBigtableIO {
     @Override
     public boolean advance() throws IOException {
       current = scanIterator.next(scanner, rangeTracker);
-      rowsRead.addAndGet(scanIterator.getRowCount(current));
-      return !scanIterator.isCompletionMarker(current);
+      if (scanIterator.isCompletionMarker(current)) {
+        rangeTracker.markDone();
+        return false;
+      } else {
+        rowsRead.addAndGet(scanIterator.getRowCount(current));
+        return true;
+      }
     }
-
 
     @Override
     public final Double getFractionConsumed() {
@@ -789,30 +793,32 @@ public class CloudBigtableIO {
       try {
         splitKey = range.interpolateKey(fraction);
       } catch (IllegalArgumentException e) {
-        READER_LOG.info("%s: Failed to interpolate key for fraction %s.", range, fraction);
+        READER_LOG.info("{}: Failed to interpolate key for fraction {}.", range, fraction);
         return null;
       }
 
       READER_LOG.debug("Proposing to split {} at fraction {} (key {})", rangeTracker, fraction,
         splitKey);
 
-      if (!rangeTracker.trySplitAtPosition(splitKey)) {
-        return null;
-      }
-
       long estimatedSizeBytes = -1;
       try {
         estimatedSizeBytes = source.getEstimatedSizeBytes(null);
       } catch (IOException e) {
-        READER_LOG.info("%s: Failed to get estimated size for key for fraction %s.", range, fraction);
+        READER_LOG.info("{}: Failed to get estimated size for key for fraction {}.", range, fraction);
         return null;
       }
       long newEstimatedSize = (long) (fraction * estimatedSizeBytes);
       byte[] splitKeyBytes = splitKey.getBytes();
       SourceWithKeys<ResultOutputType> residual = source.createSourceWithKeys(splitKeyBytes,
         source.getConfiguration().getZeroCopyStopRow(), estimatedSizeBytes - newEstimatedSize);
-      this.source = this.source.createSourceWithKeys(
+
+      SourceWithKeys<ResultOutputType> primary = this.source.createSourceWithKeys(
         source.getConfiguration().getZeroCopyStartRow(), splitKeyBytes, newEstimatedSize);
+
+      if (!rangeTracker.trySplitAtPosition(splitKey)) {
+        return null;
+      }
+      this.source = primary;
       return residual;
     }
 
