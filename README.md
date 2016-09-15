@@ -13,7 +13,7 @@ Bigger than a data warehouse, fast enough for real-time access, and less expensi
 
 ### Prerequisites
 
-* [Create a Cloud Bigtable cluster](https://cloud.google.com/bigtable/docs/creating-cluster)
+* [Create a Cloud Bigtable instance](https://cloud.google.com/bigtable/docs/creating-instance)
 * **Recommended**: [Install the Google Cloud SDK for Cloud Bigtable](https://cloud.google.com/bigtable/docs/installing-cloud-sdk)
 
 ### Using the Java client
