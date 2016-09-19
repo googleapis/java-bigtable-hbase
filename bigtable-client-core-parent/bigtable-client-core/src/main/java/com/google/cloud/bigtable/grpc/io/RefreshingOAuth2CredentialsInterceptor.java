@@ -16,7 +16,8 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import io.grpc.Metadata;
-
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
@@ -225,23 +226,36 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
    * Get the http credential header we need from a new oauth2 AccessToken.
    */
   @VisibleForTesting
-  String getHeader() throws IOException {
-    HeaderCacheElement headerCache = getCachedHeader();
-    CacheState state = getCacheState(headerCache);
-    switch (state) {
-      case Good:
-        break;
-      case Stale:
-        asyncRefresh();
-        break;
-      case Expired:
-        syncRefresh();
-        headerCache = getCachedHeader();
-        break;
-      default:
-        throw new IllegalStateException("Could not process state: " + state);
+  String getHeader()  {
+    HeaderCacheElement headerCache;
+    try {
+      headerCache = getCachedHeader();
+      CacheState state = getCacheState(headerCache);
+      switch (state) {
+        case Good:
+          break;
+        case Stale:
+          asyncRefresh();
+          break;
+        case Expired:
+          syncRefresh();
+          headerCache = getCachedHeader();
+          break;
+        case Exception:
+          asyncRefresh();
+          throw asUnauthenticatedException(headerCache.exception);
+        default:
+          throw asUnauthenticatedException(
+              new IllegalStateException("Could not process state: " + state));
+      }
+    } catch(IOException e) {
+      throw asUnauthenticatedException(e);
     }
     return headerCache.header;
+  }
+
+  private static StatusRuntimeException asUnauthenticatedException(Exception e) {
+    return Status.UNAUTHENTICATED.withCause(e).asRuntimeException();
   }
 
   @VisibleForTesting
@@ -282,21 +296,22 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
   }
 
   /**
-   * <p>
-   * Calls {@link com.google.auth.oauth2.OAuth2Credentials#refreshAccessToken()}. In case of an IOException, retry the call
-   * as per the {@link com.google.api.client.util.BackOff} policy defined by {@link com.google.cloud.bigtable.config.RetryOptions#createBackoff()}.
-   * </p>
-   * <p>
-   * This method retries until one of the following conditions occurs:
+   * Calls {@link com.google.auth.oauth2.OAuth2Credentials#refreshAccessToken()}. In case of an
+   * IOException, retry the call as per the {@link com.google.api.client.util.BackOff} policy
+   * defined by {@link com.google.cloud.bigtable.config.RetryOptions#createBackoff()}.
+   *
+   * <p>This method retries until one of the following conditions occurs:
+   *
    * <ol>
    * <li>An OAuth request was completed. If the value is null, return an exception.
    * <li>A non-IOException Exception is thrown - return an error status
    * <li>All retries have been exhausted, i.e. when the Backoff.nextBackOffMillis() returns
-   * BackOff.STOP
+   *     BackOff.STOP
    * <li>An interrupt occurs.
    * </ol>
    *
-   * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken} or an exception.
+   * @return HeaderCacheElement containing either a valid {@link com.google.auth.oauth2.AccessToken}
+   *     or an exception.
    */
   protected HeaderCacheElement refreshCredentialsWithRetry() {
     BackOff backoff = null;
@@ -345,9 +360,10 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
    *
    * @param backoff a {@link com.google.api.client.util.BackOff} object.
    * @return RetryState indicating the current state of the retry logic.
-   * @throws java.io.IOException in some cases from {@link com.google.api.client.util.BackOff#nextBackOffMillis()}
+   * @throws java.io.IOException in some cases from {@link
+   *     com.google.api.client.util.BackOff#nextBackOffMillis()}
    */
-  protected RetryState getRetryState(BackOff backoff) throws IOException{
+  protected RetryState getRetryState(BackOff backoff) throws IOException {
     long nextBackOffMillis = backoff.nextBackOffMillis();
     if (nextBackOffMillis == BackOff.STOP) {
       logger.warn("Exhausted the number of retries for credentials refresh after "
