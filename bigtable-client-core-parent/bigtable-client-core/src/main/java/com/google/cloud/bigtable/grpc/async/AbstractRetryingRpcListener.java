@@ -151,14 +151,6 @@ public abstract class AbstractRetryingRpcListener<RequestT, ResponseT, ResultT>
     // Perform Retry
     LOG.info("Retrying failed call. Failure #%d, got: %s", status.getCause(), failedCount, status);
 
-    // TODO: This is probably not needed.  Consider removing the cancel here.
-    if (this.call != null) {
-      call.cancel(
-          String.format(
-              "Request being retried. Previous call failed with status %s.",
-              status.getCode().name()),
-          null);
-    }
     call = null;
 
     rpc.getRpcMetrics().markRetry();
