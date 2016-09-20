@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
@@ -404,6 +405,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private ResultScanner<Row> streamRows(ReadRowsRequest request) {
     final Timer.Context timerContext = readRowsAsync.getRpcMetrics().timeRpc();
+    final AtomicBoolean wasCanceled = new AtomicBoolean(false);
 
     expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
 
@@ -423,10 +425,13 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     cancellationToken.addListener(new Runnable() {
       @Override
       public void run() {
-        if (!listener.hasStatusBeenRecieved()) {
+        if (!wasCanceled.get()) {
           timerContext.close();
+          wasCanceled.set(true);
         }
-        readRowsCall.cancel("User requested cancelation.", null);
+        if (!listener.hasStatusBeenRecieved()) {
+          readRowsCall.cancel("User requested cancelation.", null);
+        }
       }
     }, MoreExecutors.directExecutor());
 
