@@ -20,12 +20,12 @@ import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
@@ -404,41 +404,38 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   private ResultScanner<Row> streamRows(ReadRowsRequest request) {
-    Timer.Context timerContext = readRowsAsync.getRpcMetrics().timeRpc();
+    final Timer.Context timerContext = readRowsAsync.getRpcMetrics().timeRpc();
+    final AtomicBoolean wasCanceled = new AtomicBoolean(false);
 
     expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
 
     // TODO: This should use getCallOptions(ReqT request, BigtableAsyncRpc<ReqT, ?> rpc) for Gets.
-    CallOptions callOptions = CallOptions.DEFAULT;
-    ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall = readRowsAsync.newCall(callOptions);
+    final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
+        readRowsAsync.newCall(CallOptions.DEFAULT);
 
-    ResponseQueueReader reader =
-        new ResponseQueueReader(
-            retryOptions.getReadPartialRowTimeoutMillis(), retryOptions.getStreamingBufferSize());
+    ResponseQueueReader reader = new ResponseQueueReader(
+        retryOptions.getReadPartialRowTimeoutMillis(), retryOptions.getStreamingBufferSize());
 
-    StreamObserver<ReadRowsResponse> rowMerger = new RowMerger(reader);
-    ClientCall.Listener<ReadRowsResponse> listener =
-        new StreamObserverAdapter<>(readRowsCall, rowMerger);
+    final StreamObserverAdapter<ReadRowsResponse> listener =
+        new StreamObserverAdapter<>(readRowsCall, new RowMerger(reader));
 
     readRowsAsync.start(readRowsCall, request, listener, createMetadata(request.getTableName()));
-
-    CancellationToken cancellationToken = createCancellationToken(readRowsCall, timerContext);
-    return new StreamingBigtableResultScanner(reader, cancellationToken);
-  }
-
-  private CancellationToken createCancellationToken(
-      final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall,
-      final Timer.Context timerContext) {
     // If the scanner is closed before we're done streaming, we want to cancel the RPC.
     CancellationToken cancellationToken = new CancellationToken();
     cancellationToken.addListener(new Runnable() {
       @Override
       public void run() {
-        timerContext.close();
-        readRowsCall.cancel("User requested cancelation.", null);
+        if (!wasCanceled.get()) {
+          timerContext.close();
+          wasCanceled.set(true);
+        }
+        if (!listener.hasStatusBeenRecieved()) {
+          readRowsCall.cancel("User requested cancelation.", null);
+        }
       }
     }, MoreExecutors.directExecutor());
-    return cancellationToken;
+
+    return new StreamingBigtableResultScanner(reader, cancellationToken);
   }
 
   private void expandPoolIfNecessary(int channelCount) {

@@ -31,6 +31,7 @@ public class StreamObserverAdapter<T> extends ClientCall.Listener<T> {
 
   private final ClientCall<?, T> call;
   private final StreamObserver<T> observer;
+  private boolean statusRecieved = false;
 
   /**
    * <p>Constructor for StreamObserverAdapter.</p>
@@ -53,10 +54,18 @@ public class StreamObserverAdapter<T> extends ClientCall.Listener<T> {
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
+    this.statusRecieved = true;
     if (status.isOk()) {
       observer.onCompleted();
     } else {
       observer.onError(status.asRuntimeException());
     }
+  }
+
+  /**
+   * @return true if {@link #onClose(Status, Metadata)} was called.
+   */
+  public boolean hasStatusBeenRecieved() {
+    return statusRecieved;
   }
 }
