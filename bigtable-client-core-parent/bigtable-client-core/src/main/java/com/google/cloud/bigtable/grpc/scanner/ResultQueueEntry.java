@@ -31,6 +31,12 @@ import java.util.Objects;
  */
 abstract class ResultQueueEntry<T> {
 
+  public enum Type {
+    Data,
+    Exception,
+    CompletionMarker;
+  }
+
   /**
    * <p>fromResponse.</p>
    *
@@ -72,12 +78,8 @@ abstract class ResultQueueEntry<T> {
     private final Throwable throwable;
 
     private ExceptionResultQueueEntry(Throwable throwable) {
+      super(Type.Exception);
       this.throwable = throwable;
-    }
-
-    @Override
-    public boolean isCompletionMarker() {
-      return false;
     }
 
     @Override
@@ -87,13 +89,9 @@ abstract class ResultQueueEntry<T> {
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
     public boolean equals(Object obj) {
-      if (!(obj instanceof ExceptionResultQueueEntry) || obj == null){
-        return false;
-      }
-      ExceptionResultQueueEntry other = (ExceptionResultQueueEntry) obj;
-      return Objects.equals(throwable, other.throwable);
+      ExceptionResultQueueEntry<T> other = (ExceptionResultQueueEntry<T>) toResultQueueEntryForEquals(obj);
+      return other != null && Objects.equals(throwable, other.throwable);
     }
   }
 
@@ -101,12 +99,8 @@ abstract class ResultQueueEntry<T> {
     private final T response;
 
     private ResponseResultQueueEntry(T response) {
+      super(Type.Data);
       this.response = response;
-    }
-
-    @Override
-    public boolean isCompletionMarker() {
-      return false;
     }
 
     @Override
@@ -115,44 +109,43 @@ abstract class ResultQueueEntry<T> {
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
     public boolean equals(Object obj) {
-      if (!(obj instanceof ResponseResultQueueEntry) || obj == null){
-        return false;
-      }
-      ResponseResultQueueEntry other = (ResponseResultQueueEntry) obj;
-      return Objects.equals(response, other.response);
+      ResponseResultQueueEntry<T> other = (ResponseResultQueueEntry<T>) toResultQueueEntryForEquals(obj);
+      return other != null && Objects.equals(response, other.response);
     }
   }
 
   @SuppressWarnings("rawtypes")
-  private static final ResultQueueEntry COMPLETION_ENTRY = new ResultQueueEntry(){
-    @Override
-    public boolean isCompletionMarker() {
-      return true;
-    }
+  private static final ResultQueueEntry COMPLETION_ENTRY =
+      new ResultQueueEntry(Type.CompletionMarker) {
+        @Override
+        public Object getResponseOrThrow() throws IOException {
+          throw new IOException(
+              "Attempt to interpret a result stream completion marker as a result");
+        }
 
-    @Override
-    public Object getResponseOrThrow() throws IOException {
-      throw new IOException("Attempt to interpret a result stream completion marker as a result");
-    }
+        @Override
+        public boolean equals(Object obj) {
+          // toResultQueueEntry will return null if the type field is different between this and
+          // obj.
+          return toResultQueueEntryForEquals(obj) != null;
+        }
+      };
 
-    @Override
-    public boolean equals(Object obj) {
-      if (!(obj instanceof ResultQueueEntry) || obj == null){
-        return false;
-      }
-      ResultQueueEntry other = (ResultQueueEntry) obj;
-      return isCompletionMarker() == other.isCompletionMarker();
-    }
-  };
+  protected final Type type;
+
+  public ResultQueueEntry(Type type) {
+    this.type = type;
+  }
 
   /**
    * <p>isCompletionMarker.</p>
    *
    * @return a boolean.
    */
-  public abstract boolean isCompletionMarker();
+  public Type getType() {
+    return type;
+  }
 
   /**
    * <p>getResponseOrThrow.</p>
@@ -161,4 +154,19 @@ abstract class ResultQueueEntry<T> {
    * @throws java.io.IOException if any.
    */
   public abstract T getResponseOrThrow() throws IOException;
+
+  /**
+   * This is a utility function for checking equality between this and another ResultQueueEntry.
+   * @param obj the object to compare to
+   * @return a reference to ResultQueueEntry if obj is: 1) not null, 2) a ResultQueueEntry, 3) has
+   *         the same type as this.
+   */
+  @SuppressWarnings("unchecked")
+  protected ResultQueueEntry<T> toResultQueueEntryForEquals(Object obj) {
+    if (!(obj instanceof ResultQueueEntry) || obj == null) {
+      return null;
+    }
+    ResultQueueEntry<T> other = (ResultQueueEntry<T>) obj;
+    return type == other.type && getClass() == other.getClass() ? other : null;
+  }
 }

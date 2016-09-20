@@ -92,6 +92,11 @@ public class DropwizardMetricRegistry implements MetricRegistry {
           }
         };
       }
+
+      @Override
+      public void update(long duration, TimeUnit unit) {
+        timer.update(duration, unit);
+      }
     };
   }
 

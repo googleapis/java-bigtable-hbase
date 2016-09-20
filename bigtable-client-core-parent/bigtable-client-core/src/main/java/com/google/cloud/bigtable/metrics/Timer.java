@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.metrics;
 
 import java.io.Closeable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A timer metric which aggregates timing durations and provides duration statistics, plus
@@ -43,4 +44,12 @@ public interface Timer {
    * @see Context
    */
   Context time();
+
+  /**
+   * Adds a recorded duration.
+   *
+   * @param duration the length of the duration
+   * @param unit     the scale unit of {@code duration}
+   */
+  void update(long duration, TimeUnit unit);
 }

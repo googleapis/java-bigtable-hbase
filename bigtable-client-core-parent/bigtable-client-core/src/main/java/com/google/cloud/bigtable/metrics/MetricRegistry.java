@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.metrics;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * A registry of metric instances.
  */
@@ -55,6 +57,11 @@ public interface MetricRegistry {
               @Override
               public Context time() {
                 return NULL_CONTEXT;
+              }
+
+              @Override
+              public void update(long duration, TimeUnit unit) {
+                // ignore.
               }
             };
 
