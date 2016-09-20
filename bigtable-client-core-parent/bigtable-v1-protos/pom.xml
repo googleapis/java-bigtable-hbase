@@ -27,7 +27,7 @@ limitations under the License.
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
-       This project contains bigtable v1 .proto files and java files generated from them.
+       This project contains bigtable v1 .proto files needed by the Dataflow SDK and java files generated from them.
     </description>
 
     <pluginRepositories>
@@ -147,35 +147,5 @@ limitations under the License.
                 </plugins>
             </build>
         </profile>
-        <profile>
-            <id>generateServices</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.xolstice.maven.plugins</groupId>
-                        <artifactId>protobuf-maven-plugin</artifactId>
-                        <version>0.5.0</version>
-                         <configuration>
-                            <!-- The version of protoc must match protobuf-java. If you don't depend
-                                on protobuf-java directly, you will be transitively depending on the protobuf-java
-                                version that grpc depends on. -->
-                            <protocArtifact>com.google.protobuf:protoc:${protobuff-java.version}:exe:${os.detected.classifier}</protocArtifact>
-                            <pluginId>grpc-java</pluginId>
-                            <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
-                            <outputDirectory>${basedir}/src/generated/java/services</outputDirectory>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>compile</goal>
-                                    <goal>compile-custom</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
     </profiles>
-
 </project>

@@ -14,15 +14,7 @@ There are 3 types of functionality that the protos support:
 * Cluster administration - creating, modifying and delting Bigtable clusters, which are a collection of Tables.
 
 Here are the files directly associated with Bigtable functionality 
-* src/main/proto/google/bigtable/admin/table/v1/bigtable_table_data.proto
-* src/main/proto/google/bigtable/admin/table/v1/bigtable_table_service.proto
-* src/main/proto/google/bigtable/admin/table/v1/bigtable_table_service_messages.proto
 * src/main/proto/google/bigtable/v1/bigtable_data.proto
-* src/main/proto/google/bigtable/v1/bigtable_service.proto
-* src/main/proto/google/bigtable/v1/bigtable_service_messages.proto
-* src/main/proto/google/bigtable/admin/cluster/v1/bigtable_cluster_data.proto
-* src/main/proto/google/bigtable/admin/cluster/v1/bigtable_cluster_service.proto
-* src/main/proto/google/bigtable/admin/cluster/v1/bigtable_cluster_service_messages.proto
 
 Copied Protos
 --------------
@@ -48,7 +40,6 @@ Run the following:
 
 ```
 mvn -P generateProtos package
-mvn -P generateServices package
 find . -name '*.java' | grep -v bigtable | xargs rm
 ```
 
