@@ -67,11 +67,7 @@ public final class BigtableClientMetrics {
   }
 
   public static MetricRegistry getMetricRegistry(MetricLevel level) {
-    if (levelToLog.getLevel() >= level.getLevel()) {
-      return registry;
-    } else {
-      return MetricRegistry.NULL_METRICS_REGISTRY;
-    }
+    return isEnabled(level) ? registry :  MetricRegistry.NULL_METRICS_REGISTRY;
   }
 
   /**
@@ -117,6 +113,16 @@ public final class BigtableClientMetrics {
   /** @return the levelToLog */
   public static MetricLevel getLevelToLog() {
     return levelToLog;
+  }
+
+  /**
+   * Checks if a {@link MetricLevel} is enabled;
+   *
+   * @param level the {@link MetricLevel} to check
+   * @return true if the level is enabled.
+   */
+  public static boolean isEnabled(MetricLevel level) {
+    return levelToLog.getLevel() >= level.getLevel();
   }
 
   // Simplistic initialization via slf4j

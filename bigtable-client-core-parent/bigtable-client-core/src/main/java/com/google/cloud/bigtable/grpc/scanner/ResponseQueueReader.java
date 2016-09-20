@@ -22,6 +22,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.Preconditions;
 
 import io.grpc.stub.StreamObserver;
@@ -34,10 +37,22 @@ import io.grpc.stub.StreamObserver;
  * @version $Id: $Id
  */
 public class ResponseQueueReader implements StreamObserver<Row> {
+
+  private static Timer firstResponseTimer;
+
+  private synchronized static Timer getFirstResponseTimer() {
+    if (firstResponseTimer == null) {
+      firstResponseTimer = BigtableClientMetrics
+        .timer(MetricLevel.Info, "grpc.method.ReadRows.firstResponse.latency");
+    }
+    return firstResponseTimer;
+  }
+
   protected final BlockingQueue<ResultQueueEntry<Row>> resultQueue;
   protected AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
   private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
+  private Long startTime;
 
   /**
    * <p>Constructor for ResponseQueueReader.</p>
@@ -48,6 +63,9 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   public ResponseQueueReader(int readPartialRowTimeoutMillis, int capacityCap) {
     this.resultQueue = new LinkedBlockingQueue<>(capacityCap);
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
+    if (BigtableClientMetrics.isEnabled(MetricLevel.Info)) {
+      startTime = System.nanoTime();
+    }
   }
 
   /**
@@ -57,14 +75,26 @@ public class ResponseQueueReader implements StreamObserver<Row> {
    * @throws java.io.IOException On errors.
    */
   public synchronized Row getNextMergedRow() throws IOException {
-    if (!lastResponseProcessed) {
-      ResultQueueEntry<Row> queueEntry = getNext();
+    if (lastResponseProcessed) {
+      return null;
+    }
 
-      if (queueEntry.isCompletionMarker()) {
-        lastResponseProcessed = true;
-      } else {
-        return queueEntry.getResponseOrThrow();
+    ResultQueueEntry<Row> queueEntry = getNext();
+
+    switch (queueEntry.getType()) {
+    case CompletionMarker:
+      lastResponseProcessed = true;
+      break;
+    case Data:
+      if (startTime != null) {
+        getFirstResponseTimer().update(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+        startTime = null;
       }
+      return queueEntry.getResponseOrThrow();
+    case Exception:
+      return queueEntry.getResponseOrThrow();
+    default:
+      throw new IllegalStateException("Cannot process type: " + queueEntry.getType());
     }
 
     Preconditions.checkState(lastResponseProcessed,
