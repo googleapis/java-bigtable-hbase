@@ -23,7 +23,7 @@ limitations under the License.
         <version>0.9.3-SNAPSHOT</version>
     </parent>
 
-    <artifactId>bigtable-v1-protos</artifactId>
+    <artifactId>bigtable-legacy-protos</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
