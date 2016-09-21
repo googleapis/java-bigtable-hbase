@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 /**
  * Keeps track of Rows returned from a readRows RPC for information relevant to resuming the RPC
  * after temporary problems like DEADLINE_EXCEEDED.
@@ -83,7 +82,7 @@ public class ReadRowsRequestRetryHandler {
     this.logger = logger;
   }
 
-  public void update(Row result) throws IOException {
+  public void update(Row result) {
     updateLastFoundKey(result.getKey());
     rowCount++;
     // We've had at least one successful RPC, reset the backoff and retry counter

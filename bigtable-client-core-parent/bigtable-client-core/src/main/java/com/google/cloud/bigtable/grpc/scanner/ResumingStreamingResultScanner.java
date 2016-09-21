@@ -87,9 +87,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
     while (true) {
       try {
         Row result = currentDelegate.next();
-        if (result == null) {
-          close();
-        } else {
+        if (result != null) {
           retryHandler.update(result);
         }
         return result;
@@ -125,7 +123,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
   /** {@inheritDoc} */
   @Override
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     closeRpcContext();
     closeOperationContext();
     currentDelegate.close();
