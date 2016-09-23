@@ -502,13 +502,19 @@ public class CloudBigtableIO {
             Bytes.toStringBinary(stopKey));
           Preconditions.checkState(regionSize > 0, "Source size must be positive", regionSize);
         }
-        byte[][] splitKeys = Bytes.split(startKey, stopKey, splitCount - 1);
-        Preconditions.checkState(splitCount + 1 == splitKeys.length);
-        List<SourceWithKeys<ResultOutputType>> result = new ArrayList<>();
-        for (int i = 0; i < splitCount; i++) {
-          result.add(createSourceWithKeys(splitKeys[i], splitKeys[i + 1], regionSize));
+        try {
+          byte[][] splitKeys = Bytes.split(startKey, stopKey, splitCount - 1);
+          Preconditions.checkState(splitCount + 1 == splitKeys.length);
+          List<SourceWithKeys<ResultOutputType>> result = new ArrayList<>();
+          for (int i = 0; i < splitCount; i++) {
+            result.add(createSourceWithKeys(splitKeys[i], splitKeys[i + 1], regionSize));
+          }
+          return result;
+        } catch (Exception e) {
+          SOURCE_LOG.warn(String.format("Could not split '%s' and '%s', so using that as a range.",
+            Bytes.toString(startKey), Bytes.toString(stopKey)), e);
+          return Collections.singletonList(createSourceWithKeys(startKey, stopKey, regionSize));
         }
-        return result;
       }
     }
 
