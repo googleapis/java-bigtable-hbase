@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.grpc;
 
 import java.util.concurrent.TimeUnit;
 
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
 
 import io.grpc.CallOptions;
@@ -69,12 +71,21 @@ public interface CallOptionsFactory {
     @Override
     public <RequestT> CallOptions create(
         MethodDescriptor<RequestT, ?> descriptor, RequestT request) {
-      if (config.isUseTimeout()) {
-        return CallOptions.DEFAULT.withDeadline(
-            Deadline.after(config.getTimeoutMs(), TimeUnit.MILLISECONDS));
-      } else {
+      if (!config.isUseTimeout()) {
         return CallOptions.DEFAULT;
       }
+
+      int timeout = config.getShortRpcTimeoutMs();
+      if (request.getClass() == ReadRowsRequest.class && !isGet((ReadRowsRequest) request)) {
+        timeout = config.getLongRpcTimeoutMs();
+      }
+      return CallOptions.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
+    }
+
+    private boolean isGet(ReadRowsRequest request) {
+      RowSet rowSet = request.getRows();
+      return rowSet.getRowRangesCount() == 0 && rowSet.getRowKeysCount() == 1;
     }
   }
+
 }

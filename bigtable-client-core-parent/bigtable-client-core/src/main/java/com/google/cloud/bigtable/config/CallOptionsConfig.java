@@ -40,46 +40,89 @@ public class CallOptionsConfig implements Serializable {
    */
   public static final int TIMEOUT_MS_DEFAULT = 60_000;
 
+  /**
+   * The default duration to wait before timing out RPCs. 1 minute is probably too long for most
+   * RPCs, but the intent is to have a conservative timeout by default and aim for user overrides.
+   */
+  public static final int SCAN_TIMEOUT_MS_DEFAULT = 60_000;
+
   public static class Builder {
     private boolean useTimeout = USE_TIMEOUT_DEFAULT;
-    private int timeoutMs = TIMEOUT_MS_DEFAULT;
+    private int shortRpcTimeoutMs = TIMEOUT_MS_DEFAULT;
+    private int longRpcTimeoutMs = SCAN_TIMEOUT_MS_DEFAULT;
 
     public Builder() {
     }
 
     private Builder(CallOptionsConfig original) {
       this.useTimeout = original.useTimeout;
-      this.timeoutMs = original.timeoutMs;
+      this.shortRpcTimeoutMs = original.shortRpcTimeoutMs;
+      this.longRpcTimeoutMs = original.longRpcTimeoutMs;
     }
 
+    /**
+     * If true, turn on timeouts for unary RPCS like mutations, and single row readRows.
+     * @param useTimeout
+     * @return
+     */
     public Builder setUseTimeout(boolean useTimeout) {
       this.useTimeout = useTimeout;
       return this;
     }
 
+    /**
+     * If true, turn on timeouts for unary RPCS like mutations, and single row readRows. 
+     * @param useTimeout
+     * @return this for chaining
+     */
+    @Deprecated
     public Builder setTimeoutMs(int timeoutMs) {
-      Preconditions.checkArgument(timeoutMs > 0, "Timeout ms has to be greater than 0");
-      this.timeoutMs = timeoutMs;
+      return setShortRpcTimeoutMs(timeoutMs);
+    }
+
+   /**
+    * If true, turn on timeouts for unary RPCS like mutations, and single row readRows. 
+    * @param shortRpcTimeoutMs
+    * @return this for chaining
+    */
+    public Builder setShortRpcTimeoutMs(int shortRpcTimeoutMs) {
+      Preconditions.checkArgument(shortRpcTimeoutMs > 0, "Short Timeout ms has to be greater than 0");
+      this.shortRpcTimeoutMs = shortRpcTimeoutMs;
+      return this;
+    }
+
+    /**
+     * If true, turn on timeouts for unary RPCS, specifically multi-row readRows. 
+     * @param longRpcTimeoutMs
+     * @return 
+     * @return this for chaining
+     */
+    public Builder setLongRpcTimeoutMs(int longRpcTimeoutMs) {
+      Preconditions.checkArgument(longRpcTimeoutMs > 0, "Long Timeout ms has to be greater than 0");
+      this.longRpcTimeoutMs = longRpcTimeoutMs;
       return this;
     }
 
     public CallOptionsConfig build() {
-      return new CallOptionsConfig(useTimeout, timeoutMs);
+      return new CallOptionsConfig(useTimeout, shortRpcTimeoutMs, longRpcTimeoutMs);
     }
   }
 
   private final boolean useTimeout;
-  private final int timeoutMs;
+  private final int shortRpcTimeoutMs;
+  private final int longRpcTimeoutMs;
 
   /**
    * <p>Constructor for CallOptionsConfig.</p>
    *
    * @param useTimeout a boolean.
-   * @param timeoutMs a int.
+   * @param unaryRpcTimeoutMs a int.
+   * @param longRpcTimeoutMs a int.
    */
-  public CallOptionsConfig(boolean useTimeout, int timeoutMs) {
+  public CallOptionsConfig(boolean useTimeout, int unaryRpcTimeoutMs, int longRpcTimeoutMs) {
     this.useTimeout = useTimeout;
-    this.timeoutMs = timeoutMs;
+    this.shortRpcTimeoutMs = unaryRpcTimeoutMs;
+    this.longRpcTimeoutMs = longRpcTimeoutMs;
   }
 
   /**
@@ -92,12 +135,31 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
-   * <p>Getter for the field <code>timeoutMs</code>.</p>
+   * <p>Getter for the field <code>shortRpcTimeoutMs</code>.</p>
    *
    * @return a int.
    */
+  @Deprecated
   public int getTimeoutMs() {
-    return timeoutMs;
+    return shortRpcTimeoutMs;
+  }
+
+  /**
+   * <p>Getter for the field <code>shortRpcTimeoutMs</code>.</p>
+   *
+   * @return a int.
+   */
+  public int getShortRpcTimeoutMs() {
+    return shortRpcTimeoutMs;
+  }
+
+  /**
+   * <p>Getter for the field <code>longRpcTimeoutMs</code>.</p>
+   *
+   * @return a int.
+   */
+  public int getLongRpcTimeoutMs() {
+    return longRpcTimeoutMs;
   }
 
   /** {@inheritDoc} */
@@ -111,7 +173,8 @@ public class CallOptionsConfig implements Serializable {
     }
     CallOptionsConfig other = (CallOptionsConfig) obj;
     return useTimeout == other.useTimeout 
-        && timeoutMs == other.timeoutMs;
+        && shortRpcTimeoutMs == other.shortRpcTimeoutMs
+        && longRpcTimeoutMs == other.longRpcTimeoutMs;
   }
 
   /** {@inheritDoc} */
@@ -119,7 +182,7 @@ public class CallOptionsConfig implements Serializable {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("useTimeout", useTimeout)
-        .add("timeoutMs", timeoutMs)
+        .add("timeoutMs", shortRpcTimeoutMs)
         .toString();
   }
 
