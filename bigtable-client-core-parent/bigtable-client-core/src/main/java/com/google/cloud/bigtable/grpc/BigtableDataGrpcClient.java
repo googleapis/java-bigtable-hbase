@@ -424,7 +424,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     CancellationToken cancellationToken = new CancellationToken();
     cancellationToken.addListener(new Runnable() {
       @Override
-      public void run() {
+      public synchronized void run() {
         if (!wasCanceled.get()) {
           timerContext.close();
           wasCanceled.set(true);
