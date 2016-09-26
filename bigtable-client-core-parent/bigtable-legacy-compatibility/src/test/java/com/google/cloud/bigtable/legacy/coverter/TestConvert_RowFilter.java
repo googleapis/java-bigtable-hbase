@@ -17,13 +17,13 @@ package com.google.cloud.bigtable.legacy.coverter;
 
 import org.junit.Assert;
 import org.junit.Test;
-
+import com.google.bigtable.v2.TimestampRangeOrBuilder;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
  * Tests {@link BigtableLegacyProtobufConverter} for various types of
- * {@link com.google.bigtable.vv.RowFilter} scenarios.
+ * {@link com.google.bigtable.v1.RowFilter} scenarios.
  * @author sduskis
  */
 
@@ -34,11 +34,20 @@ public class TestConvert_RowFilter {
     BigtableLegacyProtobufConverter.convert(com.google.bigtable.v1.RowFilter.getDefaultInstance());
   }
 
+  /**
+   * The structure of {@link com.google.bigtable.v1.ColumnRange} stayed the same across v1 and v2,
+   * but the names of the elements changed. Test to ensure compatibility with v2's {@link
+   * com.google.bigtable.v2.ColumnRange}.
+   *
+   * @throws InvalidProtocolBufferException
+   */
   @Test
   public void testRowFilter_ColumnRange() throws InvalidProtocolBufferException {
     com.google.bigtable.v1.ColumnRange v1ColumnRange = com.google.bigtable.v1.ColumnRange
-        .newBuilder().setStartQualifierInclusive(ByteString.copyFrom("start".getBytes()))
-        .setEndQualifierExclusive(ByteString.copyFrom("end".getBytes())).build();
+        .newBuilder()
+        .setStartQualifierInclusive(ByteString.copyFrom("start".getBytes()))
+        .setEndQualifierExclusive(ByteString.copyFrom("end".getBytes()))
+        .build();
     com.google.bigtable.v1.RowFilter v1RowFilter =
         com.google.bigtable.v1.RowFilter.newBuilder().setColumnRangeFilter(v1ColumnRange).build();
     com.google.bigtable.v2.RowFilter v2RowFilter =
@@ -48,6 +57,38 @@ public class TestConvert_RowFilter {
 
     Assert.assertEquals(v1ColumnRange.getStartQualifierInclusive(),
       v2ColumnRange.getStartQualifierClosed());
+    Assert.assertEquals(v1ColumnRange.getEndQualifierExclusive(),
+      v2ColumnRange.getEndQualifierOpen());
+  }
+
+  /**
+   * The structure of {@link com.google.bigtable.v1.TimestampRange} stayed the same across v1 and
+   * v2, but the names of the elements changed. Test to ensure compatibility with v2's {@link
+   * com.google.bigtable.v2.TimestampRange}.
+   *
+   * @throws InvalidProtocolBufferException
+   */
+  @Test
+  public void testRowFilter_TimestampRange() throws InvalidProtocolBufferException {
+    com.google.bigtable.v1.TimestampRange v1TimestampRange =
+        com.google.bigtable.v1.TimestampRange.newBuilder()
+            .setStartTimestampMicros(1_000_000)
+            .setEndTimestampMicros(2_000_000)
+            .build();
+    com.google.bigtable.v1.RowFilter v1RowFilter =
+        com.google.bigtable.v1.RowFilter.newBuilder()
+            .setTimestampRangeFilter(v1TimestampRange)
+            .build();
+    com.google.bigtable.v2.RowFilter v2RowFilter =
+        BigtableLegacyProtobufConverter.convert(v1RowFilter);
+
+    com.google.bigtable.v2.TimestampRangeOrBuilder v2TimestampRange =
+        v2RowFilter.getTimestampRangeFilterOrBuilder();
+
+    Assert.assertEquals(v1TimestampRange.getStartTimestampMicros(),
+      v2TimestampRange.getStartTimestampMicros());
+    Assert.assertEquals(v1TimestampRange.getEndTimestampMicros(),
+      v2TimestampRange.getEndTimestampMicros());
   }
 
   // TODO: MORE TESTS!
