@@ -16,6 +16,7 @@
 package org.apache.hadoop.hbase.client;
 
 import io.grpc.Status;
+import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
@@ -291,20 +292,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
     try {
       return tableAdapter.adapt(bigtableTableAdminClient.getTable(request));
-    } catch (StatusRuntimeException e) {
-      if (e.getStatus().getCode() == Status.NOT_FOUND.getCode()) {
+    } catch (Throwable throwable) {
+      if (Status.fromThrowable(throwable).getCode() == Status.Code.NOT_FOUND) {
         throw new TableNotFoundException(tableName);
       }
-      throw new IOException("Failed to getTableDescriptor() on " + tableName, e);
-    } catch (UncheckedExecutionException e) {
-      if (e.getCause() != null && e.getCause() instanceof StatusRuntimeException) {
-        Status status = ((StatusRuntimeException) e.getCause()).getStatus();
-        if (status.getCode() == Status.NOT_FOUND.getCode()) {
-          throw new TableNotFoundException(tableName);
-        }
-      }
-      throw new IOException("Failed to getTableDescriptor() on " + tableName, e);
-    } catch (Throwable throwable) {
       throw new IOException("Failed to getTableDescriptor() on " + tableName, throwable);
     }
   }
@@ -369,17 +360,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
     try {
       bigtableTableAdminClient.createTable(builder.build());
     } catch (Throwable throwable) {
-      if (throwable.getCause() instanceof StatusRuntimeException) {
-        StatusRuntimeException e = (StatusRuntimeException) throwable.getCause();
-        if (e.getStatus() == Status.ALREADY_EXISTS) {
-          throw new TableExistsException(desc.getTableName());
-        }
+      if (Status.fromThrowable(throwable).getCode() == Status.Code.ALREADY_EXISTS) {
+        throw new TableExistsException(desc.getTableName());
       }
 
       throw new IOException(
-              String.format("Failed to create table '%s'",
-                      desc.getTableName().getNameAsString()),
-              throwable);
+          String.format("Failed to create table '%s'", desc.getTableName().getNameAsString()),
+          throwable);
     }
   }
 
