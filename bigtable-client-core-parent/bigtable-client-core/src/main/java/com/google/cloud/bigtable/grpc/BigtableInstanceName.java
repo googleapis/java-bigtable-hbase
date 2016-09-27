@@ -38,6 +38,9 @@ public class BigtableInstanceName implements Serializable {
 
   private final String instanceName;
 
+  private final String projectId;
+  private final String instanceId;
+
   /**
    * <p>Constructor for BigtableInstanceName.</p>
    *
@@ -48,6 +51,8 @@ public class BigtableInstanceName implements Serializable {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId), "projectId must be supplied");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(instanceId), "instanceId must be supplied");
     this.instanceName = String.format(BIGTABLE_V2_INSTANCE_FMT, projectId, instanceId);
+    this.projectId = projectId;
+    this.instanceId = instanceId;
   }
 
   /**
@@ -77,6 +82,7 @@ public class BigtableInstanceName implements Serializable {
     return tableId;
   }
 
+
   /**
    * <p>toTableNameStr.</p>
    *
@@ -96,4 +102,29 @@ public class BigtableInstanceName implements Serializable {
   public BigtableTableName toTableName(String tableId) {
     return new BigtableTableName(toTableNameStr(tableId));
   }
+
+  /**
+   * Creates a fully qualified cluster within the current instance.
+   * @param clusterId the id of the cluster
+   * @return A fully qualified name for the cluster within the instance.
+   */
+  public String toClusterNameString(String clusterId) {
+    return instanceName + "/clusters/" + clusterId;
+  }
+  
+  /** @return the projectId */
+  public String getProjectId() {
+    return projectId;
+  }
+
+  /** @return the instanceId */
+  public String getInstanceId() {
+    return instanceId;
+  }
+
+  /** @return the fully qualified instanceName */
+  public String getInstanceName() {
+    return instanceName;
+  }
 }
+
