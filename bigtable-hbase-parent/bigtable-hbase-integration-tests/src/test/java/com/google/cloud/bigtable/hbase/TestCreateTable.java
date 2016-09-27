@@ -21,12 +21,17 @@ import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.rules.ExpectedException;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -44,6 +49,9 @@ import java.util.concurrent.TimeUnit;
 public class TestCreateTable extends AbstractTest {
 
   private static final Logger LOG = new Logger(TestCreateTable.class);
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   /**
    * Requirement 1.8 - Table names must match [_a-zA-Z0-9][-_.a-zA-Z0-9]*
@@ -231,14 +239,14 @@ public class TestCreateTable extends AbstractTest {
     try {
       admin.createTable(descriptor, startKey, endKey, 2);
       Assert.fail();
-    }
-    catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException e) {
     }
     try {
       admin.createTable(descriptor, endKey, startKey, 5);
       Assert.fail();
-    }
-    catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException e) {
+    } finally {
+      admin.close();
     }
   }
 
@@ -288,6 +296,7 @@ public class TestCreateTable extends AbstractTest {
       }
     }
   }
+
   @Test
   public void testFiveRegionSplit() throws IOException {
 
@@ -329,6 +338,31 @@ public class TestCreateTable extends AbstractTest {
           Assert.assertEquals(Bytes.toString(splitKeys[i]), end_key);
         }
       }
+    } finally {
+      try {
+        admin.disableTable(tableName);
+        admin.deleteTable(tableName);
+        admin.close();
+      } catch (Throwable t) {
+        // Log the error and ignore it.
+        LOG.warn("Error cleaning up the table", t);
+      }
+    }
+  }
+
+  @Test
+  @Category(KnownGap.class)
+  public void testAlreadyExists() throws IOException {
+    thrown.expect(TableExistsException.class);
+    Admin admin = getConnection().getAdmin();
+    TableName tableName = TableName.valueOf("TestTable" +
+        UUID.randomUUID().toString());
+    HTableDescriptor descriptor = new HTableDescriptor(tableName);
+    descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+
+    try {
+      admin.createTable(descriptor);
+      admin.createTable(descriptor);
     } finally {
       try {
         admin.disableTable(tableName);
