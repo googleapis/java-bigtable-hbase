@@ -351,7 +351,6 @@ public class TestCreateTable extends AbstractTest {
   }
 
   @Test
-  @Category(KnownGap.class)
   public void testAlreadyExists() throws IOException {
     thrown.expect(TableExistsException.class);
     Admin admin = getConnection().getAdmin();
