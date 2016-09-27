@@ -44,9 +44,10 @@ public class BulkOptions implements Serializable {
    * This describes the maximum number of individual mutation requests to bundle in a single bulk
    * mutation RPC before sending it to the server and starting the next bulk call.
    * The server has a maximum of 100,000.  Since RPCs can be retried, we should limit the number of
-   * keys to 100 by default so we don't keep retrying larger batches.
+   * keys to 25 by default so we don't keep retrying larger batches.  25 is also better from the 
+   * server's perspective.
    */
-  public static final int BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT = 100;
+  public static final int BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT = 25;
 
 
   // Default rpc count per channel.
