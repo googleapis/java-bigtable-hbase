@@ -369,11 +369,17 @@ public abstract class AbstractBigtableAdmin implements Admin {
     try {
       bigtableTableAdminClient.createTable(builder.build());
     } catch (Throwable throwable) {
+      if (throwable.getCause() instanceof StatusRuntimeException) {
+        StatusRuntimeException e = (StatusRuntimeException) throwable.getCause();
+        if (e.getStatus() == Status.ALREADY_EXISTS) {
+          throw new TableExistsException(desc.getTableName());
+        }
+      }
+
       throw new IOException(
-          String.format(
-              "Failed to create table '%s'",
-              desc.getTableName().getNameAsString()),
-          throwable);
+              String.format("Failed to create table '%s'",
+                      desc.getTableName().getNameAsString()),
+              throwable);
     }
   }
 
