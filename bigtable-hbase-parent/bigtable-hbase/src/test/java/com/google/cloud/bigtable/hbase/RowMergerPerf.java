@@ -41,7 +41,7 @@ public class RowMergerPerf {
       CellChunk contentChunk =
           CellChunk.newBuilder()
               .setFamilyName(StringValue.newBuilder().setValue("Family" + i))
-              .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFromUtf8("Qaulifier")))
+              .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFromUtf8("Qualifier")))
               .setRowKey(ByteString.copyFrom(Bytes.toBytes("rowkey-0")))
               .setValue(ByteString.copyFrom(RandomStringUtils.randomAlphanumeric(size).getBytes()))
               .setTimestampMicros(0L)
