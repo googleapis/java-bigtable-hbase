@@ -354,14 +354,14 @@ public class BigtableOptionsFactory {
         .setUseTimeout(configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, USE_TIMEOUT_DEFAULT));
     if (configuration.get(BIGTABLE_RPC_TIMEOUT_MS_KEY) != null) {
       clientCallOptionsBuilder.setShortRpcTimeoutMs(
-        configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, TIMEOUT_MS_DEFAULT));
+        configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, SHORT_TIMEOUT_MS_DEFAULT));
     } else {
       clientCallOptionsBuilder.setShortRpcTimeoutMs(
-        configuration.getInt(HConstants.HBASE_CLIENT_OPERATION_TIMEOUT, TIMEOUT_MS_DEFAULT));
+        configuration.getInt(HConstants.HBASE_CLIENT_OPERATION_TIMEOUT, SHORT_TIMEOUT_MS_DEFAULT));
     }
 
     clientCallOptionsBuilder.setLongRpcTimeoutMs(
-      configuration.getInt(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, TIMEOUT_MS_DEFAULT));
+      configuration.getInt(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, SHORT_TIMEOUT_MS_DEFAULT));
 
     bigtableOptionsBuilder.setCallOptionsConfig(clientCallOptionsBuilder.build());
   }

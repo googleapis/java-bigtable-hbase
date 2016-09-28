@@ -38,18 +38,18 @@ public class CallOptionsConfig implements Serializable {
    * The default duration to wait before timing out RPCs. 1 minute is probably too long for most
    * RPCs, but the intent is to have a conservative timeout by default and aim for user overrides.
    */
-  public static final int TIMEOUT_MS_DEFAULT = 60_000;
+  public static final int SHORT_TIMEOUT_MS_DEFAULT = 60_000;
 
   /**
    * The default duration to wait before timing out RPCs. 1 minute is probably too long for most
    * RPCs, but the intent is to have a conservative timeout by default and aim for user overrides.
    */
-  public static final int SCAN_TIMEOUT_MS_DEFAULT = 60_000;
+  public static final int LONG_TIMEOUT_MS_DEFAULT = 60_000;
 
   public static class Builder {
     private boolean useTimeout = USE_TIMEOUT_DEFAULT;
-    private int shortRpcTimeoutMs = TIMEOUT_MS_DEFAULT;
-    private int longRpcTimeoutMs = SCAN_TIMEOUT_MS_DEFAULT;
+    private int shortRpcTimeoutMs = SHORT_TIMEOUT_MS_DEFAULT;
+    private int longRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
 
     public Builder() {
     }
@@ -71,8 +71,8 @@ public class CallOptionsConfig implements Serializable {
     }
 
     /**
-     * If true, turn on timeouts for unary RPCS like mutations, and single row readRows. 
-     * @param useTimeout
+     * The amount of milliseconds to wait before issuing a client side timeout for short RPCs.
+     * @param timeoutMs
      * @return this for chaining
      */
     @Deprecated
@@ -81,20 +81,20 @@ public class CallOptionsConfig implements Serializable {
     }
 
    /**
-    * If true, turn on timeouts for unary RPCS like mutations, and single row readRows. 
-    * @param shortRpcTimeoutMs
+     * The amount of milliseconds to wait before issuing a client side timeout for short RPCs.
+     * @param shortRpcTimeoutMs
     * @return this for chaining
     */
     public Builder setShortRpcTimeoutMs(int shortRpcTimeoutMs) {
-      Preconditions.checkArgument(shortRpcTimeoutMs > 0, "Short Timeout ms has to be greater than 0");
+      Preconditions.checkArgument(shortRpcTimeoutMs > 0, "Short Timeout ms has to be greater than 0.");
+      Preconditions.checkArgument(shortRpcTimeoutMs < 300_000, "Short Timeout ms has to be less than 300,000.");
       this.shortRpcTimeoutMs = shortRpcTimeoutMs;
       return this;
     }
 
     /**
-     * If true, turn on timeouts for unary RPCS, specifically multi-row readRows. 
+     * The amount of milliseconds to wait before issuing a client side timeout for long RPCs.
      * @param longRpcTimeoutMs
-     * @return 
      * @return this for chaining
      */
     public Builder setLongRpcTimeoutMs(int longRpcTimeoutMs) {
@@ -135,13 +135,15 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
-   * <p>Getter for the field <code>shortRpcTimeoutMs</code>.</p>
-   *
+   * <p>
+   * Getter for the field <code>shortRpcTimeoutMs</code>. Use {@link #getShortRpcTimeoutMs()}
+   * instead.
+   * </p>
    * @return a int.
    */
   @Deprecated
   public int getTimeoutMs() {
-    return shortRpcTimeoutMs;
+    return getShortRpcTimeoutMs();
   }
 
   /**
@@ -182,7 +184,8 @@ public class CallOptionsConfig implements Serializable {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("useTimeout", useTimeout)
-        .add("timeoutMs", shortRpcTimeoutMs)
+        .add("shortRpcTimeoutMs", shortRpcTimeoutMs)
+        .add("longRpcTimeoutMs", longRpcTimeoutMs)
         .toString();
   }
 
