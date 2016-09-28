@@ -28,6 +28,28 @@
  * @since 0.96.1
  */
 public final class HBaseZeroCopyByteString  {
+
+  static java.lang.reflect.Field byteField;
+  static java.lang.Class<?> byteStringClass;
+
+  static {
+    try {
+      Class<?>[] declaredClasses = ByteString.class.getDeclaredClasses();
+      for (Class<?> class1 : declaredClasses) {
+        if (class1.getName().endsWith("$LiteralByteString")) {
+          byteStringClass = class1;
+          byteField = class1.getDeclaredField("bytes");
+          if (byteField != null) {
+            byteField.setAccessible(true);
+          }
+        }
+      }
+    } catch(Exception ignored ) {
+    }
+    if (byteField == null) {
+      byteStringClass = null;
+    }
+  }
   // Gotten from AsyncHBase code base with permission.
   /** Private constructor so this class cannot be instantiated. */
   private HBaseZeroCopyByteString() {
@@ -60,7 +82,12 @@ public final class HBaseZeroCopyByteString  {
    * @return byte[] representation
    */
   public static byte[] zeroCopyGetBytes(final ByteString buf) {
-    // TODO: See if there is a new way to get the underlying byte[] without being too hacky.
+    if (byteStringClass != null && byteStringClass.isAssignableFrom(buf.getClass())) {
+      try {
+        return (byte[]) byteField.get(buf);
+      } catch (Exception ignore) {
+      }
+    }
     return buf.toByteArray();
   }
 }

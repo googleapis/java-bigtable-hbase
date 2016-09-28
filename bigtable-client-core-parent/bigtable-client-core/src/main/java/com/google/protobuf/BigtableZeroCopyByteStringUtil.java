@@ -12,6 +12,29 @@ package com.google.protobuf;
  * @version $Id: $Id
  */
 public final class BigtableZeroCopyByteStringUtil {
+
+  static java.lang.reflect.Field byteField;
+  static java.lang.Class<?> byteStringClass;
+
+  static {
+    try {
+      Class<?>[] declaredClasses = ByteString.class.getDeclaredClasses();
+      for (Class<?> class1 : declaredClasses) {
+        if (class1.getName().endsWith("$LiteralByteString")) {
+          byteStringClass = class1;
+          byteField = class1.getDeclaredField("bytes");
+          if (byteField != null) {
+            byteField.setAccessible(true);
+          }
+        }
+      }
+    } catch(Exception ignored ) {
+    }
+    if (byteField == null) {
+      byteStringClass = null;
+    }
+  }
+
   /**
    * Wraps a byte array in a {@link com.google.protobuf.ByteString} without copying it.
    *
@@ -41,7 +64,12 @@ public final class BigtableZeroCopyByteStringUtil {
    * @return an array of byte.
    */
   public static byte[] zeroCopyGetBytes(final ByteString buf) {
-    // TODO: See if there is a new way to get the underlying byte[] without being too hacky.
+    if (byteStringClass != null && byteStringClass.isAssignableFrom(buf.getClass())) {
+      try {
+        return (byte[]) byteField.get(buf);
+      } catch (Exception ignore) {
+      }
+    }
     return buf.toByteArray();
   }
 }
