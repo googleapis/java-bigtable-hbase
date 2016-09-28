@@ -51,7 +51,6 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.async.RetryingCollectingClientCallListener;
 import com.google.cloud.bigtable.grpc.async.RetryingUnaryRpcCallListener;
-import com.google.cloud.bigtable.grpc.CallOptionsFactory.OperationType;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingRpcListener;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;

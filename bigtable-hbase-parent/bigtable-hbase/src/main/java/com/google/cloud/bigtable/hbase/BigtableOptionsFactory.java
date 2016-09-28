@@ -361,7 +361,7 @@ public class BigtableOptionsFactory {
     }
 
     clientCallOptionsBuilder.setLongRpcTimeoutMs(
-      configuration.getInt(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, SHORT_TIMEOUT_MS_DEFAULT));
+      configuration.getInt(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, LONG_TIMEOUT_MS_DEFAULT));
 
     bigtableOptionsBuilder.setCallOptionsConfig(clientCallOptionsBuilder.build());
   }

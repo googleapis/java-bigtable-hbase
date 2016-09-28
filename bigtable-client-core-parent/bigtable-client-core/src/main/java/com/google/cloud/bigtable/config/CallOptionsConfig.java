@@ -41,10 +41,12 @@ public class CallOptionsConfig implements Serializable {
   public static final int SHORT_TIMEOUT_MS_DEFAULT = 60_000;
 
   /**
-   * The default duration to wait before timing out RPCs. 1 minute is probably too long for most
+   * The default duration to wait before timing out RPCs. 10 minute is probably too long for most
    * RPCs, but the intent is to have a conservative timeout by default and aim for user overrides.
+   * There could very well be 10 minute scans, so keep the value conservative for most cases and
+   * allow user overrides as needed.
    */
-  public static final int LONG_TIMEOUT_MS_DEFAULT = 60_000;
+  public static final int LONG_TIMEOUT_MS_DEFAULT = 600_000;
 
   public static class Builder {
     private boolean useTimeout = USE_TIMEOUT_DEFAULT;
