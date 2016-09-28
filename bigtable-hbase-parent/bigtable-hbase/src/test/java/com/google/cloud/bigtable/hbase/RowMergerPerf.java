@@ -13,6 +13,7 @@ import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;
 import com.google.protobuf.StringValue;
@@ -26,7 +27,7 @@ public class RowMergerPerf {
     for (int i = 0; i < 5; i++) {
       rowMergerPerf(createResponses(1));
     }
-    for (int i = 1; i <= 101; i += 10) {
+    for (int i = 5; i <= 100; i += 10) {
       System.out.println("===================");
       System.out.println("using " + i + " Cells");
       rowMergerPerf(createResponses(i));
@@ -36,7 +37,11 @@ public class RowMergerPerf {
   private static List<ReadRowsResponse> createResponses(int cellCount) {
     Builder readRowsResponse = ReadRowsResponse.newBuilder();
 
+    Preconditions.checkArgument(cellCount > 0, "cellCount has to be > 0.");
+
+    // It's ok if 100_000 / cellCount rounds down.  This only has to be approximate.
     int size = 100_000 / cellCount;
+    Preconditions.checkArgument(size > 0, "size has to be > 0.");
     for (int i = 0; i < cellCount; i++) {
       CellChunk contentChunk =
           CellChunk.newBuilder()
