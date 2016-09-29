@@ -22,73 +22,90 @@ import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
-import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
-import com.google.cloud.bigtable.grpc.io.HeaderInterceptor;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
-import io.grpc.ManagedChannel;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
-/** Sizes a Cluster to a specific node count. */
+/**
+ * This is a utility to that can be used to resize a cluster. This is useful to use 20 minutes
+ * before and after a large batch job.
+ */
 public class BigtableClusterUtilities implements AutoCloseable {
-  private static final BigtableOptions DEFAULT_OPTIONS = new BigtableOptions.Builder().build();
   private static Logger logger = new Logger(BigtableClusterUtilities.class);
   private final BigtableInstanceName instanceName;
   private final ChannelPool channelPool;
   private final BigtableInstanceClient client;
   private ListClustersResponse clusters;
 
+  /**
+   * Constructor for the utility.
+   * @param instanceName The {@link BigtableInstanceName} for the instance for the cluster to manage.
+   * @throws IOException
+   * @throws GeneralSecurityException
+   */
   public BigtableClusterUtilities(BigtableInstanceName instanceName)
       throws IOException, GeneralSecurityException {
-    this(instanceName, DEFAULT_OPTIONS);
+    this(new BigtableOptions.Builder().setProjectId(instanceName.getProjectId())
+        .setInstanceId(instanceName.getInstanceId()).build());
   }
 
   /**
-   * @param options that specify credentials or retry options.
+   * Constructor for the utility.
+   * @param options that specify projectId, instanceId, credentials and retry options.
    * @throws GeneralSecurityException
    * @throws IOException
    */
-  public BigtableClusterUtilities(BigtableInstanceName instanceName, final BigtableOptions options)
+  public BigtableClusterUtilities(final BigtableOptions options)
       throws IOException, GeneralSecurityException {
-    this.instanceName = instanceName;
-    HeaderInterceptor interceptor =
-        CredentialInterceptorCache.getInstance()
-            .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
-    channelPool =
-        new ChannelPool(
-            ImmutableList.<HeaderInterceptor>of(interceptor),
-            new ChannelPool.ChannelFactory() {
-              @Override
-              public ManagedChannel create() throws IOException {
-                return BigtableSession.createNettyChannel(options.getInstanceAdminHost(), options);
-              }
-            });
+    this.instanceName = options.getInstanceName();
+    channelPool = BigtableSession.createChannelPool(options.getInstanceAdminHost(), options);
     client = new BigtableInstanceGrpcClient(channelPool);
   }
 
-  public int getClusterSize(String clusterId){
-    Cluster cluster =
-    Preconditions.checkNotNull(getCluster(clusterId), "Cluster " + clusterId + " was not found");
+  /**
+   * Gets the size of the cluster
+   * @param clusterId
+   * @return the {@link Cluster#getServeNodes()} of the clusterId.
+   */
+  public int getClusterSize(String clusterId) {
+    Cluster cluster = Preconditions.checkNotNull(getCluster(clusterId),
+      "Cluster " + clusterId + " was not found");
     return cluster.getServeNodes();
   }
 
+  /**
+   * Gets a {@link ListClustersResponse} that contains all of the clusters in this instance.
+   * @return
+   */
   public synchronized ListClustersResponse getClusters() {
     if (this.clusters == null) {
-      logger.info("Reading clusters."); 
-      this.clusters =
-          client.listCluster(
-              ListClustersRequest.newBuilder().setParent(instanceName.getInstanceName()).build());
+      logger.info("Reading clusters.");
+      String instanceNameStr = instanceName.getInstanceName();
+      ListClustersRequest listRequest =
+          ListClustersRequest.newBuilder().setParent(instanceNameStr).build();
+      this.clusters = client.listCluster(listRequest);
     }
     return this.clusters;
   }
- 
+
+  /**
+   * Sets a cluster size to a specific size.
+   * @param clusterId
+   * @param newSize
+   * @throws InterruptedException
+   */
   public synchronized void setClusterSize(String clusterId, int newSize)
       throws InterruptedException {
+    Preconditions.checkArgument(newSize > 0, "Cluster size must be > 0");
     Cluster cluster = getCluster(clusterId);
-    updateClusterSize(cluster, newSize);
+    int currentSize = cluster.getServeNodes();
+    if (currentSize == newSize) {
+      logger.info("Cluster %s already has %d nodes.", clusterId, newSize);
+    } else {
+      updateClusterSize(cluster.getName(), newSize);
+    }
   }
 
   /**
@@ -99,48 +116,76 @@ public class BigtableClusterUtilities implements AutoCloseable {
    */
   public synchronized int incrementClusterSize(String clusterId, int incrementCount)
       throws InterruptedException {
+    Preconditions.checkArgument(incrementCount != 0,
+      "Cluster size cannot be incremented by 0 nodes. incrementCount has to be either positive or negative");
     Cluster cluster = getCluster(clusterId);
+    if (incrementCount > 0) {
+      logger.info("Adding %d nodes to cluster %s", incrementCount, clusterId);
+    } else {
+      logger.info("Removing %d nodes from cluster %s", -incrementCount, clusterId);
+    }
     int newSize = incrementCount + cluster.getServeNodes();
-    updateClusterSize(cluster, newSize);
+    updateClusterSize(cluster.getName(), newSize);
     return newSize;
   }
 
-  private void updateClusterSize(Cluster cluster, int newSize) throws InterruptedException {
-    logger.info("Updating cluster " + cluster.getName() + " to size: " + newSize); 
-    Operation operation =
-        client.updateCluster(
-            Cluster.newBuilder().setName(cluster.getName()).setServeNodes(newSize).build());
+  /**
+   * Update a cluster to have a specific size
+   *
+   * @param clusterName The fully qualified clusterName
+   * @param newSize The size to update the cluster to.
+   * @throws InterruptedException
+   */
+  private void updateClusterSize(String clusterName, int newSize) throws InterruptedException {
+    logger.info("Updating cluster %s to size %d", clusterName, newSize);
+    Operation operation = client
+        .updateCluster(Cluster.newBuilder().setName(clusterName).setServeNodes(newSize).build());
     waitForOperation(operation.getName(), 30);
-    logger.info("Done updating cluster " + cluster.getName() + "."); 
+    logger.info("Done updating cluster %s.", clusterName);
     this.clusters = null;
   }
 
-  private void waitForOperation(String operationName,
-      int maxSeconds) throws InterruptedException {
+  /**
+   * Waits for an operation like cluster resizing to complete.
+   * @param operationName The fully qualified name of the operation
+   * @param maxSeconds The maximum amount of seconds to wait for the operation to complete.
+   * @throws InterruptedException if a user interrupts the process, usually with a ^C.
+   */
+  private void waitForOperation(String operationName, int maxSeconds) throws InterruptedException {
     GetOperationRequest request = GetOperationRequest.newBuilder().setName(operationName).build();
-    for (int i = 0; i < maxSeconds; i++) {
-      Thread.sleep(1000);
+    for (int i = 0; i < maxSeconds * 2; i++) {
+      Thread.sleep(500);
       Operation response = client.getOperation(request);
       if (response.getDone()) {
         switch (response.getResultCase()) {
-          case ERROR:
-            throw new RuntimeException("Cluster could not be created: " + response.getError());
-          case RESPONSE:
-            return;
-          case RESULT_NOT_SET:
-            throw new IllegalStateException(
-                "System returned invalid response for Operation check: " + response);
+        case ERROR:
+          throw new RuntimeException("Cluster could not be created: " + response.getError());
+        case RESPONSE:
+          return;
+        case RESULT_NOT_SET:
+          throw new IllegalStateException(
+              "System returned invalid response for Operation check: " + response);
         }
       }
     }
-    throw new IllegalStateException(String.format(
-      "Waited %d seconds and operation was not complete", maxSeconds));
+    throw new IllegalStateException(
+        String.format("Waited %d seconds and operation was not complete", maxSeconds));
   }
 
+  /**
+   * Gets the current number of nodes allocated to the cluster.
+   * @param clusterId
+   * @return
+   */
   public synchronized int getClusterNodeCount(String clusterId) {
     return getCluster(clusterId).getServeNodes();
   }
 
+  /**
+   * Gets the current configuration of the cluster as encapsulated by a {@link Cluster} object.
+   * @param clusterId
+   * @return
+   */
   public synchronized Cluster getCluster(String clusterId) {
     for (Cluster cluster : getClusters().getClustersList()) {
       if (cluster.getName().endsWith("/clusters/" + clusterId)){
@@ -150,31 +195,13 @@ public class BigtableClusterUtilities implements AutoCloseable {
     throw new IllegalArgumentException("Cluster " + clusterId + " was not found");
   }
 
+  /**
+   * Shuts down the connection to the admin API.
+   * @throws Exception
+   */
   @Override
   public synchronized void close() throws Exception {
     clusters = null;
     channelPool.shutdownNow();
-  }
-
-  public static void main(String[] args) throws Exception {
-    Preconditions.checkArgument(
-        args.length == 4,
-        "Usage: BigtableClusterUtilities [projectId] [instanceId] [clusterId] [size]");
-    BigtableInstanceName instanceName = new BigtableInstanceName(args[0], args[1]);
-    try (BigtableClusterUtilities util = new BigtableClusterUtilities(instanceName)) {
-      String clusterId = args[2];
-      logger.info(
-          "Size of "
-              + clusterId
-              + " before the resize: "
-              + util.getCluster(clusterId).getServeNodes());
-      Integer newSize = Integer.valueOf(args[3]);
-      util.setClusterSize(clusterId, newSize);
-      logger.info(
-        "Size of "
-            + clusterId
-            + " after the resize: "
-            + util.getCluster(clusterId).getServeNodes());
-    }
   }
 }
