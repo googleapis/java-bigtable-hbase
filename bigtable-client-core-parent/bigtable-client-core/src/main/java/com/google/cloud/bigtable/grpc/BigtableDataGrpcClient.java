@@ -414,9 +414,9 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
     expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
 
-    CallOptions callOptions = getCallOptions(BigtableGrpc.METHOD_READ_ROWS, request);
+    CallOptions callOptions = getCallOptions(readRowsAsync.getMethodDescriptor(), request);
     final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
-        channelPool.newCall(BigtableGrpc.METHOD_READ_ROWS, callOptions);
+        readRowsAsync.newCall(callOptions);
 
     ResponseQueueReader reader = new ResponseQueueReader(
         retryOptions.getReadPartialRowTimeoutMillis(), retryOptions.getStreamingBufferSize());
@@ -441,11 +441,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }, MoreExecutors.directExecutor());
 
     return new StreamingBigtableResultScanner(reader, cancellationToken);
-  }
-
-  private boolean isGet(ReadRowsRequest request) {
-    RowSet rowSet = request.getRows();
-    return rowSet.getRowRangesCount() == 0 && rowSet.getRowKeysCount() == 1;
   }
 
   private void expandPoolIfNecessary(int channelCount) {

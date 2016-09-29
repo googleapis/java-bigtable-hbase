@@ -65,7 +65,7 @@ public class CallOptionsConfig implements Serializable {
     /**
      * If true, turn on timeouts for unary RPCS like mutations, and single row readRows.
      * @param useTimeout
-     * @return
+     * @return this for chaining
      */
     public Builder setUseTimeout(boolean useTimeout) {
       this.useTimeout = useTimeout;
@@ -151,7 +151,7 @@ public class CallOptionsConfig implements Serializable {
   /**
    * <p>Getter for the field <code>shortRpcTimeoutMs</code>.</p>
    *
-   * @return a int.
+   * @return an int.
    */
   public int getShortRpcTimeoutMs() {
     return shortRpcTimeoutMs;
@@ -160,7 +160,7 @@ public class CallOptionsConfig implements Serializable {
   /**
    * <p>Getter for the field <code>longRpcTimeoutMs</code>.</p>
    *
-   * @return a int.
+   * @return an int.
    */
   public int getLongRpcTimeoutMs() {
     return longRpcTimeoutMs;

@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.grpc;
 
 import java.util.concurrent.TimeUnit;
-
+import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
@@ -71,21 +71,31 @@ public interface CallOptionsFactory {
     @Override
     public <RequestT> CallOptions create(
         MethodDescriptor<RequestT, ?> descriptor, RequestT request) {
-      if (!config.isUseTimeout()) {
+      if (!config.isUseTimeout() || request == null) {
         return CallOptions.DEFAULT;
       }
 
       int timeout = config.getShortRpcTimeoutMs();
-      if (request.getClass() == ReadRowsRequest.class && !isGet((ReadRowsRequest) request)) {
+      if (isLongRequest(request)) {
         timeout = config.getLongRpcTimeoutMs();
       }
       return CallOptions.DEFAULT.withDeadline(Deadline.after(timeout, TimeUnit.MILLISECONDS));
     }
 
+    /**
+     * @param request
+     * @return true if this is a {@link MutateRowsRequest} or a {@link ReadRowsRequest} that's a
+     *     scan.
+     */
+    boolean isLongRequest(Object request) {
+      Class<?> requestClass = request.getClass();
+      return requestClass == MutateRowsRequest.class
+          || (requestClass == ReadRowsRequest.class && !isGet((ReadRowsRequest) request));
+    }
+
     private boolean isGet(ReadRowsRequest request) {
       RowSet rowSet = request.getRows();
-      return rowSet.getRowRangesCount() == 0 && rowSet.getRowKeysCount() == 1;
+      return rowSet != null && rowSet.getRowRangesCount() == 0 && rowSet.getRowKeysCount() == 1;
     }
   }
-
 }
