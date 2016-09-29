@@ -27,11 +27,12 @@ import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.concurrent.TimeUnit;
 
 /**
- * This is a utility to that can be used to resize a cluster. This is useful to use 20 minutes
- * before a large job to increase Cloud Bigtable capacity and 20 minutes after a large batch job to
- * reduce the size.
+ * This is a utility that can be used to resize a cluster. This is useful to use 20 minutes before a
+ * large job to increase Cloud Bigtable capacity and 20 minutes after a large batch job to reduce
+ * the size.
  */
 public class BigtableClusterUtilities implements AutoCloseable {
   private static Logger logger = new Logger(BigtableClusterUtilities.class);
@@ -40,20 +41,41 @@ public class BigtableClusterUtilities implements AutoCloseable {
   private final BigtableInstanceClient client;
 
   /**
-   * Constructor for the utility.
+   * Creates a {@link BigtableClusterUtilities} for a projectId and an instanceId.
    *
-   * @param projectId The projectId string
-   * @param instanceId The instanceId. Could be '-' for all instances.
-   * @throws IOException
-   * @throws GeneralSecurityException
+   * @param projectId
+   * @param instanceId
+   *
+   * @return a {@link BigtableClusterUtilities} for a specific projectId/instanceId.
+   * @throws GeneralSecurityException if ssl configuration fails
+   * @throws IOException if some aspect of the connection fails.
    */
-  public BigtableClusterUtilities(String projectId, String instanceId)
+  public static BigtableClusterUtilities forInstance(String projectId, String instanceId)
       throws IOException, GeneralSecurityException {
-    this(new BigtableOptions.Builder().setProjectId(projectId).setInstanceId(instanceId).build());
+    return new BigtableClusterUtilities(
+        new BigtableOptions.Builder().setProjectId(projectId).setInstanceId(instanceId).build());
   }
 
   /**
-   * Constructor for the utility.
+   * Creates a {@link BigtableClusterUtilities} for all instances in a projectId.
+   *
+   * @param projectId
+   *
+   * @return a {@link BigtableClusterUtilities} for a all instances in a projectId.
+   * @throws GeneralSecurityException if ssl configuration fails
+   * @throws IOException if some aspect of the connection fails.
+   */
+  public static BigtableClusterUtilities forAllInstances(String projectId)
+      throws IOException, GeneralSecurityException {
+    // '-' means all instanceids.
+    return new BigtableClusterUtilities(
+        new BigtableOptions.Builder().setProjectId(projectId).setInstanceId("-").build());
+  }
+
+  /**
+   * Constructor for the utility. Prefer
+   * {@link BigtableClusterUtilities#forInstance(String, String)} or
+   * {@link BigtableClusterUtilities#forAllInstances(String)} rather than this method.
    * @param options that specify projectId, instanceId, credentials and retry options.
    * @throws GeneralSecurityException
    * @throws IOException
@@ -69,29 +91,26 @@ public class BigtableClusterUtilities implements AutoCloseable {
   }
 
   /**
-   * Gets the server node count of the cluster.
+   * Gets the serve node count of the cluster.
    * @param clusterId
    * @param zoneId
    * @return the {@link Cluster#getServeNodes()} of the clusterId.
    */
   public int getClusterSize(String clusterId, String zoneId) {
-    Cluster cluster =
-        Preconditions.checkNotNull(
-            getCluster(clusterId, zoneId), "Cluster " + clusterId + " was not found");
+    String message = String.format("Cluster %s/%s was not found.", clusterId, zoneId);
+    Cluster cluster = Preconditions.checkNotNull(getCluster(clusterId, zoneId), message);
     return cluster.getServeNodes();
   }
 
   /**
-   * Gets a {@link ListClustersResponse} that contains all of the clusters in this instance.
-   *
+   * Gets a {@link ListClustersResponse} that contains all of the clusters for the
+   * projectId/instanceId configuration.
    * @return the current state of the instance
    */
   public synchronized ListClustersResponse getClusters() {
     logger.info("Reading clusters.");
-    String instanceNameStr = instanceName.getInstanceName();
-    ListClustersRequest listRequest =
-        ListClustersRequest.newBuilder().setParent(instanceNameStr).build();
-    return client.listCluster(listRequest);
+    return client.listCluster(
+      ListClustersRequest.newBuilder().setParent(instanceName.getInstanceName()).build());
   }
 
   /**
@@ -146,7 +165,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
     logger.info("Updating cluster %s to size %d", clusterName, newSize);
     Operation operation = client
         .updateCluster(Cluster.newBuilder().setName(clusterName).setServeNodes(newSize).build());
-    waitForOperation(operation.getName(), 30);
+    waitForOperation(operation.getName(), 60);
     logger.info("Done updating cluster %s.", clusterName);
   }
 
@@ -156,32 +175,35 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @param maxSeconds The maximum amount of seconds to wait for the operation to complete.
    * @throws InterruptedException if a user interrupts the process, usually with a ^C.
    */
-  private void waitForOperation(String operationName, int maxSeconds) throws InterruptedException {
+  public void waitForOperation(String operationName, int maxSeconds) throws InterruptedException {
+    long endTimeMillis = TimeUnit.SECONDS.toMillis(maxSeconds) + System.currentTimeMillis();
+
     GetOperationRequest request = GetOperationRequest.newBuilder().setName(operationName).build();
-    for (int i = 0; i < maxSeconds * 2; i++) {
+    do {
       Thread.sleep(500);
       Operation response = client.getOperation(request);
       if (response.getDone()) {
         switch (response.getResultCase()) {
-        case ERROR:
-          throw new RuntimeException("Cluster could not be created: " + response.getError());
         case RESPONSE:
           return;
+        case ERROR:
+          throw new RuntimeException("Cluster could not be resized: " + response.getError());
         case RESULT_NOT_SET:
           throw new IllegalStateException(
               "System returned invalid response for Operation check: " + response);
         }
       }
-    }
+    } while (System.currentTimeMillis() < endTimeMillis);
+
     throw new IllegalStateException(
-        String.format("Waited %d seconds and operation was not complete", maxSeconds));
+        String.format("Waited %d seconds and cluster was not resized yet.", maxSeconds));
   }
 
   /**
    * Gets the current number of nodes allocated to the cluster.
    * @param clusterId
    * @param zoneId
-   * @return the serverNode of the cluster.
+   * @return the serveNode count of the cluster.
    */
   public synchronized int getClusterNodeCount(String clusterId, String zoneId) {
     return getCluster(clusterId, zoneId).getServeNodes();
@@ -204,11 +226,12 @@ public class BigtableClusterUtilities implements AutoCloseable {
           response = cluster;
         } else {
           throw new IllegalStateException(
-              String.format("Got multiple clusters named %s in the %z zone.", clusterId, zoneId));
+              String.format("Got multiple clusters named %s in zone %z.", clusterId, zoneId));
         }
       }
     }
-    return Preconditions.checkNotNull(response, "Cluster " + clusterId + " was not found");
+    return Preconditions.checkNotNull(response,
+      String.format("Cluster %s in zone %s was not found.", clusterId, zoneId));
   }
 
   /**

@@ -415,10 +415,8 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * <p>
-   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool} of the given size, with auth headers and user agent interceptors.
-   * </p>
-   *
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   * 
    * @param hostString a {@link java.lang.String} object.
    * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
    * @throws java.io.IOException if any.
@@ -439,7 +437,7 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * createChannelPool.
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
    *
    * @param host a {@link String} object.
    * @param options a {@link BigtableOptions} object.

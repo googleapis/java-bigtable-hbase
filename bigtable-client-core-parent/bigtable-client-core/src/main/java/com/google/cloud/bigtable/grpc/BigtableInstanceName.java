@@ -103,15 +103,6 @@ public class BigtableInstanceName implements Serializable {
     return new BigtableTableName(toTableNameStr(tableId));
   }
 
-  /**
-   * Creates a fully qualified cluster within the current instance.
-   * @param clusterId the id of the cluster
-   * @return A fully qualified name for the cluster within the instance.
-   */
-  public String toClusterNameString(String clusterId) {
-    return instanceName + "/clusters/" + clusterId;
-  }
-  
   /** @return the projectId */
   public String getProjectId() {
     return projectId;
@@ -122,7 +113,10 @@ public class BigtableInstanceName implements Serializable {
     return instanceId;
   }
 
-  /** @return the fully qualified instanceName */
+  /**
+   * @return the fully qualified instanceName with the form
+   *         'projects/{projectId}/instances/{instanceId}'.
+   */
   public String getInstanceName() {
     return instanceName;
   }
