@@ -474,6 +474,10 @@ limitations under the License.
                         <groupId>org.apache.directory.server</groupId>
                         <artifactId>apacheds-kerberos-codec</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>jdk.tools</groupId>
+                        <artifactId>jdk.tools</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
