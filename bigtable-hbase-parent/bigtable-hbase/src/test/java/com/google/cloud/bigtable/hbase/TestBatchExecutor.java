@@ -43,9 +43,9 @@ import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 
@@ -275,7 +275,7 @@ public class TestBatchExecutor {
         if (current == 10) {
           return null;
         }
-        ByteString key = BigtableZeroCopyByteStringUtil.wrap(gets.get(current).getRow());
+        ByteString key = ZeroCopyByteStringUtil.wrap(gets.get(current).getRow());
         ByteString cellValue = ByteString.copyFrom(randomBytes(8));
         com.google.bigtable.v2.Cell cell = Cell.newBuilder()
             .setTimestampMicros(System.nanoTime() / 1000)

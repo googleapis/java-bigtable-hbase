@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Builder;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
-import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
 import com.google.protobuf.ByteString;
 
 /**
@@ -41,7 +41,7 @@ import com.google.protobuf.ByteString;
  * @author sduskis
  * @version $Id: $Id
  */
-public class RowFilterAdapter implements 
+public class RowFilterAdapter implements
   TypedFilterAdapter<org.apache.hadoop.hbase.filter.RowFilter> {
 
   /** {@inheritDoc} */
@@ -56,25 +56,25 @@ public class RowFilterAdapter implements
     ByteArrayComparable comparator = filter.getComparator();
     Builder builder = RowFilter.newBuilder();
     if (comparator == null) {
-      throw new IllegalStateException("Comparator cannot be null"); 
+      throw new IllegalStateException("Comparator cannot be null");
     } else if (comparator instanceof RegexStringComparator) {
       ByteString rawValue = ByteString.copyFrom(comparator.getValue());
       builder.setRowKeyRegexFilter(rawValue);
     } else if (comparator instanceof BinaryComparator) {
       byte[] quotedRegularExpression =
           ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
-      builder.setRowKeyRegexFilter(ByteStringer.wrap(quotedRegularExpression));
+      builder.setRowKeyRegexFilter(ZeroCopyByteStringUtil.wrap(quotedRegularExpression));
     } else {
       throw new IllegalStateException(String.format("Cannot adapt comparator %s", comparator
           .getClass().getCanonicalName()));
     }
     return builder.build();
   }
-  
+
   /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(
-      FilterAdapterContext context, 
+      FilterAdapterContext context,
       org.apache.hadoop.hbase.filter.RowFilter filter) {
     ByteArrayComparable comparator = filter.getComparator();
     if (!(comparator instanceof RegexStringComparator) && !(comparator instanceof BinaryComparator)) {

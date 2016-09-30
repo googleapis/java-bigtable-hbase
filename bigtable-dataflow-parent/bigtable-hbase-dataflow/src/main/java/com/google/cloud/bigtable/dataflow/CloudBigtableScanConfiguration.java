@@ -25,8 +25,8 @@ import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.ReadH
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowSet;
-import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.dataflow.ZeroCopyByteStringUtil;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 
 import java.util.Map;
@@ -120,8 +120,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     Builder withKeys(byte[] startKey, byte[] stopKey) {
-      final ByteString start = BigtableZeroCopyByteStringUtil.wrap(startKey);
-      final ByteString stop = BigtableZeroCopyByteStringUtil.wrap(stopKey);
+      final ByteString start = ZeroCopyByteStringUtil.wrap(startKey);
+      final ByteString stop = ZeroCopyByteStringUtil.wrap(stopKey);
       request =
           request.toBuilder()
               .setRows(RowSet.newBuilder().addRowRanges(
@@ -231,14 +231,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @return The start row for this configuration.
    */
   byte[] getZeroCopyStartRow() {
-    return BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(getStartRowByteString());
+    return ZeroCopyByteStringUtil.get(getStartRowByteString());
   }
 
   /**
    * @return The stop row for this configuration.
    */
   byte[] getZeroCopyStopRow() {
-    return BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(getStopRowByteString());
+    return ZeroCopyByteStringUtil.get(getStopRowByteString());
   }
 
   ByteString getStartRowByteString() {

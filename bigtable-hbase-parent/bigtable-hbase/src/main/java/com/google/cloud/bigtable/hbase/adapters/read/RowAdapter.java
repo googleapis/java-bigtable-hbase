@@ -31,8 +31,7 @@ import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
-import com.google.cloud.bigtable.util.ByteStringer;
-import com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
 
 /**
  * Adapt between a {@link com.google.bigtable.v2.Row} and an hbase client {@link org.apache.hadoop.hbase.client.Result}.
@@ -58,13 +57,13 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
     }
 
     SortedSet<org.apache.hadoop.hbase.Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);
-    byte[] rowKey = ByteStringer.extract(response.getKey());
+    byte[] rowKey = ZeroCopyByteStringUtil.get(response.getKey());
 
     for (Family family : response.getFamiliesList()) {
       byte[] familyNameBytes = Bytes.toBytes(family.getName());
 
       for (Column column : family.getColumnsList()) {
-        byte[] columnQualifier = ByteStringer.extract(column.getQualifier());
+        byte[] columnQualifier = ZeroCopyByteStringUtil.get(column.getQualifier());
 
         for (Cell cell : column.getCellsList()) {
           // Cells with labels are for internal use, do not return them.
@@ -82,7 +81,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
               familyNameBytes,
               columnQualifier,
               hbaseTimestamp,
-              ByteStringer.extract(cell.getValue()));
+              ZeroCopyByteStringUtil.get(cell.getValue()));
 
           hbaseCells.add(keyValue);
         }
@@ -103,7 +102,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
 
     // Result.getRow() is derived from its cells.  If the cells are empty, the row will be null.
     if (result.getRow() != null) {
-      rowBuilder.setKey(BigtableZeroCopyByteStringUtil.wrap(result.getRow()));
+      rowBuilder.setKey(ZeroCopyByteStringUtil.wrap(result.getRow()));
     }
 
     Map<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> familyMap = result.getMap();
@@ -121,13 +120,13 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
         for (Entry<byte[], NavigableMap<Long, byte[]>> columnEntry :
             familyEntry.getValue().entrySet()) {
           Column.Builder columnBuilder = familyBuilder.addColumnsBuilder()
-              .setQualifier(BigtableZeroCopyByteStringUtil.wrap(columnEntry.getKey()));
+              .setQualifier(ZeroCopyByteStringUtil.wrap(columnEntry.getKey()));
 
           // process the cells in the column
           for (Entry<Long, byte[]> cellData : columnEntry.getValue().entrySet()) {
             columnBuilder.addCellsBuilder()
                 .setTimestampMicros(cellData.getKey().longValue() * TIME_CONVERSION_UNIT)
-                .setValue(BigtableZeroCopyByteStringUtil.wrap(cellData.getValue()));
+                .setValue(ZeroCopyByteStringUtil.wrap(cellData.getValue()));
           }
         }
       }

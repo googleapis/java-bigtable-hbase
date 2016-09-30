@@ -21,7 +21,7 @@ import com.google.bigtable.v2.Mutation.DeleteFromColumn;
 import com.google.bigtable.v2.Mutation.DeleteFromRow;
 import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
-import com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -210,7 +210,7 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
   }
 
   private static byte[] getBytes(ByteString bs) {
-    return BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(bs);
+    return ZeroCopyByteStringUtil.get(bs);
   }
 
 }
