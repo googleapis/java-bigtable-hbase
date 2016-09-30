@@ -415,10 +415,8 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * <p>
-   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool} of the given size, with auth headers and user agent interceptors.
-   * </p>
-   *
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   * 
    * @param hostString a {@link java.lang.String} object.
    * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
    * @throws java.io.IOException if any.
@@ -439,12 +437,36 @@ public class BigtableSession implements Closeable {
   }
 
   /**
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   *
+   * @param host a {@link String} object.
+   * @param options a {@link BigtableOptions} object.
+   * @return a {@link ChannelPool} object.
+   * @throws IOException if any.
+   * @throws GeneralSecurityException
+   */
+  public static ChannelPool createChannelPool(final String host, final BigtableOptions options)
+      throws IOException, GeneralSecurityException {
+    HeaderInterceptor interceptor =
+        CredentialInterceptorCache.getInstance()
+            .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+    return new ChannelPool(
+        ImmutableList.<HeaderInterceptor>of(interceptor),
+        new ChannelPool.ChannelFactory() {
+          @Override
+          public ManagedChannel create() throws IOException {
+            return createNettyChannel(host, options);
+          }
+        });
+  }
+
+  /**
    * <p>createNettyChannel.</p>
    *
-   * @param host a {@link java.lang.String} object.
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @return a {@link io.grpc.ManagedChannel} object.
-   * @throws java.io.IOException if any.
+   * @param host a {@link String} object.
+   * @param options a {@link BigtableOptions} object.
+   * @return a {@link ManagedChannel} object.
+   * @throws IOException if any.
    */
   public static ManagedChannel createNettyChannel(String host, BigtableOptions options) throws IOException {
     // TODO Go back to using host names once more extensive testing of the IPv6 issues.
