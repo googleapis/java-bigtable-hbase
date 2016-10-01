@@ -25,7 +25,7 @@ import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
-import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
 import com.google.common.base.Optional;
 import com.google.protobuf.ByteString;
 
@@ -141,14 +141,14 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   private RowFilter createColumnQualifierFilter(byte[] unquotedQualifier) {
     return RowFilter.newBuilder()
         .setColumnQualifierRegexFilter(
-            ByteStringer.wrap(quoteRegex(unquotedQualifier)))
+            ZeroCopyByteStringUtil.wrap(quoteRegex(unquotedQualifier)))
         .build();
   }
 
   private RowFilter createFamilyFilter(byte[] familyName) {
     return RowFilter.newBuilder()
         .setFamilyNameRegexFilterBytes(
-            ByteStringer.wrap(quoteRegex(familyName)))
+            ZeroCopyByteStringUtil.wrap(quoteRegex(familyName)))
         .build();
   }
 

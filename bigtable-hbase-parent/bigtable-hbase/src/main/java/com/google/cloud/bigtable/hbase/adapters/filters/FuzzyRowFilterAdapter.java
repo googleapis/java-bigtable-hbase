@@ -27,7 +27,7 @@ import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.QuoteMetaOutputStream;
-import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.cloud.bigtable.util.ZeroCopyByteStringUtil;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 
@@ -90,7 +90,7 @@ public class FuzzyRowFilterAdapter implements TypedFilterAdapter<FuzzyRowFilter>
         baos.write(ReaderExpressionHelper.ANY_BYTE_BYTES);
       }
     }
-    ByteString quotedValue = ByteStringer.wrap(baos.toByteArray());
+    ByteString quotedValue = ZeroCopyByteStringUtil.wrap(baos.toByteArray());
     quotingStream.close();
     return RowFilter.newBuilder().setRowKeyRegexFilter(quotedValue).build();
   }
