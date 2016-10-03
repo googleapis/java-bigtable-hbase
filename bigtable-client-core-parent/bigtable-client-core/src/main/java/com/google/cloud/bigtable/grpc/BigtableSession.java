@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
 import com.google.api.client.util.Strings;
+import com.google.bigtable.admin.v2.Cluster;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
@@ -232,10 +233,12 @@ public class BigtableSession implements Closeable {
   /**
    * <p>Constructor for BigtableSession.</p>
    *
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   * @param opts a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    * @throws java.io.IOException if any.
    */
-  public BigtableSession(BigtableOptions options) throws IOException {
+  public BigtableSession(BigtableOptions opts) throws IOException {
+    this.options = resolveLegacyOptions(opts);
+
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(options.getProjectId()), PROJECT_ID_EMPTY_OR_NULL);
     Preconditions.checkArgument(
@@ -256,7 +259,6 @@ public class BigtableSession implements Closeable {
       throw new IllegalStateException("Neither Jetty ALPN nor OpenSSL via "
           + "netty-tcnative were properly configured.");
     }
-    this.options = options;
 
     Builder<HeaderInterceptor> headerInterceptorBuilder = new ImmutableList.Builder<>();
     headerInterceptorBuilder.add(
@@ -293,6 +295,37 @@ public class BigtableSession implements Closeable {
 
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
     initializeResourceLimiter(options);
+  }
+
+  /**
+   * Return options with legacy input options, if any, resolved into currently supported options.
+   */
+  private BigtableOptions resolveLegacyOptions(BigtableOptions options) throws IOException {
+    if (options.getClusterId() != null && options.getZoneId() != null) {
+      BigtableClusterUtilities utils;
+      try {
+        utils = BigtableClusterUtilities.forAllInstances(options.getProjectId());
+      } catch (GeneralSecurityException e) {
+        throw new IOException("Could not initialize BigtableClusterUtilities", e);
+      }
+
+      try {
+        Cluster cluster = utils.getCluster(options.getClusterId(), options.getZoneId());
+        String instanceId = new BigtableClusterName(cluster.getName()).getInstanceId();
+        return options.toBuilder()
+            .setZoneId(null)
+            .setClusterId(null)
+            .setInstanceId(instanceId)
+            .build();
+      } finally {
+        try {
+          utils.close();
+        } catch (Exception e) {
+          LOG.warn("Error closing BigtableClusterUtilities: ", e);
+        }
+      }
+    }
+    return options;
   }
 
   /**
@@ -415,10 +448,8 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * <p>
-   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool} of the given size, with auth headers and user agent interceptors.
-   * </p>
-   *
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   * 
    * @param hostString a {@link java.lang.String} object.
    * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
    * @throws java.io.IOException if any.
@@ -439,12 +470,36 @@ public class BigtableSession implements Closeable {
   }
 
   /**
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   *
+   * @param host a {@link String} object.
+   * @param options a {@link BigtableOptions} object.
+   * @return a {@link ChannelPool} object.
+   * @throws IOException if any.
+   * @throws GeneralSecurityException
+   */
+  public static ChannelPool createChannelPool(final String host, final BigtableOptions options)
+      throws IOException, GeneralSecurityException {
+    HeaderInterceptor interceptor =
+        CredentialInterceptorCache.getInstance()
+            .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+    return new ChannelPool(
+        ImmutableList.<HeaderInterceptor>of(interceptor),
+        new ChannelPool.ChannelFactory() {
+          @Override
+          public ManagedChannel create() throws IOException {
+            return createNettyChannel(host, options);
+          }
+        });
+  }
+
+  /**
    * <p>createNettyChannel.</p>
    *
-   * @param host a {@link java.lang.String} object.
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @return a {@link io.grpc.ManagedChannel} object.
-   * @throws java.io.IOException if any.
+   * @param host a {@link String} object.
+   * @param options a {@link BigtableOptions} object.
+   * @return a {@link ManagedChannel} object.
+   * @throws IOException if any.
    */
   public static ManagedChannel createNettyChannel(String host, BigtableOptions options) throws IOException {
     // TODO Go back to using host names once more extensive testing of the IPv6 issues.

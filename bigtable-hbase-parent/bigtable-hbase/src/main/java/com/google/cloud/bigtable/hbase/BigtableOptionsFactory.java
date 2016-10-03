@@ -30,6 +30,7 @@ import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 import io.grpc.Status;
 
@@ -65,6 +66,10 @@ public class BigtableOptionsFactory {
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
   /** Constant <code>INSTANCE_ID_KEY="google.bigtable.instance.id"</code> */
   public static final String INSTANCE_ID_KEY = "google.bigtable.instance.id";
+  /** Constant <code>CLUSTER_KEY="google.bigtable.cluster.name"</code> */
+  public static final String CLUSTER_KEY = "google.bigtable.cluster.name";
+  /** Constant <code>ZONE_KEY="google.bigtable.zone.name"</code> */
+  public static final String ZONE_KEY = "google.bigtable.zone.name";
 
   /**
    * Key to set to enable service accounts to be used, either metadata server-based or P12-based.
@@ -218,7 +223,18 @@ public class BigtableOptionsFactory {
     BigtableOptions.Builder bigtableOptionsBuilder = new BigtableOptions.Builder();
 
     bigtableOptionsBuilder.setProjectId(getValue(configuration, PROJECT_ID_KEY, "Project ID"));
-    bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
+    String zoneId = configuration.get(ZONE_KEY);
+    String clusterId = configuration.get(CLUSTER_KEY);
+    Preconditions.checkArgument((Strings.isNullOrEmpty(clusterId)) == (Strings.isNullOrEmpty(zoneId)),
+        "clusterId and zoneId must be specified as a pair.");
+    bigtableOptionsBuilder.setZoneId(zoneId);
+    bigtableOptionsBuilder.setClusterId(clusterId);
+    if (Strings.isNullOrEmpty(clusterId)) {
+      bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
+    } else {
+      Preconditions.checkArgument((Strings.isNullOrEmpty(configuration.get(INSTANCE_ID_KEY))),
+          "Zone ID and Cluster Id must not be specified if Instance ID is specified");
+    }
 
     bigtableOptionsBuilder.setDataHost(
         getHost(configuration, BIGTABLE_HOST_KEY, BIGTABLE_DATA_HOST_DEFAULT, "API Data"));
