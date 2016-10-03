@@ -71,7 +71,7 @@ public class TestBigtableOptionsFactory {
   }
 
   @Test
-  public void testClusterIsRequired() throws IOException {
+  public void testInstanceIsRequired() throws IOException {
     Configuration configuration = new Configuration(false);
     configuration.unset(BigtableOptionsFactory.INSTANCE_ID_KEY);
 
@@ -98,6 +98,16 @@ public class TestBigtableOptionsFactory {
     Assert.assertEquals(TEST_HOST, options.getDataHost());
     Assert.assertEquals(TEST_PROJECT_ID, options.getProjectId());
     Assert.assertEquals(TEST_INSTANCE_ID, options.getInstanceId());
+  }
+
+  @Test
+  public void testLegacyOptions() throws IOException {
+    configuration.set(BigtableOptionsFactory.ZONE_KEY, "z");
+    configuration.set(BigtableOptionsFactory.CLUSTER_KEY, "c");
+    configuration.unset(BigtableOptionsFactory.INSTANCE_ID_KEY);
+    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+    Assert.assertEquals("z", options.getZoneId());
+    Assert.assertEquals("c", options.getClusterId());
   }
 
   @Test

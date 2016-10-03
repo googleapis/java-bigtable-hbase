@@ -88,6 +88,36 @@ public class TestBigtableOptions {
   }
 
   @Test
+  public void testZoneClusterPair() {
+    try {
+      new BigtableOptions.Builder()
+          .setProjectId("project")
+          .setUserAgent("foo")
+          .setClusterId("cluster")
+          .build();
+      Assert.fail("Expected exception");
+    } catch (IllegalArgumentException expected) {}
+
+    try {
+      new BigtableOptions.Builder()
+          .setProjectId("project")
+          .setUserAgent("foo")
+          .setZoneId("zone")
+          .build();
+      Assert.fail("Expected exception");
+    } catch (IllegalArgumentException expected) {}
+
+    BigtableOptions options = new BigtableOptions.Builder()
+        .setProjectId("project")
+        .setUserAgent("foo")
+        .setClusterId("cluster")
+        .setZoneId("zone")
+        .build();
+    Assert.assertEquals("cluster", options.getClusterId());
+    Assert.assertEquals("zone", options.getZoneId());
+  }
+
+  @Test
   public void testEmulator() {
     Map<String, String> oldEnv = System.getenv();
     Map<String, String> testEnv = new HashMap<>();

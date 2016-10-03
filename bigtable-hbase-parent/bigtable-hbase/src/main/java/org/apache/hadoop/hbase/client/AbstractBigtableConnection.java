@@ -123,8 +123,10 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
     this.conf = conf;
+
+    BigtableOptions opts;
     try {
-      this.options = BigtableOptionsFactory.fromConfiguration(conf);
+      opts = BigtableOptionsFactory.fromConfiguration(conf);
     } catch (IOException ioe) {
       LOG.error("Error loading BigtableOptions from Configuration.", ioe);
       throw ioe;
@@ -132,7 +134,11 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
 
     this.batchPool = pool;
     this.closed = false;
-    this.session = new BigtableSession(options);
+    this.session = new BigtableSession(opts);
+
+    // Note: Reset options here because BigtableSession could potentially modify the input
+    // options by resolving legacy parameters into current ones.
+    this.options = this.session.getOptions();
   }
 
   /** {@inheritDoc} */
