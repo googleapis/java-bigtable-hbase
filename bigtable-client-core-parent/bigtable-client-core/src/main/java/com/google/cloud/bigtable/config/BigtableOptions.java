@@ -74,6 +74,10 @@ public class BigtableOptions implements Serializable {
 
     private String instanceId;
 
+    // Legacy v1 options
+    private String zoneId;
+    private String clusterId;
+
     // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
     private String dataHost = BIGTABLE_DATA_HOST_DEFAULT;
     private String tableAdminHost = BIGTABLE_TABLE_ADMIN_HOST_DEFAULT;
@@ -99,6 +103,8 @@ public class BigtableOptions implements Serializable {
       this.projectId = original.projectId;
       this.instanceId = original.instanceId;
       this.userAgent = original.userAgent;
+      this.clusterId = original.clusterId;
+      this.zoneId = original.zoneId;
       this.dataHost = original.dataHost;
       this.tableAdminHost = original.tableAdminHost;
       this.instanceAdminHost = original.instanceAdminHost;
@@ -148,6 +154,16 @@ public class BigtableOptions implements Serializable {
 
     public Builder setUserAgent(String userAgent) {
       this.userAgent = userAgent;
+      return this;
+    }
+
+    public Builder setClusterId(String clusterId) {
+      this.clusterId = clusterId;
+      return this;
+    }
+
+    public Builder setZoneId(String zoneId) {
+      this.zoneId = zoneId;
       return this;
     }
 
@@ -231,6 +247,8 @@ public class BigtableOptions implements Serializable {
           projectId,
           instanceId,
           userAgent,
+          zoneId,
+          clusterId,
           usePlaintextNegotiation,
           dataChannelCount,
           bulkOptions,
@@ -247,6 +265,8 @@ public class BigtableOptions implements Serializable {
   private final String projectId;
   private final String instanceId;
   private final String userAgent;
+  private final String zoneId;
+  private final String clusterId;
   private final int dataChannelCount;
   private final boolean usePlaintextNegotiation;
 
@@ -266,6 +286,8 @@ public class BigtableOptions implements Serializable {
       projectId = null;
       instanceId = null;
       userAgent = null;
+      clusterId = null;
+      zoneId = null;
       dataChannelCount = 1;
       instanceName = null;
       usePlaintextNegotiation = false;
@@ -284,6 +306,8 @@ public class BigtableOptions implements Serializable {
       String projectId,
       String instanceId,
       String userAgent,
+      String zoneId,
+      String clusterId,
       boolean usePlaintextNegotiation,
       int channelCount,
       BulkOptions bulkOptions,
@@ -291,6 +315,13 @@ public class BigtableOptions implements Serializable {
       CredentialOptions credentialOptions,
       RetryOptions retryOptions) {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
+    Preconditions.checkArgument((Strings.isNullOrEmpty(clusterId)) == (Strings.isNullOrEmpty(zoneId)),
+        "clusterId and zoneId must be specified as a pair.");
+    if (!Strings.isNullOrEmpty(instanceId)) {
+      Preconditions.checkArgument(
+          Strings.isNullOrEmpty(clusterId) && Strings.isNullOrEmpty(zoneId),
+          "zoneId and clusterId must not be specified if instanceId is specified.");
+    }
 
     this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
     this.instanceAdminHost = Preconditions.checkNotNull(instanceAdminHost);
@@ -300,6 +331,8 @@ public class BigtableOptions implements Serializable {
     this.instanceId = instanceId;
     this.credentialOptions = credentialOptions;
     this.userAgent = userAgent;
+    this.zoneId = zoneId;
+    this.clusterId = clusterId;
     this.retryOptions = retryOptions;
     this.dataChannelCount = channelCount;
     this.bulkOptions = bulkOptions;
@@ -320,6 +353,11 @@ public class BigtableOptions implements Serializable {
         dataHost,
         tableAdminHost,
         instanceAdminHost);
+
+    if (!Strings.isNullOrEmpty(zoneId) || !Strings.isNullOrEmpty(clusterId)) {
+      LOG.debug("Using legacy connection configuration: zoneId: %s, clusterId: %s.",
+          zoneId, clusterId);
+    }
   }
 
   /**
@@ -365,6 +403,24 @@ public class BigtableOptions implements Serializable {
    */
   public String getInstanceId() {
     return instanceId;
+  }
+
+  /**
+   * <p>Getter for the field <code>zoneId</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
+   */
+  public String getZoneId() {
+    return zoneId;
+  }
+
+  /**
+   * <p>Getter for the field <code>clusterId</code>.</p>
+   *
+   * @return a {@link java.lang.String} object.
+   */
+  public String getClusterId() {
+    return clusterId;
   }
 
   /**
@@ -468,6 +524,8 @@ public class BigtableOptions implements Serializable {
         && Objects.equals(projectId, other.projectId)
         && Objects.equals(instanceId, other.instanceId)
         && Objects.equals(userAgent, other.userAgent)
+        && Objects.equals(zoneId, other.zoneId)
+        && Objects.equals(clusterId, other.clusterId)
         && Objects.equals(credentialOptions, other.credentialOptions)
         && Objects.equals(retryOptions, other.retryOptions)
         && Objects.equals(bulkOptions, other.bulkOptions)
@@ -485,6 +543,8 @@ public class BigtableOptions implements Serializable {
         .add("projectId", projectId)
         .add("instanceId", instanceId)
         .add("userAgent", userAgent)
+        .add("zoneId", zoneId)
+        .add("clusterId", clusterId)
         .add("credentialType", credentialOptions.getCredentialType())
         .add("port", port)
         .add("dataChannelCount", dataChannelCount)
