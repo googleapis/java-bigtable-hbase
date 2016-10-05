@@ -46,18 +46,6 @@ public final class BigtableZeroCopyByteStringUtil {
   }
 
   /**
-   * Wraps a subset of a byte array in a {@link com.google.protobuf.ByteString} without copying it.
-   *
-   * @param array an array of byte.
-   * @param offset a int.
-   * @param length a int.
-   * @return a {@link com.google.protobuf.ByteString} object.
-   */
-  public static ByteString wrap(final byte[] array, int offset, int length) {
-    return ByteString.wrap(array, offset, length);
-  }
-
-  /**
    * Extracts the byte array from the given {@link com.google.protobuf.ByteString} without copy.
    *
    * @param buf A buffer from which to extract the array.

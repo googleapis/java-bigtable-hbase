@@ -32,7 +32,6 @@ import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.util.ByteStringer;
-import com.google.protobuf.BigtableZeroCopyByteStringUtil;
 
 /**
  * Adapt between a {@link com.google.bigtable.v2.Row} and an hbase client {@link org.apache.hadoop.hbase.client.Result}.
@@ -103,7 +102,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
 
     // Result.getRow() is derived from its cells.  If the cells are empty, the row will be null.
     if (result.getRow() != null) {
-      rowBuilder.setKey(BigtableZeroCopyByteStringUtil.wrap(result.getRow()));
+      rowBuilder.setKey(ByteStringer.wrap(result.getRow()));
     }
 
     Map<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> familyMap = result.getMap();
@@ -121,13 +120,13 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
         for (Entry<byte[], NavigableMap<Long, byte[]>> columnEntry :
             familyEntry.getValue().entrySet()) {
           Column.Builder columnBuilder = familyBuilder.addColumnsBuilder()
-              .setQualifier(BigtableZeroCopyByteStringUtil.wrap(columnEntry.getKey()));
+              .setQualifier(ByteStringer.wrap(columnEntry.getKey()));
 
           // process the cells in the column
           for (Entry<Long, byte[]> cellData : columnEntry.getValue().entrySet()) {
             columnBuilder.addCellsBuilder()
                 .setTimestampMicros(cellData.getKey().longValue() * TIME_CONVERSION_UNIT)
-                .setValue(BigtableZeroCopyByteStringUtil.wrap(cellData.getValue()));
+                .setValue(ByteStringer.wrap(cellData.getValue()));
           }
         }
       }

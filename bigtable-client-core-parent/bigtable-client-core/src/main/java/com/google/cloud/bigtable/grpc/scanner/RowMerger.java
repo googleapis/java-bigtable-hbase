@@ -23,8 +23,8 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
 import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Preconditions;
-import com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.protobuf.ByteString;
 
 import io.grpc.stub.StreamObserver;
@@ -364,7 +364,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
     public void completeMultiChunkCell() {
       Preconditions.checkArgument(hasChunkInProgess());
-      ByteString value = BigtableZeroCopyByteStringUtil.wrap(outputStream.toByteArray());
+      ByteString value = ByteStringer.wrap(outputStream.toByteArray());
       addCell(cellBuilderInProgress.setValue(value).build());
       outputStream = null;
       cellBuilderInProgress = null;

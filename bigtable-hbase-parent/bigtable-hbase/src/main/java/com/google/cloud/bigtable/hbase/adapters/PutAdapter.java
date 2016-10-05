@@ -22,7 +22,7 @@ import com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
-import com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -159,6 +159,6 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
   }
 
   private static byte[] getBytes(ByteString bs) {
-    return BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(bs);
+    return ByteStringer.extract(bs);
   }
 }
