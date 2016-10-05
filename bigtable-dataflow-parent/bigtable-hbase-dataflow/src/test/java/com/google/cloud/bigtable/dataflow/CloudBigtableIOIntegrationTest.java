@@ -58,6 +58,8 @@ import com.google.cloud.dataflow.sdk.transforms.DoFnTester;
 public class CloudBigtableIOIntegrationTest {
   private static final String BIGTABLE_PROJECT_KEY = "google.bigtable.project.id";
   private static final String BIGTABLE_INSTANCE_KEY = "google.bigtable.instance.id";
+  private static final String BIGTABLE_CLUSTER_KEY = "google.bigtable.cluster.name";
+  private static final String BIGTABLE_ZONE_KEY = "google.bigtable.zone.name";
 
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   public static final byte[] QUALIFIER1 = Bytes.toBytes("qualifier1");
@@ -66,6 +68,8 @@ public class CloudBigtableIOIntegrationTest {
 
   private static String projectId = System.getProperty(BIGTABLE_PROJECT_KEY);
   private static String instanceId = System.getProperty(BIGTABLE_INSTANCE_KEY);
+  private static String clusterId = System.getProperty(BIGTABLE_CLUSTER_KEY);
+  private static String zoneId = System.getProperty(BIGTABLE_ZONE_KEY);
 
   private static int LARGE_VALUE_SIZE = 201326;
 
@@ -88,11 +92,20 @@ public class CloudBigtableIOIntegrationTest {
 
   @BeforeClass
   public static void setup() throws IOException {
-    config =
-        new CloudBigtableConfiguration.Builder()
-            .withProjectId(projectId)
-            .withInstanceId(instanceId)
-            .build();
+    if (instanceId != null) {
+      config =
+          new CloudBigtableConfiguration.Builder()
+              .withProjectId(projectId)
+              .withInstanceId(instanceId)
+              .build();
+    } else {
+      config =
+          new CloudBigtableConfiguration.Builder()
+              .withProjectId(projectId)
+              .withClusterId(clusterId)
+              .withZoneId(zoneId)
+              .build();
+    }
     connection = new BigtableConnection(config.toHBaseConfig());
   }
 
