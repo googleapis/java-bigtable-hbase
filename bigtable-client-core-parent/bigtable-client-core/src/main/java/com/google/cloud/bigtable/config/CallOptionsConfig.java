@@ -118,8 +118,8 @@ public class CallOptionsConfig implements Serializable {
    * <p>Constructor for CallOptionsConfig.</p>
    *
    * @param useTimeout a boolean.
-   * @param unaryRpcTimeoutMs a int.
-   * @param longRpcTimeoutMs a int.
+   * @param unaryRpcTimeoutMs an int.
+   * @param longRpcTimeoutMs an int.
    */
   public CallOptionsConfig(boolean useTimeout, int unaryRpcTimeoutMs, int longRpcTimeoutMs) {
     this.useTimeout = useTimeout;
@@ -141,7 +141,7 @@ public class CallOptionsConfig implements Serializable {
    * Getter for the field <code>shortRpcTimeoutMs</code>. Use {@link #getShortRpcTimeoutMs()}
    * instead.
    * </p>
-   * @return a int.
+   * @return an int.
    */
   @Deprecated
   public int getTimeoutMs() {
