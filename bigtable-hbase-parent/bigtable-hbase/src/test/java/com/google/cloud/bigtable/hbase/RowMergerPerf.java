@@ -23,14 +23,18 @@ import com.google.protobuf.StringValue;
  */
 public class RowMergerPerf {
 
+  static final int VALUE_SIZE_IN_BYTES = 10_000_000;
+  static final int CUMULATIVE_CELL_COUNT = 5_000_000;
+
   public static void main(String[] args) {
-    for (int i = 0; i < 5; i++) {
-      rowMergerPerf(createResponses(1));
+    // warm up
+    for (int i = 0; i < 3; i++) {
+      rowMergerPerf(createResponses(1), 1);
     }
-    for (int i = 5; i <= 100; i += 10) {
+    for (int i = 5; i <= 105; i += 10) {
       System.out.println("===================");
       System.out.println("using " + i + " Cells");
-      rowMergerPerf(createResponses(i));
+      rowMergerPerf(createResponses(i), i);
     }
   }
 
@@ -40,7 +44,7 @@ public class RowMergerPerf {
     Preconditions.checkArgument(cellCount > 0, "cellCount has to be > 0.");
 
     // It's ok if 100_000 / cellCount rounds down.  This only has to be approximate.
-    int size = 100_000 / cellCount;
+    int size = VALUE_SIZE_IN_BYTES / cellCount;
     Preconditions.checkArgument(size > 0, "size has to be > 0.");
     for (int i = 0; i < cellCount; i++) {
       CellChunk contentChunk =
@@ -58,31 +62,36 @@ public class RowMergerPerf {
     return Arrays.asList(readRowsResponse.build());
   }
 
-  static int count = 1_000_000;
-
-  private static void rowMergerPerf(List<ReadRowsResponse> responses) {
+  private static void rowMergerPerf(List<ReadRowsResponse> responses, int cellCount) {
     RowAdapter adapter = Adapters.ROW_ADAPTER;
+    int rowCount = CUMULATIVE_CELL_COUNT / cellCount;
     System.out.println("Size: " + responses.get(0).getSerializedSize());
     {
       long start = System.nanoTime();
-      for (int i = 0; i < count; i++) {
+      for (int i = 0; i < rowCount; i++) {
         RowMerger.toRows(responses);
       }
       long time = System.nanoTime() - start;
       System.out.println(
-          String.format("RowMerger.readNext: %d rows merged in %d ms.  %d nanos per row.", count,
-              time / 1000000, time / count));
+          String.format(
+              "RowMerger: %d rows adapted in %d ms.\n"
+                  + "\t%d nanos per row\n"
+                  + "\t%d nanos per cell",
+              rowCount, time / 1000000, time / rowCount, time / CUMULATIVE_CELL_COUNT));
     }
     {
       long start = System.nanoTime();
       Row response = RowMerger.toRows(responses).get(0);
-      for (int i = 0; i < count; i++) {
+      for (int i = 0; i < rowCount; i++) {
         adapter.adaptResponse(response);
       }
       long time = System.nanoTime() - start;
       System.out.println(
-          String.format("AdaptResponse: %d rows adapted in %d ms.  %d nanos per row.",
-              count, time / 1000000, time / count));
+          String.format(
+              "AdaptResponse: %d rows adapted in %d ms.\n"
+                  + "\t%d nanos per row\n"
+                  + "\t%d nanos per cell",
+              rowCount, time / 1000000, time / rowCount, time / CUMULATIVE_CELL_COUNT));
     }
   }
 }

@@ -22,10 +22,10 @@ import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableInstanceName
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.DefaultReadHooks;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.ReadHooks;
+import com.google.bigtable.repackaged.com.google.cloud.util.ByteStringer;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowSet;
-import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
 
@@ -120,8 +120,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     Builder withKeys(byte[] startKey, byte[] stopKey) {
-      final ByteString start = BigtableZeroCopyByteStringUtil.wrap(startKey);
-      final ByteString stop = BigtableZeroCopyByteStringUtil.wrap(stopKey);
+      final ByteString start = ByteStringer.wrap(startKey);
+      final ByteString stop = ByteStringer.wrap(stopKey);
       request =
           request.toBuilder()
               .setRows(RowSet.newBuilder().addRowRanges(
@@ -231,14 +231,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @return The start row for this configuration.
    */
   byte[] getZeroCopyStartRow() {
-    return BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(getStartRowByteString());
+    return ByteStringer.extract(getStartRowByteString());
   }
 
   /**
    * @return The stop row for this configuration.
    */
   byte[] getZeroCopyStopRow() {
-    return BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(getStopRowByteString());
+    return ByteStringer.extract(getStopRowByteString());
   }
 
   ByteString getStartRowByteString() {
