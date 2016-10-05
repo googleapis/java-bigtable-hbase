@@ -242,4 +242,28 @@ public class BigtableClusterUtilities implements AutoCloseable {
   public synchronized void close() throws Exception {
     channelPool.shutdownNow();
   }
+
+  /**
+   * @return The instance id associated with the given project, zone and cluster.
+   */
+  public static String lookupInstanceId(String projectId, String clusterId, String zoneId)
+    throws IOException {
+    BigtableClusterUtilities utils;
+    try {
+      utils = BigtableClusterUtilities.forAllInstances(projectId);
+    } catch (GeneralSecurityException e) {
+      throw new RuntimeException("Could not initialize BigtableClusterUtilities", e);
+    }
+
+    try {
+      Cluster cluster = utils.getCluster(clusterId, zoneId);
+      return new BigtableClusterName(cluster.getName()).getInstanceId();
+    } finally {
+      try {
+        utils.close();
+      } catch (Exception e) {
+        logger.warn("Error closing BigtableClusterUtilities: ", e);
+      }
+    }
+  }
 }

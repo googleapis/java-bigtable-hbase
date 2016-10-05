@@ -19,6 +19,7 @@ package com.google.cloud.bigtable.dataflow;
 import org.apache.hadoop.hbase.client.Scan;
 
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableInstanceName;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableClusterUtilities;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.DefaultReadHooks;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.ReadHooks;
@@ -28,7 +29,9 @@ import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.RowSet;
 import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.dataflow.sdk.io.range.ByteKeyRange;
+import com.google.common.base.Strings;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
@@ -152,6 +155,24 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * {@inheritDoc}
      */
     @Override
+    public Builder withZoneId(String zoneId) {
+      super.withZoneId(zoneId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Builder withClusterId(String clusterId) {
+      super.withClusterId(clusterId);
+      return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Builder withConfiguration(String key, String value) {
       super.withConfiguration(key, value);
       return this;
@@ -176,6 +197,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     @Override
     public CloudBigtableScanConfiguration build() {
       if (request == null) {
+        if (Strings.isNullOrEmpty(instanceId) && !Strings.isNullOrEmpty(clusterId)) {
+          try {
+            instanceId = BigtableClusterUtilities.lookupInstanceId(projectId, clusterId, zoneId);
+          } catch (IOException e) {
+            throw new RuntimeException("Error looking up instance id", e);
+          }
+        }
         ReadHooks readHooks = new DefaultReadHooks();
         ReadRowsRequest.Builder builder = Adapters.SCAN_ADAPTER.adapt(scan, readHooks);
         builder.setTableName(new BigtableInstanceName(projectId, instanceId).toTableNameStr(tableId));
@@ -201,6 +229,23 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   protected CloudBigtableScanConfiguration(String projectId, String instanceId,
       String tableId, ReadRowsRequest request, Map<String, String> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
+    this.request = request;
+  }
+
+  /**
+   * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, zone, cluster
+   * ID, table ID, {@link Scan} and additional connection configuration.
+   *
+   * @param projectId The project ID for the cluster.
+   * @param zoneId The zone where the cluster is located.
+   * @param clusterId The cluster ID for the cluster.
+   * @param tableId The table to connect to in the cluster.
+   * @param request The {@link ReadRowsRequest} that will be used to filter the table.
+   * @param additionalConfiguration A {@link Map} with additional connection configuration.
+   */
+  protected CloudBigtableScanConfiguration(String projectId, String zoneId, String clusterId,
+      String tableId, ReadRowsRequest request, Map<String, String> additionalConfiguration) {
+    super(projectId, zoneId, clusterId, tableId, additionalConfiguration);
     this.request = request;
   }
 
