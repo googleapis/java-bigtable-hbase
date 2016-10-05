@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import com.google.bigtable.repackaged.com.google.protobuf.BigtableZeroCopyByteStringUtil;
+import com.google.bigtable.repackaged.com.google.cloud.util.ByteStringer;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.dataflow.sdk.io.range.ByteKey;
 
@@ -33,7 +33,8 @@ public class ByteStringUtil {
   public static com.google.protobuf.ByteString toUnshaded(ByteString byteString) {
     byte[] bytes = getBytes(byteString);
     try {
-      return com.google.protobuf.BigtableZeroCopyByteStringUtil.wrap(bytes);
+      return com.google.cloud.dataflow.sdk.repackaged.com.google.cloud.bigtable.util.ByteStringer
+          .wrap(bytes);
     } catch (Throwable e) {
       // There are some nasty Errors that can be thrown here.
       return com.google.protobuf.ByteString.copyFrom(bytes);
@@ -42,8 +43,8 @@ public class ByteStringUtil {
 
   private static byte[] getBytes(ByteString key) {
     try {
-      return BigtableZeroCopyByteStringUtil.zeroCopyGetBytes(key);
-    } catch(Exception e) {
+      return ByteStringer.extract(key);
+    } catch (Exception e) {
       return key.toByteArray();
     }
   }
