@@ -34,6 +34,7 @@ import com.google.common.base.Preconditions;
 import io.grpc.Status;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -206,6 +207,12 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_RPC_TIMEOUT_MS_KEY = "google.bigtable.rpc.timeout.ms";
 
   /**
+   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a long
+   * read? Currently, this feature is experimental.
+   */
+  public static final String BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY = "google.bigtable.long.rpc.timeout.ms";
+
+  /**
    * <p>fromConfiguration.</p>
    *
    * @param configuration a {@link org.apache.hadoop.conf.Configuration} object.
@@ -345,8 +352,16 @@ public class BigtableOptionsFactory {
 
     clientCallOptionsBuilder
         .setUseTimeout(configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, USE_TIMEOUT_DEFAULT));
-    clientCallOptionsBuilder
-        .setTimeoutMs(configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, TIMEOUT_MS_DEFAULT));
+    if (configuration.get(BIGTABLE_RPC_TIMEOUT_MS_KEY) != null) {
+      clientCallOptionsBuilder.setShortRpcTimeoutMs(
+        configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, SHORT_TIMEOUT_MS_DEFAULT));
+    } else {
+      clientCallOptionsBuilder.setShortRpcTimeoutMs(
+        configuration.getInt(HConstants.HBASE_CLIENT_OPERATION_TIMEOUT, SHORT_TIMEOUT_MS_DEFAULT));
+    }
+
+    clientCallOptionsBuilder.setLongRpcTimeoutMs(
+      configuration.getInt(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, LONG_TIMEOUT_MS_DEFAULT));
 
     bigtableOptionsBuilder.setCallOptionsConfig(clientCallOptionsBuilder.build());
   }

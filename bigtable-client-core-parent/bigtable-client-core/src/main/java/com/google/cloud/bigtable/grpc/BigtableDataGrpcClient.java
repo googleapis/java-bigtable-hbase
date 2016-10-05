@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterce
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
 import java.io.IOException;
@@ -41,6 +42,7 @@ import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.Row;
+import com.google.bigtable.v2.RowSet;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -345,18 +347,21 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private <ReqT, RespT> RetryingUnaryRpcCallListener<ReqT, RespT> createUnaryListener(ReqT request,
       BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    return new RetryingUnaryRpcCallListener<>(retryOptions, request, rpc,
-        getCallOptions(request, rpc), retryExecutorService, createMetadata(tableName));
+    CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
+    return new RetryingUnaryRpcCallListener<>(retryOptions, request, rpc, callOptions,
+        retryExecutorService, createMetadata(tableName));
   }
 
   private <ReqT, RespT> RetryingCollectingClientCallListener<ReqT, RespT>
       createStreamingListener(ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    return new RetryingCollectingClientCallListener<>(retryOptions, request, rpc,
-        getCallOptions(request, rpc), retryExecutorService, createMetadata(tableName));
+    CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
+    return new RetryingCollectingClientCallListener<>(retryOptions, request, rpc, callOptions,
+        retryExecutorService, createMetadata(tableName));
   }
 
-  private <ReqT> CallOptions getCallOptions(ReqT request, BigtableAsyncRpc<ReqT, ?> rpc) {
-    return callOptionsFactory.create(rpc.getMethodDescriptor(), request);
+  private <ReqT> CallOptions getCallOptions(final MethodDescriptor<ReqT, ?> methodDescriptor,
+      ReqT request) {
+    return callOptionsFactory.create(methodDescriptor, request);
   }
 
   private static <ReqT, RespT, OutputT> ListenableFuture<OutputT>
@@ -409,9 +414,9 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
     expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
 
-    // TODO: This should use getCallOptions(ReqT request, BigtableAsyncRpc<ReqT, ?> rpc) for Gets.
+    CallOptions callOptions = getCallOptions(readRowsAsync.getMethodDescriptor(), request);
     final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
-        readRowsAsync.newCall(CallOptions.DEFAULT);
+        readRowsAsync.newCall(callOptions);
 
     ResponseQueueReader reader = new ResponseQueueReader(
         retryOptions.getReadPartialRowTimeoutMillis(), retryOptions.getStreamingBufferSize());
