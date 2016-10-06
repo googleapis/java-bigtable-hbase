@@ -311,7 +311,11 @@ public class BigtableSession implements Closeable {
         Preconditions.checkArgument(
             options.getInstanceId().equals(instanceId),
             "Supplied instanceId: '%s', zoneId: '%s' and clusterId: '%s'. They do not match."
-                + "\nFound instanceId '%s' that corresponds to the zoneId/clusterId");
+                + "\nFound instanceId '%s' that corresponds to the zoneId/clusterId",
+            options.getInstanceId(),
+            options.getZoneId(),
+            options.getClusterId(),
+            instanceId);
       }
       return options.toBuilder().setInstanceId(instanceId).build();
     }
