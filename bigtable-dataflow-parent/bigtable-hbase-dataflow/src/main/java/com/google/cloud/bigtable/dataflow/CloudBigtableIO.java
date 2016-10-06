@@ -847,7 +847,7 @@ public class CloudBigtableIO {
       session.close();
       long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;
-      long operationsPerSecond = totalOps * 1000 / elapsedTimeMs;
+      long operationsPerSecond = elapsedTimeMs == 0 ? 0 : (totalOps * 1000 / elapsedTimeMs);
       READER_LOG.info(
           "{} Complete: {} operations in {} ms. That's {} operations/sec",
           this,
