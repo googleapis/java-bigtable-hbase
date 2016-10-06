@@ -239,8 +239,7 @@ public class BigtableOptionsFactory {
     if (Strings.isNullOrEmpty(clusterId)) {
       bigtableOptionsBuilder.setInstanceId(getValue(configuration, INSTANCE_ID_KEY, "Instance ID"));
     } else {
-      Preconditions.checkArgument((Strings.isNullOrEmpty(configuration.get(INSTANCE_ID_KEY))),
-          "Zone ID and Cluster Id must not be specified if Instance ID is specified");
+      bigtableOptionsBuilder.setInstanceId(configuration.get(INSTANCE_ID_KEY));
     }
 
     bigtableOptionsBuilder.setDataHost(

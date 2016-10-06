@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.dataflow;
 
-import com.google.common.base.Strings;
-
 import java.util.Map;
 import java.util.Objects;
 
@@ -135,15 +133,8 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
      */
     @Override
     public CloudBigtableTableConfiguration build() {
-      // Keeping the legacy constructor for backwards compatibility.
-      // Choose the new one if instance is specified.
-      if (!Strings.isNullOrEmpty(instanceId)) {
-        return new CloudBigtableTableConfiguration(projectId, instanceId, tableId,
-            additionalConfiguration);
-      } else {
-        return new CloudBigtableTableConfiguration(projectId, zoneId, clusterId, tableId,
-            additionalConfiguration);
-      }
+      return new CloudBigtableTableConfiguration(
+          projectId, instanceId, zoneId, clusterId, tableId, additionalConfiguration);
     }
   }
 
@@ -155,28 +146,60 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
 
   /**
    * Creates a {@link CloudBigtableTableConfiguration} using the specified configuration.
+   *
+   * @deprecated use the {@link Builder} instead.
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID
    * @param tableId The table to connect to in the cluster.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  public CloudBigtableTableConfiguration(String projectId, String instanceId,
-      String tableId, Map<String, String> additionalConfiguration) {
-    super(projectId, instanceId, additionalConfiguration);
-    this.tableId = tableId;
+  @Deprecated
+  public CloudBigtableTableConfiguration(
+      String projectId,
+      String instanceId,
+      String tableId,
+      Map<String, String> additionalConfiguration) {
+    this(projectId, instanceId, null, null, tableId, additionalConfiguration);
   }
 
   /**
    * Creates a {@link CloudBigtableTableConfiguration} using the specified configuration.
+   *
+   * @deprecated use the {@link Builder} instead.
    * @param projectId The project ID for the cluster.
    * @param zoneId The zone where the cluster is located.
    * @param clusterId The cluster ID for the cluster.
    * @param tableId The table to connect to in the cluster.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
-  public CloudBigtableTableConfiguration(String projectId, String zoneId, String clusterId,
-      String tableId, Map<String, String> additionalConfiguration) {
-    super(projectId, zoneId, clusterId, additionalConfiguration);
+  @Deprecated
+  public CloudBigtableTableConfiguration(
+      String projectId,
+      String zoneId,
+      String clusterId,
+      String tableId,
+      Map<String, String> additionalConfiguration) {
+    this(projectId, null, zoneId, clusterId, tableId, additionalConfiguration);
+  }
+
+  /**
+   * Creates a {@link CloudBigtableTableConfiguration} using the specified configuration.
+   *
+   * @param projectId The project ID for the cluster.
+   * @param instanceId The instance ID. This is nullable if zoneId and clusterId are set.
+   * @param zoneId The zone where the cluster is located.
+   * @param clusterId The cluster ID for the cluster.
+   * @param tableId The table to connect to in the cluster.
+   * @param additionalConfiguration A {@link Map} with additional connection configuration.
+   */
+  protected CloudBigtableTableConfiguration(
+      String projectId,
+      String instanceId,
+      String zoneId,
+      String clusterId,
+      String tableId,
+      Map<String, String> additionalConfiguration) {
+    super(projectId, instanceId, zoneId, clusterId, additionalConfiguration);
     this.tableId = tableId;
   }
 
