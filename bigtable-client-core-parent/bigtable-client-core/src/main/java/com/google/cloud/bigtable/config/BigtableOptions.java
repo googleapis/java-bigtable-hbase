@@ -317,11 +317,6 @@ public class BigtableOptions implements Serializable {
     Preconditions.checkArgument(channelCount > 0, "Channel count has to be at least 1.");
     Preconditions.checkArgument((Strings.isNullOrEmpty(clusterId)) == (Strings.isNullOrEmpty(zoneId)),
         "clusterId and zoneId must be specified as a pair.");
-    if (!Strings.isNullOrEmpty(instanceId)) {
-      Preconditions.checkArgument(
-          Strings.isNullOrEmpty(clusterId) && Strings.isNullOrEmpty(zoneId),
-          "zoneId and clusterId must not be specified if instanceId is specified.");
-    }
 
     this.tableAdminHost = Preconditions.checkNotNull(tableAdminHost);
     this.instanceAdminHost = Preconditions.checkNotNull(instanceAdminHost);

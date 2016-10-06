@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,10 +74,10 @@ public class TestBigtableOptions {
     oos.writeObject(options);
     oos.close();
     byte[] byteArray = bos.toByteArray();
-    
+
     ByteArrayInputStream bais = new ByteArrayInputStream(byteArray);
     ObjectInputStream iis = new ObjectInputStream(bais);
-    
+
     BigtableOptions deserialized = (BigtableOptions) iis.readObject();
     Assert.assertEquals(options, deserialized);
   }
@@ -118,6 +118,20 @@ public class TestBigtableOptions {
   }
 
   @Test
+  public void testInstanceWithCluster() {
+    BigtableOptions options = new BigtableOptions.Builder()
+        .setProjectId("project")
+        .setUserAgent("foo")
+        .setClusterId("cluster")
+        .setZoneId("zone")
+        .setInstanceId("instance")
+        .build();
+    Assert.assertEquals("cluster", options.getClusterId());
+    Assert.assertEquals("zone", options.getZoneId());
+    Assert.assertEquals("instance", options.getInstanceId());
+  }
+
+  @Test
   public void testEmulator() {
     Map<String, String> oldEnv = System.getenv();
     Map<String, String> testEnv = new HashMap<>();
@@ -151,6 +165,7 @@ public class TestBigtableOptions {
    * It only modifies the JVM's view of the environment, not the environment itself.
    * From: http://stackoverflow.com/questions/318239/how-do-i-set-environment-variables-from-java/496849
    */
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static void setTestEnv(Map<String, String> newEnv)
   {
     try {
