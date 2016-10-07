@@ -24,7 +24,7 @@ Bigger than a data warehouse, fast enough for real-time access, and less expensi
   <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.2</artifactId>
-      <version>0.9.1</version>
+      <version>0.9.3</version>
   </dependency>
 
   <dependency>
