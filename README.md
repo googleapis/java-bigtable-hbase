@@ -35,7 +35,20 @@ Bigger than a data warehouse, fast enough for real-time access, and less expensi
 ```
 * Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
 
-## Testing
+## Questions and discussions
+
+If you have questions or run into issues with Google Cloud Bigtable or the
+client libraries, you can use any of the following forums:
+
+* Stack Overflow: tag questions with [`google-cloud-bigtable`][stackoverflow-link]
+* Mailing list: [google-cloud-bigtable-discuss@][google-cloud-bigtable-discuss]
+
+You can also subscribe to
+[google-cloud-bigtable-announce@][google-cloud-bigtable-announce] list to receive
+infrequent product and client library announcements.
+
+## Developing and testing
+
 1. Running `mvn clean install` will build and install Cloud Bigtable client artifacts to your local repository, and then run the unit tests.
 1. There is also a suite of integration tests that connect to a cluster you have access to via the authentication credentials that were loaded via the Google Cloud SDK configuration step (see above).
 
@@ -65,3 +78,5 @@ Apache 2.0; see [LICENSE](LICENSE) for details.
 [maven-link]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
 [stackoverflow-shield]: https://img.shields.io/badge/stackoverflow-google--cloud--bigtable-blue.svg
 [stackoverflow-link]: http://stackoverflow.com/search?q=[google-cloud-bigtable]
+[google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss
+[google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
