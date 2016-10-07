@@ -1,7 +1,8 @@
 # [Google Cloud Bigtable HBase client for Java](https://cloud.google.com/bigtable/docs/bigtable-and-hbase)
 
-[![build.status](https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client.svg)](https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client/builds) [![ghit.me](https://ghit.me/badge.svg?repo=GoogleCloudPlatform/cloud-bigtable-client)](https://ghit.me/repo/GoogleCloudPlatform/cloud-bigtable-client)
-[![maven.version](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-client-core/badge.svg)](http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable)
+[![Travis CI status][travis-shield]][travis-link]
+[![Maven][maven-shield]][maven-link]
+[![Stack Overflow][stackoverflow-shield]][stackoverflow-link]
 
 Bigger than a data warehouse, fast enough for real-time access, and less expensive than running virtual machines. The world-renowned database that powers Google is now available to you worldwide.
 
@@ -55,3 +56,12 @@ to this project.
 ## License
 
 Apache 2.0; see [LICENSE](LICENSE) for details.
+
+<!-- references -->
+
+[travis-shield]: https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client.svg
+[travis-link]: https://travis-ci.org/GoogleCloudPlatform/cloud-bigtable-client/builds
+[maven-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-client-core/badge.svg
+[maven-link]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
+[stackoverflow-shield]: https://img.shields.io/badge/stackoverflow-google--cloud--bigtable-blue.svg
+[stackoverflow-link]: http://stackoverflow.com/search?q=[google-cloud-bigtable]
