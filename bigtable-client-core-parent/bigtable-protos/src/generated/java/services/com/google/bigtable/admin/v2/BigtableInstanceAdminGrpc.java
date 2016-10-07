@@ -23,7 +23,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.0.0)",
+    value = "by gRPC proto compiler (version 1.0.1)",
     comments = "Source: google/bigtable/admin/v2/bigtable_instance_admin.proto")
 public class BigtableInstanceAdminGrpc {
 
