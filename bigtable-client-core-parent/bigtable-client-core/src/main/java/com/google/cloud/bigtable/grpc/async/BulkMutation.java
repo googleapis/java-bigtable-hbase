@@ -41,11 +41,14 @@ import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -87,9 +90,10 @@ public class BulkMutation {
   static class RequestManager {
     private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
     private final MutateRowsRequest.Builder builder;
+    private final Meter addMeter;
+
     private MutateRowsRequest request;
     private long approximateByteSize = 0l;
-    private Meter addMeter;
 
     RequestManager(String tableName, Meter addMeter) {
       this.builder = MutateRowsRequest.newBuilder().setTableName(tableName);
@@ -111,36 +115,22 @@ public class BulkMutation {
   }
 
   @VisibleForTesting
-  static class Batch implements Runnable {
-    private final AsyncExecutor asyncExecutor;
-    private final RetryOptions retryOptions;
-    private final ScheduledExecutorService retryExecutorService;
-    private final int maxRowKeyCount;
-    private final long maxRequestSize;
-
+  class Batch implements Runnable {
     private final Meter mutationMeter =
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.added");
     private final Meter mutationRetryMeter =
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.retried");
 
+    @VisibleForTesting
+    final Long id;
     private RequestManager currentRequestManager;
     private Long retryId;
     private BackOff currentBackoff;
     private int failedCount;
 
-    Batch(
-        String tableName,
-        AsyncExecutor asyncExecutor,
-        RetryOptions retryOptions,
-        ScheduledExecutorService retryExecutorService,
-        int maxRowKeyCount,
-        long maxRequestSize) {
+    private Batch() {
+      this.id = idGenerator.incrementAndGet();
       this.currentRequestManager = new RequestManager(tableName, mutationMeter);
-      this.asyncExecutor = asyncExecutor;
-      this.retryOptions = retryOptions;
-      this.retryExecutorService = retryExecutorService;
-      this.maxRowKeyCount = maxRowKeyCount;
-      this.maxRequestSize = maxRequestSize;
     }
 
     /**
@@ -152,14 +142,13 @@ public class BulkMutation {
      *         returns from the server. See {@link #addCallback(ListenableFuture)} for
      *         more information about how the SettableFuture is set.
      */
-    @VisibleForTesting
-    ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
+    private ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
       SettableFuture<MutateRowResponse> future = SettableFuture.create();
       currentRequestManager.add(future, convert(request));
       return future;
     }
 
-    boolean isFull() {
+    private boolean isFull() {
       return getRequestCount() >= maxRowKeyCount
           || currentRequestManager.approximateByteSize >= maxRequestSize;
     }
@@ -169,6 +158,7 @@ public class BulkMutation {
      * {@link BulkMutation#add(MutateRowRequest)} when the provided {@link ListenableFuture} for the
      * {@link MutateRowsResponse} is complete.
      */
+    @VisibleForTesting
     void addCallback(ListenableFuture<List<MutateRowsResponse>> bulkFuture) {
       Futures.addCallback(
           bulkFuture,
@@ -185,7 +175,7 @@ public class BulkMutation {
           });
     }
 
-    synchronized void handleResult(List<MutateRowsResponse> results) {
+    private synchronized void handleResult(List<MutateRowsResponse> results) {
       if (this.currentRequestManager == null) {
         LOG.warn("Got duplicate responses for bulk mutation.");
         return;
@@ -328,7 +318,7 @@ public class BulkMutation {
       }
     }
 
-    protected boolean isRetryable(int codeId) {
+    private boolean isRetryable(int codeId) {
       Code code = io.grpc.Status.fromCodeValue(codeId).getCode();
       return retryOptions.isRetryable(code);
     }
@@ -338,10 +328,10 @@ public class BulkMutation {
       ListenableFuture<List<MutateRowsResponse>> future = null;
       try {
         if (retryId == null) {
-          retryId = Long.valueOf(this.asyncExecutor.getRpcThrottler().registerRetry());
+          retryId = Long.valueOf(asyncExecutor.getRpcThrottler().registerRetry());
         }
-        MutateRowsRequest request = currentRequestManager.build();
-        future = asyncExecutor.mutateRowsAsync(request);
+        activeBatches.put(currentBatch.id, currentBatch);
+        future = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
       } catch (InterruptedException e) {
         future = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
@@ -363,19 +353,23 @@ public class BulkMutation {
       }
     }
 
-    private void setRetryComplete() {
-      this.asyncExecutor.getRpcThrottler().onRetryCompletion(retryId);
+    private synchronized void setRetryComplete() {
+      asyncExecutor.getRpcThrottler().onRetryCompletion(retryId);
+      removeBatch(Batch.this);
     }
 
     @VisibleForTesting
-   int getRequestCount() {
+    int getRequestCount() {
       return currentRequestManager == null ? 0 : currentRequestManager.futures.size();
     }
   }
 
   @VisibleForTesting
   Batch currentBatch = null;
+  @VisibleForTesting
+  Map<Long, Batch> activeBatches = new HashMap<>();
 
+  private final AtomicLong idGenerator = new AtomicLong();
   private final String tableName;
   private final AsyncExecutor asyncExecutor;
   private final RetryOptions retryOptions;
@@ -385,13 +379,15 @@ public class BulkMutation {
   private final Meter batchMeter =
       BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.batch.meter");
 
+
   /**
-   * <p>Constructor for BulkMutation.</p>
-   *
-   * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
-   * @param asyncExecutor a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
-   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
-   * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
+   * <p>
+   * Constructor for BulkMutation.
+   * </p>
+   * @param tableName a {@link BigtableTableName} object.
+   * @param asyncExecutor a {@link AsyncExecutor} object.
+   * @param retryOptions a {@link RetryOptions} object.
+   * @param retryExecutorService a {@link ScheduledExecutorService} object.
    * @param maxRowKeyCount a int.
    * @param maxRequestSize a long.
    */
@@ -411,26 +407,18 @@ public class BulkMutation {
   }
 
   /**
-   * Adds a {@link com.google.bigtable.v2.MutateRowRequest} to the
-   * {@link com.google.bigtable.v2.MutateRowsRequest.Builder}. NOTE: Users have to make sure that
-   * this gets called in a thread safe way.
-   *
-   * @param request The {@link com.google.bigtable.v2.MutateRowRequest} to add
-   * @return a {@link com.google.common.util.concurrent.SettableFuture} that will be populated when the {@link com.google.bigtable.v2.MutateRowsResponse}
-   *         returns from the server. See {@link com.google.cloud.bigtable.grpc.async.BulkMutation.Batch#addCallback(ListenableFuture)} for
-   *         more information about how the SettableFuture is set.
+   * Adds a {@link .MutateRowRequest} to the {@link MutateRowsRequest.Builder}. NOTE: Users have to
+   * make sure that this gets called in a thread safe way.
+   * @param request The {@link MutateRowRequest} to add
+   * @return a {@link com.google.common.util.concurrent.SettableFuture} that will be populated when
+   *         the {@link MutateRowsResponse} returns from the server. See
+   *         {@link BulkMutation.Batch#addCallback(ListenableFuture)} for more information about how
+   *         the SettableFuture is set.
    */
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
     if (currentBatch == null) {
       batchMeter.mark();
-      currentBatch =
-          new Batch(
-              tableName,
-              asyncExecutor,
-              retryOptions,
-              retryExecutorService,
-              maxRowKeyCount,
-              maxRequestSize);
+      currentBatch = new Batch();
     }
 
     ListenableFuture<MutateRowResponse> future = currentBatch.add(request);
@@ -439,6 +427,10 @@ public class BulkMutation {
       currentBatch = null;
     }
     return future;
+  }
+
+  protected synchronized void removeBatch(Batch batch) {
+    activeBatches.remove(batch.id);
   }
 
   /**

@@ -48,6 +48,8 @@ import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.RpcThrottler;
@@ -66,7 +68,8 @@ import io.grpc.StatusRuntimeException;
 @SuppressWarnings({"rawtypes", "unchecked"})
 @RunWith(JUnit4.class)
 public class TestBulkMutation {
-  private final static String TABLE_NAME = "table";
+  private final static BigtableTableName TABLE_NAME =
+      new BigtableInstanceName("project", "instance").toTableName("table");
   private final static ByteString QUALIFIER = ByteString.copyFrom("qual".getBytes());
 
   @Rule
@@ -89,7 +92,7 @@ public class TestBulkMutation {
   RetryOptions retryOptions;
 
   private AtomicLong retryIdGenerator = new AtomicLong();
-  private BulkMutation.Batch underTest;
+  private BulkMutation underTest;
 
   @Before
   public void setup() throws InterruptedException {
@@ -114,18 +117,18 @@ public class TestBulkMutation {
       }
     });
 
-    underTest = new BulkMutation.Batch(TABLE_NAME, asyncExecutor, retryOptions, retryExecutorService,
-      1000, 1000000L);
+    underTest = new BulkMutation(TABLE_NAME, asyncExecutor, retryOptions,
+        retryExecutorService, 1000, 1000000L);
   }
 
   @Test
   public void testAdd() {
     MutateRowRequest mutateRowRequest = createRequest();
-    BulkMutation.RequestManager requestManager = new BulkMutation.RequestManager(TABLE_NAME,
-        BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"));
+    BulkMutation.RequestManager requestManager = new BulkMutation.RequestManager(
+        TABLE_NAME.toString(), BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"));
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
     MutateRowsRequest expected = MutateRowsRequest.newBuilder()
-        .setTableName(TABLE_NAME)
+        .setTableName(TABLE_NAME.toString())
         .addEntries(Entry.newBuilder().addMutations(mutateRowRequest.getMutations(0)).build())
         .build();
     Assert.assertEquals(expected, requestManager.build());
@@ -159,7 +162,7 @@ public class TestBulkMutation {
     ListenableFuture<MutateRowResponse> rowFuture = underTest.add(createRequest());
     ListenableFuture<List<MutateRowsResponse>> rowsFuture = SettableFuture.<List<MutateRowsResponse>>create();
     when(nanoClock.nanoTime()).thenReturn(1l);
-    underTest.addCallback(rowsFuture);
+    underTest.currentBatch.addCallback(rowsFuture);
     Assert.assertFalse(rowFuture.isDone());
     setResponse(io.grpc.Status.NOT_FOUND);
 
@@ -168,6 +171,7 @@ public class TestBulkMutation {
     } catch (ExecutionException e) {
       Assert.assertEquals(StatusRuntimeException.class, e.getCause().getClass());
       verify(rpcThrottler, times(1)).onRetryCompletion(eq(retryIdGenerator.get()));
+      checkBatchIsInactive();
     }
   }
 
@@ -190,6 +194,7 @@ public class TestBulkMutation {
     setResponse(io.grpc.Status.OK);
     Assert.assertTrue(rowFuture.isDone());
     verify(rpcThrottler, times(1)).onRetryCompletion(eq(retryIdGenerator.get()));
+    checkBatchIsInactive();
   }
 
   @Test
@@ -197,15 +202,15 @@ public class TestBulkMutation {
     ListenableFuture<MutateRowResponse> rowFuture1 = underTest.add(createRequest());
     ListenableFuture<MutateRowResponse> rowFuture2 = underTest.add(createRequest());
     SettableFuture<List<MutateRowsResponse>> rowsFuture = SettableFuture.<List<MutateRowsResponse>> create();
-    underTest.addCallback(rowsFuture);
+    underTest.currentBatch.addCallback(rowsFuture);
     Assert.assertFalse(rowFuture1.isDone());
     Assert.assertFalse(rowFuture2.isDone());
 
-    Assert.assertEquals(2, underTest.getRequestCount());
+    Assert.assertEquals(2, underTest.currentBatch.getRequestCount());
     // Send only one response - this is poor server behavior.
     setResponse(io.grpc.Status.OK);
     when(nanoClock.nanoTime()).thenReturn(0l);
-    Assert.assertEquals(1, underTest.getRequestCount());
+    Assert.assertEquals(1, underTest.currentBatch.getRequestCount());
 
     // Make sure that the first request completes, but the second does not.
     Assert.assertTrue(rowFuture1.isDone());
@@ -217,9 +222,10 @@ public class TestBulkMutation {
 
     // Make sure that only the second request was sent.
     setResponse(io.grpc.Status.OK);
-    Assert.assertEquals(0, underTest.getRequestCount());
+    Assert.assertEquals(0, underTest.currentBatch.getRequestCount());
     Assert.assertTrue(rowFuture2.isDone());
     verify(rpcThrottler, times(1)).onRetryCompletion(eq(retryIdGenerator.get()));
+    checkBatchIsInactive();
   }
 
   @Test
@@ -235,6 +241,7 @@ public class TestBulkMutation {
     } catch (ExecutionException e) {
       Assert.assertEquals(io.grpc.Status.DEADLINE_EXCEEDED.getCode(), io.grpc.Status.fromThrowable(e).getCode());
     }
+    checkBatchIsInactive();
     Assert.assertTrue(
         waitedNanos.get()
             > TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
@@ -263,11 +270,22 @@ public class TestBulkMutation {
 
   private void setResponse(final io.grpc.Status code)
       throws InterruptedException, ExecutionException {
-    MutateRowsResponse.Builder responseBuilder = MutateRowsResponse.newBuilder();
-    responseBuilder.addEntriesBuilder()
-        .setIndex(0)
-        .getStatusBuilder().setCode(code.getCode().value());
-    when(mockFuture.get()).thenReturn(ImmutableList.of(responseBuilder.build()));
-    underTest.run();
+    when(mockFuture.get()).thenAnswer(new Answer<ImmutableList<MutateRowsResponse>>() {
+      @Override
+      public ImmutableList<MutateRowsResponse> answer(InvocationOnMock invocation) throws Throwable {
+        Assert.assertTrue(underTest.activeBatches.containsKey(underTest.currentBatch.id));
+        MutateRowsResponse.Builder responseBuilder = MutateRowsResponse.newBuilder();
+        responseBuilder.addEntriesBuilder()
+            .setIndex(0)
+            .getStatusBuilder()
+                .setCode(code.getCode().value());
+        return ImmutableList.of(responseBuilder.build());
+      }
+    });
+    underTest.currentBatch.run();
+  }
+
+  private void checkBatchIsInactive() {
+    Assert.assertFalse(underTest.activeBatches.containsKey(underTest.currentBatch.id));
   }
 }
