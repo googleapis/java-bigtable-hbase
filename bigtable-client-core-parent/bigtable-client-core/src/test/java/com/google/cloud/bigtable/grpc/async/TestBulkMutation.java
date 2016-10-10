@@ -171,6 +171,7 @@ public class TestBulkMutation {
     } catch (ExecutionException e) {
       Assert.assertEquals(StatusRuntimeException.class, e.getCause().getClass());
       verify(rpcThrottler, times(1)).onRetryCompletion(eq(retryIdGenerator.get()));
+      checkBatchIsInactive();
     }
   }
 
@@ -193,6 +194,7 @@ public class TestBulkMutation {
     setResponse(io.grpc.Status.OK);
     Assert.assertTrue(rowFuture.isDone());
     verify(rpcThrottler, times(1)).onRetryCompletion(eq(retryIdGenerator.get()));
+    checkBatchIsInactive();
   }
 
   @Test
@@ -223,6 +225,7 @@ public class TestBulkMutation {
     Assert.assertEquals(0, underTest.currentBatch.getRequestCount());
     Assert.assertTrue(rowFuture2.isDone());
     verify(rpcThrottler, times(1)).onRetryCompletion(eq(retryIdGenerator.get()));
+    checkBatchIsInactive();
   }
 
   @Test
@@ -238,6 +241,7 @@ public class TestBulkMutation {
     } catch (ExecutionException e) {
       Assert.assertEquals(io.grpc.Status.DEADLINE_EXCEEDED.getCode(), io.grpc.Status.fromThrowable(e).getCode());
     }
+    checkBatchIsInactive();
     Assert.assertTrue(
         waitedNanos.get()
             > TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
@@ -266,11 +270,22 @@ public class TestBulkMutation {
 
   private void setResponse(final io.grpc.Status code)
       throws InterruptedException, ExecutionException {
-    MutateRowsResponse.Builder responseBuilder = MutateRowsResponse.newBuilder();
-    responseBuilder.addEntriesBuilder()
-        .setIndex(0)
-        .getStatusBuilder().setCode(code.getCode().value());
-    when(mockFuture.get()).thenReturn(ImmutableList.of(responseBuilder.build()));
+    when(mockFuture.get()).thenAnswer(new Answer<ImmutableList<MutateRowsResponse>>() {
+      @Override
+      public ImmutableList<MutateRowsResponse> answer(InvocationOnMock invocation) throws Throwable {
+        Assert.assertTrue(underTest.activeBatches.containsKey(underTest.currentBatch.id));
+        MutateRowsResponse.Builder responseBuilder = MutateRowsResponse.newBuilder();
+        responseBuilder.addEntriesBuilder()
+            .setIndex(0)
+            .getStatusBuilder()
+                .setCode(code.getCode().value());
+        return ImmutableList.of(responseBuilder.build());
+      }
+    });
     underTest.currentBatch.run();
+  }
+
+  private void checkBatchIsInactive() {
+    Assert.assertFalse(underTest.activeBatches.containsKey(underTest.currentBatch.id));
   }
 }

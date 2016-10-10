@@ -41,11 +41,14 @@ import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -118,12 +121,15 @@ public class BulkMutation {
     private final Meter mutationRetryMeter =
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.retried");
 
+    @VisibleForTesting
+    final Long id;
     private RequestManager currentRequestManager;
     private Long retryId;
     private BackOff currentBackoff;
     private int failedCount;
 
     private Batch() {
+      this.id = idGenerator.incrementAndGet();
       this.currentRequestManager = new RequestManager(tableName, mutationMeter);
     }
 
@@ -324,6 +330,7 @@ public class BulkMutation {
         if (retryId == null) {
           retryId = Long.valueOf(asyncExecutor.getRpcThrottler().registerRetry());
         }
+        activeBatches.put(currentBatch.id, currentBatch);
         future = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
       } catch (InterruptedException e) {
         future = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
@@ -346,7 +353,7 @@ public class BulkMutation {
       }
     }
 
-    private void setRetryComplete() {
+    private synchronized void setRetryComplete() {
       asyncExecutor.getRpcThrottler().onRetryCompletion(retryId);
       removeBatch(Batch.this);
     }
@@ -359,7 +366,10 @@ public class BulkMutation {
 
   @VisibleForTesting
   Batch currentBatch = null;
+  @VisibleForTesting
+  Map<Long, Batch> activeBatches = new HashMap<>();
 
+  private final AtomicLong idGenerator = new AtomicLong();
   private final String tableName;
   private final AsyncExecutor asyncExecutor;
   private final RetryOptions retryOptions;
@@ -369,15 +379,15 @@ public class BulkMutation {
   private final Meter batchMeter =
       BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.batch.meter");
 
-  private List<Batch> activeBatches = new ArrayList<>();
 
   /**
-   * <p>Constructor for BulkMutation.</p>
-   *
-   * @param tableName a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
-   * @param asyncExecutor a {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} object.
-   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
-   * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
+   * <p>
+   * Constructor for BulkMutation.
+   * </p>
+   * @param tableName a {@link BigtableTableName} object.
+   * @param asyncExecutor a {@link AsyncExecutor} object.
+   * @param retryOptions a {@link RetryOptions} object.
+   * @param retryExecutorService a {@link ScheduledExecutorService} object.
    * @param maxRowKeyCount a int.
    * @param maxRequestSize a long.
    */
@@ -397,14 +407,13 @@ public class BulkMutation {
   }
 
   /**
-   * Adds a {@link com.google.bigtable.v2.MutateRowRequest} to the
-   * {@link com.google.bigtable.v2.MutateRowsRequest.Builder}. NOTE: Users have to make sure that
-   * this gets called in a thread safe way.
-   *
-   * @param request The {@link com.google.bigtable.v2.MutateRowRequest} to add
-   * @return a {@link com.google.common.util.concurrent.SettableFuture} that will be populated when the {@link com.google.bigtable.v2.MutateRowsResponse}
-   *         returns from the server. See {@link com.google.cloud.bigtable.grpc.async.BulkMutation.Batch#addCallback(ListenableFuture)} for
-   *         more information about how the SettableFuture is set.
+   * Adds a {@link .MutateRowRequest} to the {@link MutateRowsRequest.Builder}. NOTE: Users have to
+   * make sure that this gets called in a thread safe way.
+   * @param request The {@link MutateRowRequest} to add
+   * @return a {@link com.google.common.util.concurrent.SettableFuture} that will be populated when
+   *         the {@link MutateRowsResponse} returns from the server. See
+   *         {@link BulkMutation.Batch#addCallback(ListenableFuture)} for more information about how
+   *         the SettableFuture is set.
    */
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
     if (currentBatch == null) {
@@ -414,7 +423,6 @@ public class BulkMutation {
 
     ListenableFuture<MutateRowResponse> future = currentBatch.add(request);
     if (currentBatch.isFull()) {
-      activeBatches.add(currentBatch);
       currentBatch.run();
       currentBatch = null;
     }
@@ -422,7 +430,7 @@ public class BulkMutation {
   }
 
   protected synchronized void removeBatch(Batch batch) {
-    activeBatches.remove(batch);
+    activeBatches.remove(batch.id);
   }
 
   /**
