@@ -4,11 +4,22 @@
 [![Maven][maven-shield]][maven-link]
 [![Stack Overflow][stackoverflow-shield]][stackoverflow-link]
 
-Bigger than a data warehouse, fast enough for real-time access, and less expensive than running virtual machines. The world-renowned database that powers Google is now available to you worldwide.
+[Google Cloud Bigtable](https://cloud.google.com/bigtable/) is Google's NoSQL
+Big Data database service. It's the same database that powers many core Google
+services, including Search, Analytics, Maps, and Gmail.
 
-## Overview
+Bigtable is designed to handle massive workloads at consistent low latency and
+high throughput, so it's a great choice for both operational and analytical
+applications, including IoT, user analytics, and financial data analysis.
 
-[Google Cloud Bigtable](https://cloud.google.com/bigtable/) offers you a fast, fully managed, almost infinitely scalable NoSQL database service that's ideal for web, mobile, and IoT applications requiring terabytes to petabytes of data. Unlike comparable market offerings, Cloud Bigtable doesn't require you to sacrifice speed, scale, or cost efficiency when your applications grow. The Bigtable service that Cloud Bigtable relies upon has been battle-tested at Google for more than 10 years—it's the database driving major applications such as Search, Analytics, Maps and Gmail.
+Bigtable provisions and scales to hundreds of petabytes automatically, and can
+smoothly handle millions of operations per second. Changes to the deployment
+configuration are immediate, so there is no downtime during reconfiguration.
+
+Bigtable [integrates easily][integrations] with popular Big Data tools like
+Hadoop, as well as Google Cloud Platform products like Cloud Dataflow and
+Dataproc. Plus, Bigtable supports the open-source, industry-standard HBase API,
+which makes it easy for development teams to get started.
 
 ## Project setup, installation, and configuration
 
@@ -78,5 +89,6 @@ Apache 2.0; see [LICENSE](LICENSE) for details.
 [maven-link]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
 [stackoverflow-shield]: https://img.shields.io/badge/stackoverflow-google--cloud--bigtable-blue.svg
 [stackoverflow-link]: http://stackoverflow.com/search?q=[google-cloud-bigtable]
+[integrations]: https://cloud.google.com/bigtable/docs/integrations
 [google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss
 [google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
