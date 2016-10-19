@@ -199,7 +199,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
         request = readHooks.applyPreSendHook(builder.build());
       }
       return new CloudBigtableScanConfiguration(
-          projectId, instanceId, clusterId, zoneId, tableId, request, additionalConfiguration);
+          projectId, instanceId, zoneId, clusterId, tableId, request, additionalConfiguration);
     }
   }
 
