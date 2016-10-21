@@ -19,16 +19,13 @@ import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/**
- * Tests for {@link CloudBigtableConnectionPool}.
- */
+/** Tests for {@link CloudBigtableConnectionPool}. */
 @RunWith(JUnit4.class)
 public class CloudBigtableConnectionPoolTest {
 
@@ -36,31 +33,31 @@ public class CloudBigtableConnectionPoolTest {
 
   private static class TestCloudbigtableConnectionPool extends CloudBigtableConnectionPool {
     @Override
-    protected Connection createConnection(Configuration config) throws IOException {
-      return mock(Connection.class);
+    protected AbstractBigtableConnection createConnection(Configuration config) throws IOException {
+      return mock(AbstractBigtableConnection.class);
     }
   }
 
   @Test
-  public void testConnectionIsPooled() throws IOException{
+  public void testConnectionIsPooled() throws IOException {
     TestCloudbigtableConnectionPool pool = new TestCloudbigtableConnectionPool();
-    Connection entry = pool.getConnection(config, "key");
+    AbstractBigtableConnection entry = pool.getConnection(config, "key");
     for (int i = 0; i < 100; i++) {
-      Connection newEntry = pool.getConnection(config, "key");
+      AbstractBigtableConnection newEntry = pool.getConnection(config, "key");
       assertSame(entry, newEntry);
     }
   }
 
   @Test
-  public void testDifferentKeys() throws IOException{
+  public void testDifferentKeys() throws IOException {
     TestCloudbigtableConnectionPool pool = new TestCloudbigtableConnectionPool();
-    Connection entry1 = pool.getConnection(config, "key1");
-    Connection entry2 = pool.getConnection(config, "key2");
+    AbstractBigtableConnection entry1 = pool.getConnection(config, "key1");
+    AbstractBigtableConnection entry2 = pool.getConnection(config, "key2");
     for (int i = 0; i < 100; i++) {
-      Connection newEntry1 = pool.getConnection(config, "key1");
+      AbstractBigtableConnection newEntry1 = pool.getConnection(config, "key1");
       assertSame(entry1, newEntry1);
 
-      Connection newEntry2 = pool.getConnection(config, "key2");
+      AbstractBigtableConnection newEntry2 = pool.getConnection(config, "key2");
       assertSame(entry2, newEntry2);
     }
   }
