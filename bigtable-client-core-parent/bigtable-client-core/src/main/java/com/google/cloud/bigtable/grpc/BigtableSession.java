@@ -65,6 +65,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.util.Recycler;
 
 /**
  * <p>Encapsulates the creation of Bigtable Grpc services.</p>
@@ -100,7 +101,26 @@ public class BigtableSession implements Closeable {
   static final String USER_AGENT_EMPTY_OR_NULL = "UserAgent must not be empty or null";
 
   static {
+    turnOffNettyRecycler();
     performWarmup();
+  }
+
+  /**
+   * The netty {@link Recycler} has caused some problems for long running operations in some
+   * versions of netty. As of this comment (10/21/2016), we are using netty 4.1.3.Final. The
+   * Recycler uses a system property, "io.netty.recycler.maxCapacity" which needs to be set to "0"
+   * to turn off potentially problematic behavior. The string gets transformed via the shading
+   * process, and ends up being similar to the Recycler's package name. This method sets the value
+   * to "0" if the value is not set.
+   */
+  private static void turnOffNettyRecycler() {
+    String packageName = Recycler.class.getName();
+    String prefix = packageName.substring(0, packageName.indexOf(".util.Recycler"));
+    final String key = prefix + ".recycler.maxCapacity";
+    LOG.debug("Using prefix %s for io.netty.", prefix);
+    if (System.getProperty(key) == null) {
+      System.setProperty(key, "0");
+    }
   }
 
   private synchronized static SslContext createSslContext() throws SSLException {
