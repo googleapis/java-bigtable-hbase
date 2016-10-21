@@ -36,6 +36,7 @@ import javax.net.ssl.SSLException;
 
 import com.google.api.client.util.Strings;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -534,7 +535,7 @@ public class BigtableSession implements Closeable {
         .eventLoopGroup(sharedPools.getElg())
         .executor(sharedPools.getBatchThreadPool())
         .negotiationType(negotiationType)
-        .userAgent(options.getUserAgent())
+        .userAgent(BigtableVersionInfo.CORE_UESR_AGENT + "," + options.getUserAgent())
         .flowControlWindow(FLOW_CONTROL_WINDOW)
         .build();
   }
