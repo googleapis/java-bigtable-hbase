@@ -17,12 +17,16 @@
 package com.google.cloud.bigtable.grpc;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
+
+import io.netty.util.Recycler;
 
 @SuppressWarnings({"resource","unused"})
 public class TestBigtableSession {
@@ -63,5 +67,16 @@ public class TestBigtableSession {
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage(BigtableSession.USER_AGENT_EMPTY_OR_NULL);
     createSession(PROJECT_ID, INSTANCE_ID, null);
+  }
+
+  @Test
+  public void testRecyclerIsOff() throws NoSuchFieldException, SecurityException,
+      IllegalArgumentException, IllegalAccessException, IOException {
+    // Make sure BigtableSession does its setup. This call is just to make sure that the
+    // BigtableSession's static code snippets are invoked.
+    BigtableSession.isAlpnProviderEnabled();
+    Field field = Recycler.class.getDeclaredField("DEFAULT_MAX_CAPACITY");
+    field.setAccessible(true);
+    Assert.assertEquals(0, field.getInt(null));
   }
 }
