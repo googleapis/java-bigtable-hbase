@@ -32,14 +32,14 @@ public class BigtableVersionInfo {
       properties.load(stream);
       String value = properties.getProperty(versionProperty);
       if (value == null) {
-        LOG.error("$1 not found in $2.", versionProperty, fileName);
+        LOG.error("%s not found in %s.", versionProperty, fileName);
       } else if (value.startsWith("$")){
-        LOG.info("$1 property is not replaced.", versionProperty);
+        LOG.info("%s property is not replaced.", versionProperty);
       } else {
         return value;
       }
     } catch (IOException e) {
-      LOG.error("Error while trying to get user agent name from $1", e, fileName);
+      LOG.error("Error while trying to get user agent name from %s", e, fileName);
     }
     return defaultVersion;
   }
