@@ -19,6 +19,7 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,6 +33,8 @@ import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Sleeper;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
+import com.google.cloud.bigtable.config.CredentialFactory;
+import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.common.annotations.VisibleForTesting;
@@ -158,27 +161,32 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
   Sleeper sleeper = Sleeper.DEFAULT;
 
   private final ExecutorService executor;
-  private final OAuth2Credentials credentials;
   private final RetryOptions retryOptions;
   private final Logger logger;
+  private final CredentialOptions credentialOptions;
+
+  private OAuth2Credentials credentials;
 
   /**
    * <p>Constructor for RefreshingOAuth2CredentialsInterceptor.</p>
    *
    * @param scheduler a {@link java.util.concurrent.ExecutorService} object.
    * @param credentials a {@link com.google.auth.oauth2.OAuth2Credentials} object.
+   * @param credentialOptions a {@link com.google.cloud.bigtable.config.CredentialOptions} object.
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    */
   public RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler,
-      OAuth2Credentials credentials, RetryOptions retryOptions) {
-    this(scheduler, credentials, retryOptions, LOG);
+      OAuth2Credentials credentials, CredentialOptions credentialOptions,
+      RetryOptions retryOptions) {
+    this(scheduler, credentials, credentialOptions, retryOptions, LOG);
   }
 
   @VisibleForTesting
-  RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler,
-      OAuth2Credentials credentials, RetryOptions retryOptions, Logger logger) {
+  RefreshingOAuth2CredentialsInterceptor(ExecutorService scheduler, OAuth2Credentials credentials,
+      CredentialOptions credentialOptions, RetryOptions retryOptions, Logger logger) {
     this.executor = Preconditions.checkNotNull(scheduler);
     this.credentials = Preconditions.checkNotNull(credentials);
+    this.credentialOptions = Preconditions.checkNotNull(credentialOptions);
     this.retryOptions = Preconditions.checkNotNull(retryOptions);
     this.logger = Preconditions.checkNotNull(logger);
   }
@@ -276,21 +284,23 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
    */
   @VisibleForTesting
   boolean doRefresh() {
-    boolean requiresRefresh = false;
     synchronized (isRefreshing) {
       if (!isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good) {
         isRefreshing.set(true);
-        requiresRefresh = true;
+      } else {
+        return false;
       }
     }
-    if (!requiresRefresh) {
-      return false;
-    }
-    HeaderCacheElement cacheElement = refreshCredentialsWithRetry();
-    synchronized (isRefreshing) {
-      headerCache.set(cacheElement);
-      isRefreshing.set(false);
-      isRefreshing.notifyAll();
+    try {
+      HeaderCacheElement cacheElement = refreshCredentialsWithRetry();
+      synchronized (isRefreshing) {
+        headerCache.set(cacheElement);
+      }
+    } finally {
+      synchronized (isRefreshing) {
+        isRefreshing.set(false);
+        isRefreshing.notifyAll();
+      }
     }
     return true;
   }
@@ -344,6 +354,8 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
           if (retryState != RetryState.PerformRetry) {
             return new HeaderCacheElement(exception);
           } // else Retry.
+
+          refreshCredentials();
         } catch (IOException e) {
           logger.warn("Got an exception while trying to run backoff.nextBackOffMillis()", e);
           return new HeaderCacheElement(exception);
@@ -379,6 +391,19 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
       Thread.interrupted();
       // If the thread is interrupted, terminate immediately.
       return RetryState.Interrupted;
+    }
+  }
+
+  /**
+   * Call {@link CredentialFactory#clearHttpTransport()} and retrieve a new {@link OAuth2Credentials}.
+   */
+  @VisibleForTesting
+  void refreshCredentials() {
+    CredentialFactory.clearHttpTransport();
+    try {
+      this.credentials = (OAuth2Credentials) CredentialFactory.getCredentials(credentialOptions);
+    } catch (IOException | GeneralSecurityException e1) {
+      logger.warn("Could not retrieve new credentials", e1);
     }
   }
 }

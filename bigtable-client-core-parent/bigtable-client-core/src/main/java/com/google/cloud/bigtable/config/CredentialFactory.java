@@ -97,6 +97,18 @@ public class CredentialFactory {
   }
 
   /**
+   * Removes the cached {@link HttpTransport} created by {@link #getHttpTransport()}. This is useful
+   * in cases where the transport is stale.
+   *
+   * @return true if the httpTransport was set to null;
+   */
+  public static boolean clearHttpTransport() {
+    boolean wasSet = httpTransport != null;
+    httpTransport = null;
+    return wasSet;
+  }
+
+  /**
    * Look up a Credentials object based on a configuration of credentials described in a
    * {@link com.google.cloud.bigtable.config.CredentialOptions}.
    *
