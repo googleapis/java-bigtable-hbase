@@ -34,39 +34,39 @@ public class SimpleRow {
 	private final ByteString value;
 	private final List<String> labels;
 
-	private SimpleColumn(String family, ByteString qualifier, long timestamp, ByteString value, List<String> labels) {
+    private SimpleColumn(String family, ByteString qualifier, long timestamp, ByteString value, List<String> labels) {
       this.family = family;
       this.qualifier = qualifier;
       this.timestamp = timestamp;
       this.value = value;
       this.labels = labels;
-	}
+    }
 
-	public String getFamily() {
-	  return family;
-	}
+    public String getFamily() {
+      return family;
+    }
 
-	public ByteString getQualifier() {
-	  return qualifier;
-	}
+    public ByteString getQualifier() {
+      return qualifier;
+    }
 
-	public long getTimestamp() {
-	  return timestamp;
-	}
+    public long getTimestamp() {
+      return timestamp;
+    }
 
-	public ByteString getValue() {
+    public ByteString getValue() {
       return value;
-	}
+    }
 
-	public List<String> getLabels() {
+    public List<String> getLabels() {
       return labels;
-	}
+    }
   }
 
   private final ImmutableList.Builder<SimpleColumn> builder;
 	
   public SimpleRow() {
-	builder = new ImmutableList.Builder<SimpleColumn>();
+    builder = new ImmutableList.Builder<SimpleColumn>();
   }
 	
   public void addCell(String family, ByteString qualifier, long timestamp, ByteString value, List<String> labels) {
@@ -74,6 +74,6 @@ public class SimpleRow {
   }
   
   public ImmutableList<SimpleColumn> getList() {
-	return builder.build();
+    return builder.build();
   }
 }
