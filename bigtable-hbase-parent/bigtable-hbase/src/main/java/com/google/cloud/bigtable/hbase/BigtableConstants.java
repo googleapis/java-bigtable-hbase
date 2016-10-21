@@ -16,13 +16,9 @@
 package com.google.cloud.bigtable.hbase;
 
 
-import com.google.cloud.bigtable.config.Logger;
-import com.google.protobuf.ByteString;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+
+import com.google.protobuf.ByteString;
 
 /**
  * Constants related to Bigtable.
@@ -31,8 +27,6 @@ import java.util.concurrent.TimeUnit;
  * @version $Id: $Id
  */
 public class BigtableConstants {
-
-  private static final Logger LOG = new Logger(BigtableConstants.class);
 
   /**
    * Separator between column family and column name for bigtable, as a single byte.
@@ -59,47 +53,4 @@ public class BigtableConstants {
    * TimeUnit in which Bigtable requires messages to be sent and received.
    */
   public static final TimeUnit BIGTABLE_TIMEUNIT = TimeUnit.MICROSECONDS;
-
-  /**
-   * A User-Agent token to be added to User-Agent request header.
-   */
-  public static final String USER_AGENT = getUserAgent() + "," + getJavaVersion();
-
-  /**
-   * Gets user agent from bigtable-hbase.properties. Returns a default dev user agent with current
-   * timestamp if not found.
-   */
-  private static String getUserAgent() {
-    final String defaultUserAgent = "bigtable-hbase/dev-" + System.currentTimeMillis();
-    try (InputStream stream =
-        BigtableConstants.class.getResourceAsStream("bigtable-hbase.properties")) {
-      if (stream == null) {
-        LOG.error("Could not load properties file bigtable-hbase.properties");
-        return defaultUserAgent;
-      }
-
-      Properties properties = new Properties();
-      properties.load(stream);
-      String value = properties.getProperty("bigtable.hbase.user_agent");
-      if (value == null) {
-        LOG.error("bigtable.hbase.user_agent not found in bigtable-hbase.properties.");
-      } else if (value.startsWith("$")){
-        LOG.info("bigtable.hbase.user_agent property is not replaced.");
-      } else {
-        return value;
-      }
-    } catch (IOException e) {
-      LOG.error(
-          String.format("Error while trying to get user agent name from bigtable-hbase.properties"),
-          e);
-    }
-    return defaultUserAgent;
-  }
-
-  /**
-   * @return The java specification version; for example, 1.7 or 1.8.
-   */
-  private static String getJavaVersion() {
-    return System.getProperty("java.specification.version");
-  }
 }
