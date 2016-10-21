@@ -14,7 +14,7 @@ public class BigtableVersionInfo {
   public static final String CORE_UESR_AGENT = "bigtable-" + CLIENT_VERSION +",jdk-" + JDK_VERSION;
 
   /**
-   * Gets user agent from bigtable-hbase.properties. Returns a default dev user agent with current
+   * Gets user agent from bigtable-version.properties. Returns a default dev user agent with current
    * timestamp if not found.
    */
   private static String getVersion() {
