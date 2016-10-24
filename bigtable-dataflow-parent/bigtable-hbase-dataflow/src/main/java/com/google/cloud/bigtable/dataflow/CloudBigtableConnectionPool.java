@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ public class CloudBigtableConnectionPool {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = LoggerFactory.getLogger(CloudBigtableConnectionPool.class);
 
-  private final Map<String, Connection> connections = new HashMap<>();
+  private final Map<String, AbstractBigtableConnection> connections = new HashMap<>();
 
   /**
    * <p>Constructor for CloudBigtableConnectionPool.</p>
@@ -57,7 +58,7 @@ public class CloudBigtableConnectionPool {
    * @throws java.io.IOException if any.
    * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
    */
-  public Connection getConnection(Configuration config) throws IOException {
+  public AbstractBigtableConnection getConnection(Configuration config) throws IOException {
     String key = BigtableOptionsFactory.fromConfiguration(config).getInstanceName().toString();
     return getConnection(config, key);
   }
@@ -70,9 +71,9 @@ public class CloudBigtableConnectionPool {
    * @return a {@link org.apache.hadoop.hbase.client.Connection} object.
    * @throws java.io.IOException if any.
    */
-  protected synchronized Connection getConnection(Configuration config, String key)
+  protected synchronized AbstractBigtableConnection getConnection(Configuration config, String key)
       throws IOException {
-    Connection connection = connections.get(key);
+    AbstractBigtableConnection connection = connections.get(key);
     if (connection == null) {
       connection = createConnection(config);
       connections.put(key, connection);
@@ -88,7 +89,7 @@ public class CloudBigtableConnectionPool {
    * @throws java.io.IOException if any.
    */
   @VisibleForTesting
-  protected Connection createConnection(Configuration config) throws IOException {
+  protected AbstractBigtableConnection createConnection(Configuration config) throws IOException {
     return new BigtableConnection(config) {
       @Override
       public void close() throws IOException {

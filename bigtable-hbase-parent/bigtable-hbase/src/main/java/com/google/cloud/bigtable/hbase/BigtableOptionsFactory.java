@@ -36,6 +36,7 @@ import io.grpc.Status;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.util.VersionInfo;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -291,7 +292,8 @@ public class BigtableOptionsFactory {
         BIGTABLE_DATA_CHANNEL_COUNT_KEY, BigtableOptions.BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT);
     builder.setDataChannelCount(channelCount);
 
-    builder.setUserAgent(BigtableConstants.USER_AGENT);
+    // This information is in addition to bigtable-client-core version, and jdk version.
+    builder.setUserAgent("hbase-" + VersionInfo.getVersion());
   }
 
   private static void setBulkOptions(final Configuration configuration,

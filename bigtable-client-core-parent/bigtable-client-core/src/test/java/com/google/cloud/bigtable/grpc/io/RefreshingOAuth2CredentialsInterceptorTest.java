@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -49,6 +50,7 @@ import com.google.api.client.util.NanoClock;
 import com.google.api.client.util.Sleeper;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
+import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.config.RetryOptionsUtil;
@@ -80,6 +82,9 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
   @Mock
   private Logger logger;
+
+  @Mock
+  private CredentialOptions credentialOptions;
 
   private RetryOptions retryOptions;
 
@@ -141,9 +146,13 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     setTimeInMillieconds(startTime);
     final int maxElaspedBackoffMillis = retryOptions.getMaxElaspedBackoffMillis();
     final int max_end = startTime + maxElaspedBackoffMillis * 10;
-    underTest =
-        new RefreshingOAuth2CredentialsInterceptor(executorService, credentials, retryOptions,
-            logger);
+    final AtomicInteger refreshCount = new AtomicInteger();
+    underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
+        credentialOptions, retryOptions, logger) {
+      protected void refreshCredentials() {
+        refreshCount.incrementAndGet();
+      };
+    };
     underTest.sleeper = new Sleeper() {
       @Override
       public void sleep(long ms) throws InterruptedException {
@@ -165,6 +174,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Assert.assertTrue(timeInMillis > startTime + maxElaspedBackoffMillis);
 
     verify(logger, atLeast(1)).warn(any(String.class), eq(ioException));
+    Assert.assertTrue(refreshCount.get() > 0);
   }
 
   @Test
@@ -225,7 +235,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
 
     underTest =
         new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-            new RetryOptions.Builder().build(), logger);
+          credentialOptions, new RetryOptions.Builder().build(), logger);
 
     // At this point, the access token wasn't retrieved yet. The
     // RefreshingOAuth2CredentialsInterceptor considers null to be Expired.
@@ -282,7 +292,7 @@ public class RefreshingOAuth2CredentialsInterceptorTest {
     Mockito.when(credentials.refreshAccessToken()).thenReturn(
       new AccessToken("", new Date(expiration)));
     underTest = new RefreshingOAuth2CredentialsInterceptor(executorService, credentials,
-      retryOptions, logger);
+      credentialOptions, retryOptions, logger);
     Assert.assertTrue(underTest.doRefresh());
   }
 }

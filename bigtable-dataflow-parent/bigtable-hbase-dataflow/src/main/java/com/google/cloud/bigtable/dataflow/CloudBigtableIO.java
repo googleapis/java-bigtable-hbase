@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
@@ -53,7 +54,6 @@ import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
-import com.google.bigtable.repackaged.com.google.cloud.hbase.BigtableOptionsFactory;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
@@ -761,9 +761,10 @@ public class CloudBigtableIO {
 
     @VisibleForTesting
     void initializeScanner() throws IOException {
-      Configuration hbaseConfig = source.getConfiguration().toHBaseConfig();
-      hbaseConfig.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-      session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(hbaseConfig));
+      Configuration config = source.getConfiguration().toHBaseConfig();
+      AbstractBigtableConnection connection =
+          AbstractCloudBigtableTableDoFn.pool.getConnection(config);
+      session = connection.getSession();
       scanner = session.getDataClient().readRows(source.getConfiguration().getRequest());
     }
 
@@ -844,7 +845,6 @@ public class CloudBigtableIO {
     @Override
     public void close() throws IOException {
       scanner.close();
-      session.close();
       long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;
       long operationsPerSecond = elapsedTimeMs == 0 ? 0 : (totalOps * 1000 / elapsedTimeMs);

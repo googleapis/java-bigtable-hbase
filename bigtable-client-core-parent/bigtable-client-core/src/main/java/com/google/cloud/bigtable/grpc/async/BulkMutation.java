@@ -52,9 +52,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * This class combines a collection of {@link com.google.bigtable.v2.MutateRowRequest}s into a single
- * {@link com.google.bigtable.v2.MutateRowsRequest}. This class is not thread safe, and requires calling classes to make it
- * thread safe.
+ * This class combines a collection of {@link MutateRowRequest}s into a single {@link
+ * MutateRowsRequest}. This class is not thread safe, and requires calling classes to make it thread
+ * safe.
  *
  * @author sduskis
  * @version $Id: $Id
@@ -381,15 +381,18 @@ public class BulkMutation {
 
 
   /**
-   * <p>
    * Constructor for BulkMutation.
-   * </p>
-   * @param tableName a {@link BigtableTableName} object.
-   * @param asyncExecutor a {@link AsyncExecutor} object.
-   * @param retryOptions a {@link RetryOptions} object.
-   * @param retryExecutorService a {@link ScheduledExecutorService} object.
-   * @param maxRowKeyCount a int.
-   * @param maxRequestSize a long.
+   *
+   * @param tableName a {@link BigtableTableName} object for the table to which all {@link
+   *     MutateRowRequest}s will be sent.
+   * @param asyncExecutor a {@link AsyncExecutor} object that asynchronously sends {@link
+   *     MutateRowsRequest}.
+   * @param retryOptions a {@link RetryOptions} object that describes how to perform retries.
+   * @param retryExecutorService a {@link ScheduledExecutorService} object on which to schedule
+   *     retries.
+   * @param maxRowKeyCount describes the maximum number of {@link MutateRowRequest}s to send in a
+   *     single {@link MutateRowsRequest}.
+   * @param maxRequestSize describes the maximum cumulative size of a {@link MutateRowsRequest}.
    */
   public BulkMutation(
       BigtableTableName tableName,
@@ -407,13 +410,15 @@ public class BulkMutation {
   }
 
   /**
-   * Adds a {@link .MutateRowRequest} to the {@link MutateRowsRequest.Builder}. NOTE: Users have to
-   * make sure that this gets called in a thread safe way.
+   * Adds a {@link MutateRowRequest} to the {@link
+   * com.google.bigtable.v2.MutateRowsRequest.Builder}. NOTE: Users have to make sure that this gets
+   * called in a thread safe way.
+   *
    * @param request The {@link MutateRowRequest} to add
    * @return a {@link com.google.common.util.concurrent.SettableFuture} that will be populated when
-   *         the {@link MutateRowsResponse} returns from the server. See
-   *         {@link BulkMutation.Batch#addCallback(ListenableFuture)} for more information about how
-   *         the SettableFuture is set.
+   *     the {@link MutateRowsResponse} returns from the server. See {@link
+   *     BulkMutation.Batch#addCallback(ListenableFuture)} for more information about how the
+   *     SettableFuture is set.
    */
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
     if (currentBatch == null) {
@@ -423,8 +428,7 @@ public class BulkMutation {
 
     ListenableFuture<MutateRowResponse> future = currentBatch.add(request);
     if (currentBatch.isFull()) {
-      currentBatch.run();
-      currentBatch = null;
+      flush();
     }
     return future;
   }
@@ -434,7 +438,7 @@ public class BulkMutation {
   }
 
   /**
-   * <p>flush.</p>
+   * Send any outstanding {@link MutateRowRequest}s.
    */
   public synchronized void flush() {
     if (currentBatch != null) {
@@ -444,9 +448,7 @@ public class BulkMutation {
   }
 
   /**
-   * <p>isFlushed.</p>
-   *
-   * @return a boolean.
+   * @return false if there are any outstanding {@link MutateRowRequest} that still need to be sent.
    */
   public synchronized boolean isFlushed() {
     return currentBatch == null;
