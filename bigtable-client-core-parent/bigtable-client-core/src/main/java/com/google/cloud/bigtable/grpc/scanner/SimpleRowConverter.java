@@ -24,21 +24,26 @@ import com.google.cloud.bigtable.grpc.SimpleRow.SimpleColumn;
 import com.google.common.collect.ImmutableList;
 
 /**
- * <p>This class converts an instance of {@link com.google.cloud.bigtable.grpc.SimpleRow} to {@link com.google.bigtable.v2.Row}.</p>
+ * <p>This class converts an instance of {@link com.google.cloud.bigtable.grpc.SimpleRow} to
+ * {@link com.google.bigtable.v2.Row}.</p>
  *
  * @author tyagihas
  * @version $Id: $Id
  */
 public class SimpleRowConverter {	
-  public Row.Builder buildRow(SimpleRow row, Row.Builder rowBuilder) {
+  public Row.Builder buildRow(SimpleRow row) {
+    Row.Builder rowBuilder = Row.newBuilder();
     String prevKey = "";
     Family.Builder familyBuilder = null;
-    ImmutableList<SimpleColumn> list = row.getList();
+    ImmutableList<SimpleColumn> list =
+      SimpleRow.FamilyColumnOrdering.DEFAULT_ORDERING.immutableSortedCopy(row.getList());
+
     for (int i = 0; i < list.size(); i++) {
       SimpleColumn column = list.get(i);
       if (!prevKey.equals(column.getFamily())) {
         familyBuilder = rowBuilder.addFamiliesBuilder().setName(column.getFamily());
 	  }
+      System.out.println(column.getFamily() + ", " + new String(column.getQualifier().toByteArray()));
       Column.Builder columnBuilder = Column.newBuilder().setQualifier(column.getQualifier());
       columnBuilder.addCells(Cell.newBuilder()
               .setTimestampMicros(column.getTimestamp())

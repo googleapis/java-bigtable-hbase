@@ -18,23 +18,26 @@ package com.google.cloud.bigtable.grpc;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Ordering;
 import com.google.protobuf.ByteString;
 
 /**
- * <p>This class stores values from {@link com.google.bigtable.v2.ReadRowsResponse} objects and represents a single row.</p>
+ * <p>This class stores values from {@link com.google.bigtable.v2.ReadRowsResponse} objects and
+ * represents a single row.</p>
  *
  * @author tyagihas
  * @version $Id: $Id
  */
 public class SimpleRow {
   public final class SimpleColumn {
-	private final String family;
-	private final ByteString qualifier;
-	private final long timestamp;
-	private final ByteString value;
-	private final List<String> labels;
+    private final String family;
+    private final ByteString qualifier;
+    private final long timestamp;
+    private final ByteString value;
+    private final List<String> labels;
 
-    private SimpleColumn(String family, ByteString qualifier, long timestamp, ByteString value, List<String> labels) {
+    private SimpleColumn(String family, ByteString qualifier, long timestamp, ByteString value,
+        List<String> labels) {
       this.family = family;
       this.qualifier = qualifier;
       this.timestamp = timestamp;
@@ -63,17 +66,52 @@ public class SimpleRow {
     }
   }
 
-  private final ImmutableList.Builder<SimpleColumn> builder;
-	
-  public SimpleRow() {
-    builder = new ImmutableList.Builder<SimpleColumn>();
+  public static class FamilyColumnOrdering extends Ordering<SimpleColumn> {
+    public static final FamilyColumnOrdering DEFAULT_ORDERING = new FamilyColumnOrdering();
+
+    private FamilyColumnOrdering() {}
+
+    @Override
+    public int compare(SimpleColumn left, SimpleColumn right) {
+      int result = left.family.compareTo(right.family);
+      if (result == 0) {
+        result = left.qualifier.toStringUtf8().compareTo(right.qualifier.toStringUtf8());
+      }
+      return result;
+    }
   }
+
+  public static final class Builder {
+	private static Builder DEFAULT_INSTANCE = new Builder();
+	private final ImmutableList.Builder<SimpleColumn> listBuilder;
+
+    public static Builder getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private Builder() {
+      listBuilder = new ImmutableList.Builder<SimpleColumn>();
+    }
+
+    public SimpleRow createRow() {
+      return new SimpleRow();
+    }
+  }
+
+  private ImmutableList<SimpleColumn> columns = null;
+
+  private SimpleRow() {}
 	
-  public void addCell(String family, ByteString qualifier, long timestamp, ByteString value, List<String> labels) {
-    builder.add(new SimpleColumn(family, qualifier, timestamp, value, labels));
+  public void addCell(String family, ByteString qualifier, long timestamp, ByteString value,
+      List<String> labels) {
+    Builder.getDefaultInstance().listBuilder.add(
+      new SimpleColumn(family, qualifier, timestamp, value, labels));
   }
   
   public ImmutableList<SimpleColumn> getList() {
-    return builder.build();
+    if (columns == null) {
+      columns = Builder.getDefaultInstance().listBuilder.build();
+    }
+    return columns;
   }
 }
