@@ -43,7 +43,6 @@ public class SimpleRowConverter {
       if (!prevKey.equals(column.getFamily())) {
         familyBuilder = rowBuilder.addFamiliesBuilder().setName(column.getFamily());
 	  }
-      System.out.println(column.getFamily() + ", " + new String(column.getQualifier().toByteArray()));
       Column.Builder columnBuilder = Column.newBuilder().setQualifier(column.getQualifier());
       columnBuilder.addCells(Cell.newBuilder()
               .setTimestampMicros(column.getTimestamp())
