@@ -262,7 +262,16 @@ public class CloudBigtableConfiguration implements Serializable {
     for (Entry<String, String> entry : configuration.entrySet()) {
       config.set(entry.getKey(), entry.getValue());
     }
+    setUserAgent(config);
     return config;
+  }
+
+  private void setUserAgent(Configuration config) {
+    String dataflowUserAgent = "HBaseDataflow";
+    if (configuration.containsKey(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY)) {
+      dataflowUserAgent += "," + configuration.get(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY);
+    }
+    config.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, dataflowUserAgent);
   }
 
   /**
