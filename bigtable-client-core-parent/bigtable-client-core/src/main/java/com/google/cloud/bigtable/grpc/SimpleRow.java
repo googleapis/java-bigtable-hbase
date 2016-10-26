@@ -93,14 +93,21 @@ public class SimpleRow {
       listBuilder = new ImmutableList.Builder<SimpleColumn>();
     }
 
-    public SimpleRow createRow() {
-      return new SimpleRow();
+    public SimpleRow createRow(ByteString rowKey) {
+      return new SimpleRow(rowKey);
     }
   }
 
+  private final ByteString rowKey;
   private ImmutableList<SimpleColumn> columns = null;
 
-  private SimpleRow() {}
+  private SimpleRow(ByteString rowKey) {
+	  this.rowKey = rowKey;
+  }
+  
+  public ByteString getRowKey() {
+  	return rowKey;
+  }
 	
   public void addCell(String family, ByteString qualifier, long timestamp, ByteString value,
       List<String> labels) {
