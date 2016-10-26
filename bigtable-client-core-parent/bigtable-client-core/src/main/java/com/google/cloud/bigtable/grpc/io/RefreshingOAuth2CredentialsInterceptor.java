@@ -96,7 +96,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
      * After the token is "expired," the interceptor blocks gRPC calls. The Expired state indicates
      * that the interceptor needs to do a synchronous refresh.
      */
-    public static final int TOKEN_EXPIRES_MS = 45 * 1000;
+    public static final int TOKEN_EXPIRES_MS = 15 * 1000;
 
     final IOException exception;
     final String header;
@@ -201,12 +201,19 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
    * <p>asyncRefresh.</p>
    */
   public void asyncRefresh() {
+    if (!canRefresh()) {
+      return;
+    }
     executor.execute(new Runnable() {
       @Override
       public void run() {
         doRefresh();
       }
     });
+  }
+
+  private boolean canRefresh() {
+    return !isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good;
   }
 
   /**
@@ -284,12 +291,14 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
    */
   @VisibleForTesting
   boolean doRefresh() {
+    if (!canRefresh()) {
+      return false;
+    }
     synchronized (isRefreshing) {
-      if (!isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good) {
-        isRefreshing.set(true);
-      } else {
+      if (!canRefresh()) {
         return false;
       }
+      isRefreshing.set(true);
     }
     try {
       HeaderCacheElement cacheElement = refreshCredentialsWithRetry();
