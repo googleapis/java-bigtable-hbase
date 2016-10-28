@@ -29,7 +29,7 @@ import com.google.protobuf.ByteString;
  * @version $Id: $Id
  */
 public class SimpleRow {
-  public final class SimpleColumn {
+  public final static class SimpleColumn {
     private final String family;
     private final ByteString qualifier;
     private final long timestamp;
@@ -82,43 +82,52 @@ public class SimpleRow {
   }
 
   public static final class Builder {
-	private static Builder DEFAULT_INSTANCE = new Builder();
+    private ByteString rowKey = null;
 	private final ImmutableList.Builder<SimpleColumn> listBuilder;
-
-    public static Builder getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
 
     private Builder() {
       listBuilder = new ImmutableList.Builder<SimpleColumn>();
     }
 
-    public SimpleRow createRow(ByteString rowKey) {
-      return new SimpleRow(rowKey);
+    public static Builder newBuilder() {
+      return new Builder();
+    }
+
+    public SimpleRow createRow() {
+      return new SimpleRow(this);
+    }
+
+    public Builder setRowKey(ByteString rowKey) {
+      if (rowKey == null) {
+        throw new NullPointerException();
+      }
+      this.rowKey = rowKey;
+      return this;
+    }
+
+    public ByteString getRowKey() {
+      return rowKey;
+    }
+
+    public void addCell(String family, ByteString qualifier, long timestamp, ByteString value,
+        List<String> labels) {
+      listBuilder.add(new SimpleColumn(family, qualifier, timestamp, value, labels));
     }
   }
 
   private final ByteString rowKey;
-  private ImmutableList<SimpleColumn> columns = null;
+  private final ImmutableList<SimpleColumn> columns;
 
-  private SimpleRow(ByteString rowKey) {
-	  this.rowKey = rowKey;
+  private SimpleRow(Builder builder) {
+    this.rowKey = builder.getRowKey();
+    this.columns = builder.listBuilder.build();
   }
-  
+
   public ByteString getRowKey() {
-  	return rowKey;
+    return rowKey;
   }
-	
-  public void addCell(String family, ByteString qualifier, long timestamp, ByteString value,
-      List<String> labels) {
-    Builder.getDefaultInstance().listBuilder.add(
-      new SimpleColumn(family, qualifier, timestamp, value, labels));
-  }
-  
-  public ImmutableList<SimpleColumn> getList() {
-    if (columns == null) {
-      columns = Builder.getDefaultInstance().listBuilder.build();
-    }
+
+  public List<SimpleColumn> getList() {
     return columns;
   }
 }
