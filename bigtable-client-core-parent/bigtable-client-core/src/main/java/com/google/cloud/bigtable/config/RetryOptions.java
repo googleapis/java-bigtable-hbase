@@ -50,7 +50,7 @@ public class RetryOptions implements Serializable {
   public static final boolean DEFAULT_ENABLE_GRPC_RETRIES = true;
 
   /** Constant <code>DEFAULT_ENABLE_GRPC_RETRIES_SET</code> */
-  public static final ImmutableSet<Status.Code> DEFAULT_ENABLE_GRPC_RETRIES_SET = ImmutableSet.of(
+  public static final Set<Status.Code> DEFAULT_ENABLE_GRPC_RETRIES_SET = ImmutableSet.of(
       Status.Code.DEADLINE_EXCEEDED,
       Status.Code.INTERNAL,
       Status.Code.UNAVAILABLE,
@@ -232,7 +232,7 @@ public class RetryOptions implements Serializable {
    * @param streamingBatchSize a int.
    * @param readPartialRowTimeoutMillis a int.
    * @param maxScanTimeoutRetries a int.
-   * @param statusToRetryOn a {@link com.google.common.collect.ImmutableSet} object.
+   * @param statusToRetryOn a Set.
    */
   public RetryOptions(
       boolean retriesEnabled,
@@ -243,7 +243,7 @@ public class RetryOptions implements Serializable {
       int streamingBufferSize,
       int readPartialRowTimeoutMillis,
       int maxScanTimeoutRetries,
-      ImmutableSet<Code> statusToRetryOn) {
+      Set<Code> statusToRetryOn) {
     this.retriesEnabled = retriesEnabled;
     this.allowRetriesWithoutTimestamp = allowRetriesWithoutTimestamp;
     this.initialBackoffMillis = initialBackoffMillis;
@@ -252,7 +252,7 @@ public class RetryOptions implements Serializable {
     this.streamingBufferSize = streamingBufferSize;
     this.readPartialRowTimeoutMillis = readPartialRowTimeoutMillis;
     this.maxScanTimeoutRetries = maxScanTimeoutRetries;
-    this.statusToRetryOn = statusToRetryOn;
+    this.statusToRetryOn = ImmutableSet.copyOf(statusToRetryOn);
   }
 
   /**
