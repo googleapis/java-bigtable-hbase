@@ -127,21 +127,27 @@ public class TestBulkMutation {
     BulkMutation.RequestManager requestManager = new BulkMutation.RequestManager(
         TABLE_NAME.toString(), BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"));
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
+    Entry entry = Entry.newBuilder()
+        .setRowKey(mutateRowRequest.getRowKey())
+        .addMutations(mutateRowRequest.getMutations(0))
+        .build();
     MutateRowsRequest expected = MutateRowsRequest.newBuilder()
         .setTableName(TABLE_NAME.toString())
-        .addEntries(Entry.newBuilder().addMutations(mutateRowRequest.getMutations(0)).build())
+        .addEntries(entry)
         .build();
     Assert.assertEquals(expected, requestManager.build());
   }
 
   protected static MutateRowRequest createRequest() {
-    return MutateRowRequest.newBuilder().addMutations(
-      Mutation.newBuilder()
-        .setSetCell(
-            SetCell.newBuilder()
-              .setFamilyName("cf1")
-              .setColumnQualifier(QUALIFIER))
-            .build())
+    SetCell setCell = SetCell.newBuilder()
+        .setFamilyName("cf1")
+        .setColumnQualifier(QUALIFIER)
+        .build();
+    ByteString rowKey = ByteString.copyFrom("SomeKey".getBytes());
+    return MutateRowRequest.newBuilder()
+        .setRowKey(rowKey)
+        .addMutations(Mutation.newBuilder()
+          .setSetCell(setCell))
         .build();
   }
 

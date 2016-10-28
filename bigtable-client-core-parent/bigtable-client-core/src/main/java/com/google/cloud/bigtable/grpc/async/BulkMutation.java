@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.api.client.util.BackOff;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
@@ -29,6 +28,8 @@ import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -177,44 +178,42 @@ public class BulkMutation {
 
     private synchronized void handleResult(List<MutateRowsResponse> results) {
       if (this.currentRequestManager == null) {
+        setRetryComplete();
         LOG.warn("Got duplicate responses for bulk mutation.");
         return;
       }
 
-      if (results == null || results.isEmpty()) {
-        performFullRetry(new IllegalStateException("No MutateRowResponses were found."));
-        return;
-      }
-
-      List<MutateRowsResponse.Entry> entries = new ArrayList<>();
-      for (MutateRowsResponse response : results) {
-        entries.addAll(response.getEntriesList());
-      }
-
-      if (entries.isEmpty()) {
-        performFullRetry(new IllegalStateException("No MutateRowsResponses entries were found."));
-        return;
-      }
-
       AtomicReference<Long> backoffTime = new AtomicReference<>();
-
       try {
+        if (results == null || results.isEmpty()) {
+          performFullRetry(backoffTime,
+            new IllegalStateException("No MutateRowResponses were found."));
+          return;
+        }
+
+        List<MutateRowsResponse.Entry> entries = new ArrayList<>();
+        for (MutateRowsResponse response : results) {
+          entries.addAll(response.getEntriesList());
+        }
+
+        if (entries.isEmpty()) {
+          performFullRetry(backoffTime,
+            new IllegalStateException("No MutateRowsResponses entries were found."));
+          return;
+        }
+
         String tableName = currentRequestManager.request.getTableName();
         RequestManager retryRequestManager = new RequestManager(tableName, mutationRetryMeter);
 
         handleResponses(backoffTime, entries, retryRequestManager);
         handleExtraFutures(backoffTime, retryRequestManager, entries);
         completeOrRetry(backoffTime, retryRequestManager);
-      } catch (RuntimeException e) {
+      } catch (Throwable e) {
         LOG.error(
           "Unexpected Exception occurred. Treating this issue as a temporary issue and retrying.",
           e);
         performFullRetry(backoffTime, e);
       }
-    }
-
-    private void performFullRetry(Throwable t) {
-      performFullRetry(new AtomicReference<Long>(), t);
     }
 
     private void performFullRetry(AtomicReference<Long> backoff, Throwable t) {
@@ -354,8 +353,11 @@ public class BulkMutation {
     }
 
     private synchronized void setRetryComplete() {
-      asyncExecutor.getRpcThrottler().onRetryCompletion(retryId);
-      removeBatch(Batch.this);
+      if (retryId != null) {
+        asyncExecutor.getRpcThrottler().onRetryCompletion(retryId);
+        retryId = null;
+      }
+      BulkMutation.this.removeBatch(Batch.this);
     }
 
     @VisibleForTesting
@@ -421,6 +423,7 @@ public class BulkMutation {
    *     SettableFuture is set.
    */
   public synchronized ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
+    Preconditions.checkArgument(!request.getRowKey().isEmpty(), "Request has an empty rowkey");
     if (currentBatch == null) {
       batchMeter.mark();
       currentBatch = new Batch();
