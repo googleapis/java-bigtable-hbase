@@ -73,6 +73,9 @@ public class BigtableOptionsFactory {
   /** Constant <code>ZONE_KEY="google.bigtable.zone.name"</code> */
   public static final String ZONE_KEY = "google.bigtable.zone.name";
 
+  /** Constant <code>CUSTOM_USER_AGENT_KEY="google.bigtable.custom.user.agent"</code> */
+  public static final String CUSTOM_USER_AGENT_KEY = "google.bigtable.custom.user.agent";
+
   /**
    * Key to set to enable service accounts to be used, either metadata server-based or P12-based.
    * Defaults to enabled.
@@ -293,7 +296,13 @@ public class BigtableOptionsFactory {
     builder.setDataChannelCount(channelCount);
 
     // This information is in addition to bigtable-client-core version, and jdk version.
-    builder.setUserAgent("hbase-" + VersionInfo.getVersion());
+    StringBuilder agentBuilder = new StringBuilder();
+    agentBuilder.append("hbase-").append(VersionInfo.getVersion());
+    String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
+    if (customUserAgent != null) {
+      agentBuilder.append(',').append(customUserAgent);
+    }
+    builder.setUserAgent(agentBuilder.toString());
   }
 
   private static void setBulkOptions(final Configuration configuration,
