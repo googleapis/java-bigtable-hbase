@@ -4,6 +4,8 @@
 package com.google.type;
 
 /**
+ * Protobuf type {@code google.type.Date}
+ *
  * <pre>
  * Represents a whole calendar date, e.g. date of birth. The time of day and
  * time zone are either specified elsewhere or are not significant. The date
@@ -13,15 +15,13 @@ package com.google.type;
  * of year, e.g. anniversary date. Related types are [google.type.TimeOfDay][google.type.TimeOfDay]
  * and `google.protobuf.Timestamp`.
  * </pre>
- *
- * Protobuf type {@code google.type.Date}
  */
 public  final class Date extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.type.Date)
     DateOrBuilder {
   // Use Date.newBuilder() to construct.
-  private Date(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private Date(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Date() {
@@ -37,8 +37,7 @@ public  final class Date extends
   }
   private Date(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -73,10 +72,11 @@ public  final class Date extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       makeExtensionsImmutable();
     }
@@ -86,7 +86,7 @@ public  final class Date extends
     return com.google.type.DateProto.internal_static_google_type_Date_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.type.DateProto.internal_static_google_type_Date_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -96,12 +96,12 @@ public  final class Date extends
   public static final int YEAR_FIELD_NUMBER = 1;
   private int year_;
   /**
+   * <code>optional int32 year = 1;</code>
+   *
    * <pre>
    * Year of date. Must be from 1 to 9999, or 0 if specifying a date without
    * a year.
    * </pre>
-   *
-   * <code>optional int32 year = 1;</code>
    */
   public int getYear() {
     return year_;
@@ -110,11 +110,11 @@ public  final class Date extends
   public static final int MONTH_FIELD_NUMBER = 2;
   private int month_;
   /**
+   * <code>optional int32 month = 2;</code>
+   *
    * <pre>
    * Month of year. Must be from 1 to 12.
    * </pre>
-   *
-   * <code>optional int32 month = 2;</code>
    */
   public int getMonth() {
     return month_;
@@ -123,12 +123,12 @@ public  final class Date extends
   public static final int DAY_FIELD_NUMBER = 3;
   private int day_;
   /**
+   * <code>optional int32 day = 3;</code>
+   *
    * <pre>
    * Day of month. Must be from 1 to 31 and valid for the year and month, or 0
    * if specifying a year/month where the day is not significant.
    * </pre>
-   *
-   * <code>optional int32 day = 3;</code>
    */
   public int getDay() {
     return day_;
@@ -240,40 +240,34 @@ public  final class Date extends
   }
   public static com.google.type.Date parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.type.Date parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.type.Date parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.type.Date parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.type.Date parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.type.Date parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -290,11 +284,13 @@ public  final class Date extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.type.Date}
+   *
    * <pre>
    * Represents a whole calendar date, e.g. date of birth. The time of day and
    * time zone are either specified elsewhere or are not significant. The date
@@ -304,11 +300,9 @@ public  final class Date extends
    * of year, e.g. anniversary date. Related types are [google.type.TimeOfDay][google.type.TimeOfDay]
    * and `google.protobuf.Timestamp`.
    * </pre>
-   *
-   * Protobuf type {@code google.type.Date}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.type.Date)
       com.google.type.DateOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -316,7 +310,7 @@ public  final class Date extends
       return com.google.type.DateProto.internal_static_google_type_Date_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.type.DateProto.internal_static_google_type_Date_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -329,13 +323,12 @@ public  final class Date extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -375,32 +368,6 @@ public  final class Date extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.type.Date) {
         return mergeFrom((com.google.type.Date)other);
@@ -438,7 +405,7 @@ public  final class Date extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.type.Date) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -449,23 +416,23 @@ public  final class Date extends
 
     private int year_ ;
     /**
+     * <code>optional int32 year = 1;</code>
+     *
      * <pre>
      * Year of date. Must be from 1 to 9999, or 0 if specifying a date without
      * a year.
      * </pre>
-     *
-     * <code>optional int32 year = 1;</code>
      */
     public int getYear() {
       return year_;
     }
     /**
+     * <code>optional int32 year = 1;</code>
+     *
      * <pre>
      * Year of date. Must be from 1 to 9999, or 0 if specifying a date without
      * a year.
      * </pre>
-     *
-     * <code>optional int32 year = 1;</code>
      */
     public Builder setYear(int value) {
       
@@ -474,12 +441,12 @@ public  final class Date extends
       return this;
     }
     /**
+     * <code>optional int32 year = 1;</code>
+     *
      * <pre>
      * Year of date. Must be from 1 to 9999, or 0 if specifying a date without
      * a year.
      * </pre>
-     *
-     * <code>optional int32 year = 1;</code>
      */
     public Builder clearYear() {
       
@@ -490,21 +457,21 @@ public  final class Date extends
 
     private int month_ ;
     /**
+     * <code>optional int32 month = 2;</code>
+     *
      * <pre>
      * Month of year. Must be from 1 to 12.
      * </pre>
-     *
-     * <code>optional int32 month = 2;</code>
      */
     public int getMonth() {
       return month_;
     }
     /**
+     * <code>optional int32 month = 2;</code>
+     *
      * <pre>
      * Month of year. Must be from 1 to 12.
      * </pre>
-     *
-     * <code>optional int32 month = 2;</code>
      */
     public Builder setMonth(int value) {
       
@@ -513,11 +480,11 @@ public  final class Date extends
       return this;
     }
     /**
+     * <code>optional int32 month = 2;</code>
+     *
      * <pre>
      * Month of year. Must be from 1 to 12.
      * </pre>
-     *
-     * <code>optional int32 month = 2;</code>
      */
     public Builder clearMonth() {
       
@@ -528,23 +495,23 @@ public  final class Date extends
 
     private int day_ ;
     /**
+     * <code>optional int32 day = 3;</code>
+     *
      * <pre>
      * Day of month. Must be from 1 to 31 and valid for the year and month, or 0
      * if specifying a year/month where the day is not significant.
      * </pre>
-     *
-     * <code>optional int32 day = 3;</code>
      */
     public int getDay() {
       return day_;
     }
     /**
+     * <code>optional int32 day = 3;</code>
+     *
      * <pre>
      * Day of month. Must be from 1 to 31 and valid for the year and month, or 0
      * if specifying a year/month where the day is not significant.
      * </pre>
-     *
-     * <code>optional int32 day = 3;</code>
      */
     public Builder setDay(int value) {
       
@@ -553,12 +520,12 @@ public  final class Date extends
       return this;
     }
     /**
+     * <code>optional int32 day = 3;</code>
+     *
      * <pre>
      * Day of month. Must be from 1 to 31 and valid for the year and month, or 0
      * if specifying a year/month where the day is not significant.
      * </pre>
-     *
-     * <code>optional int32 day = 3;</code>
      */
     public Builder clearDay() {
       
@@ -596,7 +563,16 @@ public  final class Date extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new Date(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

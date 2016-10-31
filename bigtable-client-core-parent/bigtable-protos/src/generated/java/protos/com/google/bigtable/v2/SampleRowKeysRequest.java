@@ -4,18 +4,18 @@
 package com.google.bigtable.v2;
 
 /**
+ * Protobuf type {@code google.bigtable.v2.SampleRowKeysRequest}
+ *
  * <pre>
  * Request message for Bigtable.SampleRowKeys.
  * </pre>
- *
- * Protobuf type {@code google.bigtable.v2.SampleRowKeysRequest}
  */
 public  final class SampleRowKeysRequest extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.SampleRowKeysRequest)
     SampleRowKeysRequestOrBuilder {
   // Use SampleRowKeysRequest.newBuilder() to construct.
-  private SampleRowKeysRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private SampleRowKeysRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private SampleRowKeysRequest() {
@@ -29,8 +29,7 @@ public  final class SampleRowKeysRequest extends
   }
   private SampleRowKeysRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -56,10 +55,11 @@ public  final class SampleRowKeysRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       makeExtensionsImmutable();
     }
@@ -69,7 +69,7 @@ public  final class SampleRowKeysRequest extends
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_SampleRowKeysRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_SampleRowKeysRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -79,13 +79,13 @@ public  final class SampleRowKeysRequest extends
   public static final int TABLE_NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object tableName_;
   /**
+   * <code>optional string table_name = 1;</code>
+   *
    * <pre>
    * The unique name of the table from which to sample row keys.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
-   *
-   * <code>optional string table_name = 1;</code>
    */
   public java.lang.String getTableName() {
     java.lang.Object ref = tableName_;
@@ -100,13 +100,13 @@ public  final class SampleRowKeysRequest extends
     }
   }
   /**
+   * <code>optional string table_name = 1;</code>
+   *
    * <pre>
    * The unique name of the table from which to sample row keys.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
-   *
-   * <code>optional string table_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getTableNameBytes() {
@@ -135,7 +135,7 @@ public  final class SampleRowKeysRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getTableNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, tableName_);
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, tableName_);
     }
   }
 
@@ -145,43 +145,13 @@ public  final class SampleRowKeysRequest extends
 
     size = 0;
     if (!getTableNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, tableName_);
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, tableName_);
     }
     memoizedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof com.google.bigtable.v2.SampleRowKeysRequest)) {
-      return super.equals(obj);
-    }
-    com.google.bigtable.v2.SampleRowKeysRequest other = (com.google.bigtable.v2.SampleRowKeysRequest) obj;
-
-    boolean result = true;
-    result = result && getTableName()
-        .equals(other.getTableName());
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
-    hash = (37 * hash) + TABLE_NAME_FIELD_NUMBER;
-    hash = (53 * hash) + getTableName().hashCode();
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
-  }
-
   public static com.google.bigtable.v2.SampleRowKeysRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -205,40 +175,34 @@ public  final class SampleRowKeysRequest extends
   }
   public static com.google.bigtable.v2.SampleRowKeysRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.v2.SampleRowKeysRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.v2.SampleRowKeysRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.bigtable.v2.SampleRowKeysRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.v2.SampleRowKeysRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.v2.SampleRowKeysRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -255,19 +219,19 @@ public  final class SampleRowKeysRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.bigtable.v2.SampleRowKeysRequest}
+   *
    * <pre>
    * Request message for Bigtable.SampleRowKeys.
    * </pre>
-   *
-   * Protobuf type {@code google.bigtable.v2.SampleRowKeysRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.SampleRowKeysRequest)
       com.google.bigtable.v2.SampleRowKeysRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -275,7 +239,7 @@ public  final class SampleRowKeysRequest extends
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_SampleRowKeysRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_SampleRowKeysRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -288,13 +252,12 @@ public  final class SampleRowKeysRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -328,32 +291,6 @@ public  final class SampleRowKeysRequest extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.SampleRowKeysRequest) {
         return mergeFrom((com.google.bigtable.v2.SampleRowKeysRequest)other);
@@ -386,7 +323,7 @@ public  final class SampleRowKeysRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.SampleRowKeysRequest) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -397,13 +334,13 @@ public  final class SampleRowKeysRequest extends
 
     private java.lang.Object tableName_ = "";
     /**
+     * <code>optional string table_name = 1;</code>
+     *
      * <pre>
      * The unique name of the table from which to sample row keys.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
-     *
-     * <code>optional string table_name = 1;</code>
      */
     public java.lang.String getTableName() {
       java.lang.Object ref = tableName_;
@@ -418,13 +355,13 @@ public  final class SampleRowKeysRequest extends
       }
     }
     /**
+     * <code>optional string table_name = 1;</code>
+     *
      * <pre>
      * The unique name of the table from which to sample row keys.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
-     *
-     * <code>optional string table_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getTableNameBytes() {
@@ -440,13 +377,13 @@ public  final class SampleRowKeysRequest extends
       }
     }
     /**
+     * <code>optional string table_name = 1;</code>
+     *
      * <pre>
      * The unique name of the table from which to sample row keys.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
-     *
-     * <code>optional string table_name = 1;</code>
      */
     public Builder setTableName(
         java.lang.String value) {
@@ -459,13 +396,13 @@ public  final class SampleRowKeysRequest extends
       return this;
     }
     /**
+     * <code>optional string table_name = 1;</code>
+     *
      * <pre>
      * The unique name of the table from which to sample row keys.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
-     *
-     * <code>optional string table_name = 1;</code>
      */
     public Builder clearTableName() {
       
@@ -474,13 +411,13 @@ public  final class SampleRowKeysRequest extends
       return this;
     }
     /**
+     * <code>optional string table_name = 1;</code>
+     *
      * <pre>
      * The unique name of the table from which to sample row keys.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
-     *
-     * <code>optional string table_name = 1;</code>
      */
     public Builder setTableNameBytes(
         com.google.protobuf.ByteString value) {
@@ -523,7 +460,16 @@ public  final class SampleRowKeysRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new SampleRowKeysRequest(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

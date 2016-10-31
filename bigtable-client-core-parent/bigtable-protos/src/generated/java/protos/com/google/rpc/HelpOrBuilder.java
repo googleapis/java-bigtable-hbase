@@ -8,45 +8,45 @@ public interface HelpOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>repeated .google.rpc.Help.Link links = 1;</code>
+   *
    * <pre>
    * URL(s) pointing to additional information on handling the current error.
    * </pre>
-   *
-   * <code>repeated .google.rpc.Help.Link links = 1;</code>
    */
   java.util.List<com.google.rpc.Help.Link> 
       getLinksList();
   /**
+   * <code>repeated .google.rpc.Help.Link links = 1;</code>
+   *
    * <pre>
    * URL(s) pointing to additional information on handling the current error.
    * </pre>
-   *
-   * <code>repeated .google.rpc.Help.Link links = 1;</code>
    */
   com.google.rpc.Help.Link getLinks(int index);
   /**
+   * <code>repeated .google.rpc.Help.Link links = 1;</code>
+   *
    * <pre>
    * URL(s) pointing to additional information on handling the current error.
    * </pre>
-   *
-   * <code>repeated .google.rpc.Help.Link links = 1;</code>
    */
   int getLinksCount();
   /**
+   * <code>repeated .google.rpc.Help.Link links = 1;</code>
+   *
    * <pre>
    * URL(s) pointing to additional information on handling the current error.
    * </pre>
-   *
-   * <code>repeated .google.rpc.Help.Link links = 1;</code>
    */
   java.util.List<? extends com.google.rpc.Help.LinkOrBuilder> 
       getLinksOrBuilderList();
   /**
+   * <code>repeated .google.rpc.Help.Link links = 1;</code>
+   *
    * <pre>
    * URL(s) pointing to additional information on handling the current error.
    * </pre>
-   *
-   * <code>repeated .google.rpc.Help.Link links = 1;</code>
    */
   com.google.rpc.Help.LinkOrBuilder getLinksOrBuilder(
       int index);

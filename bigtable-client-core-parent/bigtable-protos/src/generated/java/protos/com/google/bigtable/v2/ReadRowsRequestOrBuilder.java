@@ -8,87 +8,87 @@ public interface ReadRowsRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional string table_name = 1;</code>
+   *
    * <pre>
    * The unique name of the table from which to read.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
-   *
-   * <code>optional string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
+   * <code>optional string table_name = 1;</code>
+   *
    * <pre>
    * The unique name of the table from which to read.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
-   *
-   * <code>optional string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();
 
   /**
+   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+   *
    * <pre>
    * The row keys and/or ranges to read. If not specified, reads from all rows.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
    */
   boolean hasRows();
   /**
+   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+   *
    * <pre>
    * The row keys and/or ranges to read. If not specified, reads from all rows.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
    */
   com.google.bigtable.v2.RowSet getRows();
   /**
+   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
+   *
    * <pre>
    * The row keys and/or ranges to read. If not specified, reads from all rows.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v2.RowSet rows = 2;</code>
    */
   com.google.bigtable.v2.RowSetOrBuilder getRowsOrBuilder();
 
   /**
+   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+   *
    * <pre>
    * The filter to apply to the contents of the specified row(s). If unset,
    * reads the entirety of each row.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
    */
   boolean hasFilter();
   /**
+   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+   *
    * <pre>
    * The filter to apply to the contents of the specified row(s). If unset,
    * reads the entirety of each row.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
    */
   com.google.bigtable.v2.RowFilter getFilter();
   /**
+   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
+   *
    * <pre>
    * The filter to apply to the contents of the specified row(s). If unset,
    * reads the entirety of each row.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v2.RowFilter filter = 3;</code>
    */
   com.google.bigtable.v2.RowFilterOrBuilder getFilterOrBuilder();
 
   /**
+   * <code>optional int64 rows_limit = 4;</code>
+   *
    * <pre>
    * The read will terminate after committing to N rows' worth of results. The
    * default (zero) is to return all results.
    * </pre>
-   *
-   * <code>optional int64 rows_limit = 4;</code>
    */
   long getRowsLimit();
 }

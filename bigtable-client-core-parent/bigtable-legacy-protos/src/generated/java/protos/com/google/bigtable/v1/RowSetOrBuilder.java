@@ -8,70 +8,70 @@ public interface RowSetOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>repeated bytes row_keys = 1;</code>
+   *
    * <pre>
    * Single rows included in the set.
    * </pre>
-   *
-   * <code>repeated bytes row_keys = 1;</code>
    */
   java.util.List<com.google.protobuf.ByteString> getRowKeysList();
   /**
+   * <code>repeated bytes row_keys = 1;</code>
+   *
    * <pre>
    * Single rows included in the set.
    * </pre>
-   *
-   * <code>repeated bytes row_keys = 1;</code>
    */
   int getRowKeysCount();
   /**
+   * <code>repeated bytes row_keys = 1;</code>
+   *
    * <pre>
    * Single rows included in the set.
    * </pre>
-   *
-   * <code>repeated bytes row_keys = 1;</code>
    */
   com.google.protobuf.ByteString getRowKeys(int index);
 
   /**
+   * <code>repeated .google.bigtable.v1.RowRange row_ranges = 2;</code>
+   *
    * <pre>
    * Contiguous row ranges included in the set.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.RowRange row_ranges = 2;</code>
    */
   java.util.List<com.google.bigtable.v1.RowRange> 
       getRowRangesList();
   /**
+   * <code>repeated .google.bigtable.v1.RowRange row_ranges = 2;</code>
+   *
    * <pre>
    * Contiguous row ranges included in the set.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.RowRange row_ranges = 2;</code>
    */
   com.google.bigtable.v1.RowRange getRowRanges(int index);
   /**
+   * <code>repeated .google.bigtable.v1.RowRange row_ranges = 2;</code>
+   *
    * <pre>
    * Contiguous row ranges included in the set.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.RowRange row_ranges = 2;</code>
    */
   int getRowRangesCount();
   /**
+   * <code>repeated .google.bigtable.v1.RowRange row_ranges = 2;</code>
+   *
    * <pre>
    * Contiguous row ranges included in the set.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.RowRange row_ranges = 2;</code>
    */
   java.util.List<? extends com.google.bigtable.v1.RowRangeOrBuilder> 
       getRowRangesOrBuilderList();
   /**
+   * <code>repeated .google.bigtable.v1.RowRange row_ranges = 2;</code>
+   *
    * <pre>
    * Contiguous row ranges included in the set.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.RowRange row_ranges = 2;</code>
    */
   com.google.bigtable.v1.RowRangeOrBuilder getRowRangesOrBuilder(
       int index);

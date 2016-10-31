@@ -4,20 +4,20 @@
 package com.google.type;
 
 /**
+ * Protobuf type {@code google.type.TimeOfDay}
+ *
  * <pre>
  * Represents a time of day. The date and time zone are either not significant
  * or are specified elsewhere. An API may chose to allow leap seconds. Related
  * types are [google.type.Date][google.type.Date] and `google.protobuf.Timestamp`.
  * </pre>
- *
- * Protobuf type {@code google.type.TimeOfDay}
  */
 public  final class TimeOfDay extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.type.TimeOfDay)
     TimeOfDayOrBuilder {
   // Use TimeOfDay.newBuilder() to construct.
-  private TimeOfDay(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private TimeOfDay(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private TimeOfDay() {
@@ -34,8 +34,7 @@ public  final class TimeOfDay extends
   }
   private TimeOfDay(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -75,10 +74,11 @@ public  final class TimeOfDay extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       makeExtensionsImmutable();
     }
@@ -88,7 +88,7 @@ public  final class TimeOfDay extends
     return com.google.type.TimeOfDayProto.internal_static_google_type_TimeOfDay_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.type.TimeOfDayProto.internal_static_google_type_TimeOfDay_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -98,12 +98,12 @@ public  final class TimeOfDay extends
   public static final int HOURS_FIELD_NUMBER = 1;
   private int hours_;
   /**
+   * <code>optional int32 hours = 1;</code>
+   *
    * <pre>
    * Hours of day in 24 hour format. Should be from 0 to 23. An API may choose
    * to allow the value "24:00:00" for scenarios like business closing time.
    * </pre>
-   *
-   * <code>optional int32 hours = 1;</code>
    */
   public int getHours() {
     return hours_;
@@ -112,11 +112,11 @@ public  final class TimeOfDay extends
   public static final int MINUTES_FIELD_NUMBER = 2;
   private int minutes_;
   /**
+   * <code>optional int32 minutes = 2;</code>
+   *
    * <pre>
    * Minutes of hour of day. Must be from 0 to 59.
    * </pre>
-   *
-   * <code>optional int32 minutes = 2;</code>
    */
   public int getMinutes() {
     return minutes_;
@@ -125,12 +125,12 @@ public  final class TimeOfDay extends
   public static final int SECONDS_FIELD_NUMBER = 3;
   private int seconds_;
   /**
+   * <code>optional int32 seconds = 3;</code>
+   *
    * <pre>
    * Seconds of minutes of the time. Must normally be from 0 to 59. An API may
    * allow the value 60 if it allows leap-seconds.
    * </pre>
-   *
-   * <code>optional int32 seconds = 3;</code>
    */
   public int getSeconds() {
     return seconds_;
@@ -139,11 +139,11 @@ public  final class TimeOfDay extends
   public static final int NANOS_FIELD_NUMBER = 4;
   private int nanos_;
   /**
+   * <code>optional int32 nanos = 4;</code>
+   *
    * <pre>
    * Fractions of seconds in nanoseconds. Must be from 0 to 999,999,999.
    * </pre>
-   *
-   * <code>optional int32 nanos = 4;</code>
    */
   public int getNanos() {
     return nanos_;
@@ -266,40 +266,34 @@ public  final class TimeOfDay extends
   }
   public static com.google.type.TimeOfDay parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.type.TimeOfDay parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.type.TimeOfDay parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.type.TimeOfDay parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.type.TimeOfDay parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.type.TimeOfDay parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -316,21 +310,21 @@ public  final class TimeOfDay extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.type.TimeOfDay}
+   *
    * <pre>
    * Represents a time of day. The date and time zone are either not significant
    * or are specified elsewhere. An API may chose to allow leap seconds. Related
    * types are [google.type.Date][google.type.Date] and `google.protobuf.Timestamp`.
    * </pre>
-   *
-   * Protobuf type {@code google.type.TimeOfDay}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.type.TimeOfDay)
       com.google.type.TimeOfDayOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -338,7 +332,7 @@ public  final class TimeOfDay extends
       return com.google.type.TimeOfDayProto.internal_static_google_type_TimeOfDay_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.type.TimeOfDayProto.internal_static_google_type_TimeOfDay_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -351,13 +345,12 @@ public  final class TimeOfDay extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -400,32 +393,6 @@ public  final class TimeOfDay extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.type.TimeOfDay) {
         return mergeFrom((com.google.type.TimeOfDay)other);
@@ -466,7 +433,7 @@ public  final class TimeOfDay extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.type.TimeOfDay) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -477,23 +444,23 @@ public  final class TimeOfDay extends
 
     private int hours_ ;
     /**
+     * <code>optional int32 hours = 1;</code>
+     *
      * <pre>
      * Hours of day in 24 hour format. Should be from 0 to 23. An API may choose
      * to allow the value "24:00:00" for scenarios like business closing time.
      * </pre>
-     *
-     * <code>optional int32 hours = 1;</code>
      */
     public int getHours() {
       return hours_;
     }
     /**
+     * <code>optional int32 hours = 1;</code>
+     *
      * <pre>
      * Hours of day in 24 hour format. Should be from 0 to 23. An API may choose
      * to allow the value "24:00:00" for scenarios like business closing time.
      * </pre>
-     *
-     * <code>optional int32 hours = 1;</code>
      */
     public Builder setHours(int value) {
       
@@ -502,12 +469,12 @@ public  final class TimeOfDay extends
       return this;
     }
     /**
+     * <code>optional int32 hours = 1;</code>
+     *
      * <pre>
      * Hours of day in 24 hour format. Should be from 0 to 23. An API may choose
      * to allow the value "24:00:00" for scenarios like business closing time.
      * </pre>
-     *
-     * <code>optional int32 hours = 1;</code>
      */
     public Builder clearHours() {
       
@@ -518,21 +485,21 @@ public  final class TimeOfDay extends
 
     private int minutes_ ;
     /**
+     * <code>optional int32 minutes = 2;</code>
+     *
      * <pre>
      * Minutes of hour of day. Must be from 0 to 59.
      * </pre>
-     *
-     * <code>optional int32 minutes = 2;</code>
      */
     public int getMinutes() {
       return minutes_;
     }
     /**
+     * <code>optional int32 minutes = 2;</code>
+     *
      * <pre>
      * Minutes of hour of day. Must be from 0 to 59.
      * </pre>
-     *
-     * <code>optional int32 minutes = 2;</code>
      */
     public Builder setMinutes(int value) {
       
@@ -541,11 +508,11 @@ public  final class TimeOfDay extends
       return this;
     }
     /**
+     * <code>optional int32 minutes = 2;</code>
+     *
      * <pre>
      * Minutes of hour of day. Must be from 0 to 59.
      * </pre>
-     *
-     * <code>optional int32 minutes = 2;</code>
      */
     public Builder clearMinutes() {
       
@@ -556,23 +523,23 @@ public  final class TimeOfDay extends
 
     private int seconds_ ;
     /**
+     * <code>optional int32 seconds = 3;</code>
+     *
      * <pre>
      * Seconds of minutes of the time. Must normally be from 0 to 59. An API may
      * allow the value 60 if it allows leap-seconds.
      * </pre>
-     *
-     * <code>optional int32 seconds = 3;</code>
      */
     public int getSeconds() {
       return seconds_;
     }
     /**
+     * <code>optional int32 seconds = 3;</code>
+     *
      * <pre>
      * Seconds of minutes of the time. Must normally be from 0 to 59. An API may
      * allow the value 60 if it allows leap-seconds.
      * </pre>
-     *
-     * <code>optional int32 seconds = 3;</code>
      */
     public Builder setSeconds(int value) {
       
@@ -581,12 +548,12 @@ public  final class TimeOfDay extends
       return this;
     }
     /**
+     * <code>optional int32 seconds = 3;</code>
+     *
      * <pre>
      * Seconds of minutes of the time. Must normally be from 0 to 59. An API may
      * allow the value 60 if it allows leap-seconds.
      * </pre>
-     *
-     * <code>optional int32 seconds = 3;</code>
      */
     public Builder clearSeconds() {
       
@@ -597,21 +564,21 @@ public  final class TimeOfDay extends
 
     private int nanos_ ;
     /**
+     * <code>optional int32 nanos = 4;</code>
+     *
      * <pre>
      * Fractions of seconds in nanoseconds. Must be from 0 to 999,999,999.
      * </pre>
-     *
-     * <code>optional int32 nanos = 4;</code>
      */
     public int getNanos() {
       return nanos_;
     }
     /**
+     * <code>optional int32 nanos = 4;</code>
+     *
      * <pre>
      * Fractions of seconds in nanoseconds. Must be from 0 to 999,999,999.
      * </pre>
-     *
-     * <code>optional int32 nanos = 4;</code>
      */
     public Builder setNanos(int value) {
       
@@ -620,11 +587,11 @@ public  final class TimeOfDay extends
       return this;
     }
     /**
+     * <code>optional int32 nanos = 4;</code>
+     *
      * <pre>
      * Fractions of seconds in nanoseconds. Must be from 0 to 999,999,999.
      * </pre>
-     *
-     * <code>optional int32 nanos = 4;</code>
      */
     public Builder clearNanos() {
       
@@ -662,7 +629,16 @@ public  final class TimeOfDay extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new TimeOfDay(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

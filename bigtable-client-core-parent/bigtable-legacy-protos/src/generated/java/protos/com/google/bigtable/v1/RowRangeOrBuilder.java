@@ -8,20 +8,20 @@ public interface RowRangeOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional bytes start_key = 2;</code>
+   *
    * <pre>
    * Inclusive lower bound. If left empty, interpreted as the empty string.
    * </pre>
-   *
-   * <code>optional bytes start_key = 2;</code>
    */
   com.google.protobuf.ByteString getStartKey();
 
   /**
+   * <code>optional bytes end_key = 3;</code>
+   *
    * <pre>
    * Exclusive upper bound. If left empty, interpreted as infinity.
    * </pre>
-   *
-   * <code>optional bytes end_key = 3;</code>
    */
   com.google.protobuf.ByteString getEndKey();
 }

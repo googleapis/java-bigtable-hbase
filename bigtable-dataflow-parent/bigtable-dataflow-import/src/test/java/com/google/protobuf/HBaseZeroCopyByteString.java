@@ -18,38 +18,11 @@
  package com.google.protobuf;
 
 /**
- * Helper class to extract byte arrays from {@link ByteString} without copy.
- * <p>
- * Without this protobufs would force us to copy every single byte array out
- * of the objects de-serialized from the wire (which already do one copy, on
- * top of the copies the JVM does to go from kernel buffer to C buffer and
- * from C buffer to JVM buffer).
- *
- * @since 0.96.1
+ * Overrides the default HBaseZeroCopyByteString from the hbase implementation so that this class
+ * can work with protobuf 3.0.0.
  */
 public final class HBaseZeroCopyByteString  {
 
-  static java.lang.reflect.Field byteField;
-  static java.lang.Class<?> byteStringClass;
-
-  static {
-    try {
-      Class<?>[] declaredClasses = ByteString.class.getDeclaredClasses();
-      for (Class<?> class1 : declaredClasses) {
-        if (class1.getName().endsWith("$LiteralByteString")) {
-          byteStringClass = class1;
-          byteField = class1.getDeclaredField("bytes");
-          if (byteField != null) {
-            byteField.setAccessible(true);
-          }
-        }
-      }
-    } catch(Exception ignored ) {
-    }
-    if (byteField == null) {
-      byteStringClass = null;
-    }
-  }
   // Gotten from AsyncHBase code base with permission.
   /** Private constructor so this class cannot be instantiated. */
   private HBaseZeroCopyByteString() {
@@ -62,7 +35,7 @@ public final class HBaseZeroCopyByteString  {
    * @return wrapped array
    */
   public static ByteString wrap(final byte[] array) {
-    return ByteString.wrap(array);
+    return new LiteralByteString(array);
   }
 
   /**
@@ -73,7 +46,7 @@ public final class HBaseZeroCopyByteString  {
    * @return wrapped array
    */
   public static ByteString wrap(final byte[] array, int offset, int length) {
-    return ByteString.wrap(array, offset, length);
+    return ByteString.copyFrom(array, offset, length);
   }
 
   /**
@@ -82,12 +55,10 @@ public final class HBaseZeroCopyByteString  {
    * @return byte[] representation
    */
   public static byte[] zeroCopyGetBytes(final ByteString buf) {
-    if (byteStringClass != null && byteStringClass.isAssignableFrom(buf.getClass())) {
-      try {
-        return (byte[]) byteField.get(buf);
-      } catch (Exception ignore) {
-      }
+    if (buf.getClass() == LiteralByteString.class) {
+      return ((LiteralByteString) buf).bytes;
+    } else {
+      return buf.toByteArray();
     }
-    return buf.toByteArray();
   }
 }

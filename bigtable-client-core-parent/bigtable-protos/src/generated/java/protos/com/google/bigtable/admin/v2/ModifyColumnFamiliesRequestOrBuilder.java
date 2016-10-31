@@ -8,80 +8,80 @@ public interface ModifyColumnFamiliesRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional string name = 1;</code>
+   *
    * <pre>
    * The unique name of the table whose families should be modified.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
-   *
-   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
+   * <code>optional string name = 1;</code>
+   *
    * <pre>
    * The unique name of the table whose families should be modified.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
    * </pre>
-   *
-   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
+   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
+   *
    * <pre>
    * Modifications to be atomically applied to the specified table's families.
    * Entries are applied in order, meaning that earlier modifications can be
    * masked by later ones (in the case of repeated updates to the same family,
    * for example).
    * </pre>
-   *
-   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
    */
   java.util.List<com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification> 
       getModificationsList();
   /**
+   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
+   *
    * <pre>
    * Modifications to be atomically applied to the specified table's families.
    * Entries are applied in order, meaning that earlier modifications can be
    * masked by later ones (in the case of repeated updates to the same family,
    * for example).
    * </pre>
-   *
-   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
    */
   com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification getModifications(int index);
   /**
+   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
+   *
    * <pre>
    * Modifications to be atomically applied to the specified table's families.
    * Entries are applied in order, meaning that earlier modifications can be
    * masked by later ones (in the case of repeated updates to the same family,
    * for example).
    * </pre>
-   *
-   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
    */
   int getModificationsCount();
   /**
+   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
+   *
    * <pre>
    * Modifications to be atomically applied to the specified table's families.
    * Entries are applied in order, meaning that earlier modifications can be
    * masked by later ones (in the case of repeated updates to the same family,
    * for example).
    * </pre>
-   *
-   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
    */
   java.util.List<? extends com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder> 
       getModificationsOrBuilderList();
   /**
+   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
+   *
    * <pre>
    * Modifications to be atomically applied to the specified table's families.
    * Entries are applied in order, meaning that earlier modifications can be
    * masked by later ones (in the case of repeated updates to the same family,
    * for example).
    * </pre>
-   *
-   * <code>repeated .google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification modifications = 2;</code>
    */
   com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.ModificationOrBuilder getModificationsOrBuilder(
       int index);

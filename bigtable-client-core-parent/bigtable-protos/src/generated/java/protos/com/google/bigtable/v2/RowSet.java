@@ -4,18 +4,18 @@
 package com.google.bigtable.v2;
 
 /**
+ * Protobuf type {@code google.bigtable.v2.RowSet}
+ *
  * <pre>
  * Specifies a non-contiguous set of rows.
  * </pre>
- *
- * Protobuf type {@code google.bigtable.v2.RowSet}
  */
 public  final class RowSet extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.RowSet)
     RowSetOrBuilder {
   // Use RowSet.newBuilder() to construct.
-  private RowSet(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private RowSet(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private RowSet() {
@@ -30,8 +30,7 @@ public  final class RowSet extends
   }
   private RowSet(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -61,17 +60,17 @@ public  final class RowSet extends
               rowRanges_ = new java.util.ArrayList<com.google.bigtable.v2.RowRange>();
               mutable_bitField0_ |= 0x00000002;
             }
-            rowRanges_.add(
-                input.readMessage(com.google.bigtable.v2.RowRange.parser(), extensionRegistry));
+            rowRanges_.add(input.readMessage(com.google.bigtable.v2.RowRange.parser(), extensionRegistry));
             break;
           }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         rowKeys_ = java.util.Collections.unmodifiableList(rowKeys_);
@@ -87,7 +86,7 @@ public  final class RowSet extends
     return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_RowSet_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_RowSet_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -97,32 +96,32 @@ public  final class RowSet extends
   public static final int ROW_KEYS_FIELD_NUMBER = 1;
   private java.util.List<com.google.protobuf.ByteString> rowKeys_;
   /**
+   * <code>repeated bytes row_keys = 1;</code>
+   *
    * <pre>
    * Single rows included in the set.
    * </pre>
-   *
-   * <code>repeated bytes row_keys = 1;</code>
    */
   public java.util.List<com.google.protobuf.ByteString>
       getRowKeysList() {
     return rowKeys_;
   }
   /**
+   * <code>repeated bytes row_keys = 1;</code>
+   *
    * <pre>
    * Single rows included in the set.
    * </pre>
-   *
-   * <code>repeated bytes row_keys = 1;</code>
    */
   public int getRowKeysCount() {
     return rowKeys_.size();
   }
   /**
+   * <code>repeated bytes row_keys = 1;</code>
+   *
    * <pre>
    * Single rows included in the set.
    * </pre>
-   *
-   * <code>repeated bytes row_keys = 1;</code>
    */
   public com.google.protobuf.ByteString getRowKeys(int index) {
     return rowKeys_.get(index);
@@ -131,52 +130,52 @@ public  final class RowSet extends
   public static final int ROW_RANGES_FIELD_NUMBER = 2;
   private java.util.List<com.google.bigtable.v2.RowRange> rowRanges_;
   /**
+   * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+   *
    * <pre>
    * Contiguous row ranges included in the set.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
    */
   public java.util.List<com.google.bigtable.v2.RowRange> getRowRangesList() {
     return rowRanges_;
   }
   /**
+   * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+   *
    * <pre>
    * Contiguous row ranges included in the set.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
    */
   public java.util.List<? extends com.google.bigtable.v2.RowRangeOrBuilder> 
       getRowRangesOrBuilderList() {
     return rowRanges_;
   }
   /**
+   * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+   *
    * <pre>
    * Contiguous row ranges included in the set.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
    */
   public int getRowRangesCount() {
     return rowRanges_.size();
   }
   /**
+   * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+   *
    * <pre>
    * Contiguous row ranges included in the set.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
    */
   public com.google.bigtable.v2.RowRange getRowRanges(int index) {
     return rowRanges_.get(index);
   }
   /**
+   * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+   *
    * <pre>
    * Contiguous row ranges included in the set.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
    */
   public com.google.bigtable.v2.RowRangeOrBuilder getRowRangesOrBuilder(
       int index) {
@@ -226,44 +225,6 @@ public  final class RowSet extends
   }
 
   private static final long serialVersionUID = 0L;
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof com.google.bigtable.v2.RowSet)) {
-      return super.equals(obj);
-    }
-    com.google.bigtable.v2.RowSet other = (com.google.bigtable.v2.RowSet) obj;
-
-    boolean result = true;
-    result = result && getRowKeysList()
-        .equals(other.getRowKeysList());
-    result = result && getRowRangesList()
-        .equals(other.getRowRangesList());
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
-    if (getRowKeysCount() > 0) {
-      hash = (37 * hash) + ROW_KEYS_FIELD_NUMBER;
-      hash = (53 * hash) + getRowKeysList().hashCode();
-    }
-    if (getRowRangesCount() > 0) {
-      hash = (37 * hash) + ROW_RANGES_FIELD_NUMBER;
-      hash = (53 * hash) + getRowRangesList().hashCode();
-    }
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
-  }
-
   public static com.google.bigtable.v2.RowSet parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -287,40 +248,34 @@ public  final class RowSet extends
   }
   public static com.google.bigtable.v2.RowSet parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.v2.RowSet parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.v2.RowSet parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.bigtable.v2.RowSet parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.v2.RowSet parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.v2.RowSet parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -337,19 +292,19 @@ public  final class RowSet extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.bigtable.v2.RowSet}
+   *
    * <pre>
    * Specifies a non-contiguous set of rows.
    * </pre>
-   *
-   * Protobuf type {@code google.bigtable.v2.RowSet}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.RowSet)
       com.google.bigtable.v2.RowSetOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -357,7 +312,7 @@ public  final class RowSet extends
       return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_RowSet_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_RowSet_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -370,13 +325,12 @@ public  final class RowSet extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         getRowRangesFieldBuilder();
       }
     }
@@ -431,32 +385,6 @@ public  final class RowSet extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.RowSet) {
         return mergeFrom((com.google.bigtable.v2.RowSet)other);
@@ -497,7 +425,7 @@ public  final class RowSet extends
             rowRanges_ = other.rowRanges_;
             bitField0_ = (bitField0_ & ~0x00000002);
             rowRangesBuilder_ = 
-              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                  getRowRangesFieldBuilder() : null;
           } else {
             rowRangesBuilder_.addAllMessages(other.rowRanges_);
@@ -521,7 +449,7 @@ public  final class RowSet extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.RowSet) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -539,42 +467,42 @@ public  final class RowSet extends
        }
     }
     /**
+     * <code>repeated bytes row_keys = 1;</code>
+     *
      * <pre>
      * Single rows included in the set.
      * </pre>
-     *
-     * <code>repeated bytes row_keys = 1;</code>
      */
     public java.util.List<com.google.protobuf.ByteString>
         getRowKeysList() {
       return java.util.Collections.unmodifiableList(rowKeys_);
     }
     /**
+     * <code>repeated bytes row_keys = 1;</code>
+     *
      * <pre>
      * Single rows included in the set.
      * </pre>
-     *
-     * <code>repeated bytes row_keys = 1;</code>
      */
     public int getRowKeysCount() {
       return rowKeys_.size();
     }
     /**
+     * <code>repeated bytes row_keys = 1;</code>
+     *
      * <pre>
      * Single rows included in the set.
      * </pre>
-     *
-     * <code>repeated bytes row_keys = 1;</code>
      */
     public com.google.protobuf.ByteString getRowKeys(int index) {
       return rowKeys_.get(index);
     }
     /**
+     * <code>repeated bytes row_keys = 1;</code>
+     *
      * <pre>
      * Single rows included in the set.
      * </pre>
-     *
-     * <code>repeated bytes row_keys = 1;</code>
      */
     public Builder setRowKeys(
         int index, com.google.protobuf.ByteString value) {
@@ -587,11 +515,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated bytes row_keys = 1;</code>
+     *
      * <pre>
      * Single rows included in the set.
      * </pre>
-     *
-     * <code>repeated bytes row_keys = 1;</code>
      */
     public Builder addRowKeys(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -603,11 +531,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated bytes row_keys = 1;</code>
+     *
      * <pre>
      * Single rows included in the set.
      * </pre>
-     *
-     * <code>repeated bytes row_keys = 1;</code>
      */
     public Builder addAllRowKeys(
         java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
@@ -618,11 +546,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated bytes row_keys = 1;</code>
+     *
      * <pre>
      * Single rows included in the set.
      * </pre>
-     *
-     * <code>repeated bytes row_keys = 1;</code>
      */
     public Builder clearRowKeys() {
       rowKeys_ = java.util.Collections.emptyList();
@@ -640,15 +568,15 @@ public  final class RowSet extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilderV3<
+    private com.google.protobuf.RepeatedFieldBuilder<
         com.google.bigtable.v2.RowRange, com.google.bigtable.v2.RowRange.Builder, com.google.bigtable.v2.RowRangeOrBuilder> rowRangesBuilder_;
 
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public java.util.List<com.google.bigtable.v2.RowRange> getRowRangesList() {
       if (rowRangesBuilder_ == null) {
@@ -658,11 +586,11 @@ public  final class RowSet extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public int getRowRangesCount() {
       if (rowRangesBuilder_ == null) {
@@ -672,11 +600,11 @@ public  final class RowSet extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public com.google.bigtable.v2.RowRange getRowRanges(int index) {
       if (rowRangesBuilder_ == null) {
@@ -686,11 +614,11 @@ public  final class RowSet extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public Builder setRowRanges(
         int index, com.google.bigtable.v2.RowRange value) {
@@ -707,11 +635,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public Builder setRowRanges(
         int index, com.google.bigtable.v2.RowRange.Builder builderForValue) {
@@ -725,11 +653,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public Builder addRowRanges(com.google.bigtable.v2.RowRange value) {
       if (rowRangesBuilder_ == null) {
@@ -745,11 +673,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public Builder addRowRanges(
         int index, com.google.bigtable.v2.RowRange value) {
@@ -766,11 +694,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public Builder addRowRanges(
         com.google.bigtable.v2.RowRange.Builder builderForValue) {
@@ -784,11 +712,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public Builder addRowRanges(
         int index, com.google.bigtable.v2.RowRange.Builder builderForValue) {
@@ -802,11 +730,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public Builder addAllRowRanges(
         java.lang.Iterable<? extends com.google.bigtable.v2.RowRange> values) {
@@ -821,11 +749,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public Builder clearRowRanges() {
       if (rowRangesBuilder_ == null) {
@@ -838,11 +766,11 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public Builder removeRowRanges(int index) {
       if (rowRangesBuilder_ == null) {
@@ -855,22 +783,22 @@ public  final class RowSet extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public com.google.bigtable.v2.RowRange.Builder getRowRangesBuilder(
         int index) {
       return getRowRangesFieldBuilder().getBuilder(index);
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public com.google.bigtable.v2.RowRangeOrBuilder getRowRangesOrBuilder(
         int index) {
@@ -880,11 +808,11 @@ public  final class RowSet extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public java.util.List<? extends com.google.bigtable.v2.RowRangeOrBuilder> 
          getRowRangesOrBuilderList() {
@@ -895,22 +823,22 @@ public  final class RowSet extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public com.google.bigtable.v2.RowRange.Builder addRowRangesBuilder() {
       return getRowRangesFieldBuilder().addBuilder(
           com.google.bigtable.v2.RowRange.getDefaultInstance());
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public com.google.bigtable.v2.RowRange.Builder addRowRangesBuilder(
         int index) {
@@ -918,21 +846,21 @@ public  final class RowSet extends
           index, com.google.bigtable.v2.RowRange.getDefaultInstance());
     }
     /**
+     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
+     *
      * <pre>
      * Contiguous row ranges included in the set.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.RowRange row_ranges = 2;</code>
      */
     public java.util.List<com.google.bigtable.v2.RowRange.Builder> 
          getRowRangesBuilderList() {
       return getRowRangesFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilderV3<
+    private com.google.protobuf.RepeatedFieldBuilder<
         com.google.bigtable.v2.RowRange, com.google.bigtable.v2.RowRange.Builder, com.google.bigtable.v2.RowRangeOrBuilder> 
         getRowRangesFieldBuilder() {
       if (rowRangesBuilder_ == null) {
-        rowRangesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+        rowRangesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
             com.google.bigtable.v2.RowRange, com.google.bigtable.v2.RowRange.Builder, com.google.bigtable.v2.RowRangeOrBuilder>(
                 rowRanges_,
                 ((bitField0_ & 0x00000002) == 0x00000002),
@@ -972,7 +900,16 @@ public  final class RowSet extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new RowSet(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

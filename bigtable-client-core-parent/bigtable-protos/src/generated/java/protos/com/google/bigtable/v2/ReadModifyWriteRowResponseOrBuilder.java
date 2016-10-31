@@ -8,27 +8,27 @@ public interface ReadModifyWriteRowResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional .google.bigtable.v2.Row row = 1;</code>
+   *
    * <pre>
    * A Row containing the new contents of all cells modified by the request.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v2.Row row = 1;</code>
    */
   boolean hasRow();
   /**
+   * <code>optional .google.bigtable.v2.Row row = 1;</code>
+   *
    * <pre>
    * A Row containing the new contents of all cells modified by the request.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v2.Row row = 1;</code>
    */
   com.google.bigtable.v2.Row getRow();
   /**
+   * <code>optional .google.bigtable.v2.Row row = 1;</code>
+   *
    * <pre>
    * A Row containing the new contents of all cells modified by the request.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v2.Row row = 1;</code>
    */
   com.google.bigtable.v2.RowOrBuilder getRowOrBuilder();
 }

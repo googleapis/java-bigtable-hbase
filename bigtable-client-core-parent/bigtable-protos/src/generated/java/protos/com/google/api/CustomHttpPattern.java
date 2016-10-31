@@ -4,18 +4,18 @@
 package com.google.api;
 
 /**
+ * Protobuf type {@code google.api.CustomHttpPattern}
+ *
  * <pre>
  * A custom pattern is used for defining custom HTTP verb.
  * </pre>
- *
- * Protobuf type {@code google.api.CustomHttpPattern}
  */
 public  final class CustomHttpPattern extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.api.CustomHttpPattern)
     CustomHttpPatternOrBuilder {
   // Use CustomHttpPattern.newBuilder() to construct.
-  private CustomHttpPattern(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private CustomHttpPattern(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private CustomHttpPattern() {
@@ -30,8 +30,7 @@ public  final class CustomHttpPattern extends
   }
   private CustomHttpPattern(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -63,10 +62,11 @@ public  final class CustomHttpPattern extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       makeExtensionsImmutable();
     }
@@ -76,7 +76,7 @@ public  final class CustomHttpPattern extends
     return com.google.api.HttpProto.internal_static_google_api_CustomHttpPattern_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.api.HttpProto.internal_static_google_api_CustomHttpPattern_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -86,11 +86,11 @@ public  final class CustomHttpPattern extends
   public static final int KIND_FIELD_NUMBER = 1;
   private volatile java.lang.Object kind_;
   /**
+   * <code>optional string kind = 1;</code>
+   *
    * <pre>
    * The name of this custom HTTP verb.
    * </pre>
-   *
-   * <code>optional string kind = 1;</code>
    */
   public java.lang.String getKind() {
     java.lang.Object ref = kind_;
@@ -105,11 +105,11 @@ public  final class CustomHttpPattern extends
     }
   }
   /**
+   * <code>optional string kind = 1;</code>
+   *
    * <pre>
    * The name of this custom HTTP verb.
    * </pre>
-   *
-   * <code>optional string kind = 1;</code>
    */
   public com.google.protobuf.ByteString
       getKindBytes() {
@@ -128,11 +128,11 @@ public  final class CustomHttpPattern extends
   public static final int PATH_FIELD_NUMBER = 2;
   private volatile java.lang.Object path_;
   /**
+   * <code>optional string path = 2;</code>
+   *
    * <pre>
    * The path matched by this custom verb.
    * </pre>
-   *
-   * <code>optional string path = 2;</code>
    */
   public java.lang.String getPath() {
     java.lang.Object ref = path_;
@@ -147,11 +147,11 @@ public  final class CustomHttpPattern extends
     }
   }
   /**
+   * <code>optional string path = 2;</code>
+   *
    * <pre>
    * The path matched by this custom verb.
    * </pre>
-   *
-   * <code>optional string path = 2;</code>
    */
   public com.google.protobuf.ByteString
       getPathBytes() {
@@ -180,10 +180,10 @@ public  final class CustomHttpPattern extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getKindBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, kind_);
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, kind_);
     }
     if (!getPathBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, path_);
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, path_);
     }
   }
 
@@ -193,50 +193,16 @@ public  final class CustomHttpPattern extends
 
     size = 0;
     if (!getKindBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, kind_);
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, kind_);
     }
     if (!getPathBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, path_);
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, path_);
     }
     memoizedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof com.google.api.CustomHttpPattern)) {
-      return super.equals(obj);
-    }
-    com.google.api.CustomHttpPattern other = (com.google.api.CustomHttpPattern) obj;
-
-    boolean result = true;
-    result = result && getKind()
-        .equals(other.getKind());
-    result = result && getPath()
-        .equals(other.getPath());
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
-    hash = (37 * hash) + KIND_FIELD_NUMBER;
-    hash = (53 * hash) + getKind().hashCode();
-    hash = (37 * hash) + PATH_FIELD_NUMBER;
-    hash = (53 * hash) + getPath().hashCode();
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
-  }
-
   public static com.google.api.CustomHttpPattern parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -260,40 +226,34 @@ public  final class CustomHttpPattern extends
   }
   public static com.google.api.CustomHttpPattern parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.api.CustomHttpPattern parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.api.CustomHttpPattern parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.api.CustomHttpPattern parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.api.CustomHttpPattern parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.api.CustomHttpPattern parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -310,19 +270,19 @@ public  final class CustomHttpPattern extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.api.CustomHttpPattern}
+   *
    * <pre>
    * A custom pattern is used for defining custom HTTP verb.
    * </pre>
-   *
-   * Protobuf type {@code google.api.CustomHttpPattern}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.api.CustomHttpPattern)
       com.google.api.CustomHttpPatternOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -330,7 +290,7 @@ public  final class CustomHttpPattern extends
       return com.google.api.HttpProto.internal_static_google_api_CustomHttpPattern_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.api.HttpProto.internal_static_google_api_CustomHttpPattern_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -343,13 +303,12 @@ public  final class CustomHttpPattern extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -386,32 +345,6 @@ public  final class CustomHttpPattern extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.api.CustomHttpPattern) {
         return mergeFrom((com.google.api.CustomHttpPattern)other);
@@ -448,7 +381,7 @@ public  final class CustomHttpPattern extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.api.CustomHttpPattern) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -459,11 +392,11 @@ public  final class CustomHttpPattern extends
 
     private java.lang.Object kind_ = "";
     /**
+     * <code>optional string kind = 1;</code>
+     *
      * <pre>
      * The name of this custom HTTP verb.
      * </pre>
-     *
-     * <code>optional string kind = 1;</code>
      */
     public java.lang.String getKind() {
       java.lang.Object ref = kind_;
@@ -478,11 +411,11 @@ public  final class CustomHttpPattern extends
       }
     }
     /**
+     * <code>optional string kind = 1;</code>
+     *
      * <pre>
      * The name of this custom HTTP verb.
      * </pre>
-     *
-     * <code>optional string kind = 1;</code>
      */
     public com.google.protobuf.ByteString
         getKindBytes() {
@@ -498,11 +431,11 @@ public  final class CustomHttpPattern extends
       }
     }
     /**
+     * <code>optional string kind = 1;</code>
+     *
      * <pre>
      * The name of this custom HTTP verb.
      * </pre>
-     *
-     * <code>optional string kind = 1;</code>
      */
     public Builder setKind(
         java.lang.String value) {
@@ -515,11 +448,11 @@ public  final class CustomHttpPattern extends
       return this;
     }
     /**
+     * <code>optional string kind = 1;</code>
+     *
      * <pre>
      * The name of this custom HTTP verb.
      * </pre>
-     *
-     * <code>optional string kind = 1;</code>
      */
     public Builder clearKind() {
       
@@ -528,11 +461,11 @@ public  final class CustomHttpPattern extends
       return this;
     }
     /**
+     * <code>optional string kind = 1;</code>
+     *
      * <pre>
      * The name of this custom HTTP verb.
      * </pre>
-     *
-     * <code>optional string kind = 1;</code>
      */
     public Builder setKindBytes(
         com.google.protobuf.ByteString value) {
@@ -548,11 +481,11 @@ public  final class CustomHttpPattern extends
 
     private java.lang.Object path_ = "";
     /**
+     * <code>optional string path = 2;</code>
+     *
      * <pre>
      * The path matched by this custom verb.
      * </pre>
-     *
-     * <code>optional string path = 2;</code>
      */
     public java.lang.String getPath() {
       java.lang.Object ref = path_;
@@ -567,11 +500,11 @@ public  final class CustomHttpPattern extends
       }
     }
     /**
+     * <code>optional string path = 2;</code>
+     *
      * <pre>
      * The path matched by this custom verb.
      * </pre>
-     *
-     * <code>optional string path = 2;</code>
      */
     public com.google.protobuf.ByteString
         getPathBytes() {
@@ -587,11 +520,11 @@ public  final class CustomHttpPattern extends
       }
     }
     /**
+     * <code>optional string path = 2;</code>
+     *
      * <pre>
      * The path matched by this custom verb.
      * </pre>
-     *
-     * <code>optional string path = 2;</code>
      */
     public Builder setPath(
         java.lang.String value) {
@@ -604,11 +537,11 @@ public  final class CustomHttpPattern extends
       return this;
     }
     /**
+     * <code>optional string path = 2;</code>
+     *
      * <pre>
      * The path matched by this custom verb.
      * </pre>
-     *
-     * <code>optional string path = 2;</code>
      */
     public Builder clearPath() {
       
@@ -617,11 +550,11 @@ public  final class CustomHttpPattern extends
       return this;
     }
     /**
+     * <code>optional string path = 2;</code>
+     *
      * <pre>
      * The path matched by this custom verb.
      * </pre>
-     *
-     * <code>optional string path = 2;</code>
      */
     public Builder setPathBytes(
         com.google.protobuf.ByteString value) {
@@ -664,7 +597,16 @@ public  final class CustomHttpPattern extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new CustomHttpPattern(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

@@ -6,30 +6,24 @@ package com.google.bigtable.admin.v2;
 public final class InstanceProto {
   private InstanceProto() {}
   public static void registerAllExtensions(
-      com.google.protobuf.ExtensionRegistryLite registry) {
-  }
-
-  public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
-    registerAllExtensions(
-        (com.google.protobuf.ExtensionRegistryLite) registry);
   }
-  static final com.google.protobuf.Descriptors.Descriptor
+  static com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_Instance_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_Instance_fieldAccessorTable;
-  static final com.google.protobuf.Descriptors.Descriptor
+  static com.google.protobuf.Descriptors.Descriptor
     internal_static_google_bigtable_admin_v2_Cluster_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_bigtable_admin_v2_Cluster_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
     return descriptor;
   }
-  private static  com.google.protobuf.Descriptors.FileDescriptor
+  private static com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
     java.lang.String[] descriptorData = {
@@ -67,13 +61,13 @@ public final class InstanceProto {
     internal_static_google_bigtable_admin_v2_Instance_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_google_bigtable_admin_v2_Instance_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_Instance_descriptor,
         new java.lang.String[] { "Name", "DisplayName", "State", });
     internal_static_google_bigtable_admin_v2_Cluster_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_google_bigtable_admin_v2_Cluster_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_Cluster_descriptor,
         new java.lang.String[] { "Name", "Location", "State", "ServeNodes", "DefaultStorageType", });
     com.google.api.AnnotationsProto.getDescriptor();

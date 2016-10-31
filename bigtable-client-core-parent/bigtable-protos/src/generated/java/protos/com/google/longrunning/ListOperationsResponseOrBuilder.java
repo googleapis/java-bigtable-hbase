@@ -8,63 +8,63 @@ public interface ListOperationsResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>repeated .google.longrunning.Operation operations = 1;</code>
+   *
    * <pre>
    * A list of operations that match the specified filter in the request.
    * </pre>
-   *
-   * <code>repeated .google.longrunning.Operation operations = 1;</code>
    */
   java.util.List<com.google.longrunning.Operation> 
       getOperationsList();
   /**
+   * <code>repeated .google.longrunning.Operation operations = 1;</code>
+   *
    * <pre>
    * A list of operations that match the specified filter in the request.
    * </pre>
-   *
-   * <code>repeated .google.longrunning.Operation operations = 1;</code>
    */
   com.google.longrunning.Operation getOperations(int index);
   /**
+   * <code>repeated .google.longrunning.Operation operations = 1;</code>
+   *
    * <pre>
    * A list of operations that match the specified filter in the request.
    * </pre>
-   *
-   * <code>repeated .google.longrunning.Operation operations = 1;</code>
    */
   int getOperationsCount();
   /**
+   * <code>repeated .google.longrunning.Operation operations = 1;</code>
+   *
    * <pre>
    * A list of operations that match the specified filter in the request.
    * </pre>
-   *
-   * <code>repeated .google.longrunning.Operation operations = 1;</code>
    */
   java.util.List<? extends com.google.longrunning.OperationOrBuilder> 
       getOperationsOrBuilderList();
   /**
+   * <code>repeated .google.longrunning.Operation operations = 1;</code>
+   *
    * <pre>
    * A list of operations that match the specified filter in the request.
    * </pre>
-   *
-   * <code>repeated .google.longrunning.Operation operations = 1;</code>
    */
   com.google.longrunning.OperationOrBuilder getOperationsOrBuilder(
       int index);
 
   /**
+   * <code>optional string next_page_token = 2;</code>
+   *
    * <pre>
    * The standard List next-page token.
    * </pre>
-   *
-   * <code>optional string next_page_token = 2;</code>
    */
   java.lang.String getNextPageToken();
   /**
+   * <code>optional string next_page_token = 2;</code>
+   *
    * <pre>
    * The standard List next-page token.
    * </pre>
-   *
-   * <code>optional string next_page_token = 2;</code>
    */
   com.google.protobuf.ByteString
       getNextPageTokenBytes();

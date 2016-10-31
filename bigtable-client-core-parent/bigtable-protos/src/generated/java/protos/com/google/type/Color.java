@@ -4,6 +4,8 @@
 package com.google.type;
 
 /**
+ * Protobuf type {@code google.type.Color}
+ *
  * <pre>
  * Represents a color in the RGBA color space. This representation is designed
  * for simplicity of conversion to/from color representations in various
@@ -105,15 +107,13 @@ package com.google.type;
  *     };
  *     // ...
  * </pre>
- *
- * Protobuf type {@code google.type.Color}
  */
 public  final class Color extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.type.Color)
     ColorOrBuilder {
   // Use Color.newBuilder() to construct.
-  private Color(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private Color(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Color() {
@@ -129,8 +129,7 @@ public  final class Color extends
   }
   private Color(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -178,10 +177,11 @@ public  final class Color extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       makeExtensionsImmutable();
     }
@@ -191,7 +191,7 @@ public  final class Color extends
     return com.google.type.ColorProto.internal_static_google_type_Color_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.type.ColorProto.internal_static_google_type_Color_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -201,11 +201,11 @@ public  final class Color extends
   public static final int RED_FIELD_NUMBER = 1;
   private float red_;
   /**
+   * <code>optional float red = 1;</code>
+   *
    * <pre>
    * The amount of red in the color as a value in the interval [0, 1].
    * </pre>
-   *
-   * <code>optional float red = 1;</code>
    */
   public float getRed() {
     return red_;
@@ -214,11 +214,11 @@ public  final class Color extends
   public static final int GREEN_FIELD_NUMBER = 2;
   private float green_;
   /**
+   * <code>optional float green = 2;</code>
+   *
    * <pre>
    * The amount of green in the color as a value in the interval [0, 1].
    * </pre>
-   *
-   * <code>optional float green = 2;</code>
    */
   public float getGreen() {
     return green_;
@@ -227,11 +227,11 @@ public  final class Color extends
   public static final int BLUE_FIELD_NUMBER = 3;
   private float blue_;
   /**
+   * <code>optional float blue = 3;</code>
+   *
    * <pre>
    * The amount of blue in the color as a value in the interval [0, 1].
    * </pre>
-   *
-   * <code>optional float blue = 3;</code>
    */
   public float getBlue() {
     return blue_;
@@ -240,6 +240,8 @@ public  final class Color extends
   public static final int ALPHA_FIELD_NUMBER = 4;
   private com.google.protobuf.FloatValue alpha_;
   /**
+   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+   *
    * <pre>
    * The fraction of this color that should be applied to the pixel. That is,
    * the final pixel color is defined by the equation:
@@ -251,13 +253,13 @@ public  final class Color extends
    * If omitted, this color object is to be rendered as a solid color
    * (as if the alpha value had been explicitly given with a value of 1.0).
    * </pre>
-   *
-   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
    */
   public boolean hasAlpha() {
     return alpha_ != null;
   }
   /**
+   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+   *
    * <pre>
    * The fraction of this color that should be applied to the pixel. That is,
    * the final pixel color is defined by the equation:
@@ -269,13 +271,13 @@ public  final class Color extends
    * If omitted, this color object is to be rendered as a solid color
    * (as if the alpha value had been explicitly given with a value of 1.0).
    * </pre>
-   *
-   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
    */
   public com.google.protobuf.FloatValue getAlpha() {
     return alpha_ == null ? com.google.protobuf.FloatValue.getDefaultInstance() : alpha_;
   }
   /**
+   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+   *
    * <pre>
    * The fraction of this color that should be applied to the pixel. That is,
    * the final pixel color is defined by the equation:
@@ -287,8 +289,6 @@ public  final class Color extends
    * If omitted, this color object is to be rendered as a solid color
    * (as if the alpha value had been explicitly given with a value of 1.0).
    * </pre>
-   *
-   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
    */
   public com.google.protobuf.FloatValueOrBuilder getAlphaOrBuilder() {
     return getAlpha();
@@ -346,62 +346,6 @@ public  final class Color extends
   }
 
   private static final long serialVersionUID = 0L;
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof com.google.type.Color)) {
-      return super.equals(obj);
-    }
-    com.google.type.Color other = (com.google.type.Color) obj;
-
-    boolean result = true;
-    result = result && (
-        java.lang.Float.floatToIntBits(getRed())
-        == java.lang.Float.floatToIntBits(
-            other.getRed()));
-    result = result && (
-        java.lang.Float.floatToIntBits(getGreen())
-        == java.lang.Float.floatToIntBits(
-            other.getGreen()));
-    result = result && (
-        java.lang.Float.floatToIntBits(getBlue())
-        == java.lang.Float.floatToIntBits(
-            other.getBlue()));
-    result = result && (hasAlpha() == other.hasAlpha());
-    if (hasAlpha()) {
-      result = result && getAlpha()
-          .equals(other.getAlpha());
-    }
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
-    hash = (37 * hash) + RED_FIELD_NUMBER;
-    hash = (53 * hash) + java.lang.Float.floatToIntBits(
-        getRed());
-    hash = (37 * hash) + GREEN_FIELD_NUMBER;
-    hash = (53 * hash) + java.lang.Float.floatToIntBits(
-        getGreen());
-    hash = (37 * hash) + BLUE_FIELD_NUMBER;
-    hash = (53 * hash) + java.lang.Float.floatToIntBits(
-        getBlue());
-    if (hasAlpha()) {
-      hash = (37 * hash) + ALPHA_FIELD_NUMBER;
-      hash = (53 * hash) + getAlpha().hashCode();
-    }
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
-  }
-
   public static com.google.type.Color parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -425,40 +369,34 @@ public  final class Color extends
   }
   public static com.google.type.Color parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.type.Color parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.type.Color parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.type.Color parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.type.Color parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.type.Color parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -475,11 +413,13 @@ public  final class Color extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.type.Color}
+   *
    * <pre>
    * Represents a color in the RGBA color space. This representation is designed
    * for simplicity of conversion to/from color representations in various
@@ -581,11 +521,9 @@ public  final class Color extends
    *     };
    *     // ...
    * </pre>
-   *
-   * Protobuf type {@code google.type.Color}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.type.Color)
       com.google.type.ColorOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -593,7 +531,7 @@ public  final class Color extends
       return com.google.type.ColorProto.internal_static_google_type_Color_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.type.ColorProto.internal_static_google_type_Color_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -606,13 +544,12 @@ public  final class Color extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -663,32 +600,6 @@ public  final class Color extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.type.Color) {
         return mergeFrom((com.google.type.Color)other);
@@ -729,7 +640,7 @@ public  final class Color extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.type.Color) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -740,21 +651,21 @@ public  final class Color extends
 
     private float red_ ;
     /**
+     * <code>optional float red = 1;</code>
+     *
      * <pre>
      * The amount of red in the color as a value in the interval [0, 1].
      * </pre>
-     *
-     * <code>optional float red = 1;</code>
      */
     public float getRed() {
       return red_;
     }
     /**
+     * <code>optional float red = 1;</code>
+     *
      * <pre>
      * The amount of red in the color as a value in the interval [0, 1].
      * </pre>
-     *
-     * <code>optional float red = 1;</code>
      */
     public Builder setRed(float value) {
       
@@ -763,11 +674,11 @@ public  final class Color extends
       return this;
     }
     /**
+     * <code>optional float red = 1;</code>
+     *
      * <pre>
      * The amount of red in the color as a value in the interval [0, 1].
      * </pre>
-     *
-     * <code>optional float red = 1;</code>
      */
     public Builder clearRed() {
       
@@ -778,21 +689,21 @@ public  final class Color extends
 
     private float green_ ;
     /**
+     * <code>optional float green = 2;</code>
+     *
      * <pre>
      * The amount of green in the color as a value in the interval [0, 1].
      * </pre>
-     *
-     * <code>optional float green = 2;</code>
      */
     public float getGreen() {
       return green_;
     }
     /**
+     * <code>optional float green = 2;</code>
+     *
      * <pre>
      * The amount of green in the color as a value in the interval [0, 1].
      * </pre>
-     *
-     * <code>optional float green = 2;</code>
      */
     public Builder setGreen(float value) {
       
@@ -801,11 +712,11 @@ public  final class Color extends
       return this;
     }
     /**
+     * <code>optional float green = 2;</code>
+     *
      * <pre>
      * The amount of green in the color as a value in the interval [0, 1].
      * </pre>
-     *
-     * <code>optional float green = 2;</code>
      */
     public Builder clearGreen() {
       
@@ -816,21 +727,21 @@ public  final class Color extends
 
     private float blue_ ;
     /**
+     * <code>optional float blue = 3;</code>
+     *
      * <pre>
      * The amount of blue in the color as a value in the interval [0, 1].
      * </pre>
-     *
-     * <code>optional float blue = 3;</code>
      */
     public float getBlue() {
       return blue_;
     }
     /**
+     * <code>optional float blue = 3;</code>
+     *
      * <pre>
      * The amount of blue in the color as a value in the interval [0, 1].
      * </pre>
-     *
-     * <code>optional float blue = 3;</code>
      */
     public Builder setBlue(float value) {
       
@@ -839,11 +750,11 @@ public  final class Color extends
       return this;
     }
     /**
+     * <code>optional float blue = 3;</code>
+     *
      * <pre>
      * The amount of blue in the color as a value in the interval [0, 1].
      * </pre>
-     *
-     * <code>optional float blue = 3;</code>
      */
     public Builder clearBlue() {
       
@@ -853,9 +764,11 @@ public  final class Color extends
     }
 
     private com.google.protobuf.FloatValue alpha_ = null;
-    private com.google.protobuf.SingleFieldBuilderV3<
+    private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.FloatValue, com.google.protobuf.FloatValue.Builder, com.google.protobuf.FloatValueOrBuilder> alphaBuilder_;
     /**
+     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+     *
      * <pre>
      * The fraction of this color that should be applied to the pixel. That is,
      * the final pixel color is defined by the equation:
@@ -867,13 +780,13 @@ public  final class Color extends
      * If omitted, this color object is to be rendered as a solid color
      * (as if the alpha value had been explicitly given with a value of 1.0).
      * </pre>
-     *
-     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
      */
     public boolean hasAlpha() {
       return alphaBuilder_ != null || alpha_ != null;
     }
     /**
+     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+     *
      * <pre>
      * The fraction of this color that should be applied to the pixel. That is,
      * the final pixel color is defined by the equation:
@@ -885,8 +798,6 @@ public  final class Color extends
      * If omitted, this color object is to be rendered as a solid color
      * (as if the alpha value had been explicitly given with a value of 1.0).
      * </pre>
-     *
-     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
      */
     public com.google.protobuf.FloatValue getAlpha() {
       if (alphaBuilder_ == null) {
@@ -896,6 +807,8 @@ public  final class Color extends
       }
     }
     /**
+     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+     *
      * <pre>
      * The fraction of this color that should be applied to the pixel. That is,
      * the final pixel color is defined by the equation:
@@ -907,8 +820,6 @@ public  final class Color extends
      * If omitted, this color object is to be rendered as a solid color
      * (as if the alpha value had been explicitly given with a value of 1.0).
      * </pre>
-     *
-     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
      */
     public Builder setAlpha(com.google.protobuf.FloatValue value) {
       if (alphaBuilder_ == null) {
@@ -924,6 +835,8 @@ public  final class Color extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+     *
      * <pre>
      * The fraction of this color that should be applied to the pixel. That is,
      * the final pixel color is defined by the equation:
@@ -935,8 +848,6 @@ public  final class Color extends
      * If omitted, this color object is to be rendered as a solid color
      * (as if the alpha value had been explicitly given with a value of 1.0).
      * </pre>
-     *
-     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
      */
     public Builder setAlpha(
         com.google.protobuf.FloatValue.Builder builderForValue) {
@@ -950,6 +861,8 @@ public  final class Color extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+     *
      * <pre>
      * The fraction of this color that should be applied to the pixel. That is,
      * the final pixel color is defined by the equation:
@@ -961,8 +874,6 @@ public  final class Color extends
      * If omitted, this color object is to be rendered as a solid color
      * (as if the alpha value had been explicitly given with a value of 1.0).
      * </pre>
-     *
-     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
      */
     public Builder mergeAlpha(com.google.protobuf.FloatValue value) {
       if (alphaBuilder_ == null) {
@@ -980,6 +891,8 @@ public  final class Color extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+     *
      * <pre>
      * The fraction of this color that should be applied to the pixel. That is,
      * the final pixel color is defined by the equation:
@@ -991,8 +904,6 @@ public  final class Color extends
      * If omitted, this color object is to be rendered as a solid color
      * (as if the alpha value had been explicitly given with a value of 1.0).
      * </pre>
-     *
-     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
      */
     public Builder clearAlpha() {
       if (alphaBuilder_ == null) {
@@ -1006,6 +917,8 @@ public  final class Color extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+     *
      * <pre>
      * The fraction of this color that should be applied to the pixel. That is,
      * the final pixel color is defined by the equation:
@@ -1017,8 +930,6 @@ public  final class Color extends
      * If omitted, this color object is to be rendered as a solid color
      * (as if the alpha value had been explicitly given with a value of 1.0).
      * </pre>
-     *
-     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
      */
     public com.google.protobuf.FloatValue.Builder getAlphaBuilder() {
       
@@ -1026,6 +937,8 @@ public  final class Color extends
       return getAlphaFieldBuilder().getBuilder();
     }
     /**
+     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+     *
      * <pre>
      * The fraction of this color that should be applied to the pixel. That is,
      * the final pixel color is defined by the equation:
@@ -1037,8 +950,6 @@ public  final class Color extends
      * If omitted, this color object is to be rendered as a solid color
      * (as if the alpha value had been explicitly given with a value of 1.0).
      * </pre>
-     *
-     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
      */
     public com.google.protobuf.FloatValueOrBuilder getAlphaOrBuilder() {
       if (alphaBuilder_ != null) {
@@ -1049,6 +960,8 @@ public  final class Color extends
       }
     }
     /**
+     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
+     *
      * <pre>
      * The fraction of this color that should be applied to the pixel. That is,
      * the final pixel color is defined by the equation:
@@ -1060,14 +973,12 @@ public  final class Color extends
      * If omitted, this color object is to be rendered as a solid color
      * (as if the alpha value had been explicitly given with a value of 1.0).
      * </pre>
-     *
-     * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
      */
-    private com.google.protobuf.SingleFieldBuilderV3<
+    private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.FloatValue, com.google.protobuf.FloatValue.Builder, com.google.protobuf.FloatValueOrBuilder> 
         getAlphaFieldBuilder() {
       if (alphaBuilder_ == null) {
-        alphaBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+        alphaBuilder_ = new com.google.protobuf.SingleFieldBuilder<
             com.google.protobuf.FloatValue, com.google.protobuf.FloatValue.Builder, com.google.protobuf.FloatValueOrBuilder>(
                 getAlpha(),
                 getParentForChildren(),
@@ -1106,7 +1017,16 @@ public  final class Color extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new Color(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

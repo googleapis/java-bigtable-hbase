@@ -8,45 +8,45 @@ public interface BadRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>repeated .google.rpc.BadRequest.FieldViolation field_violations = 1;</code>
+   *
    * <pre>
    * Describes all violations in a client request.
    * </pre>
-   *
-   * <code>repeated .google.rpc.BadRequest.FieldViolation field_violations = 1;</code>
    */
   java.util.List<com.google.rpc.BadRequest.FieldViolation> 
       getFieldViolationsList();
   /**
+   * <code>repeated .google.rpc.BadRequest.FieldViolation field_violations = 1;</code>
+   *
    * <pre>
    * Describes all violations in a client request.
    * </pre>
-   *
-   * <code>repeated .google.rpc.BadRequest.FieldViolation field_violations = 1;</code>
    */
   com.google.rpc.BadRequest.FieldViolation getFieldViolations(int index);
   /**
+   * <code>repeated .google.rpc.BadRequest.FieldViolation field_violations = 1;</code>
+   *
    * <pre>
    * Describes all violations in a client request.
    * </pre>
-   *
-   * <code>repeated .google.rpc.BadRequest.FieldViolation field_violations = 1;</code>
    */
   int getFieldViolationsCount();
   /**
+   * <code>repeated .google.rpc.BadRequest.FieldViolation field_violations = 1;</code>
+   *
    * <pre>
    * Describes all violations in a client request.
    * </pre>
-   *
-   * <code>repeated .google.rpc.BadRequest.FieldViolation field_violations = 1;</code>
    */
   java.util.List<? extends com.google.rpc.BadRequest.FieldViolationOrBuilder> 
       getFieldViolationsOrBuilderList();
   /**
+   * <code>repeated .google.rpc.BadRequest.FieldViolation field_violations = 1;</code>
+   *
    * <pre>
    * Describes all violations in a client request.
    * </pre>
-   *
-   * <code>repeated .google.rpc.BadRequest.FieldViolation field_violations = 1;</code>
    */
   com.google.rpc.BadRequest.FieldViolationOrBuilder getFieldViolationsOrBuilder(
       int index);

@@ -23,7 +23,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.0.1)",
+    value = "by gRPC proto compiler (version 0.14.1)",
     comments = "Source: google/bigtable/admin/v2/bigtable_table_admin.proto")
 public class BigtableTableAdminGrpc {
 
@@ -32,7 +32,7 @@ public class BigtableTableAdminGrpc {
   public static final String SERVICE_NAME = "google.bigtable.admin.v2.BigtableTableAdmin";
 
   // Static method descriptors that strictly reflect the proto.
-  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  @io.grpc.ExperimentalApi
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.CreateTableRequest,
       com.google.bigtable.admin.v2.Table> METHOD_CREATE_TABLE =
       io.grpc.MethodDescriptor.create(
@@ -41,7 +41,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "CreateTable"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.CreateTableRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Table.getDefaultInstance()));
-  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  @io.grpc.ExperimentalApi
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.ListTablesRequest,
       com.google.bigtable.admin.v2.ListTablesResponse> METHOD_LIST_TABLES =
       io.grpc.MethodDescriptor.create(
@@ -50,7 +50,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "ListTables"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListTablesRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListTablesResponse.getDefaultInstance()));
-  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  @io.grpc.ExperimentalApi
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.GetTableRequest,
       com.google.bigtable.admin.v2.Table> METHOD_GET_TABLE =
       io.grpc.MethodDescriptor.create(
@@ -59,7 +59,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "GetTable"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.GetTableRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Table.getDefaultInstance()));
-  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  @io.grpc.ExperimentalApi
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.DeleteTableRequest,
       com.google.protobuf.Empty> METHOD_DELETE_TABLE =
       io.grpc.MethodDescriptor.create(
@@ -68,7 +68,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "DeleteTable"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.DeleteTableRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
-  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  @io.grpc.ExperimentalApi
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest,
       com.google.bigtable.admin.v2.Table> METHOD_MODIFY_COLUMN_FAMILIES =
       io.grpc.MethodDescriptor.create(
@@ -77,7 +77,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "ModifyColumnFamilies"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Table.getDefaultInstance()));
-  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  @io.grpc.ExperimentalApi
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.DropRowRangeRequest,
       com.google.protobuf.Empty> METHOD_DROP_ROW_RANGE =
       io.grpc.MethodDescriptor.create(
@@ -117,7 +117,7 @@ public class BigtableTableAdminGrpc {
    * the tables.
    * </pre>
    */
-  public static abstract class BigtableTableAdminImplBase implements io.grpc.BindableService {
+  public static interface BigtableTableAdmin {
 
     /**
      * <pre>
@@ -127,9 +127,7 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void createTable(com.google.bigtable.admin.v2.CreateTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_CREATE_TABLE, responseObserver);
-    }
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver);
 
     /**
      * <pre>
@@ -137,9 +135,7 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void listTables(com.google.bigtable.admin.v2.ListTablesRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListTablesResponse> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_LIST_TABLES, responseObserver);
-    }
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListTablesResponse> responseObserver);
 
     /**
      * <pre>
@@ -147,9 +143,7 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void getTable(com.google.bigtable.admin.v2.GetTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_GET_TABLE, responseObserver);
-    }
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver);
 
     /**
      * <pre>
@@ -157,9 +151,7 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void deleteTable(com.google.bigtable.admin.v2.DeleteTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_DELETE_TABLE, responseObserver);
-    }
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
 
     /**
      * <pre>
@@ -168,9 +160,7 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_MODIFY_COLUMN_FAMILIES, responseObserver);
-    }
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver);
 
     /**
      * <pre>
@@ -180,55 +170,50 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
+  }
+
+  @io.grpc.ExperimentalApi
+  public static abstract class AbstractBigtableTableAdmin implements BigtableTableAdmin, io.grpc.BindableService {
+
+    @java.lang.Override
+    public void createTable(com.google.bigtable.admin.v2.CreateTableRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_CREATE_TABLE, responseObserver);
+    }
+
+    @java.lang.Override
+    public void listTables(com.google.bigtable.admin.v2.ListTablesRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListTablesResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_LIST_TABLES, responseObserver);
+    }
+
+    @java.lang.Override
+    public void getTable(com.google.bigtable.admin.v2.GetTableRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_GET_TABLE, responseObserver);
+    }
+
+    @java.lang.Override
+    public void deleteTable(com.google.bigtable.admin.v2.DeleteTableRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_DELETE_TABLE, responseObserver);
+    }
+
+    @java.lang.Override
+    public void modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request,
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_MODIFY_COLUMN_FAMILIES, responseObserver);
+    }
+
+    @java.lang.Override
+    public void dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnimplementedUnaryCall(METHOD_DROP_ROW_RANGE, responseObserver);
     }
 
     @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
-      return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
-          .addMethod(
-            METHOD_CREATE_TABLE,
-            asyncUnaryCall(
-              new MethodHandlers<
-                com.google.bigtable.admin.v2.CreateTableRequest,
-                com.google.bigtable.admin.v2.Table>(
-                  this, METHODID_CREATE_TABLE)))
-          .addMethod(
-            METHOD_LIST_TABLES,
-            asyncUnaryCall(
-              new MethodHandlers<
-                com.google.bigtable.admin.v2.ListTablesRequest,
-                com.google.bigtable.admin.v2.ListTablesResponse>(
-                  this, METHODID_LIST_TABLES)))
-          .addMethod(
-            METHOD_GET_TABLE,
-            asyncUnaryCall(
-              new MethodHandlers<
-                com.google.bigtable.admin.v2.GetTableRequest,
-                com.google.bigtable.admin.v2.Table>(
-                  this, METHODID_GET_TABLE)))
-          .addMethod(
-            METHOD_DELETE_TABLE,
-            asyncUnaryCall(
-              new MethodHandlers<
-                com.google.bigtable.admin.v2.DeleteTableRequest,
-                com.google.protobuf.Empty>(
-                  this, METHODID_DELETE_TABLE)))
-          .addMethod(
-            METHOD_MODIFY_COLUMN_FAMILIES,
-            asyncUnaryCall(
-              new MethodHandlers<
-                com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest,
-                com.google.bigtable.admin.v2.Table>(
-                  this, METHODID_MODIFY_COLUMN_FAMILIES)))
-          .addMethod(
-            METHOD_DROP_ROW_RANGE,
-            asyncUnaryCall(
-              new MethodHandlers<
-                com.google.bigtable.admin.v2.DropRowRangeRequest,
-                com.google.protobuf.Empty>(
-                  this, METHODID_DROP_ROW_RANGE)))
-          .build();
+      return BigtableTableAdminGrpc.bindService(this);
     }
   }
 
@@ -239,7 +224,121 @@ public class BigtableTableAdminGrpc {
    * the tables.
    * </pre>
    */
-  public static final class BigtableTableAdminStub extends io.grpc.stub.AbstractStub<BigtableTableAdminStub> {
+  public static interface BigtableTableAdminBlockingClient {
+
+    /**
+     * <pre>
+     * Creates a new table in the specified instance.
+     * The table can be created with a full set of initial column families,
+     * specified in the request.
+     * </pre>
+     */
+    public com.google.bigtable.admin.v2.Table createTable(com.google.bigtable.admin.v2.CreateTableRequest request);
+
+    /**
+     * <pre>
+     * Lists all tables served from a specified instance.
+     * </pre>
+     */
+    public com.google.bigtable.admin.v2.ListTablesResponse listTables(com.google.bigtable.admin.v2.ListTablesRequest request);
+
+    /**
+     * <pre>
+     * Gets metadata information about the specified table.
+     * </pre>
+     */
+    public com.google.bigtable.admin.v2.Table getTable(com.google.bigtable.admin.v2.GetTableRequest request);
+
+    /**
+     * <pre>
+     * Permanently deletes a specified table and all of its data.
+     * </pre>
+     */
+    public com.google.protobuf.Empty deleteTable(com.google.bigtable.admin.v2.DeleteTableRequest request);
+
+    /**
+     * <pre>
+     * Atomically performs a series of column family modifications
+     * on the specified table.
+     * </pre>
+     */
+    public com.google.bigtable.admin.v2.Table modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request);
+
+    /**
+     * <pre>
+     * Permanently drop/delete a row range from a specified table. The request can
+     * specify whether to delete all rows in a table, or only those that match a
+     * particular prefix.
+     * </pre>
+     */
+    public com.google.protobuf.Empty dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request);
+  }
+
+  /**
+   * <pre>
+   * Service for creating, configuring, and deleting Cloud Bigtable tables.
+   * Provides access to the table schemas only, not the data stored within
+   * the tables.
+   * </pre>
+   */
+  public static interface BigtableTableAdminFutureClient {
+
+    /**
+     * <pre>
+     * Creates a new table in the specified instance.
+     * The table can be created with a full set of initial column families,
+     * specified in the request.
+     * </pre>
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> createTable(
+        com.google.bigtable.admin.v2.CreateTableRequest request);
+
+    /**
+     * <pre>
+     * Lists all tables served from a specified instance.
+     * </pre>
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.ListTablesResponse> listTables(
+        com.google.bigtable.admin.v2.ListTablesRequest request);
+
+    /**
+     * <pre>
+     * Gets metadata information about the specified table.
+     * </pre>
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> getTable(
+        com.google.bigtable.admin.v2.GetTableRequest request);
+
+    /**
+     * <pre>
+     * Permanently deletes a specified table and all of its data.
+     * </pre>
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteTable(
+        com.google.bigtable.admin.v2.DeleteTableRequest request);
+
+    /**
+     * <pre>
+     * Atomically performs a series of column family modifications
+     * on the specified table.
+     * </pre>
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> modifyColumnFamilies(
+        com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request);
+
+    /**
+     * <pre>
+     * Permanently drop/delete a row range from a specified table. The request can
+     * specify whether to delete all rows in a table, or only those that match a
+     * particular prefix.
+     * </pre>
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> dropRowRange(
+        com.google.bigtable.admin.v2.DropRowRangeRequest request);
+  }
+
+  public static class BigtableTableAdminStub extends io.grpc.stub.AbstractStub<BigtableTableAdminStub>
+      implements BigtableTableAdmin {
     private BigtableTableAdminStub(io.grpc.Channel channel) {
       super(channel);
     }
@@ -255,71 +354,42 @@ public class BigtableTableAdminGrpc {
       return new BigtableTableAdminStub(channel, callOptions);
     }
 
-    /**
-     * <pre>
-     * Creates a new table in the specified instance.
-     * The table can be created with a full set of initial column families,
-     * specified in the request.
-     * </pre>
-     */
+    @java.lang.Override
     public void createTable(com.google.bigtable.admin.v2.CreateTableRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_CREATE_TABLE, getCallOptions()), request, responseObserver);
     }
 
-    /**
-     * <pre>
-     * Lists all tables served from a specified instance.
-     * </pre>
-     */
+    @java.lang.Override
     public void listTables(com.google.bigtable.admin.v2.ListTablesRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListTablesResponse> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_LIST_TABLES, getCallOptions()), request, responseObserver);
     }
 
-    /**
-     * <pre>
-     * Gets metadata information about the specified table.
-     * </pre>
-     */
+    @java.lang.Override
     public void getTable(com.google.bigtable.admin.v2.GetTableRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_GET_TABLE, getCallOptions()), request, responseObserver);
     }
 
-    /**
-     * <pre>
-     * Permanently deletes a specified table and all of its data.
-     * </pre>
-     */
+    @java.lang.Override
     public void deleteTable(com.google.bigtable.admin.v2.DeleteTableRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_DELETE_TABLE, getCallOptions()), request, responseObserver);
     }
 
-    /**
-     * <pre>
-     * Atomically performs a series of column family modifications
-     * on the specified table.
-     * </pre>
-     */
+    @java.lang.Override
     public void modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_MODIFY_COLUMN_FAMILIES, getCallOptions()), request, responseObserver);
     }
 
-    /**
-     * <pre>
-     * Permanently drop/delete a row range from a specified table. The request can
-     * specify whether to delete all rows in a table, or only those that match a
-     * particular prefix.
-     * </pre>
-     */
+    @java.lang.Override
     public void dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
@@ -327,14 +397,8 @@ public class BigtableTableAdminGrpc {
     }
   }
 
-  /**
-   * <pre>
-   * Service for creating, configuring, and deleting Cloud Bigtable tables.
-   * Provides access to the table schemas only, not the data stored within
-   * the tables.
-   * </pre>
-   */
-  public static final class BigtableTableAdminBlockingStub extends io.grpc.stub.AbstractStub<BigtableTableAdminBlockingStub> {
+  public static class BigtableTableAdminBlockingStub extends io.grpc.stub.AbstractStub<BigtableTableAdminBlockingStub>
+      implements BigtableTableAdminBlockingClient {
     private BigtableTableAdminBlockingStub(io.grpc.Channel channel) {
       super(channel);
     }
@@ -350,80 +414,45 @@ public class BigtableTableAdminGrpc {
       return new BigtableTableAdminBlockingStub(channel, callOptions);
     }
 
-    /**
-     * <pre>
-     * Creates a new table in the specified instance.
-     * The table can be created with a full set of initial column families,
-     * specified in the request.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.bigtable.admin.v2.Table createTable(com.google.bigtable.admin.v2.CreateTableRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_CREATE_TABLE, getCallOptions(), request);
     }
 
-    /**
-     * <pre>
-     * Lists all tables served from a specified instance.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.bigtable.admin.v2.ListTablesResponse listTables(com.google.bigtable.admin.v2.ListTablesRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_LIST_TABLES, getCallOptions(), request);
     }
 
-    /**
-     * <pre>
-     * Gets metadata information about the specified table.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.bigtable.admin.v2.Table getTable(com.google.bigtable.admin.v2.GetTableRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_GET_TABLE, getCallOptions(), request);
     }
 
-    /**
-     * <pre>
-     * Permanently deletes a specified table and all of its data.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.protobuf.Empty deleteTable(com.google.bigtable.admin.v2.DeleteTableRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_DELETE_TABLE, getCallOptions(), request);
     }
 
-    /**
-     * <pre>
-     * Atomically performs a series of column family modifications
-     * on the specified table.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.bigtable.admin.v2.Table modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_MODIFY_COLUMN_FAMILIES, getCallOptions(), request);
     }
 
-    /**
-     * <pre>
-     * Permanently drop/delete a row range from a specified table. The request can
-     * specify whether to delete all rows in a table, or only those that match a
-     * particular prefix.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.protobuf.Empty dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_DROP_ROW_RANGE, getCallOptions(), request);
     }
   }
 
-  /**
-   * <pre>
-   * Service for creating, configuring, and deleting Cloud Bigtable tables.
-   * Provides access to the table schemas only, not the data stored within
-   * the tables.
-   * </pre>
-   */
-  public static final class BigtableTableAdminFutureStub extends io.grpc.stub.AbstractStub<BigtableTableAdminFutureStub> {
+  public static class BigtableTableAdminFutureStub extends io.grpc.stub.AbstractStub<BigtableTableAdminFutureStub>
+      implements BigtableTableAdminFutureClient {
     private BigtableTableAdminFutureStub(io.grpc.Channel channel) {
       super(channel);
     }
@@ -439,71 +468,42 @@ public class BigtableTableAdminGrpc {
       return new BigtableTableAdminFutureStub(channel, callOptions);
     }
 
-    /**
-     * <pre>
-     * Creates a new table in the specified instance.
-     * The table can be created with a full set of initial column families,
-     * specified in the request.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> createTable(
         com.google.bigtable.admin.v2.CreateTableRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_CREATE_TABLE, getCallOptions()), request);
     }
 
-    /**
-     * <pre>
-     * Lists all tables served from a specified instance.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.ListTablesResponse> listTables(
         com.google.bigtable.admin.v2.ListTablesRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_LIST_TABLES, getCallOptions()), request);
     }
 
-    /**
-     * <pre>
-     * Gets metadata information about the specified table.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> getTable(
         com.google.bigtable.admin.v2.GetTableRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_GET_TABLE, getCallOptions()), request);
     }
 
-    /**
-     * <pre>
-     * Permanently deletes a specified table and all of its data.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteTable(
         com.google.bigtable.admin.v2.DeleteTableRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_DELETE_TABLE, getCallOptions()), request);
     }
 
-    /**
-     * <pre>
-     * Atomically performs a series of column family modifications
-     * on the specified table.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> modifyColumnFamilies(
         com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_MODIFY_COLUMN_FAMILIES, getCallOptions()), request);
     }
 
-    /**
-     * <pre>
-     * Permanently drop/delete a row range from a specified table. The request can
-     * specify whether to delete all rows in a table, or only those that match a
-     * particular prefix.
-     * </pre>
-     */
+    @java.lang.Override
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> dropRowRange(
         com.google.bigtable.admin.v2.DropRowRangeRequest request) {
       return futureUnaryCall(
@@ -523,10 +523,10 @@ public class BigtableTableAdminGrpc {
       io.grpc.stub.ServerCalls.ServerStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.ClientStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.BidiStreamingMethod<Req, Resp> {
-    private final BigtableTableAdminImplBase serviceImpl;
+    private final BigtableTableAdmin serviceImpl;
     private final int methodId;
 
-    public MethodHandlers(BigtableTableAdminImplBase serviceImpl, int methodId) {
+    public MethodHandlers(BigtableTableAdmin serviceImpl, int methodId) {
       this.serviceImpl = serviceImpl;
       this.methodId = methodId;
     }
@@ -575,14 +575,51 @@ public class BigtableTableAdminGrpc {
     }
   }
 
-  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
-    return new io.grpc.ServiceDescriptor(SERVICE_NAME,
-        METHOD_CREATE_TABLE,
-        METHOD_LIST_TABLES,
-        METHOD_GET_TABLE,
-        METHOD_DELETE_TABLE,
-        METHOD_MODIFY_COLUMN_FAMILIES,
-        METHOD_DROP_ROW_RANGE);
+  public static io.grpc.ServerServiceDefinition bindService(
+      final BigtableTableAdmin serviceImpl) {
+    return io.grpc.ServerServiceDefinition.builder(SERVICE_NAME)
+        .addMethod(
+          METHOD_CREATE_TABLE,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.google.bigtable.admin.v2.CreateTableRequest,
+              com.google.bigtable.admin.v2.Table>(
+                serviceImpl, METHODID_CREATE_TABLE)))
+        .addMethod(
+          METHOD_LIST_TABLES,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.google.bigtable.admin.v2.ListTablesRequest,
+              com.google.bigtable.admin.v2.ListTablesResponse>(
+                serviceImpl, METHODID_LIST_TABLES)))
+        .addMethod(
+          METHOD_GET_TABLE,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.google.bigtable.admin.v2.GetTableRequest,
+              com.google.bigtable.admin.v2.Table>(
+                serviceImpl, METHODID_GET_TABLE)))
+        .addMethod(
+          METHOD_DELETE_TABLE,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.google.bigtable.admin.v2.DeleteTableRequest,
+              com.google.protobuf.Empty>(
+                serviceImpl, METHODID_DELETE_TABLE)))
+        .addMethod(
+          METHOD_MODIFY_COLUMN_FAMILIES,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest,
+              com.google.bigtable.admin.v2.Table>(
+                serviceImpl, METHODID_MODIFY_COLUMN_FAMILIES)))
+        .addMethod(
+          METHOD_DROP_ROW_RANGE,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.google.bigtable.admin.v2.DropRowRangeRequest,
+              com.google.protobuf.Empty>(
+                serviceImpl, METHODID_DROP_ROW_RANGE)))
+        .build();
   }
-
 }

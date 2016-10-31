@@ -8,77 +8,77 @@ public interface CreateInstanceMetadataOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+   *
    * <pre>
    * The request that prompted the initiation of this CreateInstance operation.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
    */
   boolean hasOriginalRequest();
   /**
+   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+   *
    * <pre>
    * The request that prompted the initiation of this CreateInstance operation.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
    */
   com.google.bigtable.admin.v2.CreateInstanceRequest getOriginalRequest();
   /**
+   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+   *
    * <pre>
    * The request that prompted the initiation of this CreateInstance operation.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
    */
   com.google.bigtable.admin.v2.CreateInstanceRequestOrBuilder getOriginalRequestOrBuilder();
 
   /**
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+   *
    * <pre>
    * The time at which the original request was received.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   boolean hasRequestTime();
   /**
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+   *
    * <pre>
    * The time at which the original request was received.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   com.google.protobuf.Timestamp getRequestTime();
   /**
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+   *
    * <pre>
    * The time at which the original request was received.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   com.google.protobuf.TimestampOrBuilder getRequestTimeOrBuilder();
 
   /**
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+   *
    * <pre>
    * The time at which the operation failed or was completed successfully.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   boolean hasFinishTime();
   /**
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+   *
    * <pre>
    * The time at which the operation failed or was completed successfully.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   com.google.protobuf.Timestamp getFinishTime();
   /**
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+   *
    * <pre>
    * The time at which the operation failed or was completed successfully.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   com.google.protobuf.TimestampOrBuilder getFinishTimeOrBuilder();
 }
