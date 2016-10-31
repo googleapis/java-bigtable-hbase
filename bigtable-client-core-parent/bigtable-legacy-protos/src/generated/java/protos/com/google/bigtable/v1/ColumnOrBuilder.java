@@ -8,6 +8,8 @@ public interface ColumnOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional bytes qualifier = 1;</code>
+   *
    * <pre>
    * The unique key which identifies this column within its family. This is the
    * same key that's used to identify the column in, for example, a RowFilter
@@ -15,51 +17,49 @@ public interface ColumnOrBuilder extends
    * May contain any byte string, including the empty string, up to 16kiB in
    * length.
    * </pre>
-   *
-   * <code>optional bytes qualifier = 1;</code>
    */
   com.google.protobuf.ByteString getQualifier();
 
   /**
+   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
+   *
    * <pre>
    * Must not be empty. Sorted in order of decreasing "timestamp_micros".
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
    */
   java.util.List<com.google.bigtable.v1.Cell> 
       getCellsList();
   /**
+   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
+   *
    * <pre>
    * Must not be empty. Sorted in order of decreasing "timestamp_micros".
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
    */
   com.google.bigtable.v1.Cell getCells(int index);
   /**
+   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
+   *
    * <pre>
    * Must not be empty. Sorted in order of decreasing "timestamp_micros".
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
    */
   int getCellsCount();
   /**
+   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
+   *
    * <pre>
    * Must not be empty. Sorted in order of decreasing "timestamp_micros".
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
    */
   java.util.List<? extends com.google.bigtable.v1.CellOrBuilder> 
       getCellsOrBuilderList();
   /**
+   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
+   *
    * <pre>
    * Must not be empty. Sorted in order of decreasing "timestamp_micros".
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.Cell cells = 2;</code>
    */
   com.google.bigtable.v1.CellOrBuilder getCellsOrBuilder(
       int index);

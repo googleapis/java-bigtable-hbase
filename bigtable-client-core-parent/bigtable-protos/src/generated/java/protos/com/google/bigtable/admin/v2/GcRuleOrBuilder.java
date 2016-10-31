@@ -8,66 +8,66 @@ public interface GcRuleOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional int32 max_num_versions = 1;</code>
+   *
    * <pre>
    * Delete all cells in a column except the most recent N.
    * </pre>
-   *
-   * <code>optional int32 max_num_versions = 1;</code>
    */
   int getMaxNumVersions();
 
   /**
+   * <code>optional .google.protobuf.Duration max_age = 2;</code>
+   *
    * <pre>
    * Delete cells in a column older than the given age.
    * Values must be at least one millisecond, and will be truncated to
    * microsecond granularity.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Duration max_age = 2;</code>
    */
   com.google.protobuf.Duration getMaxAge();
   /**
+   * <code>optional .google.protobuf.Duration max_age = 2;</code>
+   *
    * <pre>
    * Delete cells in a column older than the given age.
    * Values must be at least one millisecond, and will be truncated to
    * microsecond granularity.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Duration max_age = 2;</code>
    */
   com.google.protobuf.DurationOrBuilder getMaxAgeOrBuilder();
 
   /**
+   * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+   *
    * <pre>
    * Delete cells that would be deleted by every nested rule.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
    */
   com.google.bigtable.admin.v2.GcRule.Intersection getIntersection();
   /**
+   * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
+   *
    * <pre>
    * Delete cells that would be deleted by every nested rule.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.GcRule.Intersection intersection = 3;</code>
    */
   com.google.bigtable.admin.v2.GcRule.IntersectionOrBuilder getIntersectionOrBuilder();
 
   /**
+   * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+   *
    * <pre>
    * Delete cells that would be deleted by any nested rule.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
    */
   com.google.bigtable.admin.v2.GcRule.Union getUnion();
   /**
+   * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
+   *
    * <pre>
    * Delete cells that would be deleted by any nested rule.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.GcRule.Union union = 4;</code>
    */
   com.google.bigtable.admin.v2.GcRule.UnionOrBuilder getUnionOrBuilder();
 

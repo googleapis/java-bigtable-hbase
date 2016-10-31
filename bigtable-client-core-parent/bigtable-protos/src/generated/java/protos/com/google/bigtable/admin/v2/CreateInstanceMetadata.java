@@ -4,18 +4,18 @@
 package com.google.bigtable.admin.v2;
 
 /**
+ * Protobuf type {@code google.bigtable.admin.v2.CreateInstanceMetadata}
+ *
  * <pre>
  * The metadata for the Operation returned by CreateInstance.
  * </pre>
- *
- * Protobuf type {@code google.bigtable.admin.v2.CreateInstanceMetadata}
  */
 public  final class CreateInstanceMetadata extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.CreateInstanceMetadata)
     CreateInstanceMetadataOrBuilder {
   // Use CreateInstanceMetadata.newBuilder() to construct.
-  private CreateInstanceMetadata(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private CreateInstanceMetadata(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private CreateInstanceMetadata() {
@@ -28,8 +28,7 @@ public  final class CreateInstanceMetadata extends
   }
   private CreateInstanceMetadata(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -88,10 +87,11 @@ public  final class CreateInstanceMetadata extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       makeExtensionsImmutable();
     }
@@ -101,7 +101,7 @@ public  final class CreateInstanceMetadata extends
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -111,31 +111,31 @@ public  final class CreateInstanceMetadata extends
   public static final int ORIGINAL_REQUEST_FIELD_NUMBER = 1;
   private com.google.bigtable.admin.v2.CreateInstanceRequest originalRequest_;
   /**
+   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+   *
    * <pre>
    * The request that prompted the initiation of this CreateInstance operation.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
    */
   public boolean hasOriginalRequest() {
     return originalRequest_ != null;
   }
   /**
+   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+   *
    * <pre>
    * The request that prompted the initiation of this CreateInstance operation.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
    */
   public com.google.bigtable.admin.v2.CreateInstanceRequest getOriginalRequest() {
     return originalRequest_ == null ? com.google.bigtable.admin.v2.CreateInstanceRequest.getDefaultInstance() : originalRequest_;
   }
   /**
+   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+   *
    * <pre>
    * The request that prompted the initiation of this CreateInstance operation.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
    */
   public com.google.bigtable.admin.v2.CreateInstanceRequestOrBuilder getOriginalRequestOrBuilder() {
     return getOriginalRequest();
@@ -144,31 +144,31 @@ public  final class CreateInstanceMetadata extends
   public static final int REQUEST_TIME_FIELD_NUMBER = 2;
   private com.google.protobuf.Timestamp requestTime_;
   /**
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+   *
    * <pre>
    * The time at which the original request was received.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   public boolean hasRequestTime() {
     return requestTime_ != null;
   }
   /**
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+   *
    * <pre>
    * The time at which the original request was received.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   public com.google.protobuf.Timestamp getRequestTime() {
     return requestTime_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : requestTime_;
   }
   /**
+   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+   *
    * <pre>
    * The time at which the original request was received.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
    */
   public com.google.protobuf.TimestampOrBuilder getRequestTimeOrBuilder() {
     return getRequestTime();
@@ -177,31 +177,31 @@ public  final class CreateInstanceMetadata extends
   public static final int FINISH_TIME_FIELD_NUMBER = 3;
   private com.google.protobuf.Timestamp finishTime_;
   /**
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+   *
    * <pre>
    * The time at which the operation failed or was completed successfully.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   public boolean hasFinishTime() {
     return finishTime_ != null;
   }
   /**
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+   *
    * <pre>
    * The time at which the operation failed or was completed successfully.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   public com.google.protobuf.Timestamp getFinishTime() {
     return finishTime_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : finishTime_;
   }
   /**
+   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+   *
    * <pre>
    * The time at which the operation failed or was completed successfully.
    * </pre>
-   *
-   * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
    */
   public com.google.protobuf.TimestampOrBuilder getFinishTimeOrBuilder() {
     return getFinishTime();
@@ -252,59 +252,6 @@ public  final class CreateInstanceMetadata extends
   }
 
   private static final long serialVersionUID = 0L;
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof com.google.bigtable.admin.v2.CreateInstanceMetadata)) {
-      return super.equals(obj);
-    }
-    com.google.bigtable.admin.v2.CreateInstanceMetadata other = (com.google.bigtable.admin.v2.CreateInstanceMetadata) obj;
-
-    boolean result = true;
-    result = result && (hasOriginalRequest() == other.hasOriginalRequest());
-    if (hasOriginalRequest()) {
-      result = result && getOriginalRequest()
-          .equals(other.getOriginalRequest());
-    }
-    result = result && (hasRequestTime() == other.hasRequestTime());
-    if (hasRequestTime()) {
-      result = result && getRequestTime()
-          .equals(other.getRequestTime());
-    }
-    result = result && (hasFinishTime() == other.hasFinishTime());
-    if (hasFinishTime()) {
-      result = result && getFinishTime()
-          .equals(other.getFinishTime());
-    }
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
-    if (hasOriginalRequest()) {
-      hash = (37 * hash) + ORIGINAL_REQUEST_FIELD_NUMBER;
-      hash = (53 * hash) + getOriginalRequest().hashCode();
-    }
-    if (hasRequestTime()) {
-      hash = (37 * hash) + REQUEST_TIME_FIELD_NUMBER;
-      hash = (53 * hash) + getRequestTime().hashCode();
-    }
-    if (hasFinishTime()) {
-      hash = (37 * hash) + FINISH_TIME_FIELD_NUMBER;
-      hash = (53 * hash) + getFinishTime().hashCode();
-    }
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
-  }
-
   public static com.google.bigtable.admin.v2.CreateInstanceMetadata parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -328,40 +275,34 @@ public  final class CreateInstanceMetadata extends
   }
   public static com.google.bigtable.admin.v2.CreateInstanceMetadata parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.admin.v2.CreateInstanceMetadata parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.CreateInstanceMetadata parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.bigtable.admin.v2.CreateInstanceMetadata parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.CreateInstanceMetadata parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.admin.v2.CreateInstanceMetadata parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -378,19 +319,19 @@ public  final class CreateInstanceMetadata extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.bigtable.admin.v2.CreateInstanceMetadata}
+   *
    * <pre>
    * The metadata for the Operation returned by CreateInstance.
    * </pre>
-   *
-   * Protobuf type {@code google.bigtable.admin.v2.CreateInstanceMetadata}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.CreateInstanceMetadata)
       com.google.bigtable.admin.v2.CreateInstanceMetadataOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -398,7 +339,7 @@ public  final class CreateInstanceMetadata extends
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_CreateInstanceMetadata_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -411,13 +352,12 @@ public  final class CreateInstanceMetadata extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -481,32 +421,6 @@ public  final class CreateInstanceMetadata extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.CreateInstanceMetadata) {
         return mergeFrom((com.google.bigtable.admin.v2.CreateInstanceMetadata)other);
@@ -544,7 +458,7 @@ public  final class CreateInstanceMetadata extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.CreateInstanceMetadata) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -554,24 +468,24 @@ public  final class CreateInstanceMetadata extends
     }
 
     private com.google.bigtable.admin.v2.CreateInstanceRequest originalRequest_ = null;
-    private com.google.protobuf.SingleFieldBuilderV3<
+    private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.v2.CreateInstanceRequest, com.google.bigtable.admin.v2.CreateInstanceRequest.Builder, com.google.bigtable.admin.v2.CreateInstanceRequestOrBuilder> originalRequestBuilder_;
     /**
+     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+     *
      * <pre>
      * The request that prompted the initiation of this CreateInstance operation.
      * </pre>
-     *
-     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
      */
     public boolean hasOriginalRequest() {
       return originalRequestBuilder_ != null || originalRequest_ != null;
     }
     /**
+     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+     *
      * <pre>
      * The request that prompted the initiation of this CreateInstance operation.
      * </pre>
-     *
-     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
      */
     public com.google.bigtable.admin.v2.CreateInstanceRequest getOriginalRequest() {
       if (originalRequestBuilder_ == null) {
@@ -581,11 +495,11 @@ public  final class CreateInstanceMetadata extends
       }
     }
     /**
+     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+     *
      * <pre>
      * The request that prompted the initiation of this CreateInstance operation.
      * </pre>
-     *
-     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
      */
     public Builder setOriginalRequest(com.google.bigtable.admin.v2.CreateInstanceRequest value) {
       if (originalRequestBuilder_ == null) {
@@ -601,11 +515,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+     *
      * <pre>
      * The request that prompted the initiation of this CreateInstance operation.
      * </pre>
-     *
-     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
      */
     public Builder setOriginalRequest(
         com.google.bigtable.admin.v2.CreateInstanceRequest.Builder builderForValue) {
@@ -619,11 +533,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+     *
      * <pre>
      * The request that prompted the initiation of this CreateInstance operation.
      * </pre>
-     *
-     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
      */
     public Builder mergeOriginalRequest(com.google.bigtable.admin.v2.CreateInstanceRequest value) {
       if (originalRequestBuilder_ == null) {
@@ -641,11 +555,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+     *
      * <pre>
      * The request that prompted the initiation of this CreateInstance operation.
      * </pre>
-     *
-     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
      */
     public Builder clearOriginalRequest() {
       if (originalRequestBuilder_ == null) {
@@ -659,11 +573,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+     *
      * <pre>
      * The request that prompted the initiation of this CreateInstance operation.
      * </pre>
-     *
-     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
      */
     public com.google.bigtable.admin.v2.CreateInstanceRequest.Builder getOriginalRequestBuilder() {
       
@@ -671,11 +585,11 @@ public  final class CreateInstanceMetadata extends
       return getOriginalRequestFieldBuilder().getBuilder();
     }
     /**
+     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+     *
      * <pre>
      * The request that prompted the initiation of this CreateInstance operation.
      * </pre>
-     *
-     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
      */
     public com.google.bigtable.admin.v2.CreateInstanceRequestOrBuilder getOriginalRequestOrBuilder() {
       if (originalRequestBuilder_ != null) {
@@ -686,17 +600,17 @@ public  final class CreateInstanceMetadata extends
       }
     }
     /**
+     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
+     *
      * <pre>
      * The request that prompted the initiation of this CreateInstance operation.
      * </pre>
-     *
-     * <code>optional .google.bigtable.admin.v2.CreateInstanceRequest original_request = 1;</code>
      */
-    private com.google.protobuf.SingleFieldBuilderV3<
+    private com.google.protobuf.SingleFieldBuilder<
         com.google.bigtable.admin.v2.CreateInstanceRequest, com.google.bigtable.admin.v2.CreateInstanceRequest.Builder, com.google.bigtable.admin.v2.CreateInstanceRequestOrBuilder> 
         getOriginalRequestFieldBuilder() {
       if (originalRequestBuilder_ == null) {
-        originalRequestBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+        originalRequestBuilder_ = new com.google.protobuf.SingleFieldBuilder<
             com.google.bigtable.admin.v2.CreateInstanceRequest, com.google.bigtable.admin.v2.CreateInstanceRequest.Builder, com.google.bigtable.admin.v2.CreateInstanceRequestOrBuilder>(
                 getOriginalRequest(),
                 getParentForChildren(),
@@ -707,24 +621,24 @@ public  final class CreateInstanceMetadata extends
     }
 
     private com.google.protobuf.Timestamp requestTime_ = null;
-    private com.google.protobuf.SingleFieldBuilderV3<
+    private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> requestTimeBuilder_;
     /**
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+     *
      * <pre>
      * The time at which the original request was received.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public boolean hasRequestTime() {
       return requestTimeBuilder_ != null || requestTime_ != null;
     }
     /**
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+     *
      * <pre>
      * The time at which the original request was received.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public com.google.protobuf.Timestamp getRequestTime() {
       if (requestTimeBuilder_ == null) {
@@ -734,11 +648,11 @@ public  final class CreateInstanceMetadata extends
       }
     }
     /**
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+     *
      * <pre>
      * The time at which the original request was received.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public Builder setRequestTime(com.google.protobuf.Timestamp value) {
       if (requestTimeBuilder_ == null) {
@@ -754,11 +668,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+     *
      * <pre>
      * The time at which the original request was received.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public Builder setRequestTime(
         com.google.protobuf.Timestamp.Builder builderForValue) {
@@ -772,11 +686,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+     *
      * <pre>
      * The time at which the original request was received.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public Builder mergeRequestTime(com.google.protobuf.Timestamp value) {
       if (requestTimeBuilder_ == null) {
@@ -794,11 +708,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+     *
      * <pre>
      * The time at which the original request was received.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public Builder clearRequestTime() {
       if (requestTimeBuilder_ == null) {
@@ -812,11 +726,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+     *
      * <pre>
      * The time at which the original request was received.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public com.google.protobuf.Timestamp.Builder getRequestTimeBuilder() {
       
@@ -824,11 +738,11 @@ public  final class CreateInstanceMetadata extends
       return getRequestTimeFieldBuilder().getBuilder();
     }
     /**
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+     *
      * <pre>
      * The time at which the original request was received.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
     public com.google.protobuf.TimestampOrBuilder getRequestTimeOrBuilder() {
       if (requestTimeBuilder_ != null) {
@@ -839,17 +753,17 @@ public  final class CreateInstanceMetadata extends
       }
     }
     /**
+     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
+     *
      * <pre>
      * The time at which the original request was received.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp request_time = 2;</code>
      */
-    private com.google.protobuf.SingleFieldBuilderV3<
+    private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
         getRequestTimeFieldBuilder() {
       if (requestTimeBuilder_ == null) {
-        requestTimeBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+        requestTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
             com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
                 getRequestTime(),
                 getParentForChildren(),
@@ -860,24 +774,24 @@ public  final class CreateInstanceMetadata extends
     }
 
     private com.google.protobuf.Timestamp finishTime_ = null;
-    private com.google.protobuf.SingleFieldBuilderV3<
+    private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> finishTimeBuilder_;
     /**
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+     *
      * <pre>
      * The time at which the operation failed or was completed successfully.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public boolean hasFinishTime() {
       return finishTimeBuilder_ != null || finishTime_ != null;
     }
     /**
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+     *
      * <pre>
      * The time at which the operation failed or was completed successfully.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public com.google.protobuf.Timestamp getFinishTime() {
       if (finishTimeBuilder_ == null) {
@@ -887,11 +801,11 @@ public  final class CreateInstanceMetadata extends
       }
     }
     /**
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+     *
      * <pre>
      * The time at which the operation failed or was completed successfully.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public Builder setFinishTime(com.google.protobuf.Timestamp value) {
       if (finishTimeBuilder_ == null) {
@@ -907,11 +821,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+     *
      * <pre>
      * The time at which the operation failed or was completed successfully.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public Builder setFinishTime(
         com.google.protobuf.Timestamp.Builder builderForValue) {
@@ -925,11 +839,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+     *
      * <pre>
      * The time at which the operation failed or was completed successfully.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public Builder mergeFinishTime(com.google.protobuf.Timestamp value) {
       if (finishTimeBuilder_ == null) {
@@ -947,11 +861,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+     *
      * <pre>
      * The time at which the operation failed or was completed successfully.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public Builder clearFinishTime() {
       if (finishTimeBuilder_ == null) {
@@ -965,11 +879,11 @@ public  final class CreateInstanceMetadata extends
       return this;
     }
     /**
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+     *
      * <pre>
      * The time at which the operation failed or was completed successfully.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public com.google.protobuf.Timestamp.Builder getFinishTimeBuilder() {
       
@@ -977,11 +891,11 @@ public  final class CreateInstanceMetadata extends
       return getFinishTimeFieldBuilder().getBuilder();
     }
     /**
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+     *
      * <pre>
      * The time at which the operation failed or was completed successfully.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
     public com.google.protobuf.TimestampOrBuilder getFinishTimeOrBuilder() {
       if (finishTimeBuilder_ != null) {
@@ -992,17 +906,17 @@ public  final class CreateInstanceMetadata extends
       }
     }
     /**
+     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
+     *
      * <pre>
      * The time at which the operation failed or was completed successfully.
      * </pre>
-     *
-     * <code>optional .google.protobuf.Timestamp finish_time = 3;</code>
      */
-    private com.google.protobuf.SingleFieldBuilderV3<
+    private com.google.protobuf.SingleFieldBuilder<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
         getFinishTimeFieldBuilder() {
       if (finishTimeBuilder_ == null) {
-        finishTimeBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+        finishTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
             com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
                 getFinishTime(),
                 getParentForChildren(),
@@ -1041,7 +955,16 @@ public  final class CreateInstanceMetadata extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new CreateInstanceMetadata(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

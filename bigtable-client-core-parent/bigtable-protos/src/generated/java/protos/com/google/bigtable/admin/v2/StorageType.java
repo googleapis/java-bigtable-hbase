@@ -4,84 +4,76 @@
 package com.google.bigtable.admin.v2;
 
 /**
+ * Protobuf enum {@code google.bigtable.admin.v2.StorageType}
+ *
  * <pre>
  * Storage media types for persisting Bigtable data.
  * </pre>
- *
- * Protobuf enum {@code google.bigtable.admin.v2.StorageType}
  */
 public enum StorageType
     implements com.google.protobuf.ProtocolMessageEnum {
   /**
+   * <code>STORAGE_TYPE_UNSPECIFIED = 0;</code>
+   *
    * <pre>
    * The user did not specify a storage type.
    * </pre>
-   *
-   * <code>STORAGE_TYPE_UNSPECIFIED = 0;</code>
    */
-  STORAGE_TYPE_UNSPECIFIED(0),
+  STORAGE_TYPE_UNSPECIFIED(0, 0),
   /**
+   * <code>SSD = 1;</code>
+   *
    * <pre>
    * Flash (SSD) storage should be used.
    * </pre>
-   *
-   * <code>SSD = 1;</code>
    */
-  SSD(1),
+  SSD(1, 1),
   /**
+   * <code>HDD = 2;</code>
+   *
    * <pre>
    * Magnetic drive (HDD) storage should be used.
    * </pre>
-   *
-   * <code>HDD = 2;</code>
    */
-  HDD(2),
-  UNRECOGNIZED(-1),
+  HDD(2, 2),
+  UNRECOGNIZED(-1, -1),
   ;
 
   /**
+   * <code>STORAGE_TYPE_UNSPECIFIED = 0;</code>
+   *
    * <pre>
    * The user did not specify a storage type.
    * </pre>
-   *
-   * <code>STORAGE_TYPE_UNSPECIFIED = 0;</code>
    */
   public static final int STORAGE_TYPE_UNSPECIFIED_VALUE = 0;
   /**
+   * <code>SSD = 1;</code>
+   *
    * <pre>
    * Flash (SSD) storage should be used.
    * </pre>
-   *
-   * <code>SSD = 1;</code>
    */
   public static final int SSD_VALUE = 1;
   /**
+   * <code>HDD = 2;</code>
+   *
    * <pre>
    * Magnetic drive (HDD) storage should be used.
    * </pre>
-   *
-   * <code>HDD = 2;</code>
    */
   public static final int HDD_VALUE = 2;
 
 
   public final int getNumber() {
-    if (this == UNRECOGNIZED) {
+    if (index == -1) {
       throw new java.lang.IllegalArgumentException(
           "Can't get the number of an unknown enum value.");
     }
     return value;
   }
 
-  /**
-   * @deprecated Use {@link #forNumber(int)} instead.
-   */
-  @java.lang.Deprecated
   public static StorageType valueOf(int value) {
-    return forNumber(value);
-  }
-
-  public static StorageType forNumber(int value) {
     switch (value) {
       case 0: return STORAGE_TYPE_UNSPECIFIED;
       case 1: return SSD;
@@ -98,13 +90,13 @@ public enum StorageType
       StorageType> internalValueMap =
         new com.google.protobuf.Internal.EnumLiteMap<StorageType>() {
           public StorageType findValueByNumber(int number) {
-            return StorageType.forNumber(number);
+            return StorageType.valueOf(number);
           }
         };
 
   public final com.google.protobuf.Descriptors.EnumValueDescriptor
       getValueDescriptor() {
-    return getDescriptor().getValues().get(ordinal());
+    return getDescriptor().getValues().get(index);
   }
   public final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptorForType() {
@@ -130,9 +122,11 @@ public enum StorageType
     return VALUES[desc.getIndex()];
   }
 
+  private final int index;
   private final int value;
 
-  private StorageType(int value) {
+  private StorageType(int index, int value) {
+    this.index = index;
     this.value = value;
   }
 

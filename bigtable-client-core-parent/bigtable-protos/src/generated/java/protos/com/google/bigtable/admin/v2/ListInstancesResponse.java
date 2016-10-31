@@ -4,18 +4,18 @@
 package com.google.bigtable.admin.v2;
 
 /**
+ * Protobuf type {@code google.bigtable.admin.v2.ListInstancesResponse}
+ *
  * <pre>
  * Response message for BigtableInstanceAdmin.ListInstances.
  * </pre>
- *
- * Protobuf type {@code google.bigtable.admin.v2.ListInstancesResponse}
  */
 public  final class ListInstancesResponse extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.ListInstancesResponse)
     ListInstancesResponseOrBuilder {
   // Use ListInstancesResponse.newBuilder() to construct.
-  private ListInstancesResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private ListInstancesResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private ListInstancesResponse() {
@@ -31,8 +31,7 @@ public  final class ListInstancesResponse extends
   }
   private ListInstancesResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -54,8 +53,7 @@ public  final class ListInstancesResponse extends
               instances_ = new java.util.ArrayList<com.google.bigtable.admin.v2.Instance>();
               mutable_bitField0_ |= 0x00000001;
             }
-            instances_.add(
-                input.readMessage(com.google.bigtable.admin.v2.Instance.parser(), extensionRegistry));
+            instances_.add(input.readMessage(com.google.bigtable.admin.v2.Instance.parser(), extensionRegistry));
             break;
           }
           case 18: {
@@ -76,10 +74,11 @@ public  final class ListInstancesResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         instances_ = java.util.Collections.unmodifiableList(instances_);
@@ -95,7 +94,7 @@ public  final class ListInstancesResponse extends
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListInstancesResponse_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListInstancesResponse_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -106,52 +105,52 @@ public  final class ListInstancesResponse extends
   public static final int INSTANCES_FIELD_NUMBER = 1;
   private java.util.List<com.google.bigtable.admin.v2.Instance> instances_;
   /**
+   * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+   *
    * <pre>
    * The list of requested instances.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
    */
   public java.util.List<com.google.bigtable.admin.v2.Instance> getInstancesList() {
     return instances_;
   }
   /**
+   * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+   *
    * <pre>
    * The list of requested instances.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
    */
   public java.util.List<? extends com.google.bigtable.admin.v2.InstanceOrBuilder> 
       getInstancesOrBuilderList() {
     return instances_;
   }
   /**
+   * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+   *
    * <pre>
    * The list of requested instances.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
    */
   public int getInstancesCount() {
     return instances_.size();
   }
   /**
+   * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+   *
    * <pre>
    * The list of requested instances.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
    */
   public com.google.bigtable.admin.v2.Instance getInstances(int index) {
     return instances_.get(index);
   }
   /**
+   * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+   *
    * <pre>
    * The list of requested instances.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
    */
   public com.google.bigtable.admin.v2.InstanceOrBuilder getInstancesOrBuilder(
       int index) {
@@ -161,6 +160,8 @@ public  final class ListInstancesResponse extends
   public static final int FAILED_LOCATIONS_FIELD_NUMBER = 2;
   private com.google.protobuf.LazyStringList failedLocations_;
   /**
+   * <code>repeated string failed_locations = 2;</code>
+   *
    * <pre>
    * Locations from which Instance information could not be retrieved,
    * due to an outage or some other transient condition.
@@ -168,14 +169,14 @@ public  final class ListInstancesResponse extends
    * may be missing from 'instances', and Instances with at least one
    * Cluster in a failed location may only have partial information returned.
    * </pre>
-   *
-   * <code>repeated string failed_locations = 2;</code>
    */
   public com.google.protobuf.ProtocolStringList
       getFailedLocationsList() {
     return failedLocations_;
   }
   /**
+   * <code>repeated string failed_locations = 2;</code>
+   *
    * <pre>
    * Locations from which Instance information could not be retrieved,
    * due to an outage or some other transient condition.
@@ -183,13 +184,13 @@ public  final class ListInstancesResponse extends
    * may be missing from 'instances', and Instances with at least one
    * Cluster in a failed location may only have partial information returned.
    * </pre>
-   *
-   * <code>repeated string failed_locations = 2;</code>
    */
   public int getFailedLocationsCount() {
     return failedLocations_.size();
   }
   /**
+   * <code>repeated string failed_locations = 2;</code>
+   *
    * <pre>
    * Locations from which Instance information could not be retrieved,
    * due to an outage or some other transient condition.
@@ -197,13 +198,13 @@ public  final class ListInstancesResponse extends
    * may be missing from 'instances', and Instances with at least one
    * Cluster in a failed location may only have partial information returned.
    * </pre>
-   *
-   * <code>repeated string failed_locations = 2;</code>
    */
   public java.lang.String getFailedLocations(int index) {
     return failedLocations_.get(index);
   }
   /**
+   * <code>repeated string failed_locations = 2;</code>
+   *
    * <pre>
    * Locations from which Instance information could not be retrieved,
    * due to an outage or some other transient condition.
@@ -211,8 +212,6 @@ public  final class ListInstancesResponse extends
    * may be missing from 'instances', and Instances with at least one
    * Cluster in a failed location may only have partial information returned.
    * </pre>
-   *
-   * <code>repeated string failed_locations = 2;</code>
    */
   public com.google.protobuf.ByteString
       getFailedLocationsBytes(int index) {
@@ -222,13 +221,13 @@ public  final class ListInstancesResponse extends
   public static final int NEXT_PAGE_TOKEN_FIELD_NUMBER = 3;
   private volatile java.lang.Object nextPageToken_;
   /**
+   * <code>optional string next_page_token = 3;</code>
+   *
    * <pre>
    * Set if not all instances could be returned in a single response.
    * Pass this value to `page_token` in another request to get the next
    * page of results.
    * </pre>
-   *
-   * <code>optional string next_page_token = 3;</code>
    */
   public java.lang.String getNextPageToken() {
     java.lang.Object ref = nextPageToken_;
@@ -243,13 +242,13 @@ public  final class ListInstancesResponse extends
     }
   }
   /**
+   * <code>optional string next_page_token = 3;</code>
+   *
    * <pre>
    * Set if not all instances could be returned in a single response.
    * Pass this value to `page_token` in another request to get the next
    * page of results.
    * </pre>
-   *
-   * <code>optional string next_page_token = 3;</code>
    */
   public com.google.protobuf.ByteString
       getNextPageTokenBytes() {
@@ -281,10 +280,10 @@ public  final class ListInstancesResponse extends
       output.writeMessage(1, instances_.get(i));
     }
     for (int i = 0; i < failedLocations_.size(); i++) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, failedLocations_.getRaw(i));
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, failedLocations_.getRaw(i));
     }
     if (!getNextPageTokenBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, nextPageToken_);
+      com.google.protobuf.GeneratedMessage.writeString(output, 3, nextPageToken_);
     }
   }
 
@@ -306,55 +305,13 @@ public  final class ListInstancesResponse extends
       size += 1 * getFailedLocationsList().size();
     }
     if (!getNextPageTokenBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, nextPageToken_);
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(3, nextPageToken_);
     }
     memoizedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof com.google.bigtable.admin.v2.ListInstancesResponse)) {
-      return super.equals(obj);
-    }
-    com.google.bigtable.admin.v2.ListInstancesResponse other = (com.google.bigtable.admin.v2.ListInstancesResponse) obj;
-
-    boolean result = true;
-    result = result && getInstancesList()
-        .equals(other.getInstancesList());
-    result = result && getFailedLocationsList()
-        .equals(other.getFailedLocationsList());
-    result = result && getNextPageToken()
-        .equals(other.getNextPageToken());
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
-    if (getInstancesCount() > 0) {
-      hash = (37 * hash) + INSTANCES_FIELD_NUMBER;
-      hash = (53 * hash) + getInstancesList().hashCode();
-    }
-    if (getFailedLocationsCount() > 0) {
-      hash = (37 * hash) + FAILED_LOCATIONS_FIELD_NUMBER;
-      hash = (53 * hash) + getFailedLocationsList().hashCode();
-    }
-    hash = (37 * hash) + NEXT_PAGE_TOKEN_FIELD_NUMBER;
-    hash = (53 * hash) + getNextPageToken().hashCode();
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
-  }
-
   public static com.google.bigtable.admin.v2.ListInstancesResponse parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -378,40 +335,34 @@ public  final class ListInstancesResponse extends
   }
   public static com.google.bigtable.admin.v2.ListInstancesResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.admin.v2.ListInstancesResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ListInstancesResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.bigtable.admin.v2.ListInstancesResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ListInstancesResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.admin.v2.ListInstancesResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -428,19 +379,19 @@ public  final class ListInstancesResponse extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.bigtable.admin.v2.ListInstancesResponse}
+   *
    * <pre>
    * Response message for BigtableInstanceAdmin.ListInstances.
    * </pre>
-   *
-   * Protobuf type {@code google.bigtable.admin.v2.ListInstancesResponse}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.ListInstancesResponse)
       com.google.bigtable.admin.v2.ListInstancesResponseOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -448,7 +399,7 @@ public  final class ListInstancesResponse extends
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListInstancesResponse_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListInstancesResponse_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -461,13 +412,12 @@ public  final class ListInstancesResponse extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         getInstancesFieldBuilder();
       }
     }
@@ -527,32 +477,6 @@ public  final class ListInstancesResponse extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.ListInstancesResponse) {
         return mergeFrom((com.google.bigtable.admin.v2.ListInstancesResponse)other);
@@ -583,7 +507,7 @@ public  final class ListInstancesResponse extends
             instances_ = other.instances_;
             bitField0_ = (bitField0_ & ~0x00000001);
             instancesBuilder_ = 
-              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                  getInstancesFieldBuilder() : null;
           } else {
             instancesBuilder_.addAllMessages(other.instances_);
@@ -621,7 +545,7 @@ public  final class ListInstancesResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.ListInstancesResponse) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -640,15 +564,15 @@ public  final class ListInstancesResponse extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilderV3<
+    private com.google.protobuf.RepeatedFieldBuilder<
         com.google.bigtable.admin.v2.Instance, com.google.bigtable.admin.v2.Instance.Builder, com.google.bigtable.admin.v2.InstanceOrBuilder> instancesBuilder_;
 
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public java.util.List<com.google.bigtable.admin.v2.Instance> getInstancesList() {
       if (instancesBuilder_ == null) {
@@ -658,11 +582,11 @@ public  final class ListInstancesResponse extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public int getInstancesCount() {
       if (instancesBuilder_ == null) {
@@ -672,11 +596,11 @@ public  final class ListInstancesResponse extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public com.google.bigtable.admin.v2.Instance getInstances(int index) {
       if (instancesBuilder_ == null) {
@@ -686,11 +610,11 @@ public  final class ListInstancesResponse extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public Builder setInstances(
         int index, com.google.bigtable.admin.v2.Instance value) {
@@ -707,11 +631,11 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public Builder setInstances(
         int index, com.google.bigtable.admin.v2.Instance.Builder builderForValue) {
@@ -725,11 +649,11 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public Builder addInstances(com.google.bigtable.admin.v2.Instance value) {
       if (instancesBuilder_ == null) {
@@ -745,11 +669,11 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public Builder addInstances(
         int index, com.google.bigtable.admin.v2.Instance value) {
@@ -766,11 +690,11 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public Builder addInstances(
         com.google.bigtable.admin.v2.Instance.Builder builderForValue) {
@@ -784,11 +708,11 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public Builder addInstances(
         int index, com.google.bigtable.admin.v2.Instance.Builder builderForValue) {
@@ -802,11 +726,11 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public Builder addAllInstances(
         java.lang.Iterable<? extends com.google.bigtable.admin.v2.Instance> values) {
@@ -821,11 +745,11 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public Builder clearInstances() {
       if (instancesBuilder_ == null) {
@@ -838,11 +762,11 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public Builder removeInstances(int index) {
       if (instancesBuilder_ == null) {
@@ -855,22 +779,22 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public com.google.bigtable.admin.v2.Instance.Builder getInstancesBuilder(
         int index) {
       return getInstancesFieldBuilder().getBuilder(index);
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public com.google.bigtable.admin.v2.InstanceOrBuilder getInstancesOrBuilder(
         int index) {
@@ -880,11 +804,11 @@ public  final class ListInstancesResponse extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public java.util.List<? extends com.google.bigtable.admin.v2.InstanceOrBuilder> 
          getInstancesOrBuilderList() {
@@ -895,22 +819,22 @@ public  final class ListInstancesResponse extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public com.google.bigtable.admin.v2.Instance.Builder addInstancesBuilder() {
       return getInstancesFieldBuilder().addBuilder(
           com.google.bigtable.admin.v2.Instance.getDefaultInstance());
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public com.google.bigtable.admin.v2.Instance.Builder addInstancesBuilder(
         int index) {
@@ -918,21 +842,21 @@ public  final class ListInstancesResponse extends
           index, com.google.bigtable.admin.v2.Instance.getDefaultInstance());
     }
     /**
+     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
+     *
      * <pre>
      * The list of requested instances.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.admin.v2.Instance instances = 1;</code>
      */
     public java.util.List<com.google.bigtable.admin.v2.Instance.Builder> 
          getInstancesBuilderList() {
       return getInstancesFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilderV3<
+    private com.google.protobuf.RepeatedFieldBuilder<
         com.google.bigtable.admin.v2.Instance, com.google.bigtable.admin.v2.Instance.Builder, com.google.bigtable.admin.v2.InstanceOrBuilder> 
         getInstancesFieldBuilder() {
       if (instancesBuilder_ == null) {
-        instancesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+        instancesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
             com.google.bigtable.admin.v2.Instance, com.google.bigtable.admin.v2.Instance.Builder, com.google.bigtable.admin.v2.InstanceOrBuilder>(
                 instances_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
@@ -951,6 +875,8 @@ public  final class ListInstancesResponse extends
        }
     }
     /**
+     * <code>repeated string failed_locations = 2;</code>
+     *
      * <pre>
      * Locations from which Instance information could not be retrieved,
      * due to an outage or some other transient condition.
@@ -958,14 +884,14 @@ public  final class ListInstancesResponse extends
      * may be missing from 'instances', and Instances with at least one
      * Cluster in a failed location may only have partial information returned.
      * </pre>
-     *
-     * <code>repeated string failed_locations = 2;</code>
      */
     public com.google.protobuf.ProtocolStringList
         getFailedLocationsList() {
       return failedLocations_.getUnmodifiableView();
     }
     /**
+     * <code>repeated string failed_locations = 2;</code>
+     *
      * <pre>
      * Locations from which Instance information could not be retrieved,
      * due to an outage or some other transient condition.
@@ -973,13 +899,13 @@ public  final class ListInstancesResponse extends
      * may be missing from 'instances', and Instances with at least one
      * Cluster in a failed location may only have partial information returned.
      * </pre>
-     *
-     * <code>repeated string failed_locations = 2;</code>
      */
     public int getFailedLocationsCount() {
       return failedLocations_.size();
     }
     /**
+     * <code>repeated string failed_locations = 2;</code>
+     *
      * <pre>
      * Locations from which Instance information could not be retrieved,
      * due to an outage or some other transient condition.
@@ -987,13 +913,13 @@ public  final class ListInstancesResponse extends
      * may be missing from 'instances', and Instances with at least one
      * Cluster in a failed location may only have partial information returned.
      * </pre>
-     *
-     * <code>repeated string failed_locations = 2;</code>
      */
     public java.lang.String getFailedLocations(int index) {
       return failedLocations_.get(index);
     }
     /**
+     * <code>repeated string failed_locations = 2;</code>
+     *
      * <pre>
      * Locations from which Instance information could not be retrieved,
      * due to an outage or some other transient condition.
@@ -1001,14 +927,14 @@ public  final class ListInstancesResponse extends
      * may be missing from 'instances', and Instances with at least one
      * Cluster in a failed location may only have partial information returned.
      * </pre>
-     *
-     * <code>repeated string failed_locations = 2;</code>
      */
     public com.google.protobuf.ByteString
         getFailedLocationsBytes(int index) {
       return failedLocations_.getByteString(index);
     }
     /**
+     * <code>repeated string failed_locations = 2;</code>
+     *
      * <pre>
      * Locations from which Instance information could not be retrieved,
      * due to an outage or some other transient condition.
@@ -1016,8 +942,6 @@ public  final class ListInstancesResponse extends
      * may be missing from 'instances', and Instances with at least one
      * Cluster in a failed location may only have partial information returned.
      * </pre>
-     *
-     * <code>repeated string failed_locations = 2;</code>
      */
     public Builder setFailedLocations(
         int index, java.lang.String value) {
@@ -1030,6 +954,8 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated string failed_locations = 2;</code>
+     *
      * <pre>
      * Locations from which Instance information could not be retrieved,
      * due to an outage or some other transient condition.
@@ -1037,8 +963,6 @@ public  final class ListInstancesResponse extends
      * may be missing from 'instances', and Instances with at least one
      * Cluster in a failed location may only have partial information returned.
      * </pre>
-     *
-     * <code>repeated string failed_locations = 2;</code>
      */
     public Builder addFailedLocations(
         java.lang.String value) {
@@ -1051,6 +975,8 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated string failed_locations = 2;</code>
+     *
      * <pre>
      * Locations from which Instance information could not be retrieved,
      * due to an outage or some other transient condition.
@@ -1058,8 +984,6 @@ public  final class ListInstancesResponse extends
      * may be missing from 'instances', and Instances with at least one
      * Cluster in a failed location may only have partial information returned.
      * </pre>
-     *
-     * <code>repeated string failed_locations = 2;</code>
      */
     public Builder addAllFailedLocations(
         java.lang.Iterable<java.lang.String> values) {
@@ -1070,6 +994,8 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated string failed_locations = 2;</code>
+     *
      * <pre>
      * Locations from which Instance information could not be retrieved,
      * due to an outage or some other transient condition.
@@ -1077,8 +1003,6 @@ public  final class ListInstancesResponse extends
      * may be missing from 'instances', and Instances with at least one
      * Cluster in a failed location may only have partial information returned.
      * </pre>
-     *
-     * <code>repeated string failed_locations = 2;</code>
      */
     public Builder clearFailedLocations() {
       failedLocations_ = com.google.protobuf.LazyStringArrayList.EMPTY;
@@ -1087,6 +1011,8 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>repeated string failed_locations = 2;</code>
+     *
      * <pre>
      * Locations from which Instance information could not be retrieved,
      * due to an outage or some other transient condition.
@@ -1094,8 +1020,6 @@ public  final class ListInstancesResponse extends
      * may be missing from 'instances', and Instances with at least one
      * Cluster in a failed location may only have partial information returned.
      * </pre>
-     *
-     * <code>repeated string failed_locations = 2;</code>
      */
     public Builder addFailedLocationsBytes(
         com.google.protobuf.ByteString value) {
@@ -1111,13 +1035,13 @@ public  final class ListInstancesResponse extends
 
     private java.lang.Object nextPageToken_ = "";
     /**
+     * <code>optional string next_page_token = 3;</code>
+     *
      * <pre>
      * Set if not all instances could be returned in a single response.
      * Pass this value to `page_token` in another request to get the next
      * page of results.
      * </pre>
-     *
-     * <code>optional string next_page_token = 3;</code>
      */
     public java.lang.String getNextPageToken() {
       java.lang.Object ref = nextPageToken_;
@@ -1132,13 +1056,13 @@ public  final class ListInstancesResponse extends
       }
     }
     /**
+     * <code>optional string next_page_token = 3;</code>
+     *
      * <pre>
      * Set if not all instances could be returned in a single response.
      * Pass this value to `page_token` in another request to get the next
      * page of results.
      * </pre>
-     *
-     * <code>optional string next_page_token = 3;</code>
      */
     public com.google.protobuf.ByteString
         getNextPageTokenBytes() {
@@ -1154,13 +1078,13 @@ public  final class ListInstancesResponse extends
       }
     }
     /**
+     * <code>optional string next_page_token = 3;</code>
+     *
      * <pre>
      * Set if not all instances could be returned in a single response.
      * Pass this value to `page_token` in another request to get the next
      * page of results.
      * </pre>
-     *
-     * <code>optional string next_page_token = 3;</code>
      */
     public Builder setNextPageToken(
         java.lang.String value) {
@@ -1173,13 +1097,13 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>optional string next_page_token = 3;</code>
+     *
      * <pre>
      * Set if not all instances could be returned in a single response.
      * Pass this value to `page_token` in another request to get the next
      * page of results.
      * </pre>
-     *
-     * <code>optional string next_page_token = 3;</code>
      */
     public Builder clearNextPageToken() {
       
@@ -1188,13 +1112,13 @@ public  final class ListInstancesResponse extends
       return this;
     }
     /**
+     * <code>optional string next_page_token = 3;</code>
+     *
      * <pre>
      * Set if not all instances could be returned in a single response.
      * Pass this value to `page_token` in another request to get the next
      * page of results.
      * </pre>
-     *
-     * <code>optional string next_page_token = 3;</code>
      */
     public Builder setNextPageTokenBytes(
         com.google.protobuf.ByteString value) {
@@ -1237,7 +1161,16 @@ public  final class ListInstancesResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new ListInstancesResponse(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

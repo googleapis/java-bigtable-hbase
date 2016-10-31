@@ -8,37 +8,37 @@ public interface CustomHttpPatternOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional string kind = 1;</code>
+   *
    * <pre>
    * The name of this custom HTTP verb.
    * </pre>
-   *
-   * <code>optional string kind = 1;</code>
    */
   java.lang.String getKind();
   /**
+   * <code>optional string kind = 1;</code>
+   *
    * <pre>
    * The name of this custom HTTP verb.
    * </pre>
-   *
-   * <code>optional string kind = 1;</code>
    */
   com.google.protobuf.ByteString
       getKindBytes();
 
   /**
+   * <code>optional string path = 2;</code>
+   *
    * <pre>
    * The path matched by this custom verb.
    * </pre>
-   *
-   * <code>optional string path = 2;</code>
    */
   java.lang.String getPath();
   /**
+   * <code>optional string path = 2;</code>
+   *
    * <pre>
    * The path matched by this custom verb.
    * </pre>
-   *
-   * <code>optional string path = 2;</code>
    */
   com.google.protobuf.ByteString
       getPathBytes();

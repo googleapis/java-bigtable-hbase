@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.GeneratedMessage;
 
 import org.apache.hadoop.hbase.client.Result;
 
@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.client.Result;
  * @author sduskis
  * @version $Id: $Id
  */
-public interface ResponseAdapter<T extends GeneratedMessageV3, U extends Result> {
+public interface ResponseAdapter<T extends GeneratedMessage, U extends Result> {
 
   /**
    * Transform an Bigtable server response to an HBase Result instance.

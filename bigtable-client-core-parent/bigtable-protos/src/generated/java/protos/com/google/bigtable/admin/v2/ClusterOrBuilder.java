@@ -8,98 +8,98 @@ public interface ClusterOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional string name = 1;</code>
+   *
    * <pre>
    * &#64;OutputOnly
    * The unique name of the cluster. Values are of the form
    * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
    * </pre>
-   *
-   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
+   * <code>optional string name = 1;</code>
+   *
    * <pre>
    * &#64;OutputOnly
    * The unique name of the cluster. Values are of the form
    * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
    * </pre>
-   *
-   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
+   * <code>optional string location = 2;</code>
+   *
    * <pre>
    * &#64;CreationOnly
    * The location where this cluster's nodes and storage reside. For best
    * performance, clients should be located as close as possible to this cluster.
    * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
    * </pre>
-   *
-   * <code>optional string location = 2;</code>
    */
   java.lang.String getLocation();
   /**
+   * <code>optional string location = 2;</code>
+   *
    * <pre>
    * &#64;CreationOnly
    * The location where this cluster's nodes and storage reside. For best
    * performance, clients should be located as close as possible to this cluster.
    * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
    * </pre>
-   *
-   * <code>optional string location = 2;</code>
    */
   com.google.protobuf.ByteString
       getLocationBytes();
 
   /**
+   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+   *
    * <pre>
    * &#64;OutputOnly
    * The current state of the cluster.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
    */
   int getStateValue();
   /**
+   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
+   *
    * <pre>
    * &#64;OutputOnly
    * The current state of the cluster.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
    */
   com.google.bigtable.admin.v2.Cluster.State getState();
 
   /**
+   * <code>optional int32 serve_nodes = 4;</code>
+   *
    * <pre>
    * The number of nodes allocated to this cluster. More nodes enable higher
    * throughput and more consistent performance.
    * </pre>
-   *
-   * <code>optional int32 serve_nodes = 4;</code>
    */
   int getServeNodes();
 
   /**
+   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+   *
    * <pre>
    * &#64;CreationOnly
    * The type of storage used by this cluster to serve its
    * parent instance's tables, unless explicitly overridden.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
    */
   int getDefaultStorageTypeValue();
   /**
+   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
+   *
    * <pre>
    * &#64;CreationOnly
    * The type of storage used by this cluster to serve its
    * parent instance's tables, unless explicitly overridden.
    * </pre>
-   *
-   * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
    */
   com.google.bigtable.admin.v2.StorageType getDefaultStorageType();
 }

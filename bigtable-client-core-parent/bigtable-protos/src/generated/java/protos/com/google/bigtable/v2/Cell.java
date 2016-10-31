@@ -4,18 +4,18 @@
 package com.google.bigtable.v2;
 
 /**
+ * Protobuf type {@code google.bigtable.v2.Cell}
+ *
  * <pre>
  * Specifies (some of) the contents of a single row/column/timestamp of a table.
  * </pre>
- *
- * Protobuf type {@code google.bigtable.v2.Cell}
  */
 public  final class Cell extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.Cell)
     CellOrBuilder {
   // Use Cell.newBuilder() to construct.
-  private Cell(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private Cell(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Cell() {
@@ -31,8 +31,7 @@ public  final class Cell extends
   }
   private Cell(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -71,10 +70,11 @@ public  final class Cell extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
         labels_ = labels_.getUnmodifiableView();
@@ -87,7 +87,7 @@ public  final class Cell extends
     return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_Cell_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_Cell_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -98,6 +98,8 @@ public  final class Cell extends
   public static final int TIMESTAMP_MICROS_FIELD_NUMBER = 1;
   private long timestampMicros_;
   /**
+   * <code>optional int64 timestamp_micros = 1;</code>
+   *
    * <pre>
    * The cell's stored timestamp, which also uniquely identifies it within
    * its column.
@@ -106,8 +108,6 @@ public  final class Cell extends
    * example, a table which specifies millisecond granularity will only allow
    * values of `timestamp_micros` which are multiples of 1000.
    * </pre>
-   *
-   * <code>optional int64 timestamp_micros = 1;</code>
    */
   public long getTimestampMicros() {
     return timestampMicros_;
@@ -116,13 +116,13 @@ public  final class Cell extends
   public static final int VALUE_FIELD_NUMBER = 2;
   private com.google.protobuf.ByteString value_;
   /**
+   * <code>optional bytes value = 2;</code>
+   *
    * <pre>
    * The value stored in the cell.
    * May contain any byte string, including the empty string, up to 100MiB in
    * length.
    * </pre>
-   *
-   * <code>optional bytes value = 2;</code>
    */
   public com.google.protobuf.ByteString getValue() {
     return value_;
@@ -131,42 +131,42 @@ public  final class Cell extends
   public static final int LABELS_FIELD_NUMBER = 3;
   private com.google.protobuf.LazyStringList labels_;
   /**
+   * <code>repeated string labels = 3;</code>
+   *
    * <pre>
    * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
-   *
-   * <code>repeated string labels = 3;</code>
    */
   public com.google.protobuf.ProtocolStringList
       getLabelsList() {
     return labels_;
   }
   /**
+   * <code>repeated string labels = 3;</code>
+   *
    * <pre>
    * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
-   *
-   * <code>repeated string labels = 3;</code>
    */
   public int getLabelsCount() {
     return labels_.size();
   }
   /**
+   * <code>repeated string labels = 3;</code>
+   *
    * <pre>
    * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
-   *
-   * <code>repeated string labels = 3;</code>
    */
   public java.lang.String getLabels(int index) {
     return labels_.get(index);
   }
   /**
+   * <code>repeated string labels = 3;</code>
+   *
    * <pre>
    * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
    * </pre>
-   *
-   * <code>repeated string labels = 3;</code>
    */
   public com.google.protobuf.ByteString
       getLabelsBytes(int index) {
@@ -192,7 +192,7 @@ public  final class Cell extends
       output.writeBytes(2, value_);
     }
     for (int i = 0; i < labels_.size(); i++) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, labels_.getRaw(i));
+      com.google.protobuf.GeneratedMessage.writeString(output, 3, labels_.getRaw(i));
     }
   }
 
@@ -222,47 +222,6 @@ public  final class Cell extends
   }
 
   private static final long serialVersionUID = 0L;
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof com.google.bigtable.v2.Cell)) {
-      return super.equals(obj);
-    }
-    com.google.bigtable.v2.Cell other = (com.google.bigtable.v2.Cell) obj;
-
-    boolean result = true;
-    result = result && (getTimestampMicros()
-        == other.getTimestampMicros());
-    result = result && getValue()
-        .equals(other.getValue());
-    result = result && getLabelsList()
-        .equals(other.getLabelsList());
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
-    hash = (37 * hash) + TIMESTAMP_MICROS_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getTimestampMicros());
-    hash = (37 * hash) + VALUE_FIELD_NUMBER;
-    hash = (53 * hash) + getValue().hashCode();
-    if (getLabelsCount() > 0) {
-      hash = (37 * hash) + LABELS_FIELD_NUMBER;
-      hash = (53 * hash) + getLabelsList().hashCode();
-    }
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
-  }
-
   public static com.google.bigtable.v2.Cell parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -286,40 +245,34 @@ public  final class Cell extends
   }
   public static com.google.bigtable.v2.Cell parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.v2.Cell parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.v2.Cell parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.bigtable.v2.Cell parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.v2.Cell parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.v2.Cell parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -336,19 +289,19 @@ public  final class Cell extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.bigtable.v2.Cell}
+   *
    * <pre>
    * Specifies (some of) the contents of a single row/column/timestamp of a table.
    * </pre>
-   *
-   * Protobuf type {@code google.bigtable.v2.Cell}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.Cell)
       com.google.bigtable.v2.CellOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -356,7 +309,7 @@ public  final class Cell extends
       return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_Cell_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.DataProto.internal_static_google_bigtable_v2_Cell_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -369,13 +322,12 @@ public  final class Cell extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -422,32 +374,6 @@ public  final class Cell extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.Cell) {
         return mergeFrom((com.google.bigtable.v2.Cell)other);
@@ -492,7 +418,7 @@ public  final class Cell extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.Cell) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -504,6 +430,8 @@ public  final class Cell extends
 
     private long timestampMicros_ ;
     /**
+     * <code>optional int64 timestamp_micros = 1;</code>
+     *
      * <pre>
      * The cell's stored timestamp, which also uniquely identifies it within
      * its column.
@@ -512,13 +440,13 @@ public  final class Cell extends
      * example, a table which specifies millisecond granularity will only allow
      * values of `timestamp_micros` which are multiples of 1000.
      * </pre>
-     *
-     * <code>optional int64 timestamp_micros = 1;</code>
      */
     public long getTimestampMicros() {
       return timestampMicros_;
     }
     /**
+     * <code>optional int64 timestamp_micros = 1;</code>
+     *
      * <pre>
      * The cell's stored timestamp, which also uniquely identifies it within
      * its column.
@@ -527,8 +455,6 @@ public  final class Cell extends
      * example, a table which specifies millisecond granularity will only allow
      * values of `timestamp_micros` which are multiples of 1000.
      * </pre>
-     *
-     * <code>optional int64 timestamp_micros = 1;</code>
      */
     public Builder setTimestampMicros(long value) {
       
@@ -537,6 +463,8 @@ public  final class Cell extends
       return this;
     }
     /**
+     * <code>optional int64 timestamp_micros = 1;</code>
+     *
      * <pre>
      * The cell's stored timestamp, which also uniquely identifies it within
      * its column.
@@ -545,8 +473,6 @@ public  final class Cell extends
      * example, a table which specifies millisecond granularity will only allow
      * values of `timestamp_micros` which are multiples of 1000.
      * </pre>
-     *
-     * <code>optional int64 timestamp_micros = 1;</code>
      */
     public Builder clearTimestampMicros() {
       
@@ -557,25 +483,25 @@ public  final class Cell extends
 
     private com.google.protobuf.ByteString value_ = com.google.protobuf.ByteString.EMPTY;
     /**
+     * <code>optional bytes value = 2;</code>
+     *
      * <pre>
      * The value stored in the cell.
      * May contain any byte string, including the empty string, up to 100MiB in
      * length.
      * </pre>
-     *
-     * <code>optional bytes value = 2;</code>
      */
     public com.google.protobuf.ByteString getValue() {
       return value_;
     }
     /**
+     * <code>optional bytes value = 2;</code>
+     *
      * <pre>
      * The value stored in the cell.
      * May contain any byte string, including the empty string, up to 100MiB in
      * length.
      * </pre>
-     *
-     * <code>optional bytes value = 2;</code>
      */
     public Builder setValue(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -587,13 +513,13 @@ public  final class Cell extends
       return this;
     }
     /**
+     * <code>optional bytes value = 2;</code>
+     *
      * <pre>
      * The value stored in the cell.
      * May contain any byte string, including the empty string, up to 100MiB in
      * length.
      * </pre>
-     *
-     * <code>optional bytes value = 2;</code>
      */
     public Builder clearValue() {
       
@@ -610,53 +536,53 @@ public  final class Cell extends
        }
     }
     /**
+     * <code>repeated string labels = 3;</code>
+     *
      * <pre>
      * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
-     *
-     * <code>repeated string labels = 3;</code>
      */
     public com.google.protobuf.ProtocolStringList
         getLabelsList() {
       return labels_.getUnmodifiableView();
     }
     /**
+     * <code>repeated string labels = 3;</code>
+     *
      * <pre>
      * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
-     *
-     * <code>repeated string labels = 3;</code>
      */
     public int getLabelsCount() {
       return labels_.size();
     }
     /**
+     * <code>repeated string labels = 3;</code>
+     *
      * <pre>
      * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
-     *
-     * <code>repeated string labels = 3;</code>
      */
     public java.lang.String getLabels(int index) {
       return labels_.get(index);
     }
     /**
+     * <code>repeated string labels = 3;</code>
+     *
      * <pre>
      * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
-     *
-     * <code>repeated string labels = 3;</code>
      */
     public com.google.protobuf.ByteString
         getLabelsBytes(int index) {
       return labels_.getByteString(index);
     }
     /**
+     * <code>repeated string labels = 3;</code>
+     *
      * <pre>
      * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
-     *
-     * <code>repeated string labels = 3;</code>
      */
     public Builder setLabels(
         int index, java.lang.String value) {
@@ -669,11 +595,11 @@ public  final class Cell extends
       return this;
     }
     /**
+     * <code>repeated string labels = 3;</code>
+     *
      * <pre>
      * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
-     *
-     * <code>repeated string labels = 3;</code>
      */
     public Builder addLabels(
         java.lang.String value) {
@@ -686,11 +612,11 @@ public  final class Cell extends
       return this;
     }
     /**
+     * <code>repeated string labels = 3;</code>
+     *
      * <pre>
      * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
-     *
-     * <code>repeated string labels = 3;</code>
      */
     public Builder addAllLabels(
         java.lang.Iterable<java.lang.String> values) {
@@ -701,11 +627,11 @@ public  final class Cell extends
       return this;
     }
     /**
+     * <code>repeated string labels = 3;</code>
+     *
      * <pre>
      * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
-     *
-     * <code>repeated string labels = 3;</code>
      */
     public Builder clearLabels() {
       labels_ = com.google.protobuf.LazyStringArrayList.EMPTY;
@@ -714,11 +640,11 @@ public  final class Cell extends
       return this;
     }
     /**
+     * <code>repeated string labels = 3;</code>
+     *
      * <pre>
      * Labels applied to the cell by a [RowFilter][google.bigtable.v2.RowFilter].
      * </pre>
-     *
-     * <code>repeated string labels = 3;</code>
      */
     public Builder addLabelsBytes(
         com.google.protobuf.ByteString value) {
@@ -761,7 +687,16 @@ public  final class Cell extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new Cell(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

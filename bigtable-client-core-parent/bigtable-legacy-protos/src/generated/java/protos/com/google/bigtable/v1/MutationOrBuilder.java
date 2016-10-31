@@ -8,70 +8,70 @@ public interface MutationOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional .google.bigtable.v1.Mutation.SetCell set_cell = 1;</code>
+   *
    * <pre>
    * Set a cell's value.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v1.Mutation.SetCell set_cell = 1;</code>
    */
   com.google.bigtable.v1.Mutation.SetCell getSetCell();
   /**
+   * <code>optional .google.bigtable.v1.Mutation.SetCell set_cell = 1;</code>
+   *
    * <pre>
    * Set a cell's value.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v1.Mutation.SetCell set_cell = 1;</code>
    */
   com.google.bigtable.v1.Mutation.SetCellOrBuilder getSetCellOrBuilder();
 
   /**
+   * <code>optional .google.bigtable.v1.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+   *
    * <pre>
    * Deletes cells from a column.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v1.Mutation.DeleteFromColumn delete_from_column = 2;</code>
    */
   com.google.bigtable.v1.Mutation.DeleteFromColumn getDeleteFromColumn();
   /**
+   * <code>optional .google.bigtable.v1.Mutation.DeleteFromColumn delete_from_column = 2;</code>
+   *
    * <pre>
    * Deletes cells from a column.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v1.Mutation.DeleteFromColumn delete_from_column = 2;</code>
    */
   com.google.bigtable.v1.Mutation.DeleteFromColumnOrBuilder getDeleteFromColumnOrBuilder();
 
   /**
+   * <code>optional .google.bigtable.v1.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+   *
    * <pre>
    * Deletes cells from a column family.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v1.Mutation.DeleteFromFamily delete_from_family = 3;</code>
    */
   com.google.bigtable.v1.Mutation.DeleteFromFamily getDeleteFromFamily();
   /**
+   * <code>optional .google.bigtable.v1.Mutation.DeleteFromFamily delete_from_family = 3;</code>
+   *
    * <pre>
    * Deletes cells from a column family.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v1.Mutation.DeleteFromFamily delete_from_family = 3;</code>
    */
   com.google.bigtable.v1.Mutation.DeleteFromFamilyOrBuilder getDeleteFromFamilyOrBuilder();
 
   /**
+   * <code>optional .google.bigtable.v1.Mutation.DeleteFromRow delete_from_row = 4;</code>
+   *
    * <pre>
    * Deletes cells from the entire row.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v1.Mutation.DeleteFromRow delete_from_row = 4;</code>
    */
   com.google.bigtable.v1.Mutation.DeleteFromRow getDeleteFromRow();
   /**
+   * <code>optional .google.bigtable.v1.Mutation.DeleteFromRow delete_from_row = 4;</code>
+   *
    * <pre>
    * Deletes cells from the entire row.
    * </pre>
-   *
-   * <code>optional .google.bigtable.v1.Mutation.DeleteFromRow delete_from_row = 4;</code>
    */
   com.google.bigtable.v1.Mutation.DeleteFromRowOrBuilder getDeleteFromRowOrBuilder();
 

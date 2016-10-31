@@ -8,6 +8,8 @@ public interface FamilyOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional string name = 1;</code>
+   *
    * <pre>
    * The unique key which identifies this family within its row. This is the
    * same key that's used to identify the family in, for example, a RowFilter
@@ -16,11 +18,11 @@ public interface FamilyOrBuilder extends
    * produce cells in a sentinel family with an empty name.
    * Must be no greater than 64 characters in length.
    * </pre>
-   *
-   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
+   * <code>optional string name = 1;</code>
+   *
    * <pre>
    * The unique key which identifies this family within its row. This is the
    * same key that's used to identify the family in, for example, a RowFilter
@@ -29,52 +31,50 @@ public interface FamilyOrBuilder extends
    * produce cells in a sentinel family with an empty name.
    * Must be no greater than 64 characters in length.
    * </pre>
-   *
-   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
+   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
+   *
    * <pre>
    * Must not be empty. Sorted in order of increasing "qualifier".
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
    */
   java.util.List<com.google.bigtable.v1.Column> 
       getColumnsList();
   /**
+   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
+   *
    * <pre>
    * Must not be empty. Sorted in order of increasing "qualifier".
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
    */
   com.google.bigtable.v1.Column getColumns(int index);
   /**
+   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
+   *
    * <pre>
    * Must not be empty. Sorted in order of increasing "qualifier".
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
    */
   int getColumnsCount();
   /**
+   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
+   *
    * <pre>
    * Must not be empty. Sorted in order of increasing "qualifier".
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
    */
   java.util.List<? extends com.google.bigtable.v1.ColumnOrBuilder> 
       getColumnsOrBuilderList();
   /**
+   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
+   *
    * <pre>
    * Must not be empty. Sorted in order of increasing "qualifier".
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v1.Column columns = 2;</code>
    */
   com.google.bigtable.v1.ColumnOrBuilder getColumnsOrBuilder(
       int index);

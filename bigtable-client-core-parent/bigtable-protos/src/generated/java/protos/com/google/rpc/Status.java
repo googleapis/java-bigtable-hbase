@@ -4,6 +4,8 @@
 package com.google.rpc;
 
 /**
+ * Protobuf type {@code google.rpc.Status}
+ *
  * <pre>
  * The `Status` type defines a logical error model that is suitable for different
  * programming environments, including REST APIs and RPC APIs. It is used by
@@ -45,15 +47,13 @@ package com.google.rpc;
  * - Logging. If some API errors are stored in logs, the message `Status` could
  *     be used directly after any stripping needed for security/privacy reasons.
  * </pre>
- *
- * Protobuf type {@code google.rpc.Status}
  */
 public  final class Status extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.rpc.Status)
     StatusOrBuilder {
   // Use Status.newBuilder() to construct.
-  private Status(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private Status(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private Status() {
@@ -69,8 +69,7 @@ public  final class Status extends
   }
   private Status(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -103,17 +102,17 @@ public  final class Status extends
               details_ = new java.util.ArrayList<com.google.protobuf.Any>();
               mutable_bitField0_ |= 0x00000004;
             }
-            details_.add(
-                input.readMessage(com.google.protobuf.Any.parser(), extensionRegistry));
+            details_.add(input.readMessage(com.google.protobuf.Any.parser(), extensionRegistry));
             break;
           }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
         details_ = java.util.Collections.unmodifiableList(details_);
@@ -126,7 +125,7 @@ public  final class Status extends
     return com.google.rpc.StatusProto.internal_static_google_rpc_Status_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.rpc.StatusProto.internal_static_google_rpc_Status_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -137,11 +136,11 @@ public  final class Status extends
   public static final int CODE_FIELD_NUMBER = 1;
   private int code_;
   /**
+   * <code>optional int32 code = 1;</code>
+   *
    * <pre>
    * The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
    * </pre>
-   *
-   * <code>optional int32 code = 1;</code>
    */
   public int getCode() {
     return code_;
@@ -150,13 +149,13 @@ public  final class Status extends
   public static final int MESSAGE_FIELD_NUMBER = 2;
   private volatile java.lang.Object message_;
   /**
+   * <code>optional string message = 2;</code>
+   *
    * <pre>
    * A developer-facing error message, which should be in English. Any
    * user-facing error message should be localized and sent in the
    * [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
    * </pre>
-   *
-   * <code>optional string message = 2;</code>
    */
   public java.lang.String getMessage() {
     java.lang.Object ref = message_;
@@ -171,13 +170,13 @@ public  final class Status extends
     }
   }
   /**
+   * <code>optional string message = 2;</code>
+   *
    * <pre>
    * A developer-facing error message, which should be in English. Any
    * user-facing error message should be localized and sent in the
    * [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
    * </pre>
-   *
-   * <code>optional string message = 2;</code>
    */
   public com.google.protobuf.ByteString
       getMessageBytes() {
@@ -196,57 +195,57 @@ public  final class Status extends
   public static final int DETAILS_FIELD_NUMBER = 3;
   private java.util.List<com.google.protobuf.Any> details_;
   /**
+   * <code>repeated .google.protobuf.Any details = 3;</code>
+   *
    * <pre>
    * A list of messages that carry the error details.  There will be a
    * common set of message types for APIs to use.
    * </pre>
-   *
-   * <code>repeated .google.protobuf.Any details = 3;</code>
    */
   public java.util.List<com.google.protobuf.Any> getDetailsList() {
     return details_;
   }
   /**
+   * <code>repeated .google.protobuf.Any details = 3;</code>
+   *
    * <pre>
    * A list of messages that carry the error details.  There will be a
    * common set of message types for APIs to use.
    * </pre>
-   *
-   * <code>repeated .google.protobuf.Any details = 3;</code>
    */
   public java.util.List<? extends com.google.protobuf.AnyOrBuilder> 
       getDetailsOrBuilderList() {
     return details_;
   }
   /**
+   * <code>repeated .google.protobuf.Any details = 3;</code>
+   *
    * <pre>
    * A list of messages that carry the error details.  There will be a
    * common set of message types for APIs to use.
    * </pre>
-   *
-   * <code>repeated .google.protobuf.Any details = 3;</code>
    */
   public int getDetailsCount() {
     return details_.size();
   }
   /**
+   * <code>repeated .google.protobuf.Any details = 3;</code>
+   *
    * <pre>
    * A list of messages that carry the error details.  There will be a
    * common set of message types for APIs to use.
    * </pre>
-   *
-   * <code>repeated .google.protobuf.Any details = 3;</code>
    */
   public com.google.protobuf.Any getDetails(int index) {
     return details_.get(index);
   }
   /**
+   * <code>repeated .google.protobuf.Any details = 3;</code>
+   *
    * <pre>
    * A list of messages that carry the error details.  There will be a
    * common set of message types for APIs to use.
    * </pre>
-   *
-   * <code>repeated .google.protobuf.Any details = 3;</code>
    */
   public com.google.protobuf.AnyOrBuilder getDetailsOrBuilder(
       int index) {
@@ -269,7 +268,7 @@ public  final class Status extends
       output.writeInt32(1, code_);
     }
     if (!getMessageBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, message_);
+      com.google.protobuf.GeneratedMessage.writeString(output, 2, message_);
     }
     for (int i = 0; i < details_.size(); i++) {
       output.writeMessage(3, details_.get(i));
@@ -286,7 +285,7 @@ public  final class Status extends
         .computeInt32Size(1, code_);
     }
     if (!getMessageBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, message_);
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, message_);
     }
     for (int i = 0; i < details_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
@@ -297,46 +296,6 @@ public  final class Status extends
   }
 
   private static final long serialVersionUID = 0L;
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof com.google.rpc.Status)) {
-      return super.equals(obj);
-    }
-    com.google.rpc.Status other = (com.google.rpc.Status) obj;
-
-    boolean result = true;
-    result = result && (getCode()
-        == other.getCode());
-    result = result && getMessage()
-        .equals(other.getMessage());
-    result = result && getDetailsList()
-        .equals(other.getDetailsList());
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
-    hash = (37 * hash) + CODE_FIELD_NUMBER;
-    hash = (53 * hash) + getCode();
-    hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
-    hash = (53 * hash) + getMessage().hashCode();
-    if (getDetailsCount() > 0) {
-      hash = (37 * hash) + DETAILS_FIELD_NUMBER;
-      hash = (53 * hash) + getDetailsList().hashCode();
-    }
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
-  }
-
   public static com.google.rpc.Status parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -360,40 +319,34 @@ public  final class Status extends
   }
   public static com.google.rpc.Status parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.rpc.Status parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.rpc.Status parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.rpc.Status parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.rpc.Status parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.rpc.Status parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -410,11 +363,13 @@ public  final class Status extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.rpc.Status}
+   *
    * <pre>
    * The `Status` type defines a logical error model that is suitable for different
    * programming environments, including REST APIs and RPC APIs. It is used by
@@ -456,11 +411,9 @@ public  final class Status extends
    * - Logging. If some API errors are stored in logs, the message `Status` could
    *     be used directly after any stripping needed for security/privacy reasons.
    * </pre>
-   *
-   * Protobuf type {@code google.rpc.Status}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.rpc.Status)
       com.google.rpc.StatusOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -468,7 +421,7 @@ public  final class Status extends
       return com.google.rpc.StatusProto.internal_static_google_rpc_Status_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.StatusProto.internal_static_google_rpc_Status_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -481,13 +434,12 @@ public  final class Status extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         getDetailsFieldBuilder();
       }
     }
@@ -543,32 +495,6 @@ public  final class Status extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.rpc.Status) {
         return mergeFrom((com.google.rpc.Status)other);
@@ -606,7 +532,7 @@ public  final class Status extends
             details_ = other.details_;
             bitField0_ = (bitField0_ & ~0x00000004);
             detailsBuilder_ = 
-              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                  getDetailsFieldBuilder() : null;
           } else {
             detailsBuilder_.addAllMessages(other.details_);
@@ -630,7 +556,7 @@ public  final class Status extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.rpc.Status) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -642,21 +568,21 @@ public  final class Status extends
 
     private int code_ ;
     /**
+     * <code>optional int32 code = 1;</code>
+     *
      * <pre>
      * The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
      * </pre>
-     *
-     * <code>optional int32 code = 1;</code>
      */
     public int getCode() {
       return code_;
     }
     /**
+     * <code>optional int32 code = 1;</code>
+     *
      * <pre>
      * The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
      * </pre>
-     *
-     * <code>optional int32 code = 1;</code>
      */
     public Builder setCode(int value) {
       
@@ -665,11 +591,11 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>optional int32 code = 1;</code>
+     *
      * <pre>
      * The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
      * </pre>
-     *
-     * <code>optional int32 code = 1;</code>
      */
     public Builder clearCode() {
       
@@ -680,13 +606,13 @@ public  final class Status extends
 
     private java.lang.Object message_ = "";
     /**
+     * <code>optional string message = 2;</code>
+     *
      * <pre>
      * A developer-facing error message, which should be in English. Any
      * user-facing error message should be localized and sent in the
      * [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
      * </pre>
-     *
-     * <code>optional string message = 2;</code>
      */
     public java.lang.String getMessage() {
       java.lang.Object ref = message_;
@@ -701,13 +627,13 @@ public  final class Status extends
       }
     }
     /**
+     * <code>optional string message = 2;</code>
+     *
      * <pre>
      * A developer-facing error message, which should be in English. Any
      * user-facing error message should be localized and sent in the
      * [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
      * </pre>
-     *
-     * <code>optional string message = 2;</code>
      */
     public com.google.protobuf.ByteString
         getMessageBytes() {
@@ -723,13 +649,13 @@ public  final class Status extends
       }
     }
     /**
+     * <code>optional string message = 2;</code>
+     *
      * <pre>
      * A developer-facing error message, which should be in English. Any
      * user-facing error message should be localized and sent in the
      * [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
      * </pre>
-     *
-     * <code>optional string message = 2;</code>
      */
     public Builder setMessage(
         java.lang.String value) {
@@ -742,13 +668,13 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>optional string message = 2;</code>
+     *
      * <pre>
      * A developer-facing error message, which should be in English. Any
      * user-facing error message should be localized and sent in the
      * [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
      * </pre>
-     *
-     * <code>optional string message = 2;</code>
      */
     public Builder clearMessage() {
       
@@ -757,13 +683,13 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>optional string message = 2;</code>
+     *
      * <pre>
      * A developer-facing error message, which should be in English. Any
      * user-facing error message should be localized and sent in the
      * [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
      * </pre>
-     *
-     * <code>optional string message = 2;</code>
      */
     public Builder setMessageBytes(
         com.google.protobuf.ByteString value) {
@@ -786,16 +712,16 @@ public  final class Status extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilderV3<
+    private com.google.protobuf.RepeatedFieldBuilder<
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> detailsBuilder_;
 
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public java.util.List<com.google.protobuf.Any> getDetailsList() {
       if (detailsBuilder_ == null) {
@@ -805,12 +731,12 @@ public  final class Status extends
       }
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public int getDetailsCount() {
       if (detailsBuilder_ == null) {
@@ -820,12 +746,12 @@ public  final class Status extends
       }
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public com.google.protobuf.Any getDetails(int index) {
       if (detailsBuilder_ == null) {
@@ -835,12 +761,12 @@ public  final class Status extends
       }
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public Builder setDetails(
         int index, com.google.protobuf.Any value) {
@@ -857,12 +783,12 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public Builder setDetails(
         int index, com.google.protobuf.Any.Builder builderForValue) {
@@ -876,12 +802,12 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public Builder addDetails(com.google.protobuf.Any value) {
       if (detailsBuilder_ == null) {
@@ -897,12 +823,12 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public Builder addDetails(
         int index, com.google.protobuf.Any value) {
@@ -919,12 +845,12 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public Builder addDetails(
         com.google.protobuf.Any.Builder builderForValue) {
@@ -938,12 +864,12 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public Builder addDetails(
         int index, com.google.protobuf.Any.Builder builderForValue) {
@@ -957,12 +883,12 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public Builder addAllDetails(
         java.lang.Iterable<? extends com.google.protobuf.Any> values) {
@@ -977,12 +903,12 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public Builder clearDetails() {
       if (detailsBuilder_ == null) {
@@ -995,12 +921,12 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public Builder removeDetails(int index) {
       if (detailsBuilder_ == null) {
@@ -1013,24 +939,24 @@ public  final class Status extends
       return this;
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public com.google.protobuf.Any.Builder getDetailsBuilder(
         int index) {
       return getDetailsFieldBuilder().getBuilder(index);
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public com.google.protobuf.AnyOrBuilder getDetailsOrBuilder(
         int index) {
@@ -1040,12 +966,12 @@ public  final class Status extends
       }
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public java.util.List<? extends com.google.protobuf.AnyOrBuilder> 
          getDetailsOrBuilderList() {
@@ -1056,24 +982,24 @@ public  final class Status extends
       }
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public com.google.protobuf.Any.Builder addDetailsBuilder() {
       return getDetailsFieldBuilder().addBuilder(
           com.google.protobuf.Any.getDefaultInstance());
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public com.google.protobuf.Any.Builder addDetailsBuilder(
         int index) {
@@ -1081,22 +1007,22 @@ public  final class Status extends
           index, com.google.protobuf.Any.getDefaultInstance());
     }
     /**
+     * <code>repeated .google.protobuf.Any details = 3;</code>
+     *
      * <pre>
      * A list of messages that carry the error details.  There will be a
      * common set of message types for APIs to use.
      * </pre>
-     *
-     * <code>repeated .google.protobuf.Any details = 3;</code>
      */
     public java.util.List<com.google.protobuf.Any.Builder> 
          getDetailsBuilderList() {
       return getDetailsFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilderV3<
+    private com.google.protobuf.RepeatedFieldBuilder<
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
         getDetailsFieldBuilder() {
       if (detailsBuilder_ == null) {
-        detailsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+        detailsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
             com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>(
                 details_,
                 ((bitField0_ & 0x00000004) == 0x00000004),
@@ -1136,7 +1062,16 @@ public  final class Status extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new Status(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

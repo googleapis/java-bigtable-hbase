@@ -4,18 +4,18 @@
 package com.google.bigtable.v2;
 
 /**
+ * Protobuf type {@code google.bigtable.v2.MutateRowRequest}
+ *
  * <pre>
  * Request message for Bigtable.MutateRow.
  * </pre>
- *
- * Protobuf type {@code google.bigtable.v2.MutateRowRequest}
  */
 public  final class MutateRowRequest extends
-    com.google.protobuf.GeneratedMessageV3 implements
+    com.google.protobuf.GeneratedMessage implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.MutateRowRequest)
     MutateRowRequestOrBuilder {
   // Use MutateRowRequest.newBuilder() to construct.
-  private MutateRowRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private MutateRowRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
   private MutateRowRequest() {
@@ -31,8 +31,7 @@ public  final class MutateRowRequest extends
   }
   private MutateRowRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-      throws com.google.protobuf.InvalidProtocolBufferException {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -65,17 +64,17 @@ public  final class MutateRowRequest extends
               mutations_ = new java.util.ArrayList<com.google.bigtable.v2.Mutation>();
               mutable_bitField0_ |= 0x00000004;
             }
-            mutations_.add(
-                input.readMessage(com.google.bigtable.v2.Mutation.parser(), extensionRegistry));
+            mutations_.add(input.readMessage(com.google.bigtable.v2.Mutation.parser(), extensionRegistry));
             break;
           }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw e.setUnfinishedMessage(this);
+      throw new RuntimeException(e.setUnfinishedMessage(this));
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new RuntimeException(
+          new com.google.protobuf.InvalidProtocolBufferException(
+              e.getMessage()).setUnfinishedMessage(this));
     } finally {
       if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
         mutations_ = java.util.Collections.unmodifiableList(mutations_);
@@ -88,7 +87,7 @@ public  final class MutateRowRequest extends
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -99,13 +98,13 @@ public  final class MutateRowRequest extends
   public static final int TABLE_NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object tableName_;
   /**
+   * <code>optional string table_name = 1;</code>
+   *
    * <pre>
    * The unique name of the table to which the mutation should be applied.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
-   *
-   * <code>optional string table_name = 1;</code>
    */
   public java.lang.String getTableName() {
     java.lang.Object ref = tableName_;
@@ -120,13 +119,13 @@ public  final class MutateRowRequest extends
     }
   }
   /**
+   * <code>optional string table_name = 1;</code>
+   *
    * <pre>
    * The unique name of the table to which the mutation should be applied.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
-   *
-   * <code>optional string table_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getTableNameBytes() {
@@ -145,11 +144,11 @@ public  final class MutateRowRequest extends
   public static final int ROW_KEY_FIELD_NUMBER = 2;
   private com.google.protobuf.ByteString rowKey_;
   /**
+   * <code>optional bytes row_key = 2;</code>
+   *
    * <pre>
    * The key of the row to which the mutation should be applied.
    * </pre>
-   *
-   * <code>optional bytes row_key = 2;</code>
    */
   public com.google.protobuf.ByteString getRowKey() {
     return rowKey_;
@@ -158,62 +157,62 @@ public  final class MutateRowRequest extends
   public static final int MUTATIONS_FIELD_NUMBER = 3;
   private java.util.List<com.google.bigtable.v2.Mutation> mutations_;
   /**
+   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+   *
    * <pre>
    * Changes to be atomically applied to the specified row. Entries are applied
    * in order, meaning that earlier mutations can be masked by later ones.
    * Must contain at least one entry and at most 100000.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
    */
   public java.util.List<com.google.bigtable.v2.Mutation> getMutationsList() {
     return mutations_;
   }
   /**
+   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+   *
    * <pre>
    * Changes to be atomically applied to the specified row. Entries are applied
    * in order, meaning that earlier mutations can be masked by later ones.
    * Must contain at least one entry and at most 100000.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
    */
   public java.util.List<? extends com.google.bigtable.v2.MutationOrBuilder> 
       getMutationsOrBuilderList() {
     return mutations_;
   }
   /**
+   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+   *
    * <pre>
    * Changes to be atomically applied to the specified row. Entries are applied
    * in order, meaning that earlier mutations can be masked by later ones.
    * Must contain at least one entry and at most 100000.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
    */
   public int getMutationsCount() {
     return mutations_.size();
   }
   /**
+   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+   *
    * <pre>
    * Changes to be atomically applied to the specified row. Entries are applied
    * in order, meaning that earlier mutations can be masked by later ones.
    * Must contain at least one entry and at most 100000.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
    */
   public com.google.bigtable.v2.Mutation getMutations(int index) {
     return mutations_.get(index);
   }
   /**
+   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+   *
    * <pre>
    * Changes to be atomically applied to the specified row. Entries are applied
    * in order, meaning that earlier mutations can be masked by later ones.
    * Must contain at least one entry and at most 100000.
    * </pre>
-   *
-   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
    */
   public com.google.bigtable.v2.MutationOrBuilder getMutationsOrBuilder(
       int index) {
@@ -233,7 +232,7 @@ public  final class MutateRowRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getTableNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, tableName_);
+      com.google.protobuf.GeneratedMessage.writeString(output, 1, tableName_);
     }
     if (!rowKey_.isEmpty()) {
       output.writeBytes(2, rowKey_);
@@ -249,7 +248,7 @@ public  final class MutateRowRequest extends
 
     size = 0;
     if (!getTableNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, tableName_);
+      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, tableName_);
     }
     if (!rowKey_.isEmpty()) {
       size += com.google.protobuf.CodedOutputStream
@@ -264,46 +263,6 @@ public  final class MutateRowRequest extends
   }
 
   private static final long serialVersionUID = 0L;
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof com.google.bigtable.v2.MutateRowRequest)) {
-      return super.equals(obj);
-    }
-    com.google.bigtable.v2.MutateRowRequest other = (com.google.bigtable.v2.MutateRowRequest) obj;
-
-    boolean result = true;
-    result = result && getTableName()
-        .equals(other.getTableName());
-    result = result && getRowKey()
-        .equals(other.getRowKey());
-    result = result && getMutationsList()
-        .equals(other.getMutationsList());
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
-    hash = (37 * hash) + TABLE_NAME_FIELD_NUMBER;
-    hash = (53 * hash) + getTableName().hashCode();
-    hash = (37 * hash) + ROW_KEY_FIELD_NUMBER;
-    hash = (53 * hash) + getRowKey().hashCode();
-    if (getMutationsCount() > 0) {
-      hash = (37 * hash) + MUTATIONS_FIELD_NUMBER;
-      hash = (53 * hash) + getMutationsList().hashCode();
-    }
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
-  }
-
   public static com.google.bigtable.v2.MutateRowRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -327,40 +286,34 @@ public  final class MutateRowRequest extends
   }
   public static com.google.bigtable.v2.MutateRowRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.v2.MutateRowRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.v2.MutateRowRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static com.google.bigtable.v2.MutateRowRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static com.google.bigtable.v2.MutateRowRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static com.google.bigtable.v2.MutateRowRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -377,19 +330,19 @@ public  final class MutateRowRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
+   * Protobuf type {@code google.bigtable.v2.MutateRowRequest}
+   *
    * <pre>
    * Request message for Bigtable.MutateRow.
    * </pre>
-   *
-   * Protobuf type {@code google.bigtable.v2.MutateRowRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.MutateRowRequest)
       com.google.bigtable.v2.MutateRowRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -397,7 +350,7 @@ public  final class MutateRowRequest extends
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_MutateRowRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -410,13 +363,12 @@ public  final class MutateRowRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         getMutationsFieldBuilder();
       }
     }
@@ -472,32 +424,6 @@ public  final class MutateRowRequest extends
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.MutateRowRequest) {
         return mergeFrom((com.google.bigtable.v2.MutateRowRequest)other);
@@ -535,7 +461,7 @@ public  final class MutateRowRequest extends
             mutations_ = other.mutations_;
             bitField0_ = (bitField0_ & ~0x00000004);
             mutationsBuilder_ = 
-              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                  getMutationsFieldBuilder() : null;
           } else {
             mutationsBuilder_.addAllMessages(other.mutations_);
@@ -559,7 +485,7 @@ public  final class MutateRowRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.MutateRowRequest) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -571,13 +497,13 @@ public  final class MutateRowRequest extends
 
     private java.lang.Object tableName_ = "";
     /**
+     * <code>optional string table_name = 1;</code>
+     *
      * <pre>
      * The unique name of the table to which the mutation should be applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
-     *
-     * <code>optional string table_name = 1;</code>
      */
     public java.lang.String getTableName() {
       java.lang.Object ref = tableName_;
@@ -592,13 +518,13 @@ public  final class MutateRowRequest extends
       }
     }
     /**
+     * <code>optional string table_name = 1;</code>
+     *
      * <pre>
      * The unique name of the table to which the mutation should be applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
-     *
-     * <code>optional string table_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getTableNameBytes() {
@@ -614,13 +540,13 @@ public  final class MutateRowRequest extends
       }
     }
     /**
+     * <code>optional string table_name = 1;</code>
+     *
      * <pre>
      * The unique name of the table to which the mutation should be applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
-     *
-     * <code>optional string table_name = 1;</code>
      */
     public Builder setTableName(
         java.lang.String value) {
@@ -633,13 +559,13 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>optional string table_name = 1;</code>
+     *
      * <pre>
      * The unique name of the table to which the mutation should be applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
-     *
-     * <code>optional string table_name = 1;</code>
      */
     public Builder clearTableName() {
       
@@ -648,13 +574,13 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>optional string table_name = 1;</code>
+     *
      * <pre>
      * The unique name of the table to which the mutation should be applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
-     *
-     * <code>optional string table_name = 1;</code>
      */
     public Builder setTableNameBytes(
         com.google.protobuf.ByteString value) {
@@ -670,21 +596,21 @@ public  final class MutateRowRequest extends
 
     private com.google.protobuf.ByteString rowKey_ = com.google.protobuf.ByteString.EMPTY;
     /**
+     * <code>optional bytes row_key = 2;</code>
+     *
      * <pre>
      * The key of the row to which the mutation should be applied.
      * </pre>
-     *
-     * <code>optional bytes row_key = 2;</code>
      */
     public com.google.protobuf.ByteString getRowKey() {
       return rowKey_;
     }
     /**
+     * <code>optional bytes row_key = 2;</code>
+     *
      * <pre>
      * The key of the row to which the mutation should be applied.
      * </pre>
-     *
-     * <code>optional bytes row_key = 2;</code>
      */
     public Builder setRowKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -696,11 +622,11 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>optional bytes row_key = 2;</code>
+     *
      * <pre>
      * The key of the row to which the mutation should be applied.
      * </pre>
-     *
-     * <code>optional bytes row_key = 2;</code>
      */
     public Builder clearRowKey() {
       
@@ -718,17 +644,17 @@ public  final class MutateRowRequest extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilderV3<
+    private com.google.protobuf.RepeatedFieldBuilder<
         com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder> mutationsBuilder_;
 
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public java.util.List<com.google.bigtable.v2.Mutation> getMutationsList() {
       if (mutationsBuilder_ == null) {
@@ -738,13 +664,13 @@ public  final class MutateRowRequest extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public int getMutationsCount() {
       if (mutationsBuilder_ == null) {
@@ -754,13 +680,13 @@ public  final class MutateRowRequest extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public com.google.bigtable.v2.Mutation getMutations(int index) {
       if (mutationsBuilder_ == null) {
@@ -770,13 +696,13 @@ public  final class MutateRowRequest extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public Builder setMutations(
         int index, com.google.bigtable.v2.Mutation value) {
@@ -793,13 +719,13 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public Builder setMutations(
         int index, com.google.bigtable.v2.Mutation.Builder builderForValue) {
@@ -813,13 +739,13 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public Builder addMutations(com.google.bigtable.v2.Mutation value) {
       if (mutationsBuilder_ == null) {
@@ -835,13 +761,13 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public Builder addMutations(
         int index, com.google.bigtable.v2.Mutation value) {
@@ -858,13 +784,13 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public Builder addMutations(
         com.google.bigtable.v2.Mutation.Builder builderForValue) {
@@ -878,13 +804,13 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public Builder addMutations(
         int index, com.google.bigtable.v2.Mutation.Builder builderForValue) {
@@ -898,13 +824,13 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public Builder addAllMutations(
         java.lang.Iterable<? extends com.google.bigtable.v2.Mutation> values) {
@@ -919,13 +845,13 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public Builder clearMutations() {
       if (mutationsBuilder_ == null) {
@@ -938,13 +864,13 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public Builder removeMutations(int index) {
       if (mutationsBuilder_ == null) {
@@ -957,26 +883,26 @@ public  final class MutateRowRequest extends
       return this;
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public com.google.bigtable.v2.Mutation.Builder getMutationsBuilder(
         int index) {
       return getMutationsFieldBuilder().getBuilder(index);
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public com.google.bigtable.v2.MutationOrBuilder getMutationsOrBuilder(
         int index) {
@@ -986,13 +912,13 @@ public  final class MutateRowRequest extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public java.util.List<? extends com.google.bigtable.v2.MutationOrBuilder> 
          getMutationsOrBuilderList() {
@@ -1003,26 +929,26 @@ public  final class MutateRowRequest extends
       }
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public com.google.bigtable.v2.Mutation.Builder addMutationsBuilder() {
       return getMutationsFieldBuilder().addBuilder(
           com.google.bigtable.v2.Mutation.getDefaultInstance());
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public com.google.bigtable.v2.Mutation.Builder addMutationsBuilder(
         int index) {
@@ -1030,23 +956,23 @@ public  final class MutateRowRequest extends
           index, com.google.bigtable.v2.Mutation.getDefaultInstance());
     }
     /**
+     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
+     *
      * <pre>
      * Changes to be atomically applied to the specified row. Entries are applied
      * in order, meaning that earlier mutations can be masked by later ones.
      * Must contain at least one entry and at most 100000.
      * </pre>
-     *
-     * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
      */
     public java.util.List<com.google.bigtable.v2.Mutation.Builder> 
          getMutationsBuilderList() {
       return getMutationsFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilderV3<
+    private com.google.protobuf.RepeatedFieldBuilder<
         com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder> 
         getMutationsFieldBuilder() {
       if (mutationsBuilder_ == null) {
-        mutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+        mutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
             com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder>(
                 mutations_,
                 ((bitField0_ & 0x00000004) == 0x00000004),
@@ -1086,7 +1012,16 @@ public  final class MutateRowRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
+      try {
         return new MutateRowRequest(input, extensionRegistry);
+      } catch (RuntimeException e) {
+        if (e.getCause() instanceof
+            com.google.protobuf.InvalidProtocolBufferException) {
+          throw (com.google.protobuf.InvalidProtocolBufferException)
+              e.getCause();
+        }
+        throw e;
+      }
     }
   };
 

@@ -8,43 +8,43 @@ public interface ListClustersRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
+   * <code>optional string parent = 1;</code>
+   *
    * <pre>
    * The unique name of the instance for which a list of clusters is requested.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * Use &lt;instance&gt; = '-' to list Clusters for all Instances in a project,
    * for example "projects/myproject/instances/-"
    * </pre>
-   *
-   * <code>optional string parent = 1;</code>
    */
   java.lang.String getParent();
   /**
+   * <code>optional string parent = 1;</code>
+   *
    * <pre>
    * The unique name of the instance for which a list of clusters is requested.
    * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
    * Use &lt;instance&gt; = '-' to list Clusters for all Instances in a project,
    * for example "projects/myproject/instances/-"
    * </pre>
-   *
-   * <code>optional string parent = 1;</code>
    */
   com.google.protobuf.ByteString
       getParentBytes();
 
   /**
+   * <code>optional string page_token = 2;</code>
+   *
    * <pre>
    * The value of `next_page_token` returned by a previous call.
    * </pre>
-   *
-   * <code>optional string page_token = 2;</code>
    */
   java.lang.String getPageToken();
   /**
+   * <code>optional string page_token = 2;</code>
+   *
    * <pre>
    * The value of `next_page_token` returned by a previous call.
    * </pre>
-   *
-   * <code>optional string page_token = 2;</code>
    */
   com.google.protobuf.ByteString
       getPageTokenBytes();
