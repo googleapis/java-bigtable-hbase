@@ -1,0 +1,94 @@
+package com.google.cloud.bigtable.hbase;
+
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+
+public class ManyThreadDriver {
+
+  private static void runTest(String projectId, String instanceId, final String tableName) throws Exception {
+    Configuration configuration = new Configuration();
+    configuration.set("hbase.client.connection.impl", "com.google.cloud.bigtable.hbase1_0.BigtableConnection");
+    configuration.set("google.bigtable.project.id", projectId);
+    configuration.set("google.bigtable.instance.id", instanceId);
+    try (Connection connection = ConnectionFactory.createConnection(configuration)) {
+      Admin admin = connection.getAdmin();
+
+      HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(tableName));
+      descriptor.addFamily(new HColumnDescriptor("cf"));
+      try {
+        admin.createTable(descriptor);
+      } catch (IOException ignore) {
+        // Soldier on, maybe the table already exists.
+      }
+
+      final byte[] value = Bytes.toBytes(RandomStringUtils.randomAlphanumeric(Integer.parseInt(System.getProperty("valueSize", "1024"))));
+
+      int numThreads = Integer.parseInt(System.getProperty("numThreads", "1000"));
+      ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+      for (int i = 0; i < numThreads; i++) {
+        Runnable r = new Runnable() {
+          @Override
+          public void run() {
+            try {
+              final Table table = connection.getTable(TableName.valueOf(tableName));
+
+              while (true) {
+                // Workload: two reads and a write.
+                table.get(new Get(Bytes.toBytes(key())));
+                table.get(new Get(Bytes.toBytes(key())));
+                Put p = new Put(Bytes.toBytes(key()));
+                p.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("col"), value);
+                table.put(p);
+              }
+            } catch (Exception e) {
+              System.out.println(e.getMessage());
+            }
+          }
+        };
+        executor.execute(r);
+      }
+
+      // TODO Make a parameter
+      executor.awaitTermination(48, TimeUnit.HOURS);
+    }
+  }
+
+  private static String key() {
+    // TODO Make a parameter?
+    return "key-" + ThreadLocalRandom.current().nextInt(100000);
+  }
+
+  public static void main(String[] args) throws Exception {
+    // Consult system properties to get project/instance
+    // TODO Use standard hbase system properties?
+    String projectId = requiredProperty("bigtable.projectID");
+    String instanceId = requiredProperty("bigtable.instanceID");
+    String table = System.getProperty("bigtable.table", "ManyThreadDriver");
+    runTest(projectId, instanceId, table);
+  }
+
+
+  private static String requiredProperty(String prop) {
+      String value = System.getProperty(prop);
+      if (value == null) {
+        throw new IllegalArgumentException("Missing required system property: " + prop);
+      }
+      return value;
+  }
+}
