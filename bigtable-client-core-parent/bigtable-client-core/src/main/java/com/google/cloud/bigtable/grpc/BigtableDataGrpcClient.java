@@ -326,6 +326,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
    */
   protected <ReqT, RespT> ListenableFuture<List<RespT>> getStreamingFuture(ReqT request,
       BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
+    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return getCompletionFuture(createStreamingListener(request, rpc, tableName));
   }
 
