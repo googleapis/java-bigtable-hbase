@@ -301,7 +301,7 @@ public class BigtableSession implements Closeable {
 
     headerInterceptors = headerInterceptorBuilder.build();
 
-    ChannelPool dataChannel = createChannelPool(options.getDataHost());
+    ChannelPool dataChannel = createChannelPool(options.getDataHost(), options.getChannelCount());
 
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
@@ -442,7 +442,7 @@ public class BigtableSession implements Closeable {
    */
   public synchronized BigtableTableAdminClient getTableAdminClient() throws IOException {
     if (tableAdminClient == null) {
-      ManagedChannel channel = createChannelPool(options.getTableAdminHost());
+      ManagedChannel channel = createChannelPool(options.getTableAdminHost(), 1);
       tableAdminClient = new BigtableTableAdminGrpcClient(channel);
     }
     return tableAdminClient;
@@ -456,7 +456,7 @@ public class BigtableSession implements Closeable {
    */
   public synchronized BigtableInstanceClient getInstanceAdminClient() throws IOException {
     if (instanceAdminClient == null) {
-      ManagedChannel channel = createChannelPool(options.getInstanceAdminHost());
+      ManagedChannel channel = createChannelPool(options.getInstanceAdminHost(), 1);
       instanceAdminClient = new BigtableInstanceGrpcClient(channel);
     }
     return instanceAdminClient;
@@ -469,7 +469,7 @@ public class BigtableSession implements Closeable {
    * @return a {@link com.google.cloud.bigtable.grpc.io.ChannelPool} object.
    * @throws java.io.IOException if any.
    */
-  protected ChannelPool createChannelPool(final String hostString) throws IOException {
+  protected ChannelPool createChannelPool(final String hostString, int count) throws IOException {
     // TODO Go back to using host names once more extensive testing of the IPv6 issues.
     final InetSocketAddress serverAddress =
         new InetSocketAddress(InetAddress.getByName(hostString), options.getPort());
@@ -479,7 +479,7 @@ public class BigtableSession implements Closeable {
         return createNettyChannel(serverAddress, options);
       }
     };
-    ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory);
+    ChannelPool channelPool = new ChannelPool(headerInterceptors, channelFactory, count);
     managedChannels.add(channelPool);
     return channelPool;
   }
@@ -494,6 +494,21 @@ public class BigtableSession implements Closeable {
    * @throws GeneralSecurityException
    */
   public static ChannelPool createChannelPool(final String host, final BigtableOptions options)
+      throws IOException, GeneralSecurityException {
+    return createChannelPool(host, options, 1);
+  }
+
+  /**
+   * Create a new {@link com.google.cloud.bigtable.grpc.io.ChannelPool}, with auth headers.
+   *
+   * @param host a {@link String} object specifying the hsot to connect to.
+   * @param options a {@link BigtableOptions} object with the credentials, retry and other connection optiosn.
+   * @param count an int defining the number of channels to create 
+   * @return a {@link ChannelPool} object.
+   * @throws IOException if any.
+   * @throws GeneralSecurityException
+   */
+  public static ChannelPool createChannelPool(final String host, final BigtableOptions options, int count)
       throws IOException, GeneralSecurityException {
     HeaderInterceptor interceptor =
         CredentialInterceptorCache.getInstance()

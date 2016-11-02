@@ -326,7 +326,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
    */
   protected <ReqT, RespT> ListenableFuture<List<RespT>> getStreamingFuture(ReqT request,
       BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return getCompletionFuture(createStreamingListener(request, rpc, tableName));
   }
 
@@ -337,7 +336,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private <ReqT, RespT> ListenableFuture<RespT> getUnaryFuture(ReqT request,
       BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
     return getCompletionFuture(createUnaryListener(request, rpc, tableName));
   }
 
@@ -413,8 +411,6 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     final Timer.Context timerContext = readRowsAsync.getRpcMetrics().timeRpc();
     final AtomicBoolean wasCanceled = new AtomicBoolean(false);
 
-    expandPoolIfNecessary(this.bigtableOptions.getChannelCount());
-
     CallOptions callOptions = getCallOptions(readRowsAsync.getMethodDescriptor(), request);
     final ClientCall<ReadRowsRequest, ReadRowsResponse> readRowsCall =
         readRowsAsync.newCall(callOptions);
@@ -442,13 +438,5 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }, MoreExecutors.directExecutor());
 
     return new StreamingBigtableResultScanner(reader, cancellationToken);
-  }
-
-  private void expandPoolIfNecessary(int channelCount) {
-    try {
-      this.channelPool.ensureChannelCount(channelCount);
-    } catch (IOException e) {
-      LOG.info("Could not expand the channel pool.", e);
-    }
   }
 }
