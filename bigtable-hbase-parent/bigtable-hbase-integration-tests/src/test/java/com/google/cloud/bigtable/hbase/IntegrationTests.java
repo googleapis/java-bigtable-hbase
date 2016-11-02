@@ -81,7 +81,7 @@ public class IntegrationTests {
   private static Configuration configuration;
 
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60 * 5); // 5 minutes for all tests
+  public Timeout globalTimeout = Timeout.seconds(60 * 10); // 10 minutes for all tests
 
   static {
     TABLE_NAME = newTestTableName();
