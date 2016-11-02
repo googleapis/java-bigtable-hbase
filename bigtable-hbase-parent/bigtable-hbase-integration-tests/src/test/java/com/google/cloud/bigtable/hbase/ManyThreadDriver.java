@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 public class ManyThreadDriver {
   private static long recordCount;
   private static int valueSize;
-  private static int runtimeInHour;
+  private static int runtimeHours;
   private static int numThreads;
 
   private static void runTest(String projectId, String instanceId, final String tableName) throws Exception {
@@ -83,13 +83,13 @@ public class ManyThreadDriver {
       }
 
       // TODO Make a parameter
-      executor.awaitTermination(runtimeInHour, TimeUnit.HOURS);
+      executor.awaitTermination(runtimeHours, TimeUnit.HOURS);
     }
   }
 
   private static String key() {
     // TODO Make a parameter?
-    return "key-" + ThreadLocalRandom.current().nextLong(recordCount);
+    return "key-" + String.format("%19d", ThreadLocalRandom.current().nextLong(recordCount));
   }
 
   public static void main(String[] args) throws Exception {
@@ -100,7 +100,7 @@ public class ManyThreadDriver {
     String table = System.getProperty("bigtable.table", "ManyThreadDriver");
     recordCount = Long.parseLong(System.getProperty("recordCount", "100000"));
     valueSize = Integer.parseInt(System.getProperty("valueSize", "1024"));
-    runtimeInHour = Integer.parseInt(System.getProperty("runtimeInHour", "1"));
+    runtimeHours = Integer.parseInt(System.getProperty("runtimeHours", "1"));
     numThreads = Integer.parseInt(System.getProperty("numThreads", "1000"));
     runTest(projectId, instanceId, table);
   }
