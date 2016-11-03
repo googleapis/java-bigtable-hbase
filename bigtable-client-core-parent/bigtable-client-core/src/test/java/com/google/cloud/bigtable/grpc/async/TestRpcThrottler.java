@@ -42,6 +42,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.google.api.client.util.NanoClock;
+import com.google.cloud.bigtable.grpc.async.RpcThrottler.RetryHandler;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -55,6 +56,9 @@ public class TestRpcThrottler {
 
   @Mock
   NanoClock clock;
+
+  @Mock
+  RetryHandler handler;
 
   @Before
   public void setup(){
@@ -188,7 +192,7 @@ public class TestRpcThrottler {
               registeredEvents.offer(underTest.registerOperationWithHeapSize(1));
 
               // Add a retry for each rpc
-              final long id = underTest.registerRetry();
+              final long id = underTest.registerRetry(handler);
               SettableFuture<Boolean> future = SettableFuture.create();
               Futures.addCallback(future, new FutureCallback<Boolean>(){
 
@@ -276,7 +280,7 @@ public class TestRpcThrottler {
     final ResourceLimiter resourceLimiter = new ResourceLimiter(100l, 100);
     final RpcThrottler underTest = new RpcThrottler(resourceLimiter, clock, finishWaitTime);
 
-    long id = underTest.registerRetry();
+    long id = underTest.registerRetry(handler);
 
     ExecutorService pool = Executors.newCachedThreadPool();
     try {

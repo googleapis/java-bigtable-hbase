@@ -23,7 +23,9 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -42,6 +44,10 @@ public class RpcThrottler {
 
   private static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
 
+  public static interface RetryHandler {
+    void performRetryIfStale();
+  }
+
   // In awaitCompletion, wait up to this number of nanoseconds without any operations completing.  If
   // this amount of time goes by without any updates, awaitCompletion will log a warning.  Flush()
   // will still wait to complete.
@@ -54,7 +60,7 @@ public class RpcThrottler {
   private ReentrantLock lock = new ReentrantLock();
   private Condition flushedCondition = lock.newCondition();
   private Set<Long> outstandingRequests = new HashSet<>();
-  private Set<Long> outstandingRetries = new HashSet<>();
+  private Map<Long, RetryHandler> outstandingRetries = new HashMap<>();
   private AtomicLong retrySequenceGenerator = new AtomicLong();
   private long noSuccessWarningDeadlineNanos;
   private int noSuccessWarningCount;
@@ -131,12 +137,12 @@ public class RpcThrottler {
    * @return a long.
    * @param <T> a T object.
    */
-  public <T> long registerRetry() {
+  public <T> long registerRetry(RetryHandler handler) {
     final long id = retrySequenceGenerator.incrementAndGet();
 
     lock.lock();
     try {
-      outstandingRetries.add(id);
+      outstandingRetries.put(id, handler);
     } finally {
       lock.unlock();
     }
@@ -158,6 +164,7 @@ public class RpcThrottler {
 
         long now = clock.nanoTime();
         if (now >= noSuccessWarningDeadlineNanos) {
+
           logNoSuccessWarning(now);
           resetNoSuccessWarningDeadline();
           performedWarning = true;
@@ -231,6 +238,18 @@ public class RpcThrottler {
       lock.unlock();
     }
     resetNoSuccessWarningDeadline();
+  }
+
+  @VisibleForTesting
+  void retryStaleRpcs() {
+    lock.lock();
+    try {
+      for (RetryHandler retryHandler : outstandingRetries.values()) {
+        retryHandler.performRetryIfStale();
+      }
+    } finally {
+      lock.unlock();
+    }
   }
 
   /**

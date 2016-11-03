@@ -26,6 +26,7 @@ import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.grpc.async.RpcThrottler.RetryHandler;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
@@ -43,14 +44,11 @@ import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -127,7 +125,7 @@ public class BulkMutation {
       return futures.isEmpty();
     }
 
-    public boolean requiresRefresh() {
+    public boolean isStale() {
       return lastRpcSentTime == null
           || lastRpcSentTime < (clock.currentTimeMillis() - MAX_RPC_WAIT_TIME);
     }
@@ -141,14 +139,13 @@ public class BulkMutation {
         BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.retried");
 
     @VisibleForTesting
-    final Long id;
+    Long retryId;
     private RequestManager currentRequestManager;
-    private Long retryId;
     private BackOff currentBackoff;
     private int failedCount;
+    private ListenableFuture<List<MutateRowsResponse>> mutateRowsFuture;
 
     private Batch() {
-      this.id = idGenerator.incrementAndGet();
       this.currentRequestManager = new RequestManager(tableName, mutationMeter);
     }
 
@@ -238,9 +235,9 @@ public class BulkMutation {
       Long backoffMs = getCurrentBackoff(backoff);
       failedCount++;
       if (backoffMs == BackOff.STOP) {
-        setFailure(new BigtableRetriesExhaustedException("Batch #" + id + " Exhausted retries.", t));
+        setFailure(new BigtableRetriesExhaustedException("Batch #" + retryId + " Exhausted retries.", t));
       } else {
-        LOG.info("Retrying failed call for batch #%d. Failure #%d, got: %s", t, id, failedCount,
+        LOG.info("Retrying failed call for batch #%d. Failure #%d, got: %s", t, retryId, failedCount,
           io.grpc.Status.fromThrowable(t));
         mutationRetryMeter.mark(currentRequestManager.futures.size());
         retryExecutorService.schedule(this, backoffMs, TimeUnit.MILLISECONDS);
@@ -352,19 +349,55 @@ public class BulkMutation {
         setRetryComplete();
         return;
       }
-      ListenableFuture<List<MutateRowsResponse>> future = null;
       try {
         if (retryId == null) {
-          retryId = Long.valueOf(asyncExecutor.getRpcThrottler().registerRetry());
+          retryId = Long.valueOf(asyncExecutor.getRpcThrottler().registerRetry(createRetryHandler()));
         }
-        activeBatches.put(currentBatch.id, currentBatch);
-        future = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
+        mutateRowsFuture = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
         currentRequestManager.lastRpcSentTime = clock.currentTimeMillis();
       } catch (InterruptedException e) {
-        future = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
+        mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
-        addCallback(future);
+        addCallback(mutateRowsFuture);
       }
+    }
+
+    private RetryHandler createRetryHandler() {
+      return new RetryHandler() {
+
+        @Override
+        public void performRetryIfStale() {
+          if (retryId == null) {
+            return;
+          }
+          if (currentRequestManager == null || currentRequestManager.isEmpty()) {
+            setRetryComplete();
+            return;
+          }
+
+          if (currentRequestManager.isStale()) {
+            retryExecutorService.execute(new Runnable() {
+              @Override
+              public void run() {
+                if (retryId == null) {
+                  return;
+                }
+                if (currentRequestManager == null || currentRequestManager.isEmpty()) {
+                  setRetryComplete();
+                  return;
+                }
+                if (currentRequestManager.isStale()) {
+                  if (mutateRowsFuture != null) {
+                    mutateRowsFuture.cancel(true);
+                    mutateRowsFuture = null;
+                    setRetryComplete();
+                  }
+                }
+              }
+            });
+          }
+        }
+      };
     }
 
     /**
@@ -387,7 +420,7 @@ public class BulkMutation {
         retryId = null;
       }
       currentRequestManager = null;
-      BulkMutation.this.removeBatch(Batch.this);
+      mutateRowsFuture = null;
       if (failedCount > 0) {
         LOG.info("Batch #%d recovered from the failure and completed.", failedCount);
       }
@@ -401,10 +434,7 @@ public class BulkMutation {
 
   @VisibleForTesting
   Batch currentBatch = null;
-  @VisibleForTesting
-  Map<Long, Batch> activeBatches = new HashMap<>();
 
-  private final AtomicLong idGenerator = new AtomicLong();
   private final String tableName;
   private final AsyncExecutor asyncExecutor;
   private final RetryOptions retryOptions;
@@ -467,10 +497,6 @@ public class BulkMutation {
       flush();
     }
     return future;
-  }
-
-  protected synchronized void removeBatch(Batch batch) {
-    activeBatches.remove(batch.id);
   }
 
   /**
