@@ -113,6 +113,10 @@ public class BulkMutation {
       request = builder.build();
       return request;
     }
+
+    public boolean isEmpty() {
+      return futures.isEmpty();
+    }
   }
 
   @VisibleForTesting
@@ -218,10 +222,11 @@ public class BulkMutation {
 
     private void performFullRetry(AtomicReference<Long> backoff, Throwable t) {
       Long backoffMs = getCurrentBackoff(backoff);
+      failedCount++;
       if (backoffMs == BackOff.STOP) {
-        setFailure(new BigtableRetriesExhaustedException("Exhausted retries.", t));
+        setFailure(new BigtableRetriesExhaustedException("Batch #" + id + " Exhausted retries.", t));
       } else {
-        LOG.info("Retrying failed call. Failure #%d, got: %s", t, failedCount++,
+        LOG.info("Retrying failed call for batch #%d. Failure #%d, got: %s", t, id, failedCount,
           io.grpc.Status.fromThrowable(t));
         mutationRetryMeter.mark(currentRequestManager.futures.size());
         retryExecutorService.schedule(this, backoffMs, TimeUnit.MILLISECONDS);
@@ -257,6 +262,11 @@ public class BulkMutation {
 
         SettableFuture<MutateRowResponse> future = currentRequestManager.futures.get(index);
 
+        if (future == null) {
+          LOG.warn("Could not find a future for index %d.", index);
+          return;
+        }
+
         Status status = entry.getStatus();
         int statusCode = status.getCode();
         if (statusCode == io.grpc.Status.Code.OK.value()) {
@@ -271,8 +281,7 @@ public class BulkMutation {
 
     private void handleExtraFutures(AtomicReference<Long> backoffTime, RequestManager retryRequestManager,
         List<Entry> entries) {
-      Set<Integer> indexes = new HashSet<>();
-      indexes.addAll(getIndexes(entries));
+      Set<Integer> indexes = getIndexes(entries);
       long missingEntriesCount = 0;
       getCurrentBackoff(backoffTime);
       for (int i = 0; i < currentRequestManager.futures.size(); i++) {
@@ -294,8 +303,8 @@ public class BulkMutation {
       }
     }
 
-    private List<Integer> getIndexes(List<Entry> entries) {
-      List<Integer> indexes = new ArrayList<>(entries.size());
+    private Set<Integer> getIndexes(List<Entry> entries) {
+      Set<Integer> indexes = new HashSet<>(entries.size());
       for (Entry entry : entries) {
         indexes.add((int) entry.getIndex());
       }
@@ -308,10 +317,11 @@ public class BulkMutation {
         setRetryComplete();
       } else {
         this.currentRequestManager = retryRequestManager;
+        failedCount++;
         mutationRetryMeter.mark(retryRequestManager.futures.size());
         LOG.info(
           "Retrying failed call. Failure #%d, got #%d failures",
-          failedCount++,
+          failedCount,
           currentRequestManager.futures.size());
         retryExecutorService.schedule(this, getCurrentBackoff(backoffTime), TimeUnit.MILLISECONDS);
       }
@@ -324,6 +334,10 @@ public class BulkMutation {
 
     @Override
     public synchronized void run() {
+      if (currentRequestManager == null || currentRequestManager.isEmpty()) {
+        setRetryComplete();
+        return;
+      }
       ListenableFuture<List<MutateRowsResponse>> future = null;
       try {
         if (retryId == null) {
@@ -357,7 +371,11 @@ public class BulkMutation {
         asyncExecutor.getRpcThrottler().onRetryCompletion(retryId);
         retryId = null;
       }
+      currentRequestManager = null;
       BulkMutation.this.removeBatch(Batch.this);
+      if (failedCount > 0) {
+        LOG.info("Batch #%d recovered from the failure and completed.", failedCount);
+      }
     }
 
     @VisibleForTesting
