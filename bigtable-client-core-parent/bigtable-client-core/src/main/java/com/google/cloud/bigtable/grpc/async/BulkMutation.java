@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.async;
 
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.api.client.util.BackOff;
+import com.google.api.client.util.Clock;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
@@ -69,6 +70,8 @@ public class BulkMutation {
   /** Constant <code>LOG</code> */
   protected final static Logger LOG = new Logger(BulkMutation.class);
 
+  public static final long MAX_RPC_WAIT_TIME = TimeUnit.MINUTES.toMillis(5);
+
   private static StatusRuntimeException toException(Status status) {
     io.grpc.Status grpcStatus = io.grpc.Status
         .fromCodeValue(status.getCode())
@@ -88,6 +91,9 @@ public class BulkMutation {
   }
 
   @VisibleForTesting
+  static Clock clock = Clock.SYSTEM;
+
+  @VisibleForTesting
   static class RequestManager {
     private final List<SettableFuture<MutateRowResponse>> futures = new ArrayList<>();
     private final MutateRowsRequest.Builder builder;
@@ -95,6 +101,9 @@ public class BulkMutation {
 
     private MutateRowsRequest request;
     private long approximateByteSize = 0l;
+
+    @VisibleForTesting
+    Long lastRpcSentTime;
 
     RequestManager(String tableName, Meter addMeter) {
       this.builder = MutateRowsRequest.newBuilder().setTableName(tableName);
@@ -116,6 +125,11 @@ public class BulkMutation {
 
     public boolean isEmpty() {
       return futures.isEmpty();
+    }
+
+    public boolean requiresRefresh() {
+      return lastRpcSentTime == null
+          || lastRpcSentTime < (clock.currentTimeMillis() - MAX_RPC_WAIT_TIME);
     }
   }
 
@@ -345,6 +359,7 @@ public class BulkMutation {
         }
         activeBatches.put(currentBatch.id, currentBatch);
         future = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
+        currentRequestManager.lastRpcSentTime = clock.currentTimeMillis();
       } catch (InterruptedException e) {
         future = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {

@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,6 +39,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.google.api.client.util.Clock;
 import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
@@ -52,6 +54,7 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
+import com.google.cloud.bigtable.grpc.async.BulkMutation.RequestManager;
 import com.google.cloud.bigtable.grpc.async.RpcThrottler;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
@@ -121,11 +124,15 @@ public class TestBulkMutation {
         retryExecutorService, 1000, 1000000L);
   }
 
+  @After
+  public void turnDown() {
+    BulkMutation.clock = Clock.SYSTEM;
+  }
+
   @Test
   public void testAdd() {
     MutateRowRequest mutateRowRequest = createRequest();
-    BulkMutation.RequestManager requestManager = new BulkMutation.RequestManager(
-        TABLE_NAME.toString(), BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"));
+    BulkMutation.RequestManager requestManager = createTestRequestManager();
     requestManager.add(null, BulkMutation.convert(mutateRowRequest));
     Entry entry = Entry.newBuilder()
         .setRowKey(mutateRowRequest.getRowKey())
@@ -136,6 +143,11 @@ public class TestBulkMutation {
         .addEntries(entry)
         .build();
     Assert.assertEquals(expected, requestManager.build());
+  }
+
+  private RequestManager createTestRequestManager() {
+    return new BulkMutation.RequestManager(
+        TABLE_NAME.toString(), BigtableClientMetrics.meter(MetricLevel.Trace, "test.bulk"));
   }
 
   protected static MutateRowRequest createRequest() {
@@ -251,6 +263,25 @@ public class TestBulkMutation {
     Assert.assertTrue(
         waitedNanos.get()
             > TimeUnit.MILLISECONDS.toNanos(retryOptions.getMaxElaspedBackoffMillis()));
+  }
+
+  @Test
+  public void testRequestTimer() {
+    RequestManager requestManager = createTestRequestManager();
+    Assert.assertTrue(requestManager.requiresRefresh());
+    final AtomicLong currentTime = new AtomicLong(500);
+    BulkMutation.clock = new Clock() {
+      @Override
+      public long currentTimeMillis() {
+        return currentTime.get();
+      }
+    };
+    requestManager.lastRpcSentTime = currentTime.get();
+    Assert.assertFalse(requestManager.requiresRefresh());
+    currentTime.addAndGet(BulkMutation.MAX_RPC_WAIT_TIME - 1);
+    Assert.assertFalse(requestManager.requiresRefresh());
+    currentTime.addAndGet(2);
+    Assert.assertTrue(requestManager.requiresRefresh());
   }
 
   private void setupScheduler(final AtomicLong waitedNanos) {
