@@ -23,7 +23,9 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -42,6 +44,10 @@ public class RpcThrottler {
 
   private static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
 
+  public static interface RetryHandler {
+    void performRetryIfStale();
+  }
+
   // In awaitCompletion, wait up to this number of nanoseconds without any operations completing.  If
   // this amount of time goes by without any updates, awaitCompletion will log a warning.  Flush()
   // will still wait to complete.
@@ -54,9 +60,9 @@ public class RpcThrottler {
   private ReentrantLock lock = new ReentrantLock();
   private Condition flushedCondition = lock.newCondition();
   private Set<Long> outstandingRequests = new HashSet<>();
-  private Set<Long> outstandingRetries = new HashSet<>();
+  private Map<Long, RetryHandler> outstandingRetries = new HashMap<>();
   private AtomicLong retrySequenceGenerator = new AtomicLong();
-  private long noSuccessWarningDeadlineNanos;
+  private long noSuccessCheckDeadlineNanos;
   private int noSuccessWarningCount;
 
   /**
@@ -131,12 +137,12 @@ public class RpcThrottler {
    * @return a long.
    * @param <T> a T object.
    */
-  public <T> long registerRetry() {
+  public <T> long registerRetry(RetryHandler handler) {
     final long id = retrySequenceGenerator.incrementAndGet();
 
     lock.lock();
     try {
-      outstandingRetries.add(id);
+      outstandingRetries.put(id, handler);
     } finally {
       lock.unlock();
     }
@@ -157,7 +163,12 @@ public class RpcThrottler {
         flushedCondition.await(finishWaitMillis, TimeUnit.MILLISECONDS);
 
         long now = clock.nanoTime();
-        if (now >= noSuccessWarningDeadlineNanos) {
+        if (now >= noSuccessCheckDeadlineNanos) {
+          // There are unusual cases where an RPC could be completed, but we don't clean up
+          // the state and the locks.  Try to clean up if there is a timeout.
+          for (RetryHandler retryHandler : outstandingRetries.values()) {
+            retryHandler.performRetryIfStale();
+          }
           logNoSuccessWarning(now);
           resetNoSuccessWarningDeadline();
           performedWarning = true;
@@ -172,7 +183,7 @@ public class RpcThrottler {
   }
 
   private void logNoSuccessWarning(long now) {
-    long lastUpdateNanos = now - noSuccessWarningDeadlineNanos + INTERVAL_NO_SUCCESS_WARNING_NANOS;
+    long lastUpdateNanos = now - noSuccessCheckDeadlineNanos + INTERVAL_NO_SUCCESS_WARNING_NANOS;
     long lastUpdated = TimeUnit.NANOSECONDS.toSeconds(lastUpdateNanos);
     LOG.warn("No operations completed within the last %d seconds. "
             + "There are still %d rpcs and %d retries in progress.", lastUpdated,
@@ -209,7 +220,7 @@ public class RpcThrottler {
 
   @VisibleForTesting
   void resetNoSuccessWarningDeadline() {
-    noSuccessWarningDeadlineNanos = clock.nanoTime() + INTERVAL_NO_SUCCESS_WARNING_NANOS;
+    noSuccessCheckDeadlineNanos = clock.nanoTime() + INTERVAL_NO_SUCCESS_WARNING_NANOS;
   }
 
   @VisibleForTesting
