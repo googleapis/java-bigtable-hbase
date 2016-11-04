@@ -383,29 +383,10 @@ public class BulkMutation {
       return new RetryHandler() {
         @Override
         public void performRetryIfStale() {
-          // If the retryId is null, it means that the operation somehow 
-          if (retryId == null || operationsAreComplete()) {
+          // If the retryId is null, it means that the operation somehow fails partially,
+          // cleanup the retry.
+          if (retryId == null || operationsAreComplete() || currentRequestManager.isStale()) {
             setRetryComplete();
-            return;
-          }
-          if (currentRequestManager.isStale()) {
-            retryExecutorService.execute(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    if (retryId == null || operationsAreComplete()) {
-                      setRetryComplete();
-                      return;
-                    }
-                    if (currentRequestManager.isStale()) {
-                      if (mutateRowsFuture != null) {
-                        mutateRowsFuture.cancel(true);
-                        mutateRowsFuture = null;
-                      }
-                      setRetryComplete();
-                    }
-                  }
-                });
           }
         }
       };
