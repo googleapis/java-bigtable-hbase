@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.grpc.async.RpcThrottler.RetryHandler;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -164,7 +165,9 @@ public class RpcThrottler {
 
         long now = clock.nanoTime();
         if (now >= noSuccessWarningDeadlineNanos) {
-
+          for (RetryHandler retryHandler : outstandingRetries.values()) {
+            retryHandler.performRetryIfStale();
+          }
           logNoSuccessWarning(now);
           resetNoSuccessWarningDeadline();
           performedWarning = true;
@@ -238,18 +241,6 @@ public class RpcThrottler {
       lock.unlock();
     }
     resetNoSuccessWarningDeadline();
-  }
-
-  @VisibleForTesting
-  void retryStaleRpcs() {
-    lock.lock();
-    try {
-      for (RetryHandler retryHandler : outstandingRetries.values()) {
-        retryHandler.performRetryIfStale();
-      }
-    } finally {
-      lock.unlock();
-    }
   }
 
   /**
