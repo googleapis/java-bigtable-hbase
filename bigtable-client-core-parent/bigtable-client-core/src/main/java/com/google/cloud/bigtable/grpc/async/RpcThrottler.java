@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.client.util.NanoClock;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.grpc.async.RpcThrottler.RetryHandler;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -63,7 +62,7 @@ public class RpcThrottler {
   private Set<Long> outstandingRequests = new HashSet<>();
   private Map<Long, RetryHandler> outstandingRetries = new HashMap<>();
   private AtomicLong retrySequenceGenerator = new AtomicLong();
-  private long noSuccessWarningDeadlineNanos;
+  private long noSuccessCheckDeadlineNanos;
   private int noSuccessWarningCount;
 
   /**
@@ -164,7 +163,9 @@ public class RpcThrottler {
         flushedCondition.await(finishWaitMillis, TimeUnit.MILLISECONDS);
 
         long now = clock.nanoTime();
-        if (now >= noSuccessWarningDeadlineNanos) {
+        if (now >= noSuccessCheckDeadlineNanos) {
+          // There are unusual cases where an RPC could be completed, but we don't clean up
+          // the state and the locks.  Try to clean up if there is a timeout.
           for (RetryHandler retryHandler : outstandingRetries.values()) {
             retryHandler.performRetryIfStale();
           }
@@ -182,7 +183,7 @@ public class RpcThrottler {
   }
 
   private void logNoSuccessWarning(long now) {
-    long lastUpdateNanos = now - noSuccessWarningDeadlineNanos + INTERVAL_NO_SUCCESS_WARNING_NANOS;
+    long lastUpdateNanos = now - noSuccessCheckDeadlineNanos + INTERVAL_NO_SUCCESS_WARNING_NANOS;
     long lastUpdated = TimeUnit.NANOSECONDS.toSeconds(lastUpdateNanos);
     LOG.warn("No operations completed within the last %d seconds. "
             + "There are still %d rpcs and %d retries in progress.", lastUpdated,
@@ -219,7 +220,7 @@ public class RpcThrottler {
 
   @VisibleForTesting
   void resetNoSuccessWarningDeadline() {
-    noSuccessWarningDeadlineNanos = clock.nanoTime() + INTERVAL_NO_SUCCESS_WARNING_NANOS;
+    noSuccessCheckDeadlineNanos = clock.nanoTime() + INTERVAL_NO_SUCCESS_WARNING_NANOS;
   }
 
   @VisibleForTesting

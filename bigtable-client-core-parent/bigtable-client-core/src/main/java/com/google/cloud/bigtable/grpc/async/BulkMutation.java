@@ -125,10 +125,15 @@ public class BulkMutation {
       return futures.isEmpty();
     }
 
+    public int getRequestCount() {
+      return futures.size();
+    }
+
     public boolean isStale() {
       return lastRpcSentTime == null
           || lastRpcSentTime < (clock.currentTimeMillis() - MAX_RPC_WAIT_TIME);
     }
+
   }
 
   @VisibleForTesting
@@ -159,14 +164,16 @@ public class BulkMutation {
      *         more information about how the SettableFuture is set.
      */
     private ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
+      Preconditions.checkNotNull(currentRequestManager);
       SettableFuture<MutateRowResponse> future = SettableFuture.create();
       currentRequestManager.add(future, convert(request));
       return future;
     }
 
     private boolean isFull() {
+      Preconditions.checkNotNull(currentRequestManager);
       return getRequestCount() >= maxRowKeyCount
-          || currentRequestManager.approximateByteSize >= maxRequestSize;
+          || (currentRequestManager.approximateByteSize >= maxRequestSize);
     }
 
     /**
@@ -181,25 +188,27 @@ public class BulkMutation {
           new FutureCallback<List<MutateRowsResponse>>() {
             @Override
             public void onSuccess(List<MutateRowsResponse> result) {
+              mutateRowsFuture = null;
               handleResult(result);
             }
 
             @Override
             public void onFailure(Throwable t) {
+              mutateRowsFuture = null;
               performFullRetry(new AtomicReference<Long>(), t);
             }
           });
     }
 
     private synchronized void handleResult(List<MutateRowsResponse> results) {
-      if (this.currentRequestManager == null) {
-        setRetryComplete();
-        LOG.warn("Got duplicate responses for bulk mutation.");
-        return;
-      }
 
       AtomicReference<Long> backoffTime = new AtomicReference<>();
       try {
+        if (operationsAreComplete()) {
+          LOG.warn("Got duplicate responses for bulk mutation.");
+          setRetryComplete();
+          return;
+        }
         if (results == null || results.isEmpty()) {
           performFullRetry(backoffTime,
             new IllegalStateException("No MutateRowResponses were found."));
@@ -232,6 +241,10 @@ public class BulkMutation {
     }
 
     private void performFullRetry(AtomicReference<Long> backoff, Throwable t) {
+      if (currentRequestManager == null) {
+        setRetryComplete();
+        return;
+      }
       Long backoffMs = getCurrentBackoff(backoff);
       failedCount++;
       if (backoffMs == BackOff.STOP) {
@@ -239,7 +252,7 @@ public class BulkMutation {
       } else {
         LOG.info("Retrying failed call for batch #%d. Failure #%d, got: %s", t, retryId, failedCount,
           io.grpc.Status.fromThrowable(t));
-        mutationRetryMeter.mark(currentRequestManager.futures.size());
+        mutationRetryMeter.mark(getRequestCount());
         retryExecutorService.schedule(this, backoffMs, TimeUnit.MILLISECONDS);
       }
     }
@@ -266,7 +279,7 @@ public class BulkMutation {
         Iterable<MutateRowsResponse.Entry> entries, RequestManager retryRequestManager) {
       for (MutateRowsResponse.Entry entry : entries) {
         int index = (int) entry.getIndex();
-        if (index >= currentRequestManager.futures.size()) {
+        if (index >= getRequestCount()) {
           LOG.error("Got extra status: %s", entry);
           break;
         }
@@ -295,7 +308,7 @@ public class BulkMutation {
       Set<Integer> indexes = getIndexes(entries);
       long missingEntriesCount = 0;
       getCurrentBackoff(backoffTime);
-      for (int i = 0; i < currentRequestManager.futures.size(); i++) {
+      for (int i = 0; i < getRequestCount(); i++) {
         // If the indexes do not contain this future, then there's a problem.
         if (!indexes.remove(i)) {
           missingEntriesCount++;
@@ -322,18 +335,17 @@ public class BulkMutation {
       return indexes;
     }
 
-    private void completeOrRetry(AtomicReference<Long> backoffTime, RequestManager retryRequestManager) {
-      if (retryRequestManager == null || retryRequestManager.futures.isEmpty()) {
-        this.currentRequestManager = null;
+    private void completeOrRetry(
+        AtomicReference<Long> backoffTime, RequestManager retryRequestManager) {
+      if (retryRequestManager == null || retryRequestManager.isEmpty()) {
         setRetryComplete();
       } else {
         this.currentRequestManager = retryRequestManager;
         failedCount++;
-        mutationRetryMeter.mark(retryRequestManager.futures.size());
+        mutationRetryMeter.mark(getRequestCount());
         LOG.info(
-          "Retrying failed call. Failure #%d, got #%d failures",
-          failedCount,
-          currentRequestManager.futures.size());
+            "Retrying failed call. Failure #%d, got #%d failures",
+            failedCount, getRequestCount());
         retryExecutorService.schedule(this, getCurrentBackoff(backoffTime), TimeUnit.MILLISECONDS);
       }
     }
@@ -345,56 +357,55 @@ public class BulkMutation {
 
     @Override
     public synchronized void run() {
-      if (currentRequestManager == null || currentRequestManager.isEmpty()) {
+      if (operationsAreComplete()) {
         setRetryComplete();
         return;
       }
       try {
         if (retryId == null) {
-          retryId = Long.valueOf(asyncExecutor.getRpcThrottler().registerRetry(createRetryHandler()));
+          retryId =
+              Long.valueOf(asyncExecutor.getRpcThrottler().registerRetry(createRetryHandler()));
         }
         mutateRowsFuture = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
         currentRequestManager.lastRpcSentTime = clock.currentTimeMillis();
-      } catch (InterruptedException e) {
+      } catch (Throwable e) {
         mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
         addCallback(mutateRowsFuture);
       }
     }
 
+    /**
+     * A {@link RetryHandler} is a method of last resort in cases where somehow the various
+     * listeners failed to get a response, or had some kind of strange issue.
+     */
     private RetryHandler createRetryHandler() {
       return new RetryHandler() {
-
         @Override
         public void performRetryIfStale() {
-          if (retryId == null) {
-            return;
-          }
-          if (currentRequestManager == null || currentRequestManager.isEmpty()) {
+          // If the retryId is null, it means that the operation somehow 
+          if (retryId == null || operationsAreComplete()) {
             setRetryComplete();
             return;
           }
-
           if (currentRequestManager.isStale()) {
-            retryExecutorService.execute(new Runnable() {
-              @Override
-              public void run() {
-                if (retryId == null) {
-                  return;
-                }
-                if (currentRequestManager == null || currentRequestManager.isEmpty()) {
-                  setRetryComplete();
-                  return;
-                }
-                if (currentRequestManager.isStale()) {
-                  if (mutateRowsFuture != null) {
-                    mutateRowsFuture.cancel(true);
-                    mutateRowsFuture = null;
-                    setRetryComplete();
+            retryExecutorService.execute(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    if (retryId == null || operationsAreComplete()) {
+                      setRetryComplete();
+                      return;
+                    }
+                    if (currentRequestManager.isStale()) {
+                      if (mutateRowsFuture != null) {
+                        mutateRowsFuture.cancel(true);
+                        mutateRowsFuture = null;
+                      }
+                      setRetryComplete();
+                    }
                   }
-                }
-              }
-            });
+                });
           }
         }
       };
@@ -406,8 +417,10 @@ public class BulkMutation {
      */
     private void setFailure(Throwable t) {
       try {
-        for (SettableFuture<MutateRowResponse> future : currentRequestManager.futures) {
-          future.setException(t);
+        if (currentRequestManager != null) {
+          for (SettableFuture<MutateRowResponse> future : currentRequestManager.futures) {
+            future.setException(t);
+          }
         }
       } finally {
         setRetryComplete();
@@ -416,11 +429,14 @@ public class BulkMutation {
 
     private synchronized void setRetryComplete() {
       if (retryId != null) {
+        if (mutateRowsFuture != null) {
+          mutateRowsFuture.cancel(true);
+        }
+        mutateRowsFuture = null;
         asyncExecutor.getRpcThrottler().onRetryCompletion(retryId);
         retryId = null;
       }
       currentRequestManager = null;
-      mutateRowsFuture = null;
       if (failedCount > 0) {
         LOG.info("Batch #%d recovered from the failure and completed.", failedCount);
       }
@@ -428,7 +444,11 @@ public class BulkMutation {
 
     @VisibleForTesting
     int getRequestCount() {
-      return currentRequestManager == null ? 0 : currentRequestManager.futures.size();
+      return currentRequestManager == null ? 0 : currentRequestManager.getRequestCount();
+    }
+
+    boolean operationsAreComplete() {
+      return currentRequestManager == null || currentRequestManager.isEmpty();
     }
   }
 
