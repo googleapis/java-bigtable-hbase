@@ -169,6 +169,9 @@ public class RpcThrottler {
           for (RetryHandler retryHandler : outstandingRetries.values()) {
             retryHandler.performRetryIfStale();
           }
+          if (isFlushed()) {
+            break;
+          }
           logNoSuccessWarning(now);
           resetNoSuccessWarningDeadline();
           performedWarning = true;
