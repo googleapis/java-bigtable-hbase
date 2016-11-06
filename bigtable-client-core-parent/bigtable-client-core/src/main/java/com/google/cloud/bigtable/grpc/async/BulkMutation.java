@@ -415,12 +415,12 @@ public class BulkMutation {
         }
         mutateRowsFuture = null;
         asyncExecutor.getRpcThrottler().onRetryCompletion(retryId);
+        if (failedCount > 0) {
+          LOG.info("Batch #%d recovered from the failure and completed.", retryId);
+        }
         retryId = null;
       }
       currentRequestManager = null;
-      if (failedCount > 0) {
-        LOG.info("Batch #%d recovered from the failure and completed.", retryId);
-      }
     }
 
     @VisibleForTesting
