@@ -419,7 +419,7 @@ public class BulkMutation {
       }
       currentRequestManager = null;
       if (failedCount > 0) {
-        LOG.info("Batch #%d recovered from the failure and completed.", failedCount);
+        LOG.info("Batch #%d recovered from the failure and completed.", retryId);
       }
     }
 
