@@ -19,39 +19,80 @@ import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
-import com.google.cloud.bigtable.grpc.SimpleRow;
-import com.google.cloud.bigtable.grpc.SimpleRow.SimpleColumn;
 import com.google.common.collect.ImmutableList;
+import com.google.protobuf.ByteString;
 
 /**
- * <p>This class converts an instance of {@link com.google.cloud.bigtable.grpc.SimpleRow} to
- * {@link com.google.bigtable.v2.Row}.</p>
- *
+ * This class converts between instances of {@link SimpleRow} and {@link Row}.
  * @author tyagihas
  * @version $Id: $Id
  */
-public class SimpleRowConverter {	
-  public Row.Builder buildRow(SimpleRow row) {
-    Row.Builder rowBuilder = Row.newBuilder();
-    String prevKey = "";
-    Family.Builder familyBuilder = null;
-    ImmutableList<SimpleColumn> list =
-      SimpleRow.FamilyColumnOrdering.DEFAULT_ORDERING.immutableSortedCopy(row.getList());
+public class SimpleRowConverter {
 
-    for (int i = 0; i < list.size(); i++) {
-      SimpleColumn column = list.get(i);
-      if (!prevKey.equals(column.getFamily())) {
-        familyBuilder = rowBuilder.addFamiliesBuilder().setName(column.getFamily());
-	  }
-      Column.Builder columnBuilder = Column.newBuilder().setQualifier(column.getQualifier());
-      columnBuilder.addCells(Cell.newBuilder()
-              .setTimestampMicros(column.getTimestamp())
-              .addAllLabels(column.getLabels())
-              .setValue(column.getValue())
-              .build());
-	  familyBuilder.addColumns(columnBuilder);
-	  prevKey = column.getFamily();
+  public static Row convert(SimpleRow row) {
+    ImmutableList<SimpleRow.SimpleCell> cells =
+        SimpleRow.FamilyColumnOrdering.DEFAULT_ORDERING.immutableSortedCopy(row.getCells());
+
+    Row.Builder rowBuilder = Row.newBuilder().setKey(row.getRowKey());
+    String prevFamily = null;
+    Family.Builder familyBuilder = null;
+    ByteString previousColumn = null;
+    Column.Builder columnBuilder = null;
+
+    for (SimpleRow.SimpleCell cell : cells) {
+      final String currentFamily = cell.getFamily();
+      if (!currentFamily.equals(prevFamily)) {
+        if (familyBuilder != null) {
+          if (columnBuilder != null) {
+            familyBuilder.addColumns(columnBuilder.build());
+            columnBuilder = null;
+            previousColumn = null;
+          }
+          rowBuilder.addFamilies(familyBuilder.build());
+        }
+        familyBuilder = Family.newBuilder().setName(currentFamily);
+        prevFamily = currentFamily;
+      }
+      ByteString currentQualifier = cell.getQualifier();
+      if (!currentQualifier.equals(previousColumn)) {
+        if (columnBuilder != null) {
+          familyBuilder.addColumns(columnBuilder.build());
+        }
+        columnBuilder = Column.newBuilder().setQualifier(currentQualifier);
+        previousColumn = currentQualifier;
+      }
+      columnBuilder.addCells(toCell(cell));
     }
-    return rowBuilder;
-  }  
+
+    if (familyBuilder != null) {
+      if (columnBuilder != null) {
+        familyBuilder.addColumns(columnBuilder.build());
+      }
+      rowBuilder.addFamilies(familyBuilder.build());
+    }
+    return rowBuilder.build();
+  }
+
+  private static Cell toCell(SimpleRow.SimpleCell cell) {
+    return Cell.newBuilder()
+        .setTimestampMicros(cell.getTimestamp())
+        .addAllLabels(cell.getLabels())
+        .setValue(cell.getValue())
+        .build();
+  }
+
+  public static SimpleRow convert(Row row) {
+    SimpleRow.Builder builder = SimpleRow.newBuilder().withRowKey(row.getKey());
+    for (Family family : row.getFamiliesList()) {
+      String familyName = family.getName();
+      for (Column column : family.getColumnsList()) {
+        ByteString qualifier = column.getQualifier();
+        for (Cell cell : column.getCellsList()) {
+          builder.addCell(familyName, qualifier, cell.getTimestampMicros(), cell.getValue(),
+            cell.getLabelsList());
+        }
+      }
+    }
+    return builder.build();
+  }
 }
