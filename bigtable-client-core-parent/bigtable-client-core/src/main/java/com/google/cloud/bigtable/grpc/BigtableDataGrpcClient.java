@@ -22,7 +22,6 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -42,11 +41,9 @@ import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.Row;
-import com.google.bigtable.v2.RowSet;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.async.RetryingCollectingClientCallListener;
@@ -86,8 +83,6 @@ import com.google.protobuf.ServiceException;
  * @version $Id: $Id
  */
 public class BigtableDataGrpcClient implements BigtableDataClient {
-
-  private static final Logger LOG = new Logger(BigtableDataGrpcClient.class);
 
   // Retryable Predicates
   /** Constant <code>IS_RETRYABLE_MUTATION</code> */
@@ -150,10 +145,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       };
 
   // Member variables
-  private final ChannelPool channelPool;
   private final ScheduledExecutorService retryExecutorService;
   private final RetryOptions retryOptions;
-  private final BigtableOptions bigtableOptions;
   private final BigtableResultScannerFactory<ReadRowsRequest, Row> streamingScannerFactory =
       new BigtableResultScannerFactory<ReadRowsRequest, Row>() {
         @Override
@@ -196,9 +189,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions,
       BigtableAsyncUtilities asyncUtilities) {
-    this.channelPool = channelPool;
     this.retryExecutorService = retryExecutorService;
-    this.bigtableOptions = bigtableOptions;
     this.retryOptions = bigtableOptions.getRetryOptions();
 
     this.sampleRowKeysAsync =
