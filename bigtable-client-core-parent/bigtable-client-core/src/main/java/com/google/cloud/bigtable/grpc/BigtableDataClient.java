@@ -29,6 +29,7 @@ import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -134,7 +135,7 @@ public interface BigtableDataClient {
   ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(SampleRowKeysRequest request);
 
   /**
-   * Perform a scan over rows.
+   * Perform a scan over {@link Row}s.
    *
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
@@ -142,13 +143,31 @@ public interface BigtableDataClient {
   ResultScanner<Row> readRows(ReadRowsRequest request);
 
   /**
-   * Read multiple Rows into an in-memory list.
+   * Read multiple {@link Row}s into an in-memory list.
    *
    * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
    * all reads have completed.
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
    */
   ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request);
+
+
+  /**
+   * Perform a scan over {@link FlatRow}s.
+   *
+   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
+   * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
+   */
+  ResultScanner<FlatRow> readFlatRows(ReadRowsRequest request);
+
+  /**
+   * Read multiple {@link FlatRow}s into an in-memory list.
+   *
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will finish when
+   * all reads have completed.
+   * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
+   */
+  ListenableFuture<List<FlatRow>> readFlatRowsAsync(ReadRowsRequest request);
 
   /**
    * Sets a {@link com.google.cloud.bigtable.grpc.CallOptionsFactory} which creates {@link io.grpc.CallOptions}

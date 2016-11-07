@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
@@ -38,11 +37,11 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
   // Member variables from the constructor.
   private final ReadRowsRequestRetryHandler retryHandler;
-  private final BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory;
+  private final BigtableResultScannerFactory<ReadRowsRequest, FlatRow> scannerFactory;
   private final Logger logger;
   private final RpcMetrics rpcMetrics;
 
-  private ResultScanner<Row> currentDelegate;
+  private ResultScanner<FlatRow> currentDelegate;
 
   private Context operationContext;
   private Context rpcContext;
@@ -59,7 +58,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
    *          object to keep track of retries and failures.
    */
   public ResumingStreamingResultScanner(RetryOptions retryOptions, ReadRowsRequest originalRequest,
-      BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory, RpcMetrics rpcMetrics) {
+      BigtableResultScannerFactory<ReadRowsRequest, FlatRow> scannerFactory, RpcMetrics rpcMetrics) {
     this(retryOptions, originalRequest, scannerFactory, rpcMetrics, LOG);
   }
 
@@ -67,7 +66,7 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
   ResumingStreamingResultScanner(
       RetryOptions retryOptions,
       ReadRowsRequest originalRequest,
-      BigtableResultScannerFactory<ReadRowsRequest, Row> scannerFactory,
+      BigtableResultScannerFactory<ReadRowsRequest, FlatRow> scannerFactory,
       RpcMetrics rpcMetrics,
       Logger logger) {
     this.operationContext = rpcMetrics.timeOperation();
@@ -83,10 +82,10 @@ public class ResumingStreamingResultScanner extends AbstractBigtableResultScanne
 
   /** {@inheritDoc} */
   @Override
-  public Row next() throws IOException {
+  public FlatRow next() throws IOException {
     while (true) {
       try {
-        Row result = currentDelegate.next();
+        FlatRow result = currentDelegate.next();
         if (result != null) {
           retryHandler.update(result);
         }

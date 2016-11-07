@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import java.io.IOException;
 
-import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
@@ -55,9 +54,9 @@ public class StreamingBigtableResultScanner extends AbstractBigtableResultScanne
 
   /** {@inheritDoc} */
   @Override
-  public Row next() throws IOException {
+  public FlatRow next() throws IOException {
     Timer.Context timerContext = resultsTimer.time();
-    Row row = responseQueueReader.getNextMergedRow();
+    FlatRow row = responseQueueReader.getNextMergedRow();
     if (row != null) {
       resultsMeter.mark();
     }

@@ -21,12 +21,11 @@ import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.CheckAndMutateRowResponse;
@@ -53,6 +52,8 @@ import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.io.CancellationToken;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableResultScannerFactory;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
 import com.google.cloud.bigtable.grpc.scanner.ResponseQueueReader;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ResumingStreamingResultScanner;
@@ -65,6 +66,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -136,21 +138,36 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   // Streaming API transformers
-  private static Function<List<ReadRowsResponse>, List<Row>> ROW_TRANSFORMER =
-      new Function<List<ReadRowsResponse>, List<Row>>() {
+  private static Function<FlatRow, Row> FLAT_ROW_TRANSFORMER = new Function<FlatRow, Row>(){
+    @Override
+    public Row apply(FlatRow input) {
+      return FlatRowConverter.convert(input);
+    }
+  };
+
+  private static Function<List<ReadRowsResponse>, List<FlatRow>> FLAT_ROW_LIST_TRANSFORMER =
+      new Function<List<ReadRowsResponse>, List<FlatRow>>() {
         @Override
-        public List<Row> apply(List<ReadRowsResponse> responses) {
+        public List<FlatRow> apply(List<ReadRowsResponse> responses) {
           return RowMerger.toRows(responses);
         }
       };
 
+  private static Function<List<ReadRowsResponse>, List<Row>> ROW_LIST_TRANSFORMER =
+    new Function<List<ReadRowsResponse>, List<Row>>() {
+      @Override
+      public List<Row> apply(List<ReadRowsResponse> responses) {
+        return Lists.transform(RowMerger.toRows(responses), FLAT_ROW_TRANSFORMER);
+      }
+    };
+      
   // Member variables
   private final ScheduledExecutorService retryExecutorService;
   private final RetryOptions retryOptions;
-  private final BigtableResultScannerFactory<ReadRowsRequest, Row> streamingScannerFactory =
-      new BigtableResultScannerFactory<ReadRowsRequest, Row>() {
+  private final BigtableResultScannerFactory<ReadRowsRequest, FlatRow> streamingScannerFactory =
+      new BigtableResultScannerFactory<ReadRowsRequest, FlatRow>() {
         @Override
-        public ResultScanner<Row> createScanner(ReadRowsRequest request) {
+        public ResultScanner<FlatRow> createScanner(ReadRowsRequest request) {
           return streamRows(request);
         }
       };
@@ -301,9 +318,15 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request) {
     return Futures.transform(getStreamingFuture(request, readRowsAsync, request.getTableName()),
-      ROW_TRANSFORMER);
+      ROW_LIST_TRANSFORMER);
   }
 
+  @Override
+  public ListenableFuture<List<FlatRow>> readFlatRowsAsync(ReadRowsRequest request) {
+    return Futures.transform(getStreamingFuture(request, readRowsAsync, request.getTableName()),
+      FLAT_ROW_LIST_TRANSFORMER);
+  }
+  
   // Helper methods
   /**
    * <p>getStreamingFuture.</p>
@@ -394,11 +417,47 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     // during operation.
     // TODO(sduskis): Figure out a way to perform operation level metrics with the
     // AbstractBigtableResultScanner implementations.
+    final ResultScanner<FlatRow> delegate = readFlatRows(request);
+    return new ResultScanner<Row>(){
+    
+      @Override
+      public void close() throws IOException {
+        delegate.close();
+      }
+    
+      @Override
+      public Row[] next(int count) throws IOException {
+        FlatRow[] flatRows = delegate.next(count);
+        Row rows [] = new Row[flatRows.length];
+        for (int i = 0; i < flatRows.length; i++) {
+          rows[i] = FlatRowConverter.convert(flatRows[i]);
+        }
+        return rows;
+      }
+    
+      @Override
+      public Row next() throws IOException {
+        return FlatRowConverter.convert(delegate.next());
+      }
+    
+      @Override
+      public int available() {
+        return delegate.available();
+      }
+    };
+  }
+
+  @Override
+  public ResultScanner<FlatRow> readFlatRows(ReadRowsRequest request) {
+    // Delegate all resumable operations to the scanner. It will request a non-resumable scanner
+    // during operation.
+    // TODO(sduskis): Figure out a way to perform operation level metrics with the
+    // AbstractBigtableResultScanner implementations.
     return new ResumingStreamingResultScanner(retryOptions, request, streamingScannerFactory,
         readRowsAsync.getRpcMetrics());
   }
 
-  private ResultScanner<Row> streamRows(ReadRowsRequest request) {
+  private ResultScanner<FlatRow> streamRows(ReadRowsRequest request) {
     final Timer.Context timerContext = readRowsAsync.getRpcMetrics().timeRpc();
     final AtomicBoolean wasCanceled = new AtomicBoolean(false);
 

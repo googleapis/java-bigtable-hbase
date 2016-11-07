@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.google.bigtable.v2.Row;
-
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -27,18 +25,18 @@ import java.util.ArrayList;
  * @author sduskis
  * @version $Id: $Id
  */
-public abstract class AbstractBigtableResultScanner implements ResultScanner<Row> {
+public abstract class AbstractBigtableResultScanner implements ResultScanner<FlatRow> {
   /** {@inheritDoc} */
   @Override
-  public final Row[] next(int count) throws IOException {
-    ArrayList<Row> resultList = new ArrayList<>(count);
+  public final FlatRow[] next(int count) throws IOException {
+    ArrayList<FlatRow> resultList = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
-      Row row = next();
+      FlatRow row = next();
       if (row == null) {
         break;
       }
       resultList.add(row);
     }
-    return resultList.toArray(new Row[resultList.size()]);
+    return resultList.toArray(new FlatRow[resultList.size()]);
   }
 }

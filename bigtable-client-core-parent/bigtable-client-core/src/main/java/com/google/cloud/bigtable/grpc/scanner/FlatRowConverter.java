@@ -30,6 +30,9 @@ import com.google.protobuf.ByteString;
 public class FlatRowConverter {
 
   public static Row convert(FlatRow row) {
+    if (row == null) {
+      return null;
+    }
     ImmutableList<FlatRow.Cell> cells =
         FlatRow.CellOrdering.DEFAULT_ORDERING.immutableSortedCopy(row.getCells());
 
