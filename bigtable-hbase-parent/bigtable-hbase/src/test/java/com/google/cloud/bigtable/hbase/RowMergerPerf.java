@@ -24,7 +24,7 @@ import com.google.protobuf.StringValue;
 public class RowMergerPerf {
 
   static final int VALUE_SIZE_IN_BYTES = 10_000_000;
-  static final int CUMULATIVE_CELL_COUNT = 5_000_000;
+  static final long CUMULATIVE_CELL_COUNT = 10_000_000l;
 
   public static void main(String[] args) {
     // warm up
@@ -49,9 +49,9 @@ public class RowMergerPerf {
     for (int i = 0; i < cellCount; i++) {
       CellChunk contentChunk =
           CellChunk.newBuilder()
-              .setFamilyName(StringValue.newBuilder().setValue("Family" + i))
-              .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFromUtf8("Qualifier")))
               .setRowKey(ByteString.copyFrom(Bytes.toBytes("rowkey-0")))
+              .setFamilyName(StringValue.newBuilder().setValue("Family" + (i / 4)))
+              .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFromUtf8("Qualifier" + (i%4))))
               .setValue(ByteString.copyFrom(RandomStringUtils.randomAlphanumeric(size).getBytes()))
               .setTimestampMicros(0L)
               .setCommitRow(i == cellCount - 1)
@@ -64,12 +64,12 @@ public class RowMergerPerf {
 
   private static void rowMergerPerf(List<ReadRowsResponse> responses, int cellCount) {
     RowAdapter adapter = Adapters.ROW_ADAPTER;
-    int rowCount = CUMULATIVE_CELL_COUNT / cellCount;
+    long rowCount = CUMULATIVE_CELL_COUNT / cellCount;
     System.out.println("Size: " + responses.get(0).getSerializedSize());
     {
       long start = System.nanoTime();
       for (int i = 0; i < rowCount; i++) {
-        RowMerger.toRows(responses);
+        RowMerger.toRows(responses).get(0);
       }
       long time = System.nanoTime() - start;
       System.out.println(

@@ -23,7 +23,6 @@ import com.google.bigtable.v2.Row;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.google.protobuf.ByteString;
@@ -165,20 +164,21 @@ public class FlatRow implements Serializable {
       if (result != 0) {
         return result;
       }
-      // reverse timestamp ordering
-      result = Long.compare(right.timestamp, left.timestamp);
-      if (result != 0) {
-        return result;
-      }
-      result = Integer.compare(left.getLabels().size(), right.getLabels().size());
-      if (result != 0) {
-        return result;
-      }
-      ComparisonChain comparison = ComparisonChain.start();
-      for (int i = 0; i < left.getLabels().size(); i++) {
-        comparison.compare(left.getLabels().get(i), right.getLabels().get(i));
-      }
-      return comparison.result();
+//      // reverse timestamp ordering
+//      result = Long.compare(left.timestamp, right.timestamp);
+//      if (result != 0) {
+//        return result;
+//      }
+//      result = Integer.compare(left.getLabels().size(), right.getLabels().size());
+//      if (result != 0) {
+//        return result;
+//      }
+//      ComparisonChain comparison = ComparisonChain.start();
+//      for (int i = 0; i < left.getLabels().size(); i++) {
+//        comparison.compare(left.getLabels().get(i), right.getLabels().get(i));
+//      }
+//      return comparison.result();
+      return 0;
     }
   }
 

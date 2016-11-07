@@ -66,8 +66,8 @@ public class RowMergerTest {
   @Test
   public void testThreeCellRow() {
     CellChunk cellChunk1 = createCell("row_key1", "family", "qualifier", "value", 1, false);
-    CellChunk cellChunk2 = createCell(null, null, "qualifier2", "value2", 1, false);
-    CellChunk cellChunk3 = createCell(null, null, null, "value3", 2, true);
+    CellChunk cellChunk2 = createCell(null, null, "qualifier2", "value2", 2, false);
+    CellChunk cellChunk3 = createCell(null, null, null, "value3", 1, true);
     RowMerger underTest = new RowMerger(observer);
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk1).build());
     underTest.onNext(ReadRowsResponse.newBuilder().addChunks(cellChunk2).build());
