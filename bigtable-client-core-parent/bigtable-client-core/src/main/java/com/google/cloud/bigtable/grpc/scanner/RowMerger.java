@@ -21,11 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
-import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
@@ -34,17 +32,17 @@ import io.grpc.stub.StreamObserver;
 
 /**
  * <p>
- * Builds a complete {@link com.google.bigtable.v2.Row} from {@link com.google.bigtable.v2.ReadRowsResponse} objects. A {@link com.google.bigtable.v2.ReadRowsResponse}
- * may contain a single {@link com.google.bigtable.v2.Row}, multiple {@link com.google.bigtable.v2.Row}s, or even a part of a {@link com.google.bigtable.v2.Cell} if the
+ * Builds a complete {@link FlatRow} from {@link com.google.bigtable.v2.ReadRowsResponse} objects. A {@link com.google.bigtable.v2.ReadRowsResponse}
+ * may contain a single {@link FlatRow}, multiple {@link FlatRow}s, or even a part of a {@link com.google.bigtable.v2.Cell} if the
  * cell is
  * </p>
  * <p>
- * Each RowMerger object is valid only for building a single Row. Expected usage is along the lines
+ * Each RowMerger object is valid only for building a single FlatRow. Expected usage is along the lines
  * of:
  * </p>
  *
  * <pre>
- * {@link io.grpc.stub.StreamObserver}&lt;{@link com.google.bigtable.v2.Row}&gt; observer = ...;
+ * {@link io.grpc.stub.StreamObserver}&lt;{@link FlatRow}&gt; observer = ...;
  * RowMerger rowMerger = new RowMerger(observer);
  * ...
  * rowMerger.onNext(...);
@@ -67,11 +65,11 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    * @param responses a {@link java.lang.Iterable} object.
    * @return a {@link java.util.List} object.
    */
-  public static List<Row> toRows(Iterable<ReadRowsResponse> responses) {
-    final ArrayList<Row> result = new ArrayList<>();
-    RowMerger rowMerger = new RowMerger(new StreamObserver<Row>() {
+  public static List<FlatRow> toRows(Iterable<ReadRowsResponse> responses) {
+    final ArrayList<FlatRow> result = new ArrayList<>();
+    RowMerger rowMerger = new RowMerger(new StreamObserver<FlatRow>() {
       @Override
-      public void onNext(Row value) {
+      public void onNext(FlatRow value) {
         result.add(value);
       }
 
@@ -101,7 +99,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private enum RowMergerState {
 
     /**
-     * A new {@link CellChunk} represents a completely new {@link Row}.
+     * A new {@link CellChunk} represents a completely new {@link FlatRow}.
      */
     NewRow {
       @Override
@@ -131,13 +129,13 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       }
 
       @Override
-      void handleOnComplete(StreamObserver<Row> observer) {
+      void handleOnComplete(StreamObserver<FlatRow> observer) {
         observer.onCompleted();
       }
     },
 
     /**
-     * A new {@link CellChunk} represents a new {@link Cell} in a {@link Row}.
+     * A new {@link CellChunk} represents a new {@link FlatRow.Cell} in a {@link FlatRow}.
      */
     RowInProgress {
       @Override
@@ -168,13 +166,14 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       }
 
       @Override
-      void handleOnComplete(StreamObserver<Row> observer) {
+      void handleOnComplete(StreamObserver<FlatRow> observer) {
         observer.onError(new IllegalStateException("Got a partial row, but the stream ended"));
       }
     },
 
     /**
-     * A new {@link CellChunk} represents a portion of the value in a {@link Cell} in a {@link Row}.
+     * A new {@link CellChunk} represents a portion of the value in a {@link FlatRow.Cell} in a
+     * {@link FlatRow}.
      */
     CellInProgress {
       @Override
@@ -198,7 +197,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       }
 
       @Override
-      void handleOnComplete(StreamObserver<Row> observer) {
+      void handleOnComplete(StreamObserver<FlatRow> observer) {
         observer.onError(new IllegalStateException("Got a partial row, but the stream ended"));
       }
     };
@@ -208,7 +207,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     abstract void validateChunk(RowInProgress rowInProgess, ByteString previousKey,
         CellChunk newChunk) throws Exception;
 
-    abstract void handleOnComplete(StreamObserver<Row> observer);
+    abstract void handleOnComplete(StreamObserver<FlatRow> observer);
   }
 
   /**
@@ -360,7 +359,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     return chunk.getRowStatusCase() == RowStatusCase.RESET_ROW && chunk.getResetRow();
   }
 
-  private final StreamObserver<Row> observer;
+  private final StreamObserver<FlatRow> observer;
 
   private RowMergerState state = RowMergerState.NewRow;
   private ByteString previousKey;
@@ -372,7 +371,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    *
    * @param observer a {@link io.grpc.stub.StreamObserver} object.
    */
-  public RowMerger(StreamObserver<Row> observer) {
+  public RowMerger(StreamObserver<FlatRow> observer) {
     this.observer = observer;
   }
 
@@ -417,7 +416,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         }
 
         if (isCommit(chunk)) {
-          observer.onNext(FlatRowConverter.convert(rowInProgress.flatRowBuilder.build()));
+          observer.onNext(rowInProgress.flatRowBuilder.build());
           previousKey = rowInProgress.getRowKey();
           rowInProgress = null;
           state = RowMergerState.NewRow;

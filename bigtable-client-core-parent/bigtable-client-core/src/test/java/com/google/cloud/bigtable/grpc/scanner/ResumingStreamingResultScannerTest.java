@@ -42,7 +42,6 @@ import org.mockito.stubbing.OngoingStubbing;
 
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.Logger;
@@ -76,11 +75,11 @@ public class ResumingStreamingResultScannerTest {
   @Rule
   public ExpectedException thrown = ExpectedException.none();
   @Mock
-  ResultScanner<Row> mockScanner;
+  ResultScanner<FlatRow> mockScanner;
   @Mock
-  ResultScanner<Row> mockScannerPostResume;
+  ResultScanner<FlatRow> mockScannerPostResume;
   @Mock
-  BigtableResultScannerFactory<ReadRowsRequest, Row> mockScannerFactory;
+  BigtableResultScannerFactory<ReadRowsRequest, FlatRow> mockScannerFactory;
   @Mock
   Logger logger;
 
@@ -115,14 +114,14 @@ public class ResumingStreamingResultScannerTest {
     MockitoAnnotations.initMocks(this);
   }
 
-  static Row buildRow(String rowKey) {
-    return Row.newBuilder()
-        .setKey(ByteString.copyFromUtf8(rowKey))
+  static FlatRow buildRow(String rowKey) {
+    return FlatRow.newBuilder()
+        .withRowKey(ByteString.copyFromUtf8(rowKey))
         .build();
   }
 
-  static void assertRowKey(String expectedRowKey, Row row) {
-    assertEquals(expectedRowKey, row.getKey().toStringUtf8());
+  static void assertRowKey(String expectedRowKey, FlatRow row) {
+    assertEquals(expectedRowKey, row.getRowKey().toStringUtf8());
   }
 
   @Test
@@ -189,10 +188,10 @@ public class ResumingStreamingResultScannerTest {
   @SuppressWarnings("unchecked")
   private void doErrorsResume(IOException expectedIOException, long numRowsLimit, int numExceptions)
       throws IOException {
-    Row row1 = buildRow("row1");
-    Row row2 = buildRow("row2");
-    Row row3 = buildRow("row3");
-    Row row4 = buildRow("row4");
+    FlatRow row1 = buildRow("row1");
+    FlatRow row2 = buildRow("row2");
+    FlatRow row3 = buildRow("row3");
+    FlatRow row4 = buildRow("row4");
 
     ReadRowsRequest originalRequest = readRowsRequest;
     if (numRowsLimit != 0) {
@@ -207,16 +206,16 @@ public class ResumingStreamingResultScannerTest {
     }
 
     // If we are doing more than one failure then create a scanner for each.
-    List<ResultScanner<Row>> additionalMockScanners = new ArrayList<>();
+    List<ResultScanner<FlatRow>> additionalMockScanners = new ArrayList<>();
     for (int i = 1; i < numExceptions; i++) {
-      ResultScanner<Row> mock = mock(ResultScanner.class);
+      ResultScanner<FlatRow> mock = mock(ResultScanner.class);
       additionalMockScanners.add(mock);
     }
 
     when(mockScannerFactory.createScanner(eq(originalRequest))).thenReturn(mockScanner);
-    OngoingStubbing<ResultScanner<Row>> afterFailureStub =
+    OngoingStubbing<ResultScanner<FlatRow>> afterFailureStub =
         when(mockScannerFactory.createScanner(eq(expectedResumeRequest)));
-    for (ResultScanner<Row> mock : additionalMockScanners) {
+    for (ResultScanner<FlatRow> mock : additionalMockScanners) {
       afterFailureStub = afterFailureStub.thenReturn(mock);
     }
     afterFailureStub.thenReturn(mockScannerPostResume);
@@ -234,7 +233,7 @@ public class ResumingStreamingResultScannerTest {
                     + "likely due to the mockClient not returning the "
                     + "post-resume scanner properly"));
 
-    for (ResultScanner<Row> mock : additionalMockScanners) {
+    for (ResultScanner<FlatRow> mock : additionalMockScanners) {
       when(mock.next())
           .thenThrow(expectedIOException)
           .thenThrow(
@@ -290,8 +289,8 @@ public class ResumingStreamingResultScannerTest {
   }
 
   private void doErrorsDoNotResume(RetryOptions retryOptions, Status status) throws IOException {
-    Row row1 = buildRow("row1");
-    Row row2 = buildRow("row2");
+    FlatRow row1 = buildRow("row1");
+    FlatRow row2 = buildRow("row2");
 
     ReadRowsRequest expectedResumeRequest =
         createRequest(createRowRangeOpenedStart(ByteString.copyFromUtf8("row2"), blank));
@@ -331,19 +330,19 @@ public class ResumingStreamingResultScannerTest {
    * Test successfully retrying while receiving a mixture of timeouts and retryable exceptions
    */
   public void testTimeoutsMixedWithErrors() throws IOException {
-    Row row1 = buildRow("row1");
-    Row row2 = buildRow("row2");
-    Row row3 = buildRow("row3");
-    Row row4 = buildRow("row4");
+    FlatRow row1 = buildRow("row1");
+    FlatRow row2 = buildRow("row2");
+    FlatRow row3 = buildRow("row3");
+    FlatRow row4 = buildRow("row4");
 
     IOException retryableException =
         new IOExceptionWithStatus("Test", Status.UNAVAILABLE);
     IOException timeoutException = new ScanTimeoutException("Test");
 
     when(mockScannerFactory.createScanner(eq(readRowsRequest))).thenReturn(mockScanner);
-    ResultScanner<Row> afterError1Mock = mock(ResultScanner.class);
-    ResultScanner<Row> afterTimeoutMock = mock(ResultScanner.class);
-    ResultScanner<Row> afterError2Mock = mock(ResultScanner.class);
+    ResultScanner<FlatRow> afterError1Mock = mock(ResultScanner.class);
+    ResultScanner<FlatRow> afterTimeoutMock = mock(ResultScanner.class);
+    ResultScanner<FlatRow> afterError2Mock = mock(ResultScanner.class);
 
     ReadRowsRequest expectedResumeRequest =
         createRequest(createRowRangeOpenedStart(ByteString.copyFromUtf8("row1"), blank));
@@ -399,8 +398,8 @@ public class ResumingStreamingResultScannerTest {
   public void test_filterRows_testAllRange() throws IOException{
     ByteString key1 = ByteString.copyFrom("row1".getBytes());
 
-    Row row1 = buildRow("row1");
-    Row row2 = buildRow("row2");
+    FlatRow row1 = buildRow("row1");
+    FlatRow row2 = buildRow("row2");
 
     when(mockScannerFactory.createScanner(any(ReadRowsRequest.class))).thenReturn(mockScanner);
 
@@ -434,8 +433,8 @@ public class ResumingStreamingResultScannerTest {
     ByteString key2 = ByteString.copyFrom("row2".getBytes());
     ByteString key3 = ByteString.copyFrom("row3".getBytes());
 
-    Row row1 = buildRow("row1");
-    Row row2 = buildRow("row2");
+    FlatRow row1 = buildRow("row1");
+    FlatRow row2 = buildRow("row2");
 
     when(mockScannerFactory.createScanner(any(ReadRowsRequest.class))).thenReturn(mockScanner);
 
@@ -470,8 +469,8 @@ public class ResumingStreamingResultScannerTest {
     ByteString key2 = ByteString.copyFrom("row2".getBytes());
     ByteString key3 = ByteString.copyFrom("row3".getBytes());
 
-    Row row1 = buildRow("row1");
-    Row row2 = buildRow("row2");
+    FlatRow row1 = buildRow("row1");
+    FlatRow row2 = buildRow("row2");
 
     when(mockScannerFactory.createScanner(any(ReadRowsRequest.class))).thenReturn(mockScanner);
 

@@ -20,8 +20,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
@@ -30,13 +29,14 @@ import com.google.common.base.Preconditions;
 import io.grpc.stub.StreamObserver;
 
 /**
- * Helper to read a queue of ResultQueueEntries and use the RowMergers to reconstruct
- * complete Row objects from the partial ReadRowsResponse objects.
+ * Manages a queue of {@link ResultQueueEntry}s of {@link FlatRow}.
  *
  * @author sduskis
  * @version $Id: $Id
+ * @see BigtableDataGrpcClient#readFlatRows(com.google.bigtable.v2.ReadRowsRequest) for more
+ *     information.
  */
-public class ResponseQueueReader implements StreamObserver<Row> {
+public class ResponseQueueReader implements StreamObserver<FlatRow> {
 
   private static Timer firstResponseTimer;
 
@@ -48,7 +48,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
     return firstResponseTimer;
   }
 
-  protected final BlockingQueue<ResultQueueEntry<Row>> resultQueue;
+  protected final BlockingQueue<ResultQueueEntry<FlatRow>> resultQueue;
   protected AtomicBoolean completionMarkerFound = new AtomicBoolean(false);
   private final int readPartialRowTimeoutMillis;
   private boolean lastResponseProcessed = false;
@@ -69,17 +69,17 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   }
 
   /**
-   * Get the next complete Row object from the response queue.
+   * Get the next complete {@link FlatRow} object from the response queue.
    *
-   * @return null if end-of-stream, otherwise a complete Row.
+   * @return null if end-of-stream, otherwise a complete {@link FlatRow}.
    * @throws java.io.IOException On errors.
    */
-  public synchronized Row getNextMergedRow() throws IOException {
+  public synchronized FlatRow getNextMergedRow() throws IOException {
     if (lastResponseProcessed) {
       return null;
     }
 
-    ResultQueueEntry<Row> queueEntry = getNext();
+    ResultQueueEntry<FlatRow> queueEntry = getNext();
 
     switch (queueEntry.getType()) {
     case CompletionMarker:
@@ -98,7 +98,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
     }
 
     Preconditions.checkState(lastResponseProcessed,
-      "Should only exit merge loop with by returning a complete Row or hitting end of stream.");
+      "Should only exit merge loop with by returning a complete FlatRow or hitting end of stream.");
     return null;
   }
 
@@ -108,8 +108,8 @@ public class ResponseQueueReader implements StreamObserver<Row> {
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultQueueEntry} object.
    * @throws java.io.IOException if any.
    */
-  protected ResultQueueEntry<Row> getNext() throws IOException {
-    ResultQueueEntry<Row> queueEntry;
+  protected ResultQueueEntry<FlatRow> getNext() throws IOException {
+    ResultQueueEntry<FlatRow> queueEntry;
     try {
       queueEntry = resultQueue.poll(readPartialRowTimeoutMillis, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
@@ -134,7 +134,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
 
   /** {@inheritDoc} */
   @Override
-  public void onNext(Row row) {
+  public void onNext(FlatRow row) {
     try {
       resultQueue.put(ResultQueueEntry.fromResponse(row));
     } catch (InterruptedException e) {
@@ -147,7 +147,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   @Override
   public void onError(Throwable t) {
     try {
-      resultQueue.put(ResultQueueEntry.<Row> fromThrowable(t));
+      resultQueue.put(ResultQueueEntry.<FlatRow> fromThrowable(t));
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);
@@ -159,7 +159,7 @@ public class ResponseQueueReader implements StreamObserver<Row> {
   public void onCompleted() {
     try {
       completionMarkerFound.set(true);
-      resultQueue.put(ResultQueueEntry.<Row> completionMarker());
+      resultQueue.put(ResultQueueEntry.<FlatRow> completionMarker());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while adding a ResultQueueEntry", e);

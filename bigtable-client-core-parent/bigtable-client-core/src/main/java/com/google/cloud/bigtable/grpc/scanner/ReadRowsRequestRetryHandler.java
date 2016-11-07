@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Sleeper;
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowRange.EndKeyCase;
 import com.google.bigtable.v2.RowRange.StartKeyCase;
@@ -82,8 +81,8 @@ public class ReadRowsRequestRetryHandler {
     this.logger = logger;
   }
 
-  public void update(Row result) {
-    updateLastFoundKey(result.getKey());
+  public void update(FlatRow result) {
+    updateLastFoundKey(result.getRowKey());
     rowCount++;
     // We've had at least one successful RPC, reset the backoff and retry counter
     currentErrorBackoff = null;

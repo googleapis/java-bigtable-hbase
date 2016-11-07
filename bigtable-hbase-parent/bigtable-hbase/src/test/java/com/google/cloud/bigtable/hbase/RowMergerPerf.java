@@ -10,6 +10,8 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.Builder;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
 import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
@@ -69,7 +71,7 @@ public class RowMergerPerf {
     {
       long start = System.nanoTime();
       for (int i = 0; i < rowCount; i++) {
-        RowMerger.toRows(responses).get(0);
+        RowMerger.toRows(responses);
       }
       long time = System.nanoTime() - start;
       System.out.println(
@@ -79,9 +81,23 @@ public class RowMergerPerf {
                   + "\t%d nanos per cell",
               rowCount, time / 1000000, time / rowCount, time / CUMULATIVE_CELL_COUNT));
     }
+    final FlatRow flatRow = RowMerger.toRows(responses).get(0);
     {
       long start = System.nanoTime();
-      Row response = RowMerger.toRows(responses).get(0);
+      for (int i = 0; i < rowCount; i++) {
+        FlatRowConverter.convert(flatRow);
+      }
+      long time = System.nanoTime() - start;
+      System.out.println(
+          String.format(
+              "FlatRowConverter: %d rows converted in %d ms.\n"
+                  + "\t%d nanos per row\n"
+                  + "\t%d nanos per cell",
+              rowCount, time / 1000000, time / rowCount, time / CUMULATIVE_CELL_COUNT));
+    }
+    {
+      long start = System.nanoTime();
+      Row response = FlatRowConverter.convert(flatRow);
       for (int i = 0; i < rowCount; i++) {
         adapter.adaptResponse(response);
       }
