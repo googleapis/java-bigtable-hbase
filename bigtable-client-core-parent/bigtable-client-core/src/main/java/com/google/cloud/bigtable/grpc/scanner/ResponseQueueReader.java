@@ -20,7 +20,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
@@ -29,11 +29,12 @@ import com.google.common.base.Preconditions;
 import io.grpc.stub.StreamObserver;
 
 /**
- * Helper to read a queue of ResultQueueEntries and use the RowMergers to reconstruct
- * complete FlatRow objects from the partial ReadRowsResponse objects.
+ * Manages a queue of {@link ResultQueueEntry}s of {@link FlatRow}.
  *
  * @author sduskis
  * @version $Id: $Id
+ * @see BigtableDataGrpcClient#readFlatRows(com.google.bigtable.v2.ReadRowsRequest) for more
+ *     information.
  */
 public class ResponseQueueReader implements StreamObserver<FlatRow> {
 
@@ -68,9 +69,9 @@ public class ResponseQueueReader implements StreamObserver<FlatRow> {
   }
 
   /**
-   * Get the next complete FlatRow object from the response queue.
+   * Get the next complete {@link FlatRow} object from the response queue.
    *
-   * @return null if end-of-stream, otherwise a complete FlatRow.
+   * @return null if end-of-stream, otherwise a complete {@link FlatRow}.
    * @throws java.io.IOException On errors.
    */
   public synchronized FlatRow getNextMergedRow() throws IOException {

@@ -418,28 +418,28 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     // TODO(sduskis): Figure out a way to perform operation level metrics with the
     // AbstractBigtableResultScanner implementations.
     final ResultScanner<FlatRow> delegate = readFlatRows(request);
-    return new ResultScanner<Row>(){
-    
+    return new ResultScanner<Row>() {
+
       @Override
       public void close() throws IOException {
         delegate.close();
       }
-    
+
       @Override
       public Row[] next(int count) throws IOException {
         FlatRow[] flatRows = delegate.next(count);
-        Row rows [] = new Row[flatRows.length];
+        Row[] rows = new Row[flatRows.length];
         for (int i = 0; i < flatRows.length; i++) {
           rows[i] = FlatRowConverter.convert(flatRows[i]);
         }
         return rows;
       }
-    
+
       @Override
       public Row next() throws IOException {
         return FlatRowConverter.convert(delegate.next());
       }
-    
+
       @Override
       public int available() {
         return delegate.available();
