@@ -23,15 +23,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 
 /**
- * This class converts between instances of {@link SimpleRow} and {@link Row}.
+ * This class converts between instances of {@link FlatRow} and {@link Row}.
  * @author tyagihas
  * @version $Id: $Id
  */
-public class SimpleRowConverter {
+public class FlatRowConverter {
 
-  public static Row convert(SimpleRow row) {
-    ImmutableList<SimpleRow.SimpleCell> cells =
-        SimpleRow.FamilyColumnOrdering.DEFAULT_ORDERING.immutableSortedCopy(row.getCells());
+  public static Row convert(FlatRow row) {
+    ImmutableList<FlatRow.Cell> cells =
+        FlatRow.CellOrdering.DEFAULT_ORDERING.immutableSortedCopy(row.getCells());
 
     Row.Builder rowBuilder = Row.newBuilder().setKey(row.getRowKey());
     String prevFamily = null;
@@ -39,7 +39,7 @@ public class SimpleRowConverter {
     ByteString previousColumn = null;
     Column.Builder columnBuilder = null;
 
-    for (SimpleRow.SimpleCell cell : cells) {
+    for (FlatRow.Cell cell : cells) {
       final String currentFamily = cell.getFamily();
       if (!currentFamily.equals(prevFamily)) {
         if (familyBuilder != null) {
@@ -73,7 +73,7 @@ public class SimpleRowConverter {
     return rowBuilder.build();
   }
 
-  private static Cell toCell(SimpleRow.SimpleCell cell) {
+  private static Cell toCell(FlatRow.Cell cell) {
     return Cell.newBuilder()
         .setTimestampMicros(cell.getTimestamp())
         .addAllLabels(cell.getLabels())
@@ -81,8 +81,8 @@ public class SimpleRowConverter {
         .build();
   }
 
-  public static SimpleRow convert(Row row) {
-    SimpleRow.Builder builder = SimpleRow.newBuilder().withRowKey(row.getKey());
+  public static FlatRow convert(Row row) {
+    FlatRow.Builder builder = FlatRow.newBuilder().withRowKey(row.getKey());
     for (Family family : row.getFamiliesList()) {
       String familyName = family.getName();
       for (Column column : family.getColumnsList()) {

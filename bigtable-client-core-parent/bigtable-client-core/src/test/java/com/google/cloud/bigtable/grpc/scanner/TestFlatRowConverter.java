@@ -26,12 +26,10 @@ import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
 import com.google.protobuf.ByteString;
 
-
 @RunWith(JUnit4.class)
-public class TestSimpleRowConverter {
+public class TestFlatRowConverter {
 
-
-  private static Cell asProtoCell(SimpleRow.SimpleCell simpleCell) {
+  private static Cell asProtoCell(FlatRow.Cell simpleCell) {
     return Cell.newBuilder()
       .setValue(simpleCell.getValue())
       .setTimestampMicros(simpleCell.getTimestamp())
@@ -40,11 +38,11 @@ public class TestSimpleRowConverter {
 
   @Test
   public void testOneCell() {
-    SimpleRow simpleRow = SimpleRow.newBuilder()
+    FlatRow simpleRow = FlatRow.newBuilder()
         .withRowKey(toByteString("key"))
         .addCell("family", toByteString("column"), 500, toByteString("value"), null)
         .build();
-    SimpleRow.SimpleCell simpleCell = simpleRow.getCells().get(0);
+    FlatRow.Cell simpleCell = simpleRow.getCells().get(0);
 
     Row expectedRow = Row.newBuilder()
         .setKey(simpleRow.getRowKey())
@@ -61,17 +59,17 @@ public class TestSimpleRowConverter {
 
   @Test
   public void testManyCells() {
-    SimpleRow simpleRow = SimpleRow.newBuilder()
+    FlatRow simpleRow = FlatRow.newBuilder()
         .withRowKey(toByteString("key"))
         .addCell("family1", toByteString("column"), 500, toByteString("value"), null)
         .addCell("family1", toByteString("column2"), 500, toByteString("value"), null)
         .addCell("family1", toByteString("column2"), 400, toByteString("value"), null)
         .addCell("family2", toByteString("column"), 500, toByteString("value"), null)
         .build();
-    SimpleRow.SimpleCell simpleCell0 = simpleRow.getCells().get(0);
-    SimpleRow.SimpleCell simpleCell1 = simpleRow.getCells().get(1);
-    SimpleRow.SimpleCell simpleCell2 = simpleRow.getCells().get(2);
-    SimpleRow.SimpleCell simpleCell3 = simpleRow.getCells().get(3);
+    FlatRow.Cell simpleCell0 = simpleRow.getCells().get(0);
+    FlatRow.Cell simpleCell1 = simpleRow.getCells().get(1);
+    FlatRow.Cell simpleCell2 = simpleRow.getCells().get(2);
+    FlatRow.Cell simpleCell3 = simpleRow.getCells().get(3);
 
     Row expectedRow = Row.newBuilder()
         .setKey(simpleRow.getRowKey())
@@ -97,9 +95,9 @@ public class TestSimpleRowConverter {
     testBothWays(simpleRow, expectedRow);
   }
 
-  private void testBothWays(SimpleRow simpleRow, Row row) {
-    Assert.assertEquals(row, SimpleRowConverter.convert(simpleRow));
-    Assert.assertEquals(simpleRow, SimpleRowConverter.convert(row));
+  private void testBothWays(FlatRow simpleRow, Row row) {
+    Assert.assertEquals(row, FlatRowConverter.convert(simpleRow));
+    Assert.assertEquals(simpleRow, FlatRowConverter.convert(row));
   }
 
   private ByteString toByteString(final String string) {

@@ -19,25 +19,28 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.appengine.repackaged.com.google.common.base.Objects;
+import com.google.bigtable.v2.Row;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.google.protobuf.ByteString;
 
 /**
- * <p>This class stores values from {@link com.google.bigtable.v2.ReadRowsResponse} objects and
- * represents a single row.</p>
- *
+ * <p>
+ * This class stores represents a single row. It's a flattened version of the adata of aa
+ * {@link Row}
+ * </p>
  * @author tyagihas
  * @version $Id: $Id
  */
-public class SimpleRow implements Serializable {
+public class FlatRow implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  public final static class SimpleCell implements Serializable {
+  public final static class Cell implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -76,8 +79,8 @@ public class SimpleRow implements Serializable {
         return this;
       }
 
-      public SimpleCell build() {
-        return new SimpleCell(family, qualifier, timestamp, value, labels);
+      public Cell build() {
+        return new Cell(family, qualifier, timestamp, value, labels);
       }
     }
 
@@ -91,7 +94,7 @@ public class SimpleRow implements Serializable {
     private final ByteString value;
     private final List<String> labels;
 
-    private SimpleCell(String family, ByteString qualifier, long timestamp, ByteString value,
+    private Cell(String family, ByteString qualifier, long timestamp, ByteString value,
         List<String> labels) {
       this.family = family;
       this.qualifier = qualifier;
@@ -122,10 +125,10 @@ public class SimpleRow implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-      if (!(obj instanceof SimpleCell)) {
+      if (!(obj instanceof Cell)) {
         return false;
       }
-      SimpleCell other = (SimpleCell) obj;
+      Cell other = (Cell) obj;
       return Objects.equal(family, other.family) &&
           Objects.equal(qualifier, other.qualifier) &&
           timestamp == other.timestamp &&
@@ -143,21 +146,22 @@ public class SimpleRow implements Serializable {
           .add("labels", labels)
           .toString();
     }
-
   }
 
-  public static class FamilyColumnOrdering extends Ordering<SimpleCell> {
-    public static final FamilyColumnOrdering DEFAULT_ORDERING = new FamilyColumnOrdering();
+  public static class CellOrdering extends Ordering<Cell> {
+    public static final CellOrdering DEFAULT_ORDERING = new CellOrdering();
 
-    private FamilyColumnOrdering() {}
+    private CellOrdering() {}
 
     @Override
-    public int compare(SimpleCell left, SimpleCell right) {
+    public int compare(Cell left, Cell right) {
+
       int result = left.family.compareTo(right.family);
       if (result != 0) {
         return result;
       }
-      result = left.qualifier.asReadOnlyByteBuffer().compareTo(right.qualifier.asReadOnlyByteBuffer());
+      result =
+          left.qualifier.asReadOnlyByteBuffer().compareTo(right.qualifier.asReadOnlyByteBuffer());
       if (result != 0) {
         return result;
       }
@@ -170,16 +174,20 @@ public class SimpleRow implements Serializable {
       if (result != 0) {
         return result;
       }
-      return 0;
+      ComparisonChain comparison = ComparisonChain.start();
+      for (int i = 0; i < left.getLabels().size(); i++) {
+        comparison.compare(left.getLabels().get(i), right.getLabels().get(i));
+      }
+      return comparison.result();
     }
   }
 
   public static final class Builder {
     private ByteString rowKey = null;
-    private final ImmutableList.Builder<SimpleCell> listBuilder;
+    private final ImmutableList.Builder<Cell> listBuilder;
 
     private Builder() {
-      listBuilder = new ImmutableList.Builder<SimpleCell>();
+      listBuilder = new ImmutableList.Builder<Cell>();
     }
 
     public Builder withRowKey(ByteString rowKey) {
@@ -190,21 +198,21 @@ public class SimpleRow implements Serializable {
 
     public Builder addCell(String family, ByteString qualifier, long timestamp, ByteString value,
         List<String> labels) {
-      return addCell(new SimpleCell(family, qualifier, timestamp, value, labels));
+      return addCell(new Cell(family, qualifier, timestamp, value, labels));
     }
 
     public Builder addCell(String family, ByteString qualifier, long timestamp, ByteString value) {
-      return addCell(new SimpleCell(family, qualifier, timestamp, value, null));
+      return addCell(new Cell(family, qualifier, timestamp, value, null));
     }
 
-    public Builder addCell(SimpleCell column) {
+    public Builder addCell(Cell column) {
       Preconditions.checkNotNull(column, "column can not be null");
       listBuilder.add(column);
       return this;
     }
 
-    public SimpleRow build() {
-      return new SimpleRow(rowKey, listBuilder.build());
+    public FlatRow build() {
+      return new FlatRow(rowKey, listBuilder.build());
     }
   }
 
@@ -213,9 +221,9 @@ public class SimpleRow implements Serializable {
   }
 
   private final ByteString rowKey;
-  private final ImmutableList<SimpleCell> cells;
+  private final ImmutableList<Cell> cells;
 
-  public SimpleRow(ByteString rowKey, ImmutableList<SimpleCell> cells) {
+  public FlatRow(ByteString rowKey, ImmutableList<Cell> cells) {
     this.rowKey = rowKey;
     this.cells = cells;
   }
@@ -224,16 +232,16 @@ public class SimpleRow implements Serializable {
     return rowKey;
   }
 
-  public List<SimpleCell> getCells() {
+  public List<Cell> getCells() {
     return cells;
   }
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof SimpleRow)) {
+    if (!(obj instanceof FlatRow)) {
       return false;
     }
-    SimpleRow other = (SimpleRow) obj;
+    FlatRow other = (FlatRow) obj;
     return Objects.equal(rowKey, other.rowKey) &&
         Objects.equal(cells, other.getCells());
   }
