@@ -40,11 +40,14 @@ public class ManyThreadDriver {
   private static int runtimeHours;
   private static int numThreads;
 
-  private static void runTest(String projectId, String instanceId, final String tableName) throws Exception {
+  private static void runTest(String projectId, String instanceId, final String tableName)
+      throws Exception {
     Configuration configuration = new Configuration();
-    configuration.set("hbase.client.connection.impl", "com.google.cloud.bigtable.hbase1_0.BigtableConnection");
+    configuration.set(
+        "hbase.client.connection.impl", "com.google.cloud.bigtable.hbase1_0.BigtableConnection");
     configuration.set("google.bigtable.project.id", projectId);
     configuration.set("google.bigtable.instance.id", instanceId);
+    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
     try (Connection connection = ConnectionFactory.createConnection(configuration)) {
       Admin admin = connection.getAdmin();
 
@@ -58,32 +61,35 @@ public class ManyThreadDriver {
 
       final byte[] value = Bytes.toBytes(RandomStringUtils.randomAlphanumeric(valueSize));
 
-      ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+      final long endTimeMs = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(runtimeHours);
       for (int i = 0; i < numThreads; i++) {
-        Runnable r = new Runnable() {
-          @Override
-          public void run() {
-            try {
-              final Table table = connection.getTable(TableName.valueOf(tableName));
+        Runnable r =
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  final Table table = connection.getTable(TableName.valueOf(tableName));
 
-              while (true) {
-                // Workload: two reads and a write.
-                table.get(new Get(Bytes.toBytes(key())));
-                table.get(new Get(Bytes.toBytes(key())));
-                Put p = new Put(Bytes.toBytes(key()));
-                p.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("col"), value);
-                table.put(p);
+                  while (System.currentTimeMillis() < endTimeMs) {
+                    // Workload: two reads and a write.
+                    table.get(new Get(Bytes.toBytes(key())));
+                    table.get(new Get(Bytes.toBytes(key())));
+                    Put p = new Put(Bytes.toBytes(key()));
+                    p.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("col"), value);
+                    table.put(p);
+                  }
+                } catch (Exception e) {
+                  System.out.println(e.getMessage());
+                }
               }
-            } catch (Exception e) {
-              System.out.println(e.getMessage());
-            }
-          }
-        };
+            };
         executor.execute(r);
       }
 
-      // TODO Make a parameter
+      executor.shutdown();
       executor.awaitTermination(runtimeHours, TimeUnit.HOURS);
+    } finally {
+      executor.shutdownNow();
     }
   }
 
