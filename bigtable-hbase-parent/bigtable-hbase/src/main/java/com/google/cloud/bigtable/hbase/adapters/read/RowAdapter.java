@@ -15,9 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -25,10 +22,8 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.bigtable.v2.Cell;
-import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.util.ByteStringer;
@@ -39,7 +34,7 @@ import com.google.cloud.bigtable.util.ByteStringer;
  * @author sduskis
  * @version $Id: $Id
  */
-public class RowAdapter implements ResponseAdapter<Row, Result> {
+public class RowAdapter implements ResponseAdapter<FlatRow, Result> {
   // This only works because BIGTABLE_TIMEUNIT is smaller than HBASE_TIMEUNIT, otherwise we will get
   // 0.
   static final long TIME_CONVERSION_UNIT = BigtableConstants.BIGTABLE_TIMEUNIT.convert(1,
@@ -51,41 +46,33 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
    * Convert a {@link Row} to a {@link Result}.
    */
   @Override
-  public Result adaptResponse(Row response) {
-    if (response == null) {
+  public Result adaptResponse(FlatRow flatRow) {
+    if (flatRow == null) {
       return new Result();
     }
 
     SortedSet<org.apache.hadoop.hbase.Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);
-    byte[] rowKey = ByteStringer.extract(response.getKey());
+    byte[] rowKey = ByteStringer.extract(flatRow.getRowKey());
 
-    for (Family family : response.getFamiliesList()) {
-      byte[] familyNameBytes = Bytes.toBytes(family.getName());
-
-      for (Column column : family.getColumnsList()) {
-        byte[] columnQualifier = ByteStringer.extract(column.getQualifier());
-
-        for (Cell cell : column.getCellsList()) {
-          // Cells with labels are for internal use, do not return them.
-          // TODO(kevinsi4508): Filter out targeted {@link WhileMatchFilter} labels.
-          if (cell.getLabelsCount() > 0) {
-            continue;
-          }
-
-          // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
-          // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
-          // HBase will treat them as duplicates.
-          long hbaseTimestamp = cell.getTimestampMicros() / TIME_CONVERSION_UNIT;
-          RowCell keyValue = new RowCell(
-              rowKey,
-              familyNameBytes,
-              columnQualifier,
-              hbaseTimestamp,
-              ByteStringer.extract(cell.getValue()));
-
-          hbaseCells.add(keyValue);
-        }
+    for (FlatRow.Cell cell : flatRow.getCells()) {
+      // Cells with labels are for internal use, do not return them.
+      // TODO(kevinsi4508): Filter out targeted {@link WhileMatchFilter} labels.
+      if (!cell.getLabels().isEmpty()) {
+        continue;
       }
+
+      // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
+      // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
+      // HBase will treat them as duplicates.
+      long hbaseTimestamp = cell.getTimestamp() / TIME_CONVERSION_UNIT;
+      RowCell keyValue = new RowCell(
+          rowKey,
+          Bytes.toBytes(cell.getFamily()),
+          ByteStringer.extract(cell.getQualifier()),
+          hbaseTimestamp,
+          ByteStringer.extract(cell.getValue()));
+
+      hbaseCells.add(keyValue);
     }
 
     return Result.create(hbaseCells.toArray(new org.apache.hadoop.hbase.Cell[hbaseCells.size()]));
@@ -97,38 +84,22 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
    * @param result a {@link org.apache.hadoop.hbase.client.Result} object.
    * @return a {@link com.google.bigtable.v2.Row} object.
    */
-  public Row adaptToRow(Result result) {
-    Row.Builder rowBuilder = Row.newBuilder();
+  public FlatRow adaptToRow(Result result) {
+    FlatRow.Builder rowBuilder = FlatRow.newBuilder();
 
     // Result.getRow() is derived from its cells.  If the cells are empty, the row will be null.
     if (result.getRow() != null) {
-      rowBuilder.setKey(ByteStringer.wrap(result.getRow()));
+      rowBuilder.withRowKey(ByteStringer.wrap(result.getRow()));
     }
 
-    Map<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> familyMap = result.getMap();
-
-    // If there are no cells, the family map is null.
-    if (familyMap != null) {
-
-      // process all families
-      for (Entry<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> familyEntry :
-           familyMap.entrySet()) {
-        Family.Builder familyBuilder =
-            rowBuilder.addFamiliesBuilder().setName(Bytes.toString(familyEntry.getKey()));
-
-        // process the columns in the family
-        for (Entry<byte[], NavigableMap<Long, byte[]>> columnEntry :
-            familyEntry.getValue().entrySet()) {
-          Column.Builder columnBuilder = familyBuilder.addColumnsBuilder()
-              .setQualifier(ByteStringer.wrap(columnEntry.getKey()));
-
-          // process the cells in the column
-          for (Entry<Long, byte[]> cellData : columnEntry.getValue().entrySet()) {
-            columnBuilder.addCellsBuilder()
-                .setTimestampMicros(cellData.getKey().longValue() * TIME_CONVERSION_UNIT)
-                .setValue(ByteStringer.wrap(cellData.getValue()));
-          }
-        }
+    final org.apache.hadoop.hbase.Cell[] rawCells = result.rawCells();
+    if (rawCells != null && rawCells.length > 0) {
+      for (org.apache.hadoop.hbase.Cell rawCell : rawCells) {
+        rowBuilder.addCell(
+          Bytes.toString(rawCell.getFamilyArray()),
+          ByteStringer.wrap(rawCell.getQualifierArray()),
+          rawCell.getTimestamp() * TIME_CONVERSION_UNIT,
+          ByteStringer.wrap(rawCell.getValueArray()));
       }
     }
 
