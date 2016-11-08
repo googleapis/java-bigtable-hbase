@@ -814,15 +814,30 @@ public class CloudBigtableIO {
         READER_LOG.info("{}: Failed to get estimated size for key for fraction {}.", range, fraction);
         return null;
       }
-      long newEstimatedSize = (long) (fraction * estimatedSizeBytes);
-      byte[] splitKeyBytes = splitKey.getBytes();
-      SourceWithKeys<ResultOutputType> residual = source.createSourceWithKeys(splitKeyBytes,
-        source.getConfiguration().getZeroCopyStopRow(), estimatedSizeBytes - newEstimatedSize);
+      SourceWithKeys<ResultOutputType> residual = null;
+      SourceWithKeys<ResultOutputType> primary = null;
+      try {
+        long newPrimarySize = (long) (fraction * estimatedSizeBytes);
+        long residualSize = estimatedSizeBytes - newPrimarySize;
 
-      SourceWithKeys<ResultOutputType> primary = this.source.createSourceWithKeys(
-        source.getConfiguration().getZeroCopyStartRow(), splitKeyBytes, newEstimatedSize);
+        byte[] currentStartKey = source.getConfiguration().getZeroCopyStartRow();
+        byte[] splitKeyBytes = splitKey.getBytes();
+        byte[] currentStopKey = source.getConfiguration().getZeroCopyStopRow();
 
-      if (!rangeTracker.trySplitAtPosition(splitKey)) {
+        primary = source.createSourceWithKeys(currentStartKey, splitKeyBytes, newPrimarySize);
+        residual = source.createSourceWithKeys(splitKeyBytes, currentStopKey, residualSize);
+
+        if (!rangeTracker.trySplitAtPosition(splitKey)) {
+          return null;
+        }
+      } catch (Throwable t) {
+        try {
+          String msg = String.format("%d Failed to get estimated size for key for fraction %f.",
+            range, fraction);
+          READER_LOG.warn(msg, t);
+        } catch (Throwable t1) {
+          // ignore.
+        }
         return null;
       }
       this.source = primary;
