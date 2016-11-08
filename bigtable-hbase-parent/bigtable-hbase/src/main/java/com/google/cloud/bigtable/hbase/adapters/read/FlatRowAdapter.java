@@ -87,6 +87,8 @@ public class FlatRowAdapter {
     // Result.getRow() is derived from its cells.  If the cells are empty, the row will be null.
     if (result.getRow() != null) {
       rowBuilder.withRowKey(ByteStringer.wrap(result.getRow()));
+    } else {
+      return null;
     }
 
     final org.apache.hadoop.hbase.Cell[] rawCells = result.rawCells();

@@ -54,7 +54,7 @@ public class TestFlatRowAdapter {
 
     // The rowKey is defined based on the cells, and in this case there are no cells, so there isn't
     // a key.
-    assertEquals(FlatRow.newBuilder().build(), instance.adaptToRow(result));
+    assertEquals(null, instance.adaptToRow(result));
   }
 
   @Test

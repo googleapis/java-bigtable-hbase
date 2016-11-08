@@ -103,6 +103,8 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
     // Result.getRow() is derived from its cells.  If the cells are empty, the row will be null.
     if (result.getRow() != null) {
       rowBuilder.setKey(ByteStringer.wrap(result.getRow()));
+    } else {
+      return null;
     }
 
     Map<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> familyMap = result.getMap();
