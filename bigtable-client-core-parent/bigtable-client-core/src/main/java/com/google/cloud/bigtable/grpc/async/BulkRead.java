@@ -202,7 +202,7 @@ public class BulkRead {
             entry.setException(e);
           }
         }
-        if (rowFutures != null) {
+        if (flatRowFutures != null) {
           for (SettableFuture<List<FlatRow>> entry : flatRowFutures.values()) {
             entry.setException(e);
           }
