@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.api.client.util.Throwables;
-import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
@@ -31,16 +30,16 @@ import java.io.IOException;
  * @author sduskis
  * @version $Id: $Id
  */
-public class BigtableResultScannerAdapter {
+public class BigtableResultScannerAdapter<T> {
 
-  final ResponseAdapter<Row, Result> rowAdapter;
+  final ResponseAdapter<T, Result> rowAdapter;
 
   /**
    * <p>Constructor for BigtableResultScannerAdapter.</p>
    *
    * @param rowAdapter a {@link com.google.cloud.bigtable.hbase.adapters.ResponseAdapter} object.
    */
-  public BigtableResultScannerAdapter(ResponseAdapter<Row, Result> rowAdapter) {
+  public BigtableResultScannerAdapter(ResponseAdapter<T, Result> rowAdapter) {
     this.rowAdapter = rowAdapter;
   }
 
@@ -51,11 +50,11 @@ public class BigtableResultScannerAdapter {
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
   public ResultScanner adapt(
-      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<Row> bigtableResultScanner) {
+      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<T> bigtableResultScanner) {
     return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {
-        Row row = bigtableResultScanner.next();
+        T row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
           return null;

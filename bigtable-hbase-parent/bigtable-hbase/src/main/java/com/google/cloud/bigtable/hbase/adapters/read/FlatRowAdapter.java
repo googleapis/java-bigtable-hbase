@@ -21,9 +21,9 @@ import java.util.TreeSet;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
+import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.util.ByteStringer;
 
 /**
@@ -32,17 +32,16 @@ import com.google.cloud.bigtable.util.ByteStringer;
  * @author sduskis
  * @version $Id: $Id
  */
-public class FlatRowAdapter {
+public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
   // This only works because BIGTABLE_TIMEUNIT is smaller than HBASE_TIMEUNIT, otherwise we will get
   // 0.
   static final long TIME_CONVERSION_UNIT = BigtableConstants.BIGTABLE_TIMEUNIT.convert(1,
     BigtableConstants.HBASE_TIMEUNIT);
 
   /**
-   * {@inheritDoc}
-   *
    * Convert a {@link FlatRow} to a {@link Result}.
    */
+  @Override
   public Result adaptResponse(FlatRow flatRow) {
     if (flatRow == null) {
       return Result.EMPTY_RESULT;
