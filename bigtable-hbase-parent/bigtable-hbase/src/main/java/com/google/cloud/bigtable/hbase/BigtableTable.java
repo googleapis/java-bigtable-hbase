@@ -63,6 +63,7 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
@@ -221,9 +222,9 @@ public class BigtableTable implements Table {
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
     Timer.Context timerContext = metrics.getTimer.time();
-    try (com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v2.Row> scanner =
-        client.readRows(hbaseAdapter.adapt(get))) {
-      return Adapters.ROW_ADAPTER.adaptResponse(scanner.next());
+    try (com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
+        client.readFlatRows(hbaseAdapter.adapt(get))) {
+      return Adapters.FLAT_ROW_ADAPTER.adaptResponse(scanner.next());
     } catch (Throwable t) {
       throw logAndCreateIOException("get", get.getRow(), t);
     } finally {
@@ -236,8 +237,8 @@ public class BigtableTable implements Table {
   public ResultScanner getScanner(Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
     try {
-      com.google.cloud.bigtable.grpc.scanner.ResultScanner<com.google.bigtable.v2.Row> scanner =
-          client.readRows(hbaseAdapter.adapt(scan));
+      com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> scanner =
+          client.readFlatRows(hbaseAdapter.adapt(scan));
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner);
       }

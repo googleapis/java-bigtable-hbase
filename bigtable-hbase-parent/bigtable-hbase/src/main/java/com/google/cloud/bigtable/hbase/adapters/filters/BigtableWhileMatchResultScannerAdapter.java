@@ -16,10 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import com.google.api.client.util.Throwables;
-import com.google.bigtable.v2.Cell;
-import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Family;
-import com.google.bigtable.v2.Row;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
@@ -41,14 +38,14 @@ public class BigtableWhileMatchResultScannerAdapter {
   private static final String WHILE_MATCH_FILTER_IN_LABEL_SUFFIX = "-in";
   private static final String WHILE_MATCH_FILTER_OUT_LABEL_SUFFIX = "-out";
 
-  final ResponseAdapter<Row, Result> rowAdapter;
+  final ResponseAdapter<FlatRow, Result> rowAdapter;
 
   /**
    * <p>Constructor for BigtableWhileMatchResultScannerAdapter.</p>
    *
    * @param rowAdapter a {@link com.google.cloud.bigtable.hbase.adapters.ResponseAdapter} object.
    */
-  public BigtableWhileMatchResultScannerAdapter(ResponseAdapter<Row, Result> rowAdapter) {
+  public BigtableWhileMatchResultScannerAdapter(ResponseAdapter<FlatRow, Result> rowAdapter) {
     this.rowAdapter = rowAdapter;
   }
 
@@ -59,11 +56,11 @@ public class BigtableWhileMatchResultScannerAdapter {
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
   public ResultScanner adapt(
-      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<Row> bigtableResultScanner) {
+      final com.google.cloud.bigtable.grpc.scanner.ResultScanner<FlatRow> bigtableResultScanner) {
     return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {
-        Row row = bigtableResultScanner.next();
+        FlatRow row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
           return null;
@@ -101,21 +98,17 @@ public class BigtableWhileMatchResultScannerAdapter {
    * Returns {@code true} iff there are matching {@link WhileMatchFilter} labels or no {@link
    * WhileMatchFilter} labels.
    */
-  private static boolean hasMatchingLabels(Row row) {
+  private static boolean hasMatchingLabels(FlatRow row) {
     int inLabelCount = 0;
     int outLabelCount = 0;
-    for (Family family : row.getFamiliesList()) {
-      for (Column column : family.getColumnsList()) {
-        for (Cell cell : column.getCellsList()) {
-          for (String label : cell.getLabelsList()) {
-            // TODO(kevinsi4508): Make sure {@code label} is a {@link WhileMatchFilter} label.
-            // TODO(kevinsi4508): Handle multiple {@link WhileMatchFilter} labels.
-            if (label.endsWith(WHILE_MATCH_FILTER_IN_LABEL_SUFFIX)) {
-              inLabelCount++;
-            } else if (label.endsWith(WHILE_MATCH_FILTER_OUT_LABEL_SUFFIX)) {
-              outLabelCount++;
-            }
-          }
+    for (FlatRow.Cell cell : row.getCells()) {
+      for (String label : cell.getLabels()) {
+        // TODO(kevinsi4508): Make sure {@code label} is a {@link WhileMatchFilter} label.
+        // TODO(kevinsi4508): Handle multiple {@link WhileMatchFilter} labels.
+        if (label.endsWith(WHILE_MATCH_FILTER_IN_LABEL_SUFFIX)) {
+          inLabelCount++;
+        } else if (label.endsWith(WHILE_MATCH_FILTER_OUT_LABEL_SUFFIX)) {
+          outLabelCount++;
         }
       }
     }
