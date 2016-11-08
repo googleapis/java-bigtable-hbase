@@ -51,7 +51,6 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.GeneratedMessage;
 
 /**
  * Bigtable's {@link org.apache.hadoop.hbase.client.BufferedMutator} implementation.
@@ -331,7 +330,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * @param future a {@link com.google.common.util.concurrent.ListenableFuture} object.
    * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
    */
-  protected void addExceptionCallback(ListenableFuture<? extends GeneratedMessage> future,
+  @SuppressWarnings("unchecked")
+  protected void addExceptionCallback(ListenableFuture<?> future,
       Mutation mutation) {
     Futures.addCallback(future, new ExceptionCallback(mutation));
   }
@@ -353,8 +353,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private ListenableFuture<? extends GeneratedMessage> issueRequestDetails(Mutation mutation,
-      long operationId) {
+  private ListenableFuture<?> issueRequestDetails(Mutation mutation, long operationId) {
     try {
       if (mutation == null) {
         return Futures.immediateFailedFuture(
@@ -419,7 +418,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private class ExceptionCallback implements FutureCallback<GeneratedMessage> {
+  @SuppressWarnings("rawtypes")
+  private class ExceptionCallback implements FutureCallback {
     private final Row mutation;
 
     public ExceptionCallback(Row mutation) {
@@ -432,7 +432,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
 
     @Override
-    public void onSuccess(GeneratedMessage ignored) {
+    public void onSuccess(Object ignored) {
     }
   }
 
