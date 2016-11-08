@@ -39,6 +39,8 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
     BigtableConstants.HBASE_TIMEUNIT);
 
   /**
+   * {@inheritDoc}
+   * 
    * Convert a {@link FlatRow} to a {@link Result}.
    */
   @Override

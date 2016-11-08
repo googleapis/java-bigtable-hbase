@@ -85,8 +85,8 @@ public class TestBigtableWhileMatchResultScannerAdapter {
   @Test
   public void adapt_oneRow_hasMatchingLabels() throws IOException {
     FlatRow row = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key"))
-        .addCell(null, null, 0, null, Arrays.asList("a-in"))
-        .addCell(null, null, 0, null, Arrays.asList("a-out"))
+        .addCell("", ByteString.EMPTY, 0, ByteString.EMPTY, Arrays.asList("a-in"))
+        .addCell("", ByteString.EMPTY, 0, ByteString.EMPTY, Arrays.asList("a-out"))
         .build();
     when(mockBigtableResultScanner.next()).thenReturn(row);
     Result result = new Result();
@@ -101,7 +101,7 @@ public class TestBigtableWhileMatchResultScannerAdapter {
   @Test
   public void adapt_oneRow_hasNoMatchingLabels() throws IOException {
     FlatRow row = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key"))
-        .addCell(null, null, 0, null, Arrays.asList("a-in"))
+        .addCell("", ByteString.EMPTY, 0, ByteString.EMPTY, Arrays.asList("a-in"))
         .build();
     when(mockBigtableResultScanner.next()).thenReturn(row);
 

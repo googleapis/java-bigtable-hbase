@@ -37,7 +37,7 @@ import com.google.cloud.bigtable.hbase.adapters.read.ScanAdapter;
 public final class Adapters {
   /** Constant <code>ROW_ADAPTER</code> */
   public static final RowAdapter ROW_ADAPTER = new RowAdapter();
-  /** Constant <code>ROW_ADAPTER</code> */
+  /** Constant <code>FLAT_ROW_ADAPTER</code> */
   public static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
   /** Constant <code>APPEND_ADAPTER</code> */
   public static final AppendAdapter APPEND_ADAPTER = new AppendAdapter();
