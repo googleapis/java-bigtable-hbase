@@ -278,8 +278,8 @@ public class AsyncExecutor {
     return call(rpc, request, id);
   }
 
-  private <ResponseT, RequestT extends GeneratedMessage> ListenableFuture<ResponseT>
-      call(AsyncCall<RequestT, ResponseT> rpc, RequestT request, long id) {
+  private <ResponseT, RequestT> ListenableFuture<ResponseT> call(AsyncCall<RequestT, ResponseT> rpc,
+      RequestT request, long id) {
     ListenableFuture<ResponseT> future;
     try {
       future = rpc.call(client, request);
