@@ -80,9 +80,6 @@ public class IntegrationTests {
   private static Connection connection;
   private static Configuration configuration;
 
-  @Rule
-  public Timeout globalTimeout = Timeout.seconds(60 * 10); // 10 minutes for all tests
-
   static {
     TABLE_NAME = newTestTableName();
     addExtraResources(BASE_CONFIGURATION);
@@ -126,7 +123,7 @@ public class IntegrationTests {
   }
 
   @ClassRule
-  public static Timeout timeoutRule = new Timeout((int) TimeUnit.MINUTES.toMillis(5));
+  public static Timeout timeoutRule = new Timeout((int) TimeUnit.MINUTES.toMillis(10));
 
   public static void createTable(TableName tableName) throws IOException {
     try (Admin admin = connection.getAdmin();) {

@@ -45,11 +45,11 @@ public class FlatRow implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public final static class Builder {
-      private String family;
-      private ByteString qualifier;
+      private String family = "";
+      private ByteString qualifier = ByteString.EMPTY;
       private long timestamp;
-      private ByteString value;
-      private List<String> labels;
+      private ByteString value = ByteString.EMPTY;
+      private List<String> labels = Collections.<String> emptyList();
 
       public Builder withFamily(String family) {
         this.family = family;
@@ -170,11 +170,10 @@ public class FlatRow implements Serializable {
   }
 
   public static final class Builder {
-    private ByteString rowKey = null;
-    private final ImmutableList.Builder<Cell> listBuilder;
+    private ByteString rowKey = ByteString.EMPTY;
+    private final ImmutableList.Builder<Cell> listBuilder = new ImmutableList.Builder<Cell>();
 
     private Builder() {
-      listBuilder = new ImmutableList.Builder<Cell>();
     }
 
     public Builder withRowKey(ByteString rowKey) {

@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.dataflow.coders;
 import static org.apache.hadoop.hbase.util.Bytes.toBytes;
 
 import com.google.bigtable.repackaged.com.google.api.client.util.Clock;
+import com.google.cloud.dataflow.sdk.util.CoderUtils;
 import com.google.cloud.dataflow.sdk.util.MutationDetectors;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -60,10 +61,10 @@ public class HBaseMutationCoderTest {
         new Put(toBytes("key")).addColumn(toBytes("family"), toBytes("column"), toBytes("value"));
     for (int i = 0; i < 5; i++) {
       Assert.assertEquals(
-          0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
+          0, original.compareTo(CoderUtils.decodeFromByteArray(underTest, CoderUtils.encodeToByteArray(underTest, original))));
       time.set(time.get() + 10_000);
       Assert.assertEquals(
-          0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
+          0, original.compareTo(CoderUtils.decodeFromByteArray(underTest, CoderUtils.encodeToByteArray(underTest, original))));
       MutationDetectors.forValueWithCoder(original, underTest).verifyUnmodified();
     }
   }
@@ -73,7 +74,7 @@ public class HBaseMutationCoderTest {
     Delete original = new Delete(toBytes("key"));
     for (int i = 0; i < 5; i++) {
       Assert.assertEquals(
-          0, original.compareTo(CoderTestUtil.encodeAndDecode(underTest, original)));
+          0, original.compareTo(CoderUtils.decodeFromByteArray(underTest, CoderUtils.encodeToByteArray(underTest, original))));
       time.set(time.get() + 10_000);
       MutationDetectors.forValueWithCoder(original, underTest).verifyUnmodified();
     }

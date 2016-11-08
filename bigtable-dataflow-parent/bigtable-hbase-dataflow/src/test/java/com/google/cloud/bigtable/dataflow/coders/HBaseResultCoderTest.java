@@ -16,35 +16,39 @@
 package com.google.cloud.bigtable.dataflow.coders;
 
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.read.RowCell;
+import com.google.cloud.dataflow.sdk.util.CoderUtils;
 
 /**
  * Tests for {@link HBaseResultCoder}
  */
 public class HBaseResultCoderTest {
 
-  private HBaseResultCoder underTest = new HBaseResultCoder();
+  private HBaseResultCoder underTest = HBaseResultCoder.getInstance();
 
   private Result original = createResult();
 
   @Test
   public void testRoundTrip() throws Exception {
-    Result copy = CoderTestUtil.encodeAndDecode(underTest, original);
+    Result copy = CoderUtils.decodeFromByteArray(underTest,
+      CoderUtils.encodeToByteArray(underTest, original));
     // This method throws an exception if the values are not equal.
     Result.compareResults(original, copy);
   }
 
   private Result createResult() {
-    return Result.create(new Cell[] { new KeyValue("key".getBytes(), "family".getBytes(),
+    return Result.create(new Cell[] { new RowCell("key".getBytes(), "family".getBytes(),
         "qualifier".getBytes(), System.currentTimeMillis(), "value".getBytes()) });
   }
 
   @Test
   public void ensureDeterministic() throws Exception {
-    Assert.assertArrayEquals(CoderTestUtil.encode(underTest, original),
-      CoderTestUtil.encode(underTest, original));
+    Assert.assertArrayEquals(
+      CoderUtils.encodeToByteArray(underTest, original),
+      CoderUtils.encodeToByteArray(underTest, original));
   }
 }
