@@ -48,7 +48,7 @@ public class RowAdapter implements ResponseAdapter<FlatRow, Result> {
   @Override
   public Result adaptResponse(FlatRow flatRow) {
     if (flatRow == null) {
-      return new Result();
+      return Result.EMPTY_RESULT;
     }
 
     SortedSet<org.apache.hadoop.hbase.Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);

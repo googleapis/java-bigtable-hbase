@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.client.coprocessor.Batch;
 
 import com.google.api.client.util.Preconditions;
 import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -44,6 +45,8 @@ import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
+import com.google.cloud.bigtable.grpc.scanner.FlatRowConverter;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
@@ -54,7 +57,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.GeneratedMessage;
 
 /**
  * Class to help BigtableTable with batch operations on an BigtableClient.
@@ -72,10 +74,10 @@ public class BatchExecutor {
    */
   public static final byte[] NO_REGION = new byte[0];
 
-  private static final Function<List<com.google.bigtable.v2.Row>, com.google.bigtable.v2.Row> ROWS_TO_ROW_CONVERTER =
-      new Function<List<com.google.bigtable.v2.Row>, com.google.bigtable.v2.Row>() {
+  private static final Function<List<FlatRow>, FlatRow> ROWS_TO_ROW_CONVERTER =
+      new Function<List<FlatRow>, FlatRow>() {
         @Override
-        public com.google.bigtable.v2.Row apply(List<com.google.bigtable.v2.Row> rows) {
+        public FlatRow apply(List<FlatRow> rows) {
           if (rows.isEmpty()) {
             return null;
           } else {
@@ -88,7 +90,8 @@ public class BatchExecutor {
    * A callback for ListenableFutures issued as a result of an RPC
    * @param <T> The type of message the hbase callback requires.
    */
-  static class RpcResultFutureCallback<T> implements FutureCallback<GeneratedMessage> {
+  @SuppressWarnings("rawtypes")
+  static class RpcResultFutureCallback<T> implements FutureCallback {
     private final Row row;
     private final Batch.Callback<T> callback;
 
@@ -112,14 +115,16 @@ public class BatchExecutor {
 
     @SuppressWarnings("unchecked")
     @Override
-    public final void onSuccess(GeneratedMessage message) {
+    public final void onSuccess(Object message) {
       try {
         Result result = Result.EMPTY_RESULT;
-        if (message instanceof com.google.bigtable.v2.Row) {
-          result = Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v2.Row) message);
+        if (message instanceof FlatRow) {
+          result = Adapters.ROW_ADAPTER.adaptResponse((FlatRow) message);
+        } else  if (message instanceof com.google.bigtable.v2.Row) {
+          com.google.bigtable.v2.Row protoRow = (com.google.bigtable.v2.Row) message;
+          result = adaptResponse(protoRow);
         } else if (message instanceof ReadModifyWriteRowResponse) {
-          result =
-              Adapters.ROW_ADAPTER.adaptResponse(((ReadModifyWriteRowResponse) message).getRow());
+          result = adaptResponse(((ReadModifyWriteRowResponse) message).getRow());
         }
         resultsArray[index] = result;
         resultFuture.set(result);
@@ -129,6 +134,10 @@ public class BatchExecutor {
       } catch (Throwable throwable) {
         resultFuture.setException(throwable);
       }
+    }
+
+    private Result adaptResponse(com.google.bigtable.v2.Row protoRow) {
+      return Adapters.ROW_ADAPTER.adaptResponse(FlatRowConverter.convert(protoRow));
     }
 
     @Override
@@ -157,7 +166,7 @@ public class BatchExecutor {
       this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
     }
 
-    public ListenableFuture<? extends GeneratedMessage> mutateRowAsync(MutateRowRequest request)
+    public ListenableFuture<MutateRowResponse> mutateRowAsync(MutateRowRequest request)
         throws InterruptedException {
       if (!options.getBulkOptions().useBulkApi()) {
         return asyncExecutor.mutateRowAsync(request);
@@ -166,12 +175,12 @@ public class BatchExecutor {
       }
     }
 
-    public ListenableFuture<? extends GeneratedMessage> readRowsAsync(ReadRowsRequest request)
+    public ListenableFuture<FlatRow> readRowsAsync(ReadRowsRequest request)
         throws InterruptedException {
       if (!options.getBulkOptions().useBulkApi()) {
-        return Futures.transform(asyncExecutor.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
+        return Futures.transform(asyncExecutor.readFlatRowsAsync(request), ROWS_TO_ROW_CONVERTER);
       } else {
-        return Futures.transform(bulkRead.add(request), ROWS_TO_ROW_CONVERTER);
+        return Futures.transform(bulkRead.addFlatRow(request), ROWS_TO_ROW_CONVERTER);
       }
     }
 
@@ -215,6 +224,7 @@ public class BatchExecutor {
    * @param <T> The type of the callback.
    * @return A ListenableFuture that will have the result when the RPC completes.
    */
+  @SuppressWarnings("unchecked")
   private <R extends Row, T> ListenableFuture<Result> issueAsyncRowRequest(
       BulkOperation bulkOperation, Row row, Batch.Callback<T> callback, Object[] results,
       int index) {
@@ -227,8 +237,7 @@ public class BatchExecutor {
     return resultFuture;
   }
 
-  private ListenableFuture<? extends GeneratedMessage>
-      issueAsyncRequest(BulkOperation bulkOperation, Row row) {
+  private ListenableFuture<?> issueAsyncRequest(BulkOperation bulkOperation, Row row) {
     try {
       if (row instanceof Get) {
         return bulkOperation.readRowsAsync(requestAdapter.adapt((Get) row));
