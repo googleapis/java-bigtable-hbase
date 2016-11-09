@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.dataflow.coders;
 
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,7 +26,8 @@ public class HBaseResultArrayCoderTest {
 
   private HBaseResultArrayCoder underTest = new HBaseResultArrayCoder();
 
-  private Result[] original = new Result[]{createResult()};
+  private Result[] original =
+      new Result[] { HBaseResultCoderTest.TEST_RESULT, HBaseResultCoderTest.TEST_RESULT };
 
   @Test
   public void testRoundTrip() throws Exception {
@@ -37,15 +36,9 @@ public class HBaseResultArrayCoderTest {
     Result.compareResults(original[0], copy[0]);
   }
 
-  private Result createResult() {
-    return Result.create(new Cell[] { new KeyValue("key".getBytes(), "family".getBytes(),
-        "qualifier".getBytes(), System.currentTimeMillis(), "value".getBytes()) });
-  }
-
   @Test
   public void ensureDeterministic() throws Exception {
     Assert.assertArrayEquals(CoderTestUtil.encode(underTest, original),
       CoderTestUtil.encode(underTest, original));
   }
 }
-

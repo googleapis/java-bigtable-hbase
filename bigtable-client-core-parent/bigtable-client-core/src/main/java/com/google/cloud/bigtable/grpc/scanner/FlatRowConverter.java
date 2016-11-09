@@ -15,11 +15,12 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
+import java.util.Collection;
+
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.Row;
-import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 
 /**
@@ -33,9 +34,17 @@ public class FlatRowConverter {
     if (row == null) {
       return null;
     }
-    ImmutableList<FlatRow.Cell> cells =
-        FlatRow.CellOrdering.DEFAULT_ORDERING.immutableSortedCopy(row.getCells());
+    return convert(row, FlatRow.CellOrdering.DEFAULT_ORDERING.immutableSortedCopy(row.getCells()));
+  }
 
+  public static Row convertUnorderd(FlatRow row) {
+    if (row == null) {
+      return null;
+    }
+    return convert(row, row.getCells());
+  }
+
+  private static Row convert(FlatRow row, Collection<FlatRow.Cell> cells) {
     Row.Builder rowBuilder = Row.newBuilder().setKey(row.getRowKey());
     String prevFamily = null;
     Family.Builder familyBuilder = null;

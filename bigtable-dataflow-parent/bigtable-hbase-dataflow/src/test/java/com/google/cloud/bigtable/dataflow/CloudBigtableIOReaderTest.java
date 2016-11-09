@@ -28,9 +28,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.dataflow.CloudBigtableScanConfiguration.Builder;
 import com.google.cloud.dataflow.sdk.io.range.ByteKey;
@@ -48,7 +48,7 @@ public class CloudBigtableIOReaderTest {
   BigtableSession mockSession;
 
   @Mock
-  ResultScanner<Row> mockScanner;
+  ResultScanner<FlatRow> mockScanner;
 
   @Mock
   CloudBigtableIO.AbstractSource<Result> mockSource;
@@ -82,7 +82,7 @@ public class CloudBigtableIOReaderTest {
 
   private void setRowKey(String rowKey) throws IOException {
     ByteString rowKeyByteString = ByteString.copyFrom(Bytes.toBytes(rowKey));
-    Row row = Row.newBuilder().setKey(rowKeyByteString).build();
+    FlatRow row = FlatRow.newBuilder().withRowKey(rowKeyByteString).build();
     when(mockScanner.next()).thenReturn(row);
   }
 
