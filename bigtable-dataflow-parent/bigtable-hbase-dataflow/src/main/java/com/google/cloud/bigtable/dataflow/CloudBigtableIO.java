@@ -53,9 +53,9 @@ import com.google.bigtable.repackaged.com.google.cloud.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableTableName;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.dataflow.coders.HBaseMutationCoder;
@@ -186,7 +186,7 @@ public class CloudBigtableIO {
      * @param resultScanner The {@link ResultScanner} on which to operate.
      * @param rangeTracker The {@link ByteKeyRangeTracker} that defines the range in which to get results.
      */
-    ResultOutputType next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker) throws IOException;
+    ResultOutputType next(ResultScanner<FlatRow> resultScanner, ByteKeyRangeTracker rangeTracker) throws IOException;
 
     /**
      * Is the work complete? Checks for null in the case of {@link Result}, or empty in the case of
@@ -207,12 +207,12 @@ public class CloudBigtableIO {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Result next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker)
+    public Result next(ResultScanner<FlatRow> resultScanner, ByteKeyRangeTracker rangeTracker)
         throws IOException {
-      Row row = resultScanner.next();
+      FlatRow row = resultScanner.next();
       if (row != null
-          && rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getKey()))) {
-        return Adapters.ROW_ADAPTER.adaptResponse(row);
+          && rangeTracker.tryReturnRecordAt(true, ByteStringUtil.toByteKey(row.getRowKey()))) {
+        return Adapters.FLAT_ROW_ADAPTER.adaptResponse(row);
       }
       return null;
     }
@@ -241,21 +241,21 @@ public class CloudBigtableIO {
 
 
     @Override
-    public Result[] next(ResultScanner<Row> resultScanner, ByteKeyRangeTracker rangeTracker)
+    public Result[] next(ResultScanner<FlatRow> resultScanner, ByteKeyRangeTracker rangeTracker)
         throws IOException {
       List<Result> results = new ArrayList<>();
       for (int i = 0; i < arraySize; i++) {
-        Row row = resultScanner.next();
+        FlatRow row = resultScanner.next();
         if (row == null) {
           // The scan completed.
           break;
         }
-        ByteKey key = ByteStringUtil.toByteKey(row.getKey());
+        ByteKey key = ByteStringUtil.toByteKey(row.getRowKey());
         if (!rangeTracker.tryReturnRecordAt(true, key)) {
           // A split occurred and the split key was before this key.
           break;
         }
-        results.add(Adapters.ROW_ADAPTER.adaptResponse(row));
+        results.add(Adapters.FLAT_ROW_ADAPTER.adaptResponse(row));
       }
       return results.toArray(new Result[results.size()]);
     }
@@ -730,7 +730,7 @@ public class CloudBigtableIO {
     private final ScanIterator<ResultOutputType> scanIterator;
 
     private volatile BigtableSession session;
-    private volatile ResultScanner<Row> scanner;
+    private volatile ResultScanner<FlatRow> scanner;
     private volatile ResultOutputType current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
@@ -765,7 +765,7 @@ public class CloudBigtableIO {
       AbstractBigtableConnection connection =
           AbstractCloudBigtableTableDoFn.pool.getConnection(config);
       session = connection.getSession();
-      scanner = session.getDataClient().readRows(source.getConfiguration().getRequest());
+      scanner = session.getDataClient().readFlatRows(source.getConfiguration().getRequest());
     }
 
     /**
@@ -850,7 +850,7 @@ public class CloudBigtableIO {
     }
 
     @VisibleForTesting
-    protected void setScanner(ResultScanner<Row> scanner) {
+    protected void setScanner(ResultScanner<FlatRow> scanner) {
       this.scanner = scanner;
     }
 

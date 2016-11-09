@@ -15,7 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import java.util.SortedSet;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.TreeSet;
 
 import org.apache.hadoop.hbase.KeyValue;
@@ -49,7 +50,21 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
       return Result.EMPTY_RESULT;
     }
 
-    SortedSet<org.apache.hadoop.hbase.Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);
+    return convert(flatRow, new TreeSet<org.apache.hadoop.hbase.Cell>(KeyValue.COMPARATOR));
+  }
+
+  /**
+   * Convert a {@link FlatRow} to a {@link Result} without sorting the cells first.
+   */
+  public Result adaptResponsePresortedCells(FlatRow flatRow) {
+    if (flatRow == null) {
+      return Result.EMPTY_RESULT;
+    }
+
+    return convert(flatRow, new ArrayList<org.apache.hadoop.hbase.Cell>());
+  }
+
+  private Result convert(FlatRow flatRow, Collection<org.apache.hadoop.hbase.Cell> hbaseCells) {
     byte[] rowKey = ByteStringer.extract(flatRow.getRowKey());
 
     for (FlatRow.Cell cell : flatRow.getCells()) {
@@ -83,14 +98,14 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
    * @return a {@link FlatRow} object.
    */
   public FlatRow adaptToRow(Result result) {
-    FlatRow.Builder rowBuilder = FlatRow.newBuilder();
 
     // Result.getRow() is derived from its cells.  If the cells are empty, the row will be null.
-    if (result.getRow() != null) {
-      rowBuilder.withRowKey(ByteStringer.wrap(result.getRow()));
-    } else {
+    if (result.getRow() == null) {
       return null;
     }
+
+    FlatRow.Builder rowBuilder =
+        FlatRow.newBuilder().withRowKey(ByteStringer.wrap(result.getRow()));
 
     final org.apache.hadoop.hbase.Cell[] rawCells = result.rawCells();
     if (rawCells != null && rawCells.length > 0) {

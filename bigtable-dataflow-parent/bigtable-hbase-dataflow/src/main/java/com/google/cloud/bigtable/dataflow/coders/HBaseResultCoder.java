@@ -21,10 +21,11 @@ import java.io.OutputStream;
 
 import org.apache.hadoop.hbase.client.Result;
 
+import com.google.bigtable.repackaged.com.google.cloud.grpc.scanner.FlatRow;
 import com.google.bigtable.repackaged.com.google.cloud.hbase.adapters.Adapters;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.v2.Row;
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
+import com.google.cloud.dataflow.sdk.coders.SerializableCoder;
 
 /**
  * An {@link AtomicCoder} that serializes and deserializes the {@link Result}.
@@ -34,20 +35,21 @@ public class HBaseResultCoder extends AtomicCoder<Result> {
   private static final long serialVersionUID = -4975428837770254686L;
 
   private static final HBaseResultCoder INSTANCE = new HBaseResultCoder();
+  private static final SerializableCoder<FlatRow> FLAT_ROW_CODER = SerializableCoder.of(FlatRow.class);
 
   public static HBaseResultCoder getInstance() {
     return INSTANCE;
   }
 
   @Override
-  public Result decode(InputStream inputStream, Coder.Context context)
-      throws IOException {
-    return Adapters.ROW_ADAPTER.adaptResponse(Row.parseDelimitedFrom(inputStream));
+  public Result decode(InputStream inputStream, Coder.Context context) throws IOException {
+    return Adapters.FLAT_ROW_ADAPTER
+        .adaptResponsePresortedCells(FLAT_ROW_CODER.decode(inputStream, context));
   }
 
   @Override
   public void encode(Result value, OutputStream outputStream, Coder.Context context)
       throws IOException {
-    Adapters.ROW_ADAPTER.adaptToRow(value).writeDelimitedTo(outputStream);
+    FLAT_ROW_CODER.encode(Adapters.FLAT_ROW_ADAPTER.adaptToRow(value), outputStream, context);
   }
 }
