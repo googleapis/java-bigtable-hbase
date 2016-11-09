@@ -30,6 +30,7 @@ import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.GeneratedMessage;
@@ -106,6 +107,18 @@ public class AsyncExecutor {
         @Override
         public ListenableFuture<List<Row>> call(BigtableDataClient client, ReadRowsRequest request) {
           return client.readRowsAsync(request);
+        }
+      };
+
+
+  /**
+   * Calls {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)}.
+   */
+  protected static AsyncCall<ReadRowsRequest, List<FlatRow>> READ_FLAT_ROWS_ASYNC =
+      new AsyncCall<ReadRowsRequest, List<FlatRow>>() {
+        @Override
+        public ListenableFuture<List<FlatRow>> call(BigtableDataClient client, ReadRowsRequest request) {
+          return client.readFlatRowsAsync(request);
         }
       };
 
@@ -268,6 +281,21 @@ public class AsyncExecutor {
   public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request)
       throws InterruptedException {
     return call(READ_ROWS_ASYNC, request);
+  }
+
+
+  /**
+   * Performs a {@link com.google.cloud.bigtable.grpc.BigtableDataClient#readRowsAsync(ReadRowsRequest)} on the
+   * {@link com.google.bigtable.v2.ReadRowsRequest}. This method may block if
+   * {@link com.google.cloud.bigtable.grpc.async.RpcThrottler#registerOperationWithHeapSize(long)} blocks.
+   *
+   * @param request The {@link com.google.bigtable.v2.ReadRowsRequest} to send.
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} which can be listened to for completion events.
+   * @throws java.lang.InterruptedException if any.
+   */
+  public ListenableFuture<List<FlatRow>> readFlatRowsAsync(ReadRowsRequest request)
+      throws InterruptedException {
+    return call(READ_FLAT_ROWS_ASYNC, request);
   }
 
   private <RequestT extends GeneratedMessage, ResponseT> ListenableFuture<ResponseT> call(

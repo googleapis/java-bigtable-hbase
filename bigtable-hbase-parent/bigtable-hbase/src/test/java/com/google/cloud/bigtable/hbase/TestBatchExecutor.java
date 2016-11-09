@@ -23,14 +23,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.bigtable.v2.Cell;
-import com.google.bigtable.v2.Column;
-import com.google.bigtable.v2.Family;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.Row;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
@@ -40,6 +36,7 @@ import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -144,7 +141,7 @@ public class TestBatchExecutor {
         new HBaseRequestAdapter(options, TableName.valueOf("table"), new Configuration(false));
 
     MockitoAnnotations.initMocks(this);
-    when(mockAsyncExecutor.readRowsAsync(any(ReadRowsRequest.class))).thenReturn(mockFuture);
+    when(mockAsyncExecutor.readFlatRowsAsync(any(ReadRowsRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.mutateRowAsync(any(MutateRowRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(mockFuture);
     when(mockAsyncExecutor.readModifyWriteRowAsync(any(ReadModifyWriteRowRequest.class))).thenReturn(mockFuture);
@@ -184,10 +181,11 @@ public class TestBatchExecutor {
 
   @Test
   public void testGet() throws Exception {
-    final Row response = Row.getDefaultInstance();
+    final byte[] key = randomBytes(8);
+    FlatRow response = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key)).build();
     when(mockFuture.get()).thenReturn(ImmutableList.of(response));
-    Result[] results = batch(Arrays.asList(new Get(randomBytes(8))));
-    Assert.assertTrue(matchesRow(Adapters.ROW_ADAPTER.adaptResponse(response)).matches(results[0]));
+    Result[] results = batch(Arrays.asList(new Get(key)));
+    Assert.assertTrue(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response)).matches(results[0]));
   }
 
   @Test
@@ -244,15 +242,15 @@ public class TestBatchExecutor {
 
   @Test
   public void testGetCallback() throws Exception {
-    Row response = Row.getDefaultInstance();
+    byte[] key = randomBytes(8);
+    FlatRow response = FlatRow.newBuilder().withRowKey(ByteString.copyFrom(key)).build();
     when(mockFuture.get()).thenReturn(ImmutableList.of(response));
     final Callback<Result> callback = Mockito.mock(Callback.class);
-    byte[] key = randomBytes(8);
     List<Get> gets = Arrays.asList(new Get(key));
     createExecutor(DEFAULT_OPTIONS).batchCallback(gets, new Result[1], callback);
 
     verify(callback, times(1)).update(same(BatchExecutor.NO_REGION), same(key),
-      argThat(matchesRow(Adapters.ROW_ADAPTER.adaptResponse(response))));
+      argThat(matchesRow(Adapters.FLAT_ROW_ADAPTER.adaptResponse(response))));
   }
 
   @Test
@@ -265,28 +263,20 @@ public class TestBatchExecutor {
       byte[] row_key = randomBytes(8);
       gets.add(new Get(row_key));
     }
-    ResultScanner<Row> mockScanner = Mockito.mock(ResultScanner.class);
-    when(mockClient.readRows(any(ReadRowsRequest.class))).thenReturn(mockScanner);
+    ResultScanner<FlatRow> mockScanner = Mockito.mock(ResultScanner.class);
+    when(mockClient.readFlatRows(any(ReadRowsRequest.class))).thenReturn(mockScanner);
     final AtomicInteger counter = new AtomicInteger();
-    when(mockScanner.next()).then(new Answer<Row>() {
+    when(mockScanner.next()).then(new Answer<FlatRow>() {
       @Override
-      public Row answer(InvocationOnMock invocation) throws Throwable {
+      public FlatRow answer(InvocationOnMock invocation) throws Throwable {
         int current = counter.incrementAndGet();
         if (current == 10) {
           return null;
         }
         ByteString key = ByteStringer.wrap(gets.get(current).getRow());
         ByteString cellValue = ByteString.copyFrom(randomBytes(8));
-        com.google.bigtable.v2.Cell cell = Cell.newBuilder()
-            .setTimestampMicros(System.nanoTime() / 1000)
-            .setValue(cellValue)
-            .build();
-        Family family =
-            Family.newBuilder()
-                .setName("family")
-                .addColumns(Column.newBuilder().addCells(cell))
-                .build();
-        return Row.newBuilder().setKey(key).addFamilies(family).build();
+        return FlatRow.newBuilder().withRowKey(key)
+            .addCell("family", ByteString.EMPTY, System.nanoTime() / 1000, cellValue).build();
       }
     });
 
@@ -294,7 +284,7 @@ public class TestBatchExecutor {
     BigtableOptions options = new BigtableOptions.Builder().setBulkOptions(bulkOptions).build();
     BatchExecutor underTest = createExecutor(options);
     Result[] results = underTest.batch(gets);
-    verify(mockClient, times(1)).readRows(any(ReadRowsRequest.class));
+    verify(mockClient, times(1)).readFlatRows(any(ReadRowsRequest.class));
     Assert.assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
     for (int i = 1; i < results.length; i++) {
       Assert.assertTrue(Bytes.equals(results[i].getRow(), gets.get(i).getRow()));

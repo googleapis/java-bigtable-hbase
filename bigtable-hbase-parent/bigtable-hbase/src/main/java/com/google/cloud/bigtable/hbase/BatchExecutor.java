@@ -44,6 +44,7 @@ import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.AsyncExecutor;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
@@ -71,10 +72,10 @@ public class BatchExecutor {
    */
   public static final byte[] NO_REGION = new byte[0];
 
-  private static final Function<List<com.google.bigtable.v2.Row>, com.google.bigtable.v2.Row> ROWS_TO_ROW_CONVERTER =
-      new Function<List<com.google.bigtable.v2.Row>, com.google.bigtable.v2.Row>() {
+  private static final Function<List<FlatRow>, FlatRow> ROWS_TO_ROW_CONVERTER =
+      new Function<List<FlatRow>, FlatRow>() {
         @Override
-        public com.google.bigtable.v2.Row apply(List<com.google.bigtable.v2.Row> rows) {
+        public FlatRow apply(List<FlatRow> rows) {
           if (rows.isEmpty()) {
             return null;
           } else {
@@ -114,7 +115,9 @@ public class BatchExecutor {
     public final void onSuccess(Object message) {
       try {
         Result result = Result.EMPTY_RESULT;
-        if (message instanceof com.google.bigtable.v2.Row) {
+        if (message instanceof FlatRow) {
+          result = Adapters.FLAT_ROW_ADAPTER.adaptResponse((FlatRow) message);
+        } else if (message instanceof com.google.bigtable.v2.Row) {
           result = Adapters.ROW_ADAPTER.adaptResponse((com.google.bigtable.v2.Row) message);
         } else if (message instanceof ReadModifyWriteRowResponse) {
           result =
@@ -168,7 +171,7 @@ public class BatchExecutor {
     protected ListenableFuture<?> readRowsAsync(ReadRowsRequest request)
         throws InterruptedException {
       if (!options.getBulkOptions().useBulkApi()) {
-        return Futures.transform(asyncExecutor.readRowsAsync(request), ROWS_TO_ROW_CONVERTER);
+        return Futures.transform(asyncExecutor.readFlatRowsAsync(request), ROWS_TO_ROW_CONVERTER);
       } else {
         return Futures.transform(bulkRead.add(request), ROWS_TO_ROW_CONVERTER);
       }
@@ -214,7 +217,6 @@ public class BatchExecutor {
    * @param <T> The type of the callback.
    * @return A ListenableFuture that will have the result when the RPC completes.
    */
-  @SuppressWarnings("unchecked")
   private <R extends Row, T> ListenableFuture<Result> issueAsyncRowRequest(
       BulkOperation bulkOperation, Row row, Batch.Callback<T> callback, Object[] results,
       int index) {

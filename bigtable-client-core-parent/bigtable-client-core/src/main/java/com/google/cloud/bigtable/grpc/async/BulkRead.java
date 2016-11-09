@@ -22,12 +22,12 @@ import java.util.Map.Entry;
 
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.RowFilter;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
+import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -61,11 +61,11 @@ public class BulkRead {
   /**
    * Maps row keys to a collection of {@link SettableFuture}s that will be populated once the batch
    * operation is complete. The value of the {@link Multimap} is a {@link SettableFuture} of
-   * a {@link List} of {@link Row}s.  The {@link Multimap} is used because a user could request
-   * the same key multiple times in the same batch. The {@link List} of {@link Row}s mimics the
+   * a {@link List} of {@link FlatRow}s.  The {@link Multimap} is used because a user could request
+   * the same key multiple times in the same batch. The {@link List} of {@link FlatRow}s mimics the
    * interface of {@link BigtableDataClient#readRowsAsync(ReadRowsRequest)}.
    */
-  private Multimap<ByteString, SettableFuture<List<Row>>> futures;
+  private Multimap<ByteString, SettableFuture<List<FlatRow>>> futures;
 
   /**
    * <p>Constructor for BulkRead.</p>
@@ -82,11 +82,11 @@ public class BulkRead {
    * Adds the key in the request to a list of to look up in a batch read.
    *
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} with a single row key.
-   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will be populated with the {@link com.google.bigtable.v2.Row} that
+   * @return a {@link com.google.common.util.concurrent.ListenableFuture} that will be populated with the {@link com.google.bigtable.v2.FlatRow} that
    *    corresponds to the request
    * @throws java.lang.InterruptedException if any.
    */
-  public ListenableFuture<List<Row>> add(ReadRowsRequest request) throws InterruptedException {
+  public ListenableFuture<List<FlatRow>> add(ReadRowsRequest request) throws InterruptedException {
     Preconditions.checkNotNull(request);
     Preconditions.checkArgument(request.getRows().getRowKeysCount() == 1);
     ByteString rowKey = request.getRows().getRowKeysList().get(0);
@@ -103,7 +103,7 @@ public class BulkRead {
     if (futures == null) {
       futures = HashMultimap.create();
     }
-    SettableFuture<List<Row>> future = SettableFuture.create();
+    SettableFuture<List<FlatRow>> future = SettableFuture.create();
     futures.put(rowKey, future);
     return future;
   }
@@ -115,32 +115,32 @@ public class BulkRead {
   public void flush() {
     if (futures != null && !futures.isEmpty()) {
       try {
-        ResultScanner<Row> scanner = client.readRows(ReadRowsRequest.newBuilder()
+        ResultScanner<FlatRow> scanner = client.readFlatRows(ReadRowsRequest.newBuilder()
           .setTableName(tableName)
           .setFilter(currentFilter)
           .setRows(RowSet.newBuilder().addAllRowKeys(futures.keys()).build())
           .build());
         while (true) {
-          Row row = scanner.next();
+          FlatRow row = scanner.next();
           if (row == null) {
             break;
           }
-          Collection<SettableFuture<List<Row>>> rowFutures = futures.get(row.getKey());
+          Collection<SettableFuture<List<FlatRow>>> rowFutures = futures.get(row.getRowKey());
           if (rowFutures != null) {
             // TODO: What about missing keys?
-            for (SettableFuture<List<Row>> rowFuture : rowFutures) {
+            for (SettableFuture<List<FlatRow>> rowFuture : rowFutures) {
               rowFuture.set(ImmutableList.of(row));
             }
-            futures.removeAll(row.getKey());
+            futures.removeAll(row.getRowKey());
           } else {
-            LOG.warn("Found key: %s, but it was not in the original request.", row.getKey());
+            LOG.warn("Found key: %s, but it was not in the original request.", row.getRowKey());
           }
         }
-        for (Entry<ByteString, SettableFuture<List<Row>>> entry : futures.entries()) {
-          entry.getValue().set(ImmutableList.<Row> of());
+        for (Entry<ByteString, SettableFuture<List<FlatRow>>> entry : futures.entries()) {
+          entry.getValue().set(ImmutableList.<FlatRow> of());
         }
       } catch (IOException e) {
-        for (Entry<ByteString, SettableFuture<List<Row>>> entry : futures.entries()) {
+        for (Entry<ByteString, SettableFuture<List<FlatRow>>> entry : futures.entries()) {
           entry.getValue().setException(e);
         }
       }
