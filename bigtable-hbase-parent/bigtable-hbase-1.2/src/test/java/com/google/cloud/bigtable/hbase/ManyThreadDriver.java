@@ -16,13 +16,11 @@
 package com.google.cloud.bigtable.hbase;
 
 import org.apache.commons.lang.RandomStringUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
@@ -42,13 +40,8 @@ public class ManyThreadDriver {
 
   private static void runTest(String projectId, String instanceId, final String tableName)
       throws Exception {
-    Configuration configuration = new Configuration();
-    configuration.set(
-        "hbase.client.connection.impl", "com.google.cloud.bigtable.hbase1_0.BigtableConnection");
-    configuration.set("google.bigtable.project.id", projectId);
-    configuration.set("google.bigtable.instance.id", instanceId);
     ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-    try (Connection connection = ConnectionFactory.createConnection(configuration)) {
+    try (Connection connection = BigtableConfiguration.connect(projectId, instanceId)) {
       Admin admin = connection.getAdmin();
 
       HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(tableName));
