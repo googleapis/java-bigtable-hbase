@@ -25,14 +25,52 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.graphite.GraphiteReporter;
+import com.codahale.metrics.graphite.PickledGraphite;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.DropwizardMetricRegistry;
+import com.google.cloud.bigtable.metrics.MetricRegistry;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 public class ManyThreadDriver {
+  
+  static GraphiteReporter reporter = null;
+
+  static {
+    String serverIp = System.getProperty("graphite.server.ip");
+    if (serverIp != null) {
+      MetricRegistry registry = BigtableClientMetrics.getMetricRegistry(MetricLevel.Info);
+      DropwizardMetricRegistry dropwizardRegistry;
+      if (registry instanceof DropwizardMetricRegistry) {
+        dropwizardRegistry = (DropwizardMetricRegistry) registry;
+      } else {
+        dropwizardRegistry = new DropwizardMetricRegistry();
+        BigtableClientMetrics.setMetricRegistry(dropwizardRegistry);
+      }
+
+      final int port = Integer.parseInt(System.getProperty("graphite.server.port"));
+      final String prefix = System.getProperty("graphite.prefix");
+      final PickledGraphite pickledGraphite =
+          new PickledGraphite(new InetSocketAddress(serverIp, port));
+      reporter =
+          GraphiteReporter.forRegistry(dropwizardRegistry.getRegistry())
+              .prefixedWith(prefix)
+              .convertRatesTo(TimeUnit.SECONDS)
+              .convertDurationsTo(TimeUnit.MILLISECONDS)
+              .filter(MetricFilter.ALL)
+              .build(pickledGraphite);
+      reporter.start(20, TimeUnit.SECONDS);
+      BigtableClientMetrics.setMetricRegistry(registry);
+    }
+  }
+
   private static long recordCount;
   private static int valueSize;
   private static int runtimeHours;
