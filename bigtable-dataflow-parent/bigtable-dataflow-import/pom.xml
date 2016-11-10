@@ -83,7 +83,6 @@ limitations under the License.
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-boringssl-static</artifactId>
             <scope>test</scope>
-            <classifier>${os.detected.classifier}</classifier>
         </dependency>
     </dependencies>
     <profiles>
