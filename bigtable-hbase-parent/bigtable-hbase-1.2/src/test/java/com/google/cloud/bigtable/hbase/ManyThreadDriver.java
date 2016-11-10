@@ -55,7 +55,15 @@ public class ManyThreadDriver {
         BigtableClientMetrics.setMetricRegistry(dropwizardRegistry);
       }
 
-      final int port = Integer.parseInt(System.getProperty("graphite.server.port"));
+      int port = -1;
+      if (serverIp.contains(":")) {
+        String[] split = serverIp.split(":");
+        serverIp = split[0];
+        port = Integer.parseInt(split[1]);
+      } else {
+        port = Integer.parseInt(System.getProperty("graphite.server.port"));
+      }
+      System.out.println("Graphite server: " + serverIp + " port: " + port);
       final String prefix = System.getProperty("graphite.prefix");
       final PickledGraphite pickledGraphite =
           new PickledGraphite(new InetSocketAddress(serverIp, port));
