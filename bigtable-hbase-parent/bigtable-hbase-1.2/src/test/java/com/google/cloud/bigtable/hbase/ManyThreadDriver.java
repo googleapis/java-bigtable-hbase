@@ -75,7 +75,8 @@ public class ManyThreadDriver {
               .filter(MetricFilter.ALL)
               .build(pickledGraphite);
       reporter.start(20, TimeUnit.SECONDS);
-      BigtableClientMetrics.setMetricRegistry(registry);
+      BigtableClientMetrics.setMetricRegistry(dropwizardRegistry);
+      System.out.println("created registry with prefix: " + prefix);
     }
   }
 
