@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public final class BigtableClientMetrics {
 
   private static final String METRIC_PREFIX = "google-cloud-bigtable.";
-  private static MetricRegistry registry;
+  private static MetricRegistry registry = MetricRegistry.NULL_METRICS_REGISTRY;
   private static MetricLevel levelToLog = MetricLevel.Info;
 
   public enum MetricLevel {
@@ -65,7 +65,7 @@ public final class BigtableClientMetrics {
         DropwizardMetricRegistry dropwizardRegistry = new DropwizardMetricRegistry();
         DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
         setMetricRegistry(dropwizardRegistry);
-      } else if (registry == null || registry instanceof DropwizardMetricRegistry) {
+      } else if (registry instanceof DropwizardMetricRegistry) {
         DropwizardMetricRegistry dropwizardRegistry = (DropwizardMetricRegistry) registry;
         DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
       } else {
@@ -73,9 +73,6 @@ public final class BigtableClientMetrics {
           "Could not set up logging since the metrics registry is not a DropwizardMetricRegistry; it is a %s w.",
           registry.getClass().getName());
       }
-    }
-    if (registry == null) {
-      setMetricRegistry(MetricRegistry.NULL_METRICS_REGISTRY);
     }
   }
 
