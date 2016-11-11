@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public final class BigtableClientMetrics {
 
   private static final String METRIC_PREFIX = "google-cloud-bigtable.";
-  private static MetricRegistry registry = MetricRegistry.NULL_METRICS_REGISTRY;
+  private static MetricRegistry registry;
   private static MetricLevel levelToLog = MetricLevel.Info;
 
   public enum MetricLevel {
@@ -54,6 +54,28 @@ public final class BigtableClientMetrics {
 
     public int getLevel() {
       return level;
+    }
+  }
+
+  // Simplistic initialization via slf4j
+  static {
+    Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
+    if (logger.isDebugEnabled()) {
+      if (registry == MetricRegistry.NULL_METRICS_REGISTRY) {
+        DropwizardMetricRegistry dropwizardRegistry = new DropwizardMetricRegistry();
+        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
+        setMetricRegistry(dropwizardRegistry);
+      } else if (registry == null || registry instanceof DropwizardMetricRegistry) {
+        DropwizardMetricRegistry dropwizardRegistry = (DropwizardMetricRegistry) registry;
+        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
+      } else {
+        logger.info(
+          "Could not set up logging since the metrics registry is not a DropwizardMetricRegistry; it is a %s w.",
+          registry.getClass().getName());
+      }
+    }
+    if (registry == null) {
+      setMetricRegistry(MetricRegistry.NULL_METRICS_REGISTRY);
     }
   }
 
@@ -123,25 +145,6 @@ public final class BigtableClientMetrics {
    */
   public static boolean isEnabled(MetricLevel level) {
     return levelToLog.getLevel() >= level.getLevel();
-  }
-
-  // Simplistic initialization via slf4j
-  static {
-    Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
-    if (logger.isDebugEnabled()) {
-      if (registry == MetricRegistry.NULL_METRICS_REGISTRY) {
-        DropwizardMetricRegistry dropwizardRegistry = new DropwizardMetricRegistry();
-        registry = dropwizardRegistry;
-        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
-      } else if (registry instanceof DropwizardMetricRegistry) {
-        DropwizardMetricRegistry dropwizardRegistry = (DropwizardMetricRegistry) registry;
-        DropwizardMetricRegistry.createSlf4jReporter(dropwizardRegistry, logger, 1, TimeUnit.MINUTES);
-      } else {
-        logger.info(
-          "Could not set up logging since the metrics registry is not a DropwizardMetricRegistry; it is a %s w.",
-          registry.getClass().getName());
-      }
-    }
   }
 
   private BigtableClientMetrics(){
