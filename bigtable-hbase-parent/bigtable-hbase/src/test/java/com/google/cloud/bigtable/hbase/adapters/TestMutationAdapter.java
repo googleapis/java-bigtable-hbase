@@ -15,8 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v2.MutateRowRequest;
+import static org.mockito.Matchers.*;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
+
+import java.util.Collections;
 
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
@@ -39,15 +41,15 @@ public class TestMutationAdapter {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   @Mock
-  private OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter;
+  private MutationAdapter<Delete> deleteAdapter;
   @Mock
-  private OperationAdapter<Put, MutateRowRequest.Builder> putAdapter;
+  private MutationAdapter<Put> putAdapter;
   @Mock
-  private OperationAdapter<Increment, MutateRowRequest.Builder> incrementAdapter;
+  private MutationAdapter<Increment> incrementAdapter;
   @Mock
-  private OperationAdapter<Append, MutateRowRequest.Builder> appendAdapter;
+  private MutationAdapter<Append> appendAdapter;
 
-  private MutationAdapter adapter;
+  private HBaseMutationAdapter adapter;
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   public static class UnknownMutation extends Mutation {}
@@ -55,7 +57,7 @@ public class TestMutationAdapter {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    adapter = new MutationAdapter(deleteAdapter, putAdapter, incrementAdapter, appendAdapter);
+    adapter = new HBaseMutationAdapter(deleteAdapter, putAdapter, incrementAdapter, appendAdapter);
   }
 
   @After
@@ -69,45 +71,34 @@ public class TestMutationAdapter {
 
   @Test
   public void testPutIsAdapted() {
-    Put put = new Put(dataHelper.randomData("rk1"));
-    Mockito.when(putAdapter.adapt(put))
-        .thenReturn(MutateRowRequest.newBuilder());
-
-    adapter.adapt(put);
-
-    Mockito.verify(putAdapter, Mockito.times(1)).adapt(Mockito.any(Put.class));
+    verify(new Put(dataHelper.randomData("rk1")), putAdapter, Put.class);
   }
 
   @Test
   public void testDeleteIsAdapted() {
-    Delete delete = new Delete(dataHelper.randomData("rk1"));
-    Mockito.when(deleteAdapter.adapt(delete))
-        .thenReturn(MutateRowRequest.newBuilder());
-
-    adapter.adapt(delete);
-
-    Mockito.verify(deleteAdapter, Mockito.times(1)).adapt(Mockito.any(Delete.class));
+    verify(new Delete(dataHelper.randomData("rk1")), deleteAdapter, Delete.class);
   }
 
   @Test
   public void testAppendIsAdapted() {
-    Append append = new Append(dataHelper.randomData("rk1"));
-    Mockito.when(appendAdapter.adapt(append))
-        .thenReturn(MutateRowRequest.newBuilder());
-
-    adapter.adapt(append);
-
-    Mockito.verify(appendAdapter, Mockito.times(1)).adapt(Mockito.any(Append.class));
+    verify(new Append(dataHelper.randomData("rk1")), appendAdapter, Append.class);
   }
 
   @Test
   public void testIncrementIsAdapted() {
-    Increment increment = new Increment(dataHelper.randomData("rk1"));
-    Mockito.when(incrementAdapter.adapt(increment))
-        .thenReturn(MutateRowRequest.newBuilder());
-    adapter.adapt(increment);
+    verify(new Increment(dataHelper.randomData("rk1")), incrementAdapter, Increment.class);
+  }
 
-    Mockito.verify(incrementAdapter, Mockito.times(1)).adapt(Mockito.any(Increment.class));
+  private <T extends Mutation> void verify(T mutation, final MutationAdapter<T> adapter,
+      final Class<T> type) {
+    Mockito.when(adapter.toMutationList(any(type)))
+        .thenReturn(Collections.<com.google.bigtable.v2.Mutation> emptyList());
+    Mockito.when(adapter.getRow(any(type)))
+        .thenReturn(new byte[0]);
+
+    adapter.adapt(mutation);
+
+    Mockito.verify(adapter, Mockito.times(1)).adapt(same(mutation));
   }
 
   @Test

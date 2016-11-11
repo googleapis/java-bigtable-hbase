@@ -18,10 +18,10 @@ package com.google.cloud.bigtable.hbase.adapters;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.DeleteFromColumn;
+import com.google.bigtable.v2.Mutation.DeleteFromFamily;
 import com.google.bigtable.v2.Mutation.DeleteFromRow;
 import com.google.bigtable.v2.TimestampRange;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +39,7 @@ import java.util.Map;
  * @author sduskis
  * @version $Id: $Id
  */
-public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.Builder> {
+public class DeleteAdapter extends MutationAdapter<Delete> {
   static boolean isPointDelete(Cell cell) {
     return cell.getTypeByte() == KeyValue.Type.Delete.getCode();
   }
@@ -89,8 +90,8 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
     }
   }
 
-  static Mutation.DeleteFromColumn.Builder addDeleteFromColumnMods(MutateRowRequest.Builder result,
-      ByteString familyByteString, Cell cell) {
+  static Mutation.DeleteFromColumn addDeleteFromColumnMods(ByteString familyByteString,
+      Cell cell) {
 
     ByteString cellQualifierByteString = ByteString.copyFrom(
         cell.getQualifierArray(),
@@ -98,7 +99,7 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
         cell.getQualifierLength());
 
     Mutation.DeleteFromColumn.Builder deleteBuilder =
-        result.addMutationsBuilder().getDeleteFromColumnBuilder()
+        Mutation.DeleteFromColumn.newBuilder()
             .setFamilyNameBytes(familyByteString)
             .setColumnQualifier(cellQualifierByteString);
 
@@ -121,19 +122,22 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
         deleteBuilder.getTimeRangeBuilder().setEndTimestampMicros(endTimestamp);
       }
     }
-    return deleteBuilder;
+    return deleteBuilder.build();
   }
 
-  /** {@inheritDoc} */
   @Override
-  public MutateRowRequest.Builder adapt(Delete operation) {
-    MutateRowRequest.Builder result = MutateRowRequest.newBuilder()
-        .setRowKey(ByteString.copyFrom(operation.getRow()));
+  protected byte[] getRow(Delete operation) {
+    return operation.getRow();
+  }
 
+  @Override
+  protected List<Mutation> toMutationList(Delete operation) {
+    List<Mutation> mutations = new ArrayList<>();
     if (operation.getFamilyCellMap().isEmpty()) {
       throwIfUnsupportedDeleteRow(operation);
 
-      result.addMutationsBuilder().setDeleteFromRow(DeleteFromRow.getDefaultInstance());
+      mutations
+          .add(Mutation.newBuilder().setDeleteFromRow(DeleteFromRow.getDefaultInstance()).build());
     } else {
       for (Map.Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {
 
@@ -144,12 +148,15 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
             if (isPointDelete(cell)) {
               throwIfUnsupportedPointDelete(cell);
             }
-            addDeleteFromColumnMods(result, familyByteString, cell);
+            mutations.add(Mutation.newBuilder()
+                .setDeleteFromColumn(addDeleteFromColumnMods(familyByteString, cell)).build());
           } else if (isFamilyDelete(cell)) {
             throwIfUnsupportedDeleteFamily(cell);
 
-            result.addMutationsBuilder().getDeleteFromFamilyBuilder()
-                .setFamilyNameBytes(familyByteString);
+            mutations.add(Mutation.newBuilder()
+                .setDeleteFromFamily(
+                  DeleteFromFamily.newBuilder().setFamilyNameBytes(familyByteString).build())
+                .build());
           } else if (isFamilyVersionDelete(cell)) {
             throwOnUnsupportedDeleteFamilyVersion(cell);
           } else {
@@ -158,9 +165,8 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
         }
       }
     }
-    return result;
+    return mutations;
   }
-
 
   /**
    * <p>adapt.</p>
@@ -208,9 +214,4 @@ public class DeleteAdapter implements OperationAdapter<Delete, MutateRowRequest.
     }
     return delete;
   }
-
-  private static byte[] getBytes(ByteString bs) {
-    return ByteStringer.extract(bs);
-  }
-
 }

@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 
 import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -43,7 +44,7 @@ public class HBaseRequestAdapter {
 
   public static class MutationAdapters {
     protected final PutAdapter putAdapter;
-    protected final MutationAdapter mutationAdapter;
+    protected final HBaseMutationAdapter mutationAdapter;
     protected final RowMutationsAdapter rowMutationsAdapter;
 
     public MutationAdapters(BigtableOptions options, Configuration config) {
@@ -160,6 +161,16 @@ public class HBaseRequestAdapter {
   /**
    * <p>adapt.</p>
    *
+   * @param put a {@link org.apache.hadoop.hbase.client.Put} object.
+   * @return a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} object.
+   */
+  public MutateRowsRequest.Entry adaptToBulkEntry(Put put) {
+    return mutationAdapters.putAdapter.adaptToBulkEntry(put).build();
+  }
+
+  /**
+   * <p>adapt.</p>
+   *
    * @param mutations a {@link org.apache.hadoop.hbase.client.RowMutations} object.
    * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
    */
@@ -207,5 +218,4 @@ public class HBaseRequestAdapter {
   protected String getTableNameString() {
     return getBigtableTableName().toString();
   }
-
 }
