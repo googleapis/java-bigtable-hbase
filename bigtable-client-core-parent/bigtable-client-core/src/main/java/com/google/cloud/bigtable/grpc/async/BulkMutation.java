@@ -152,6 +152,7 @@ public class BulkMutation {
 
     private Batch() {
       this.currentRequestManager = new RequestManager(tableName, mutationMeter);
+      batchMeter.mark();
     }
 
     /**
@@ -486,17 +487,26 @@ public class BulkMutation {
    *     BulkMutation.Batch#addCallback(ListenableFuture)} for more information about how the
    *     SettableFuture is set.
    */
-  public synchronized ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
+  public ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
     Preconditions.checkArgument(!request.getRowKey().isEmpty(), "Request has an empty rowkey");
-    if (currentBatch == null) {
-      batchMeter.mark();
-      currentBatch = new Batch();
+    Batch batchToFlush = null;
+    ListenableFuture<MutateRowResponse> future;
+    synchronized(this) {
+      if (currentBatch == null) {
+        currentBatch = new Batch();
+      }
+      future = currentBatch.add(request);
+      if (currentBatch.isFull()) {
+        batchToFlush = currentBatch;
+        currentBatch = null;
+      }
+    }
+    // This should should happen outside of the synchronized block so that more mutations can be
+    // added in other threads.
+    if (batchToFlush != null) {
+      batchToFlush.run();
     }
 
-    ListenableFuture<MutateRowResponse> future = currentBatch.add(request);
-    if (currentBatch.isFull()) {
-      flush();
-    }
     return future;
   }
 

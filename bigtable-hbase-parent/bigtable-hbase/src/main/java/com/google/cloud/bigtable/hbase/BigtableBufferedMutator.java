@@ -97,6 +97,19 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
+  private class BulkMutationOperation implements Runnable {
+    final Mutation mutation;
+
+    public BulkMutationOperation(Mutation mutation) {
+      this.mutation = mutation;
+    }
+
+    @Override
+    public void run() {
+      addExceptionCallback(bulkMutation.add(adapt(mutation)), mutation);
+    }
+  }
+
   private final Configuration configuration;
 
   /**
@@ -121,7 +134,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
   private final ExecutorService executorService;
   private final BulkOptions bulkOptions;
 
-  private final LinkedBlockingQueue<Runnable> asyncOperationsQueue = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<Runnable> asyncOperationsQueue;
+  private final AtomicBoolean operationsComplete = new AtomicBoolean(true);
 
   /**
    * A counter for the number of {@link #mutationWorker}s are
@@ -152,8 +166,17 @@ public class BigtableBufferedMutator implements BufferedMutator {
           } catch (InterruptedException e) {
             LOG.info("Interrupted. Shutting down the mutation worker.");
             break;
-          } catch (Exception e) {
+          } catch (Throwable e) {
             LOG.error("Exception in buffered mutator.", e);
+          } finally {
+            if (!operationsComplete.get() && asyncOperationsQueue.isEmpty()) {
+              synchronized(operationsComplete) {
+                if (!operationsComplete.get() && asyncOperationsQueue.isEmpty()) {
+                  operationsComplete.set(true);
+                  operationsComplete.notifyAll();
+                }
+              }
+            }
           }
         }
       } finally {
@@ -164,15 +187,18 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
 
   /**
-   * <p>Constructor for BigtableBufferedMutator.</p>
-   *
+   * <p>
+   * Constructor for BigtableBufferedMutator.
+   * </p>
    * @param adapter Converts HBase objects to Bigtable protos
    * @param configuration For Additional configuration. TODO: move this to options
    * @param listener Handles exceptions. By default, it just throws the exception.
-   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} to get {@link com.google.cloud.bigtable.config.BigtableOptions}, {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor}
-   * and {@link com.google.cloud.bigtable.grpc.async.BulkMutation} objects from
+   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} to get
+   *          {@link com.google.cloud.bigtable.config.BigtableOptions},
+   *          {@link com.google.cloud.bigtable.grpc.async.AsyncExecutor} and
+   *          {@link com.google.cloud.bigtable.grpc.async.BulkMutation} objects from
    * @param asyncRpcExecutorService Optional performance improvement for adapting hbase objects and
-   * starting the async operations on the BigtableDataClient.
+   *          starting the async operations on the BigtableDataClient.
    */
   public BigtableBufferedMutator(
       HBaseRequestAdapter adapter,
@@ -188,6 +214,9 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.asyncExecutor = session.createAsyncExecutor();
     this.bulkOptions = options.getBulkOptions();
     this.executorService = asyncRpcExecutorService;
+    int asyncMutatorCount = options.getBulkOptions().getAsyncMutatorCount();
+    this.asyncOperationsQueue =
+        asyncMutatorCount == 0 ? null : new LinkedBlockingQueue<Runnable>(asyncMutatorCount * 4);
     if (bulkOptions.useBulkApi()) {
       BigtableTableName tableName = this.adapter.getBigtableTableName();
       this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
@@ -212,7 +241,11 @@ public class BigtableBufferedMutator implements BufferedMutator {
       flush();
       int activeWorkerCount = activeMutationWorkers.get();
       for (int i = 0; i < activeWorkerCount; i++) {
-        asyncOperationsQueue.add(SHUTDOWN_MARKER);
+        try {
+          offer(SHUTDOWN_MARKER);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
       }
       asyncExecutor.flush();
       closed = true;
@@ -225,9 +258,21 @@ public class BigtableBufferedMutator implements BufferedMutator {
   @Override
   public void flush() throws IOException {
     // Make sure that the async mutator workers are running.
-    if (!asyncOperationsQueue.isEmpty()) {
+    if (asyncOperationsQueue != null && !asyncOperationsQueue.isEmpty()) {
       initializeAsyncMutators();
     }
+    while (!operationsComplete.get()) {
+      synchronized(operationsComplete) {
+        try {
+          if (!operationsComplete.get()) {
+            operationsComplete.wait(250);
+          }
+        } catch (InterruptedException e) {
+          break;
+        }
+      }
+    }
+
     // If there is a bulk mutation in progress, then send it.
     if (bulkMutation != null) {
       bulkMutation.flush();
@@ -299,24 +344,26 @@ public class BigtableBufferedMutator implements BufferedMutator {
    */
   private void offer(Mutation mutation) throws IOException {
     try {
-      Runnable operation = null;
       if (bulkOptions.useBulkApi() && (mutation instanceof Put || mutation instanceof Delete)) {
-        // TODO: Do this logic asynchronously.
-        addExceptionCallback(bulkMutation.add(adapt(mutation)), mutation);
+        offer(new BulkMutationOperation(mutation));
       } else {
         long operationId =
             asyncExecutor.getRpcThrottler().registerOperationWithHeapSize(mutation.heapSize());
-        operation = new MutationOperation(mutation, operationId);
-        if (executorService != null && bulkOptions.getAsyncMutatorCount() > 0) {
-          initializeAsyncMutators();
-          asyncOperationsQueue.add(operation);
-        } else {
-          operation.run();
-        }
+        offer(new MutationOperation(mutation, operationId));
       }
     } catch (InterruptedException e) {
       throw new IOException("Interrupted in buffered mutator while mutating row : '"
           + Bytes.toString(mutation.getRow()), e);
+    }
+  }
+
+  private void offer(Runnable operation) throws InterruptedException {
+    if (executorService != null && bulkOptions.getAsyncMutatorCount() > 0) {
+      initializeAsyncMutators();
+      asyncOperationsQueue.offer(operation, 1, TimeUnit.MINUTES);
+      operationsComplete.set(false);
+    } else {
+      operation.run();
     }
   }
 
