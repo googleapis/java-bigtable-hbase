@@ -63,10 +63,10 @@ public final class Adapters {
    * <p>createMutationsAdapter.</p>
    *
    * @param putAdapter a {@link com.google.cloud.bigtable.hbase.adapters.PutAdapter} object.
-   * @return a {@link com.google.cloud.bigtable.hbase.adapters.MutationAdapter} object.
+   * @return a {@link com.google.cloud.bigtable.hbase.adapters.HBaseMutationAdapter} object.
    */
-  public static MutationAdapter createMutationsAdapter(PutAdapter putAdapter) {
-    return new MutationAdapter(
+  public static HBaseMutationAdapter createMutationsAdapter(PutAdapter putAdapter) {
+    return new HBaseMutationAdapter(
       DELETE_ADAPTER,
       putAdapter,
       new UnsupportedOperationAdapter<Increment>("increment"),

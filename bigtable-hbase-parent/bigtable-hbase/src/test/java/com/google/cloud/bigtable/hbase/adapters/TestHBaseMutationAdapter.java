@@ -35,7 +35,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 @RunWith(JUnit4.class)
-public class TestMutationAdapter {
+public class TestHBaseMutationAdapter {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   @Mock
@@ -47,7 +47,7 @@ public class TestMutationAdapter {
   @Mock
   private OperationAdapter<Append, MutateRowRequest.Builder> appendAdapter;
 
-  private MutationAdapter adapter;
+  private HBaseMutationAdapter adapter;
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
 
   public static class UnknownMutation extends Mutation {}
@@ -55,7 +55,7 @@ public class TestMutationAdapter {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    adapter = new MutationAdapter(deleteAdapter, putAdapter, incrementAdapter, appendAdapter);
+    adapter = new HBaseMutationAdapter(deleteAdapter, putAdapter, incrementAdapter, appendAdapter);
   }
 
   @After

@@ -43,13 +43,13 @@ public class HBaseRequestAdapter {
 
   public static class MutationAdapters {
     protected final PutAdapter putAdapter;
-    protected final MutationAdapter mutationAdapter;
+    protected final HBaseMutationAdapter hbaseMutationAdapter;
     protected final RowMutationsAdapter rowMutationsAdapter;
 
     public MutationAdapters(BigtableOptions options, Configuration config) {
       this.putAdapter = Adapters.createPutAdapter(config, options);
-      this.mutationAdapter = Adapters.createMutationsAdapter(putAdapter);
-      this.rowMutationsAdapter = new RowMutationsAdapter(mutationAdapter);
+      this.hbaseMutationAdapter = Adapters.createMutationsAdapter(putAdapter);
+      this.rowMutationsAdapter = new RowMutationsAdapter(hbaseMutationAdapter);
     }
   }
 
@@ -176,7 +176,7 @@ public class HBaseRequestAdapter {
    * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
    */
   public MutateRowRequest adapt(org.apache.hadoop.hbase.client.Mutation mutation) {
-    MutateRowRequest.Builder builder = mutationAdapters.mutationAdapter.adapt(mutation);
+    MutateRowRequest.Builder builder = mutationAdapters.hbaseMutationAdapter.adapt(mutation);
     builder.setTableName(getTableNameString());
     return builder.build();
   }
