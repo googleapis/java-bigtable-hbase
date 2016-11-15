@@ -34,7 +34,7 @@ import java.util.Map;
  * @author sduskis
  * @version $Id: $Id
  */
-public class MutationAdapter
+public class HBaseMutationAdapter
     implements OperationAdapter<Mutation, MutateRowRequest.Builder> {
 
   static class AdapterInstanceMap {
@@ -66,7 +66,7 @@ public class MutationAdapter
    * @param incrementAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
    * @param appendAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
    */
-  public MutationAdapter(
+  public HBaseMutationAdapter(
       OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
       OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
       OperationAdapter<Increment, MutateRowRequest.Builder> incrementAdapter,
