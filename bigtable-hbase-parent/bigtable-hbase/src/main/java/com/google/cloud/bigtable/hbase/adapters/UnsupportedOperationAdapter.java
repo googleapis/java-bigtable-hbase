@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v2.MutateRowRequest;
+import java.util.List;
 
-import org.apache.hadoop.hbase.client.Operation;
+import org.apache.hadoop.hbase.client.Mutation;
 
 /**
  * An adapter that throws an Unsupported exception when its adapt method is invoked.
@@ -25,8 +25,7 @@ import org.apache.hadoop.hbase.client.Operation;
  * @author sduskis
  * @version $Id: $Id
  */
-public class UnsupportedOperationAdapter<T extends Operation>
-    implements OperationAdapter<T, MutateRowRequest.Builder> {
+public class UnsupportedOperationAdapter<T extends Mutation> extends MutationAdapter<T> {
 
   private final String operationDescription;
 
@@ -39,14 +38,15 @@ public class UnsupportedOperationAdapter<T extends Operation>
     this.operationDescription = operationDescription;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Adapt a single HBase Operation to a single Bigtable generated message.
-   */
   @Override
-  public MutateRowRequest.Builder adapt(T operation) {
+  protected byte[] getRow(T operation) {
     throw new UnsupportedOperationException(
-        String.format("The %s operation is unsupported.", operationDescription));
+      String.format("The %s operation is unsupported.", operationDescription));
+  }
+
+  @Override
+  protected List<com.google.bigtable.v2.Mutation> toMutationList(T operation) {
+    throw new UnsupportedOperationException(
+      String.format("The %s operation is unsupported.", operationDescription));
   }
 }

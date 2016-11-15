@@ -22,7 +22,6 @@ import com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
-import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -40,7 +39,7 @@ import java.util.Map.Entry;
  * @author sduskis
  * @version $Id: $Id
  */
-public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builder> {
+public class PutAdapter extends MutationAdapter<Put> {
   private final int maxKeyValueSize;
   private final boolean setClientTimestamp;
   public Clock clock = Clock.SYSTEM;
@@ -66,10 +65,8 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
     this.setClientTimestamp = setClientTimestamp;
   }
 
-  /** {@inheritDoc} */
   @Override
-  public MutateRowRequest.Builder adapt(Put operation) {
-
+  protected List<Mutation> toMutationList(Put operation) {
     if (operation.isEmpty()) {
       throw new IllegalArgumentException("No columns to insert");
     }
@@ -119,10 +116,13 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
             .build());
       }
     }
+    return mutations;
+  }
 
-    return MutateRowRequest.newBuilder()
-        .setRowKey(ByteString.copyFrom(operation.getRow()))
-        .addAllMutations(mutations);
+
+  @Override
+  protected byte[] getRow(Put put) {
+    return put.getRow();
   }
 
   /**
@@ -156,9 +156,5 @@ public class PutAdapter implements OperationAdapter<Put, MutateRowRequest.Builde
           getBytes(setCell.getColumnQualifier()), timestampHbase, getBytes(setCell.getValue())));
     }
     return put;
-  }
-
-  private static byte[] getBytes(ByteString bs) {
-    return ByteStringer.extract(bs);
   }
 }
