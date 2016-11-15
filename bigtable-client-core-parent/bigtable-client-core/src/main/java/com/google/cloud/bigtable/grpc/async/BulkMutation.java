@@ -513,7 +513,7 @@ public class BulkMutation {
   /**
    * @return false if there are any outstanding {@link MutateRowRequest} that still need to be sent.
    */
-  public synchronized boolean isFlushed() {
+  public boolean isFlushed() {
     return currentBatch == null;
   }
 }

@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.concurrent.GuardedBy;
 
 /**
  * Throttles the number of RPCs that are outstanding at any point in time.
@@ -56,12 +57,18 @@ public class RpcThrottler {
   private final ResourceLimiter resourceLimiter;
   private final NanoClock clock;
   private final long finishWaitMillis;
+  private final AtomicLong retrySequenceGenerator = new AtomicLong();
 
   private ReentrantLock lock = new ReentrantLock();
   private Condition flushedCondition = lock.newCondition();
+
+  @GuardedBy("lock")
   private Set<Long> outstandingRequests = new HashSet<>();
+  @GuardedBy("lock")
   private Map<Long, RetryHandler> outstandingRetries = new HashMap<>();
-  private AtomicLong retrySequenceGenerator = new AtomicLong();
+  @GuardedBy("lock")
+  private boolean isFlushed = true;
+
   private long noSuccessCheckDeadlineNanos;
   private int noSuccessWarningCount;
 
@@ -97,6 +104,7 @@ public class RpcThrottler {
     lock.lock();
     try {
       outstandingRequests.add(id);
+      isFlushed = false;
     } finally {
       lock.unlock();
     }
@@ -209,12 +217,7 @@ public class RpcThrottler {
    * @return true if there are any outstanding requests being tracked by this throttler
    */
   public boolean hasInflightRequests() {
-    lock.lock();
-    try {
-      return outstandingRequests.size() > 0;
-    } finally {
-      lock.unlock();
-    }
+    return !isFlushed;
   }
 
   private boolean isFlushed() {
@@ -240,6 +243,7 @@ public class RpcThrottler {
       outstandingRequests.remove(id);
       if (isFlushed()) {
         flushedCondition.signal();
+        isFlushed = true;
       }
     } finally {
       lock.unlock();
@@ -258,6 +262,7 @@ public class RpcThrottler {
       outstandingRetries.remove(id);
       if (isFlushed()) {
         flushedCondition.signal();
+        isFlushed = true;
       }
     } finally {
       lock.unlock();
