@@ -329,7 +329,6 @@ public class AsyncExecutor {
     try {
       rpcThrottler.awaitCompletion();
     } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
       throw new IOException("Batch operations were interrupted.");
     }
     LOG.trace("Done flushing");

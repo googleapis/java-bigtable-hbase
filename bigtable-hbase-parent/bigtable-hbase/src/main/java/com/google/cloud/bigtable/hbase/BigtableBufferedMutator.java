@@ -63,8 +63,17 @@ public class BigtableBufferedMutator implements BufferedMutator {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BigtableBufferedMutator.class);
 
-  /** Constant <code>MUTATION_TO_BE_SENT_WAIT_MS=1000</code> */
-  protected static final long MUTATION_TO_BE_SENT_WAIT_MS = 1000;
+  /**
+   * The time to wait for a an async operation to poll before shutting down a thread. Default is 1
+   * second.
+   */
+  protected static final long ASYNC_POLL_WAIT_MS = 1000;
+
+  /**
+   * The time to wait for a an async operation to offer a new mutation before throwing an exception.
+   * Default is 1 minute.
+   */
+  protected static final long ASYNC_OFFER_WAIT_MS = 60000;
 
   private static class MutationException {
     private final Row mutation;
@@ -76,11 +85,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private final static Runnable SHUTDOWN_MARKER = new Runnable() {
-    @Override
-    public void run() {
-    }
-  };
+  private AtomicBoolean isShutdown = new AtomicBoolean(false);
 
   private class MutationOperation implements Runnable {
     final Mutation mutation;
@@ -93,7 +98,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
     @Override
     public void run() {
-      issueRequest(mutation, operationId);
+      addExceptionCallback(issueRequestDetails(mutation, operationId), mutation);
     }
   }
 
@@ -142,24 +147,26 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * active.
    */
   private final AtomicInteger activeMutationWorkers = new AtomicInteger();
+  private long lastOperationFoundInMs = -1;
 
   private BulkMutation bulkMutation = null;
 
   /**
-   * This {@link Runnable} pulls a mutation from {@link #asyncOperationsQueue}, and calls {{@link
-   * #issueRequest(Mutation, long)} via {@link MutationOperation#run()}.
+   * This {@link Runnable} pulls a mutation from {@link #asyncOperationsQueue}, and calls
+   * {@link MutationOperation#run()} or {@link BulkMutationOperation#run()}.
    */
   private final Runnable mutationWorker = new Runnable() {
     @Override
     public void run() {
       activeMutationWorkers.incrementAndGet();
       try {
-        while (!executorService.isShutdown()) {
+        while (!executorService.isShutdown() && !isShutdown.get()) {
           try {
             Runnable operation =
-                asyncOperationsQueue.poll(MUTATION_TO_BE_SENT_WAIT_MS, TimeUnit.MILLISECONDS);
+                asyncOperationsQueue.poll(ASYNC_POLL_WAIT_MS, TimeUnit.MILLISECONDS);
+            lastOperationFoundInMs = System.currentTimeMillis();
             // The operation can be null if a timeout occurs.
-            if (operation == null || operation == SHUTDOWN_MARKER) {
+            if (operation == null) {
               break;
             }
             operation.run();
@@ -184,7 +191,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
       }
     }
   };
-
 
   /**
    * <p>
@@ -224,13 +230,21 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   private void initializeAsyncMutators() {
-    if (executorService != null && activeMutationWorkers.get() < bulkOptions.getAsyncMutatorCount()) {
+    if (areNewWorkersRequired()) {
       synchronized (activeMutationWorkers) {
-        for (int i = activeMutationWorkers.get(); i < bulkOptions.getAsyncMutatorCount(); i++) {
-          executorService.submit(mutationWorker);
+        if (areNewWorkersRequired()) {
+          for (int i = activeMutationWorkers.get(); i < bulkOptions.getAsyncMutatorCount(); i++) {
+            executorService.submit(mutationWorker);
+          }
         }
       }
     }
+  }
+
+  protected boolean areNewWorkersRequired() {
+    return executorService != null
+        && (activeMutationWorkers.get() < bulkOptions.getAsyncMutatorCount()
+            || lastOperationFoundInMs < System.currentTimeMillis() - ASYNC_POLL_WAIT_MS);
   }
 
   /** {@inheritDoc} */
@@ -239,14 +253,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
     closedWriteLock.lock();
     try {
       flush();
-      int activeWorkerCount = activeMutationWorkers.get();
-      for (int i = 0; i < activeWorkerCount; i++) {
-        try {
-          offer(SHUTDOWN_MARKER);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
+      isShutdown.set(true);
       asyncExecutor.flush();
       closed = true;
     } finally {
@@ -268,7 +275,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
             operationsComplete.wait(250);
           }
         } catch (InterruptedException e) {
-          break;
+          throw new IOException("BigtableBufferedMutator.flush() was interrupted.");
         }
       }
     }
@@ -344,12 +351,18 @@ public class BigtableBufferedMutator implements BufferedMutator {
    */
   private void offer(Mutation mutation) throws IOException {
     try {
+      Runnable runnable;
       if (bulkOptions.useBulkApi() && (mutation instanceof Put || mutation instanceof Delete)) {
-        offer(new BulkMutationOperation(mutation));
+        runnable = new BulkMutationOperation(mutation);
       } else {
         long operationId =
             asyncExecutor.getRpcThrottler().registerOperationWithHeapSize(mutation.heapSize());
-        offer(new MutationOperation(mutation, operationId));
+        runnable = new MutationOperation(mutation, operationId);
+      }
+      final boolean offerAccepted = offer(runnable, ASYNC_OFFER_WAIT_MS);
+      if (!offerAccepted) {
+        addGlobalException(mutation,
+          new IllegalStateException("The Bigtalbe Buffered Mutator asynchronous operations failed."));
       }
     } catch (InterruptedException e) {
       throw new IOException("Interrupted in buffered mutator while mutating row : '"
@@ -357,18 +370,23 @@ public class BigtableBufferedMutator implements BufferedMutator {
     }
   }
 
-  private void offer(Runnable operation) throws InterruptedException {
+  private boolean offer(Runnable operation, long waitTimeMs) throws InterruptedException {
     if (executorService != null && bulkOptions.getAsyncMutatorCount() > 0) {
-      initializeAsyncMutators();
-      asyncOperationsQueue.offer(operation, 1, TimeUnit.MINUTES);
-      operationsComplete.set(false);
+      final long totalWaitTimes = waitTimeMs/ASYNC_POLL_WAIT_MS;
+      for (int i = 0; i < totalWaitTimes; i++) {
+        initializeAsyncMutators();
+        boolean offerAccepted =
+            asyncOperationsQueue.offer(operation, waitTimeMs, TimeUnit.MILLISECONDS);
+        operationsComplete.set(false);
+        if (offerAccepted) {
+          return true;
+        }
+      }
     } else {
       operation.run();
+      return true;
     }
-  }
-
-  private void issueRequest(Mutation mutation, long operationId) {
-    addExceptionCallback(issueRequestDetails(mutation, operationId), mutation);
+    return false;
   }
 
   /**
@@ -418,7 +436,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       }
       return Futures.immediateFailedFuture(
         new IllegalArgumentException("Encountered unknown mutation type: " + mutation.getClass()));
-    } catch (Exception e) {
+    } catch (Throwable e) {
       // issueRequest(mutation) could throw an Exception for validation issues. Remove the heapsize
       // and inflight rpc count.
       return Futures.immediateFailedFuture(e);
