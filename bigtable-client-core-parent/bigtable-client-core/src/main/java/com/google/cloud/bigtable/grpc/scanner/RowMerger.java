@@ -108,7 +108,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
       @Override
       void validateChunk(RowInProgress rowInProgess, ByteString previousKey, CellChunk newChunk) {
-        Preconditions.checkArgument(!rowInProgess.hasRowKey(),
+        Preconditions.checkArgument(rowInProgess == null || !rowInProgess.hasRowKey(),
           "A new row cannot have existing state: %s", newChunk);
         Preconditions.checkArgument(newChunk.getRowStatusCase() != RowStatusCase.RESET_ROW,
           "A new row cannot be reset: %s", newChunk);
@@ -301,12 +301,6 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     private boolean hasRowKey() {
       return flatRowBuilder != null;
     }
-
-    private void reset() {
-      flatRowBuilder = null;
-      currentId = null;
-      outputStream = null;
-    }
   }
 
   private static boolean isCommit(CellChunk chunk) {
@@ -321,7 +315,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
   private RowMergerState state = RowMergerState.NewRow;
   private ByteString previousKey = null;
-  private RowInProgress rowInProgress = new RowInProgress();
+  private RowInProgress rowInProgress;
   private boolean complete;
 
   /**
@@ -349,11 +343,14 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         CellChunk chunk = readRowsResponse.getChunks(i);
         state.validateChunk(rowInProgress, previousKey, chunk);
         if (isReset(chunk)) {
-          rowInProgress.reset();
+          rowInProgress = null;
           state = RowMergerState.NewRow;
           continue;
         }
-        if (state == RowMergerState.NewRow || state == RowMergerState.RowInProgress) {
+        if(state == RowMergerState.NewRow) {
+          rowInProgress = new RowInProgress();
+          rowInProgress.updateCurrentKey(chunk);
+        } else if (state == RowMergerState.RowInProgress) {
           rowInProgress.updateCurrentKey(chunk);
         }
         if (chunk.getValueSize() > 0) {
@@ -371,7 +368,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         if (isCommit(chunk)) {
           observer.onNext(rowInProgress.flatRowBuilder.build());
           previousKey = rowInProgress.getRowKey();
-          rowInProgress.reset();
+          rowInProgress = null;
           state = RowMergerState.NewRow;
         }
       } catch (Throwable e) {
