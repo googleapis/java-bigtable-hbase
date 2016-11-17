@@ -13,7 +13,7 @@ public interface CreateClusterRequestOrBuilder extends
    * <pre>
    * The unique name of the instance in which to create the new cluster.
    * Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    */
   java.lang.String getParent();
@@ -23,7 +23,7 @@ public interface CreateClusterRequestOrBuilder extends
    * <pre>
    * The unique name of the instance in which to create the new cluster.
    * Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    */
   com.google.protobuf.ByteString
@@ -33,9 +33,9 @@ public interface CreateClusterRequestOrBuilder extends
    * <code>optional string cluster_id = 2;</code>
    *
    * <pre>
-   * The id to be used when referring to the new cluster within its instance,
-   * e.g. just the "mycluster" section of the full name
-   * "projects/myproject/instances/myinstance/clusters/mycluster"
+   * The ID to be used when referring to the new cluster within its instance,
+   * e.g., just `mycluster` rather than
+   * `projects/myproject/instances/myinstance/clusters/mycluster`.
    * </pre>
    */
   java.lang.String getClusterId();
@@ -43,9 +43,9 @@ public interface CreateClusterRequestOrBuilder extends
    * <code>optional string cluster_id = 2;</code>
    *
    * <pre>
-   * The id to be used when referring to the new cluster within its instance,
-   * e.g. just the "mycluster" section of the full name
-   * "projects/myproject/instances/myinstance/clusters/mycluster"
+   * The ID to be used when referring to the new cluster within its instance,
+   * e.g., just `mycluster` rather than
+   * `projects/myproject/instances/myinstance/clusters/mycluster`.
    * </pre>
    */
   com.google.protobuf.ByteString
@@ -56,7 +56,7 @@ public interface CreateClusterRequestOrBuilder extends
    *
    * <pre>
    * The cluster to be created.
-   * Fields marked "&#64;OutputOnly" must be left blank.
+   * Fields marked `OutputOnly` must be left blank.
    * </pre>
    */
   boolean hasCluster();
@@ -65,7 +65,7 @@ public interface CreateClusterRequestOrBuilder extends
    *
    * <pre>
    * The cluster to be created.
-   * Fields marked "&#64;OutputOnly" must be left blank.
+   * Fields marked `OutputOnly` must be left blank.
    * </pre>
    */
   com.google.bigtable.admin.v2.Cluster getCluster();
@@ -74,7 +74,7 @@ public interface CreateClusterRequestOrBuilder extends
    *
    * <pre>
    * The cluster to be created.
-   * Fields marked "&#64;OutputOnly" must be left blank.
+   * Fields marked `OutputOnly` must be left blank.
    * </pre>
    */
   com.google.bigtable.admin.v2.ClusterOrBuilder getClusterOrBuilder();

@@ -25,6 +25,7 @@ public  final class Instance extends
     name_ = "";
     displayName_ = "";
     state_ = 0;
+    type_ = 0;
   }
 
   @java.lang.Override
@@ -67,6 +68,12 @@ public  final class Instance extends
             int rawValue = input.readEnum();
 
             state_ = rawValue;
+            break;
+          }
+          case 32: {
+            int rawValue = input.readEnum();
+
+            type_ = rawValue;
             break;
           }
         }
@@ -226,15 +233,162 @@ public  final class Instance extends
     // @@protoc_insertion_point(enum_scope:google.bigtable.admin.v2.Instance.State)
   }
 
+  /**
+   * Protobuf enum {@code google.bigtable.admin.v2.Instance.Type}
+   *
+   * <pre>
+   * The type of the instance.
+   * </pre>
+   */
+  public enum Type
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>TYPE_UNSPECIFIED = 0;</code>
+     *
+     * <pre>
+     * The type of the instance is unspecified. If set when creating an
+     * instance, a `PRODUCTION` instance will be created. If set when updating
+     * an instance, the type will be left unchanged.
+     * </pre>
+     */
+    TYPE_UNSPECIFIED(0, 0),
+    /**
+     * <code>PRODUCTION = 1;</code>
+     *
+     * <pre>
+     * An instance meant for production use. `serve_nodes` must be set
+     * on the cluster.
+     * </pre>
+     */
+    PRODUCTION(1, 1),
+    /**
+     * <code>DEVELOPMENT = 2;</code>
+     *
+     * <pre>
+     * The instance is meant for development purposes only.
+     * It uses shared resources and has no performance or uptime guarantees.
+     * After a development instance is created, it can be upgraded by
+     * updating the instance to type `PRODUCTION`. An instance created
+     * as a production instance cannot be changed to a development instance.
+     * When creating a development instance, `serve_nodes` on the cluster must
+     * not be set.
+     * </pre>
+     */
+    DEVELOPMENT(2, 2),
+    UNRECOGNIZED(-1, -1),
+    ;
+
+    /**
+     * <code>TYPE_UNSPECIFIED = 0;</code>
+     *
+     * <pre>
+     * The type of the instance is unspecified. If set when creating an
+     * instance, a `PRODUCTION` instance will be created. If set when updating
+     * an instance, the type will be left unchanged.
+     * </pre>
+     */
+    public static final int TYPE_UNSPECIFIED_VALUE = 0;
+    /**
+     * <code>PRODUCTION = 1;</code>
+     *
+     * <pre>
+     * An instance meant for production use. `serve_nodes` must be set
+     * on the cluster.
+     * </pre>
+     */
+    public static final int PRODUCTION_VALUE = 1;
+    /**
+     * <code>DEVELOPMENT = 2;</code>
+     *
+     * <pre>
+     * The instance is meant for development purposes only.
+     * It uses shared resources and has no performance or uptime guarantees.
+     * After a development instance is created, it can be upgraded by
+     * updating the instance to type `PRODUCTION`. An instance created
+     * as a production instance cannot be changed to a development instance.
+     * When creating a development instance, `serve_nodes` on the cluster must
+     * not be set.
+     * </pre>
+     */
+    public static final int DEVELOPMENT_VALUE = 2;
+
+
+    public final int getNumber() {
+      if (index == -1) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    public static Type valueOf(int value) {
+      switch (value) {
+        case 0: return TYPE_UNSPECIFIED;
+        case 1: return PRODUCTION;
+        case 2: return DEVELOPMENT;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<Type>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        Type> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<Type>() {
+            public Type findValueByNumber(int number) {
+              return Type.valueOf(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      return getDescriptor().getValues().get(index);
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return com.google.bigtable.admin.v2.Instance.getDescriptor().getEnumTypes().get(1);
+    }
+
+    private static final Type[] VALUES = values();
+
+    public static Type valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      if (desc.getIndex() == -1) {
+        return UNRECOGNIZED;
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int index;
+    private final int value;
+
+    private Type(int index, int value) {
+      this.index = index;
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:google.bigtable.admin.v2.Instance.Type)
+  }
+
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * (`OutputOnly`)
    * The unique name of the instance. Values are of the form
-   * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
+   * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
    * </pre>
    */
   public java.lang.String getName() {
@@ -253,9 +407,9 @@ public  final class Instance extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * (`OutputOnly`)
    * The unique name of the instance. Values are of the form
-   * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
+   * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -324,6 +478,7 @@ public  final class Instance extends
    * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    *
    * <pre>
+   * (`OutputOnly`)
    * The current state of the instance.
    * </pre>
    */
@@ -334,12 +489,37 @@ public  final class Instance extends
    * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    *
    * <pre>
+   * (`OutputOnly`)
    * The current state of the instance.
    * </pre>
    */
   public com.google.bigtable.admin.v2.Instance.State getState() {
     com.google.bigtable.admin.v2.Instance.State result = com.google.bigtable.admin.v2.Instance.State.valueOf(state_);
     return result == null ? com.google.bigtable.admin.v2.Instance.State.UNRECOGNIZED : result;
+  }
+
+  public static final int TYPE_FIELD_NUMBER = 4;
+  private int type_;
+  /**
+   * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+   *
+   * <pre>
+   * The type of the instance. Defaults to `PRODUCTION`.
+   * </pre>
+   */
+  public int getTypeValue() {
+    return type_;
+  }
+  /**
+   * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+   *
+   * <pre>
+   * The type of the instance. Defaults to `PRODUCTION`.
+   * </pre>
+   */
+  public com.google.bigtable.admin.v2.Instance.Type getType() {
+    com.google.bigtable.admin.v2.Instance.Type result = com.google.bigtable.admin.v2.Instance.Type.valueOf(type_);
+    return result == null ? com.google.bigtable.admin.v2.Instance.Type.UNRECOGNIZED : result;
   }
 
   private byte memoizedIsInitialized = -1;
@@ -363,6 +543,9 @@ public  final class Instance extends
     if (state_ != com.google.bigtable.admin.v2.Instance.State.STATE_NOT_KNOWN.getNumber()) {
       output.writeEnum(3, state_);
     }
+    if (type_ != com.google.bigtable.admin.v2.Instance.Type.TYPE_UNSPECIFIED.getNumber()) {
+      output.writeEnum(4, type_);
+    }
   }
 
   public int getSerializedSize() {
@@ -379,6 +562,10 @@ public  final class Instance extends
     if (state_ != com.google.bigtable.admin.v2.Instance.State.STATE_NOT_KNOWN.getNumber()) {
       size += com.google.protobuf.CodedOutputStream
         .computeEnumSize(3, state_);
+    }
+    if (type_ != com.google.bigtable.admin.v2.Instance.Type.TYPE_UNSPECIFIED.getNumber()) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeEnumSize(4, type_);
     }
     memoizedSize = size;
     return size;
@@ -504,6 +691,8 @@ public  final class Instance extends
 
       state_ = 0;
 
+      type_ = 0;
+
       return this;
     }
 
@@ -529,6 +718,7 @@ public  final class Instance extends
       result.name_ = name_;
       result.displayName_ = displayName_;
       result.state_ = state_;
+      result.type_ = type_;
       onBuilt();
       return result;
     }
@@ -554,6 +744,9 @@ public  final class Instance extends
       }
       if (other.state_ != 0) {
         setStateValue(other.getStateValue());
+      }
+      if (other.type_ != 0) {
+        setTypeValue(other.getTypeValue());
       }
       onChanged();
       return this;
@@ -586,9 +779,9 @@ public  final class Instance extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The unique name of the instance. Values are of the form
-     * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
+     * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
      */
     public java.lang.String getName() {
@@ -607,9 +800,9 @@ public  final class Instance extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The unique name of the instance. Values are of the form
-     * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
+     * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -629,9 +822,9 @@ public  final class Instance extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The unique name of the instance. Values are of the form
-     * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
+     * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
      */
     public Builder setName(
@@ -648,9 +841,9 @@ public  final class Instance extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The unique name of the instance. Values are of the form
-     * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
+     * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
      */
     public Builder clearName() {
@@ -663,9 +856,9 @@ public  final class Instance extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The unique name of the instance. Values are of the form
-     * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
+     * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
      */
     public Builder setNameBytes(
@@ -784,6 +977,7 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      *
      * <pre>
+     * (`OutputOnly`)
      * The current state of the instance.
      * </pre>
      */
@@ -794,6 +988,7 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      *
      * <pre>
+     * (`OutputOnly`)
      * The current state of the instance.
      * </pre>
      */
@@ -806,6 +1001,7 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      *
      * <pre>
+     * (`OutputOnly`)
      * The current state of the instance.
      * </pre>
      */
@@ -817,6 +1013,7 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      *
      * <pre>
+     * (`OutputOnly`)
      * The current state of the instance.
      * </pre>
      */
@@ -833,12 +1030,77 @@ public  final class Instance extends
      * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      *
      * <pre>
+     * (`OutputOnly`)
      * The current state of the instance.
      * </pre>
      */
     public Builder clearState() {
       
       state_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int type_ = 0;
+    /**
+     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+     *
+     * <pre>
+     * The type of the instance. Defaults to `PRODUCTION`.
+     * </pre>
+     */
+    public int getTypeValue() {
+      return type_;
+    }
+    /**
+     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+     *
+     * <pre>
+     * The type of the instance. Defaults to `PRODUCTION`.
+     * </pre>
+     */
+    public Builder setTypeValue(int value) {
+      type_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+     *
+     * <pre>
+     * The type of the instance. Defaults to `PRODUCTION`.
+     * </pre>
+     */
+    public com.google.bigtable.admin.v2.Instance.Type getType() {
+      com.google.bigtable.admin.v2.Instance.Type result = com.google.bigtable.admin.v2.Instance.Type.valueOf(type_);
+      return result == null ? com.google.bigtable.admin.v2.Instance.Type.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+     *
+     * <pre>
+     * The type of the instance. Defaults to `PRODUCTION`.
+     * </pre>
+     */
+    public Builder setType(com.google.bigtable.admin.v2.Instance.Type value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      
+      type_ = value.getNumber();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+     *
+     * <pre>
+     * The type of the instance. Defaults to `PRODUCTION`.
+     * </pre>
+     */
+    public Builder clearType() {
+      
+      type_ = 0;
       onChanged();
       return this;
     }

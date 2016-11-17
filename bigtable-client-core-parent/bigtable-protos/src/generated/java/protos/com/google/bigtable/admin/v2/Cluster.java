@@ -288,9 +288,9 @@ public  final class Cluster extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * (`OutputOnly`)
    * The unique name of the cluster. Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    */
   public java.lang.String getName() {
@@ -309,9 +309,9 @@ public  final class Cluster extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * (`OutputOnly`)
    * The unique name of the cluster. Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -334,10 +334,11 @@ public  final class Cluster extends
    * <code>optional string location = 2;</code>
    *
    * <pre>
-   * &#64;CreationOnly
+   * (`CreationOnly`)
    * The location where this cluster's nodes and storage reside. For best
    * performance, clients should be located as close as possible to this cluster.
-   * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
+   * Currently only zones are supported, so values should be of the form
+   * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
    * </pre>
    */
   public java.lang.String getLocation() {
@@ -356,10 +357,11 @@ public  final class Cluster extends
    * <code>optional string location = 2;</code>
    *
    * <pre>
-   * &#64;CreationOnly
+   * (`CreationOnly`)
    * The location where this cluster's nodes and storage reside. For best
    * performance, clients should be located as close as possible to this cluster.
-   * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
+   * Currently only zones are supported, so values should be of the form
+   * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -382,7 +384,7 @@ public  final class Cluster extends
    * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * (`OutputOnly`)
    * The current state of the cluster.
    * </pre>
    */
@@ -393,7 +395,7 @@ public  final class Cluster extends
    * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * (`OutputOnly`)
    * The current state of the cluster.
    * </pre>
    */
@@ -422,7 +424,7 @@ public  final class Cluster extends
    * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
    *
    * <pre>
-   * &#64;CreationOnly
+   * (`CreationOnly`)
    * The type of storage used by this cluster to serve its
    * parent instance's tables, unless explicitly overridden.
    * </pre>
@@ -434,7 +436,7 @@ public  final class Cluster extends
    * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
    *
    * <pre>
-   * &#64;CreationOnly
+   * (`CreationOnly`)
    * The type of storage used by this cluster to serve its
    * parent instance's tables, unless explicitly overridden.
    * </pre>
@@ -713,9 +715,9 @@ public  final class Cluster extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The unique name of the cluster. Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      */
     public java.lang.String getName() {
@@ -734,9 +736,9 @@ public  final class Cluster extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The unique name of the cluster. Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -756,9 +758,9 @@ public  final class Cluster extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The unique name of the cluster. Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      */
     public Builder setName(
@@ -775,9 +777,9 @@ public  final class Cluster extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The unique name of the cluster. Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      */
     public Builder clearName() {
@@ -790,9 +792,9 @@ public  final class Cluster extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The unique name of the cluster. Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      */
     public Builder setNameBytes(
@@ -812,10 +814,11 @@ public  final class Cluster extends
      * <code>optional string location = 2;</code>
      *
      * <pre>
-     * &#64;CreationOnly
+     * (`CreationOnly`)
      * The location where this cluster's nodes and storage reside. For best
      * performance, clients should be located as close as possible to this cluster.
-     * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
+     * Currently only zones are supported, so values should be of the form
+     * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
      * </pre>
      */
     public java.lang.String getLocation() {
@@ -834,10 +837,11 @@ public  final class Cluster extends
      * <code>optional string location = 2;</code>
      *
      * <pre>
-     * &#64;CreationOnly
+     * (`CreationOnly`)
      * The location where this cluster's nodes and storage reside. For best
      * performance, clients should be located as close as possible to this cluster.
-     * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
+     * Currently only zones are supported, so values should be of the form
+     * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -857,10 +861,11 @@ public  final class Cluster extends
      * <code>optional string location = 2;</code>
      *
      * <pre>
-     * &#64;CreationOnly
+     * (`CreationOnly`)
      * The location where this cluster's nodes and storage reside. For best
      * performance, clients should be located as close as possible to this cluster.
-     * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
+     * Currently only zones are supported, so values should be of the form
+     * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
      * </pre>
      */
     public Builder setLocation(
@@ -877,10 +882,11 @@ public  final class Cluster extends
      * <code>optional string location = 2;</code>
      *
      * <pre>
-     * &#64;CreationOnly
+     * (`CreationOnly`)
      * The location where this cluster's nodes and storage reside. For best
      * performance, clients should be located as close as possible to this cluster.
-     * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
+     * Currently only zones are supported, so values should be of the form
+     * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
      * </pre>
      */
     public Builder clearLocation() {
@@ -893,10 +899,11 @@ public  final class Cluster extends
      * <code>optional string location = 2;</code>
      *
      * <pre>
-     * &#64;CreationOnly
+     * (`CreationOnly`)
      * The location where this cluster's nodes and storage reside. For best
      * performance, clients should be located as close as possible to this cluster.
-     * Currently only zones are supported, e.g. projects/&#42;&#47;locations/us-central1-b
+     * Currently only zones are supported, so values should be of the form
+     * `projects/&lt;project&gt;/locations/&lt;zone&gt;`.
      * </pre>
      */
     public Builder setLocationBytes(
@@ -916,7 +923,7 @@ public  final class Cluster extends
      * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The current state of the cluster.
      * </pre>
      */
@@ -927,7 +934,7 @@ public  final class Cluster extends
      * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The current state of the cluster.
      * </pre>
      */
@@ -940,7 +947,7 @@ public  final class Cluster extends
      * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The current state of the cluster.
      * </pre>
      */
@@ -952,7 +959,7 @@ public  final class Cluster extends
      * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The current state of the cluster.
      * </pre>
      */
@@ -969,7 +976,7 @@ public  final class Cluster extends
      * <code>optional .google.bigtable.admin.v2.Cluster.State state = 3;</code>
      *
      * <pre>
-     * &#64;OutputOnly
+     * (`OutputOnly`)
      * The current state of the cluster.
      * </pre>
      */
@@ -1026,7 +1033,7 @@ public  final class Cluster extends
      * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      *
      * <pre>
-     * &#64;CreationOnly
+     * (`CreationOnly`)
      * The type of storage used by this cluster to serve its
      * parent instance's tables, unless explicitly overridden.
      * </pre>
@@ -1038,7 +1045,7 @@ public  final class Cluster extends
      * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      *
      * <pre>
-     * &#64;CreationOnly
+     * (`CreationOnly`)
      * The type of storage used by this cluster to serve its
      * parent instance's tables, unless explicitly overridden.
      * </pre>
@@ -1052,7 +1059,7 @@ public  final class Cluster extends
      * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      *
      * <pre>
-     * &#64;CreationOnly
+     * (`CreationOnly`)
      * The type of storage used by this cluster to serve its
      * parent instance's tables, unless explicitly overridden.
      * </pre>
@@ -1065,7 +1072,7 @@ public  final class Cluster extends
      * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      *
      * <pre>
-     * &#64;CreationOnly
+     * (`CreationOnly`)
      * The type of storage used by this cluster to serve its
      * parent instance's tables, unless explicitly overridden.
      * </pre>
@@ -1083,7 +1090,7 @@ public  final class Cluster extends
      * <code>optional .google.bigtable.admin.v2.StorageType default_storage_type = 5;</code>
      *
      * <pre>
-     * &#64;CreationOnly
+     * (`CreationOnly`)
      * The type of storage used by this cluster to serve its
      * parent instance's tables, unless explicitly overridden.
      * </pre>

@@ -104,7 +104,7 @@ public  final class CreateClusterRequest extends
    * <pre>
    * The unique name of the instance in which to create the new cluster.
    * Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    */
   public java.lang.String getParent() {
@@ -125,7 +125,7 @@ public  final class CreateClusterRequest extends
    * <pre>
    * The unique name of the instance in which to create the new cluster.
    * Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -148,9 +148,9 @@ public  final class CreateClusterRequest extends
    * <code>optional string cluster_id = 2;</code>
    *
    * <pre>
-   * The id to be used when referring to the new cluster within its instance,
-   * e.g. just the "mycluster" section of the full name
-   * "projects/myproject/instances/myinstance/clusters/mycluster"
+   * The ID to be used when referring to the new cluster within its instance,
+   * e.g., just `mycluster` rather than
+   * `projects/myproject/instances/myinstance/clusters/mycluster`.
    * </pre>
    */
   public java.lang.String getClusterId() {
@@ -169,9 +169,9 @@ public  final class CreateClusterRequest extends
    * <code>optional string cluster_id = 2;</code>
    *
    * <pre>
-   * The id to be used when referring to the new cluster within its instance,
-   * e.g. just the "mycluster" section of the full name
-   * "projects/myproject/instances/myinstance/clusters/mycluster"
+   * The ID to be used when referring to the new cluster within its instance,
+   * e.g., just `mycluster` rather than
+   * `projects/myproject/instances/myinstance/clusters/mycluster`.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -195,7 +195,7 @@ public  final class CreateClusterRequest extends
    *
    * <pre>
    * The cluster to be created.
-   * Fields marked "&#64;OutputOnly" must be left blank.
+   * Fields marked `OutputOnly` must be left blank.
    * </pre>
    */
   public boolean hasCluster() {
@@ -206,7 +206,7 @@ public  final class CreateClusterRequest extends
    *
    * <pre>
    * The cluster to be created.
-   * Fields marked "&#64;OutputOnly" must be left blank.
+   * Fields marked `OutputOnly` must be left blank.
    * </pre>
    */
   public com.google.bigtable.admin.v2.Cluster getCluster() {
@@ -217,7 +217,7 @@ public  final class CreateClusterRequest extends
    *
    * <pre>
    * The cluster to be created.
-   * Fields marked "&#64;OutputOnly" must be left blank.
+   * Fields marked `OutputOnly` must be left blank.
    * </pre>
    */
   public com.google.bigtable.admin.v2.ClusterOrBuilder getClusterOrBuilder() {
@@ -475,7 +475,7 @@ public  final class CreateClusterRequest extends
      * <pre>
      * The unique name of the instance in which to create the new cluster.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      */
     public java.lang.String getParent() {
@@ -496,7 +496,7 @@ public  final class CreateClusterRequest extends
      * <pre>
      * The unique name of the instance in which to create the new cluster.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -518,7 +518,7 @@ public  final class CreateClusterRequest extends
      * <pre>
      * The unique name of the instance in which to create the new cluster.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      */
     public Builder setParent(
@@ -537,7 +537,7 @@ public  final class CreateClusterRequest extends
      * <pre>
      * The unique name of the instance in which to create the new cluster.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      */
     public Builder clearParent() {
@@ -552,7 +552,7 @@ public  final class CreateClusterRequest extends
      * <pre>
      * The unique name of the instance in which to create the new cluster.
      * Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
      */
     public Builder setParentBytes(
@@ -572,9 +572,9 @@ public  final class CreateClusterRequest extends
      * <code>optional string cluster_id = 2;</code>
      *
      * <pre>
-     * The id to be used when referring to the new cluster within its instance,
-     * e.g. just the "mycluster" section of the full name
-     * "projects/myproject/instances/myinstance/clusters/mycluster"
+     * The ID to be used when referring to the new cluster within its instance,
+     * e.g., just `mycluster` rather than
+     * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
      */
     public java.lang.String getClusterId() {
@@ -593,9 +593,9 @@ public  final class CreateClusterRequest extends
      * <code>optional string cluster_id = 2;</code>
      *
      * <pre>
-     * The id to be used when referring to the new cluster within its instance,
-     * e.g. just the "mycluster" section of the full name
-     * "projects/myproject/instances/myinstance/clusters/mycluster"
+     * The ID to be used when referring to the new cluster within its instance,
+     * e.g., just `mycluster` rather than
+     * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -615,9 +615,9 @@ public  final class CreateClusterRequest extends
      * <code>optional string cluster_id = 2;</code>
      *
      * <pre>
-     * The id to be used when referring to the new cluster within its instance,
-     * e.g. just the "mycluster" section of the full name
-     * "projects/myproject/instances/myinstance/clusters/mycluster"
+     * The ID to be used when referring to the new cluster within its instance,
+     * e.g., just `mycluster` rather than
+     * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
      */
     public Builder setClusterId(
@@ -634,9 +634,9 @@ public  final class CreateClusterRequest extends
      * <code>optional string cluster_id = 2;</code>
      *
      * <pre>
-     * The id to be used when referring to the new cluster within its instance,
-     * e.g. just the "mycluster" section of the full name
-     * "projects/myproject/instances/myinstance/clusters/mycluster"
+     * The ID to be used when referring to the new cluster within its instance,
+     * e.g., just `mycluster` rather than
+     * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
      */
     public Builder clearClusterId() {
@@ -649,9 +649,9 @@ public  final class CreateClusterRequest extends
      * <code>optional string cluster_id = 2;</code>
      *
      * <pre>
-     * The id to be used when referring to the new cluster within its instance,
-     * e.g. just the "mycluster" section of the full name
-     * "projects/myproject/instances/myinstance/clusters/mycluster"
+     * The ID to be used when referring to the new cluster within its instance,
+     * e.g., just `mycluster` rather than
+     * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
      */
     public Builder setClusterIdBytes(
@@ -674,7 +674,7 @@ public  final class CreateClusterRequest extends
      *
      * <pre>
      * The cluster to be created.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public boolean hasCluster() {
@@ -685,7 +685,7 @@ public  final class CreateClusterRequest extends
      *
      * <pre>
      * The cluster to be created.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public com.google.bigtable.admin.v2.Cluster getCluster() {
@@ -700,7 +700,7 @@ public  final class CreateClusterRequest extends
      *
      * <pre>
      * The cluster to be created.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public Builder setCluster(com.google.bigtable.admin.v2.Cluster value) {
@@ -721,7 +721,7 @@ public  final class CreateClusterRequest extends
      *
      * <pre>
      * The cluster to be created.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public Builder setCluster(
@@ -740,7 +740,7 @@ public  final class CreateClusterRequest extends
      *
      * <pre>
      * The cluster to be created.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public Builder mergeCluster(com.google.bigtable.admin.v2.Cluster value) {
@@ -763,7 +763,7 @@ public  final class CreateClusterRequest extends
      *
      * <pre>
      * The cluster to be created.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public Builder clearCluster() {
@@ -782,7 +782,7 @@ public  final class CreateClusterRequest extends
      *
      * <pre>
      * The cluster to be created.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public com.google.bigtable.admin.v2.Cluster.Builder getClusterBuilder() {
@@ -795,7 +795,7 @@ public  final class CreateClusterRequest extends
      *
      * <pre>
      * The cluster to be created.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public com.google.bigtable.admin.v2.ClusterOrBuilder getClusterOrBuilder() {
@@ -811,7 +811,7 @@ public  final class CreateClusterRequest extends
      *
      * <pre>
      * The cluster to be created.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     private com.google.protobuf.SingleFieldBuilder<

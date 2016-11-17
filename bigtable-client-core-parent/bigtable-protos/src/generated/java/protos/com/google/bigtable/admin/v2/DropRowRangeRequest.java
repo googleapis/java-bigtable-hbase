@@ -124,7 +124,8 @@ public  final class DropRowRangeRequest extends
    *
    * <pre>
    * The unique name of the table on which to drop a range of rows.
-   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+   * Values are of the form
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
    * </pre>
    */
   public java.lang.String getName() {
@@ -144,7 +145,8 @@ public  final class DropRowRangeRequest extends
    *
    * <pre>
    * The unique name of the table on which to drop a range of rows.
-   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+   * Values are of the form
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -463,7 +465,8 @@ public  final class DropRowRangeRequest extends
      *
      * <pre>
      * The unique name of the table on which to drop a range of rows.
-     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * Values are of the form
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
      * </pre>
      */
     public java.lang.String getName() {
@@ -483,7 +486,8 @@ public  final class DropRowRangeRequest extends
      *
      * <pre>
      * The unique name of the table on which to drop a range of rows.
-     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * Values are of the form
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -504,7 +508,8 @@ public  final class DropRowRangeRequest extends
      *
      * <pre>
      * The unique name of the table on which to drop a range of rows.
-     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * Values are of the form
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
      * </pre>
      */
     public Builder setName(
@@ -522,7 +527,8 @@ public  final class DropRowRangeRequest extends
      *
      * <pre>
      * The unique name of the table on which to drop a range of rows.
-     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * Values are of the form
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
      * </pre>
      */
     public Builder clearName() {
@@ -536,7 +542,8 @@ public  final class DropRowRangeRequest extends
      *
      * <pre>
      * The unique name of the table on which to drop a range of rows.
-     * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+     * Values are of the form
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
      * </pre>
      */
     public Builder setNameBytes(

@@ -12,7 +12,7 @@ public interface ListTablesRequestOrBuilder extends
    *
    * <pre>
    * The unique name of the instance for which tables should be listed.
-   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+   * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
    * </pre>
    */
   java.lang.String getParent();
@@ -21,7 +21,7 @@ public interface ListTablesRequestOrBuilder extends
    *
    * <pre>
    * The unique name of the instance for which tables should be listed.
-   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
+   * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
    * </pre>
    */
   com.google.protobuf.ByteString

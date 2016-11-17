@@ -30,19 +30,24 @@ public final class InstanceProto {
       "\n\'google/bigtable/admin/v2/instance.prot" +
       "o\022\030google.bigtable.admin.v2\032\034google/api/" +
       "annotations.proto\032%google/bigtable/admin" +
-      "/v2/common.proto\"\236\001\n\010Instance\022\014\n\004name\030\001 " +
+      "/v2/common.proto\"\224\002\n\010Instance\022\014\n\004name\030\001 " +
       "\001(\t\022\024\n\014display_name\030\002 \001(\t\0227\n\005state\030\003 \001(\016" +
       "2(.google.bigtable.admin.v2.Instance.Sta" +
-      "te\"5\n\005State\022\023\n\017STATE_NOT_KNOWN\020\000\022\t\n\005READ" +
-      "Y\020\001\022\014\n\010CREATING\020\002\"\216\002\n\007Cluster\022\014\n\004name\030\001 " +
-      "\001(\t\022\020\n\010location\030\002 \001(\t\0226\n\005state\030\003 \001(\0162\'.g" +
-      "oogle.bigtable.admin.v2.Cluster.State\022\023\n",
-      "\013serve_nodes\030\004 \001(\005\022C\n\024default_storage_ty" +
-      "pe\030\005 \001(\0162%.google.bigtable.admin.v2.Stor" +
-      "ageType\"Q\n\005State\022\023\n\017STATE_NOT_KNOWN\020\000\022\t\n" +
-      "\005READY\020\001\022\014\n\010CREATING\020\002\022\014\n\010RESIZING\020\003\022\014\n\010" +
-      "DISABLED\020\004B/\n\034com.google.bigtable.admin." +
-      "v2B\rInstanceProtoP\001b\006proto3"
+      "te\0225\n\004type\030\004 \001(\0162\'.google.bigtable.admin" +
+      ".v2.Instance.Type\"5\n\005State\022\023\n\017STATE_NOT_" +
+      "KNOWN\020\000\022\t\n\005READY\020\001\022\014\n\010CREATING\020\002\"=\n\004Type" +
+      "\022\024\n\020TYPE_UNSPECIFIED\020\000\022\016\n\nPRODUCTION\020\001\022\017",
+      "\n\013DEVELOPMENT\020\002\"\216\002\n\007Cluster\022\014\n\004name\030\001 \001(" +
+      "\t\022\020\n\010location\030\002 \001(\t\0226\n\005state\030\003 \001(\0162\'.goo" +
+      "gle.bigtable.admin.v2.Cluster.State\022\023\n\013s" +
+      "erve_nodes\030\004 \001(\005\022C\n\024default_storage_type" +
+      "\030\005 \001(\0162%.google.bigtable.admin.v2.Storag" +
+      "eType\"Q\n\005State\022\023\n\017STATE_NOT_KNOWN\020\000\022\t\n\005R" +
+      "EADY\020\001\022\014\n\010CREATING\020\002\022\014\n\010RESIZING\020\003\022\014\n\010DI" +
+      "SABLED\020\004Bz\n\034com.google.bigtable.admin.v2" +
+      "B\rInstanceProtoP\001ZIgoogle.golang.org/gen" +
+      "proto/googleapis/bigtable/admin/v2/insta",
+      "nce;instanceb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -63,7 +68,7 @@ public final class InstanceProto {
     internal_static_google_bigtable_admin_v2_Instance_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_google_bigtable_admin_v2_Instance_descriptor,
-        new java.lang.String[] { "Name", "DisplayName", "State", });
+        new java.lang.String[] { "Name", "DisplayName", "State", "Type", });
     internal_static_google_bigtable_admin_v2_Cluster_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_google_bigtable_admin_v2_Cluster_fieldAccessorTable = new

@@ -95,7 +95,7 @@ public  final class ListTablesResponse extends
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
    *
    * <pre>
-   * The tables present in the requested cluster.
+   * The tables present in the requested instance.
    * </pre>
    */
   public java.util.List<com.google.bigtable.admin.v2.Table> getTablesList() {
@@ -105,7 +105,7 @@ public  final class ListTablesResponse extends
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
    *
    * <pre>
-   * The tables present in the requested cluster.
+   * The tables present in the requested instance.
    * </pre>
    */
   public java.util.List<? extends com.google.bigtable.admin.v2.TableOrBuilder> 
@@ -116,7 +116,7 @@ public  final class ListTablesResponse extends
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
    *
    * <pre>
-   * The tables present in the requested cluster.
+   * The tables present in the requested instance.
    * </pre>
    */
   public int getTablesCount() {
@@ -126,7 +126,7 @@ public  final class ListTablesResponse extends
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
    *
    * <pre>
-   * The tables present in the requested cluster.
+   * The tables present in the requested instance.
    * </pre>
    */
   public com.google.bigtable.admin.v2.Table getTables(int index) {
@@ -136,7 +136,7 @@ public  final class ListTablesResponse extends
    * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
    *
    * <pre>
-   * The tables present in the requested cluster.
+   * The tables present in the requested instance.
    * </pre>
    */
   public com.google.bigtable.admin.v2.TableOrBuilder getTablesOrBuilder(
@@ -469,7 +469,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public java.util.List<com.google.bigtable.admin.v2.Table> getTablesList() {
@@ -483,7 +483,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public int getTablesCount() {
@@ -497,7 +497,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public com.google.bigtable.admin.v2.Table getTables(int index) {
@@ -511,7 +511,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public Builder setTables(
@@ -532,7 +532,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public Builder setTables(
@@ -550,7 +550,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public Builder addTables(com.google.bigtable.admin.v2.Table value) {
@@ -570,7 +570,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public Builder addTables(
@@ -591,7 +591,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public Builder addTables(
@@ -609,7 +609,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public Builder addTables(
@@ -627,7 +627,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public Builder addAllTables(
@@ -646,7 +646,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public Builder clearTables() {
@@ -663,7 +663,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public Builder removeTables(int index) {
@@ -680,7 +680,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public com.google.bigtable.admin.v2.Table.Builder getTablesBuilder(
@@ -691,7 +691,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public com.google.bigtable.admin.v2.TableOrBuilder getTablesOrBuilder(
@@ -705,7 +705,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public java.util.List<? extends com.google.bigtable.admin.v2.TableOrBuilder> 
@@ -720,7 +720,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public com.google.bigtable.admin.v2.Table.Builder addTablesBuilder() {
@@ -731,7 +731,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public com.google.bigtable.admin.v2.Table.Builder addTablesBuilder(
@@ -743,7 +743,7 @@ public  final class ListTablesResponse extends
      * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
      *
      * <pre>
-     * The tables present in the requested cluster.
+     * The tables present in the requested instance.
      * </pre>
      */
     public java.util.List<com.google.bigtable.admin.v2.Table.Builder> 

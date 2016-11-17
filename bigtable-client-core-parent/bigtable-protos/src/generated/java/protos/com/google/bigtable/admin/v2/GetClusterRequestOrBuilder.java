@@ -12,7 +12,7 @@ public interface GetClusterRequestOrBuilder extends
    *
    * <pre>
    * The unique name of the requested cluster. Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;`.
    * </pre>
    */
   java.lang.String getName();
@@ -21,7 +21,7 @@ public interface GetClusterRequestOrBuilder extends
    *
    * <pre>
    * The unique name of the requested cluster. Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;`.
    * </pre>
    */
   com.google.protobuf.ByteString
