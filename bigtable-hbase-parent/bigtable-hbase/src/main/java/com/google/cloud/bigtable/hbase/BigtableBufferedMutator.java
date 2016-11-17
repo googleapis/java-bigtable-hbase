@@ -64,16 +64,16 @@ public class BigtableBufferedMutator implements BufferedMutator {
   protected static final Logger LOG = new Logger(BigtableBufferedMutator.class);
 
   /**
-   * The time to wait for a an async operation to poll before shutting down a thread. Default is 1
+   * The time to wait for an async operation to poll before shutting down a thread. Default is 1
    * second.
    */
-  protected static final long ASYNC_POLL_WAIT_MS = 1000;
+  protected static final long ASYNC_POLL_WAIT_MS = TimeUnit.SECONDS.toMillis(1);
 
   /**
    * The time to wait for a an async operation to offer a new mutation before throwing an exception.
    * Default is 1 minute.
    */
-  protected static final long ASYNC_OFFER_WAIT_MS = 60000;
+  protected static final long ASYNC_OFFER_WAIT_MS = TimeUnit.MINUTES.toMillis(1);
 
   private static class MutationException {
     private final Row mutation;
@@ -147,7 +147,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * active.
    */
   private final AtomicInteger activeMutationWorkers = new AtomicInteger();
-  private long lastOperationFoundInMs = -1;
 
   private BulkMutation bulkMutation = null;
 
@@ -164,7 +163,6 @@ public class BigtableBufferedMutator implements BufferedMutator {
           try {
             Runnable operation =
                 asyncOperationsQueue.poll(ASYNC_POLL_WAIT_MS, TimeUnit.MILLISECONDS);
-            lastOperationFoundInMs = System.currentTimeMillis();
             // The operation can be null if a timeout occurs.
             if (operation == null) {
               break;
@@ -176,7 +174,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
           } catch (Throwable e) {
             LOG.error("Exception in buffered mutator.", e);
           } finally {
-            if (!operationsComplete.get() && asyncOperationsQueue.isEmpty()) {
+            if (asyncOperationsQueue.isEmpty()) {
               synchronized(operationsComplete) {
                 if (!operationsComplete.get() && asyncOperationsQueue.isEmpty()) {
                   operationsComplete.set(true);
@@ -221,8 +219,12 @@ public class BigtableBufferedMutator implements BufferedMutator {
     this.bulkOptions = options.getBulkOptions();
     this.executorService = asyncRpcExecutorService;
     int asyncMutatorCount = options.getBulkOptions().getAsyncMutatorCount();
+
+    // The queue should be limited in size so that way there isn't too large of a queue waiting to
+    // be processed. An unlimited queue can eat up a lot of memory, and is an indication of problems
+    // in mutationWorker.  2 * the number of workers seems reasonable.
     this.asyncOperationsQueue =
-        asyncMutatorCount == 0 ? null : new LinkedBlockingQueue<Runnable>(asyncMutatorCount * 4);
+        asyncMutatorCount == 0 ? null : new LinkedBlockingQueue<Runnable>(asyncMutatorCount * 2);
     if (bulkOptions.useBulkApi()) {
       BigtableTableName tableName = this.adapter.getBigtableTableName();
       this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
@@ -243,8 +245,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
 
   protected boolean areNewWorkersRequired() {
     return executorService != null
-        && (activeMutationWorkers.get() < bulkOptions.getAsyncMutatorCount()
-            || lastOperationFoundInMs < System.currentTimeMillis() - ASYNC_POLL_WAIT_MS);
+        && (activeMutationWorkers.get() < bulkOptions.getAsyncMutatorCount());
   }
 
   /** {@inheritDoc} */
@@ -264,11 +265,11 @@ public class BigtableBufferedMutator implements BufferedMutator {
   /** {@inheritDoc} */
   @Override
   public void flush() throws IOException {
-    // Make sure that the async mutator workers are running.
-    if (asyncOperationsQueue != null && !asyncOperationsQueue.isEmpty()) {
-      initializeAsyncMutators();
-    }
     while (!operationsComplete.get()) {
+      // Make sure that the async mutator workers are running.
+      if (asyncOperationsQueue != null && !asyncOperationsQueue.isEmpty()) {
+        initializeAsyncMutators();
+      }
       synchronized(operationsComplete) {
         try {
           if (!operationsComplete.get()) {
@@ -361,8 +362,8 @@ public class BigtableBufferedMutator implements BufferedMutator {
       }
       final boolean offerAccepted = offer(runnable, ASYNC_OFFER_WAIT_MS);
       if (!offerAccepted) {
-        addGlobalException(mutation,
-          new IllegalStateException("The Bigtalbe Buffered Mutator asynchronous operations failed."));
+        addGlobalException(mutation, new IllegalStateException(
+            "The Bigtable Buffered Mutator asynchronous operations failed."));
       }
     } catch (InterruptedException e) {
       throw new IOException("Interrupted in buffered mutator while mutating row : '"
