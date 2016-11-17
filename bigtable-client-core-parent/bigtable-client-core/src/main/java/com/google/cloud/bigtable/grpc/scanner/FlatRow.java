@@ -23,7 +23,6 @@ import com.google.bigtable.v2.Row;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.google.protobuf.ByteString;
@@ -200,6 +199,10 @@ public class FlatRow implements Serializable {
 
     public FlatRow build() {
       return new FlatRow(rowKey, listBuilder.build());
+    }
+
+    public ByteString getRowKey() {
+      return rowKey;
     }
   }
 
