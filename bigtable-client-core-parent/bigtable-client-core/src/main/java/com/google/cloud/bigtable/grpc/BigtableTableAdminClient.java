@@ -88,20 +88,21 @@ public interface BigtableTableAdminClient {
   /**
    * Creates a new snapshot from a table in a specific cluster.
    * @param request a {@link SnapshotTableRequest} object.
-   * 
    * @return The long running {@link Operation} for the request.
    */
   Operation snapshotTable(SnapshotTableRequest request);
 
   /**
-   * Get metadata information about the specified snapshot.
+   * Gets metadata information about the specified snapshot.
    * @param request a {@link GetSnapshotRequest} object.
+   * @return The {@link Snapshot} definied by the request.
    */
   Snapshot getSnapshot(GetSnapshotRequest request);
 
   /**
    * Lists all snapshots associated with the specified cluster.
    * @param request a {@link ListSnapshotsRequest} object.
+   * @return The {@link ListSnapshotsResponse} which has the list of the snapshots in the cluster.
    */
   ListSnapshotsResponse listSnapshots(ListSnapshotsRequest request);
 
@@ -114,6 +115,7 @@ public interface BigtableTableAdminClient {
   /**
    * Creates a new table from a snapshot.
    * @param request a {@link CreateTableFromSnapshotRequest} object.
+   * @return The long running {@link Operation} for the request.
    */
   Operation createTableFromSnapshot(CreateTableFromSnapshotRequest request);
 
