@@ -83,7 +83,7 @@ public  final class GetInstanceRequest extends
    *
    * <pre>
    * The unique name of the requested instance. Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
    * </pre>
    */
   public java.lang.String getName() {
@@ -103,7 +103,7 @@ public  final class GetInstanceRequest extends
    *
    * <pre>
    * The unique name of the requested instance. Values are of the form
-   * projects/&lt;project&gt;/instances/&lt;instance&gt;
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -336,7 +336,7 @@ public  final class GetInstanceRequest extends
      *
      * <pre>
      * The unique name of the requested instance. Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
      * </pre>
      */
     public java.lang.String getName() {
@@ -356,7 +356,7 @@ public  final class GetInstanceRequest extends
      *
      * <pre>
      * The unique name of the requested instance. Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -377,7 +377,7 @@ public  final class GetInstanceRequest extends
      *
      * <pre>
      * The unique name of the requested instance. Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
      * </pre>
      */
     public Builder setName(
@@ -395,7 +395,7 @@ public  final class GetInstanceRequest extends
      *
      * <pre>
      * The unique name of the requested instance. Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
      * </pre>
      */
     public Builder clearName() {
@@ -409,7 +409,7 @@ public  final class GetInstanceRequest extends
      *
      * <pre>
      * The unique name of the requested instance. Values are of the form
-     * projects/&lt;project&gt;/instances/&lt;instance&gt;
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
      * </pre>
      */
     public Builder setNameBytes(

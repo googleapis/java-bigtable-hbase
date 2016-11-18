@@ -158,9 +158,11 @@ public final class BigtableInstanceAdminProto {
       "\001\n\rDeleteCluster\022..google.bigtable.admin" +
       ".v2.DeleteClusterRequest\032\026.google.protob" +
       "uf.Empty\"4\202\323\344\223\002.*,/v2/{name=projects/*/i" +
-      "nstances/*/clusters/*}B<\n\034com.google.big" +
-      "table.admin.v2B\032BigtableInstanceAdminPro" +
-      "toP\001b\006proto3"
+      "nstances/*/clusters/*}B\221\001\n\034com.google.bi" +
+      "gtable.admin.v2B\032BigtableInstanceAdminPr" +
+      "otoP\001ZSgoogle.golang.org/genproto/google" +
+      "apis/bigtable/admin/v2/instanceadmin;ins",
+      "tanceadminb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

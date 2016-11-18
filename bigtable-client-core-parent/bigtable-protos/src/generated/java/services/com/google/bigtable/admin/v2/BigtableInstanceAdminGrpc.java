@@ -19,7 +19,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * <pre>
  * Service for creating, configuring, and deleting Cloud Bigtable Instances and
  * Clusters. Provides access to the Instance and Cluster schemas only, not the
- * tables metadata or data stored in those tables.
+ * tables' metadata or data stored in those tables.
  * </pre>
  */
 @javax.annotation.Generated(
@@ -150,7 +150,7 @@ public class BigtableInstanceAdminGrpc {
    * <pre>
    * Service for creating, configuring, and deleting Cloud Bigtable Instances and
    * Clusters. Provides access to the Instance and Cluster schemas only, not the
-   * tables metadata or data stored in those tables.
+   * tables' metadata or data stored in those tables.
    * </pre>
    */
   public static interface BigtableInstanceAdmin {
@@ -308,7 +308,7 @@ public class BigtableInstanceAdminGrpc {
    * <pre>
    * Service for creating, configuring, and deleting Cloud Bigtable Instances and
    * Clusters. Provides access to the Instance and Cluster schemas only, not the
-   * tables metadata or data stored in those tables.
+   * tables' metadata or data stored in those tables.
    * </pre>
    */
   public static interface BigtableInstanceAdminBlockingClient {
@@ -388,7 +388,7 @@ public class BigtableInstanceAdminGrpc {
    * <pre>
    * Service for creating, configuring, and deleting Cloud Bigtable Instances and
    * Clusters. Provides access to the Instance and Cluster schemas only, not the
-   * tables metadata or data stored in those tables.
+   * tables' metadata or data stored in those tables.
    * </pre>
    */
   public static interface BigtableInstanceAdminFutureClient {

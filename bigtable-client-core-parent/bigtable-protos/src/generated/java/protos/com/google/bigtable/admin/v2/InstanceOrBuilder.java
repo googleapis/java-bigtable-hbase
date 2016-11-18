@@ -11,9 +11,9 @@ public interface InstanceOrBuilder extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * (`OutputOnly`)
    * The unique name of the instance. Values are of the form
-   * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
+   * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
    * </pre>
    */
   java.lang.String getName();
@@ -21,9 +21,9 @@ public interface InstanceOrBuilder extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * &#64;OutputOnly
+   * (`OutputOnly`)
    * The unique name of the instance. Values are of the form
-   * projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]
+   * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
    * </pre>
    */
   com.google.protobuf.ByteString
@@ -55,6 +55,7 @@ public interface InstanceOrBuilder extends
    * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    *
    * <pre>
+   * (`OutputOnly`)
    * The current state of the instance.
    * </pre>
    */
@@ -63,8 +64,26 @@ public interface InstanceOrBuilder extends
    * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    *
    * <pre>
+   * (`OutputOnly`)
    * The current state of the instance.
    * </pre>
    */
   com.google.bigtable.admin.v2.Instance.State getState();
+
+  /**
+   * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+   *
+   * <pre>
+   * The type of the instance. Defaults to `PRODUCTION`.
+   * </pre>
+   */
+  int getTypeValue();
+  /**
+   * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
+   *
+   * <pre>
+   * The type of the instance. Defaults to `PRODUCTION`.
+   * </pre>
+   */
+  com.google.bigtable.admin.v2.Instance.Type getType();
 }

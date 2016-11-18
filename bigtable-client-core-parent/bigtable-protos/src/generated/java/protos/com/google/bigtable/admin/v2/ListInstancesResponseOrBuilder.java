@@ -58,7 +58,7 @@ public interface ListInstancesResponseOrBuilder extends
    * Locations from which Instance information could not be retrieved,
    * due to an outage or some other transient condition.
    * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
+   * may be missing from `instances`, and Instances with at least one
    * Cluster in a failed location may only have partial information returned.
    * </pre>
    */
@@ -71,7 +71,7 @@ public interface ListInstancesResponseOrBuilder extends
    * Locations from which Instance information could not be retrieved,
    * due to an outage or some other transient condition.
    * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
+   * may be missing from `instances`, and Instances with at least one
    * Cluster in a failed location may only have partial information returned.
    * </pre>
    */
@@ -83,7 +83,7 @@ public interface ListInstancesResponseOrBuilder extends
    * Locations from which Instance information could not be retrieved,
    * due to an outage or some other transient condition.
    * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
+   * may be missing from `instances`, and Instances with at least one
    * Cluster in a failed location may only have partial information returned.
    * </pre>
    */
@@ -95,7 +95,7 @@ public interface ListInstancesResponseOrBuilder extends
    * Locations from which Instance information could not be retrieved,
    * due to an outage or some other transient condition.
    * Instances whose Clusters are all in one of the failed locations
-   * may be missing from 'instances', and Instances with at least one
+   * may be missing from `instances`, and Instances with at least one
    * Cluster in a failed location may only have partial information returned.
    * </pre>
    */

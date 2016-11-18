@@ -127,7 +127,7 @@ public  final class CreateInstanceRequest extends
    *
    * <pre>
    * The unique name of the project in which to create the new instance.
-   * Values are of the form projects/&lt;project&gt;
+   * Values are of the form `projects/&lt;project&gt;`.
    * </pre>
    */
   public java.lang.String getParent() {
@@ -147,7 +147,7 @@ public  final class CreateInstanceRequest extends
    *
    * <pre>
    * The unique name of the project in which to create the new instance.
-   * Values are of the form projects/&lt;project&gt;
+   * Values are of the form `projects/&lt;project&gt;`.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -170,9 +170,9 @@ public  final class CreateInstanceRequest extends
    * <code>optional string instance_id = 2;</code>
    *
    * <pre>
-   * The id to be used when referring to the new instance within its project,
-   * e.g. just the "myinstance" section of the full name
-   * "projects/myproject/instances/myinstance"
+   * The ID to be used when referring to the new instance within its project,
+   * e.g., just `myinstance` rather than
+   * `projects/myproject/instances/myinstance`.
    * </pre>
    */
   public java.lang.String getInstanceId() {
@@ -191,9 +191,9 @@ public  final class CreateInstanceRequest extends
    * <code>optional string instance_id = 2;</code>
    *
    * <pre>
-   * The id to be used when referring to the new instance within its project,
-   * e.g. just the "myinstance" section of the full name
-   * "projects/myproject/instances/myinstance"
+   * The ID to be used when referring to the new instance within its project,
+   * e.g., just `myinstance` rather than
+   * `projects/myproject/instances/myinstance`.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -217,7 +217,7 @@ public  final class CreateInstanceRequest extends
    *
    * <pre>
    * The instance to create.
-   * Fields marked "&#64;OutputOnly" must be left blank.
+   * Fields marked `OutputOnly` must be left blank.
    * </pre>
    */
   public boolean hasInstance() {
@@ -228,7 +228,7 @@ public  final class CreateInstanceRequest extends
    *
    * <pre>
    * The instance to create.
-   * Fields marked "&#64;OutputOnly" must be left blank.
+   * Fields marked `OutputOnly` must be left blank.
    * </pre>
    */
   public com.google.bigtable.admin.v2.Instance getInstance() {
@@ -239,7 +239,7 @@ public  final class CreateInstanceRequest extends
    *
    * <pre>
    * The instance to create.
-   * Fields marked "&#64;OutputOnly" must be left blank.
+   * Fields marked `OutputOnly` must be left blank.
    * </pre>
    */
   public com.google.bigtable.admin.v2.InstanceOrBuilder getInstanceOrBuilder() {
@@ -273,9 +273,9 @@ public  final class CreateInstanceRequest extends
    *
    * <pre>
    * The clusters to be created within the instance, mapped by desired
-   * cluster ID (e.g. just the "mycluster" part of the full name
-   * "projects/myproject/instances/myinstance/clusters/mycluster").
-   * Fields marked "&#64;OutputOnly" must be left blank.
+   * cluster ID, e.g., just `mycluster` rather than
+   * `projects/myproject/instances/myinstance/clusters/mycluster`.
+   * Fields marked `OutputOnly` must be left blank.
    * Currently exactly one cluster must be specified.
    * </pre>
    */
@@ -584,7 +584,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The unique name of the project in which to create the new instance.
-     * Values are of the form projects/&lt;project&gt;
+     * Values are of the form `projects/&lt;project&gt;`.
      * </pre>
      */
     public java.lang.String getParent() {
@@ -604,7 +604,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The unique name of the project in which to create the new instance.
-     * Values are of the form projects/&lt;project&gt;
+     * Values are of the form `projects/&lt;project&gt;`.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -625,7 +625,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The unique name of the project in which to create the new instance.
-     * Values are of the form projects/&lt;project&gt;
+     * Values are of the form `projects/&lt;project&gt;`.
      * </pre>
      */
     public Builder setParent(
@@ -643,7 +643,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The unique name of the project in which to create the new instance.
-     * Values are of the form projects/&lt;project&gt;
+     * Values are of the form `projects/&lt;project&gt;`.
      * </pre>
      */
     public Builder clearParent() {
@@ -657,7 +657,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The unique name of the project in which to create the new instance.
-     * Values are of the form projects/&lt;project&gt;
+     * Values are of the form `projects/&lt;project&gt;`.
      * </pre>
      */
     public Builder setParentBytes(
@@ -677,9 +677,9 @@ public  final class CreateInstanceRequest extends
      * <code>optional string instance_id = 2;</code>
      *
      * <pre>
-     * The id to be used when referring to the new instance within its project,
-     * e.g. just the "myinstance" section of the full name
-     * "projects/myproject/instances/myinstance"
+     * The ID to be used when referring to the new instance within its project,
+     * e.g., just `myinstance` rather than
+     * `projects/myproject/instances/myinstance`.
      * </pre>
      */
     public java.lang.String getInstanceId() {
@@ -698,9 +698,9 @@ public  final class CreateInstanceRequest extends
      * <code>optional string instance_id = 2;</code>
      *
      * <pre>
-     * The id to be used when referring to the new instance within its project,
-     * e.g. just the "myinstance" section of the full name
-     * "projects/myproject/instances/myinstance"
+     * The ID to be used when referring to the new instance within its project,
+     * e.g., just `myinstance` rather than
+     * `projects/myproject/instances/myinstance`.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -720,9 +720,9 @@ public  final class CreateInstanceRequest extends
      * <code>optional string instance_id = 2;</code>
      *
      * <pre>
-     * The id to be used when referring to the new instance within its project,
-     * e.g. just the "myinstance" section of the full name
-     * "projects/myproject/instances/myinstance"
+     * The ID to be used when referring to the new instance within its project,
+     * e.g., just `myinstance` rather than
+     * `projects/myproject/instances/myinstance`.
      * </pre>
      */
     public Builder setInstanceId(
@@ -739,9 +739,9 @@ public  final class CreateInstanceRequest extends
      * <code>optional string instance_id = 2;</code>
      *
      * <pre>
-     * The id to be used when referring to the new instance within its project,
-     * e.g. just the "myinstance" section of the full name
-     * "projects/myproject/instances/myinstance"
+     * The ID to be used when referring to the new instance within its project,
+     * e.g., just `myinstance` rather than
+     * `projects/myproject/instances/myinstance`.
      * </pre>
      */
     public Builder clearInstanceId() {
@@ -754,9 +754,9 @@ public  final class CreateInstanceRequest extends
      * <code>optional string instance_id = 2;</code>
      *
      * <pre>
-     * The id to be used when referring to the new instance within its project,
-     * e.g. just the "myinstance" section of the full name
-     * "projects/myproject/instances/myinstance"
+     * The ID to be used when referring to the new instance within its project,
+     * e.g., just `myinstance` rather than
+     * `projects/myproject/instances/myinstance`.
      * </pre>
      */
     public Builder setInstanceIdBytes(
@@ -779,7 +779,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The instance to create.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public boolean hasInstance() {
@@ -790,7 +790,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The instance to create.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public com.google.bigtable.admin.v2.Instance getInstance() {
@@ -805,7 +805,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The instance to create.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public Builder setInstance(com.google.bigtable.admin.v2.Instance value) {
@@ -826,7 +826,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The instance to create.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public Builder setInstance(
@@ -845,7 +845,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The instance to create.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public Builder mergeInstance(com.google.bigtable.admin.v2.Instance value) {
@@ -868,7 +868,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The instance to create.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public Builder clearInstance() {
@@ -887,7 +887,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The instance to create.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public com.google.bigtable.admin.v2.Instance.Builder getInstanceBuilder() {
@@ -900,7 +900,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The instance to create.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     public com.google.bigtable.admin.v2.InstanceOrBuilder getInstanceOrBuilder() {
@@ -916,7 +916,7 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The instance to create.
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * Fields marked `OutputOnly` must be left blank.
      * </pre>
      */
     private com.google.protobuf.SingleFieldBuilder<
@@ -960,9 +960,9 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The clusters to be created within the instance, mapped by desired
-     * cluster ID (e.g. just the "mycluster" part of the full name
-     * "projects/myproject/instances/myinstance/clusters/mycluster").
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * cluster ID, e.g., just `mycluster` rather than
+     * `projects/myproject/instances/myinstance/clusters/mycluster`.
+     * Fields marked `OutputOnly` must be left blank.
      * Currently exactly one cluster must be specified.
      * </pre>
      */
@@ -974,9 +974,9 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The clusters to be created within the instance, mapped by desired
-     * cluster ID (e.g. just the "mycluster" part of the full name
-     * "projects/myproject/instances/myinstance/clusters/mycluster").
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * cluster ID, e.g., just `mycluster` rather than
+     * `projects/myproject/instances/myinstance/clusters/mycluster`.
+     * Fields marked `OutputOnly` must be left blank.
      * Currently exactly one cluster must be specified.
      * </pre>
      */
@@ -989,9 +989,9 @@ public  final class CreateInstanceRequest extends
      *
      * <pre>
      * The clusters to be created within the instance, mapped by desired
-     * cluster ID (e.g. just the "mycluster" part of the full name
-     * "projects/myproject/instances/myinstance/clusters/mycluster").
-     * Fields marked "&#64;OutputOnly" must be left blank.
+     * cluster ID, e.g., just `mycluster` rather than
+     * `projects/myproject/instances/myinstance/clusters/mycluster`.
+     * Fields marked `OutputOnly` must be left blank.
      * Currently exactly one cluster must be specified.
      * </pre>
      */

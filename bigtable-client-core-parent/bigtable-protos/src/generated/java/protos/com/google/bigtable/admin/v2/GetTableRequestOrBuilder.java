@@ -12,7 +12,8 @@ public interface GetTableRequestOrBuilder extends
    *
    * <pre>
    * The unique name of the requested table.
-   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+   * Values are of the form
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
    * </pre>
    */
   java.lang.String getName();
@@ -21,7 +22,8 @@ public interface GetTableRequestOrBuilder extends
    *
    * <pre>
    * The unique name of the requested table.
-   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;
+   * Values are of the form
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
    * </pre>
    */
   com.google.protobuf.ByteString

@@ -3,17 +3,17 @@
 
 package com.google.bigtable.admin.v2;
 
-public interface DeleteTableRequestOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:google.bigtable.admin.v2.DeleteTableRequest)
+public interface GetSnapshotRequestOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:google.bigtable.admin.v2.GetSnapshotRequest)
     com.google.protobuf.MessageOrBuilder {
 
   /**
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * The unique name of the table to be deleted.
+   * The unique name of the requested snapshot.
    * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
    * </pre>
    */
   java.lang.String getName();
@@ -21,9 +21,9 @@ public interface DeleteTableRequestOrBuilder extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * The unique name of the table to be deleted.
+   * The unique name of the requested snapshot.
    * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
    * </pre>
    */
   com.google.protobuf.ByteString

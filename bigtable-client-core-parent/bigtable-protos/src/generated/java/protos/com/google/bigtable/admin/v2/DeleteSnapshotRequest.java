@@ -4,21 +4,17 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.DeleteTableRequest}
- *
- * <pre>
- * Request message for [google.bigtable.admin.v2.BigtableTableAdmin.DeleteTable][google.bigtable.admin.v2.BigtableTableAdmin.DeleteTable]
- * </pre>
+ * Protobuf type {@code google.bigtable.admin.v2.DeleteSnapshotRequest}
  */
-public  final class DeleteTableRequest extends
+public  final class DeleteSnapshotRequest extends
     com.google.protobuf.GeneratedMessage implements
-    // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.DeleteTableRequest)
-    DeleteTableRequestOrBuilder {
-  // Use DeleteTableRequest.newBuilder() to construct.
-  private DeleteTableRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.DeleteSnapshotRequest)
+    DeleteSnapshotRequestOrBuilder {
+  // Use DeleteSnapshotRequest.newBuilder() to construct.
+  private DeleteSnapshotRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
-  private DeleteTableRequest() {
+  private DeleteSnapshotRequest() {
     name_ = "";
   }
 
@@ -27,7 +23,7 @@ public  final class DeleteTableRequest extends
   getUnknownFields() {
     return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
   }
-  private DeleteTableRequest(
+  private DeleteSnapshotRequest(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
     this();
@@ -66,14 +62,14 @@ public  final class DeleteTableRequest extends
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DeleteTableRequest_descriptor;
+    return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DeleteSnapshotRequest_descriptor;
   }
 
   protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DeleteTableRequest_fieldAccessorTable
+    return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DeleteSnapshotRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.google.bigtable.admin.v2.DeleteTableRequest.class, com.google.bigtable.admin.v2.DeleteTableRequest.Builder.class);
+            com.google.bigtable.admin.v2.DeleteSnapshotRequest.class, com.google.bigtable.admin.v2.DeleteSnapshotRequest.Builder.class);
   }
 
   public static final int NAME_FIELD_NUMBER = 1;
@@ -82,9 +78,9 @@ public  final class DeleteTableRequest extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * The unique name of the table to be deleted.
+   * The unique name of the snapshot to be deleted.
    * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
    * </pre>
    */
   public java.lang.String getName() {
@@ -103,9 +99,9 @@ public  final class DeleteTableRequest extends
    * <code>optional string name = 1;</code>
    *
    * <pre>
-   * The unique name of the table to be deleted.
+   * The unique name of the snapshot to be deleted.
    * Values are of the form
-   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+   * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
    * </pre>
    */
   public com.google.protobuf.ByteString
@@ -152,53 +148,53 @@ public  final class DeleteTableRequest extends
   }
 
   private static final long serialVersionUID = 0L;
-  public static com.google.bigtable.admin.v2.DeleteTableRequest parseFrom(
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.google.bigtable.admin.v2.DeleteTableRequest parseFrom(
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.google.bigtable.admin.v2.DeleteTableRequest parseFrom(byte[] data)
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.google.bigtable.admin.v2.DeleteTableRequest parseFrom(
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.google.bigtable.admin.v2.DeleteTableRequest parseFrom(java.io.InputStream input)
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return PARSER.parseFrom(input);
   }
-  public static com.google.bigtable.admin.v2.DeleteTableRequest parseFrom(
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return PARSER.parseFrom(input, extensionRegistry);
   }
-  public static com.google.bigtable.admin.v2.DeleteTableRequest parseDelimitedFrom(java.io.InputStream input)
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return PARSER.parseDelimitedFrom(input);
   }
-  public static com.google.bigtable.admin.v2.DeleteTableRequest parseDelimitedFrom(
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
-  public static com.google.bigtable.admin.v2.DeleteTableRequest parseFrom(
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return PARSER.parseFrom(input);
   }
-  public static com.google.bigtable.admin.v2.DeleteTableRequest parseFrom(
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -209,7 +205,7 @@ public  final class DeleteTableRequest extends
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.google.bigtable.admin.v2.DeleteTableRequest prototype) {
+  public static Builder newBuilder(com.google.bigtable.admin.v2.DeleteSnapshotRequest prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   public Builder toBuilder() {
@@ -224,29 +220,25 @@ public  final class DeleteTableRequest extends
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.DeleteTableRequest}
-   *
-   * <pre>
-   * Request message for [google.bigtable.admin.v2.BigtableTableAdmin.DeleteTable][google.bigtable.admin.v2.BigtableTableAdmin.DeleteTable]
-   * </pre>
+   * Protobuf type {@code google.bigtable.admin.v2.DeleteSnapshotRequest}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.DeleteTableRequest)
-      com.google.bigtable.admin.v2.DeleteTableRequestOrBuilder {
+      // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.DeleteSnapshotRequest)
+      com.google.bigtable.admin.v2.DeleteSnapshotRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DeleteTableRequest_descriptor;
+      return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DeleteSnapshotRequest_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DeleteTableRequest_fieldAccessorTable
+      return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DeleteSnapshotRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.google.bigtable.admin.v2.DeleteTableRequest.class, com.google.bigtable.admin.v2.DeleteTableRequest.Builder.class);
+              com.google.bigtable.admin.v2.DeleteSnapshotRequest.class, com.google.bigtable.admin.v2.DeleteSnapshotRequest.Builder.class);
     }
 
-    // Construct using com.google.bigtable.admin.v2.DeleteTableRequest.newBuilder()
+    // Construct using com.google.bigtable.admin.v2.DeleteSnapshotRequest.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -269,39 +261,39 @@ public  final class DeleteTableRequest extends
 
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DeleteTableRequest_descriptor;
+      return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DeleteSnapshotRequest_descriptor;
     }
 
-    public com.google.bigtable.admin.v2.DeleteTableRequest getDefaultInstanceForType() {
-      return com.google.bigtable.admin.v2.DeleteTableRequest.getDefaultInstance();
+    public com.google.bigtable.admin.v2.DeleteSnapshotRequest getDefaultInstanceForType() {
+      return com.google.bigtable.admin.v2.DeleteSnapshotRequest.getDefaultInstance();
     }
 
-    public com.google.bigtable.admin.v2.DeleteTableRequest build() {
-      com.google.bigtable.admin.v2.DeleteTableRequest result = buildPartial();
+    public com.google.bigtable.admin.v2.DeleteSnapshotRequest build() {
+      com.google.bigtable.admin.v2.DeleteSnapshotRequest result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
       return result;
     }
 
-    public com.google.bigtable.admin.v2.DeleteTableRequest buildPartial() {
-      com.google.bigtable.admin.v2.DeleteTableRequest result = new com.google.bigtable.admin.v2.DeleteTableRequest(this);
+    public com.google.bigtable.admin.v2.DeleteSnapshotRequest buildPartial() {
+      com.google.bigtable.admin.v2.DeleteSnapshotRequest result = new com.google.bigtable.admin.v2.DeleteSnapshotRequest(this);
       result.name_ = name_;
       onBuilt();
       return result;
     }
 
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.google.bigtable.admin.v2.DeleteTableRequest) {
-        return mergeFrom((com.google.bigtable.admin.v2.DeleteTableRequest)other);
+      if (other instanceof com.google.bigtable.admin.v2.DeleteSnapshotRequest) {
+        return mergeFrom((com.google.bigtable.admin.v2.DeleteSnapshotRequest)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.google.bigtable.admin.v2.DeleteTableRequest other) {
-      if (other == com.google.bigtable.admin.v2.DeleteTableRequest.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.google.bigtable.admin.v2.DeleteSnapshotRequest other) {
+      if (other == com.google.bigtable.admin.v2.DeleteSnapshotRequest.getDefaultInstance()) return this;
       if (!other.getName().isEmpty()) {
         name_ = other.name_;
         onChanged();
@@ -318,11 +310,11 @@ public  final class DeleteTableRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.google.bigtable.admin.v2.DeleteTableRequest parsedMessage = null;
+      com.google.bigtable.admin.v2.DeleteSnapshotRequest parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.google.bigtable.admin.v2.DeleteTableRequest) e.getUnfinishedMessage();
+        parsedMessage = (com.google.bigtable.admin.v2.DeleteSnapshotRequest) e.getUnfinishedMessage();
         throw e;
       } finally {
         if (parsedMessage != null) {
@@ -337,9 +329,9 @@ public  final class DeleteTableRequest extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * The unique name of the table to be deleted.
+     * The unique name of the snapshot to be deleted.
      * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
      */
     public java.lang.String getName() {
@@ -358,9 +350,9 @@ public  final class DeleteTableRequest extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * The unique name of the table to be deleted.
+     * The unique name of the snapshot to be deleted.
      * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
      */
     public com.google.protobuf.ByteString
@@ -380,9 +372,9 @@ public  final class DeleteTableRequest extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * The unique name of the table to be deleted.
+     * The unique name of the snapshot to be deleted.
      * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
      */
     public Builder setName(
@@ -399,9 +391,9 @@ public  final class DeleteTableRequest extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * The unique name of the table to be deleted.
+     * The unique name of the snapshot to be deleted.
      * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
      */
     public Builder clearName() {
@@ -414,9 +406,9 @@ public  final class DeleteTableRequest extends
      * <code>optional string name = 1;</code>
      *
      * <pre>
-     * The unique name of the table to be deleted.
+     * The unique name of the snapshot to be deleted.
      * Values are of the form
-     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
+     * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
      */
     public Builder setNameBytes(
@@ -441,27 +433,27 @@ public  final class DeleteTableRequest extends
     }
 
 
-    // @@protoc_insertion_point(builder_scope:google.bigtable.admin.v2.DeleteTableRequest)
+    // @@protoc_insertion_point(builder_scope:google.bigtable.admin.v2.DeleteSnapshotRequest)
   }
 
-  // @@protoc_insertion_point(class_scope:google.bigtable.admin.v2.DeleteTableRequest)
-  private static final com.google.bigtable.admin.v2.DeleteTableRequest DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:google.bigtable.admin.v2.DeleteSnapshotRequest)
+  private static final com.google.bigtable.admin.v2.DeleteSnapshotRequest DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.google.bigtable.admin.v2.DeleteTableRequest();
+    DEFAULT_INSTANCE = new com.google.bigtable.admin.v2.DeleteSnapshotRequest();
   }
 
-  public static com.google.bigtable.admin.v2.DeleteTableRequest getDefaultInstance() {
+  public static com.google.bigtable.admin.v2.DeleteSnapshotRequest getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<DeleteTableRequest>
-      PARSER = new com.google.protobuf.AbstractParser<DeleteTableRequest>() {
-    public DeleteTableRequest parsePartialFrom(
+  private static final com.google.protobuf.Parser<DeleteSnapshotRequest>
+      PARSER = new com.google.protobuf.AbstractParser<DeleteSnapshotRequest>() {
+    public DeleteSnapshotRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       try {
-        return new DeleteTableRequest(input, extensionRegistry);
+        return new DeleteSnapshotRequest(input, extensionRegistry);
       } catch (RuntimeException e) {
         if (e.getCause() instanceof
             com.google.protobuf.InvalidProtocolBufferException) {
@@ -473,16 +465,16 @@ public  final class DeleteTableRequest extends
     }
   };
 
-  public static com.google.protobuf.Parser<DeleteTableRequest> parser() {
+  public static com.google.protobuf.Parser<DeleteSnapshotRequest> parser() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.google.protobuf.Parser<DeleteTableRequest> getParserForType() {
+  public com.google.protobuf.Parser<DeleteSnapshotRequest> getParserForType() {
     return PARSER;
   }
 
-  public com.google.bigtable.admin.v2.DeleteTableRequest getDefaultInstanceForType() {
+  public com.google.bigtable.admin.v2.DeleteSnapshotRequest getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

@@ -12,7 +12,7 @@ public interface ListInstancesRequestOrBuilder extends
    *
    * <pre>
    * The unique name of the project for which a list of instances is requested.
-   * Values are of the form projects/&lt;project&gt;
+   * Values are of the form `projects/&lt;project&gt;`.
    * </pre>
    */
   java.lang.String getParent();
@@ -21,7 +21,7 @@ public interface ListInstancesRequestOrBuilder extends
    *
    * <pre>
    * The unique name of the project for which a list of instances is requested.
-   * Values are of the form projects/&lt;project&gt;
+   * Values are of the form `projects/&lt;project&gt;`.
    * </pre>
    */
   com.google.protobuf.ByteString

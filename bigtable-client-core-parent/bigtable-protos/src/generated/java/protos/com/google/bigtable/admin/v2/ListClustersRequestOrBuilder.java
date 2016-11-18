@@ -12,9 +12,9 @@ public interface ListClustersRequestOrBuilder extends
    *
    * <pre>
    * The unique name of the instance for which a list of clusters is requested.
-   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
-   * Use &lt;instance&gt; = '-' to list Clusters for all Instances in a project,
-   * for example "projects/myproject/instances/-"
+   * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
+   * Use `&lt;instance&gt; = '-'` to list Clusters for all Instances in a project,
+   * e.g., `projects/myproject/instances/-`.
    * </pre>
    */
   java.lang.String getParent();
@@ -23,9 +23,9 @@ public interface ListClustersRequestOrBuilder extends
    *
    * <pre>
    * The unique name of the instance for which a list of clusters is requested.
-   * Values are of the form projects/&lt;project&gt;/instances/&lt;instance&gt;
-   * Use &lt;instance&gt; = '-' to list Clusters for all Instances in a project,
-   * for example "projects/myproject/instances/-"
+   * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
+   * Use `&lt;instance&gt; = '-'` to list Clusters for all Instances in a project,
+   * e.g., `projects/myproject/instances/-`.
    * </pre>
    */
   com.google.protobuf.ByteString

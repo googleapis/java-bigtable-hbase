@@ -21,9 +21,10 @@ public final class CommonProto {
       "\030google.bigtable.admin.v2\032\034google/api/an" +
       "notations.proto\032\037google/protobuf/timesta" +
       "mp.proto*=\n\013StorageType\022\034\n\030STORAGE_TYPE_" +
-      "UNSPECIFIED\020\000\022\007\n\003SSD\020\001\022\007\n\003HDD\020\002B-\n\034com.g" +
-      "oogle.bigtable.admin.v2B\013CommonProtoP\001b\006" +
-      "proto3"
+      "UNSPECIFIED\020\000\022\007\n\003SSD\020\001\022\007\n\003HDD\020\002Bt\n\034com.g" +
+      "oogle.bigtable.admin.v2B\013CommonProtoP\001ZE" +
+      "google.golang.org/genproto/googleapis/bi" +
+      "gtable/admin/v2/common;commonb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
