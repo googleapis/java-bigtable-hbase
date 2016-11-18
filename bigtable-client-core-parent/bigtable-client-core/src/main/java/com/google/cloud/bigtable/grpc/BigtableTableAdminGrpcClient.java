@@ -16,14 +16,22 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
+import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
+import com.google.bigtable.admin.v2.GetSnapshotRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
+import com.google.bigtable.admin.v2.Snapshot;
+import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
+import com.google.longrunning.Operation;
 
 import io.grpc.Channel;
 
@@ -80,5 +88,35 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   @Override
   public void dropRowRange(DropRowRangeRequest request) {
     blockingStub.dropRowRange(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Operation snapshotTable(SnapshotTableRequest request) {
+    return blockingStub.snapshotTable(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Snapshot getSnapshot(GetSnapshotRequest request) {
+    return blockingStub.getSnapshot(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ListSnapshotsResponse listSnapshots(ListSnapshotsRequest request) {
+    return blockingStub.listSnapshots(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void deleteSnapshot(DeleteSnapshotRequest request) {
+    blockingStub.deleteSnapshot(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Operation createTableFromSnapshot(CreateTableFromSnapshotRequest request) {
+    return blockingStub.createTableFromSnapshot(request);
   }
 }

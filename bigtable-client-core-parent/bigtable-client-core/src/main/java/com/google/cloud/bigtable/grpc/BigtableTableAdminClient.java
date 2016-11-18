@@ -15,14 +15,22 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
+import com.google.bigtable.admin.v2.GetSnapshotRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsRequest;
+import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
+import com.google.bigtable.admin.v2.Snapshot;
+import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
+import com.google.longrunning.Operation;
 
 /**
  * A client for the Cloud Bigtable Table Admin API.
@@ -32,12 +40,9 @@ import com.google.bigtable.admin.v2.Table;
  */
 public interface BigtableTableAdminClient {
 
-
   /**
-   * Creates a new table, to be served from a specified cluster.
-   * The table can be created with a full set of initial column families,
+   * Creates a new table. The table can be created with a full set of initial column families,
    * specified in the request.
-   *
    * @param request a {@link com.google.bigtable.admin.v2.CreateTableRequest} object.
    */
   void createTable(CreateTableRequest request);
@@ -51,7 +56,7 @@ public interface BigtableTableAdminClient {
   Table getTable(GetTableRequest request);
 
   /**
-   * Lists the names of all tables served from a specified cluster.
+   * Lists the names of all tables in an instance.
    *
    * @param request a {@link com.google.bigtable.admin.v2.ListTablesRequest} object.
    * @return a {@link com.google.bigtable.admin.v2.ListTablesResponse} object.
@@ -78,4 +83,38 @@ public interface BigtableTableAdminClient {
    * @param request a {@link com.google.bigtable.admin.v2.DropRowRangeRequest} object.
    */
   void dropRowRange(DropRowRangeRequest request);
+
+  // ////////////// SNAPSHOT methods /////////////
+  /**
+   * Creates a new snapshot from a table in a specific cluster.
+   * @param request a {@link SnapshotTableRequest} object.
+   * 
+   * @return The long running {@link Operation} for the request.
+   */
+  Operation snapshotTable(SnapshotTableRequest request);
+
+  /**
+   * Get metadata information about the specified snapshot.
+   * @param request a {@link GetSnapshotRequest} object.
+   */
+  Snapshot getSnapshot(GetSnapshotRequest request);
+
+  /**
+   * Lists all snapshots associated with the specified cluster.
+   * @param request a {@link ListSnapshotsRequest} object.
+   */
+  ListSnapshotsResponse listSnapshots(ListSnapshotsRequest request);
+
+  /**
+   * Permanently deletes the specified snapshot.
+   * @param request a {@link DeleteSnapshotRequest} object.
+   */
+  void deleteSnapshot(DeleteSnapshotRequest request);
+
+  /**
+   * Creates a new table from a snapshot.
+   * @param request a {@link CreateTableFromSnapshotRequest} object.
+   */
+  Operation createTableFromSnapshot(CreateTableFromSnapshotRequest request);
+
 }
