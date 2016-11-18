@@ -34,7 +34,7 @@ import io.grpc.MethodDescriptor;
  * Simple microbenchmark for {@link ChannelPool}
  */
 public class ChannelPoolPerf {
-  private static final int TEST_COUNT = 1_000_000;
+  private static final int TEST_COUNT = 10_000_000;
 
   public static void main(String[] args) throws Exception {
     final ManagedChannel channel = new ManagedChannel() {
@@ -81,7 +81,7 @@ public class ChannelPoolPerf {
       }
     };
     int threads = 10;
-    int concurrent = 400;
+    int concurrent = 100;
     final ChannelPool.ChannelFactory pool = new ChannelPool.ChannelFactory() {
       @Override
       public ManagedChannel create() throws IOException {
