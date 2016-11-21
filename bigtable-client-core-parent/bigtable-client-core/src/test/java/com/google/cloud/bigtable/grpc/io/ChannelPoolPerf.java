@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -91,6 +92,7 @@ public class ChannelPoolPerf {
     List<HeaderInterceptor> headers = Collections.<HeaderInterceptor> emptyList();
     final ChannelPool cp = new ChannelPool(headers, pool, 40);
     ExecutorService es = Executors.newFixedThreadPool(threads);
+    final List<Double> results = new ArrayList<>(1000);
     Callable<Void> runnable = new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -100,6 +102,7 @@ public class ChannelPoolPerf {
         }
         long diff = System.nanoTime() - start;
         double nanosPerRow = diff / TEST_COUNT;
+        results.add(nanosPerRow);
         System.out.println(String.format("took %d ms.  %.0f nanos/row", diff / 1_000_000, nanosPerRow));
         return null;
       }
@@ -110,5 +113,11 @@ public class ChannelPoolPerf {
     }
     es.shutdown();
     es.awaitTermination(1000, TimeUnit.SECONDS);
+    Collections.sort(results);
+    // Remove the biggest outliers
+    results.remove(0);
+    results.remove(results.size() - 1);
+    System.out.println("50th percentile: " + results.get(results.size() / 2));
+    System.out.println("90th percentile: " + results.get((int)(results.size() * 0.9)));
   }
 }
