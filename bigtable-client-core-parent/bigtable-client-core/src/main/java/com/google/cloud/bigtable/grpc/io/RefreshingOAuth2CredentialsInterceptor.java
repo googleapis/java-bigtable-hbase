@@ -408,7 +408,6 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
    */
   @VisibleForTesting
   void refreshCredentials() {
-    CredentialFactory.clearHttpTransport();
     try {
       this.credentials = (OAuth2Credentials) CredentialFactory.getCredentials(credentialOptions);
     } catch (IOException | GeneralSecurityException e1) {

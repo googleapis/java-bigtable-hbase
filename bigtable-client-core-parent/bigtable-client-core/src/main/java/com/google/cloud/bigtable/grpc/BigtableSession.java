@@ -37,7 +37,6 @@ import javax.net.ssl.SSLException;
 import com.google.api.client.util.Strings;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
-import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
@@ -192,18 +191,6 @@ public class BigtableSession implements Closeable {
           } catch (SSLException e) {
             LOG.warn("Could not asynchronously create the ssl context", e);
           }
-        }
-      }
-    });
-    connectionStartupExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        // The first invocation of CredentialFactory.getHttpTransport() is expensive.
-        // Reference it so that it gets constructed asynchronously.
-        try {
-          CredentialFactory.getHttpTransport();
-        } catch (IOException | GeneralSecurityException e) {
-          LOG.warn("Could not asynchronously initialze httpTransport", e);
         }
       }
     });
