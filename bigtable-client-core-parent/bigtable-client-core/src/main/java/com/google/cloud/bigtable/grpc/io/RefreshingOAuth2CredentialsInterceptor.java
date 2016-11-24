@@ -31,6 +31,7 @@ import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Sleeper;
+import com.google.auth.appengine.AppEngineCredentials;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.CredentialFactory;
@@ -100,7 +101,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
 
     final IOException exception;
     final String header;
-    
+
     /**
      * Defines the amount of time in ms when the header is considered "stale" and should be
      * refreshed in the near future. A {@code null} value means that the header does not become stale.
@@ -198,22 +199,33 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
   }
 
   /**
-   * <p>asyncRefresh.</p>
+   * Refreshes the OAuth2 token asynchronously, unless there is a currently running asynchronous
+   * refresh or the credentials are for AppEngine. AppEngine has some credentials related state in a
+   * {@link ThreadLocal} which prevents running
+   * @throws IOException
    */
-  public void asyncRefresh() {
-    if (!canRefresh()) {
-      return;
-    }
-    executor.execute(new Runnable() {
-      @Override
-      public void run() {
-        doRefresh();
+  public void asyncRefresh() throws IOException {
+    if (credentials instanceof AppEngineCredentials) {
+      syncRefresh();
+    } else {
+      if (canRefresh()) {
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            doRefresh();
+          }
+        });
       }
-    });
+    }
   }
 
   private boolean canRefresh() {
     return !isRefreshing.get() && getCacheState(this.headerCache.get()) != CacheState.Good;
+  }
+
+  @VisibleForTesting
+  boolean isRefreshing() {
+    return isRefreshing.get();
   }
 
   /**
