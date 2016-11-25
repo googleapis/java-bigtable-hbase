@@ -17,12 +17,13 @@ package com.google.cloud.bigtable.hbase.adapters;
 
 
 import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.Mutation;
+import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
-import com.google.cloud.bigtable.hbase.adapters.OperationAdapter;
 import com.google.cloud.bigtable.hbase.adapters.RowMutationsAdapter;
 import com.google.protobuf.ByteString;
 
-import org.apache.hadoop.hbase.client.Mutation;
+//import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.junit.Assert;
@@ -36,12 +37,14 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @RunWith(JUnit4.class)
 public class TestRowMutationsAdapter {
 
   @Mock
-  private OperationAdapter<Mutation, MutateRowRequest.Builder> mutationAdapter;
+  private MutationAdapter<org.apache.hadoop.hbase.client.Mutation> mutationAdapter;
 
   private RowMutationsAdapter adapter;
   private DataGenerationHelper dataHelper = new DataGenerationHelper();
@@ -82,21 +85,23 @@ public class TestRowMutationsAdapter {
             .addColumn(family2, qualifier2, value2));
 
     // When mockAdapter is asked to adapt the above mutations, we'll return these responses:
-    MutateRowRequest.Builder response1 = MutateRowRequest.newBuilder();
-    response1.addMutationsBuilder()
-        .getSetCellBuilder()
+    List<Mutation> response1 = Arrays.asList(Mutation.newBuilder()
+        .setSetCell(SetCell.newBuilder()
             .setColumnQualifier(ByteString.copyFrom(qualifier1))
             .setFamilyNameBytes(ByteString.copyFrom(family1))
-            .setValue(ByteString.copyFrom(value1));
+            .setValue(ByteString.copyFrom(value1)))
+        .build());
 
-    MutateRowRequest.Builder response2 = MutateRowRequest.newBuilder();
-    response2.addMutationsBuilder()
-        .getSetCellBuilder()
+    List<Mutation> response2 = Arrays.asList(Mutation.newBuilder()
+      .setSetCell(SetCell.newBuilder()
             .setColumnQualifier(ByteString.copyFrom(qualifier2))
             .setFamilyNameBytes(ByteString.copyFrom(family2))
-            .setValue(ByteString.copyFrom(value2));
+            .setValue(ByteString.copyFrom(value2)))
+      .build());
 
-    Mockito.when(mutationAdapter.adapt(Matchers.any(Mutation.class)))
+    Mockito
+        .when(mutationAdapter
+            .adaptMutations(Matchers.any(org.apache.hadoop.hbase.client.Mutation.class)))
         .thenReturn(response1)
         .thenReturn(response2);
 

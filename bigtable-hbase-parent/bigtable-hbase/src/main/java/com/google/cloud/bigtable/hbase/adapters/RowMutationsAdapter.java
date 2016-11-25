@@ -31,16 +31,14 @@ import org.apache.hadoop.hbase.client.RowMutations;
  */
 public class RowMutationsAdapter {
 
-  protected final OperationAdapter<Mutation,
-      MutateRowRequest.Builder> mutationAdapter;
+  protected final MutationAdapter<Mutation> mutationAdapter;
 
   /**
    * <p>Constructor for RowMutationsAdapter.</p>
    *
    * @param mutationAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
    */
-  public RowMutationsAdapter(
-      OperationAdapter<Mutation, MutateRowRequest.Builder> mutationAdapter) {
+  public RowMutationsAdapter(MutationAdapter<Mutation> mutationAdapter) {
     this.mutationAdapter = mutationAdapter;
   }
 
@@ -56,8 +54,7 @@ public class RowMutationsAdapter {
     result.setRowKey(ByteString.copyFrom(mutations.getRow()));
 
     for (Mutation mutation : mutations.getMutations()) {
-      MutateRowRequest.Builder bigtableBuilder = mutationAdapter.adapt(mutation);
-      result.addAllMutations(bigtableBuilder.getMutationsList());
+      result.addAllMutations(mutationAdapter.adaptMutations(mutation));
     }
 
     return result;

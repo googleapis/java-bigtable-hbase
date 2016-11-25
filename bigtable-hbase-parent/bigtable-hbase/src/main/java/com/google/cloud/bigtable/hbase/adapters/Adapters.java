@@ -69,8 +69,8 @@ public final class Adapters {
     return new HBaseMutationAdapter(
       DELETE_ADAPTER,
       putAdapter,
-      new UnsupportedOperationAdapter<Increment>("increment"),
-      new UnsupportedOperationAdapter<Append>("append"));
+      new UnsupportedMutationAdapter<Increment>("increment"),
+      new UnsupportedMutationAdapter<Append>("append"));
   }
 
   /**
