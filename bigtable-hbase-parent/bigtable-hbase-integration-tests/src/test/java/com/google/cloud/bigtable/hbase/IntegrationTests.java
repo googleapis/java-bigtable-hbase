@@ -34,7 +34,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
@@ -80,9 +79,6 @@ public class IntegrationTests {
   private static Connection connection;
   private static Configuration configuration;
 
-  @Rule
-  public Timeout globalTimeout = Timeout.seconds(60 * 10); // 10 minutes for all tests
-
   static {
     TABLE_NAME = newTestTableName();
     addExtraResources(BASE_CONFIGURATION);
@@ -126,7 +122,7 @@ public class IntegrationTests {
   }
 
   @ClassRule
-  public static Timeout timeoutRule = new Timeout((int) TimeUnit.MINUTES.toMillis(5));
+  public static Timeout timeoutRule = new Timeout(10, TimeUnit.MINUTES);
 
   public static void createTable(TableName tableName) throws IOException {
     try (Admin admin = connection.getAdmin();) {
