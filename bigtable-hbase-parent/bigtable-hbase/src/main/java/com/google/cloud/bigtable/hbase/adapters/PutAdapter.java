@@ -23,6 +23,7 @@ import com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.Cell;
@@ -44,7 +45,9 @@ import java.util.Map.Entry;
 public class PutAdapter extends MutationAdapter<Put> {
   private final int maxKeyValueSize;
   private final boolean setClientTimestamp;
-  public Clock clock = Clock.SYSTEM;
+
+  @VisibleForTesting
+  Clock clock = Clock.SYSTEM;
 
   /**
    * <p>Constructor for PutAdapter.</p>
