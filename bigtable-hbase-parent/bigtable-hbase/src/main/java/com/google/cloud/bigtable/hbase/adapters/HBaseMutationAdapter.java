@@ -15,14 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.bigtable.v2.MutateRowRequest;
-
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,14 +33,12 @@ import java.util.Map;
  * @author sduskis
  * @version $Id: $Id
  */
-public class HBaseMutationAdapter
-    implements OperationAdapter<Mutation, MutateRowRequest.Builder> {
+public class HBaseMutationAdapter extends MutationAdapter<Mutation> {
 
   static class AdapterInstanceMap {
-    private Map<Class<?>, OperationAdapter<?, ?>> unsafeMap =
-        new HashMap<Class<?>, OperationAdapter<?, ?>>();
+    private Map<Class<?>, MutationAdapter<?>> unsafeMap = new HashMap<>();
 
-    public <S extends Mutation, U extends OperationAdapter<S, MutateRowRequest.Builder>>
+    public <S extends Mutation, U extends MutationAdapter<S>>
     Class<S> put(Class<S> key, U adapter) {
       unsafeMap.put(key, adapter);
       return key;
@@ -50,8 +47,7 @@ public class HBaseMutationAdapter
     // The only way to add to the unsafeMap is via put which enforces our type constraints at
     // compile-time. The unchecked cast should be safe.
     @SuppressWarnings("unchecked")
-    public <S extends Mutation, U extends OperationAdapter<S, MutateRowRequest.Builder>>
-    U get(Class<? extends S> key) {
+    public <S extends Mutation, U extends MutationAdapter<S>> U get(Class<? extends S> key) {
       return (U) unsafeMap.get(key);
     }
   }
@@ -67,26 +63,25 @@ public class HBaseMutationAdapter
    * @param appendAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
    */
   public HBaseMutationAdapter(
-      OperationAdapter<Delete, MutateRowRequest.Builder> deleteAdapter,
-      OperationAdapter<Put, MutateRowRequest.Builder> putAdapter,
-      OperationAdapter<Increment, MutateRowRequest.Builder> incrementAdapter,
-      OperationAdapter<Append, MutateRowRequest.Builder> appendAdapter) {
+      MutationAdapter<Delete> deleteAdapter,
+      MutationAdapter<Put> putAdapter,
+      MutationAdapter<Increment> incrementAdapter,
+      MutationAdapter<Append> appendAdapter) {
     adapterMap.put(Delete.class, deleteAdapter);
     adapterMap.put(Put.class, putAdapter);
     adapterMap.put(Increment.class, incrementAdapter);
     adapterMap.put(Append.class, appendAdapter);
   }
 
-  /** {@inheritDoc} */
   @Override
-  public MutateRowRequest.Builder adapt(Mutation mutation) {
-    OperationAdapter<Mutation, MutateRowRequest.Builder> adapter =
-        adapterMap.get(mutation.getClass());
+  /** {@inheritDoc} */
+  protected Collection<com.google.bigtable.v2.Mutation> adaptMutations(Mutation mutation) {
+    MutationAdapter<Mutation> adapter = adapterMap.get(mutation.getClass());
     if (adapter == null) {
       throw new UnsupportedOperationException(
           String.format(
               "Cannot adapt mutation of type %s.", mutation.getClass().getCanonicalName()));
     }
-    return adapter.adapt(mutation);
+    return adapter.adaptMutations(mutation);
   }
 }
