@@ -67,6 +67,9 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
   private Result convert(FlatRow flatRow, Collection<org.apache.hadoop.hbase.Cell> hbaseCells) {
     byte[] rowKey = ByteStringer.extract(flatRow.getRowKey());
 
+    FlatRow.Cell previousCell = null;
+    byte[] previousFamily = null;
+
     for (FlatRow.Cell cell : flatRow.getCells()) {
       // Cells with labels are for internal use, do not return them.
       // TODO(kevinsi4508): Filter out targeted {@link WhileMatchFilter} labels.
@@ -78,17 +81,28 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
       // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
       // HBase will treat them as duplicates.
       long hbaseTimestamp = cell.getTimestamp() / TIME_CONVERSION_UNIT;
+      byte[] family = getFamily(previousCell, previousFamily, cell);
       RowCell keyValue = new RowCell(
           rowKey,
-          Bytes.toBytes(cell.getFamily()),
+          family,
           ByteStringer.extract(cell.getQualifier()),
           hbaseTimestamp,
           ByteStringer.extract(cell.getValue()));
 
       hbaseCells.add(keyValue);
+      previousCell = cell;
+      previousFamily = family;
     }
 
     return Result.create(hbaseCells.toArray(new org.apache.hadoop.hbase.Cell[hbaseCells.size()]));
+  }
+
+  private byte[] getFamily(FlatRow.Cell previousCell, byte[] previousFamily, FlatRow.Cell cell) {
+    if (previousCell != null && previousCell.getFamily() == cell.getFamily()) {
+      return previousFamily;
+    } else {
+      return Bytes.toBytes(cell.getFamily());
+    }
   }
 
   /**
