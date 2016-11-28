@@ -100,7 +100,7 @@ public class RowMergerPerf {
       // The adapter is slower than the RowMerger, so decrease the number of rows by a factor of 3
       // so that the test finishes faster. This will be enough of a sample to get an idea about the
       // adapter's performance
-      long rowCount = CUMULATIVE_CELL_COUNT / cellCountPerRow / 4;
+      long rowCount = CUMULATIVE_CELL_COUNT / cellCountPerRow;
 
       FlatRow flatRow = RowMerger.toRows(Arrays.asList(response)).get(0);
       long start = System.nanoTime();
