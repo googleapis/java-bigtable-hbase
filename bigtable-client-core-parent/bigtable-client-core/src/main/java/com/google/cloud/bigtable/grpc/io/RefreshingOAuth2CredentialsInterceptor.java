@@ -31,7 +31,6 @@ import com.google.api.client.util.BackOff;
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.Preconditions;
 import com.google.api.client.util.Sleeper;
-import com.google.auth.appengine.AppEngineCredentials;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.CredentialFactory;
@@ -84,6 +83,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
 
   @VisibleForTesting
   static Clock clock = Clock.SYSTEM;
+  
 
   @VisibleForTesting
   static class HeaderCacheElement {
@@ -165,6 +165,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
   private final RetryOptions retryOptions;
   private final Logger logger;
   private final CredentialOptions credentialOptions;
+  private final boolean isAppEngine;
 
   private OAuth2Credentials credentials;
 
@@ -190,6 +191,12 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
     this.credentialOptions = Preconditions.checkNotNull(credentialOptions);
     this.retryOptions = Preconditions.checkNotNull(retryOptions);
     this.logger = Preconditions.checkNotNull(logger);
+
+    // com.google.auth.oauth2.AppEngineCredentials is package private, so we don't have direct
+    // visibility to it. This is a way to detect that this application runs on AppEngine so that
+    // we can always get credentials synchronously, which must be done for AppEngineCredentials
+    // which relies on a ThreadLocal.
+    this.isAppEngine = credentials.getClass().getName().contains("AppEngineCredentials");
   }
 
   /** {@inheritDoc} */
@@ -199,23 +206,23 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
   }
 
   /**
-   * Refreshes the OAuth2 token asynchronously, unless there is a currently running asynchronous
-   * refresh or the credentials are for AppEngine. AppEngine has some credentials related state in a
-   * {@link ThreadLocal} which prevents running
+   * Refreshes the OAuth2 token asynchronously. This method will only start an async refresh if
+   * there isn't a currently running asynchronous refresh or the credentials are for AppEngine.
+   * AppEngine has some credentials related state in a {@link ThreadLocal} which prevents it from
+   * running asynchronously. In the AppEngine case, this method will defer to {@link #syncRefresh()}
+   *
    * @throws IOException
    */
   public void asyncRefresh() throws IOException {
-    if (credentials instanceof AppEngineCredentials) {
+    if (isAppEngine) {
       syncRefresh();
-    } else {
-      if (canRefresh()) {
-        executor.execute(new Runnable() {
-          @Override
-          public void run() {
-            doRefresh();
-          }
-        });
-      }
+    } else if (canRefresh()) {
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          doRefresh();
+        }
+      });
     }
   }
 
