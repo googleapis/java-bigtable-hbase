@@ -44,7 +44,7 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
   static final long TIME_CONVERSION_UNIT = BigtableConstants.BIGTABLE_TIMEUNIT.convert(1,
     BigtableConstants.HBASE_TIMEUNIT);
 
-  static final Comparator<RowCell> QUALIFIER_COMPARATOR =
+  static final Comparator<RowCell> QUALIFIER_AND_TIMESTAMP_COMPARATOR =
       new Comparator<RowCell>() {
         @Override
         public int compare(RowCell left, RowCell right) {
@@ -52,38 +52,37 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
           if (result != 0) {
             return result;
           }
-          result = Long.compare(right.getTimestamp(), left.getTimestamp());
-          return result;
+          return Long.compare(right.getTimestamp(), left.getTimestamp());
         }
       };
 
-  /**
+    /**
    * {@inheritDoc}
    * 
    * Convert a {@link FlatRow} to a {@link Result}.
    */
   @Override
   public Result adaptResponse(FlatRow flatRow) {
-    if (flatRow == null) {
-      return Result.EMPTY_RESULT;
-    }
-    List<Cell> hbaseCells = addCells(flatRow, false);
-    return Result.create(hbaseCells.toArray(new Cell[hbaseCells.size()]));
+    return adaptResponse(flatRow, true);
   }
 
   /**
    * Convert a {@link FlatRow} to a {@link Result} without sorting the cells first.
    */
   public Result adaptResponsePresortedCells(FlatRow flatRow) {
+    return adaptResponse(flatRow, false);
+  }
+
+  private Result adaptResponse(FlatRow flatRow, final boolean sort) {
     if (flatRow == null) {
       return Result.EMPTY_RESULT;
     }
-    List<Cell> hbaseCells = addCells(flatRow, false);
+    List<Cell> hbaseCells = extractCells(flatRow, sort);
     return Result.create(hbaseCells.toArray(new Cell[hbaseCells.size()]));
   }
 
   /**
-   * Converts all of the {@link FlatRow#getCells()} into HBase {@link RowCell}s.
+   * Converts all of the {@link FlatRow.Cell}s into HBase {@link RowCell}s.
    * <p>
    * All @link FlatRow.Cell}s with labels are discarded, since those are used only for
    * {@link WhileMatchFilter}
@@ -100,7 +99,7 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
    * @param sort
    * @return
    */
-  private List<Cell> addCells(FlatRow flatRow, boolean sort) {
+  private List<Cell> extractCells(FlatRow flatRow, boolean sort) {
     byte[] rowKey = ByteStringer.extract(flatRow.getRowKey());
 
     FlatRow.Cell previousCell = null;
@@ -108,12 +107,14 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
 
     List<FlatRow.Cell> cells = flatRow.getCells();
     List<Cell> hbaseCells = new ArrayList<>(cells.size());
-    List<RowCell> familyCells = new ArrayList<>(cells.size());
+    List<RowCell> familyCells = sort ? new ArrayList<RowCell>(cells.size()) : null;
 
     for (FlatRow.Cell cell : cells) {
       // Cells with labels are for internal use, do not return them.
       // TODO(kevinsi4508): Filter out targeted {@link WhileMatchFilter} labels.
-      if (!cell.getLabels().isEmpty() || cell.hasEqualKeys(previousCell)) {
+      //
+      // Perform deduplication by skipping cells with matching key (family, qualifier, timestamp).
+      if (!cell.getLabels().isEmpty() || cell.equalFamilyQualifierAndTimestamp(previousCell)) {
         continue;
       }
 
@@ -129,9 +130,11 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
               ByteStringer.extract(cell.getQualifier()),
               hbaseTimestamp,
               ByteStringer.extract(cell.getValue()));
-      if (!sort ) {
+      if (!sort) {
         hbaseCells.add(rowCell);
       } else {
+        // getFamily() returns previousFamily if the family Strings contained in the FlatRow.Cell
+        // are equals. We can use 
         if (previousFamily != null && family != previousFamily) {
           addAll(hbaseCells, familyCells);
         }
@@ -140,16 +143,16 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
       previousCell = cell;
       previousFamily = family;
     }
-    addAll(hbaseCells, familyCells);
+    if (sort) {
+      addAll(hbaseCells, familyCells);
+    }
     return hbaseCells;
   }
 
-  void addAll(List<Cell> hbaseCells, List<RowCell> familyCells) {
-    if (!familyCells.isEmpty()) {
-      Collections.sort(familyCells, QUALIFIER_COMPARATOR);
-      hbaseCells.addAll(familyCells);
-      familyCells.clear();
-    }
+  private static void addAll(List<Cell> hbaseCells, List<RowCell> familyCells) {
+    Collections.sort(familyCells, QUALIFIER_AND_TIMESTAMP_COMPARATOR);
+    hbaseCells.addAll(familyCells);
+    familyCells.clear();
   }
 
   private byte[] getFamily(FlatRow.Cell previousCell, byte[] previousFamily, FlatRow.Cell cell) {

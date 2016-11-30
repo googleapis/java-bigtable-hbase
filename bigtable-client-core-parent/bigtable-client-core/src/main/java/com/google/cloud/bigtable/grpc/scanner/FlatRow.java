@@ -29,7 +29,7 @@ import com.google.protobuf.ByteString;
 
 /**
  * <p>
- * This class stores represents a single row. It's a flattened version of the adata of aa
+ * This class stores represents a single row. It's a flattened version of the data of a
  * {@link Row}
  * </p>
  * @author tyagihas
@@ -128,16 +128,17 @@ public class FlatRow implements Serializable {
         return false;
       }
       Cell other = (Cell) obj;
-      return hasEqualKeys(other) &&
+      return equalFamilyQualifierAndTimestamp(other) &&
           Objects.equal(value, other.value) &&
           Objects.equal(labels, other.labels);
     }
 
     /**
      * @param other
-     * @return true if the family, qualifier and timestamps are the same
+     * @return true if the family, qualifier and timestamps are the same in this Cell as it is in
+     *         the other Cell.
      */
-    public boolean hasEqualKeys(Cell other) {
+    public boolean equalFamilyQualifierAndTimestamp(Cell other) {
       return other != null &&
           Objects.equal(family, other.family) &&
           Objects.equal(qualifier, other.qualifier) &&

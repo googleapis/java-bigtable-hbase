@@ -46,18 +46,20 @@ public class RowMergerPerf {
 
     // It's ok if 100_000 / cellCount rounds down.  This only has to be approximate.
     int size = VALUE_SIZE_IN_BYTES / cellCount;
+    final int qualifiersPerFamily = 15;
     Preconditions.checkArgument(size > 0, "size has to be > 0.");
     final ByteString rowKey = ByteString.copyFrom(Bytes.toBytes("rowkey-0"));
     for (int i = 0; i < cellCount; i++) {
       CellChunk.Builder contentChunk =
           CellChunk.newBuilder()
               .setRowKey(i == 0 ? rowKey : ByteString.EMPTY)
-              .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFromUtf8("Qualifier" + (i%4))))
+              .setQualifier(BytesValue.newBuilder()
+                  .setValue(ByteString.copyFromUtf8("Qualifier" + (i % qualifiersPerFamily))))
               .setValue(ByteString.copyFrom(RandomStringUtils.randomAlphanumeric(size).getBytes()))
               .setTimestampMicros(330020L)
               .setCommitRow(i == cellCount - 1);
-      if (i % 4 == 0) {
-        contentChunk.setFamilyName(StringValue.newBuilder().setValue("Family" + (i / 4)));
+      if (i % qualifiersPerFamily == 0) {
+        contentChunk.setFamilyName(StringValue.newBuilder().setValue("Family" + (i / qualifiersPerFamily)));
       }
 
       readRowsResponse.addChunks(contentChunk);
