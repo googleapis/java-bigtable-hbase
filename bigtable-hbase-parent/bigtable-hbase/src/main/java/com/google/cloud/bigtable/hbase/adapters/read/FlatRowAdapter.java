@@ -15,17 +15,22 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.TreeSet;
-
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
+import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.v2.RowFilter.Interleave;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.util.ByteStringer;
+import com.google.common.base.Objects;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.WhileMatchFilter;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Adapt between a {@link FlatRow} and an hbase client {@link org.apache.hadoop.hbase.client.Result}.
@@ -39,41 +44,77 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
   static final long TIME_CONVERSION_UNIT = BigtableConstants.BIGTABLE_TIMEUNIT.convert(1,
     BigtableConstants.HBASE_TIMEUNIT);
 
-  /**
+  static final Comparator<RowCell> QUALIFIER_AND_TIMESTAMP_COMPARATOR =
+      new Comparator<RowCell>() {
+        @Override
+        public int compare(RowCell left, RowCell right) {
+          int result = Bytes.compareTo(left.getQualifierArray(), right.getQualifierArray());
+          if (result != 0) {
+            return result;
+          }
+          return Long.compare(right.getTimestamp(), left.getTimestamp());
+        }
+      };
+
+    /**
    * {@inheritDoc}
    * 
    * Convert a {@link FlatRow} to a {@link Result}.
    */
   @Override
   public Result adaptResponse(FlatRow flatRow) {
-    if (flatRow == null) {
-      return Result.EMPTY_RESULT;
-    }
-
-    return convert(flatRow, new TreeSet<org.apache.hadoop.hbase.Cell>(KeyValue.COMPARATOR));
+    return adaptResponse(flatRow, true);
   }
 
   /**
    * Convert a {@link FlatRow} to a {@link Result} without sorting the cells first.
    */
   public Result adaptResponsePresortedCells(FlatRow flatRow) {
+    return adaptResponse(flatRow, false);
+  }
+
+  private Result adaptResponse(FlatRow flatRow, final boolean sort) {
     if (flatRow == null) {
       return Result.EMPTY_RESULT;
     }
-
-    return convert(flatRow, new ArrayList<org.apache.hadoop.hbase.Cell>());
+    List<Cell> hbaseCells = extractCells(flatRow, sort);
+    return Result.create(hbaseCells.toArray(new Cell[hbaseCells.size()]));
   }
 
-  private Result convert(FlatRow flatRow, Collection<org.apache.hadoop.hbase.Cell> hbaseCells) {
+  /**
+   * Converts all of the {@link FlatRow.Cell}s into HBase {@link RowCell}s.
+   * <p>
+   * All @link FlatRow.Cell}s with labels are discarded, since those are used only for
+   * {@link WhileMatchFilter}
+   * <p>
+   * Some additional deduping and sorting is also required. Cloud Bigtable returns values sorted by
+   * family in lexicographically ascending order, an arbitrary ordering of qualifiers (by internal
+   * id rather than lexicographically) and finally by timestamp descending. Each cell can appear
+   * more than once, if there are {@link Interleave}s in the {@link ReadRowsRequest#getFilter()},
+   * but the duplicates will appear one after the other. An {@link Interleave}s can originate from a
+   * {@link FilterList} with a {@link FilterList.Operator#MUST_PASS_ONE} operator or a
+   * {@link WhileMatchFilter}.
+   * <p>
+   * @param flatRow
+   * @param sort
+   * @return
+   */
+  private List<Cell> extractCells(FlatRow flatRow, boolean sort) {
     byte[] rowKey = ByteStringer.extract(flatRow.getRowKey());
 
     FlatRow.Cell previousCell = null;
     byte[] previousFamily = null;
 
-    for (FlatRow.Cell cell : flatRow.getCells()) {
+    List<FlatRow.Cell> cells = flatRow.getCells();
+    List<Cell> hbaseCells = new ArrayList<>(cells.size());
+    List<RowCell> familyCells = sort ? new ArrayList<RowCell>(cells.size()) : null;
+
+    for (FlatRow.Cell cell : cells) {
       // Cells with labels are for internal use, do not return them.
       // TODO(kevinsi4508): Filter out targeted {@link WhileMatchFilter} labels.
-      if (!cell.getLabels().isEmpty()) {
+      //
+      // Perform deduplication by skipping cells with matching key (family, qualifier, timestamp).
+      if (!cell.getLabels().isEmpty() || cell.equalFamilyQualifierAndTimestamp(previousCell)) {
         continue;
       }
 
@@ -82,23 +123,40 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
       // HBase will treat them as duplicates.
       long hbaseTimestamp = cell.getTimestamp() / TIME_CONVERSION_UNIT;
       byte[] family = getFamily(previousCell, previousFamily, cell);
-      RowCell keyValue = new RowCell(
-          rowKey,
-          family,
-          ByteStringer.extract(cell.getQualifier()),
-          hbaseTimestamp,
-          ByteStringer.extract(cell.getValue()));
-
-      hbaseCells.add(keyValue);
+      RowCell rowCell =
+          new RowCell(
+              rowKey,
+              family,
+              ByteStringer.extract(cell.getQualifier()),
+              hbaseTimestamp,
+              ByteStringer.extract(cell.getValue()));
+      if (!sort) {
+        hbaseCells.add(rowCell);
+      } else {
+        // getFamily() returns previousFamily if the family Strings contained in the FlatRow.Cell
+        // are equals. We can use 
+        if (previousFamily != null && family != previousFamily) {
+          addAll(hbaseCells, familyCells);
+        }
+        familyCells.add(rowCell);
+      }
       previousCell = cell;
       previousFamily = family;
     }
+    if (sort) {
+      addAll(hbaseCells, familyCells);
+    }
+    return hbaseCells;
+  }
 
-    return Result.create(hbaseCells.toArray(new org.apache.hadoop.hbase.Cell[hbaseCells.size()]));
+  private static void addAll(List<Cell> hbaseCells, List<RowCell> familyCells) {
+    Collections.sort(familyCells, QUALIFIER_AND_TIMESTAMP_COMPARATOR);
+    hbaseCells.addAll(familyCells);
+    familyCells.clear();
   }
 
   private byte[] getFamily(FlatRow.Cell previousCell, byte[] previousFamily, FlatRow.Cell cell) {
-    if (previousCell != null && previousCell.getFamily() == cell.getFamily()) {
+    if (previousCell != null && Objects.equal(previousCell.getFamily(), cell.getFamily())) {
       return previousFamily;
     } else {
       return Bytes.toBytes(cell.getFamily());
@@ -121,9 +179,9 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
     FlatRow.Builder rowBuilder =
         FlatRow.newBuilder().withRowKey(ByteStringer.wrap(result.getRow()));
 
-    final org.apache.hadoop.hbase.Cell[] rawCells = result.rawCells();
+    final Cell[] rawCells = result.rawCells();
     if (rawCells != null && rawCells.length > 0) {
-      for (org.apache.hadoop.hbase.Cell rawCell : rawCells) {
+      for (Cell rawCell : rawCells) {
         rowBuilder.addCell(
           Bytes.toString(rawCell.getFamilyArray()),
           ByteStringer.wrap(rawCell.getQualifierArray()),
