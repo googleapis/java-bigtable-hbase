@@ -15,9 +15,14 @@
  */
 package com.google.cloud.bigtable.dataflowimport;
 
+import com.google.cloud.bigtable.dataflow.CloudBigtableIO;
+import com.google.cloud.bigtable.dataflow.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.dataflow.coders.HBaseResultCoder;
+import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.coders.KvCoder;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
+import com.google.cloud.dataflow.sdk.io.Read;
+import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory;
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner;
 import com.google.cloud.dataflow.sdk.transforms.PTransform;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
@@ -144,5 +149,17 @@ public class HBaseImportIO {
       builder.put(IMPORT_FORMAT_VER, VERSION_094_STRING);
     }
     return builder.build();
+  }
+
+  public static void main(String[] args) throws Exception {
+    HBaseImportOptions options =
+        PipelineOptionsFactory.fromArgs(args).withValidation().as(HBaseImportOptions.class);
+    Pipeline p = CloudBigtableIO.initializeForWrite(Pipeline.create(options));
+    p
+        .apply("ReadSequenceFile", Read.from(HBaseImportIO.createSource(options)))
+        .apply("ConvertResultToMutations", HBaseImportIO.transformToMutations())
+        .apply("WriteToTable", CloudBigtableIO.writeToTable(
+            CloudBigtableTableConfiguration.fromCBTOptions(options)));
+    p.run();
   }
 }
