@@ -42,6 +42,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -49,6 +51,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -102,6 +105,9 @@ import javax.annotation.Nullable;
  */
 public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   private static final long serialVersionUID = 0L;
+  private static final Logger SOURCE_LOG = LoggerFactory.getLogger(HadoopFileSource.class);
+
+  private static final long ONE_HUNDRED_MB = 100 * (1 << 20);
 
   // Work-around to suppress confusing warning and stack traces by gcs-connector.
   // See setIsRemoteFileFromLaunchSite() for more information. This variable
@@ -278,7 +284,24 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   public List<? extends BoundedSource<KV<K, V>>> splitIntoBundles(long desiredBundleSizeBytes,
       PipelineOptions options) throws Exception {
     if (serializableSplit == null) {
-      return Lists.transform(computeSplits(desiredBundleSizeBytes),
+      // Dataflow can send a really small number desiredBundleSizeBytes, as low as 1. 100 MB chunks
+      // seem to be a good floor.
+      desiredBundleSizeBytes = Math.max(desiredBundleSizeBytes, ONE_HUNDRED_MB);
+
+      // Each file in the path described by the filePattern is broken down into splits reflecting
+      // the desiredBundleSizeBytes.  The list will be ordered by filename and starting location
+      List<InputSplit> splits = computeSplits(desiredBundleSizeBytes);
+      SOURCE_LOG.info("Got " + splits.size() + " splits.");
+
+      // Randomize the order of the splits. This improves Bigtable performance, since splits will
+      // reach different nodes. Without this shuffle, the splits will likely hit very few nodes
+      // since the splits have contiguous row ranges.
+      //
+      // With the shuffle, the ranges across the splits will be disjointed. Each split will now have
+      // a higher likelihood of reaching a different node than its neighbors.
+      Collections.shuffle(splits);
+
+      return Lists.transform(splits,
           new Function<InputSplit, BoundedSource<KV<K, V>>>() {
         @Nullable @Override
         public BoundedSource<KV<K, V>> apply(@Nullable InputSplit inputSplit) {
@@ -367,11 +390,13 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       for (FileStatus st : listStatus(createFormat(job), job)) {
         size += st.getLen();
       }
+      return size;
     } catch (IOException | NoSuchMethodException | InvocationTargetException
         | IllegalAccessException | InstantiationException e) {
       // ignore, and return 0
+      SOURCE_LOG.warn("Got exception", e);
+      return 0;
     }
-    return size;
   }
 
   private List<FileStatus> listStatus(FileInputFormat<K, V> format,
@@ -405,6 +430,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     private Configuration conf;
     private RecordReader<K, V> currentReader;
     private KV<K, V> currentPair;
+    private volatile boolean done = false;
 
     /**
      * Create a {@code HadoopFileReader} based on a file or a file pattern specification.
@@ -483,6 +509,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
           }
           // either no next split or all readers were empty
           currentPair = null;
+          done = true;
           return false;
         }
       } catch (InterruptedException e) {
@@ -560,8 +587,15 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       try {
         return (double) currentReader.getProgress();
       } catch (IOException | InterruptedException e) {
+        SOURCE_LOG.warn("getProcess() exception", e);
         return null;
       }
+    }
+
+    public final long getSplitPointsRemaining() {
+      // This source does not currently support dynamic work rebalancing, so remaining
+      // parallelism is always 1.
+      return done ? 0 : 1;
     }
 
     @Override
