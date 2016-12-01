@@ -244,7 +244,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    *
    * @return a {@link java.lang.Class} object.
    */
-  public Class<? extends FileInputFormat<?, ?>> getFormatClass() {
+  public Class<? extends FileInputFormat<K, V>> getFormatClass() {
     return formatClass;
   }
 
@@ -399,15 +399,14 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     }
   }
 
+  @SuppressWarnings("unchecked")
   private List<FileStatus> listStatus(FileInputFormat<K, V> format,
       JobContext jobContext) throws NoSuchMethodException, InvocationTargetException,
       IllegalAccessException {
     // FileInputFormat#listStatus is protected, so call using reflection
     Method listStatus = FileInputFormat.class.getDeclaredMethod("listStatus", JobContext.class);
     listStatus.setAccessible(true);
-    @SuppressWarnings("unchecked")
-    List<FileStatus> stat = (List<FileStatus>) listStatus.invoke(format, jobContext);
-    return stat;
+    return (List<FileStatus>) listStatus.invoke(format, jobContext);
   }
 
   /** {@inheritDoc} */
@@ -420,10 +419,10 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
 
     private final BoundedSource<KV<K, V>> source;
     private final String filepattern;
-    private final Class<? extends FileInputFormat<?, ?>> formatClass;
+    private final Class<? extends FileInputFormat<K, V>> formatClass;
     private final Map<String, String> serializationProperties;
 
-    private FileInputFormat<?, ?> format;
+    private FileInputFormat<K, V> format;
     private TaskAttemptContext attemptContext;
     private List<InputSplit> splits;
     private ListIterator<InputSplit> splitsIterator;
@@ -436,7 +435,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
      * Create a {@code HadoopFileReader} based on a file or a file pattern specification.
      */
     public HadoopFileReader(BoundedSource<KV<K, V>> source, String filepattern,
-        Class<? extends FileInputFormat<?, ?>> formatClass,
+        Class<? extends FileInputFormat<K, V>> formatClass,
         Map<String, String> serializationProperties) {
       this(source, filepattern, formatClass, null, serializationProperties);
     }
@@ -445,7 +444,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
      * Create a {@code HadoopFileReader} based on a single Hadoop input split.
      */
     public HadoopFileReader(BoundedSource<KV<K, V>> source, String filepattern,
-        Class<? extends FileInputFormat<?, ?>> formatClass, InputSplit split,
+        Class<? extends FileInputFormat<K, V>> formatClass, InputSplit split,
         Map<String, String> serializationProperties) {
       this.source = source;
       this.filepattern = filepattern;
@@ -455,7 +454,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
         this.splitsIterator = splits.listIterator();
       }
       this.serializationProperties = serializationProperties == null
-          ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(serializationProperties);
+          ? ImmutableMap.<String, String> of() : ImmutableMap.copyOf(serializationProperties);
     }
 
     @Override
@@ -465,14 +464,11 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       FileInputFormat.addInputPath(job, path);
 
       try {
-        @SuppressWarnings("unchecked")
-        FileInputFormat<K, V> f = (FileInputFormat<K, V>) formatClass.newInstance();
-        this.format = f;
+        this.format = formatClass.newInstance();
       } catch (InstantiationException | IllegalAccessException e) {
         throw new IOException("Cannot instantiate file input format " + formatClass, e);
       }
-      this.attemptContext = new TaskAttemptContextImpl(job.getConfiguration(),
-          new TaskAttemptID());
+      this.attemptContext = new TaskAttemptContextImpl(job.getConfiguration(), new TaskAttemptID());
 
       if (splitsIterator == null) {
         this.splits = format.getSplits(job);
@@ -492,9 +488,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
           while (splitsIterator.hasNext()) {
             // advance the reader and see if it has records
             InputSplit nextSplit = splitsIterator.next();
-            @SuppressWarnings("unchecked")
-            RecordReader<K, V> reader =
-                (RecordReader<K, V>) format.createRecordReader(nextSplit, attemptContext);
+            RecordReader<K, V> reader = format.createRecordReader(nextSplit, attemptContext);
             if (currentReader != null) {
               currentReader.close();
             }
@@ -523,18 +517,18 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       return getHadoopConfigWithOverrides(serializationProperties);
     }
 
-    @SuppressWarnings("unchecked")
     private KV<K, V> nextPair() throws IOException, InterruptedException {
-      K key = currentReader.getCurrentKey();
-      V value = currentReader.getCurrentValue();
-      // clone Writable objects since they are reused between calls to RecordReader#nextKeyValue
-      if (key instanceof Writable) {
-        key = (K) WritableUtils.clone((Writable) key, conf);
-      }
+      return KV.of(
+        cloneIfWritable(currentReader.getCurrentKey()),
+        cloneIfWritable(currentReader.getCurrentValue()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T cloneIfWritable(T value) {
       if (value instanceof Writable) {
-        value = (V) WritableUtils.clone((Writable) value, conf);
+        return (T) WritableUtils.clone((Writable) value, conf);
       }
-      return KV.of(key, value);
+      return value;
     }
 
     @Override
@@ -618,8 +612,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
 
     private InputSplit split;
 
-    public SerializableSplit() {
-    }
+    public SerializableSplit() {}
 
     public SerializableSplit(InputSplit split) {
       Preconditions.checkArgument(split instanceof Writable, "Split is not writable: "
@@ -648,6 +641,4 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       }
     }
   }
-
-
 }
