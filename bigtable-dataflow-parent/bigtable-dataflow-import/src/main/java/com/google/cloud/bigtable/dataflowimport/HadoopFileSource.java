@@ -107,7 +107,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   private static final long serialVersionUID = 0L;
   private static final Logger SOURCE_LOG = LoggerFactory.getLogger(HadoopFileSource.class);
 
-  private static final long ONE_HUNDRED_MB = 100 * (1 << 20);
+  private static final long MIN_BUNDLE_SIZE_BYTES = 100 * (1 << 20);
 
   // Work-around to suppress confusing warning and stack traces by gcs-connector.
   // See setIsRemoteFileFromLaunchSite() for more information. This variable
@@ -286,11 +286,11 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     if (serializableSplit == null) {
       // Dataflow can send a really small number desiredBundleSizeBytes, as low as 1. 100 MB chunks
       // seem to be a good floor.
-      desiredBundleSizeBytes = Math.max(desiredBundleSizeBytes, ONE_HUNDRED_MB);
+      long bundleSizeBytes = Math.max(desiredBundleSizeBytes, MIN_BUNDLE_SIZE_BYTES);
 
       // Each file in the path described by the filePattern is broken down into splits reflecting
       // the desiredBundleSizeBytes.  The list will be ordered by filename and starting location
-      List<InputSplit> splits = computeSplits(desiredBundleSizeBytes);
+      List<InputSplit> splits = computeSplits(bundleSizeBytes);
       SOURCE_LOG.info("Got " + splits.size() + " splits.");
 
       // Randomize the order of the splits. This improves Bigtable performance, since splits will
@@ -394,7 +394,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     } catch (IOException | NoSuchMethodException | InvocationTargetException
         | IllegalAccessException | InstantiationException e) {
       // ignore, and return 0
-      SOURCE_LOG.warn("Got exception", e);
+      SOURCE_LOG.error("Got exception while trying to getEstimatedSizeBytes().", e);
       return 0;
     }
   }
@@ -587,11 +587,12 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
       try {
         return (double) currentReader.getProgress();
       } catch (IOException | InterruptedException e) {
-        SOURCE_LOG.warn("getProcess() exception", e);
+        SOURCE_LOG.error("Problem with HadoopFileSource.getProcess()", e);
         return null;
       }
     }
 
+    @Override
     public final long getSplitPointsRemaining() {
       // This source does not currently support dynamic work rebalancing, so remaining
       // parallelism is always 1.
