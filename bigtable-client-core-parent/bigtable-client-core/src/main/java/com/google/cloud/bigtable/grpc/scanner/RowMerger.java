@@ -25,6 +25,7 @@ import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 
 import io.grpc.stub.StreamObserver;
@@ -223,7 +224,10 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     }
 
     private void updateForFamily(CellChunk chunk) {
-      this.family = chunk.getFamilyName().getValue();
+      if (!chunk.getFamilyName().getValue().equals(family)) {
+        // Try to get a reference to the same object if there's equality.
+        this.family = chunk.getFamilyName().getValue();
+      }
       updateForQualifier(chunk);
     }
 
@@ -242,7 +246,8 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    * This class represents the data in the row that's currently being processed.
    */
   private static final class RowInProgress {
-    private FlatRow.Builder flatRowBuilder = null;
+    private ByteString rowKey;
+    private ImmutableList.Builder<FlatRow.Cell> cells;
 
     // cell in progress info
     private CellIdentifier currentId;
@@ -250,15 +255,15 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
     private final void addFullChunk(ReadRowsResponse.CellChunk chunk) {
       Preconditions.checkState(!hasChunkInProgess());
-      flatRowBuilder.addCell(currentId.family, currentId.qualifier, currentId.timestampMicros,
-        chunk.getValue(), currentId.labels);
+      cells.add(new FlatRow.Cell(currentId.family, currentId.qualifier, currentId.timestampMicros,
+        chunk.getValue(), currentId.labels));
     }
 
     private final void completeMultiChunkCell() {
       Preconditions.checkArgument(hasChunkInProgess());
       ByteString value = ByteStringer.wrap(outputStream.toByteArray());
-      flatRowBuilder.addCell(currentId.family, currentId.qualifier, currentId.timestampMicros,
-        value, currentId.labels);
+      cells.add(new FlatRow.Cell(currentId.family, currentId.qualifier, currentId.timestampMicros,
+        value, currentId.labels));
       outputStream = null;
     }
 
@@ -266,8 +271,10 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
      * update the current key with the new chunk info
      */
     private final void updateCurrentKey(ReadRowsResponse.CellChunk chunk) {
-      if (flatRowBuilder == null || isNewRowKey(chunk)) {
-        flatRowBuilder = FlatRow.newBuilder().withRowKey(chunk.getRowKey());
+      ByteString newRowKey = chunk.getRowKey();
+      if (rowKey == null || (!newRowKey.isEmpty() && !newRowKey.equals(rowKey))) {
+        rowKey = newRowKey;
+        cells = ImmutableList.builder();
         currentId = new CellIdentifier(chunk);
       } else if (chunk.hasFamilyName()) {
         currentId.updateForFamily(chunk);
@@ -276,11 +283,6 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       } else {
         currentId.updateForTimestamp(chunk);
       }
-    }
-
-    private boolean isNewRowKey(ReadRowsResponse.CellChunk chunk) {
-      ByteString rowKey = chunk.getRowKey();
-      return !rowKey.isEmpty() && flatRowBuilder != null && !rowKey.equals(flatRowBuilder.getRowKey());
     }
 
     private boolean hasChunkInProgess() {
@@ -295,11 +297,15 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     }
 
     private ByteString getRowKey() {
-      return flatRowBuilder == null ? null : flatRowBuilder.getRowKey();
+      return rowKey;
     }
 
     private boolean hasRowKey() {
-      return flatRowBuilder != null;
+      return rowKey != null;
+    }
+
+    FlatRow buildRow() {
+      return new FlatRow(rowKey, cells.build());
     }
   }
 
@@ -366,7 +372,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         }
 
         if (isCommit(chunk)) {
-          observer.onNext(rowInProgress.flatRowBuilder.build());
+          observer.onNext(rowInProgress.buildRow());
           previousKey = rowInProgress.getRowKey();
           rowInProgress = null;
           state = RowMergerState.NewRow;
