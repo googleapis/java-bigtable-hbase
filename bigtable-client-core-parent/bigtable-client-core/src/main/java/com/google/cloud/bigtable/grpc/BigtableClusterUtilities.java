@@ -36,9 +36,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class BigtableClusterUtilities implements AutoCloseable {
   private static Logger logger = new Logger(BigtableClusterUtilities.class);
-  private final BigtableInstanceName instanceName;
-  private final ChannelPool channelPool;
-  private final BigtableInstanceClient client;
 
   /**
    * Creates a {@link BigtableClusterUtilities} for a projectId and an instanceId.
@@ -73,6 +70,66 @@ public class BigtableClusterUtilities implements AutoCloseable {
   }
 
   /**
+   * @return The instance id associated with the given project, zone and cluster.
+   */
+  public static String lookupInstanceId(String projectId, String clusterId, String zoneId)
+    throws IOException {
+    BigtableClusterUtilities utils;
+    try {
+      utils = BigtableClusterUtilities.forAllInstances(projectId);
+    } catch (GeneralSecurityException e) {
+      throw new RuntimeException("Could not initialize BigtableClusterUtilities", e);
+    }
+
+    try {
+      Cluster cluster = utils.getCluster(clusterId, zoneId);
+      return new BigtableClusterName(cluster.getName()).getInstanceId();
+    } finally {
+      try {
+        utils.close();
+      } catch (Exception e) {
+        logger.warn("Error closing BigtableClusterUtilities: ", e);
+      }
+    }
+  }
+
+  /**
+   * @return The cluster associated with the given project and instance
+   */
+  public static Cluster lookupCluster(String projectId, String instanceId)
+    throws IOException {
+    BigtableClusterUtilities utils;
+    try {
+      utils = BigtableClusterUtilities.forInstance(projectId, instanceId);
+    } catch (GeneralSecurityException e) {
+      throw new RuntimeException("Could not initialize BigtableClusterUtilities", e);
+    }
+
+    try {
+      return utils.getSingleCluster();
+    } finally {
+      try {
+        utils.close();
+      } catch (Exception e) {
+        logger.warn("Error closing BigtableClusterUtilities: ", e);
+      }
+    }
+  }
+
+  public static String getZoneId(Cluster cluster) {
+    Preconditions.checkState(cluster != null, "Cluster doesn't exist");
+    String name = cluster.getLocation();
+    String key = "/locations/";
+    int index = name.lastIndexOf(key) + key.length() + 1;
+    return name.substring(index);
+  }
+
+
+  private final BigtableInstanceName instanceName;
+  private final ChannelPool channelPool;
+  private final BigtableInstanceClient client;
+
+  /**
    * Constructor for the utility. Prefer
    * {@link BigtableClusterUtilities#forInstance(String, String)} or
    * {@link BigtableClusterUtilities#forAllInstances(String)} rather than this method.
@@ -97,17 +154,26 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @return the {@link Cluster#getServeNodes()} of the clusterId.
    */
   public int getClusterSize(String clusterId, String zoneId) {
+    Cluster cluster = getCluster(clusterId, zoneId);
     String message = String.format("Cluster %s/%s was not found.", clusterId, zoneId);
-    Cluster cluster = Preconditions.checkNotNull(getCluster(clusterId, zoneId), message);
+    Preconditions.checkNotNull(cluster, message);
     return cluster.getServeNodes();
+  }
+
+  /**
+   * Gets the serve node count of an instance with a single cluster.
+   * @return the {@link Cluster#getServeNodes()} of the clusterId.
+   */
+  public int getClusterSize() {
+    return getSingleCluster().getServeNodes();
   }
 
   /**
    * Gets a {@link ListClustersResponse} that contains all of the clusters for the
    * projectId/instanceId configuration.
-   * @return the current state of the instance
+   * @return the current state of the instance or the project if the instance is "-"
    */
-  public synchronized ListClustersResponse getClusters() {
+  public ListClustersResponse getClusters() {
     logger.info("Reading clusters.");
     return client.listCluster(
       ListClustersRequest.newBuilder().setParent(instanceName.getInstanceName()).build());
@@ -118,18 +184,41 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @param clusterId
    * @param zoneId
    * @param newSize
-   * @throws InterruptedException
+   * @throws InterruptedException if the cluster is in the middle of updating, and an interrupt was
+   *           received
    */
-  public synchronized void setClusterSize(String clusterId, String zoneId, int newSize)
+  public void setClusterSize(String clusterId, String zoneId, int newSize)
+      throws InterruptedException {
+    setClusterSize(getCluster(clusterId, zoneId), newSize);
+  }
+
+  /**
+   * Sets a cluster size to a specific size in an instance with a single clustr
+   * @param newSize
+   * @throws InterruptedException if the cluster is in the middle of updating, and an interrupt was
+   *           received
+   */
+  public void setClusterSize(int newSize) throws InterruptedException {
+    setClusterSize(getSingleCluster(), newSize);
+  }
+
+  private void setClusterSize(Cluster cluster, int newSize)
       throws InterruptedException {
     Preconditions.checkArgument(newSize > 0, "Cluster size must be > 0");
-    Cluster cluster = getCluster(clusterId, zoneId);
     int currentSize = cluster.getServeNodes();
     if (currentSize == newSize) {
-      logger.info("Cluster %s already has %d nodes.", clusterId, newSize);
+      logger.info("Cluster %s already has %d nodes.", getClusterId(cluster), newSize);
     } else {
       updateClusterSize(cluster.getName(), newSize);
     }
+  }
+
+  public Cluster getSingleCluster() {
+    Preconditions.checkState(getClusters().getClustersCount() != 0,
+        "There must be at least one matching cluster for this method to work");
+    Preconditions.checkState(getClusters().getClustersCount() == 1,
+      "There can only be one cluster for this method to work.");
+    return getClusters().getClusters(0);
   }
 
   /**
@@ -137,13 +226,31 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @param zoneId
    * @param incrementCount a positive or negative number to add to the current node count
    * @return the new size of the cluster.
-   * @throws InterruptedException
+   * @throws InterruptedException if the cluster is in the middle of updating, and an interrupt was
+   *           received
    */
-  public synchronized int incrementClusterSize(String clusterId, String zoneId, int incrementCount)
+  public int incrementClusterSize(String clusterId, String zoneId, int incrementCount)
+      throws InterruptedException {
+    return incrementClusterSize(incrementCount, getCluster(clusterId, zoneId));
+  }
+
+  /**
+   * Increments the size of an instance with a single cluster.
+   * @param incrementCount a positive or negative number to add to the current node count
+   * @return the new size of the cluster.
+   * @throws InterruptedException if the cluster is in the middle of updating, and an interrupt was
+   *           received
+   */
+  public int incrementClusterSize(int incrementCount)
+      throws InterruptedException {
+    return incrementClusterSize(incrementCount, getSingleCluster());
+  }
+
+  private int incrementClusterSize(int incrementCount, Cluster cluster)
       throws InterruptedException {
     Preconditions.checkArgument(incrementCount != 0,
-      "Cluster size cannot be incremented by 0 nodes. incrementCount has to be either positive or negative");
-    Cluster cluster = getCluster(clusterId, zoneId);
+        "Cluster size cannot be incremented by 0 nodes. incrementCount has to be either positive or negative");
+    String clusterId = getClusterId(cluster);
     if (incrementCount > 0) {
       logger.info("Adding %d nodes to cluster %s", incrementCount, clusterId);
     } else {
@@ -152,6 +259,10 @@ public class BigtableClusterUtilities implements AutoCloseable {
     int newSize = incrementCount + cluster.getServeNodes();
     updateClusterSize(cluster.getName(), newSize);
     return newSize;
+  }
+
+  private String getClusterId(Cluster cluster) {
+    return new BigtableClusterName(cluster.getName()).getClusterName();
   }
 
   /**
@@ -205,7 +316,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @param zoneId
    * @return the serveNode count of the cluster.
    */
-  public synchronized int getClusterNodeCount(String clusterId, String zoneId) {
+  public int getClusterNodeCount(String clusterId, String zoneId) {
     return getCluster(clusterId, zoneId).getServeNodes();
   }
 
@@ -217,7 +328,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @return the {@link Cluster} if it was set. If the cluster is not found, throw a {@link
    *     NullPointerException}.
    */
-  public synchronized Cluster getCluster(String clusterId, String zoneId) {
+  public Cluster getCluster(String clusterId, String zoneId) {
     Cluster response = null;
     for (Cluster cluster : getClusters().getClustersList()) {
       if (cluster.getName().endsWith("/clusters/" + clusterId)
@@ -239,31 +350,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @throws Exception
    */
   @Override
-  public synchronized void close() throws Exception {
+  public void close() throws Exception {
     channelPool.shutdownNow();
-  }
-
-  /**
-   * @return The instance id associated with the given project, zone and cluster.
-   */
-  public static String lookupInstanceId(String projectId, String clusterId, String zoneId)
-    throws IOException {
-    BigtableClusterUtilities utils;
-    try {
-      utils = BigtableClusterUtilities.forAllInstances(projectId);
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException("Could not initialize BigtableClusterUtilities", e);
-    }
-
-    try {
-      Cluster cluster = utils.getCluster(clusterId, zoneId);
-      return new BigtableClusterName(cluster.getName()).getInstanceId();
-    } finally {
-      try {
-        utils.close();
-      } catch (Exception e) {
-        logger.warn("Error closing BigtableClusterUtilities: ", e);
-      }
-    }
   }
 }

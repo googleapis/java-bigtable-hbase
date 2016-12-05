@@ -27,16 +27,18 @@ import java.util.regex.Pattern;
 public class BigtableClusterName {
   // Use a very loose pattern so we don't validate more strictly than the server.
   private static final Pattern PATTERN =
-      Pattern.compile("projects/.*/instances/(.*)/clusters/.*");
+      Pattern.compile("projects/.*/instances/(.*)/clusters/(.*)");
 
   private final String clusterName;
   private final String instanceId;
+  private final String clusterId;
 
   public BigtableClusterName(String clusterName) {
     this.clusterName = clusterName;
     Matcher matcher = PATTERN.matcher(clusterName);
     Preconditions.checkArgument(matcher.matches(), "Malformed cluster name");
     this.instanceId = matcher.group(1);
+    this.clusterId = matcher.group(2);
   }
 
   @Override
@@ -45,9 +47,27 @@ public class BigtableClusterName {
   }
 
   /**
-   * @return The id of the instance that contains this cluster.
+   * @return The id of the instance that contains this cluster. It's the second entry in the Cluster
+   *         name: projects/(.*)/instances/(.*)/clusters/(.*)
    */
   public String getInstanceId() {
     return instanceId;
+  }
+
+  /**
+   * @return The id of this cluster. It's the thir entry in the Cluster name:
+   *         projects/(.*)/instances/(.*)/clusters/(.*)
+   */
+  public String getClusterName() {
+    return clusterId;
+  }
+
+  /**
+   * @param snapshotId The id of the snapshot
+   * @return A fully qualified snapshot name that contains the fully qualified cluster name as the
+   *         parent and the snapshot name as the child.
+   */
+  public String toSnapshotName(String snapshotId) {
+    return clusterName + "/snapshots/" + snapshotId;
   }
 }
