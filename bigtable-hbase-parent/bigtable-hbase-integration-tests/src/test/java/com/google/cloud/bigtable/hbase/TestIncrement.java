@@ -205,6 +205,7 @@ public class TestIncrement extends AbstractTest {
       TimeUnit.MILLISECONDS.sleep(10);  // Make sure the clock has a chance to move
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      throw new RuntimeException("sleep was interrupted", e);
     }
     table.increment(increment);
     result = table.get(get);

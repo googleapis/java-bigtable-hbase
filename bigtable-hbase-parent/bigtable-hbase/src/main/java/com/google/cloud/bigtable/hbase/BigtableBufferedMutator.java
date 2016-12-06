@@ -150,6 +150,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
             }
             operation.run();
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             LOG.info("Interrupted. Shutting down the mutation worker.");
             break;
           } catch (Exception e) {
@@ -315,6 +316,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
         }
       }
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new IOException("Interrupted in buffered mutator while mutating row : '"
           + Bytes.toString(mutation.getRow()), e);
     }

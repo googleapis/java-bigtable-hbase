@@ -312,6 +312,7 @@ public abstract class AbstractBigtableConnection implements Connection, Closeabl
           this.batchPool.shutdownNow();
         }
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         this.batchPool.shutdownNow();
       }
     }

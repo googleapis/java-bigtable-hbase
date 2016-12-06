@@ -324,6 +324,7 @@ public class BatchExecutor {
       batch(actions, results);
       return results;
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       LOG.error("Encountered exception in batch(List<>).", e);
       throw new IOException("Batch error", e);
     }
