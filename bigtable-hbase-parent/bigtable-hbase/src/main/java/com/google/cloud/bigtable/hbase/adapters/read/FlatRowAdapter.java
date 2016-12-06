@@ -22,10 +22,12 @@ import com.google.cloud.bigtable.hbase.BigtableConstants;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.util.ByteStringer;
 import com.google.common.base.Objects;
+
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.filter.FilterList;
@@ -43,18 +45,6 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
   // 0.
   static final long TIME_CONVERSION_UNIT = BigtableConstants.BIGTABLE_TIMEUNIT.convert(1,
     BigtableConstants.HBASE_TIMEUNIT);
-
-  static final Comparator<RowCell> QUALIFIER_AND_TIMESTAMP_COMPARATOR =
-      new Comparator<RowCell>() {
-        @Override
-        public int compare(RowCell left, RowCell right) {
-          int result = Bytes.compareTo(left.getQualifierArray(), right.getQualifierArray());
-          if (result != 0) {
-            return result;
-          }
-          return Long.compare(right.getTimestamp(), left.getTimestamp());
-        }
-      };
 
     /**
    * {@inheritDoc}
@@ -77,8 +67,8 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
     if (flatRow == null) {
       return Result.EMPTY_RESULT;
     }
-    List<Cell> hbaseCells = extractCells(flatRow, sort);
-    return Result.create(hbaseCells.toArray(new Cell[hbaseCells.size()]));
+    Cell[] hbaseCells = sort ? extractCellsSortAndDedup(flatRow) : extractPresortedCells(flatRow);
+    return Result.create(hbaseCells);
   }
 
   /**
@@ -88,79 +78,87 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
    * {@link WhileMatchFilter}
    * <p>
    * Some additional deduping and sorting is also required. Cloud Bigtable returns values sorted by
-   * family in lexicographically ascending order, an arbitrary ordering of qualifiers (by internal
-   * id rather than lexicographically) and finally by timestamp descending. Each cell can appear
-   * more than once, if there are {@link Interleave}s in the {@link ReadRowsRequest#getFilter()},
-   * but the duplicates will appear one after the other. An {@link Interleave}s can originate from a
-   * {@link FilterList} with a {@link FilterList.Operator#MUST_PASS_ONE} operator or a
-   * {@link WhileMatchFilter}.
+   * family (by internal id, not lexicographically), a lexicographically ascending ordering of
+   * qualifiers, and finally by timestamp descending. Each cell can appear more than once, if there
+   * are {@link Interleave}s in the {@link ReadRowsRequest#getFilter()}, but the duplicates will
+   * appear one after the other. An {@link Interleave}s can originate from a {@link FilterList} with
+   * a {@link FilterList.Operator#MUST_PASS_ONE} operator or a {@link WhileMatchFilter}.
    * <p>
    * @param flatRow
-   * @param sort
-   * @return
+   * @return a
    */
-  private List<Cell> extractCells(FlatRow flatRow, boolean sort) {
+  private Cell[] extractCellsSortAndDedup(FlatRow flatRow) {
     byte[] rowKey = ByteStringer.extract(flatRow.getRowKey());
 
     FlatRow.Cell previousCell = null;
     byte[] previousFamily = null;
 
-    List<FlatRow.Cell> cells = flatRow.getCells();
-    List<Cell> hbaseCells = new ArrayList<>(cells.size());
-    List<RowCell> familyCells = sort ? new ArrayList<RowCell>(cells.size()) : null;
+    Map<String, List<RowCell>> familyMap = new TreeMap<>();
+    List<RowCell> currentFamilyRowCells = new ArrayList<>(flatRow.getCells().size());
 
-    for (FlatRow.Cell cell : cells) {
+    int cellCount = 0;
+    for (FlatRow.Cell cell : flatRow.getCells()) {
       // Cells with labels are for internal use, do not return them.
       // TODO(kevinsi4508): Filter out targeted {@link WhileMatchFilter} labels.
-      //
-      // Perform deduplication by skipping cells with matching key (family, qualifier, timestamp).
-      if (!cell.getLabels().isEmpty() || cell.equalFamilyQualifierAndTimestamp(previousCell)) {
+      if (!cell.getLabels().isEmpty()) {
         continue;
       }
 
-      // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
-      // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
-      // HBase will treat them as duplicates.
-      long hbaseTimestamp = cell.getTimestamp() / TIME_CONVERSION_UNIT;
-      byte[] family = getFamily(previousCell, previousFamily, cell);
-      RowCell rowCell =
-          new RowCell(
-              rowKey,
-              family,
-              ByteStringer.extract(cell.getQualifier()),
-              hbaseTimestamp,
-              ByteStringer.extract(cell.getValue()));
-      if (!sort) {
-        hbaseCells.add(rowCell);
-      } else {
-        // getFamily() returns previousFamily if the family Strings contained in the FlatRow.Cell
-        // are equals. We can use 
-        if (previousFamily != null && family != previousFamily) {
-          addAll(hbaseCells, familyCells);
+      byte[] family;
+      String familyString = cell.getFamily();
+      if (previousCell != null && Objects.equal(previousCell.getFamily(), familyString)) {
+        // Dedup cells where the family, qualifier and timestamp are the same.
+        if (cell.getTimestamp() == previousCell.getTimestamp()
+            && Objects.equal(previousCell.getQualifier(), cell.getQualifier())) {
+          continue;
         }
-        familyCells.add(rowCell);
+        family = previousFamily;
+      } else {
+        family = Bytes.toBytes(familyString);
+        currentFamilyRowCells = new ArrayList<>();
+        familyMap.put(familyString, currentFamilyRowCells);
       }
+
+      currentFamilyRowCells.add(toRowCell(rowKey, cell, family));
       previousCell = cell;
       previousFamily = family;
+      cellCount++;
     }
-    if (sort) {
-      addAll(hbaseCells, familyCells);
+    Cell[] combined = new Cell[cellCount];
+    int i = 0;
+    for (List<RowCell> rowCellList : familyMap.values()) {
+      for (int j = 0; j < rowCellList.size(); j++) {
+        combined[i++] = rowCellList.get(j);
+      }
+    }
+    return combined;
+  }
+
+  /**
+   * Converts all of the {@link FlatRow.Cell}s into HBase {@link RowCell}s.
+   * @param flatRow
+   * @return
+   */
+  private Cell[] extractPresortedCells(FlatRow flatRow) {
+    byte[] rowKey = ByteStringer.extract(flatRow.getRowKey());
+    Cell[] hbaseCells = new Cell[flatRow.getCells().size()];
+    int i = 0;
+    for (FlatRow.Cell cell : flatRow.getCells()) {
+      hbaseCells[i++] = toRowCell(rowKey, cell, Bytes.toBytes(cell.getFamily()));
     }
     return hbaseCells;
   }
 
-  private static void addAll(List<Cell> hbaseCells, List<RowCell> familyCells) {
-    Collections.sort(familyCells, QUALIFIER_AND_TIMESTAMP_COMPARATOR);
-    hbaseCells.addAll(familyCells);
-    familyCells.clear();
-  }
-
-  private byte[] getFamily(FlatRow.Cell previousCell, byte[] previousFamily, FlatRow.Cell cell) {
-    if (previousCell != null && Objects.equal(previousCell.getFamily(), cell.getFamily())) {
-      return previousFamily;
-    } else {
-      return Bytes.toBytes(cell.getFamily());
-    }
+  private static RowCell toRowCell(byte[] rowKey, FlatRow.Cell cell, byte[] family) {
+    return new RowCell(
+        rowKey,
+        family,
+        ByteStringer.extract(cell.getQualifier()),
+        // Bigtable timestamp has more granularity than HBase one. It is possible that Bigtable
+        // cells are deduped unintentionally here. On the other hand, if we don't dedup them,
+        // HBase will treat them as duplicates.
+        cell.getTimestamp() / TIME_CONVERSION_UNIT,
+        ByteStringer.extract(cell.getValue()));
   }
 
   /**

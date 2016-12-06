@@ -128,21 +128,12 @@ public class FlatRow implements Serializable {
         return false;
       }
       Cell other = (Cell) obj;
-      return equalFamilyQualifierAndTimestamp(other) &&
-          Objects.equal(value, other.value) &&
-          Objects.equal(labels, other.labels);
-    }
-
-    /**
-     * @param other
-     * @return true if the family, qualifier and timestamps are the same in this Cell as it is in
-     *         the other Cell.
-     */
-    public boolean equalFamilyQualifierAndTimestamp(Cell other) {
-      return other != null &&
+      return
+          timestamp == other.timestamp &&
           Objects.equal(family, other.family) &&
           Objects.equal(qualifier, other.qualifier) &&
-          timestamp == other.timestamp;
+          Objects.equal(value, other.value) &&
+          Objects.equal(labels, other.labels);
     }
 
     @Override
