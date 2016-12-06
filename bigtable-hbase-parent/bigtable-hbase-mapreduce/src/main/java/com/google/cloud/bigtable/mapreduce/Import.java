@@ -408,7 +408,10 @@ public class Import extends Configured implements Tool {
     Job job = Job.getInstance(conf, conf.get(JOB_NAME_CONF_KEY, NAME + "_" + tableName));
     job.setJarByClass(Importer.class);
     FileInputFormat.setInputPaths(job, inputDir);
-    job.setInputFormatClass(SequenceFileInputFormat.class);
+    // Randomize the splits to avoid hot spotting a single tablet server
+    job.setInputFormatClass(ShuffledSequenceFileInputFormat.class);
+    // Give the mappers enough work to do otherwise each split will be dominated by spinup time
+    ShuffledSequenceFileInputFormat.setMinInputSplitSize(job, 1L*1024*1024*1024);
     String hfileOutPath = conf.get(BULK_OUTPUT_CONF_KEY);
 
     // make sure we get the filter in the jars
