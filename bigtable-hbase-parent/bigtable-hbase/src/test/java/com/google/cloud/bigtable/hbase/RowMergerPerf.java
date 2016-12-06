@@ -30,12 +30,15 @@ public class RowMergerPerf {
   public static void main(String[] args) {
 //     warm up
     for (int i = 0; i < 3; i++) {
-      rowMergerPerf(createResponses(1), 1);
+      System.out.println("===================");
+      System.out.println("testing 1 Cell");
+      rowMergerPerf(1);
     }
+
     for (int i = 5; i <= 105; i += 10) {
       System.out.println("===================");
-      System.out.println("using " + i + " Cells");
-      rowMergerPerf(createResponses(i), i);
+      System.out.println("testing " + i + " Cells");
+      rowMergerPerf(i);
     }
   }
 
@@ -86,7 +89,8 @@ public class RowMergerPerf {
     }
   };
 
-  private static void rowMergerPerf(ReadRowsResponse response, int cellCountPerRow) {
+  private static void rowMergerPerf(int cellCountPerRow) {
+    ReadRowsResponse response = createResponses(cellCountPerRow);
     System.out.println("Size: " + response.getSerializedSize());
 
     {
