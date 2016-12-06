@@ -47,7 +47,7 @@ public class BigtableClusterName {
   }
 
   /**
-   * @return The id of the instance that contains this cluster. It's the second entry in the Cluster
+   * @return The id of the instance that contains this cluster. It's the second group in the Cluster
    *         name: projects/(.*)/instances/(.*)/clusters/(.*)
    */
   public String getInstanceId() {
@@ -55,7 +55,7 @@ public class BigtableClusterName {
   }
 
   /**
-   * @return The id of this cluster. It's the thir entry in the Cluster name:
+   * @return The id of this cluster. It's the third group in the Cluster name:
    *         projects/(.*)/instances/(.*)/clusters/(.*)
    */
   public String getClusterName() {
@@ -63,6 +63,7 @@ public class BigtableClusterName {
   }
 
   /**
+   * Create a fully qualified snapshot name based on the the clusterName and the snapshotId.
    * @param snapshotId The id of the snapshot
    * @return A fully qualified snapshot name that contains the fully qualified cluster name as the
    *         parent and the snapshot name as the child.
