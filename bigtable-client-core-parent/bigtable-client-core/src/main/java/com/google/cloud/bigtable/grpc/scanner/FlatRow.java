@@ -93,7 +93,7 @@ public class FlatRow implements Serializable {
     private final ByteString value;
     private final List<String> labels;
 
-    private Cell(String family, ByteString qualifier, long timestamp, ByteString value,
+    public Cell(String family, ByteString qualifier, long timestamp, ByteString value,
         List<String> labels) {
       this.family = family;
       this.qualifier = qualifier;
@@ -192,9 +192,9 @@ public class FlatRow implements Serializable {
       return addCell(new Cell(family, qualifier, timestamp, value, null));
     }
 
-    public Builder addCell(Cell column) {
-      Preconditions.checkNotNull(column, "column can not be null");
-      listBuilder.add(column);
+    public Builder addCell(Cell cell) {
+      Preconditions.checkNotNull(cell, "cell can not be null");
+      listBuilder.add(cell);
       return this;
     }
 
