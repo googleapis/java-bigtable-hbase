@@ -43,8 +43,7 @@ public class HBaseResultCoder extends AtomicCoder<Result> {
 
   @Override
   public Result decode(InputStream inputStream, Coder.Context context) throws IOException {
-    return Adapters.FLAT_ROW_ADAPTER
-        .adaptResponsePresortedCells(FLAT_ROW_CODER.decode(inputStream, context));
+    return Adapters.FLAT_ROW_ADAPTER.adaptResponse(FLAT_ROW_CODER.decode(inputStream, context));
   }
 
   @Override

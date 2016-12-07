@@ -183,39 +183,10 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
    */
   @Override
   public Result adaptResponse(FlatRow flatRow) {
-    return adaptResponse(flatRow, true);
-  }
-
-  /**
-   * Convert a {@link FlatRow} to a {@link Result} without sorting the cells first.
-   */
-  public Result adaptResponsePresortedCells(FlatRow flatRow) {
-    return adaptResponse(flatRow, false);
-  }
-
-  private static Result adaptResponse(FlatRow flatRow, final boolean sort) {
     if (flatRow == null) {
       return Result.EMPTY_RESULT;
     }
-    Cell[] hbaseCells = sort
-        ? new CellSorter(flatRow).getSortedAndDedupedHBaseCells()
-        : extractPresortedCells(flatRow);
-    return Result.create(hbaseCells);
-  }
-
-  /**
-   * Converts all of the {@link FlatRow.Cell}s into HBase {@link RowCell}s.
-   * @param flatRow
-   * @return
-   */
-  private static Cell[] extractPresortedCells(FlatRow flatRow) {
-    byte[] rowKey = ByteStringer.extract(flatRow.getRowKey());
-    Cell[] hbaseCells = new Cell[flatRow.getCells().size()];
-    int i = 0;
-    for (FlatRow.Cell cell : flatRow.getCells()) {
-      hbaseCells[i++] = toRowCell(rowKey, cell, Bytes.toBytes(cell.getFamily()));
-    }
-    return hbaseCells;
+    return Result.create(new CellSorter(flatRow).getSortedAndDedupedHBaseCells());
   }
 
   private static RowCell toRowCell(byte[] rowKey, FlatRow.Cell cell, byte[] family) {
