@@ -373,7 +373,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       }
       return Futures.immediateFailedFuture(
         new IllegalArgumentException("Encountered unknown mutation type: " + mutation.getClass()));
-    } catch (Exception e) {
+    } catch (Throwable e) {
       // issueRequest(mutation) could throw an Exception for validation issues. Remove the heapsize
       // and inflight rpc count.
       return Futures.immediateFailedFuture(e);

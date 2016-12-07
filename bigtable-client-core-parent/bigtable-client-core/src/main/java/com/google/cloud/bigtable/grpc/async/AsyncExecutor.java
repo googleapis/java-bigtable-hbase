@@ -311,7 +311,7 @@ public class AsyncExecutor {
     ListenableFuture<ResponseT> future;
     try {
       future = rpc.call(client, request);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       future = Futures.immediateFailedFuture(e);
     }
     rpcThrottler.addCallback(future, id);
