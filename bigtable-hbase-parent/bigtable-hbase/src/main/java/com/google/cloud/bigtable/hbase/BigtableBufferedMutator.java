@@ -39,7 +39,7 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -342,11 +342,11 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
    * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
    */
-  protected MutateRowRequest adapt(Mutation mutation) {
+  protected MutateRowsRequest.Entry adapt(Mutation mutation) {
     if (mutation instanceof Put) {
-      return adapter.adapt((Put) mutation);
+      return adapter.adaptEntry((Put) mutation);
     } else if (mutation instanceof Delete) {
-      return adapter.adapt((Delete) mutation);
+      return adapter.adaptEntry((Delete) mutation);
     } else {
       throw new IllegalArgumentException(
           "Encountered unknown mutation type: " + mutation.getClass());

@@ -16,8 +16,9 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 
-import com.google.bigtable.v2.MutateRowRequest;
-import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RowMutations;
@@ -29,34 +30,25 @@ import org.apache.hadoop.hbase.client.RowMutations;
  * @author sduskis
  * @version $Id: $Id
  */
-public class RowMutationsAdapter {
+public class RowMutationsAdapter extends MutationAdapter<RowMutations>{
 
   protected final MutationAdapter<Mutation> mutationAdapter;
 
   /**
    * <p>Constructor for RowMutationsAdapter.</p>
    *
-   * @param mutationAdapter a {@link com.google.cloud.bigtable.hbase.adapters.OperationAdapter} object.
+   * @param mutationAdapter a {@link MutationAdapter} object.
    */
   public RowMutationsAdapter(MutationAdapter<Mutation> mutationAdapter) {
     this.mutationAdapter = mutationAdapter;
   }
 
-  /**
-   * <p>adapt.</p>
-   *
-   * @param mutations a {@link org.apache.hadoop.hbase.client.RowMutations} object.
-   * @return a {@link com.google.bigtable.v2.MutateRowRequest.Builder} object.
-   */
-  public MutateRowRequest.Builder adapt(RowMutations mutations) {
-    MutateRowRequest.Builder result = MutateRowRequest.newBuilder();
-
-    result.setRowKey(ByteString.copyFrom(mutations.getRow()));
-
-    for (Mutation mutation : mutations.getMutations()) {
-      result.addAllMutations(mutationAdapter.adaptMutations(mutation));
+  @Override
+  protected Collection<com.google.bigtable.v2.Mutation> adaptMutations(RowMutations operation) {
+    List<com.google.bigtable.v2.Mutation> result = new ArrayList<>();
+    for (Mutation mutation : operation.getMutations()) {
+      result.addAll(mutationAdapter.adaptMutations(mutation));
     }
-
     return result;
   }
 }
