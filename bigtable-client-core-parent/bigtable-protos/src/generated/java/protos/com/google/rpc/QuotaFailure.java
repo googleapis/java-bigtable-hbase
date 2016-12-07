@@ -4,8 +4,6 @@
 package com.google.rpc;
 
 /**
- * Protobuf type {@code google.rpc.QuotaFailure}
- *
  * <pre>
  * Describes how a quota check failed.
  * For example if a daily limit was exceeded for the calling project,
@@ -17,13 +15,15 @@ package com.google.rpc;
  * Also see RetryDetail and Help types for other details about handling a
  * quota failure.
  * </pre>
+ *
+ * Protobuf type {@code google.rpc.QuotaFailure}
  */
 public  final class QuotaFailure extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.rpc.QuotaFailure)
     QuotaFailureOrBuilder {
   // Use QuotaFailure.newBuilder() to construct.
-  private QuotaFailure(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private QuotaFailure(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private QuotaFailure() {
@@ -37,7 +37,8 @@ public  final class QuotaFailure extends
   }
   private QuotaFailure(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -59,17 +60,17 @@ public  final class QuotaFailure extends
               violations_ = new java.util.ArrayList<com.google.rpc.QuotaFailure.Violation>();
               mutable_bitField0_ |= 0x00000001;
             }
-            violations_.add(input.readMessage(com.google.rpc.QuotaFailure.Violation.parser(), extensionRegistry));
+            violations_.add(
+                input.readMessage(com.google.rpc.QuotaFailure.Violation.parser(), extensionRegistry));
             break;
           }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         violations_ = java.util.Collections.unmodifiableList(violations_);
@@ -82,7 +83,7 @@ public  final class QuotaFailure extends
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -94,30 +95,28 @@ public  final class QuotaFailure extends
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional string subject = 1;</code>
-     *
      * <pre>
      * The subject on which the quota check failed.
      * For example, "clientip:&lt;ip address of client&gt;" or "project:&lt;Google
      * developer project id&gt;".
      * </pre>
+     *
+     * <code>optional string subject = 1;</code>
      */
     java.lang.String getSubject();
     /**
-     * <code>optional string subject = 1;</code>
-     *
      * <pre>
      * The subject on which the quota check failed.
      * For example, "clientip:&lt;ip address of client&gt;" or "project:&lt;Google
      * developer project id&gt;".
      * </pre>
+     *
+     * <code>optional string subject = 1;</code>
      */
     com.google.protobuf.ByteString
         getSubjectBytes();
 
     /**
-     * <code>optional string description = 2;</code>
-     *
      * <pre>
      * A description of how the quota check failed. Clients can use this
      * description to find more about the quota configuration in the service's
@@ -126,11 +125,11 @@ public  final class QuotaFailure extends
      * For example: "Service disabled" or "Daily Limit for read operations
      * exceeded".
      * </pre>
+     *
+     * <code>optional string description = 2;</code>
      */
     java.lang.String getDescription();
     /**
-     * <code>optional string description = 2;</code>
-     *
      * <pre>
      * A description of how the quota check failed. Clients can use this
      * description to find more about the quota configuration in the service's
@@ -139,24 +138,26 @@ public  final class QuotaFailure extends
      * For example: "Service disabled" or "Daily Limit for read operations
      * exceeded".
      * </pre>
+     *
+     * <code>optional string description = 2;</code>
      */
     com.google.protobuf.ByteString
         getDescriptionBytes();
   }
   /**
-   * Protobuf type {@code google.rpc.QuotaFailure.Violation}
-   *
    * <pre>
    * A message type used to describe a single quota violation.  For example, a
    * daily quota or a custom quota that was exceeded.
    * </pre>
+   *
+   * Protobuf type {@code google.rpc.QuotaFailure.Violation}
    */
   public  static final class Violation extends
-      com.google.protobuf.GeneratedMessage implements
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:google.rpc.QuotaFailure.Violation)
       ViolationOrBuilder {
     // Use Violation.newBuilder() to construct.
-    private Violation(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private Violation(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private Violation() {
@@ -171,7 +172,8 @@ public  final class QuotaFailure extends
     }
     private Violation(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       this();
       int mutable_bitField0_ = 0;
       try {
@@ -203,11 +205,10 @@ public  final class QuotaFailure extends
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
       } finally {
         makeExtensionsImmutable();
       }
@@ -217,7 +218,7 @@ public  final class QuotaFailure extends
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_Violation_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_Violation_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -227,13 +228,13 @@ public  final class QuotaFailure extends
     public static final int SUBJECT_FIELD_NUMBER = 1;
     private volatile java.lang.Object subject_;
     /**
-     * <code>optional string subject = 1;</code>
-     *
      * <pre>
      * The subject on which the quota check failed.
      * For example, "clientip:&lt;ip address of client&gt;" or "project:&lt;Google
      * developer project id&gt;".
      * </pre>
+     *
+     * <code>optional string subject = 1;</code>
      */
     public java.lang.String getSubject() {
       java.lang.Object ref = subject_;
@@ -248,13 +249,13 @@ public  final class QuotaFailure extends
       }
     }
     /**
-     * <code>optional string subject = 1;</code>
-     *
      * <pre>
      * The subject on which the quota check failed.
      * For example, "clientip:&lt;ip address of client&gt;" or "project:&lt;Google
      * developer project id&gt;".
      * </pre>
+     *
+     * <code>optional string subject = 1;</code>
      */
     public com.google.protobuf.ByteString
         getSubjectBytes() {
@@ -273,8 +274,6 @@ public  final class QuotaFailure extends
     public static final int DESCRIPTION_FIELD_NUMBER = 2;
     private volatile java.lang.Object description_;
     /**
-     * <code>optional string description = 2;</code>
-     *
      * <pre>
      * A description of how the quota check failed. Clients can use this
      * description to find more about the quota configuration in the service's
@@ -283,6 +282,8 @@ public  final class QuotaFailure extends
      * For example: "Service disabled" or "Daily Limit for read operations
      * exceeded".
      * </pre>
+     *
+     * <code>optional string description = 2;</code>
      */
     public java.lang.String getDescription() {
       java.lang.Object ref = description_;
@@ -297,8 +298,6 @@ public  final class QuotaFailure extends
       }
     }
     /**
-     * <code>optional string description = 2;</code>
-     *
      * <pre>
      * A description of how the quota check failed. Clients can use this
      * description to find more about the quota configuration in the service's
@@ -307,6 +306,8 @@ public  final class QuotaFailure extends
      * For example: "Service disabled" or "Daily Limit for read operations
      * exceeded".
      * </pre>
+     *
+     * <code>optional string description = 2;</code>
      */
     public com.google.protobuf.ByteString
         getDescriptionBytes() {
@@ -335,10 +336,10 @@ public  final class QuotaFailure extends
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (!getSubjectBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 1, subject_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, subject_);
       }
       if (!getDescriptionBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 2, description_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, description_);
       }
     }
 
@@ -348,16 +349,50 @@ public  final class QuotaFailure extends
 
       size = 0;
       if (!getSubjectBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, subject_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, subject_);
       }
       if (!getDescriptionBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, description_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, description_);
       }
       memoizedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.google.rpc.QuotaFailure.Violation)) {
+        return super.equals(obj);
+      }
+      com.google.rpc.QuotaFailure.Violation other = (com.google.rpc.QuotaFailure.Violation) obj;
+
+      boolean result = true;
+      result = result && getSubject()
+          .equals(other.getSubject());
+      result = result && getDescription()
+          .equals(other.getDescription());
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (37 * hash) + SUBJECT_FIELD_NUMBER;
+      hash = (53 * hash) + getSubject().hashCode();
+      hash = (37 * hash) + DESCRIPTION_FIELD_NUMBER;
+      hash = (53 * hash) + getDescription().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
     public static com.google.rpc.QuotaFailure.Violation parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -381,34 +416,40 @@ public  final class QuotaFailure extends
     }
     public static com.google.rpc.QuotaFailure.Violation parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.rpc.QuotaFailure.Violation parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.rpc.QuotaFailure.Violation parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static com.google.rpc.QuotaFailure.Violation parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static com.google.rpc.QuotaFailure.Violation parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static com.google.rpc.QuotaFailure.Violation parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
     public Builder newBuilderForType() { return newBuilder(); }
@@ -425,20 +466,20 @@ public  final class QuotaFailure extends
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
     /**
-     * Protobuf type {@code google.rpc.QuotaFailure.Violation}
-     *
      * <pre>
      * A message type used to describe a single quota violation.  For example, a
      * daily quota or a custom quota that was exceeded.
      * </pre>
+     *
+     * Protobuf type {@code google.rpc.QuotaFailure.Violation}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:google.rpc.QuotaFailure.Violation)
         com.google.rpc.QuotaFailure.ViolationOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -446,7 +487,7 @@ public  final class QuotaFailure extends
         return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_Violation_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_Violation_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -459,12 +500,13 @@ public  final class QuotaFailure extends
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
         }
       }
       public Builder clear() {
@@ -501,6 +543,32 @@ public  final class QuotaFailure extends
         return result;
       }
 
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof com.google.rpc.QuotaFailure.Violation) {
           return mergeFrom((com.google.rpc.QuotaFailure.Violation)other);
@@ -537,7 +605,7 @@ public  final class QuotaFailure extends
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (com.google.rpc.QuotaFailure.Violation) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -548,13 +616,13 @@ public  final class QuotaFailure extends
 
       private java.lang.Object subject_ = "";
       /**
-       * <code>optional string subject = 1;</code>
-       *
        * <pre>
        * The subject on which the quota check failed.
        * For example, "clientip:&lt;ip address of client&gt;" or "project:&lt;Google
        * developer project id&gt;".
        * </pre>
+       *
+       * <code>optional string subject = 1;</code>
        */
       public java.lang.String getSubject() {
         java.lang.Object ref = subject_;
@@ -569,13 +637,13 @@ public  final class QuotaFailure extends
         }
       }
       /**
-       * <code>optional string subject = 1;</code>
-       *
        * <pre>
        * The subject on which the quota check failed.
        * For example, "clientip:&lt;ip address of client&gt;" or "project:&lt;Google
        * developer project id&gt;".
        * </pre>
+       *
+       * <code>optional string subject = 1;</code>
        */
       public com.google.protobuf.ByteString
           getSubjectBytes() {
@@ -591,13 +659,13 @@ public  final class QuotaFailure extends
         }
       }
       /**
-       * <code>optional string subject = 1;</code>
-       *
        * <pre>
        * The subject on which the quota check failed.
        * For example, "clientip:&lt;ip address of client&gt;" or "project:&lt;Google
        * developer project id&gt;".
        * </pre>
+       *
+       * <code>optional string subject = 1;</code>
        */
       public Builder setSubject(
           java.lang.String value) {
@@ -610,13 +678,13 @@ public  final class QuotaFailure extends
         return this;
       }
       /**
-       * <code>optional string subject = 1;</code>
-       *
        * <pre>
        * The subject on which the quota check failed.
        * For example, "clientip:&lt;ip address of client&gt;" or "project:&lt;Google
        * developer project id&gt;".
        * </pre>
+       *
+       * <code>optional string subject = 1;</code>
        */
       public Builder clearSubject() {
         
@@ -625,13 +693,13 @@ public  final class QuotaFailure extends
         return this;
       }
       /**
-       * <code>optional string subject = 1;</code>
-       *
        * <pre>
        * The subject on which the quota check failed.
        * For example, "clientip:&lt;ip address of client&gt;" or "project:&lt;Google
        * developer project id&gt;".
        * </pre>
+       *
+       * <code>optional string subject = 1;</code>
        */
       public Builder setSubjectBytes(
           com.google.protobuf.ByteString value) {
@@ -647,8 +715,6 @@ public  final class QuotaFailure extends
 
       private java.lang.Object description_ = "";
       /**
-       * <code>optional string description = 2;</code>
-       *
        * <pre>
        * A description of how the quota check failed. Clients can use this
        * description to find more about the quota configuration in the service's
@@ -657,6 +723,8 @@ public  final class QuotaFailure extends
        * For example: "Service disabled" or "Daily Limit for read operations
        * exceeded".
        * </pre>
+       *
+       * <code>optional string description = 2;</code>
        */
       public java.lang.String getDescription() {
         java.lang.Object ref = description_;
@@ -671,8 +739,6 @@ public  final class QuotaFailure extends
         }
       }
       /**
-       * <code>optional string description = 2;</code>
-       *
        * <pre>
        * A description of how the quota check failed. Clients can use this
        * description to find more about the quota configuration in the service's
@@ -681,6 +747,8 @@ public  final class QuotaFailure extends
        * For example: "Service disabled" or "Daily Limit for read operations
        * exceeded".
        * </pre>
+       *
+       * <code>optional string description = 2;</code>
        */
       public com.google.protobuf.ByteString
           getDescriptionBytes() {
@@ -696,8 +764,6 @@ public  final class QuotaFailure extends
         }
       }
       /**
-       * <code>optional string description = 2;</code>
-       *
        * <pre>
        * A description of how the quota check failed. Clients can use this
        * description to find more about the quota configuration in the service's
@@ -706,6 +772,8 @@ public  final class QuotaFailure extends
        * For example: "Service disabled" or "Daily Limit for read operations
        * exceeded".
        * </pre>
+       *
+       * <code>optional string description = 2;</code>
        */
       public Builder setDescription(
           java.lang.String value) {
@@ -718,8 +786,6 @@ public  final class QuotaFailure extends
         return this;
       }
       /**
-       * <code>optional string description = 2;</code>
-       *
        * <pre>
        * A description of how the quota check failed. Clients can use this
        * description to find more about the quota configuration in the service's
@@ -728,6 +794,8 @@ public  final class QuotaFailure extends
        * For example: "Service disabled" or "Daily Limit for read operations
        * exceeded".
        * </pre>
+       *
+       * <code>optional string description = 2;</code>
        */
       public Builder clearDescription() {
         
@@ -736,8 +804,6 @@ public  final class QuotaFailure extends
         return this;
       }
       /**
-       * <code>optional string description = 2;</code>
-       *
        * <pre>
        * A description of how the quota check failed. Clients can use this
        * description to find more about the quota configuration in the service's
@@ -746,6 +812,8 @@ public  final class QuotaFailure extends
        * For example: "Service disabled" or "Daily Limit for read operations
        * exceeded".
        * </pre>
+       *
+       * <code>optional string description = 2;</code>
        */
       public Builder setDescriptionBytes(
           com.google.protobuf.ByteString value) {
@@ -788,16 +856,7 @@ public  final class QuotaFailure extends
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
           return new Violation(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
       }
     };
 
@@ -819,52 +878,52 @@ public  final class QuotaFailure extends
   public static final int VIOLATIONS_FIELD_NUMBER = 1;
   private java.util.List<com.google.rpc.QuotaFailure.Violation> violations_;
   /**
-   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-   *
    * <pre>
    * Describes all quota violations.
    * </pre>
+   *
+   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
    */
   public java.util.List<com.google.rpc.QuotaFailure.Violation> getViolationsList() {
     return violations_;
   }
   /**
-   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-   *
    * <pre>
    * Describes all quota violations.
    * </pre>
+   *
+   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
    */
   public java.util.List<? extends com.google.rpc.QuotaFailure.ViolationOrBuilder> 
       getViolationsOrBuilderList() {
     return violations_;
   }
   /**
-   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-   *
    * <pre>
    * Describes all quota violations.
    * </pre>
+   *
+   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
    */
   public int getViolationsCount() {
     return violations_.size();
   }
   /**
-   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-   *
    * <pre>
    * Describes all quota violations.
    * </pre>
+   *
+   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
    */
   public com.google.rpc.QuotaFailure.Violation getViolations(int index) {
     return violations_.get(index);
   }
   /**
-   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-   *
    * <pre>
    * Describes all quota violations.
    * </pre>
+   *
+   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
    */
   public com.google.rpc.QuotaFailure.ViolationOrBuilder getViolationsOrBuilder(
       int index) {
@@ -902,6 +961,38 @@ public  final class QuotaFailure extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.rpc.QuotaFailure)) {
+      return super.equals(obj);
+    }
+    com.google.rpc.QuotaFailure other = (com.google.rpc.QuotaFailure) obj;
+
+    boolean result = true;
+    result = result && getViolationsList()
+        .equals(other.getViolationsList());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    if (getViolationsCount() > 0) {
+      hash = (37 * hash) + VIOLATIONS_FIELD_NUMBER;
+      hash = (53 * hash) + getViolationsList().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.rpc.QuotaFailure parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -925,34 +1016,40 @@ public  final class QuotaFailure extends
   }
   public static com.google.rpc.QuotaFailure parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.QuotaFailure parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.QuotaFailure parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.rpc.QuotaFailure parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.QuotaFailure parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.QuotaFailure parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -969,13 +1066,11 @@ public  final class QuotaFailure extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.rpc.QuotaFailure}
-   *
    * <pre>
    * Describes how a quota check failed.
    * For example if a daily limit was exceeded for the calling project,
@@ -987,9 +1082,11 @@ public  final class QuotaFailure extends
    * Also see RetryDetail and Help types for other details about handling a
    * quota failure.
    * </pre>
+   *
+   * Protobuf type {@code google.rpc.QuotaFailure}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.rpc.QuotaFailure)
       com.google.rpc.QuotaFailureOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -997,7 +1094,7 @@ public  final class QuotaFailure extends
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_QuotaFailure_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -1010,12 +1107,13 @@ public  final class QuotaFailure extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
         getViolationsFieldBuilder();
       }
     }
@@ -1063,6 +1161,32 @@ public  final class QuotaFailure extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.rpc.QuotaFailure) {
         return mergeFrom((com.google.rpc.QuotaFailure)other);
@@ -1093,7 +1217,7 @@ public  final class QuotaFailure extends
             violations_ = other.violations_;
             bitField0_ = (bitField0_ & ~0x00000001);
             violationsBuilder_ = 
-              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getViolationsFieldBuilder() : null;
           } else {
             violationsBuilder_.addAllMessages(other.violations_);
@@ -1117,7 +1241,7 @@ public  final class QuotaFailure extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.rpc.QuotaFailure) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -1136,15 +1260,15 @@ public  final class QuotaFailure extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.rpc.QuotaFailure.Violation, com.google.rpc.QuotaFailure.Violation.Builder, com.google.rpc.QuotaFailure.ViolationOrBuilder> violationsBuilder_;
 
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public java.util.List<com.google.rpc.QuotaFailure.Violation> getViolationsList() {
       if (violationsBuilder_ == null) {
@@ -1154,11 +1278,11 @@ public  final class QuotaFailure extends
       }
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public int getViolationsCount() {
       if (violationsBuilder_ == null) {
@@ -1168,11 +1292,11 @@ public  final class QuotaFailure extends
       }
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public com.google.rpc.QuotaFailure.Violation getViolations(int index) {
       if (violationsBuilder_ == null) {
@@ -1182,11 +1306,11 @@ public  final class QuotaFailure extends
       }
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public Builder setViolations(
         int index, com.google.rpc.QuotaFailure.Violation value) {
@@ -1203,11 +1327,11 @@ public  final class QuotaFailure extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public Builder setViolations(
         int index, com.google.rpc.QuotaFailure.Violation.Builder builderForValue) {
@@ -1221,11 +1345,11 @@ public  final class QuotaFailure extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public Builder addViolations(com.google.rpc.QuotaFailure.Violation value) {
       if (violationsBuilder_ == null) {
@@ -1241,11 +1365,11 @@ public  final class QuotaFailure extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public Builder addViolations(
         int index, com.google.rpc.QuotaFailure.Violation value) {
@@ -1262,11 +1386,11 @@ public  final class QuotaFailure extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public Builder addViolations(
         com.google.rpc.QuotaFailure.Violation.Builder builderForValue) {
@@ -1280,11 +1404,11 @@ public  final class QuotaFailure extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public Builder addViolations(
         int index, com.google.rpc.QuotaFailure.Violation.Builder builderForValue) {
@@ -1298,11 +1422,11 @@ public  final class QuotaFailure extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public Builder addAllViolations(
         java.lang.Iterable<? extends com.google.rpc.QuotaFailure.Violation> values) {
@@ -1317,11 +1441,11 @@ public  final class QuotaFailure extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public Builder clearViolations() {
       if (violationsBuilder_ == null) {
@@ -1334,11 +1458,11 @@ public  final class QuotaFailure extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public Builder removeViolations(int index) {
       if (violationsBuilder_ == null) {
@@ -1351,22 +1475,22 @@ public  final class QuotaFailure extends
       return this;
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public com.google.rpc.QuotaFailure.Violation.Builder getViolationsBuilder(
         int index) {
       return getViolationsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public com.google.rpc.QuotaFailure.ViolationOrBuilder getViolationsOrBuilder(
         int index) {
@@ -1376,11 +1500,11 @@ public  final class QuotaFailure extends
       }
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public java.util.List<? extends com.google.rpc.QuotaFailure.ViolationOrBuilder> 
          getViolationsOrBuilderList() {
@@ -1391,22 +1515,22 @@ public  final class QuotaFailure extends
       }
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public com.google.rpc.QuotaFailure.Violation.Builder addViolationsBuilder() {
       return getViolationsFieldBuilder().addBuilder(
           com.google.rpc.QuotaFailure.Violation.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public com.google.rpc.QuotaFailure.Violation.Builder addViolationsBuilder(
         int index) {
@@ -1414,21 +1538,21 @@ public  final class QuotaFailure extends
           index, com.google.rpc.QuotaFailure.Violation.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-     *
      * <pre>
      * Describes all quota violations.
      * </pre>
+     *
+     * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
      */
     public java.util.List<com.google.rpc.QuotaFailure.Violation.Builder> 
          getViolationsBuilderList() {
       return getViolationsFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.rpc.QuotaFailure.Violation, com.google.rpc.QuotaFailure.Violation.Builder, com.google.rpc.QuotaFailure.ViolationOrBuilder> 
         getViolationsFieldBuilder() {
       if (violationsBuilder_ == null) {
-        violationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+        violationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
             com.google.rpc.QuotaFailure.Violation, com.google.rpc.QuotaFailure.Violation.Builder, com.google.rpc.QuotaFailure.ViolationOrBuilder>(
                 violations_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
@@ -1468,16 +1592,7 @@ public  final class QuotaFailure extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new QuotaFailure(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

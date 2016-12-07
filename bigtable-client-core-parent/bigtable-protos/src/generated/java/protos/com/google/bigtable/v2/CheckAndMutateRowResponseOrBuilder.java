@@ -8,12 +8,12 @@ public interface CheckAndMutateRowResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional bool predicate_matched = 1;</code>
-   *
    * <pre>
    * Whether or not the request's `predicate_filter` yielded any results for
    * the specified row.
    * </pre>
+   *
+   * <code>optional bool predicate_matched = 1;</code>
    */
   boolean getPredicateMatched();
 }

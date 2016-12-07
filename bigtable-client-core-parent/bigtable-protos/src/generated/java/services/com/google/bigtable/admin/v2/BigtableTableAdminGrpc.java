@@ -24,7 +24,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 0.14.1)",
+    value = "by gRPC proto compiler (version 1.0.2)",
     comments = "Source: google/bigtable/admin/v2/bigtable_table_admin.proto")
 public class BigtableTableAdminGrpc {
 
@@ -33,7 +33,7 @@ public class BigtableTableAdminGrpc {
   public static final String SERVICE_NAME = "google.bigtable.admin.v2.BigtableTableAdmin";
 
   // Static method descriptors that strictly reflect the proto.
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.CreateTableRequest,
       com.google.bigtable.admin.v2.Table> METHOD_CREATE_TABLE =
       io.grpc.MethodDescriptor.create(
@@ -42,7 +42,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "CreateTable"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.CreateTableRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Table.getDefaultInstance()));
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest,
       com.google.longrunning.Operation> METHOD_CREATE_TABLE_FROM_SNAPSHOT =
       io.grpc.MethodDescriptor.create(
@@ -51,7 +51,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "CreateTableFromSnapshot"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.Operation.getDefaultInstance()));
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.ListTablesRequest,
       com.google.bigtable.admin.v2.ListTablesResponse> METHOD_LIST_TABLES =
       io.grpc.MethodDescriptor.create(
@@ -60,7 +60,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "ListTables"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListTablesRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListTablesResponse.getDefaultInstance()));
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.GetTableRequest,
       com.google.bigtable.admin.v2.Table> METHOD_GET_TABLE =
       io.grpc.MethodDescriptor.create(
@@ -69,7 +69,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "GetTable"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.GetTableRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Table.getDefaultInstance()));
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.DeleteTableRequest,
       com.google.protobuf.Empty> METHOD_DELETE_TABLE =
       io.grpc.MethodDescriptor.create(
@@ -78,7 +78,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "DeleteTable"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.DeleteTableRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest,
       com.google.bigtable.admin.v2.Table> METHOD_MODIFY_COLUMN_FAMILIES =
       io.grpc.MethodDescriptor.create(
@@ -87,7 +87,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "ModifyColumnFamilies"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Table.getDefaultInstance()));
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.DropRowRangeRequest,
       com.google.protobuf.Empty> METHOD_DROP_ROW_RANGE =
       io.grpc.MethodDescriptor.create(
@@ -96,7 +96,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "DropRowRange"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.DropRowRangeRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.protobuf.Empty.getDefaultInstance()));
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.SnapshotTableRequest,
       com.google.longrunning.Operation> METHOD_SNAPSHOT_TABLE =
       io.grpc.MethodDescriptor.create(
@@ -105,7 +105,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "SnapshotTable"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.SnapshotTableRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.longrunning.Operation.getDefaultInstance()));
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.GetSnapshotRequest,
       com.google.bigtable.admin.v2.Snapshot> METHOD_GET_SNAPSHOT =
       io.grpc.MethodDescriptor.create(
@@ -114,7 +114,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "GetSnapshot"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.GetSnapshotRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.Snapshot.getDefaultInstance()));
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.ListSnapshotsRequest,
       com.google.bigtable.admin.v2.ListSnapshotsResponse> METHOD_LIST_SNAPSHOTS =
       io.grpc.MethodDescriptor.create(
@@ -123,7 +123,7 @@ public class BigtableTableAdminGrpc {
               "google.bigtable.admin.v2.BigtableTableAdmin", "ListSnapshots"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListSnapshotsRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.google.bigtable.admin.v2.ListSnapshotsResponse.getDefaultInstance()));
-  @io.grpc.ExperimentalApi
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
   public static final io.grpc.MethodDescriptor<com.google.bigtable.admin.v2.DeleteSnapshotRequest,
       com.google.protobuf.Empty> METHOD_DELETE_SNAPSHOT =
       io.grpc.MethodDescriptor.create(
@@ -164,7 +164,7 @@ public class BigtableTableAdminGrpc {
    * the tables.
    * </pre>
    */
-  public static interface BigtableTableAdmin {
+  public static abstract class BigtableTableAdminImplBase implements io.grpc.BindableService {
 
     /**
      * <pre>
@@ -174,7 +174,9 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void createTable(com.google.bigtable.admin.v2.CreateTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_CREATE_TABLE, responseObserver);
+    }
 
     /**
      * <pre>
@@ -183,7 +185,9 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void createTableFromSnapshot(com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest request,
-        io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_CREATE_TABLE_FROM_SNAPSHOT, responseObserver);
+    }
 
     /**
      * <pre>
@@ -191,7 +195,9 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void listTables(com.google.bigtable.admin.v2.ListTablesRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListTablesResponse> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListTablesResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_LIST_TABLES, responseObserver);
+    }
 
     /**
      * <pre>
@@ -199,7 +205,9 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void getTable(com.google.bigtable.admin.v2.GetTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_GET_TABLE, responseObserver);
+    }
 
     /**
      * <pre>
@@ -207,7 +215,9 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void deleteTable(com.google.bigtable.admin.v2.DeleteTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_DELETE_TABLE, responseObserver);
+    }
 
     /**
      * <pre>
@@ -216,7 +226,9 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_MODIFY_COLUMN_FAMILIES, responseObserver);
+    }
 
     /**
      * <pre>
@@ -226,7 +238,9 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_DROP_ROW_RANGE, responseObserver);
+    }
 
     /**
      * <pre>
@@ -235,7 +249,9 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void snapshotTable(com.google.bigtable.admin.v2.SnapshotTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_SNAPSHOT_TABLE, responseObserver);
+    }
 
     /**
      * <pre>
@@ -243,7 +259,9 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void getSnapshot(com.google.bigtable.admin.v2.GetSnapshotRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Snapshot> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Snapshot> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_GET_SNAPSHOT, responseObserver);
+    }
 
     /**
      * <pre>
@@ -251,88 +269,100 @@ public class BigtableTableAdminGrpc {
      * </pre>
      */
     public void listSnapshots(com.google.bigtable.admin.v2.ListSnapshotsRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListSnapshotsResponse> responseObserver);
+        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListSnapshotsResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(METHOD_LIST_SNAPSHOTS, responseObserver);
+    }
 
     /**
      * <pre>
      * Permanently deletes the specified snapshot.
      * </pre>
      */
-    public void deleteSnapshot(com.google.bigtable.admin.v2.DeleteSnapshotRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver);
-  }
-
-  @io.grpc.ExperimentalApi
-  public static abstract class AbstractBigtableTableAdmin implements BigtableTableAdmin, io.grpc.BindableService {
-
-    @java.lang.Override
-    public void createTable(com.google.bigtable.admin.v2.CreateTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_CREATE_TABLE, responseObserver);
-    }
-
-    @java.lang.Override
-    public void createTableFromSnapshot(com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest request,
-        io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_CREATE_TABLE_FROM_SNAPSHOT, responseObserver);
-    }
-
-    @java.lang.Override
-    public void listTables(com.google.bigtable.admin.v2.ListTablesRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListTablesResponse> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_LIST_TABLES, responseObserver);
-    }
-
-    @java.lang.Override
-    public void getTable(com.google.bigtable.admin.v2.GetTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_GET_TABLE, responseObserver);
-    }
-
-    @java.lang.Override
-    public void deleteTable(com.google.bigtable.admin.v2.DeleteTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_DELETE_TABLE, responseObserver);
-    }
-
-    @java.lang.Override
-    public void modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_MODIFY_COLUMN_FAMILIES, responseObserver);
-    }
-
-    @java.lang.Override
-    public void dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_DROP_ROW_RANGE, responseObserver);
-    }
-
-    @java.lang.Override
-    public void snapshotTable(com.google.bigtable.admin.v2.SnapshotTableRequest request,
-        io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_SNAPSHOT_TABLE, responseObserver);
-    }
-
-    @java.lang.Override
-    public void getSnapshot(com.google.bigtable.admin.v2.GetSnapshotRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Snapshot> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_GET_SNAPSHOT, responseObserver);
-    }
-
-    @java.lang.Override
-    public void listSnapshots(com.google.bigtable.admin.v2.ListSnapshotsRequest request,
-        io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListSnapshotsResponse> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_LIST_SNAPSHOTS, responseObserver);
-    }
-
-    @java.lang.Override
     public void deleteSnapshot(com.google.bigtable.admin.v2.DeleteSnapshotRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnimplementedUnaryCall(METHOD_DELETE_SNAPSHOT, responseObserver);
     }
 
     @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
-      return BigtableTableAdminGrpc.bindService(this);
+      return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
+          .addMethod(
+            METHOD_CREATE_TABLE,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.CreateTableRequest,
+                com.google.bigtable.admin.v2.Table>(
+                  this, METHODID_CREATE_TABLE)))
+          .addMethod(
+            METHOD_CREATE_TABLE_FROM_SNAPSHOT,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest,
+                com.google.longrunning.Operation>(
+                  this, METHODID_CREATE_TABLE_FROM_SNAPSHOT)))
+          .addMethod(
+            METHOD_LIST_TABLES,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.ListTablesRequest,
+                com.google.bigtable.admin.v2.ListTablesResponse>(
+                  this, METHODID_LIST_TABLES)))
+          .addMethod(
+            METHOD_GET_TABLE,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.GetTableRequest,
+                com.google.bigtable.admin.v2.Table>(
+                  this, METHODID_GET_TABLE)))
+          .addMethod(
+            METHOD_DELETE_TABLE,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.DeleteTableRequest,
+                com.google.protobuf.Empty>(
+                  this, METHODID_DELETE_TABLE)))
+          .addMethod(
+            METHOD_MODIFY_COLUMN_FAMILIES,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest,
+                com.google.bigtable.admin.v2.Table>(
+                  this, METHODID_MODIFY_COLUMN_FAMILIES)))
+          .addMethod(
+            METHOD_DROP_ROW_RANGE,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.DropRowRangeRequest,
+                com.google.protobuf.Empty>(
+                  this, METHODID_DROP_ROW_RANGE)))
+          .addMethod(
+            METHOD_SNAPSHOT_TABLE,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.SnapshotTableRequest,
+                com.google.longrunning.Operation>(
+                  this, METHODID_SNAPSHOT_TABLE)))
+          .addMethod(
+            METHOD_GET_SNAPSHOT,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.GetSnapshotRequest,
+                com.google.bigtable.admin.v2.Snapshot>(
+                  this, METHODID_GET_SNAPSHOT)))
+          .addMethod(
+            METHOD_LIST_SNAPSHOTS,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.ListSnapshotsRequest,
+                com.google.bigtable.admin.v2.ListSnapshotsResponse>(
+                  this, METHODID_LIST_SNAPSHOTS)))
+          .addMethod(
+            METHOD_DELETE_SNAPSHOT,
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.google.bigtable.admin.v2.DeleteSnapshotRequest,
+                com.google.protobuf.Empty>(
+                  this, METHODID_DELETE_SNAPSHOT)))
+          .build();
     }
   }
 
@@ -344,201 +374,7 @@ public class BigtableTableAdminGrpc {
    * the tables.
    * </pre>
    */
-  public static interface BigtableTableAdminBlockingClient {
-
-    /**
-     * <pre>
-     * Creates a new table in the specified instance.
-     * The table can be created with a full set of initial column families,
-     * specified in the request.
-     * </pre>
-     */
-    public com.google.bigtable.admin.v2.Table createTable(com.google.bigtable.admin.v2.CreateTableRequest request);
-
-    /**
-     * <pre>
-     * Creates a new table from the specified snapshot. The target table must
-     * not exist. The snapshot and the table must be in the same instance.
-     * </pre>
-     */
-    public com.google.longrunning.Operation createTableFromSnapshot(com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest request);
-
-    /**
-     * <pre>
-     * Lists all tables served from a specified instance.
-     * </pre>
-     */
-    public com.google.bigtable.admin.v2.ListTablesResponse listTables(com.google.bigtable.admin.v2.ListTablesRequest request);
-
-    /**
-     * <pre>
-     * Gets metadata information about the specified table.
-     * </pre>
-     */
-    public com.google.bigtable.admin.v2.Table getTable(com.google.bigtable.admin.v2.GetTableRequest request);
-
-    /**
-     * <pre>
-     * Permanently deletes a specified table and all of its data.
-     * </pre>
-     */
-    public com.google.protobuf.Empty deleteTable(com.google.bigtable.admin.v2.DeleteTableRequest request);
-
-    /**
-     * <pre>
-     * Atomically performs a series of column family modifications
-     * on the specified table.
-     * </pre>
-     */
-    public com.google.bigtable.admin.v2.Table modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request);
-
-    /**
-     * <pre>
-     * Permanently drop/delete a row range from a specified table. The request can
-     * specify whether to delete all rows in a table, or only those that match a
-     * particular prefix.
-     * </pre>
-     */
-    public com.google.protobuf.Empty dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request);
-
-    /**
-     * <pre>
-     * Creates a new snapshot in the specified cluster from the specified
-     * source table. The cluster and the table must be in the same instance.
-     * </pre>
-     */
-    public com.google.longrunning.Operation snapshotTable(com.google.bigtable.admin.v2.SnapshotTableRequest request);
-
-    /**
-     * <pre>
-     * Gets metadata information about the specified snapshot.
-     * </pre>
-     */
-    public com.google.bigtable.admin.v2.Snapshot getSnapshot(com.google.bigtable.admin.v2.GetSnapshotRequest request);
-
-    /**
-     * <pre>
-     * Lists all snapshots associated with the specified cluster.
-     * </pre>
-     */
-    public com.google.bigtable.admin.v2.ListSnapshotsResponse listSnapshots(com.google.bigtable.admin.v2.ListSnapshotsRequest request);
-
-    /**
-     * <pre>
-     * Permanently deletes the specified snapshot.
-     * </pre>
-     */
-    public com.google.protobuf.Empty deleteSnapshot(com.google.bigtable.admin.v2.DeleteSnapshotRequest request);
-  }
-
-  /**
-   * <pre>
-   * Service for creating, configuring, and deleting Cloud Bigtable tables,
-   * as well as managing table snapshots.
-   * Provides access to the table schemas only, not the data stored within
-   * the tables.
-   * </pre>
-   */
-  public static interface BigtableTableAdminFutureClient {
-
-    /**
-     * <pre>
-     * Creates a new table in the specified instance.
-     * The table can be created with a full set of initial column families,
-     * specified in the request.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> createTable(
-        com.google.bigtable.admin.v2.CreateTableRequest request);
-
-    /**
-     * <pre>
-     * Creates a new table from the specified snapshot. The target table must
-     * not exist. The snapshot and the table must be in the same instance.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.longrunning.Operation> createTableFromSnapshot(
-        com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest request);
-
-    /**
-     * <pre>
-     * Lists all tables served from a specified instance.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.ListTablesResponse> listTables(
-        com.google.bigtable.admin.v2.ListTablesRequest request);
-
-    /**
-     * <pre>
-     * Gets metadata information about the specified table.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> getTable(
-        com.google.bigtable.admin.v2.GetTableRequest request);
-
-    /**
-     * <pre>
-     * Permanently deletes a specified table and all of its data.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteTable(
-        com.google.bigtable.admin.v2.DeleteTableRequest request);
-
-    /**
-     * <pre>
-     * Atomically performs a series of column family modifications
-     * on the specified table.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> modifyColumnFamilies(
-        com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request);
-
-    /**
-     * <pre>
-     * Permanently drop/delete a row range from a specified table. The request can
-     * specify whether to delete all rows in a table, or only those that match a
-     * particular prefix.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> dropRowRange(
-        com.google.bigtable.admin.v2.DropRowRangeRequest request);
-
-    /**
-     * <pre>
-     * Creates a new snapshot in the specified cluster from the specified
-     * source table. The cluster and the table must be in the same instance.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.longrunning.Operation> snapshotTable(
-        com.google.bigtable.admin.v2.SnapshotTableRequest request);
-
-    /**
-     * <pre>
-     * Gets metadata information about the specified snapshot.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Snapshot> getSnapshot(
-        com.google.bigtable.admin.v2.GetSnapshotRequest request);
-
-    /**
-     * <pre>
-     * Lists all snapshots associated with the specified cluster.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.ListSnapshotsResponse> listSnapshots(
-        com.google.bigtable.admin.v2.ListSnapshotsRequest request);
-
-    /**
-     * <pre>
-     * Permanently deletes the specified snapshot.
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteSnapshot(
-        com.google.bigtable.admin.v2.DeleteSnapshotRequest request);
-  }
-
-  public static class BigtableTableAdminStub extends io.grpc.stub.AbstractStub<BigtableTableAdminStub>
-      implements BigtableTableAdmin {
+  public static final class BigtableTableAdminStub extends io.grpc.stub.AbstractStub<BigtableTableAdminStub> {
     private BigtableTableAdminStub(io.grpc.Channel channel) {
       super(channel);
     }
@@ -554,77 +390,128 @@ public class BigtableTableAdminGrpc {
       return new BigtableTableAdminStub(channel, callOptions);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Creates a new table in the specified instance.
+     * The table can be created with a full set of initial column families,
+     * specified in the request.
+     * </pre>
+     */
     public void createTable(com.google.bigtable.admin.v2.CreateTableRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_CREATE_TABLE, getCallOptions()), request, responseObserver);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Creates a new table from the specified snapshot. The target table must
+     * not exist. The snapshot and the table must be in the same instance.
+     * </pre>
+     */
     public void createTableFromSnapshot(com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest request,
         io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_CREATE_TABLE_FROM_SNAPSHOT, getCallOptions()), request, responseObserver);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Lists all tables served from a specified instance.
+     * </pre>
+     */
     public void listTables(com.google.bigtable.admin.v2.ListTablesRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListTablesResponse> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_LIST_TABLES, getCallOptions()), request, responseObserver);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Gets metadata information about the specified table.
+     * </pre>
+     */
     public void getTable(com.google.bigtable.admin.v2.GetTableRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_GET_TABLE, getCallOptions()), request, responseObserver);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Permanently deletes a specified table and all of its data.
+     * </pre>
+     */
     public void deleteTable(com.google.bigtable.admin.v2.DeleteTableRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_DELETE_TABLE, getCallOptions()), request, responseObserver);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Atomically performs a series of column family modifications
+     * on the specified table.
+     * </pre>
+     */
     public void modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Table> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_MODIFY_COLUMN_FAMILIES, getCallOptions()), request, responseObserver);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Permanently drop/delete a row range from a specified table. The request can
+     * specify whether to delete all rows in a table, or only those that match a
+     * particular prefix.
+     * </pre>
+     */
     public void dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_DROP_ROW_RANGE, getCallOptions()), request, responseObserver);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Creates a new snapshot in the specified cluster from the specified
+     * source table. The cluster and the table must be in the same instance.
+     * </pre>
+     */
     public void snapshotTable(com.google.bigtable.admin.v2.SnapshotTableRequest request,
         io.grpc.stub.StreamObserver<com.google.longrunning.Operation> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_SNAPSHOT_TABLE, getCallOptions()), request, responseObserver);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Gets metadata information about the specified snapshot.
+     * </pre>
+     */
     public void getSnapshot(com.google.bigtable.admin.v2.GetSnapshotRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.Snapshot> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_GET_SNAPSHOT, getCallOptions()), request, responseObserver);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Lists all snapshots associated with the specified cluster.
+     * </pre>
+     */
     public void listSnapshots(com.google.bigtable.admin.v2.ListSnapshotsRequest request,
         io.grpc.stub.StreamObserver<com.google.bigtable.admin.v2.ListSnapshotsResponse> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_LIST_SNAPSHOTS, getCallOptions()), request, responseObserver);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Permanently deletes the specified snapshot.
+     * </pre>
+     */
     public void deleteSnapshot(com.google.bigtable.admin.v2.DeleteSnapshotRequest request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
@@ -632,8 +519,15 @@ public class BigtableTableAdminGrpc {
     }
   }
 
-  public static class BigtableTableAdminBlockingStub extends io.grpc.stub.AbstractStub<BigtableTableAdminBlockingStub>
-      implements BigtableTableAdminBlockingClient {
+  /**
+   * <pre>
+   * Service for creating, configuring, and deleting Cloud Bigtable tables,
+   * as well as managing table snapshots.
+   * Provides access to the table schemas only, not the data stored within
+   * the tables.
+   * </pre>
+   */
+  public static final class BigtableTableAdminBlockingStub extends io.grpc.stub.AbstractStub<BigtableTableAdminBlockingStub> {
     private BigtableTableAdminBlockingStub(io.grpc.Channel channel) {
       super(channel);
     }
@@ -649,75 +543,133 @@ public class BigtableTableAdminGrpc {
       return new BigtableTableAdminBlockingStub(channel, callOptions);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Creates a new table in the specified instance.
+     * The table can be created with a full set of initial column families,
+     * specified in the request.
+     * </pre>
+     */
     public com.google.bigtable.admin.v2.Table createTable(com.google.bigtable.admin.v2.CreateTableRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_CREATE_TABLE, getCallOptions(), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Creates a new table from the specified snapshot. The target table must
+     * not exist. The snapshot and the table must be in the same instance.
+     * </pre>
+     */
     public com.google.longrunning.Operation createTableFromSnapshot(com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_CREATE_TABLE_FROM_SNAPSHOT, getCallOptions(), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Lists all tables served from a specified instance.
+     * </pre>
+     */
     public com.google.bigtable.admin.v2.ListTablesResponse listTables(com.google.bigtable.admin.v2.ListTablesRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_LIST_TABLES, getCallOptions(), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Gets metadata information about the specified table.
+     * </pre>
+     */
     public com.google.bigtable.admin.v2.Table getTable(com.google.bigtable.admin.v2.GetTableRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_GET_TABLE, getCallOptions(), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Permanently deletes a specified table and all of its data.
+     * </pre>
+     */
     public com.google.protobuf.Empty deleteTable(com.google.bigtable.admin.v2.DeleteTableRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_DELETE_TABLE, getCallOptions(), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Atomically performs a series of column family modifications
+     * on the specified table.
+     * </pre>
+     */
     public com.google.bigtable.admin.v2.Table modifyColumnFamilies(com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_MODIFY_COLUMN_FAMILIES, getCallOptions(), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Permanently drop/delete a row range from a specified table. The request can
+     * specify whether to delete all rows in a table, or only those that match a
+     * particular prefix.
+     * </pre>
+     */
     public com.google.protobuf.Empty dropRowRange(com.google.bigtable.admin.v2.DropRowRangeRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_DROP_ROW_RANGE, getCallOptions(), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Creates a new snapshot in the specified cluster from the specified
+     * source table. The cluster and the table must be in the same instance.
+     * </pre>
+     */
     public com.google.longrunning.Operation snapshotTable(com.google.bigtable.admin.v2.SnapshotTableRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_SNAPSHOT_TABLE, getCallOptions(), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Gets metadata information about the specified snapshot.
+     * </pre>
+     */
     public com.google.bigtable.admin.v2.Snapshot getSnapshot(com.google.bigtable.admin.v2.GetSnapshotRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_GET_SNAPSHOT, getCallOptions(), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Lists all snapshots associated with the specified cluster.
+     * </pre>
+     */
     public com.google.bigtable.admin.v2.ListSnapshotsResponse listSnapshots(com.google.bigtable.admin.v2.ListSnapshotsRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_LIST_SNAPSHOTS, getCallOptions(), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Permanently deletes the specified snapshot.
+     * </pre>
+     */
     public com.google.protobuf.Empty deleteSnapshot(com.google.bigtable.admin.v2.DeleteSnapshotRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_DELETE_SNAPSHOT, getCallOptions(), request);
     }
   }
 
-  public static class BigtableTableAdminFutureStub extends io.grpc.stub.AbstractStub<BigtableTableAdminFutureStub>
-      implements BigtableTableAdminFutureClient {
+  /**
+   * <pre>
+   * Service for creating, configuring, and deleting Cloud Bigtable tables,
+   * as well as managing table snapshots.
+   * Provides access to the table schemas only, not the data stored within
+   * the tables.
+   * </pre>
+   */
+  public static final class BigtableTableAdminFutureStub extends io.grpc.stub.AbstractStub<BigtableTableAdminFutureStub> {
     private BigtableTableAdminFutureStub(io.grpc.Channel channel) {
       super(channel);
     }
@@ -733,77 +685,128 @@ public class BigtableTableAdminGrpc {
       return new BigtableTableAdminFutureStub(channel, callOptions);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Creates a new table in the specified instance.
+     * The table can be created with a full set of initial column families,
+     * specified in the request.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> createTable(
         com.google.bigtable.admin.v2.CreateTableRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_CREATE_TABLE, getCallOptions()), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Creates a new table from the specified snapshot. The target table must
+     * not exist. The snapshot and the table must be in the same instance.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.longrunning.Operation> createTableFromSnapshot(
         com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_CREATE_TABLE_FROM_SNAPSHOT, getCallOptions()), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Lists all tables served from a specified instance.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.ListTablesResponse> listTables(
         com.google.bigtable.admin.v2.ListTablesRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_LIST_TABLES, getCallOptions()), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Gets metadata information about the specified table.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> getTable(
         com.google.bigtable.admin.v2.GetTableRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_GET_TABLE, getCallOptions()), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Permanently deletes a specified table and all of its data.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteTable(
         com.google.bigtable.admin.v2.DeleteTableRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_DELETE_TABLE, getCallOptions()), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Atomically performs a series of column family modifications
+     * on the specified table.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Table> modifyColumnFamilies(
         com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_MODIFY_COLUMN_FAMILIES, getCallOptions()), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Permanently drop/delete a row range from a specified table. The request can
+     * specify whether to delete all rows in a table, or only those that match a
+     * particular prefix.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> dropRowRange(
         com.google.bigtable.admin.v2.DropRowRangeRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_DROP_ROW_RANGE, getCallOptions()), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Creates a new snapshot in the specified cluster from the specified
+     * source table. The cluster and the table must be in the same instance.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.longrunning.Operation> snapshotTable(
         com.google.bigtable.admin.v2.SnapshotTableRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_SNAPSHOT_TABLE, getCallOptions()), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Gets metadata information about the specified snapshot.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.Snapshot> getSnapshot(
         com.google.bigtable.admin.v2.GetSnapshotRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_GET_SNAPSHOT, getCallOptions()), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Lists all snapshots associated with the specified cluster.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.bigtable.admin.v2.ListSnapshotsResponse> listSnapshots(
         com.google.bigtable.admin.v2.ListSnapshotsRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_LIST_SNAPSHOTS, getCallOptions()), request);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Permanently deletes the specified snapshot.
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> deleteSnapshot(
         com.google.bigtable.admin.v2.DeleteSnapshotRequest request) {
       return futureUnaryCall(
@@ -828,10 +831,10 @@ public class BigtableTableAdminGrpc {
       io.grpc.stub.ServerCalls.ServerStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.ClientStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.BidiStreamingMethod<Req, Resp> {
-    private final BigtableTableAdmin serviceImpl;
+    private final BigtableTableAdminImplBase serviceImpl;
     private final int methodId;
 
-    public MethodHandlers(BigtableTableAdmin serviceImpl, int methodId) {
+    public MethodHandlers(BigtableTableAdminImplBase serviceImpl, int methodId) {
       this.serviceImpl = serviceImpl;
       this.methodId = methodId;
     }
@@ -900,86 +903,19 @@ public class BigtableTableAdminGrpc {
     }
   }
 
-  public static io.grpc.ServerServiceDefinition bindService(
-      final BigtableTableAdmin serviceImpl) {
-    return io.grpc.ServerServiceDefinition.builder(SERVICE_NAME)
-        .addMethod(
-          METHOD_CREATE_TABLE,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.CreateTableRequest,
-              com.google.bigtable.admin.v2.Table>(
-                serviceImpl, METHODID_CREATE_TABLE)))
-        .addMethod(
-          METHOD_CREATE_TABLE_FROM_SNAPSHOT,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest,
-              com.google.longrunning.Operation>(
-                serviceImpl, METHODID_CREATE_TABLE_FROM_SNAPSHOT)))
-        .addMethod(
-          METHOD_LIST_TABLES,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.ListTablesRequest,
-              com.google.bigtable.admin.v2.ListTablesResponse>(
-                serviceImpl, METHODID_LIST_TABLES)))
-        .addMethod(
-          METHOD_GET_TABLE,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.GetTableRequest,
-              com.google.bigtable.admin.v2.Table>(
-                serviceImpl, METHODID_GET_TABLE)))
-        .addMethod(
-          METHOD_DELETE_TABLE,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.DeleteTableRequest,
-              com.google.protobuf.Empty>(
-                serviceImpl, METHODID_DELETE_TABLE)))
-        .addMethod(
-          METHOD_MODIFY_COLUMN_FAMILIES,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest,
-              com.google.bigtable.admin.v2.Table>(
-                serviceImpl, METHODID_MODIFY_COLUMN_FAMILIES)))
-        .addMethod(
-          METHOD_DROP_ROW_RANGE,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.DropRowRangeRequest,
-              com.google.protobuf.Empty>(
-                serviceImpl, METHODID_DROP_ROW_RANGE)))
-        .addMethod(
-          METHOD_SNAPSHOT_TABLE,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.SnapshotTableRequest,
-              com.google.longrunning.Operation>(
-                serviceImpl, METHODID_SNAPSHOT_TABLE)))
-        .addMethod(
-          METHOD_GET_SNAPSHOT,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.GetSnapshotRequest,
-              com.google.bigtable.admin.v2.Snapshot>(
-                serviceImpl, METHODID_GET_SNAPSHOT)))
-        .addMethod(
-          METHOD_LIST_SNAPSHOTS,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.ListSnapshotsRequest,
-              com.google.bigtable.admin.v2.ListSnapshotsResponse>(
-                serviceImpl, METHODID_LIST_SNAPSHOTS)))
-        .addMethod(
-          METHOD_DELETE_SNAPSHOT,
-          asyncUnaryCall(
-            new MethodHandlers<
-              com.google.bigtable.admin.v2.DeleteSnapshotRequest,
-              com.google.protobuf.Empty>(
-                serviceImpl, METHODID_DELETE_SNAPSHOT)))
-        .build();
+  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
+    return new io.grpc.ServiceDescriptor(SERVICE_NAME,
+        METHOD_CREATE_TABLE,
+        METHOD_CREATE_TABLE_FROM_SNAPSHOT,
+        METHOD_LIST_TABLES,
+        METHOD_GET_TABLE,
+        METHOD_DELETE_TABLE,
+        METHOD_MODIFY_COLUMN_FAMILIES,
+        METHOD_DROP_ROW_RANGE,
+        METHOD_SNAPSHOT_TABLE,
+        METHOD_GET_SNAPSHOT,
+        METHOD_LIST_SNAPSHOTS,
+        METHOD_DELETE_SNAPSHOT);
   }
+
 }

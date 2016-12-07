@@ -8,35 +8,33 @@ public interface ColorOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional float red = 1;</code>
-   *
    * <pre>
    * The amount of red in the color as a value in the interval [0, 1].
    * </pre>
+   *
+   * <code>optional float red = 1;</code>
    */
   float getRed();
 
   /**
-   * <code>optional float green = 2;</code>
-   *
    * <pre>
    * The amount of green in the color as a value in the interval [0, 1].
    * </pre>
+   *
+   * <code>optional float green = 2;</code>
    */
   float getGreen();
 
   /**
-   * <code>optional float blue = 3;</code>
-   *
    * <pre>
    * The amount of blue in the color as a value in the interval [0, 1].
    * </pre>
+   *
+   * <code>optional float blue = 3;</code>
    */
   float getBlue();
 
   /**
-   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
-   *
    * <pre>
    * The fraction of this color that should be applied to the pixel. That is,
    * the final pixel color is defined by the equation:
@@ -48,11 +46,11 @@ public interface ColorOrBuilder extends
    * If omitted, this color object is to be rendered as a solid color
    * (as if the alpha value had been explicitly given with a value of 1.0).
    * </pre>
+   *
+   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
    */
   boolean hasAlpha();
   /**
-   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
-   *
    * <pre>
    * The fraction of this color that should be applied to the pixel. That is,
    * the final pixel color is defined by the equation:
@@ -64,11 +62,11 @@ public interface ColorOrBuilder extends
    * If omitted, this color object is to be rendered as a solid color
    * (as if the alpha value had been explicitly given with a value of 1.0).
    * </pre>
+   *
+   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
    */
   com.google.protobuf.FloatValue getAlpha();
   /**
-   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
-   *
    * <pre>
    * The fraction of this color that should be applied to the pixel. That is,
    * the final pixel color is defined by the equation:
@@ -80,6 +78,8 @@ public interface ColorOrBuilder extends
    * If omitted, this color object is to be rendered as a solid color
    * (as if the alpha value had been explicitly given with a value of 1.0).
    * </pre>
+   *
+   * <code>optional .google.protobuf.FloatValue alpha = 4;</code>
    */
   com.google.protobuf.FloatValueOrBuilder getAlphaOrBuilder();
 }

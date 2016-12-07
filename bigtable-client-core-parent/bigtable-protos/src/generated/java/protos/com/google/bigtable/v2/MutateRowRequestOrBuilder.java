@@ -8,86 +8,86 @@ public interface MutateRowRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table to which the mutation should be applied.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   java.lang.String getTableName();
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table to which the mutation should be applied.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   com.google.protobuf.ByteString
       getTableNameBytes();
 
   /**
-   * <code>optional bytes row_key = 2;</code>
-   *
    * <pre>
    * The key of the row to which the mutation should be applied.
    * </pre>
+   *
+   * <code>optional bytes row_key = 2;</code>
    */
   com.google.protobuf.ByteString getRowKey();
 
   /**
-   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row. Entries are applied
    * in order, meaning that earlier mutations can be masked by later ones.
    * Must contain at least one entry and at most 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
    */
   java.util.List<com.google.bigtable.v2.Mutation> 
       getMutationsList();
   /**
-   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row. Entries are applied
    * in order, meaning that earlier mutations can be masked by later ones.
    * Must contain at least one entry and at most 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
    */
   com.google.bigtable.v2.Mutation getMutations(int index);
   /**
-   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row. Entries are applied
    * in order, meaning that earlier mutations can be masked by later ones.
    * Must contain at least one entry and at most 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
    */
   int getMutationsCount();
   /**
-   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row. Entries are applied
    * in order, meaning that earlier mutations can be masked by later ones.
    * Must contain at least one entry and at most 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
    */
   java.util.List<? extends com.google.bigtable.v2.MutationOrBuilder> 
       getMutationsOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row. Entries are applied
    * in order, meaning that earlier mutations can be masked by later ones.
    * Must contain at least one entry and at most 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation mutations = 3;</code>
    */
   com.google.bigtable.v2.MutationOrBuilder getMutationsOrBuilder(
       int index);

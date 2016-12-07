@@ -6,64 +6,70 @@ package com.google.rpc;
 public final class ErrorDetailsProto {
   private ErrorDetailsProto() {}
   public static void registerAllExtensions(
-      com.google.protobuf.ExtensionRegistry registry) {
+      com.google.protobuf.ExtensionRegistryLite registry) {
   }
-  static com.google.protobuf.Descriptors.Descriptor
+
+  public static void registerAllExtensions(
+      com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions(
+        (com.google.protobuf.ExtensionRegistryLite) registry);
+  }
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_rpc_RetryInfo_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_rpc_RetryInfo_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_rpc_DebugInfo_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_rpc_DebugInfo_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_rpc_QuotaFailure_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_rpc_QuotaFailure_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_rpc_QuotaFailure_Violation_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_rpc_QuotaFailure_Violation_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_rpc_BadRequest_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_rpc_BadRequest_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_rpc_BadRequest_FieldViolation_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_rpc_BadRequest_FieldViolation_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_rpc_RequestInfo_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_rpc_RequestInfo_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_rpc_ResourceInfo_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_rpc_ResourceInfo_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_rpc_Help_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_rpc_Help_fieldAccessorTable;
-  static com.google.protobuf.Descriptors.Descriptor
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_google_rpc_Help_Link_descriptor;
-  static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_google_rpc_Help_Link_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
     return descriptor;
   }
-  private static com.google.protobuf.Descriptors.FileDescriptor
+  private static  com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
     java.lang.String[] descriptorData = {
@@ -103,61 +109,61 @@ public final class ErrorDetailsProto {
     internal_static_google_rpc_RetryInfo_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_google_rpc_RetryInfo_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_rpc_RetryInfo_descriptor,
         new java.lang.String[] { "RetryDelay", });
     internal_static_google_rpc_DebugInfo_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_google_rpc_DebugInfo_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_rpc_DebugInfo_descriptor,
         new java.lang.String[] { "StackEntries", "Detail", });
     internal_static_google_rpc_QuotaFailure_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_google_rpc_QuotaFailure_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_rpc_QuotaFailure_descriptor,
         new java.lang.String[] { "Violations", });
     internal_static_google_rpc_QuotaFailure_Violation_descriptor =
       internal_static_google_rpc_QuotaFailure_descriptor.getNestedTypes().get(0);
     internal_static_google_rpc_QuotaFailure_Violation_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_rpc_QuotaFailure_Violation_descriptor,
         new java.lang.String[] { "Subject", "Description", });
     internal_static_google_rpc_BadRequest_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_google_rpc_BadRequest_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_rpc_BadRequest_descriptor,
         new java.lang.String[] { "FieldViolations", });
     internal_static_google_rpc_BadRequest_FieldViolation_descriptor =
       internal_static_google_rpc_BadRequest_descriptor.getNestedTypes().get(0);
     internal_static_google_rpc_BadRequest_FieldViolation_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_rpc_BadRequest_FieldViolation_descriptor,
         new java.lang.String[] { "Field", "Description", });
     internal_static_google_rpc_RequestInfo_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_google_rpc_RequestInfo_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_rpc_RequestInfo_descriptor,
         new java.lang.String[] { "RequestId", "ServingData", });
     internal_static_google_rpc_ResourceInfo_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_google_rpc_ResourceInfo_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_rpc_ResourceInfo_descriptor,
         new java.lang.String[] { "ResourceType", "ResourceName", "Owner", "Description", });
     internal_static_google_rpc_Help_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_google_rpc_Help_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_rpc_Help_descriptor,
         new java.lang.String[] { "Links", });
     internal_static_google_rpc_Help_Link_descriptor =
       internal_static_google_rpc_Help_descriptor.getNestedTypes().get(0);
     internal_static_google_rpc_Help_Link_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_google_rpc_Help_Link_descriptor,
         new java.lang.String[] { "Description", "Url", });
     com.google.protobuf.DurationProto.getDescriptor();

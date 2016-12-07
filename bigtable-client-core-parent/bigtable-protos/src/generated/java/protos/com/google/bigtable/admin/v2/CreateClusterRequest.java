@@ -4,18 +4,18 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.CreateClusterRequest}
- *
  * <pre>
  * Request message for BigtableInstanceAdmin.CreateCluster.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.CreateClusterRequest}
  */
 public  final class CreateClusterRequest extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.CreateClusterRequest)
     CreateClusterRequestOrBuilder {
   // Use CreateClusterRequest.newBuilder() to construct.
-  private CreateClusterRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private CreateClusterRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private CreateClusterRequest() {
@@ -30,7 +30,8 @@ public  final class CreateClusterRequest extends
   }
   private CreateClusterRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -75,11 +76,10 @@ public  final class CreateClusterRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -89,7 +89,7 @@ public  final class CreateClusterRequest extends
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_CreateClusterRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_CreateClusterRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -99,13 +99,13 @@ public  final class CreateClusterRequest extends
   public static final int PARENT_FIELD_NUMBER = 1;
   private volatile java.lang.Object parent_;
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the instance in which to create the new cluster.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public java.lang.String getParent() {
     java.lang.Object ref = parent_;
@@ -120,13 +120,13 @@ public  final class CreateClusterRequest extends
     }
   }
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the instance in which to create the new cluster.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public com.google.protobuf.ByteString
       getParentBytes() {
@@ -145,13 +145,13 @@ public  final class CreateClusterRequest extends
   public static final int CLUSTER_ID_FIELD_NUMBER = 2;
   private volatile java.lang.Object clusterId_;
   /**
-   * <code>optional string cluster_id = 2;</code>
-   *
    * <pre>
    * The ID to be used when referring to the new cluster within its instance,
    * e.g., just `mycluster` rather than
    * `projects/myproject/instances/myinstance/clusters/mycluster`.
    * </pre>
+   *
+   * <code>optional string cluster_id = 2;</code>
    */
   public java.lang.String getClusterId() {
     java.lang.Object ref = clusterId_;
@@ -166,13 +166,13 @@ public  final class CreateClusterRequest extends
     }
   }
   /**
-   * <code>optional string cluster_id = 2;</code>
-   *
    * <pre>
    * The ID to be used when referring to the new cluster within its instance,
    * e.g., just `mycluster` rather than
    * `projects/myproject/instances/myinstance/clusters/mycluster`.
    * </pre>
+   *
+   * <code>optional string cluster_id = 2;</code>
    */
   public com.google.protobuf.ByteString
       getClusterIdBytes() {
@@ -191,34 +191,34 @@ public  final class CreateClusterRequest extends
   public static final int CLUSTER_FIELD_NUMBER = 3;
   private com.google.bigtable.admin.v2.Cluster cluster_;
   /**
-   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-   *
    * <pre>
    * The cluster to be created.
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
    */
   public boolean hasCluster() {
     return cluster_ != null;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-   *
    * <pre>
    * The cluster to be created.
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
    */
   public com.google.bigtable.admin.v2.Cluster getCluster() {
     return cluster_ == null ? com.google.bigtable.admin.v2.Cluster.getDefaultInstance() : cluster_;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-   *
    * <pre>
    * The cluster to be created.
    * Fields marked `OutputOnly` must be left blank.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
    */
   public com.google.bigtable.admin.v2.ClusterOrBuilder getClusterOrBuilder() {
     return getCluster();
@@ -237,10 +237,10 @@ public  final class CreateClusterRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getParentBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, parent_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, parent_);
     }
     if (!getClusterIdBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 2, clusterId_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, clusterId_);
     }
     if (cluster_ != null) {
       output.writeMessage(3, getCluster());
@@ -253,10 +253,10 @@ public  final class CreateClusterRequest extends
 
     size = 0;
     if (!getParentBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, parent_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, parent_);
     }
     if (!getClusterIdBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, clusterId_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, clusterId_);
     }
     if (cluster_ != null) {
       size += com.google.protobuf.CodedOutputStream
@@ -267,6 +267,49 @@ public  final class CreateClusterRequest extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.CreateClusterRequest)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.CreateClusterRequest other = (com.google.bigtable.admin.v2.CreateClusterRequest) obj;
+
+    boolean result = true;
+    result = result && getParent()
+        .equals(other.getParent());
+    result = result && getClusterId()
+        .equals(other.getClusterId());
+    result = result && (hasCluster() == other.hasCluster());
+    if (hasCluster()) {
+      result = result && getCluster()
+          .equals(other.getCluster());
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + PARENT_FIELD_NUMBER;
+    hash = (53 * hash) + getParent().hashCode();
+    hash = (37 * hash) + CLUSTER_ID_FIELD_NUMBER;
+    hash = (53 * hash) + getClusterId().hashCode();
+    if (hasCluster()) {
+      hash = (37 * hash) + CLUSTER_FIELD_NUMBER;
+      hash = (53 * hash) + getCluster().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.CreateClusterRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -290,34 +333,40 @@ public  final class CreateClusterRequest extends
   }
   public static com.google.bigtable.admin.v2.CreateClusterRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateClusterRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.CreateClusterRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateClusterRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.CreateClusterRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateClusterRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -334,19 +383,19 @@ public  final class CreateClusterRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.CreateClusterRequest}
-   *
    * <pre>
    * Request message for BigtableInstanceAdmin.CreateCluster.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.CreateClusterRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.CreateClusterRequest)
       com.google.bigtable.admin.v2.CreateClusterRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -354,7 +403,7 @@ public  final class CreateClusterRequest extends
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_CreateClusterRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_CreateClusterRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -367,12 +416,13 @@ public  final class CreateClusterRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -420,6 +470,32 @@ public  final class CreateClusterRequest extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.CreateClusterRequest) {
         return mergeFrom((com.google.bigtable.admin.v2.CreateClusterRequest)other);
@@ -459,7 +535,7 @@ public  final class CreateClusterRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.CreateClusterRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -470,13 +546,13 @@ public  final class CreateClusterRequest extends
 
     private java.lang.Object parent_ = "";
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the new cluster.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public java.lang.String getParent() {
       java.lang.Object ref = parent_;
@@ -491,13 +567,13 @@ public  final class CreateClusterRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the new cluster.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public com.google.protobuf.ByteString
         getParentBytes() {
@@ -513,13 +589,13 @@ public  final class CreateClusterRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the new cluster.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParent(
         java.lang.String value) {
@@ -532,13 +608,13 @@ public  final class CreateClusterRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the new cluster.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder clearParent() {
       
@@ -547,13 +623,13 @@ public  final class CreateClusterRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the new cluster.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/[a-z][-a-z0-9]*`.
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
@@ -569,13 +645,13 @@ public  final class CreateClusterRequest extends
 
     private java.lang.Object clusterId_ = "";
     /**
-     * <code>optional string cluster_id = 2;</code>
-     *
      * <pre>
      * The ID to be used when referring to the new cluster within its instance,
      * e.g., just `mycluster` rather than
      * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
+     *
+     * <code>optional string cluster_id = 2;</code>
      */
     public java.lang.String getClusterId() {
       java.lang.Object ref = clusterId_;
@@ -590,13 +666,13 @@ public  final class CreateClusterRequest extends
       }
     }
     /**
-     * <code>optional string cluster_id = 2;</code>
-     *
      * <pre>
      * The ID to be used when referring to the new cluster within its instance,
      * e.g., just `mycluster` rather than
      * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
+     *
+     * <code>optional string cluster_id = 2;</code>
      */
     public com.google.protobuf.ByteString
         getClusterIdBytes() {
@@ -612,13 +688,13 @@ public  final class CreateClusterRequest extends
       }
     }
     /**
-     * <code>optional string cluster_id = 2;</code>
-     *
      * <pre>
      * The ID to be used when referring to the new cluster within its instance,
      * e.g., just `mycluster` rather than
      * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
+     *
+     * <code>optional string cluster_id = 2;</code>
      */
     public Builder setClusterId(
         java.lang.String value) {
@@ -631,13 +707,13 @@ public  final class CreateClusterRequest extends
       return this;
     }
     /**
-     * <code>optional string cluster_id = 2;</code>
-     *
      * <pre>
      * The ID to be used when referring to the new cluster within its instance,
      * e.g., just `mycluster` rather than
      * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
+     *
+     * <code>optional string cluster_id = 2;</code>
      */
     public Builder clearClusterId() {
       
@@ -646,13 +722,13 @@ public  final class CreateClusterRequest extends
       return this;
     }
     /**
-     * <code>optional string cluster_id = 2;</code>
-     *
      * <pre>
      * The ID to be used when referring to the new cluster within its instance,
      * e.g., just `mycluster` rather than
      * `projects/myproject/instances/myinstance/clusters/mycluster`.
      * </pre>
+     *
+     * <code>optional string cluster_id = 2;</code>
      */
     public Builder setClusterIdBytes(
         com.google.protobuf.ByteString value) {
@@ -667,26 +743,26 @@ public  final class CreateClusterRequest extends
     }
 
     private com.google.bigtable.admin.v2.Cluster cluster_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.Cluster, com.google.bigtable.admin.v2.Cluster.Builder, com.google.bigtable.admin.v2.ClusterOrBuilder> clusterBuilder_;
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-     *
      * <pre>
      * The cluster to be created.
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public boolean hasCluster() {
       return clusterBuilder_ != null || cluster_ != null;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-     *
      * <pre>
      * The cluster to be created.
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public com.google.bigtable.admin.v2.Cluster getCluster() {
       if (clusterBuilder_ == null) {
@@ -696,12 +772,12 @@ public  final class CreateClusterRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-     *
      * <pre>
      * The cluster to be created.
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public Builder setCluster(com.google.bigtable.admin.v2.Cluster value) {
       if (clusterBuilder_ == null) {
@@ -717,12 +793,12 @@ public  final class CreateClusterRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-     *
      * <pre>
      * The cluster to be created.
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public Builder setCluster(
         com.google.bigtable.admin.v2.Cluster.Builder builderForValue) {
@@ -736,12 +812,12 @@ public  final class CreateClusterRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-     *
      * <pre>
      * The cluster to be created.
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public Builder mergeCluster(com.google.bigtable.admin.v2.Cluster value) {
       if (clusterBuilder_ == null) {
@@ -759,12 +835,12 @@ public  final class CreateClusterRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-     *
      * <pre>
      * The cluster to be created.
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public Builder clearCluster() {
       if (clusterBuilder_ == null) {
@@ -778,12 +854,12 @@ public  final class CreateClusterRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-     *
      * <pre>
      * The cluster to be created.
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public com.google.bigtable.admin.v2.Cluster.Builder getClusterBuilder() {
       
@@ -791,12 +867,12 @@ public  final class CreateClusterRequest extends
       return getClusterFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-     *
      * <pre>
      * The cluster to be created.
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
     public com.google.bigtable.admin.v2.ClusterOrBuilder getClusterOrBuilder() {
       if (clusterBuilder_ != null) {
@@ -807,18 +883,18 @@ public  final class CreateClusterRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
-     *
      * <pre>
      * The cluster to be created.
      * Fields marked `OutputOnly` must be left blank.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Cluster cluster = 3;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.Cluster, com.google.bigtable.admin.v2.Cluster.Builder, com.google.bigtable.admin.v2.ClusterOrBuilder> 
         getClusterFieldBuilder() {
       if (clusterBuilder_ == null) {
-        clusterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        clusterBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.bigtable.admin.v2.Cluster, com.google.bigtable.admin.v2.Cluster.Builder, com.google.bigtable.admin.v2.ClusterOrBuilder>(
                 getCluster(),
                 getParentForChildren(),
@@ -857,16 +933,7 @@ public  final class CreateClusterRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new CreateClusterRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

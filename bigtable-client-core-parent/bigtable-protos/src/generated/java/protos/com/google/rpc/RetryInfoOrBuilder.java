@@ -8,27 +8,27 @@ public interface RetryInfoOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-   *
    * <pre>
    * Clients should wait at least this long between retrying the same request.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
    */
   boolean hasRetryDelay();
   /**
-   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-   *
    * <pre>
    * Clients should wait at least this long between retrying the same request.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
    */
   com.google.protobuf.Duration getRetryDelay();
   /**
-   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-   *
    * <pre>
    * Clients should wait at least this long between retrying the same request.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
    */
   com.google.protobuf.DurationOrBuilder getRetryDelayOrBuilder();
 }

@@ -8,67 +8,67 @@ public interface ListTablesResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested instance.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
    */
   java.util.List<com.google.bigtable.admin.v2.Table> 
       getTablesList();
   /**
-   * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested instance.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
    */
   com.google.bigtable.admin.v2.Table getTables(int index);
   /**
-   * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested instance.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
    */
   int getTablesCount();
   /**
-   * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested instance.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
    */
   java.util.List<? extends com.google.bigtable.admin.v2.TableOrBuilder> 
       getTablesOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
-   *
    * <pre>
    * The tables present in the requested instance.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Table tables = 1;</code>
    */
   com.google.bigtable.admin.v2.TableOrBuilder getTablesOrBuilder(
       int index);
 
   /**
-   * <code>optional string next_page_token = 2;</code>
-   *
    * <pre>
    * Set if not all tables could be returned in a single response.
    * Pass this value to `page_token` in another request to get the next
    * page of results.
    * </pre>
+   *
+   * <code>optional string next_page_token = 2;</code>
    */
   java.lang.String getNextPageToken();
   /**
-   * <code>optional string next_page_token = 2;</code>
-   *
    * <pre>
    * Set if not all tables could be returned in a single response.
    * Pass this value to `page_token` in another request to get the next
    * page of results.
    * </pre>
+   *
+   * <code>optional string next_page_token = 2;</code>
    */
   com.google.protobuf.ByteString
       getNextPageTokenBytes();

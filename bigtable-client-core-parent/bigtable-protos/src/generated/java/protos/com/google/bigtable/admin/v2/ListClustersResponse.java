@@ -4,18 +4,18 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.ListClustersResponse}
- *
  * <pre>
  * Response message for BigtableInstanceAdmin.ListClusters.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.ListClustersResponse}
  */
 public  final class ListClustersResponse extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.ListClustersResponse)
     ListClustersResponseOrBuilder {
   // Use ListClustersResponse.newBuilder() to construct.
-  private ListClustersResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private ListClustersResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private ListClustersResponse() {
@@ -31,7 +31,8 @@ public  final class ListClustersResponse extends
   }
   private ListClustersResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -53,7 +54,8 @@ public  final class ListClustersResponse extends
               clusters_ = new java.util.ArrayList<com.google.bigtable.admin.v2.Cluster>();
               mutable_bitField0_ |= 0x00000001;
             }
-            clusters_.add(input.readMessage(com.google.bigtable.admin.v2.Cluster.parser(), extensionRegistry));
+            clusters_.add(
+                input.readMessage(com.google.bigtable.admin.v2.Cluster.parser(), extensionRegistry));
             break;
           }
           case 18: {
@@ -74,11 +76,10 @@ public  final class ListClustersResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         clusters_ = java.util.Collections.unmodifiableList(clusters_);
@@ -94,7 +95,7 @@ public  final class ListClustersResponse extends
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListClustersResponse_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListClustersResponse_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -105,52 +106,52 @@ public  final class ListClustersResponse extends
   public static final int CLUSTERS_FIELD_NUMBER = 1;
   private java.util.List<com.google.bigtable.admin.v2.Cluster> clusters_;
   /**
-   * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-   *
    * <pre>
    * The list of requested clusters.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
    */
   public java.util.List<com.google.bigtable.admin.v2.Cluster> getClustersList() {
     return clusters_;
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-   *
    * <pre>
    * The list of requested clusters.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
    */
   public java.util.List<? extends com.google.bigtable.admin.v2.ClusterOrBuilder> 
       getClustersOrBuilderList() {
     return clusters_;
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-   *
    * <pre>
    * The list of requested clusters.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
    */
   public int getClustersCount() {
     return clusters_.size();
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-   *
    * <pre>
    * The list of requested clusters.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
    */
   public com.google.bigtable.admin.v2.Cluster getClusters(int index) {
     return clusters_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-   *
    * <pre>
    * The list of requested clusters.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
    */
   public com.google.bigtable.admin.v2.ClusterOrBuilder getClustersOrBuilder(
       int index) {
@@ -160,54 +161,54 @@ public  final class ListClustersResponse extends
   public static final int FAILED_LOCATIONS_FIELD_NUMBER = 2;
   private com.google.protobuf.LazyStringList failedLocations_;
   /**
-   * <code>repeated string failed_locations = 2;</code>
-   *
    * <pre>
    * Locations from which Cluster information could not be retrieved,
    * due to an outage or some other transient condition.
    * Clusters from these locations may be missing from `clusters`,
    * or may only have partial information returned.
    * </pre>
+   *
+   * <code>repeated string failed_locations = 2;</code>
    */
   public com.google.protobuf.ProtocolStringList
       getFailedLocationsList() {
     return failedLocations_;
   }
   /**
-   * <code>repeated string failed_locations = 2;</code>
-   *
    * <pre>
    * Locations from which Cluster information could not be retrieved,
    * due to an outage or some other transient condition.
    * Clusters from these locations may be missing from `clusters`,
    * or may only have partial information returned.
    * </pre>
+   *
+   * <code>repeated string failed_locations = 2;</code>
    */
   public int getFailedLocationsCount() {
     return failedLocations_.size();
   }
   /**
-   * <code>repeated string failed_locations = 2;</code>
-   *
    * <pre>
    * Locations from which Cluster information could not be retrieved,
    * due to an outage or some other transient condition.
    * Clusters from these locations may be missing from `clusters`,
    * or may only have partial information returned.
    * </pre>
+   *
+   * <code>repeated string failed_locations = 2;</code>
    */
   public java.lang.String getFailedLocations(int index) {
     return failedLocations_.get(index);
   }
   /**
-   * <code>repeated string failed_locations = 2;</code>
-   *
    * <pre>
    * Locations from which Cluster information could not be retrieved,
    * due to an outage or some other transient condition.
    * Clusters from these locations may be missing from `clusters`,
    * or may only have partial information returned.
    * </pre>
+   *
+   * <code>repeated string failed_locations = 2;</code>
    */
   public com.google.protobuf.ByteString
       getFailedLocationsBytes(int index) {
@@ -217,13 +218,13 @@ public  final class ListClustersResponse extends
   public static final int NEXT_PAGE_TOKEN_FIELD_NUMBER = 3;
   private volatile java.lang.Object nextPageToken_;
   /**
-   * <code>optional string next_page_token = 3;</code>
-   *
    * <pre>
    * Set if not all clusters could be returned in a single response.
    * Pass this value to `page_token` in another request to get the next
    * page of results.
    * </pre>
+   *
+   * <code>optional string next_page_token = 3;</code>
    */
   public java.lang.String getNextPageToken() {
     java.lang.Object ref = nextPageToken_;
@@ -238,13 +239,13 @@ public  final class ListClustersResponse extends
     }
   }
   /**
-   * <code>optional string next_page_token = 3;</code>
-   *
    * <pre>
    * Set if not all clusters could be returned in a single response.
    * Pass this value to `page_token` in another request to get the next
    * page of results.
    * </pre>
+   *
+   * <code>optional string next_page_token = 3;</code>
    */
   public com.google.protobuf.ByteString
       getNextPageTokenBytes() {
@@ -276,10 +277,10 @@ public  final class ListClustersResponse extends
       output.writeMessage(1, clusters_.get(i));
     }
     for (int i = 0; i < failedLocations_.size(); i++) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 2, failedLocations_.getRaw(i));
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, failedLocations_.getRaw(i));
     }
     if (!getNextPageTokenBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 3, nextPageToken_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, nextPageToken_);
     }
   }
 
@@ -301,13 +302,55 @@ public  final class ListClustersResponse extends
       size += 1 * getFailedLocationsList().size();
     }
     if (!getNextPageTokenBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(3, nextPageToken_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, nextPageToken_);
     }
     memoizedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.ListClustersResponse)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.ListClustersResponse other = (com.google.bigtable.admin.v2.ListClustersResponse) obj;
+
+    boolean result = true;
+    result = result && getClustersList()
+        .equals(other.getClustersList());
+    result = result && getFailedLocationsList()
+        .equals(other.getFailedLocationsList());
+    result = result && getNextPageToken()
+        .equals(other.getNextPageToken());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    if (getClustersCount() > 0) {
+      hash = (37 * hash) + CLUSTERS_FIELD_NUMBER;
+      hash = (53 * hash) + getClustersList().hashCode();
+    }
+    if (getFailedLocationsCount() > 0) {
+      hash = (37 * hash) + FAILED_LOCATIONS_FIELD_NUMBER;
+      hash = (53 * hash) + getFailedLocationsList().hashCode();
+    }
+    hash = (37 * hash) + NEXT_PAGE_TOKEN_FIELD_NUMBER;
+    hash = (53 * hash) + getNextPageToken().hashCode();
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.ListClustersResponse parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -331,34 +374,40 @@ public  final class ListClustersResponse extends
   }
   public static com.google.bigtable.admin.v2.ListClustersResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListClustersResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ListClustersResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListClustersResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.ListClustersResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.ListClustersResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -375,19 +424,19 @@ public  final class ListClustersResponse extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.ListClustersResponse}
-   *
    * <pre>
    * Response message for BigtableInstanceAdmin.ListClusters.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.ListClustersResponse}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.ListClustersResponse)
       com.google.bigtable.admin.v2.ListClustersResponseOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -395,7 +444,7 @@ public  final class ListClustersResponse extends
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListClustersResponse_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.BigtableInstanceAdminProto.internal_static_google_bigtable_admin_v2_ListClustersResponse_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -408,12 +457,13 @@ public  final class ListClustersResponse extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
         getClustersFieldBuilder();
       }
     }
@@ -473,6 +523,32 @@ public  final class ListClustersResponse extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.ListClustersResponse) {
         return mergeFrom((com.google.bigtable.admin.v2.ListClustersResponse)other);
@@ -503,7 +579,7 @@ public  final class ListClustersResponse extends
             clusters_ = other.clusters_;
             bitField0_ = (bitField0_ & ~0x00000001);
             clustersBuilder_ = 
-              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getClustersFieldBuilder() : null;
           } else {
             clustersBuilder_.addAllMessages(other.clusters_);
@@ -541,7 +617,7 @@ public  final class ListClustersResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.ListClustersResponse) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -560,15 +636,15 @@ public  final class ListClustersResponse extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.bigtable.admin.v2.Cluster, com.google.bigtable.admin.v2.Cluster.Builder, com.google.bigtable.admin.v2.ClusterOrBuilder> clustersBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public java.util.List<com.google.bigtable.admin.v2.Cluster> getClustersList() {
       if (clustersBuilder_ == null) {
@@ -578,11 +654,11 @@ public  final class ListClustersResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public int getClustersCount() {
       if (clustersBuilder_ == null) {
@@ -592,11 +668,11 @@ public  final class ListClustersResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public com.google.bigtable.admin.v2.Cluster getClusters(int index) {
       if (clustersBuilder_ == null) {
@@ -606,11 +682,11 @@ public  final class ListClustersResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public Builder setClusters(
         int index, com.google.bigtable.admin.v2.Cluster value) {
@@ -627,11 +703,11 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public Builder setClusters(
         int index, com.google.bigtable.admin.v2.Cluster.Builder builderForValue) {
@@ -645,11 +721,11 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public Builder addClusters(com.google.bigtable.admin.v2.Cluster value) {
       if (clustersBuilder_ == null) {
@@ -665,11 +741,11 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public Builder addClusters(
         int index, com.google.bigtable.admin.v2.Cluster value) {
@@ -686,11 +762,11 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public Builder addClusters(
         com.google.bigtable.admin.v2.Cluster.Builder builderForValue) {
@@ -704,11 +780,11 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public Builder addClusters(
         int index, com.google.bigtable.admin.v2.Cluster.Builder builderForValue) {
@@ -722,11 +798,11 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public Builder addAllClusters(
         java.lang.Iterable<? extends com.google.bigtable.admin.v2.Cluster> values) {
@@ -741,11 +817,11 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public Builder clearClusters() {
       if (clustersBuilder_ == null) {
@@ -758,11 +834,11 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public Builder removeClusters(int index) {
       if (clustersBuilder_ == null) {
@@ -775,22 +851,22 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public com.google.bigtable.admin.v2.Cluster.Builder getClustersBuilder(
         int index) {
       return getClustersFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public com.google.bigtable.admin.v2.ClusterOrBuilder getClustersOrBuilder(
         int index) {
@@ -800,11 +876,11 @@ public  final class ListClustersResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public java.util.List<? extends com.google.bigtable.admin.v2.ClusterOrBuilder> 
          getClustersOrBuilderList() {
@@ -815,22 +891,22 @@ public  final class ListClustersResponse extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public com.google.bigtable.admin.v2.Cluster.Builder addClustersBuilder() {
       return getClustersFieldBuilder().addBuilder(
           com.google.bigtable.admin.v2.Cluster.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public com.google.bigtable.admin.v2.Cluster.Builder addClustersBuilder(
         int index) {
@@ -838,21 +914,21 @@ public  final class ListClustersResponse extends
           index, com.google.bigtable.admin.v2.Cluster.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
-     *
      * <pre>
      * The list of requested clusters.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.admin.v2.Cluster clusters = 1;</code>
      */
     public java.util.List<com.google.bigtable.admin.v2.Cluster.Builder> 
          getClustersBuilderList() {
       return getClustersFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.bigtable.admin.v2.Cluster, com.google.bigtable.admin.v2.Cluster.Builder, com.google.bigtable.admin.v2.ClusterOrBuilder> 
         getClustersFieldBuilder() {
       if (clustersBuilder_ == null) {
-        clustersBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+        clustersBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
             com.google.bigtable.admin.v2.Cluster, com.google.bigtable.admin.v2.Cluster.Builder, com.google.bigtable.admin.v2.ClusterOrBuilder>(
                 clusters_,
                 ((bitField0_ & 0x00000001) == 0x00000001),
@@ -871,68 +947,68 @@ public  final class ListClustersResponse extends
        }
     }
     /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
      * <pre>
      * Locations from which Cluster information could not be retrieved,
      * due to an outage or some other transient condition.
      * Clusters from these locations may be missing from `clusters`,
      * or may only have partial information returned.
      * </pre>
+     *
+     * <code>repeated string failed_locations = 2;</code>
      */
     public com.google.protobuf.ProtocolStringList
         getFailedLocationsList() {
       return failedLocations_.getUnmodifiableView();
     }
     /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
      * <pre>
      * Locations from which Cluster information could not be retrieved,
      * due to an outage or some other transient condition.
      * Clusters from these locations may be missing from `clusters`,
      * or may only have partial information returned.
      * </pre>
+     *
+     * <code>repeated string failed_locations = 2;</code>
      */
     public int getFailedLocationsCount() {
       return failedLocations_.size();
     }
     /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
      * <pre>
      * Locations from which Cluster information could not be retrieved,
      * due to an outage or some other transient condition.
      * Clusters from these locations may be missing from `clusters`,
      * or may only have partial information returned.
      * </pre>
+     *
+     * <code>repeated string failed_locations = 2;</code>
      */
     public java.lang.String getFailedLocations(int index) {
       return failedLocations_.get(index);
     }
     /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
      * <pre>
      * Locations from which Cluster information could not be retrieved,
      * due to an outage or some other transient condition.
      * Clusters from these locations may be missing from `clusters`,
      * or may only have partial information returned.
      * </pre>
+     *
+     * <code>repeated string failed_locations = 2;</code>
      */
     public com.google.protobuf.ByteString
         getFailedLocationsBytes(int index) {
       return failedLocations_.getByteString(index);
     }
     /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
      * <pre>
      * Locations from which Cluster information could not be retrieved,
      * due to an outage or some other transient condition.
      * Clusters from these locations may be missing from `clusters`,
      * or may only have partial information returned.
      * </pre>
+     *
+     * <code>repeated string failed_locations = 2;</code>
      */
     public Builder setFailedLocations(
         int index, java.lang.String value) {
@@ -945,14 +1021,14 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
      * <pre>
      * Locations from which Cluster information could not be retrieved,
      * due to an outage or some other transient condition.
      * Clusters from these locations may be missing from `clusters`,
      * or may only have partial information returned.
      * </pre>
+     *
+     * <code>repeated string failed_locations = 2;</code>
      */
     public Builder addFailedLocations(
         java.lang.String value) {
@@ -965,14 +1041,14 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
      * <pre>
      * Locations from which Cluster information could not be retrieved,
      * due to an outage or some other transient condition.
      * Clusters from these locations may be missing from `clusters`,
      * or may only have partial information returned.
      * </pre>
+     *
+     * <code>repeated string failed_locations = 2;</code>
      */
     public Builder addAllFailedLocations(
         java.lang.Iterable<java.lang.String> values) {
@@ -983,14 +1059,14 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
      * <pre>
      * Locations from which Cluster information could not be retrieved,
      * due to an outage or some other transient condition.
      * Clusters from these locations may be missing from `clusters`,
      * or may only have partial information returned.
      * </pre>
+     *
+     * <code>repeated string failed_locations = 2;</code>
      */
     public Builder clearFailedLocations() {
       failedLocations_ = com.google.protobuf.LazyStringArrayList.EMPTY;
@@ -999,14 +1075,14 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>repeated string failed_locations = 2;</code>
-     *
      * <pre>
      * Locations from which Cluster information could not be retrieved,
      * due to an outage or some other transient condition.
      * Clusters from these locations may be missing from `clusters`,
      * or may only have partial information returned.
      * </pre>
+     *
+     * <code>repeated string failed_locations = 2;</code>
      */
     public Builder addFailedLocationsBytes(
         com.google.protobuf.ByteString value) {
@@ -1022,13 +1098,13 @@ public  final class ListClustersResponse extends
 
     private java.lang.Object nextPageToken_ = "";
     /**
-     * <code>optional string next_page_token = 3;</code>
-     *
      * <pre>
      * Set if not all clusters could be returned in a single response.
      * Pass this value to `page_token` in another request to get the next
      * page of results.
      * </pre>
+     *
+     * <code>optional string next_page_token = 3;</code>
      */
     public java.lang.String getNextPageToken() {
       java.lang.Object ref = nextPageToken_;
@@ -1043,13 +1119,13 @@ public  final class ListClustersResponse extends
       }
     }
     /**
-     * <code>optional string next_page_token = 3;</code>
-     *
      * <pre>
      * Set if not all clusters could be returned in a single response.
      * Pass this value to `page_token` in another request to get the next
      * page of results.
      * </pre>
+     *
+     * <code>optional string next_page_token = 3;</code>
      */
     public com.google.protobuf.ByteString
         getNextPageTokenBytes() {
@@ -1065,13 +1141,13 @@ public  final class ListClustersResponse extends
       }
     }
     /**
-     * <code>optional string next_page_token = 3;</code>
-     *
      * <pre>
      * Set if not all clusters could be returned in a single response.
      * Pass this value to `page_token` in another request to get the next
      * page of results.
      * </pre>
+     *
+     * <code>optional string next_page_token = 3;</code>
      */
     public Builder setNextPageToken(
         java.lang.String value) {
@@ -1084,13 +1160,13 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>optional string next_page_token = 3;</code>
-     *
      * <pre>
      * Set if not all clusters could be returned in a single response.
      * Pass this value to `page_token` in another request to get the next
      * page of results.
      * </pre>
+     *
+     * <code>optional string next_page_token = 3;</code>
      */
     public Builder clearNextPageToken() {
       
@@ -1099,13 +1175,13 @@ public  final class ListClustersResponse extends
       return this;
     }
     /**
-     * <code>optional string next_page_token = 3;</code>
-     *
      * <pre>
      * Set if not all clusters could be returned in a single response.
      * Pass this value to `page_token` in another request to get the next
      * page of results.
      * </pre>
+     *
+     * <code>optional string next_page_token = 3;</code>
      */
     public Builder setNextPageTokenBytes(
         com.google.protobuf.ByteString value) {
@@ -1148,16 +1224,7 @@ public  final class ListClustersResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ListClustersResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

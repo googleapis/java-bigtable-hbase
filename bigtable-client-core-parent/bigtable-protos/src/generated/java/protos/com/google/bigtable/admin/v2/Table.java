@@ -4,19 +4,19 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.Table}
- *
  * <pre>
  * A collection of user data indexed by row, column, and timestamp.
  * Each table is served using the resources of its parent cluster.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.Table}
  */
 public  final class Table extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.Table)
     TableOrBuilder {
   // Use Table.newBuilder() to construct.
-  private Table(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private Table(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private Table() {
@@ -31,7 +31,8 @@ public  final class Table extends
   }
   private Table(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -75,11 +76,10 @@ public  final class Table extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -100,7 +100,7 @@ public  final class Table extends
             "Invalid map field number: " + number);
     }
   }
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Table_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -108,63 +108,71 @@ public  final class Table extends
   }
 
   /**
-   * Protobuf enum {@code google.bigtable.admin.v2.Table.TimestampGranularity}
-   *
    * <pre>
    * Possible timestamp granularities to use when keeping multiple versions
    * of data in a table.
    * </pre>
+   *
+   * Protobuf enum {@code google.bigtable.admin.v2.Table.TimestampGranularity}
    */
   public enum TimestampGranularity
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
-     * <code>TIMESTAMP_GRANULARITY_UNSPECIFIED = 0;</code>
-     *
      * <pre>
      * The user did not specify a granularity. Should not be returned.
      * When specified during table creation, MILLIS will be used.
      * </pre>
-     */
-    TIMESTAMP_GRANULARITY_UNSPECIFIED(0, 0),
-    /**
-     * <code>MILLIS = 1;</code>
      *
+     * <code>TIMESTAMP_GRANULARITY_UNSPECIFIED = 0;</code>
+     */
+    TIMESTAMP_GRANULARITY_UNSPECIFIED(0),
+    /**
      * <pre>
      * The table keeps data versioned at a granularity of 1ms.
      * </pre>
+     *
+     * <code>MILLIS = 1;</code>
      */
-    MILLIS(1, 1),
-    UNRECOGNIZED(-1, -1),
+    MILLIS(1),
+    UNRECOGNIZED(-1),
     ;
 
     /**
-     * <code>TIMESTAMP_GRANULARITY_UNSPECIFIED = 0;</code>
-     *
      * <pre>
      * The user did not specify a granularity. Should not be returned.
      * When specified during table creation, MILLIS will be used.
      * </pre>
+     *
+     * <code>TIMESTAMP_GRANULARITY_UNSPECIFIED = 0;</code>
      */
     public static final int TIMESTAMP_GRANULARITY_UNSPECIFIED_VALUE = 0;
     /**
-     * <code>MILLIS = 1;</code>
-     *
      * <pre>
      * The table keeps data versioned at a granularity of 1ms.
      * </pre>
+     *
+     * <code>MILLIS = 1;</code>
      */
     public static final int MILLIS_VALUE = 1;
 
 
     public final int getNumber() {
-      if (index == -1) {
+      if (this == UNRECOGNIZED) {
         throw new java.lang.IllegalArgumentException(
             "Can't get the number of an unknown enum value.");
       }
       return value;
     }
 
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static TimestampGranularity valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static TimestampGranularity forNumber(int value) {
       switch (value) {
         case 0: return TIMESTAMP_GRANULARITY_UNSPECIFIED;
         case 1: return MILLIS;
@@ -180,13 +188,13 @@ public  final class Table extends
         TimestampGranularity> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<TimestampGranularity>() {
             public TimestampGranularity findValueByNumber(int number) {
-              return TimestampGranularity.valueOf(number);
+              return TimestampGranularity.forNumber(number);
             }
           };
 
     public final com.google.protobuf.Descriptors.EnumValueDescriptor
         getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
+      return getDescriptor().getValues().get(ordinal());
     }
     public final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptorForType() {
@@ -211,11 +219,9 @@ public  final class Table extends
       return VALUES[desc.getIndex()];
     }
 
-    private final int index;
     private final int value;
 
-    private TimestampGranularity(int index, int value) {
-      this.index = index;
+    private TimestampGranularity(int value) {
       this.value = value;
     }
 
@@ -223,92 +229,100 @@ public  final class Table extends
   }
 
   /**
-   * Protobuf enum {@code google.bigtable.admin.v2.Table.View}
-   *
    * <pre>
    * Defines a view over a table's fields.
    * </pre>
+   *
+   * Protobuf enum {@code google.bigtable.admin.v2.Table.View}
    */
   public enum View
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
-     * <code>VIEW_UNSPECIFIED = 0;</code>
-     *
      * <pre>
      * Uses the default view for each method as documented in its request.
      * </pre>
-     */
-    VIEW_UNSPECIFIED(0, 0),
-    /**
-     * <code>NAME_ONLY = 1;</code>
      *
+     * <code>VIEW_UNSPECIFIED = 0;</code>
+     */
+    VIEW_UNSPECIFIED(0),
+    /**
      * <pre>
      * Only populates `name`.
      * </pre>
-     */
-    NAME_ONLY(1, 1),
-    /**
-     * <code>SCHEMA_VIEW = 2;</code>
      *
+     * <code>NAME_ONLY = 1;</code>
+     */
+    NAME_ONLY(1),
+    /**
      * <pre>
      * Only populates `name` and fields related to the table's schema.
      * </pre>
-     */
-    SCHEMA_VIEW(2, 2),
-    /**
-     * <code>FULL = 4;</code>
      *
+     * <code>SCHEMA_VIEW = 2;</code>
+     */
+    SCHEMA_VIEW(2),
+    /**
      * <pre>
      * Populates all fields.
      * </pre>
+     *
+     * <code>FULL = 4;</code>
      */
-    FULL(3, 4),
-    UNRECOGNIZED(-1, -1),
+    FULL(4),
+    UNRECOGNIZED(-1),
     ;
 
     /**
-     * <code>VIEW_UNSPECIFIED = 0;</code>
-     *
      * <pre>
      * Uses the default view for each method as documented in its request.
      * </pre>
+     *
+     * <code>VIEW_UNSPECIFIED = 0;</code>
      */
     public static final int VIEW_UNSPECIFIED_VALUE = 0;
     /**
-     * <code>NAME_ONLY = 1;</code>
-     *
      * <pre>
      * Only populates `name`.
      * </pre>
+     *
+     * <code>NAME_ONLY = 1;</code>
      */
     public static final int NAME_ONLY_VALUE = 1;
     /**
-     * <code>SCHEMA_VIEW = 2;</code>
-     *
      * <pre>
      * Only populates `name` and fields related to the table's schema.
      * </pre>
+     *
+     * <code>SCHEMA_VIEW = 2;</code>
      */
     public static final int SCHEMA_VIEW_VALUE = 2;
     /**
-     * <code>FULL = 4;</code>
-     *
      * <pre>
      * Populates all fields.
      * </pre>
+     *
+     * <code>FULL = 4;</code>
      */
     public static final int FULL_VALUE = 4;
 
 
     public final int getNumber() {
-      if (index == -1) {
+      if (this == UNRECOGNIZED) {
         throw new java.lang.IllegalArgumentException(
             "Can't get the number of an unknown enum value.");
       }
       return value;
     }
 
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static View valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static View forNumber(int value) {
       switch (value) {
         case 0: return VIEW_UNSPECIFIED;
         case 1: return NAME_ONLY;
@@ -326,13 +340,13 @@ public  final class Table extends
         View> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<View>() {
             public View findValueByNumber(int number) {
-              return View.valueOf(number);
+              return View.forNumber(number);
             }
           };
 
     public final com.google.protobuf.Descriptors.EnumValueDescriptor
         getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
+      return getDescriptor().getValues().get(ordinal());
     }
     public final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptorForType() {
@@ -357,11 +371,9 @@ public  final class Table extends
       return VALUES[desc.getIndex()];
     }
 
-    private final int index;
     private final int value;
 
-    private View(int index, int value) {
-      this.index = index;
+    private View(int value) {
       this.value = value;
     }
 
@@ -372,14 +384,14 @@ public  final class Table extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The unique name of the table. Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
    * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -394,14 +406,14 @@ public  final class Table extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The unique name of the table. Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
    * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -436,28 +448,90 @@ public  final class Table extends
     if (columnFamilies_ == null) {
       return com.google.protobuf.MapField.emptyMapField(
           ColumnFamiliesDefaultEntryHolder.defaultEntry);
-   }
+    }
     return columnFamilies_;
   }
+
+  public int getColumnFamiliesCount() {
+    return internalGetColumnFamilies().getMap().size();
+  }
   /**
-   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
-   *
    * <pre>
    * (`CreationOnly`)
    * The column families configured for this table, mapped by column family ID.
    * Views: `SCHEMA_VIEW`, `FULL`
    * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
    */
 
+  public boolean containsColumnFamilies(
+      java.lang.String key) {
+    if (key == null) { throw new java.lang.NullPointerException(); }
+    return internalGetColumnFamilies().getMap().containsKey(key);
+  }
+  /**
+   * Use {@link #getColumnFamiliesMap()} instead.
+   */
+  @java.lang.Deprecated
   public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> getColumnFamilies() {
+    return getColumnFamiliesMap();
+  }
+  /**
+   * <pre>
+   * (`CreationOnly`)
+   * The column families configured for this table, mapped by column family ID.
+   * Views: `SCHEMA_VIEW`, `FULL`
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+
+  public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> getColumnFamiliesMap() {
     return internalGetColumnFamilies().getMap();
+  }
+  /**
+   * <pre>
+   * (`CreationOnly`)
+   * The column families configured for this table, mapped by column family ID.
+   * Views: `SCHEMA_VIEW`, `FULL`
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+
+  public com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrDefault(
+      java.lang.String key,
+      com.google.bigtable.admin.v2.ColumnFamily defaultValue) {
+    if (key == null) { throw new java.lang.NullPointerException(); }
+    java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> map =
+        internalGetColumnFamilies().getMap();
+    return map.containsKey(key) ? map.get(key) : defaultValue;
+  }
+  /**
+   * <pre>
+   * (`CreationOnly`)
+   * The column families configured for this table, mapped by column family ID.
+   * Views: `SCHEMA_VIEW`, `FULL`
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+
+  public com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrThrow(
+      java.lang.String key) {
+    if (key == null) { throw new java.lang.NullPointerException(); }
+    java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> map =
+        internalGetColumnFamilies().getMap();
+    if (!map.containsKey(key)) {
+      throw new java.lang.IllegalArgumentException();
+    }
+    return map.get(key);
   }
 
   public static final int GRANULARITY_FIELD_NUMBER = 4;
   private int granularity_;
   /**
-   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-   *
    * <pre>
    * (`CreationOnly`)
    * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
@@ -465,13 +539,13 @@ public  final class Table extends
    * If unspecified at creation time, the value will be set to `MILLIS`.
    * Views: `SCHEMA_VIEW`, `FULL`
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   public int getGranularityValue() {
     return granularity_;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-   *
    * <pre>
    * (`CreationOnly`)
    * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
@@ -479,6 +553,8 @@ public  final class Table extends
    * If unspecified at creation time, the value will be set to `MILLIS`.
    * Views: `SCHEMA_VIEW`, `FULL`
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   public com.google.bigtable.admin.v2.Table.TimestampGranularity getGranularity() {
     com.google.bigtable.admin.v2.Table.TimestampGranularity result = com.google.bigtable.admin.v2.Table.TimestampGranularity.valueOf(granularity_);
@@ -498,7 +574,7 @@ public  final class Table extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
     }
     for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> entry
          : internalGetColumnFamilies().getMap().entrySet()) {
@@ -520,7 +596,7 @@ public  final class Table extends
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
     }
     for (java.util.Map.Entry<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> entry
          : internalGetColumnFamilies().getMap().entrySet()) {
@@ -541,6 +617,45 @@ public  final class Table extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.Table)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.Table other = (com.google.bigtable.admin.v2.Table) obj;
+
+    boolean result = true;
+    result = result && getName()
+        .equals(other.getName());
+    result = result && internalGetColumnFamilies().equals(
+        other.internalGetColumnFamilies());
+    result = result && granularity_ == other.granularity_;
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getName().hashCode();
+    if (!internalGetColumnFamilies().getMap().isEmpty()) {
+      hash = (37 * hash) + COLUMN_FAMILIES_FIELD_NUMBER;
+      hash = (53 * hash) + internalGetColumnFamilies().hashCode();
+    }
+    hash = (37 * hash) + GRANULARITY_FIELD_NUMBER;
+    hash = (53 * hash) + granularity_;
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.Table parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -564,34 +679,40 @@ public  final class Table extends
   }
   public static com.google.bigtable.admin.v2.Table parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Table parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Table parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Table parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Table parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Table parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -608,20 +729,20 @@ public  final class Table extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.Table}
-   *
    * <pre>
    * A collection of user data indexed by row, column, and timestamp.
    * Each table is served using the resources of its parent cluster.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.Table}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.Table)
       com.google.bigtable.admin.v2.TableOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -651,7 +772,7 @@ public  final class Table extends
               "Invalid map field number: " + number);
       }
     }
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Table_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -664,12 +785,13 @@ public  final class Table extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -712,6 +834,32 @@ public  final class Table extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.Table) {
         return mergeFrom((com.google.bigtable.admin.v2.Table)other);
@@ -749,7 +897,7 @@ public  final class Table extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.Table) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -761,14 +909,14 @@ public  final class Table extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the table. Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
      * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -783,14 +931,14 @@ public  final class Table extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the table. Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
      * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -806,14 +954,14 @@ public  final class Table extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the table. Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
      * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -826,14 +974,14 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the table. Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
      * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -842,14 +990,14 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the table. Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
      * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -870,7 +1018,7 @@ public  final class Table extends
       if (columnFamilies_ == null) {
         return com.google.protobuf.MapField.emptyMapField(
             ColumnFamiliesDefaultEntryHolder.defaultEntry);
-     }
+      }
       return columnFamilies_;
     }
     private com.google.protobuf.MapField<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
@@ -885,40 +1033,139 @@ public  final class Table extends
       }
       return columnFamilies_;
     }
+
+    public int getColumnFamiliesCount() {
+      return internalGetColumnFamilies().getMap().size();
+    }
     /**
-     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
-     *
      * <pre>
      * (`CreationOnly`)
      * The column families configured for this table, mapped by column family ID.
      * Views: `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
      */
+
+    public boolean containsColumnFamilies(
+        java.lang.String key) {
+      if (key == null) { throw new java.lang.NullPointerException(); }
+      return internalGetColumnFamilies().getMap().containsKey(key);
+    }
+    /**
+     * Use {@link #getColumnFamiliesMap()} instead.
+     */
+    @java.lang.Deprecated
     public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> getColumnFamilies() {
+      return getColumnFamiliesMap();
+    }
+    /**
+     * <pre>
+     * (`CreationOnly`)
+     * The column families configured for this table, mapped by column family ID.
+     * Views: `SCHEMA_VIEW`, `FULL`
+     * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+     */
+
+    public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> getColumnFamiliesMap() {
       return internalGetColumnFamilies().getMap();
     }
     /**
-     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
-     *
      * <pre>
      * (`CreationOnly`)
      * The column families configured for this table, mapped by column family ID.
      * Views: `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
      */
+
+    public com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrDefault(
+        java.lang.String key,
+        com.google.bigtable.admin.v2.ColumnFamily defaultValue) {
+      if (key == null) { throw new java.lang.NullPointerException(); }
+      java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> map =
+          internalGetColumnFamilies().getMap();
+      return map.containsKey(key) ? map.get(key) : defaultValue;
+    }
+    /**
+     * <pre>
+     * (`CreationOnly`)
+     * The column families configured for this table, mapped by column family ID.
+     * Views: `SCHEMA_VIEW`, `FULL`
+     * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+     */
+
+    public com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrThrow(
+        java.lang.String key) {
+      if (key == null) { throw new java.lang.NullPointerException(); }
+      java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> map =
+          internalGetColumnFamilies().getMap();
+      if (!map.containsKey(key)) {
+        throw new java.lang.IllegalArgumentException();
+      }
+      return map.get(key);
+    }
+
+    public Builder clearColumnFamilies() {
+      getMutableColumnFamilies().clear();
+      return this;
+    }
+    /**
+     * <pre>
+     * (`CreationOnly`)
+     * The column families configured for this table, mapped by column family ID.
+     * Views: `SCHEMA_VIEW`, `FULL`
+     * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+     */
+
+    public Builder removeColumnFamilies(
+        java.lang.String key) {
+      if (key == null) { throw new java.lang.NullPointerException(); }
+      getMutableColumnFamilies().remove(key);
+      return this;
+    }
+    /**
+     * Use alternate mutation accessors instead.
+     */
+    @java.lang.Deprecated
     public java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
     getMutableColumnFamilies() {
       return internalGetMutableColumnFamilies().getMutableMap();
     }
     /**
-     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
-     *
      * <pre>
      * (`CreationOnly`)
      * The column families configured for this table, mapped by column family ID.
      * Views: `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
      */
+    public Builder putColumnFamilies(
+        java.lang.String key,
+        com.google.bigtable.admin.v2.ColumnFamily value) {
+      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (value == null) { throw new java.lang.NullPointerException(); }
+      getMutableColumnFamilies().put(key, value);
+      return this;
+    }
+    /**
+     * <pre>
+     * (`CreationOnly`)
+     * The column families configured for this table, mapped by column family ID.
+     * Views: `SCHEMA_VIEW`, `FULL`
+     * </pre>
+     *
+     * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+     */
+
     public Builder putAllColumnFamilies(
         java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily> values) {
       getMutableColumnFamilies().putAll(values);
@@ -927,8 +1174,6 @@ public  final class Table extends
 
     private int granularity_ = 0;
     /**
-     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-     *
      * <pre>
      * (`CreationOnly`)
      * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
@@ -936,13 +1181,13 @@ public  final class Table extends
      * If unspecified at creation time, the value will be set to `MILLIS`.
      * Views: `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public int getGranularityValue() {
       return granularity_;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-     *
      * <pre>
      * (`CreationOnly`)
      * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
@@ -950,6 +1195,8 @@ public  final class Table extends
      * If unspecified at creation time, the value will be set to `MILLIS`.
      * Views: `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public Builder setGranularityValue(int value) {
       granularity_ = value;
@@ -957,8 +1204,6 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-     *
      * <pre>
      * (`CreationOnly`)
      * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
@@ -966,14 +1211,14 @@ public  final class Table extends
      * If unspecified at creation time, the value will be set to `MILLIS`.
      * Views: `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public com.google.bigtable.admin.v2.Table.TimestampGranularity getGranularity() {
       com.google.bigtable.admin.v2.Table.TimestampGranularity result = com.google.bigtable.admin.v2.Table.TimestampGranularity.valueOf(granularity_);
       return result == null ? com.google.bigtable.admin.v2.Table.TimestampGranularity.UNRECOGNIZED : result;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-     *
      * <pre>
      * (`CreationOnly`)
      * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
@@ -981,6 +1226,8 @@ public  final class Table extends
      * If unspecified at creation time, the value will be set to `MILLIS`.
      * Views: `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public Builder setGranularity(com.google.bigtable.admin.v2.Table.TimestampGranularity value) {
       if (value == null) {
@@ -992,8 +1239,6 @@ public  final class Table extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-     *
      * <pre>
      * (`CreationOnly`)
      * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
@@ -1001,6 +1246,8 @@ public  final class Table extends
      * If unspecified at creation time, the value will be set to `MILLIS`.
      * Views: `SCHEMA_VIEW`, `FULL`
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
      */
     public Builder clearGranularity() {
       
@@ -1038,16 +1285,7 @@ public  final class Table extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new Table(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 
