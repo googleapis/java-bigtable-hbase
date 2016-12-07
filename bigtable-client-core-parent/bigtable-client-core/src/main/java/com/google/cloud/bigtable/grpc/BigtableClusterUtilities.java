@@ -83,7 +83,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
 
     try {
       Cluster cluster = utils.getCluster(clusterId, zoneId);
-      return new BigtableClusterName(cluster.getName()).getInstanceId();
+      return BigtableClusterName.parse(cluster.getName()).getInstanceId();
     } finally {
       try {
         utils.close();
@@ -171,7 +171,8 @@ public class BigtableClusterUtilities implements AutoCloseable {
   /**
    * Gets a {@link ListClustersResponse} that contains all of the clusters for the
    * projectId/instanceId configuration.
-   * @return the current state of the instance or the project if the instance is "-"
+   * @return all clusters in the instance if the instance ID is provided; otherwise, all clusters in
+   *         project are returned.
    */
   public ListClustersResponse getClusters() {
     logger.info("Reading clusters.");
@@ -202,6 +203,12 @@ public class BigtableClusterUtilities implements AutoCloseable {
     setClusterSize(getSingleCluster(), newSize);
   }
 
+  /**
+   * Update a specific cluster's server node count to the number specified
+   * @param cluster
+   * @param newSize
+   * @throws InterruptedException
+   */
   private void setClusterSize(Cluster cluster, int newSize)
       throws InterruptedException {
     Preconditions.checkArgument(newSize > 0, "Cluster size must be > 0");
@@ -209,75 +216,39 @@ public class BigtableClusterUtilities implements AutoCloseable {
     if (currentSize == newSize) {
       logger.info("Cluster %s already has %d nodes.", getClusterId(cluster), newSize);
     } else {
-      updateClusterSize(cluster.getName(), newSize);
+      String clusterName = cluster.getName();
+      logger.info("Updating cluster %s to size %d", clusterName, newSize);
+      Cluster updatedCluster = Cluster.newBuilder()
+          .setName(clusterName)
+          .setServeNodes(newSize)
+          .build();
+      Operation operation = client.updateCluster(updatedCluster);
+      waitForOperation(operation.getName(), 60);
+      logger.info("Done updating cluster %s.", clusterName);
     }
   }
 
+  /**
+   * @return a Single Cluster for the project and instance.
+   * @throws IllegalStateException for any project / instance combination that does not return
+   *           exactly 1 cluster.
+   */
   public Cluster getSingleCluster() {
-    Preconditions.checkState(getClusters().getClustersCount() != 0,
-        "There must be at least one matching cluster for this method to work");
-    Preconditions.checkState(getClusters().getClustersCount() == 1,
+    ListClustersResponse response = getClusters();
+    Preconditions.checkState(response.getClustersCount() != 0, "The instance does not exist.");
+    Preconditions.checkState(response.getClustersCount() == 1,
       "There can only be one cluster for this method to work.");
-    return getClusters().getClusters(0);
+    return response.getClusters(0);
   }
 
   /**
-   * @param clusterId
-   * @param zoneId
-   * @param incrementCount a positive or negative number to add to the current node count
-   * @return the new size of the cluster.
-   * @throws InterruptedException if the cluster is in the middle of updating, and an interrupt was
-   *           received
+   * Extract the cluster id from the cluster. See {@link BigtableClusterName#getClusterId()} for
+   * more information.
+   * @param cluster A {@link Cluster} with a fully qualified cluster name
+   * @return the id portion of the {@link Cluster#getName()};
    */
-  public int incrementClusterSize(String clusterId, String zoneId, int incrementCount)
-      throws InterruptedException {
-    return incrementClusterSize(incrementCount, getCluster(clusterId, zoneId));
-  }
-
-  /**
-   * Increments the size of an instance with a single cluster.
-   * @param incrementCount a positive or negative number to add to the current node count
-   * @return the new size of the cluster.
-   * @throws InterruptedException if the cluster is in the middle of updating, and an interrupt was
-   *           received
-   */
-  public int incrementClusterSize(int incrementCount)
-      throws InterruptedException {
-    return incrementClusterSize(incrementCount, getSingleCluster());
-  }
-
-  private int incrementClusterSize(int incrementCount, Cluster cluster)
-      throws InterruptedException {
-    Preconditions.checkArgument(incrementCount != 0,
-        "Cluster size cannot be incremented by 0 nodes. incrementCount has to be either positive or negative");
-    String clusterId = getClusterId(cluster);
-    if (incrementCount > 0) {
-      logger.info("Adding %d nodes to cluster %s", incrementCount, clusterId);
-    } else {
-      logger.info("Removing %d nodes from cluster %s", -incrementCount, clusterId);
-    }
-    int newSize = incrementCount + cluster.getServeNodes();
-    updateClusterSize(cluster.getName(), newSize);
-    return newSize;
-  }
-
   private String getClusterId(Cluster cluster) {
-    return new BigtableClusterName(cluster.getName()).getClusterName();
-  }
-
-  /**
-   * Update a cluster to have a specific size
-   *
-   * @param clusterName The fully qualified clusterName
-   * @param newSize The size to update the cluster to.
-   * @throws InterruptedException
-   */
-  private void updateClusterSize(String clusterName, int newSize) throws InterruptedException {
-    logger.info("Updating cluster %s to size %d", clusterName, newSize);
-    Operation operation = client
-        .updateCluster(Cluster.newBuilder().setName(clusterName).setServeNodes(newSize).build());
-    waitForOperation(operation.getName(), 60);
-    logger.info("Done updating cluster %s.", clusterName);
+    return BigtableClusterName.parse(cluster.getName()).getClusterId();
   }
 
   /**

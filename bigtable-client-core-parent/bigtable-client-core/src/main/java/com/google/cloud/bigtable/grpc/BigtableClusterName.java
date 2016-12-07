@@ -27,11 +27,15 @@ import java.util.regex.Pattern;
 public class BigtableClusterName {
   // Use a very loose pattern so we don't validate more strictly than the server.
   private static final Pattern PATTERN =
-      Pattern.compile("projects/.*/instances/(.*)/clusters/(.*)");
+      Pattern.compile("projects/[^/]+/instances/([^/]+)/clusters/([^/]+)");
 
   private final String clusterName;
   private final String instanceId;
   private final String clusterId;
+
+  public static BigtableClusterName parse(String clusterName) {
+    return new BigtableClusterName(clusterName);
+  }
 
   public BigtableClusterName(String clusterName) {
     this.clusterName = clusterName;
@@ -41,6 +45,9 @@ public class BigtableClusterName {
     this.clusterId = matcher.group(2);
   }
 
+  /**
+   * Returns the fully qualified cluster name same thing as {@link #getClusterName()}.
+   */
   @Override
   public String toString() {
     return clusterName;
@@ -48,22 +55,31 @@ public class BigtableClusterName {
 
   /**
    * @return The id of the instance that contains this cluster. It's the second group in the Cluster
-   *         name: projects/(.*)/instances/(.*)/clusters/(.*)
+   *         name: "projects/(.+)/instances/(.+)/clusters/(.+)".
    */
   public String getInstanceId() {
     return instanceId;
   }
 
   /**
-   * @return The id of this cluster. It's the third group in the Cluster name:
-   *         projects/(.*)/instances/(.*)/clusters/(.*)
+   * @return The id of this cluster. It will look like the following
+   *         projects/(.+)/instances/(.+)/clusters/(.+).
    */
   public String getClusterName() {
+    return clusterName;
+  }
+
+  /**
+   * @return The id of this cluster. It's the third group in the Cluster name:
+   *         "projects/(.+)/instances/(.+)/clusters/(.+)".
+   */
+  public String getClusterId() {
     return clusterId;
   }
 
   /**
    * Create a fully qualified snapshot name based on the the clusterName and the snapshotId.
+   * Snapshot name will look like: "projects/(.+)/instances/(.+)/clusters/(.+)/snapshots/(.+)"
    * @param snapshotId The id of the snapshot
    * @return A fully qualified snapshot name that contains the fully qualified cluster name as the
    *         parent and the snapshot name as the child.

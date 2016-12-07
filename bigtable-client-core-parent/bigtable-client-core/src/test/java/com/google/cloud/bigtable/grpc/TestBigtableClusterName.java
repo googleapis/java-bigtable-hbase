@@ -23,19 +23,19 @@ public class TestBigtableClusterName {
   @Test
   public void getInstanceId() {
     String clusterName = "projects/proj/instances/inst/clusters/cluster";
-    Assert.assertEquals("inst", new BigtableClusterName(clusterName).getInstanceId());
+    Assert.assertEquals("inst", BigtableClusterName.parse(clusterName).getInstanceId());
   }
 
   @Test
   public void getClusterId() {
     String clusterName = "projects/proj/instances/inst/clusters/cluster1";
-    Assert.assertEquals("cluster1", new BigtableClusterName(clusterName).getClusterName());
+    Assert.assertEquals("cluster1", BigtableClusterName.parse(clusterName).getClusterId());
   }
 
   @Test
   public void createSnapshotName() throws Exception {
     String clusterName = "projects/proj/instances/inst/clusters/cluster1";
     Assert.assertEquals(clusterName + "/snapshots/snp",
-      new BigtableClusterName(clusterName).toSnapshotName("snp"));
+      BigtableClusterName.parse(clusterName).toSnapshotName("snp"));
   }
 }
