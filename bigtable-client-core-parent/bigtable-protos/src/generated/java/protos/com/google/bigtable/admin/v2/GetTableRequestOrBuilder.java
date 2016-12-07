@@ -8,43 +8,43 @@ public interface GetTableRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the requested table.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the requested table.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
-   *
    * <pre>
    * The view to be applied to the returned table's fields.
    * Defaults to SCHEMA_ONLY if unspecified.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   int getViewValue();
   /**
-   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
-   *
    * <pre>
    * The view to be applied to the returned table's fields.
    * Defaults to SCHEMA_ONLY if unspecified.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table.View view = 2;</code>
    */
   com.google.bigtable.admin.v2.Table.View getView();
 }

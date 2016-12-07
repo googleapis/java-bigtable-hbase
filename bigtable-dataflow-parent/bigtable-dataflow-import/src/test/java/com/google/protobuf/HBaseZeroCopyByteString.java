@@ -17,6 +17,8 @@
  */
  package com.google.protobuf;
 
+import com.google.cloud.bigtable.dataflowimport.ZeroCopyByteStringUtil;
+
 /**
  * Overrides the default HBaseZeroCopyByteString from the hbase implementation so that this class
  * can work with protobuf 3.0.0.
@@ -35,7 +37,7 @@ public final class HBaseZeroCopyByteString  {
    * @return wrapped array
    */
   public static ByteString wrap(final byte[] array) {
-    return new LiteralByteString(array);
+    return ZeroCopyByteStringUtil.wrap(array);
   }
 
   /**
@@ -55,10 +57,6 @@ public final class HBaseZeroCopyByteString  {
    * @return byte[] representation
    */
   public static byte[] zeroCopyGetBytes(final ByteString buf) {
-    if (buf.getClass() == LiteralByteString.class) {
-      return ((LiteralByteString) buf).bytes;
-    } else {
-      return buf.toByteArray();
-    }
+    return ZeroCopyByteStringUtil.get(buf);
   }
 }

@@ -4,18 +4,18 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.DropRowRangeRequest}
- *
  * <pre>
  * Request message for [google.bigtable.admin.v2.BigtableTableAdmin.DropRowRange][google.bigtable.admin.v2.BigtableTableAdmin.DropRowRange]
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.DropRowRangeRequest}
  */
 public  final class DropRowRangeRequest extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.DropRowRangeRequest)
     DropRowRangeRequestOrBuilder {
   // Use DropRowRangeRequest.newBuilder() to construct.
-  private DropRowRangeRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private DropRowRangeRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private DropRowRangeRequest() {
@@ -29,7 +29,8 @@ public  final class DropRowRangeRequest extends
   }
   private DropRowRangeRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -65,11 +66,10 @@ public  final class DropRowRangeRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -79,7 +79,7 @@ public  final class DropRowRangeRequest extends
     return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DropRowRangeRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DropRowRangeRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -93,17 +93,24 @@ public  final class DropRowRangeRequest extends
     ROW_KEY_PREFIX(2),
     DELETE_ALL_DATA_FROM_TABLE(3),
     TARGET_NOT_SET(0);
-    private int value = 0;
+    private final int value;
     private TargetCase(int value) {
       this.value = value;
     }
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static TargetCase valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static TargetCase forNumber(int value) {
       switch (value) {
         case 2: return ROW_KEY_PREFIX;
         case 3: return DELETE_ALL_DATA_FROM_TABLE;
         case 0: return TARGET_NOT_SET;
-        default: throw new java.lang.IllegalArgumentException(
-          "Value is undefined for this oneof enum.");
+        default: return null;
       }
     }
     public int getNumber() {
@@ -113,20 +120,20 @@ public  final class DropRowRangeRequest extends
 
   public TargetCase
   getTargetCase() {
-    return TargetCase.valueOf(
+    return TargetCase.forNumber(
         targetCase_);
   }
 
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the table on which to drop a range of rows.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -141,13 +148,13 @@ public  final class DropRowRangeRequest extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * The unique name of the table on which to drop a range of rows.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -165,12 +172,12 @@ public  final class DropRowRangeRequest extends
 
   public static final int ROW_KEY_PREFIX_FIELD_NUMBER = 2;
   /**
-   * <code>optional bytes row_key_prefix = 2;</code>
-   *
    * <pre>
    * Delete all rows that start with this row key prefix. Prefix cannot be
    * zero length.
    * </pre>
+   *
+   * <code>optional bytes row_key_prefix = 2;</code>
    */
   public com.google.protobuf.ByteString getRowKeyPrefix() {
     if (targetCase_ == 2) {
@@ -181,11 +188,11 @@ public  final class DropRowRangeRequest extends
 
   public static final int DELETE_ALL_DATA_FROM_TABLE_FIELD_NUMBER = 3;
   /**
-   * <code>optional bool delete_all_data_from_table = 3;</code>
-   *
    * <pre>
    * Delete all rows in the table. Setting this to false is a no-op.
    * </pre>
+   *
+   * <code>optional bool delete_all_data_from_table = 3;</code>
    */
   public boolean getDeleteAllDataFromTable() {
     if (targetCase_ == 3) {
@@ -207,7 +214,7 @@ public  final class DropRowRangeRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
     }
     if (targetCase_ == 2) {
       output.writeBytes(
@@ -225,7 +232,7 @@ public  final class DropRowRangeRequest extends
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
     }
     if (targetCase_ == 2) {
       size += com.google.protobuf.CodedOutputStream
@@ -242,6 +249,64 @@ public  final class DropRowRangeRequest extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.DropRowRangeRequest)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.DropRowRangeRequest other = (com.google.bigtable.admin.v2.DropRowRangeRequest) obj;
+
+    boolean result = true;
+    result = result && getName()
+        .equals(other.getName());
+    result = result && getTargetCase().equals(
+        other.getTargetCase());
+    if (!result) return false;
+    switch (targetCase_) {
+      case 2:
+        result = result && getRowKeyPrefix()
+            .equals(other.getRowKeyPrefix());
+        break;
+      case 3:
+        result = result && (getDeleteAllDataFromTable()
+            == other.getDeleteAllDataFromTable());
+        break;
+      case 0:
+      default:
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getName().hashCode();
+    switch (targetCase_) {
+      case 2:
+        hash = (37 * hash) + ROW_KEY_PREFIX_FIELD_NUMBER;
+        hash = (53 * hash) + getRowKeyPrefix().hashCode();
+        break;
+      case 3:
+        hash = (37 * hash) + DELETE_ALL_DATA_FROM_TABLE_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getDeleteAllDataFromTable());
+        break;
+      case 0:
+      default:
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.DropRowRangeRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -265,34 +330,40 @@ public  final class DropRowRangeRequest extends
   }
   public static com.google.bigtable.admin.v2.DropRowRangeRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.DropRowRangeRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.DropRowRangeRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.DropRowRangeRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.DropRowRangeRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.DropRowRangeRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -309,19 +380,19 @@ public  final class DropRowRangeRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.DropRowRangeRequest}
-   *
    * <pre>
    * Request message for [google.bigtable.admin.v2.BigtableTableAdmin.DropRowRange][google.bigtable.admin.v2.BigtableTableAdmin.DropRowRange]
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.DropRowRangeRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.DropRowRangeRequest)
       com.google.bigtable.admin.v2.DropRowRangeRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -329,7 +400,7 @@ public  final class DropRowRangeRequest extends
       return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DropRowRangeRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_DropRowRangeRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -342,12 +413,13 @@ public  final class DropRowRangeRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -390,6 +462,32 @@ public  final class DropRowRangeRequest extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.DropRowRangeRequest) {
         return mergeFrom((com.google.bigtable.admin.v2.DropRowRangeRequest)other);
@@ -435,7 +533,7 @@ public  final class DropRowRangeRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.DropRowRangeRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -447,7 +545,7 @@ public  final class DropRowRangeRequest extends
     private java.lang.Object target_;
     public TargetCase
         getTargetCase() {
-      return TargetCase.valueOf(
+      return TargetCase.forNumber(
           targetCase_);
     }
 
@@ -461,13 +559,13 @@ public  final class DropRowRangeRequest extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table on which to drop a range of rows.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -482,13 +580,13 @@ public  final class DropRowRangeRequest extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table on which to drop a range of rows.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -504,13 +602,13 @@ public  final class DropRowRangeRequest extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table on which to drop a range of rows.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -523,13 +621,13 @@ public  final class DropRowRangeRequest extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table on which to drop a range of rows.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -538,13 +636,13 @@ public  final class DropRowRangeRequest extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * The unique name of the table on which to drop a range of rows.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -559,12 +657,12 @@ public  final class DropRowRangeRequest extends
     }
 
     /**
-     * <code>optional bytes row_key_prefix = 2;</code>
-     *
      * <pre>
      * Delete all rows that start with this row key prefix. Prefix cannot be
      * zero length.
      * </pre>
+     *
+     * <code>optional bytes row_key_prefix = 2;</code>
      */
     public com.google.protobuf.ByteString getRowKeyPrefix() {
       if (targetCase_ == 2) {
@@ -573,12 +671,12 @@ public  final class DropRowRangeRequest extends
       return com.google.protobuf.ByteString.EMPTY;
     }
     /**
-     * <code>optional bytes row_key_prefix = 2;</code>
-     *
      * <pre>
      * Delete all rows that start with this row key prefix. Prefix cannot be
      * zero length.
      * </pre>
+     *
+     * <code>optional bytes row_key_prefix = 2;</code>
      */
     public Builder setRowKeyPrefix(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -590,12 +688,12 @@ public  final class DropRowRangeRequest extends
       return this;
     }
     /**
-     * <code>optional bytes row_key_prefix = 2;</code>
-     *
      * <pre>
      * Delete all rows that start with this row key prefix. Prefix cannot be
      * zero length.
      * </pre>
+     *
+     * <code>optional bytes row_key_prefix = 2;</code>
      */
     public Builder clearRowKeyPrefix() {
       if (targetCase_ == 2) {
@@ -607,11 +705,11 @@ public  final class DropRowRangeRequest extends
     }
 
     /**
-     * <code>optional bool delete_all_data_from_table = 3;</code>
-     *
      * <pre>
      * Delete all rows in the table. Setting this to false is a no-op.
      * </pre>
+     *
+     * <code>optional bool delete_all_data_from_table = 3;</code>
      */
     public boolean getDeleteAllDataFromTable() {
       if (targetCase_ == 3) {
@@ -620,11 +718,11 @@ public  final class DropRowRangeRequest extends
       return false;
     }
     /**
-     * <code>optional bool delete_all_data_from_table = 3;</code>
-     *
      * <pre>
      * Delete all rows in the table. Setting this to false is a no-op.
      * </pre>
+     *
+     * <code>optional bool delete_all_data_from_table = 3;</code>
      */
     public Builder setDeleteAllDataFromTable(boolean value) {
       targetCase_ = 3;
@@ -633,11 +731,11 @@ public  final class DropRowRangeRequest extends
       return this;
     }
     /**
-     * <code>optional bool delete_all_data_from_table = 3;</code>
-     *
      * <pre>
      * Delete all rows in the table. Setting this to false is a no-op.
      * </pre>
+     *
+     * <code>optional bool delete_all_data_from_table = 3;</code>
      */
     public Builder clearDeleteAllDataFromTable() {
       if (targetCase_ == 3) {
@@ -677,16 +775,7 @@ public  final class DropRowRangeRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new DropRowRangeRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

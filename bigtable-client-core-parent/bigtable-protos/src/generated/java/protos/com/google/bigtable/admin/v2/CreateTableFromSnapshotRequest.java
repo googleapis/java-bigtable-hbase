@@ -7,11 +7,11 @@ package com.google.bigtable.admin.v2;
  * Protobuf type {@code google.bigtable.admin.v2.CreateTableFromSnapshotRequest}
  */
 public  final class CreateTableFromSnapshotRequest extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.CreateTableFromSnapshotRequest)
     CreateTableFromSnapshotRequestOrBuilder {
   // Use CreateTableFromSnapshotRequest.newBuilder() to construct.
-  private CreateTableFromSnapshotRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private CreateTableFromSnapshotRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private CreateTableFromSnapshotRequest() {
@@ -27,7 +27,8 @@ public  final class CreateTableFromSnapshotRequest extends
   }
   private CreateTableFromSnapshotRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -65,11 +66,10 @@ public  final class CreateTableFromSnapshotRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -79,7 +79,7 @@ public  final class CreateTableFromSnapshotRequest extends
     return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_CreateTableFromSnapshotRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_CreateTableFromSnapshotRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -89,12 +89,12 @@ public  final class CreateTableFromSnapshotRequest extends
   public static final int PARENT_FIELD_NUMBER = 1;
   private volatile java.lang.Object parent_;
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the instance in which to create the table.
    * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public java.lang.String getParent() {
     java.lang.Object ref = parent_;
@@ -109,12 +109,12 @@ public  final class CreateTableFromSnapshotRequest extends
     }
   }
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the instance in which to create the table.
    * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   public com.google.protobuf.ByteString
       getParentBytes() {
@@ -133,12 +133,12 @@ public  final class CreateTableFromSnapshotRequest extends
   public static final int TABLE_ID_FIELD_NUMBER = 2;
   private volatile java.lang.Object tableId_;
   /**
-   * <code>optional string table_id = 2;</code>
-   *
    * <pre>
    * The name by which the new table should be referred to within the parent
    * instance, e.g., `foobar` rather than `&lt;parent&gt;/tables/foobar`.
    * </pre>
+   *
+   * <code>optional string table_id = 2;</code>
    */
   public java.lang.String getTableId() {
     java.lang.Object ref = tableId_;
@@ -153,12 +153,12 @@ public  final class CreateTableFromSnapshotRequest extends
     }
   }
   /**
-   * <code>optional string table_id = 2;</code>
-   *
    * <pre>
    * The name by which the new table should be referred to within the parent
    * instance, e.g., `foobar` rather than `&lt;parent&gt;/tables/foobar`.
    * </pre>
+   *
+   * <code>optional string table_id = 2;</code>
    */
   public com.google.protobuf.ByteString
       getTableIdBytes() {
@@ -177,14 +177,14 @@ public  final class CreateTableFromSnapshotRequest extends
   public static final int SOURCE_SNAPSHOT_FIELD_NUMBER = 3;
   private volatile java.lang.Object sourceSnapshot_;
   /**
-   * <code>optional string source_snapshot = 3;</code>
-   *
    * <pre>
    * The unique name of the snapshot from which to restore the table. The
    * snapshot and the table must be in the same instance.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
    * </pre>
+   *
+   * <code>optional string source_snapshot = 3;</code>
    */
   public java.lang.String getSourceSnapshot() {
     java.lang.Object ref = sourceSnapshot_;
@@ -199,14 +199,14 @@ public  final class CreateTableFromSnapshotRequest extends
     }
   }
   /**
-   * <code>optional string source_snapshot = 3;</code>
-   *
    * <pre>
    * The unique name of the snapshot from which to restore the table. The
    * snapshot and the table must be in the same instance.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
    * </pre>
+   *
+   * <code>optional string source_snapshot = 3;</code>
    */
   public com.google.protobuf.ByteString
       getSourceSnapshotBytes() {
@@ -235,13 +235,13 @@ public  final class CreateTableFromSnapshotRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getParentBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, parent_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, parent_);
     }
     if (!getTableIdBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 2, tableId_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, tableId_);
     }
     if (!getSourceSnapshotBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 3, sourceSnapshot_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, sourceSnapshot_);
     }
   }
 
@@ -251,19 +251,57 @@ public  final class CreateTableFromSnapshotRequest extends
 
     size = 0;
     if (!getParentBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, parent_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, parent_);
     }
     if (!getTableIdBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, tableId_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, tableId_);
     }
     if (!getSourceSnapshotBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(3, sourceSnapshot_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, sourceSnapshot_);
     }
     memoizedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest other = (com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest) obj;
+
+    boolean result = true;
+    result = result && getParent()
+        .equals(other.getParent());
+    result = result && getTableId()
+        .equals(other.getTableId());
+    result = result && getSourceSnapshot()
+        .equals(other.getSourceSnapshot());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + PARENT_FIELD_NUMBER;
+    hash = (53 * hash) + getParent().hashCode();
+    hash = (37 * hash) + TABLE_ID_FIELD_NUMBER;
+    hash = (53 * hash) + getTableId().hashCode();
+    hash = (37 * hash) + SOURCE_SNAPSHOT_FIELD_NUMBER;
+    hash = (53 * hash) + getSourceSnapshot().hashCode();
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -287,34 +325,40 @@ public  final class CreateTableFromSnapshotRequest extends
   }
   public static com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -331,7 +375,7 @@ public  final class CreateTableFromSnapshotRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -339,7 +383,7 @@ public  final class CreateTableFromSnapshotRequest extends
    * Protobuf type {@code google.bigtable.admin.v2.CreateTableFromSnapshotRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.CreateTableFromSnapshotRequest)
       com.google.bigtable.admin.v2.CreateTableFromSnapshotRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -347,7 +391,7 @@ public  final class CreateTableFromSnapshotRequest extends
       return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_CreateTableFromSnapshotRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.BigtableTableAdminProto.internal_static_google_bigtable_admin_v2_CreateTableFromSnapshotRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -360,12 +404,13 @@ public  final class CreateTableFromSnapshotRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -405,6 +450,32 @@ public  final class CreateTableFromSnapshotRequest extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest) {
         return mergeFrom((com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest)other);
@@ -445,7 +516,7 @@ public  final class CreateTableFromSnapshotRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -456,12 +527,12 @@ public  final class CreateTableFromSnapshotRequest extends
 
     private java.lang.Object parent_ = "";
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the table.
      * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public java.lang.String getParent() {
       java.lang.Object ref = parent_;
@@ -476,12 +547,12 @@ public  final class CreateTableFromSnapshotRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the table.
      * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public com.google.protobuf.ByteString
         getParentBytes() {
@@ -497,12 +568,12 @@ public  final class CreateTableFromSnapshotRequest extends
       }
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the table.
      * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParent(
         java.lang.String value) {
@@ -515,12 +586,12 @@ public  final class CreateTableFromSnapshotRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the table.
      * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder clearParent() {
       
@@ -529,12 +600,12 @@ public  final class CreateTableFromSnapshotRequest extends
       return this;
     }
     /**
-     * <code>optional string parent = 1;</code>
-     *
      * <pre>
      * The unique name of the instance in which to create the table.
      * Values are of the form `projects/&lt;project&gt;/instances/&lt;instance&gt;`.
      * </pre>
+     *
+     * <code>optional string parent = 1;</code>
      */
     public Builder setParentBytes(
         com.google.protobuf.ByteString value) {
@@ -550,12 +621,12 @@ public  final class CreateTableFromSnapshotRequest extends
 
     private java.lang.Object tableId_ = "";
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the parent
      * instance, e.g., `foobar` rather than `&lt;parent&gt;/tables/foobar`.
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public java.lang.String getTableId() {
       java.lang.Object ref = tableId_;
@@ -570,12 +641,12 @@ public  final class CreateTableFromSnapshotRequest extends
       }
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the parent
      * instance, e.g., `foobar` rather than `&lt;parent&gt;/tables/foobar`.
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public com.google.protobuf.ByteString
         getTableIdBytes() {
@@ -591,12 +662,12 @@ public  final class CreateTableFromSnapshotRequest extends
       }
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the parent
      * instance, e.g., `foobar` rather than `&lt;parent&gt;/tables/foobar`.
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public Builder setTableId(
         java.lang.String value) {
@@ -609,12 +680,12 @@ public  final class CreateTableFromSnapshotRequest extends
       return this;
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the parent
      * instance, e.g., `foobar` rather than `&lt;parent&gt;/tables/foobar`.
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public Builder clearTableId() {
       
@@ -623,12 +694,12 @@ public  final class CreateTableFromSnapshotRequest extends
       return this;
     }
     /**
-     * <code>optional string table_id = 2;</code>
-     *
      * <pre>
      * The name by which the new table should be referred to within the parent
      * instance, e.g., `foobar` rather than `&lt;parent&gt;/tables/foobar`.
      * </pre>
+     *
+     * <code>optional string table_id = 2;</code>
      */
     public Builder setTableIdBytes(
         com.google.protobuf.ByteString value) {
@@ -644,14 +715,14 @@ public  final class CreateTableFromSnapshotRequest extends
 
     private java.lang.Object sourceSnapshot_ = "";
     /**
-     * <code>optional string source_snapshot = 3;</code>
-     *
      * <pre>
      * The unique name of the snapshot from which to restore the table. The
      * snapshot and the table must be in the same instance.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
+     *
+     * <code>optional string source_snapshot = 3;</code>
      */
     public java.lang.String getSourceSnapshot() {
       java.lang.Object ref = sourceSnapshot_;
@@ -666,14 +737,14 @@ public  final class CreateTableFromSnapshotRequest extends
       }
     }
     /**
-     * <code>optional string source_snapshot = 3;</code>
-     *
      * <pre>
      * The unique name of the snapshot from which to restore the table. The
      * snapshot and the table must be in the same instance.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
+     *
+     * <code>optional string source_snapshot = 3;</code>
      */
     public com.google.protobuf.ByteString
         getSourceSnapshotBytes() {
@@ -689,14 +760,14 @@ public  final class CreateTableFromSnapshotRequest extends
       }
     }
     /**
-     * <code>optional string source_snapshot = 3;</code>
-     *
      * <pre>
      * The unique name of the snapshot from which to restore the table. The
      * snapshot and the table must be in the same instance.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
+     *
+     * <code>optional string source_snapshot = 3;</code>
      */
     public Builder setSourceSnapshot(
         java.lang.String value) {
@@ -709,14 +780,14 @@ public  final class CreateTableFromSnapshotRequest extends
       return this;
     }
     /**
-     * <code>optional string source_snapshot = 3;</code>
-     *
      * <pre>
      * The unique name of the snapshot from which to restore the table. The
      * snapshot and the table must be in the same instance.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
+     *
+     * <code>optional string source_snapshot = 3;</code>
      */
     public Builder clearSourceSnapshot() {
       
@@ -725,14 +796,14 @@ public  final class CreateTableFromSnapshotRequest extends
       return this;
     }
     /**
-     * <code>optional string source_snapshot = 3;</code>
-     *
      * <pre>
      * The unique name of the snapshot from which to restore the table. The
      * snapshot and the table must be in the same instance.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
+     *
+     * <code>optional string source_snapshot = 3;</code>
      */
     public Builder setSourceSnapshotBytes(
         com.google.protobuf.ByteString value) {
@@ -775,16 +846,7 @@ public  final class CreateTableFromSnapshotRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new CreateTableFromSnapshotRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

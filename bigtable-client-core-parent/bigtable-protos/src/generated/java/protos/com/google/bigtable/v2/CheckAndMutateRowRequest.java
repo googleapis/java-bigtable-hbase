@@ -4,18 +4,18 @@
 package com.google.bigtable.v2;
 
 /**
- * Protobuf type {@code google.bigtable.v2.CheckAndMutateRowRequest}
- *
  * <pre>
  * Request message for Bigtable.CheckAndMutateRow.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v2.CheckAndMutateRowRequest}
  */
 public  final class CheckAndMutateRowRequest extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.CheckAndMutateRowRequest)
     CheckAndMutateRowRequestOrBuilder {
   // Use CheckAndMutateRowRequest.newBuilder() to construct.
-  private CheckAndMutateRowRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private CheckAndMutateRowRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private CheckAndMutateRowRequest() {
@@ -32,7 +32,8 @@ public  final class CheckAndMutateRowRequest extends
   }
   private CheckAndMutateRowRequest(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -65,7 +66,8 @@ public  final class CheckAndMutateRowRequest extends
               trueMutations_ = new java.util.ArrayList<com.google.bigtable.v2.Mutation>();
               mutable_bitField0_ |= 0x00000008;
             }
-            trueMutations_.add(input.readMessage(com.google.bigtable.v2.Mutation.parser(), extensionRegistry));
+            trueMutations_.add(
+                input.readMessage(com.google.bigtable.v2.Mutation.parser(), extensionRegistry));
             break;
           }
           case 42: {
@@ -73,7 +75,8 @@ public  final class CheckAndMutateRowRequest extends
               falseMutations_ = new java.util.ArrayList<com.google.bigtable.v2.Mutation>();
               mutable_bitField0_ |= 0x00000010;
             }
-            falseMutations_.add(input.readMessage(com.google.bigtable.v2.Mutation.parser(), extensionRegistry));
+            falseMutations_.add(
+                input.readMessage(com.google.bigtable.v2.Mutation.parser(), extensionRegistry));
             break;
           }
           case 50: {
@@ -92,11 +95,10 @@ public  final class CheckAndMutateRowRequest extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
         trueMutations_ = java.util.Collections.unmodifiableList(trueMutations_);
@@ -112,7 +114,7 @@ public  final class CheckAndMutateRowRequest extends
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_CheckAndMutateRowRequest_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_CheckAndMutateRowRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -123,14 +125,14 @@ public  final class CheckAndMutateRowRequest extends
   public static final int TABLE_NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object tableName_;
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table to which the conditional mutation should be
    * applied.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   public java.lang.String getTableName() {
     java.lang.Object ref = tableName_;
@@ -145,14 +147,14 @@ public  final class CheckAndMutateRowRequest extends
     }
   }
   /**
-   * <code>optional string table_name = 1;</code>
-   *
    * <pre>
    * The unique name of the table to which the conditional mutation should be
    * applied.
    * Values are of the form
    * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
    * </pre>
+   *
+   * <code>optional string table_name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getTableNameBytes() {
@@ -171,11 +173,11 @@ public  final class CheckAndMutateRowRequest extends
   public static final int ROW_KEY_FIELD_NUMBER = 2;
   private com.google.protobuf.ByteString rowKey_;
   /**
-   * <code>optional bytes row_key = 2;</code>
-   *
    * <pre>
    * The key of the row to which the conditional mutation should be applied.
    * </pre>
+   *
+   * <code>optional bytes row_key = 2;</code>
    */
   public com.google.protobuf.ByteString getRowKey() {
     return rowKey_;
@@ -184,40 +186,40 @@ public  final class CheckAndMutateRowRequest extends
   public static final int PREDICATE_FILTER_FIELD_NUMBER = 6;
   private com.google.bigtable.v2.RowFilter predicateFilter_;
   /**
-   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-   *
    * <pre>
    * The filter to be applied to the contents of the specified row. Depending
    * on whether or not any results are yielded, either `true_mutations` or
    * `false_mutations` will be executed. If unset, checks that the row contains
    * any values at all.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
    */
   public boolean hasPredicateFilter() {
     return predicateFilter_ != null;
   }
   /**
-   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-   *
    * <pre>
    * The filter to be applied to the contents of the specified row. Depending
    * on whether or not any results are yielded, either `true_mutations` or
    * `false_mutations` will be executed. If unset, checks that the row contains
    * any values at all.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
    */
   public com.google.bigtable.v2.RowFilter getPredicateFilter() {
     return predicateFilter_ == null ? com.google.bigtable.v2.RowFilter.getDefaultInstance() : predicateFilter_;
   }
   /**
-   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-   *
    * <pre>
    * The filter to be applied to the contents of the specified row. Depending
    * on whether or not any results are yielded, either `true_mutations` or
    * `false_mutations` will be executed. If unset, checks that the row contains
    * any values at all.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
    */
   public com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder() {
     return getPredicateFilter();
@@ -226,8 +228,6 @@ public  final class CheckAndMutateRowRequest extends
   public static final int TRUE_MUTATIONS_FIELD_NUMBER = 4;
   private java.util.List<com.google.bigtable.v2.Mutation> trueMutations_;
   /**
-   * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row if `predicate_filter`
    * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -235,13 +235,13 @@ public  final class CheckAndMutateRowRequest extends
    * Must contain at least one entry if `false_mutations` is empty, and at most
    * 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
    */
   public java.util.List<com.google.bigtable.v2.Mutation> getTrueMutationsList() {
     return trueMutations_;
   }
   /**
-   * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row if `predicate_filter`
    * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -249,14 +249,14 @@ public  final class CheckAndMutateRowRequest extends
    * Must contain at least one entry if `false_mutations` is empty, and at most
    * 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
    */
   public java.util.List<? extends com.google.bigtable.v2.MutationOrBuilder> 
       getTrueMutationsOrBuilderList() {
     return trueMutations_;
   }
   /**
-   * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row if `predicate_filter`
    * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -264,13 +264,13 @@ public  final class CheckAndMutateRowRequest extends
    * Must contain at least one entry if `false_mutations` is empty, and at most
    * 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
    */
   public int getTrueMutationsCount() {
     return trueMutations_.size();
   }
   /**
-   * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row if `predicate_filter`
    * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -278,13 +278,13 @@ public  final class CheckAndMutateRowRequest extends
    * Must contain at least one entry if `false_mutations` is empty, and at most
    * 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
    */
   public com.google.bigtable.v2.Mutation getTrueMutations(int index) {
     return trueMutations_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row if `predicate_filter`
    * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -292,6 +292,8 @@ public  final class CheckAndMutateRowRequest extends
    * Must contain at least one entry if `false_mutations` is empty, and at most
    * 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
    */
   public com.google.bigtable.v2.MutationOrBuilder getTrueMutationsOrBuilder(
       int index) {
@@ -301,8 +303,6 @@ public  final class CheckAndMutateRowRequest extends
   public static final int FALSE_MUTATIONS_FIELD_NUMBER = 5;
   private java.util.List<com.google.bigtable.v2.Mutation> falseMutations_;
   /**
-   * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row if `predicate_filter`
    * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -310,13 +310,13 @@ public  final class CheckAndMutateRowRequest extends
    * Must contain at least one entry if `true_mutations` is empty, and at most
    * 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
    */
   public java.util.List<com.google.bigtable.v2.Mutation> getFalseMutationsList() {
     return falseMutations_;
   }
   /**
-   * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row if `predicate_filter`
    * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -324,14 +324,14 @@ public  final class CheckAndMutateRowRequest extends
    * Must contain at least one entry if `true_mutations` is empty, and at most
    * 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
    */
   public java.util.List<? extends com.google.bigtable.v2.MutationOrBuilder> 
       getFalseMutationsOrBuilderList() {
     return falseMutations_;
   }
   /**
-   * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row if `predicate_filter`
    * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -339,13 +339,13 @@ public  final class CheckAndMutateRowRequest extends
    * Must contain at least one entry if `true_mutations` is empty, and at most
    * 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
    */
   public int getFalseMutationsCount() {
     return falseMutations_.size();
   }
   /**
-   * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row if `predicate_filter`
    * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -353,13 +353,13 @@ public  final class CheckAndMutateRowRequest extends
    * Must contain at least one entry if `true_mutations` is empty, and at most
    * 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
    */
   public com.google.bigtable.v2.Mutation getFalseMutations(int index) {
     return falseMutations_.get(index);
   }
   /**
-   * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-   *
    * <pre>
    * Changes to be atomically applied to the specified row if `predicate_filter`
    * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -367,6 +367,8 @@ public  final class CheckAndMutateRowRequest extends
    * Must contain at least one entry if `true_mutations` is empty, and at most
    * 100000.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
    */
   public com.google.bigtable.v2.MutationOrBuilder getFalseMutationsOrBuilder(
       int index) {
@@ -386,7 +388,7 @@ public  final class CheckAndMutateRowRequest extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getTableNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, tableName_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, tableName_);
     }
     if (!rowKey_.isEmpty()) {
       output.writeBytes(2, rowKey_);
@@ -408,7 +410,7 @@ public  final class CheckAndMutateRowRequest extends
 
     size = 0;
     if (!getTableNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, tableName_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, tableName_);
     }
     if (!rowKey_.isEmpty()) {
       size += com.google.protobuf.CodedOutputStream
@@ -431,6 +433,61 @@ public  final class CheckAndMutateRowRequest extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.v2.CheckAndMutateRowRequest)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.v2.CheckAndMutateRowRequest other = (com.google.bigtable.v2.CheckAndMutateRowRequest) obj;
+
+    boolean result = true;
+    result = result && getTableName()
+        .equals(other.getTableName());
+    result = result && getRowKey()
+        .equals(other.getRowKey());
+    result = result && (hasPredicateFilter() == other.hasPredicateFilter());
+    if (hasPredicateFilter()) {
+      result = result && getPredicateFilter()
+          .equals(other.getPredicateFilter());
+    }
+    result = result && getTrueMutationsList()
+        .equals(other.getTrueMutationsList());
+    result = result && getFalseMutationsList()
+        .equals(other.getFalseMutationsList());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + TABLE_NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getTableName().hashCode();
+    hash = (37 * hash) + ROW_KEY_FIELD_NUMBER;
+    hash = (53 * hash) + getRowKey().hashCode();
+    if (hasPredicateFilter()) {
+      hash = (37 * hash) + PREDICATE_FILTER_FIELD_NUMBER;
+      hash = (53 * hash) + getPredicateFilter().hashCode();
+    }
+    if (getTrueMutationsCount() > 0) {
+      hash = (37 * hash) + TRUE_MUTATIONS_FIELD_NUMBER;
+      hash = (53 * hash) + getTrueMutationsList().hashCode();
+    }
+    if (getFalseMutationsCount() > 0) {
+      hash = (37 * hash) + FALSE_MUTATIONS_FIELD_NUMBER;
+      hash = (53 * hash) + getFalseMutationsList().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.v2.CheckAndMutateRowRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -454,34 +511,40 @@ public  final class CheckAndMutateRowRequest extends
   }
   public static com.google.bigtable.v2.CheckAndMutateRowRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.CheckAndMutateRowRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.CheckAndMutateRowRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.CheckAndMutateRowRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.CheckAndMutateRowRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.CheckAndMutateRowRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -498,19 +561,19 @@ public  final class CheckAndMutateRowRequest extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v2.CheckAndMutateRowRequest}
-   *
    * <pre>
    * Request message for Bigtable.CheckAndMutateRow.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v2.CheckAndMutateRowRequest}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.CheckAndMutateRowRequest)
       com.google.bigtable.v2.CheckAndMutateRowRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -518,7 +581,7 @@ public  final class CheckAndMutateRowRequest extends
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_CheckAndMutateRowRequest_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_CheckAndMutateRowRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -531,12 +594,13 @@ public  final class CheckAndMutateRowRequest extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
         getTrueMutationsFieldBuilder();
         getFalseMutationsFieldBuilder();
       }
@@ -619,6 +683,32 @@ public  final class CheckAndMutateRowRequest extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.CheckAndMutateRowRequest) {
         return mergeFrom((com.google.bigtable.v2.CheckAndMutateRowRequest)other);
@@ -659,7 +749,7 @@ public  final class CheckAndMutateRowRequest extends
             trueMutations_ = other.trueMutations_;
             bitField0_ = (bitField0_ & ~0x00000008);
             trueMutationsBuilder_ = 
-              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getTrueMutationsFieldBuilder() : null;
           } else {
             trueMutationsBuilder_.addAllMessages(other.trueMutations_);
@@ -685,7 +775,7 @@ public  final class CheckAndMutateRowRequest extends
             falseMutations_ = other.falseMutations_;
             bitField0_ = (bitField0_ & ~0x00000010);
             falseMutationsBuilder_ = 
-              com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getFalseMutationsFieldBuilder() : null;
           } else {
             falseMutationsBuilder_.addAllMessages(other.falseMutations_);
@@ -709,7 +799,7 @@ public  final class CheckAndMutateRowRequest extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.CheckAndMutateRowRequest) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -721,14 +811,14 @@ public  final class CheckAndMutateRowRequest extends
 
     private java.lang.Object tableName_ = "";
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table to which the conditional mutation should be
      * applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public java.lang.String getTableName() {
       java.lang.Object ref = tableName_;
@@ -743,14 +833,14 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table to which the conditional mutation should be
      * applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getTableNameBytes() {
@@ -766,14 +856,14 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table to which the conditional mutation should be
      * applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public Builder setTableName(
         java.lang.String value) {
@@ -786,14 +876,14 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table to which the conditional mutation should be
      * applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public Builder clearTableName() {
       
@@ -802,14 +892,14 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>optional string table_name = 1;</code>
-     *
      * <pre>
      * The unique name of the table to which the conditional mutation should be
      * applied.
      * Values are of the form
      * projects/&amp;lt;project&amp;gt;/instances/&amp;lt;instance&amp;gt;/tables/&amp;lt;table&amp;gt;
      * </pre>
+     *
+     * <code>optional string table_name = 1;</code>
      */
     public Builder setTableNameBytes(
         com.google.protobuf.ByteString value) {
@@ -825,21 +915,21 @@ public  final class CheckAndMutateRowRequest extends
 
     private com.google.protobuf.ByteString rowKey_ = com.google.protobuf.ByteString.EMPTY;
     /**
-     * <code>optional bytes row_key = 2;</code>
-     *
      * <pre>
      * The key of the row to which the conditional mutation should be applied.
      * </pre>
+     *
+     * <code>optional bytes row_key = 2;</code>
      */
     public com.google.protobuf.ByteString getRowKey() {
       return rowKey_;
     }
     /**
-     * <code>optional bytes row_key = 2;</code>
-     *
      * <pre>
      * The key of the row to which the conditional mutation should be applied.
      * </pre>
+     *
+     * <code>optional bytes row_key = 2;</code>
      */
     public Builder setRowKey(com.google.protobuf.ByteString value) {
       if (value == null) {
@@ -851,11 +941,11 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>optional bytes row_key = 2;</code>
-     *
      * <pre>
      * The key of the row to which the conditional mutation should be applied.
      * </pre>
+     *
+     * <code>optional bytes row_key = 2;</code>
      */
     public Builder clearRowKey() {
       
@@ -865,30 +955,30 @@ public  final class CheckAndMutateRowRequest extends
     }
 
     private com.google.bigtable.v2.RowFilter predicateFilter_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder> predicateFilterBuilder_;
     /**
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-     *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
      * on whether or not any results are yielded, either `true_mutations` or
      * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public boolean hasPredicateFilter() {
       return predicateFilterBuilder_ != null || predicateFilter_ != null;
     }
     /**
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-     *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
      * on whether or not any results are yielded, either `true_mutations` or
      * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public com.google.bigtable.v2.RowFilter getPredicateFilter() {
       if (predicateFilterBuilder_ == null) {
@@ -898,14 +988,14 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-     *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
      * on whether or not any results are yielded, either `true_mutations` or
      * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public Builder setPredicateFilter(com.google.bigtable.v2.RowFilter value) {
       if (predicateFilterBuilder_ == null) {
@@ -921,14 +1011,14 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-     *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
      * on whether or not any results are yielded, either `true_mutations` or
      * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public Builder setPredicateFilter(
         com.google.bigtable.v2.RowFilter.Builder builderForValue) {
@@ -942,14 +1032,14 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-     *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
      * on whether or not any results are yielded, either `true_mutations` or
      * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public Builder mergePredicateFilter(com.google.bigtable.v2.RowFilter value) {
       if (predicateFilterBuilder_ == null) {
@@ -967,14 +1057,14 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-     *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
      * on whether or not any results are yielded, either `true_mutations` or
      * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public Builder clearPredicateFilter() {
       if (predicateFilterBuilder_ == null) {
@@ -988,14 +1078,14 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-     *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
      * on whether or not any results are yielded, either `true_mutations` or
      * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public com.google.bigtable.v2.RowFilter.Builder getPredicateFilterBuilder() {
       
@@ -1003,14 +1093,14 @@ public  final class CheckAndMutateRowRequest extends
       return getPredicateFilterFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-     *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
      * on whether or not any results are yielded, either `true_mutations` or
      * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
     public com.google.bigtable.v2.RowFilterOrBuilder getPredicateFilterOrBuilder() {
       if (predicateFilterBuilder_ != null) {
@@ -1021,20 +1111,20 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
-     *
      * <pre>
      * The filter to be applied to the contents of the specified row. Depending
      * on whether or not any results are yielded, either `true_mutations` or
      * `false_mutations` will be executed. If unset, checks that the row contains
      * any values at all.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.RowFilter predicate_filter = 6;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder> 
         getPredicateFilterFieldBuilder() {
       if (predicateFilterBuilder_ == null) {
-        predicateFilterBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        predicateFilterBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.bigtable.v2.RowFilter, com.google.bigtable.v2.RowFilter.Builder, com.google.bigtable.v2.RowFilterOrBuilder>(
                 getPredicateFilter(),
                 getParentForChildren(),
@@ -1053,12 +1143,10 @@ public  final class CheckAndMutateRowRequest extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder> trueMutationsBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1066,6 +1154,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public java.util.List<com.google.bigtable.v2.Mutation> getTrueMutationsList() {
       if (trueMutationsBuilder_ == null) {
@@ -1075,8 +1165,6 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1084,6 +1172,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public int getTrueMutationsCount() {
       if (trueMutationsBuilder_ == null) {
@@ -1093,8 +1183,6 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1102,6 +1190,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public com.google.bigtable.v2.Mutation getTrueMutations(int index) {
       if (trueMutationsBuilder_ == null) {
@@ -1111,8 +1201,6 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1120,6 +1208,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public Builder setTrueMutations(
         int index, com.google.bigtable.v2.Mutation value) {
@@ -1136,8 +1226,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1145,6 +1233,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public Builder setTrueMutations(
         int index, com.google.bigtable.v2.Mutation.Builder builderForValue) {
@@ -1158,8 +1248,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1167,6 +1255,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public Builder addTrueMutations(com.google.bigtable.v2.Mutation value) {
       if (trueMutationsBuilder_ == null) {
@@ -1182,8 +1272,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1191,6 +1279,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public Builder addTrueMutations(
         int index, com.google.bigtable.v2.Mutation value) {
@@ -1207,8 +1297,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1216,6 +1304,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public Builder addTrueMutations(
         com.google.bigtable.v2.Mutation.Builder builderForValue) {
@@ -1229,8 +1319,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1238,6 +1326,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public Builder addTrueMutations(
         int index, com.google.bigtable.v2.Mutation.Builder builderForValue) {
@@ -1251,8 +1341,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1260,6 +1348,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public Builder addAllTrueMutations(
         java.lang.Iterable<? extends com.google.bigtable.v2.Mutation> values) {
@@ -1274,8 +1364,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1283,6 +1371,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public Builder clearTrueMutations() {
       if (trueMutationsBuilder_ == null) {
@@ -1295,8 +1385,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1304,6 +1392,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public Builder removeTrueMutations(int index) {
       if (trueMutationsBuilder_ == null) {
@@ -1316,8 +1406,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1325,14 +1413,14 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public com.google.bigtable.v2.Mutation.Builder getTrueMutationsBuilder(
         int index) {
       return getTrueMutationsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1340,6 +1428,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public com.google.bigtable.v2.MutationOrBuilder getTrueMutationsOrBuilder(
         int index) {
@@ -1349,8 +1439,6 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1358,6 +1446,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public java.util.List<? extends com.google.bigtable.v2.MutationOrBuilder> 
          getTrueMutationsOrBuilderList() {
@@ -1368,8 +1458,6 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1377,14 +1465,14 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public com.google.bigtable.v2.Mutation.Builder addTrueMutationsBuilder() {
       return getTrueMutationsFieldBuilder().addBuilder(
           com.google.bigtable.v2.Mutation.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1392,6 +1480,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public com.google.bigtable.v2.Mutation.Builder addTrueMutationsBuilder(
         int index) {
@@ -1399,8 +1489,6 @@ public  final class CheckAndMutateRowRequest extends
           index, com.google.bigtable.v2.Mutation.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * yields at least one cell when applied to `row_key`. Entries are applied in
@@ -1408,16 +1496,18 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `false_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation true_mutations = 4;</code>
      */
     public java.util.List<com.google.bigtable.v2.Mutation.Builder> 
          getTrueMutationsBuilderList() {
       return getTrueMutationsFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder> 
         getTrueMutationsFieldBuilder() {
       if (trueMutationsBuilder_ == null) {
-        trueMutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+        trueMutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
             com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder>(
                 trueMutations_,
                 ((bitField0_ & 0x00000008) == 0x00000008),
@@ -1437,12 +1527,10 @@ public  final class CheckAndMutateRowRequest extends
        }
     }
 
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder> falseMutationsBuilder_;
 
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1450,6 +1538,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public java.util.List<com.google.bigtable.v2.Mutation> getFalseMutationsList() {
       if (falseMutationsBuilder_ == null) {
@@ -1459,8 +1549,6 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1468,6 +1556,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public int getFalseMutationsCount() {
       if (falseMutationsBuilder_ == null) {
@@ -1477,8 +1567,6 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1486,6 +1574,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public com.google.bigtable.v2.Mutation getFalseMutations(int index) {
       if (falseMutationsBuilder_ == null) {
@@ -1495,8 +1585,6 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1504,6 +1592,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public Builder setFalseMutations(
         int index, com.google.bigtable.v2.Mutation value) {
@@ -1520,8 +1610,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1529,6 +1617,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public Builder setFalseMutations(
         int index, com.google.bigtable.v2.Mutation.Builder builderForValue) {
@@ -1542,8 +1632,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1551,6 +1639,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public Builder addFalseMutations(com.google.bigtable.v2.Mutation value) {
       if (falseMutationsBuilder_ == null) {
@@ -1566,8 +1656,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1575,6 +1663,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public Builder addFalseMutations(
         int index, com.google.bigtable.v2.Mutation value) {
@@ -1591,8 +1681,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1600,6 +1688,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public Builder addFalseMutations(
         com.google.bigtable.v2.Mutation.Builder builderForValue) {
@@ -1613,8 +1703,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1622,6 +1710,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public Builder addFalseMutations(
         int index, com.google.bigtable.v2.Mutation.Builder builderForValue) {
@@ -1635,8 +1725,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1644,6 +1732,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public Builder addAllFalseMutations(
         java.lang.Iterable<? extends com.google.bigtable.v2.Mutation> values) {
@@ -1658,8 +1748,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1667,6 +1755,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public Builder clearFalseMutations() {
       if (falseMutationsBuilder_ == null) {
@@ -1679,8 +1769,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1688,6 +1776,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public Builder removeFalseMutations(int index) {
       if (falseMutationsBuilder_ == null) {
@@ -1700,8 +1790,6 @@ public  final class CheckAndMutateRowRequest extends
       return this;
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1709,14 +1797,14 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public com.google.bigtable.v2.Mutation.Builder getFalseMutationsBuilder(
         int index) {
       return getFalseMutationsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1724,6 +1812,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public com.google.bigtable.v2.MutationOrBuilder getFalseMutationsOrBuilder(
         int index) {
@@ -1733,8 +1823,6 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1742,6 +1830,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public java.util.List<? extends com.google.bigtable.v2.MutationOrBuilder> 
          getFalseMutationsOrBuilderList() {
@@ -1752,8 +1842,6 @@ public  final class CheckAndMutateRowRequest extends
       }
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1761,14 +1849,14 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public com.google.bigtable.v2.Mutation.Builder addFalseMutationsBuilder() {
       return getFalseMutationsFieldBuilder().addBuilder(
           com.google.bigtable.v2.Mutation.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1776,6 +1864,8 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public com.google.bigtable.v2.Mutation.Builder addFalseMutationsBuilder(
         int index) {
@@ -1783,8 +1873,6 @@ public  final class CheckAndMutateRowRequest extends
           index, com.google.bigtable.v2.Mutation.getDefaultInstance());
     }
     /**
-     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
-     *
      * <pre>
      * Changes to be atomically applied to the specified row if `predicate_filter`
      * does not yield any cells when applied to `row_key`. Entries are applied in
@@ -1792,16 +1880,18 @@ public  final class CheckAndMutateRowRequest extends
      * Must contain at least one entry if `true_mutations` is empty, and at most
      * 100000.
      * </pre>
+     *
+     * <code>repeated .google.bigtable.v2.Mutation false_mutations = 5;</code>
      */
     public java.util.List<com.google.bigtable.v2.Mutation.Builder> 
          getFalseMutationsBuilderList() {
       return getFalseMutationsFieldBuilder().getBuilderList();
     }
-    private com.google.protobuf.RepeatedFieldBuilder<
+    private com.google.protobuf.RepeatedFieldBuilderV3<
         com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder> 
         getFalseMutationsFieldBuilder() {
       if (falseMutationsBuilder_ == null) {
-        falseMutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+        falseMutationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
             com.google.bigtable.v2.Mutation, com.google.bigtable.v2.Mutation.Builder, com.google.bigtable.v2.MutationOrBuilder>(
                 falseMutations_,
                 ((bitField0_ & 0x00000010) == 0x00000010),
@@ -1841,16 +1931,7 @@ public  final class CheckAndMutateRowRequest extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new CheckAndMutateRowRequest(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

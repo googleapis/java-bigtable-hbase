@@ -4,19 +4,19 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.Snapshot}
- *
  * <pre>
  * A snapshot of a table at a particular time. A snapshot can be used as a
  * checkpoint for data restoration or a data source for a new table.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.Snapshot}
  */
 public  final class Snapshot extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.Snapshot)
     SnapshotOrBuilder {
   // Use Snapshot.newBuilder() to construct.
-  private Snapshot(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private Snapshot(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private Snapshot() {
@@ -31,7 +31,8 @@ public  final class Snapshot extends
   }
   private Snapshot(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -101,11 +102,10 @@ public  final class Snapshot extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -115,7 +115,7 @@ public  final class Snapshot extends
     return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Snapshot_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Snapshot_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -125,14 +125,14 @@ public  final class Snapshot extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The unique name of the snapshot.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -147,14 +147,14 @@ public  final class Snapshot extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The unique name of the snapshot.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -173,34 +173,34 @@ public  final class Snapshot extends
   public static final int SOURCE_TABLE_FIELD_NUMBER = 2;
   private com.google.bigtable.admin.v2.Table sourceTable_;
   /**
-   * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The source table at the time the snapshot was taken.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
    */
   public boolean hasSourceTable() {
     return sourceTable_ != null;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The source table at the time the snapshot was taken.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
    */
   public com.google.bigtable.admin.v2.Table getSourceTable() {
     return sourceTable_ == null ? com.google.bigtable.admin.v2.Table.getDefaultInstance() : sourceTable_;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The source table at the time the snapshot was taken.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
    */
   public com.google.bigtable.admin.v2.TableOrBuilder getSourceTableOrBuilder() {
     return getSourceTable();
@@ -209,13 +209,13 @@ public  final class Snapshot extends
   public static final int DATA_SIZE_BYTES_FIELD_NUMBER = 3;
   private long dataSizeBytes_;
   /**
-   * <code>optional int64 data_size_bytes = 3;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The size of the data in the source table at the time the snapshot was
    * taken.
    * </pre>
+   *
+   * <code>optional int64 data_size_bytes = 3;</code>
    */
   public long getDataSizeBytes() {
     return dataSizeBytes_;
@@ -224,34 +224,34 @@ public  final class Snapshot extends
   public static final int CREATE_TIME_FIELD_NUMBER = 4;
   private com.google.protobuf.Timestamp createTime_;
   /**
-   * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The time when the snapshot is created.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
    */
   public boolean hasCreateTime() {
     return createTime_ != null;
   }
   /**
-   * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The time when the snapshot is created.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
    */
   public com.google.protobuf.Timestamp getCreateTime() {
     return createTime_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : createTime_;
   }
   /**
-   * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The time when the snapshot is created.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
    */
   public com.google.protobuf.TimestampOrBuilder getCreateTimeOrBuilder() {
     return getCreateTime();
@@ -260,40 +260,40 @@ public  final class Snapshot extends
   public static final int DELETE_TIME_FIELD_NUMBER = 5;
   private com.google.protobuf.Timestamp deleteTime_;
   /**
-   * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The time when the snapshot will be deleted. The maximum amount of time a
    * snapshot can stay active is 365 days. If 'ttl' is not specified,
    * the default maximum of 365 days will be used.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
    */
   public boolean hasDeleteTime() {
     return deleteTime_ != null;
   }
   /**
-   * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The time when the snapshot will be deleted. The maximum amount of time a
    * snapshot can stay active is 365 days. If 'ttl' is not specified,
    * the default maximum of 365 days will be used.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
    */
   public com.google.protobuf.Timestamp getDeleteTime() {
     return deleteTime_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : deleteTime_;
   }
   /**
-   * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The time when the snapshot will be deleted. The maximum amount of time a
    * snapshot can stay active is 365 days. If 'ttl' is not specified,
    * the default maximum of 365 days will be used.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
    */
   public com.google.protobuf.TimestampOrBuilder getDeleteTimeOrBuilder() {
     return getDeleteTime();
@@ -312,7 +312,7 @@ public  final class Snapshot extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
     }
     if (sourceTable_ != null) {
       output.writeMessage(2, getSourceTable());
@@ -334,7 +334,7 @@ public  final class Snapshot extends
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
     }
     if (sourceTable_ != null) {
       size += com.google.protobuf.CodedOutputStream
@@ -357,6 +357,68 @@ public  final class Snapshot extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.Snapshot)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.Snapshot other = (com.google.bigtable.admin.v2.Snapshot) obj;
+
+    boolean result = true;
+    result = result && getName()
+        .equals(other.getName());
+    result = result && (hasSourceTable() == other.hasSourceTable());
+    if (hasSourceTable()) {
+      result = result && getSourceTable()
+          .equals(other.getSourceTable());
+    }
+    result = result && (getDataSizeBytes()
+        == other.getDataSizeBytes());
+    result = result && (hasCreateTime() == other.hasCreateTime());
+    if (hasCreateTime()) {
+      result = result && getCreateTime()
+          .equals(other.getCreateTime());
+    }
+    result = result && (hasDeleteTime() == other.hasDeleteTime());
+    if (hasDeleteTime()) {
+      result = result && getDeleteTime()
+          .equals(other.getDeleteTime());
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getName().hashCode();
+    if (hasSourceTable()) {
+      hash = (37 * hash) + SOURCE_TABLE_FIELD_NUMBER;
+      hash = (53 * hash) + getSourceTable().hashCode();
+    }
+    hash = (37 * hash) + DATA_SIZE_BYTES_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getDataSizeBytes());
+    if (hasCreateTime()) {
+      hash = (37 * hash) + CREATE_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + getCreateTime().hashCode();
+    }
+    if (hasDeleteTime()) {
+      hash = (37 * hash) + DELETE_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + getDeleteTime().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.Snapshot parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -380,34 +442,40 @@ public  final class Snapshot extends
   }
   public static com.google.bigtable.admin.v2.Snapshot parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Snapshot parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Snapshot parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Snapshot parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Snapshot parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Snapshot parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -424,20 +492,20 @@ public  final class Snapshot extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.Snapshot}
-   *
    * <pre>
    * A snapshot of a table at a particular time. A snapshot can be used as a
    * checkpoint for data restoration or a data source for a new table.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.Snapshot}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.Snapshot)
       com.google.bigtable.admin.v2.SnapshotOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -445,7 +513,7 @@ public  final class Snapshot extends
       return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Snapshot_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.TableProto.internal_static_google_bigtable_admin_v2_Snapshot_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -458,12 +526,13 @@ public  final class Snapshot extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -533,6 +602,32 @@ public  final class Snapshot extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.Snapshot) {
         return mergeFrom((com.google.bigtable.admin.v2.Snapshot)other);
@@ -577,7 +672,7 @@ public  final class Snapshot extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.Snapshot) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -588,14 +683,14 @@ public  final class Snapshot extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the snapshot.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -610,14 +705,14 @@ public  final class Snapshot extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the snapshot.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -633,14 +728,14 @@ public  final class Snapshot extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the snapshot.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -653,14 +748,14 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the snapshot.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -669,14 +764,14 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the snapshot.
      * Values are of the form
      * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;/snapshots/&lt;snapshot&gt;`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -691,26 +786,26 @@ public  final class Snapshot extends
     }
 
     private com.google.bigtable.admin.v2.Table sourceTable_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.Table, com.google.bigtable.admin.v2.Table.Builder, com.google.bigtable.admin.v2.TableOrBuilder> sourceTableBuilder_;
     /**
-     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The source table at the time the snapshot was taken.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
      */
     public boolean hasSourceTable() {
       return sourceTableBuilder_ != null || sourceTable_ != null;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The source table at the time the snapshot was taken.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
      */
     public com.google.bigtable.admin.v2.Table getSourceTable() {
       if (sourceTableBuilder_ == null) {
@@ -720,12 +815,12 @@ public  final class Snapshot extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The source table at the time the snapshot was taken.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
      */
     public Builder setSourceTable(com.google.bigtable.admin.v2.Table value) {
       if (sourceTableBuilder_ == null) {
@@ -741,12 +836,12 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The source table at the time the snapshot was taken.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
      */
     public Builder setSourceTable(
         com.google.bigtable.admin.v2.Table.Builder builderForValue) {
@@ -760,12 +855,12 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The source table at the time the snapshot was taken.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
      */
     public Builder mergeSourceTable(com.google.bigtable.admin.v2.Table value) {
       if (sourceTableBuilder_ == null) {
@@ -783,12 +878,12 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The source table at the time the snapshot was taken.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
      */
     public Builder clearSourceTable() {
       if (sourceTableBuilder_ == null) {
@@ -802,12 +897,12 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The source table at the time the snapshot was taken.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
      */
     public com.google.bigtable.admin.v2.Table.Builder getSourceTableBuilder() {
       
@@ -815,12 +910,12 @@ public  final class Snapshot extends
       return getSourceTableFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The source table at the time the snapshot was taken.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
      */
     public com.google.bigtable.admin.v2.TableOrBuilder getSourceTableOrBuilder() {
       if (sourceTableBuilder_ != null) {
@@ -831,18 +926,18 @@ public  final class Snapshot extends
       }
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The source table at the time the snapshot was taken.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Table source_table = 2;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.admin.v2.Table, com.google.bigtable.admin.v2.Table.Builder, com.google.bigtable.admin.v2.TableOrBuilder> 
         getSourceTableFieldBuilder() {
       if (sourceTableBuilder_ == null) {
-        sourceTableBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        sourceTableBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.bigtable.admin.v2.Table, com.google.bigtable.admin.v2.Table.Builder, com.google.bigtable.admin.v2.TableOrBuilder>(
                 getSourceTable(),
                 getParentForChildren(),
@@ -854,25 +949,25 @@ public  final class Snapshot extends
 
     private long dataSizeBytes_ ;
     /**
-     * <code>optional int64 data_size_bytes = 3;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The size of the data in the source table at the time the snapshot was
      * taken.
      * </pre>
+     *
+     * <code>optional int64 data_size_bytes = 3;</code>
      */
     public long getDataSizeBytes() {
       return dataSizeBytes_;
     }
     /**
-     * <code>optional int64 data_size_bytes = 3;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The size of the data in the source table at the time the snapshot was
      * taken.
      * </pre>
+     *
+     * <code>optional int64 data_size_bytes = 3;</code>
      */
     public Builder setDataSizeBytes(long value) {
       
@@ -881,13 +976,13 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional int64 data_size_bytes = 3;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The size of the data in the source table at the time the snapshot was
      * taken.
      * </pre>
+     *
+     * <code>optional int64 data_size_bytes = 3;</code>
      */
     public Builder clearDataSizeBytes() {
       
@@ -897,26 +992,26 @@ public  final class Snapshot extends
     }
 
     private com.google.protobuf.Timestamp createTime_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> createTimeBuilder_;
     /**
-     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot is created.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
      */
     public boolean hasCreateTime() {
       return createTimeBuilder_ != null || createTime_ != null;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot is created.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
      */
     public com.google.protobuf.Timestamp getCreateTime() {
       if (createTimeBuilder_ == null) {
@@ -926,12 +1021,12 @@ public  final class Snapshot extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot is created.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
      */
     public Builder setCreateTime(com.google.protobuf.Timestamp value) {
       if (createTimeBuilder_ == null) {
@@ -947,12 +1042,12 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot is created.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
      */
     public Builder setCreateTime(
         com.google.protobuf.Timestamp.Builder builderForValue) {
@@ -966,12 +1061,12 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot is created.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
      */
     public Builder mergeCreateTime(com.google.protobuf.Timestamp value) {
       if (createTimeBuilder_ == null) {
@@ -989,12 +1084,12 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot is created.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
      */
     public Builder clearCreateTime() {
       if (createTimeBuilder_ == null) {
@@ -1008,12 +1103,12 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot is created.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
      */
     public com.google.protobuf.Timestamp.Builder getCreateTimeBuilder() {
       
@@ -1021,12 +1116,12 @@ public  final class Snapshot extends
       return getCreateTimeFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot is created.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
      */
     public com.google.protobuf.TimestampOrBuilder getCreateTimeOrBuilder() {
       if (createTimeBuilder_ != null) {
@@ -1037,18 +1132,18 @@ public  final class Snapshot extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot is created.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp create_time = 4;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
         getCreateTimeFieldBuilder() {
       if (createTimeBuilder_ == null) {
-        createTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        createTimeBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
                 getCreateTime(),
                 getParentForChildren(),
@@ -1059,30 +1154,30 @@ public  final class Snapshot extends
     }
 
     private com.google.protobuf.Timestamp deleteTime_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> deleteTimeBuilder_;
     /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot will be deleted. The maximum amount of time a
      * snapshot can stay active is 365 days. If 'ttl' is not specified,
      * the default maximum of 365 days will be used.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
      */
     public boolean hasDeleteTime() {
       return deleteTimeBuilder_ != null || deleteTime_ != null;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot will be deleted. The maximum amount of time a
      * snapshot can stay active is 365 days. If 'ttl' is not specified,
      * the default maximum of 365 days will be used.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
      */
     public com.google.protobuf.Timestamp getDeleteTime() {
       if (deleteTimeBuilder_ == null) {
@@ -1092,14 +1187,14 @@ public  final class Snapshot extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot will be deleted. The maximum amount of time a
      * snapshot can stay active is 365 days. If 'ttl' is not specified,
      * the default maximum of 365 days will be used.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
      */
     public Builder setDeleteTime(com.google.protobuf.Timestamp value) {
       if (deleteTimeBuilder_ == null) {
@@ -1115,14 +1210,14 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot will be deleted. The maximum amount of time a
      * snapshot can stay active is 365 days. If 'ttl' is not specified,
      * the default maximum of 365 days will be used.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
      */
     public Builder setDeleteTime(
         com.google.protobuf.Timestamp.Builder builderForValue) {
@@ -1136,14 +1231,14 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot will be deleted. The maximum amount of time a
      * snapshot can stay active is 365 days. If 'ttl' is not specified,
      * the default maximum of 365 days will be used.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
      */
     public Builder mergeDeleteTime(com.google.protobuf.Timestamp value) {
       if (deleteTimeBuilder_ == null) {
@@ -1161,14 +1256,14 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot will be deleted. The maximum amount of time a
      * snapshot can stay active is 365 days. If 'ttl' is not specified,
      * the default maximum of 365 days will be used.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
      */
     public Builder clearDeleteTime() {
       if (deleteTimeBuilder_ == null) {
@@ -1182,14 +1277,14 @@ public  final class Snapshot extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot will be deleted. The maximum amount of time a
      * snapshot can stay active is 365 days. If 'ttl' is not specified,
      * the default maximum of 365 days will be used.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
      */
     public com.google.protobuf.Timestamp.Builder getDeleteTimeBuilder() {
       
@@ -1197,14 +1292,14 @@ public  final class Snapshot extends
       return getDeleteTimeFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot will be deleted. The maximum amount of time a
      * snapshot can stay active is 365 days. If 'ttl' is not specified,
      * the default maximum of 365 days will be used.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
      */
     public com.google.protobuf.TimestampOrBuilder getDeleteTimeOrBuilder() {
       if (deleteTimeBuilder_ != null) {
@@ -1215,20 +1310,20 @@ public  final class Snapshot extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The time when the snapshot will be deleted. The maximum amount of time a
      * snapshot can stay active is 365 days. If 'ttl' is not specified,
      * the default maximum of 365 days will be used.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Timestamp delete_time = 5;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
         getDeleteTimeFieldBuilder() {
       if (deleteTimeBuilder_ == null) {
-        deleteTimeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        deleteTimeBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
                 getDeleteTime(),
                 getParentForChildren(),
@@ -1267,16 +1362,7 @@ public  final class Snapshot extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new Snapshot(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

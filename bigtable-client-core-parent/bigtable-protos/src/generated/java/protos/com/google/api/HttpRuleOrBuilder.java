@@ -8,184 +8,184 @@ public interface HttpRuleOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string get = 2;</code>
-   *
    * <pre>
    * Used for listing and getting information about resources.
    * </pre>
+   *
+   * <code>optional string get = 2;</code>
    */
   java.lang.String getGet();
   /**
-   * <code>optional string get = 2;</code>
-   *
    * <pre>
    * Used for listing and getting information about resources.
    * </pre>
+   *
+   * <code>optional string get = 2;</code>
    */
   com.google.protobuf.ByteString
       getGetBytes();
 
   /**
-   * <code>optional string put = 3;</code>
-   *
    * <pre>
    * Used for updating a resource.
    * </pre>
+   *
+   * <code>optional string put = 3;</code>
    */
   java.lang.String getPut();
   /**
-   * <code>optional string put = 3;</code>
-   *
    * <pre>
    * Used for updating a resource.
    * </pre>
+   *
+   * <code>optional string put = 3;</code>
    */
   com.google.protobuf.ByteString
       getPutBytes();
 
   /**
-   * <code>optional string post = 4;</code>
-   *
    * <pre>
    * Used for creating a resource.
    * </pre>
+   *
+   * <code>optional string post = 4;</code>
    */
   java.lang.String getPost();
   /**
-   * <code>optional string post = 4;</code>
-   *
    * <pre>
    * Used for creating a resource.
    * </pre>
+   *
+   * <code>optional string post = 4;</code>
    */
   com.google.protobuf.ByteString
       getPostBytes();
 
   /**
-   * <code>optional string delete = 5;</code>
-   *
    * <pre>
    * Used for deleting a resource.
    * </pre>
+   *
+   * <code>optional string delete = 5;</code>
    */
   java.lang.String getDelete();
   /**
-   * <code>optional string delete = 5;</code>
-   *
    * <pre>
    * Used for deleting a resource.
    * </pre>
+   *
+   * <code>optional string delete = 5;</code>
    */
   com.google.protobuf.ByteString
       getDeleteBytes();
 
   /**
-   * <code>optional string patch = 6;</code>
-   *
    * <pre>
    * Used for updating a resource.
    * </pre>
+   *
+   * <code>optional string patch = 6;</code>
    */
   java.lang.String getPatch();
   /**
-   * <code>optional string patch = 6;</code>
-   *
    * <pre>
    * Used for updating a resource.
    * </pre>
+   *
+   * <code>optional string patch = 6;</code>
    */
   com.google.protobuf.ByteString
       getPatchBytes();
 
   /**
-   * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-   *
    * <pre>
    * Custom pattern is used for defining custom verbs.
    * </pre>
+   *
+   * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
    */
   com.google.api.CustomHttpPattern getCustom();
   /**
-   * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
-   *
    * <pre>
    * Custom pattern is used for defining custom verbs.
    * </pre>
+   *
+   * <code>optional .google.api.CustomHttpPattern custom = 8;</code>
    */
   com.google.api.CustomHttpPatternOrBuilder getCustomOrBuilder();
 
   /**
-   * <code>optional string body = 7;</code>
-   *
    * <pre>
    * The name of the request field whose value is mapped to the HTTP body, or
    * `*` for mapping all fields not captured by the path pattern to the HTTP
    * body. NOTE: the referred field must not be a repeated field.
    * </pre>
+   *
+   * <code>optional string body = 7;</code>
    */
   java.lang.String getBody();
   /**
-   * <code>optional string body = 7;</code>
-   *
    * <pre>
    * The name of the request field whose value is mapped to the HTTP body, or
    * `*` for mapping all fields not captured by the path pattern to the HTTP
    * body. NOTE: the referred field must not be a repeated field.
    * </pre>
+   *
+   * <code>optional string body = 7;</code>
    */
   com.google.protobuf.ByteString
       getBodyBytes();
 
   /**
-   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-   *
    * <pre>
    * Additional HTTP bindings for the selector. Nested bindings must
    * not contain an `additional_bindings` field themselves (that is,
    * the nesting may only be one level deep).
    * </pre>
+   *
+   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    */
   java.util.List<com.google.api.HttpRule> 
       getAdditionalBindingsList();
   /**
-   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-   *
    * <pre>
    * Additional HTTP bindings for the selector. Nested bindings must
    * not contain an `additional_bindings` field themselves (that is,
    * the nesting may only be one level deep).
    * </pre>
+   *
+   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    */
   com.google.api.HttpRule getAdditionalBindings(int index);
   /**
-   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-   *
    * <pre>
    * Additional HTTP bindings for the selector. Nested bindings must
    * not contain an `additional_bindings` field themselves (that is,
    * the nesting may only be one level deep).
    * </pre>
+   *
+   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    */
   int getAdditionalBindingsCount();
   /**
-   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-   *
    * <pre>
    * Additional HTTP bindings for the selector. Nested bindings must
    * not contain an `additional_bindings` field themselves (that is,
    * the nesting may only be one level deep).
    * </pre>
+   *
+   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    */
   java.util.List<? extends com.google.api.HttpRuleOrBuilder> 
       getAdditionalBindingsOrBuilderList();
   /**
-   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
-   *
    * <pre>
    * Additional HTTP bindings for the selector. Nested bindings must
    * not contain an `additional_bindings` field themselves (that is,
    * the nesting may only be one level deep).
    * </pre>
+   *
+   * <code>repeated .google.api.HttpRule additional_bindings = 11;</code>
    */
   com.google.api.HttpRuleOrBuilder getAdditionalBindingsOrBuilder(
       int index);

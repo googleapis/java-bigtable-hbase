@@ -8,67 +8,67 @@ public interface ListSnapshotsResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .google.bigtable.admin.v2.Snapshot snapshots = 1;</code>
-   *
    * <pre>
    * The snapshots present in the requested cluster.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Snapshot snapshots = 1;</code>
    */
   java.util.List<com.google.bigtable.admin.v2.Snapshot> 
       getSnapshotsList();
   /**
-   * <code>repeated .google.bigtable.admin.v2.Snapshot snapshots = 1;</code>
-   *
    * <pre>
    * The snapshots present in the requested cluster.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Snapshot snapshots = 1;</code>
    */
   com.google.bigtable.admin.v2.Snapshot getSnapshots(int index);
   /**
-   * <code>repeated .google.bigtable.admin.v2.Snapshot snapshots = 1;</code>
-   *
    * <pre>
    * The snapshots present in the requested cluster.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Snapshot snapshots = 1;</code>
    */
   int getSnapshotsCount();
   /**
-   * <code>repeated .google.bigtable.admin.v2.Snapshot snapshots = 1;</code>
-   *
    * <pre>
    * The snapshots present in the requested cluster.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Snapshot snapshots = 1;</code>
    */
   java.util.List<? extends com.google.bigtable.admin.v2.SnapshotOrBuilder> 
       getSnapshotsOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.admin.v2.Snapshot snapshots = 1;</code>
-   *
    * <pre>
    * The snapshots present in the requested cluster.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.admin.v2.Snapshot snapshots = 1;</code>
    */
   com.google.bigtable.admin.v2.SnapshotOrBuilder getSnapshotsOrBuilder(
       int index);
 
   /**
-   * <code>optional string next_page_token = 2;</code>
-   *
    * <pre>
    * Set if not all snapshots could be returned in a single response.
    * Pass this value to `page_token` in another request to get the next
    * page of results.
    * </pre>
+   *
+   * <code>optional string next_page_token = 2;</code>
    */
   java.lang.String getNextPageToken();
   /**
-   * <code>optional string next_page_token = 2;</code>
-   *
    * <pre>
    * Set if not all snapshots could be returned in a single response.
    * Pass this value to `page_token` in another request to get the next
    * page of results.
    * </pre>
+   *
+   * <code>optional string next_page_token = 2;</code>
    */
   com.google.protobuf.ByteString
       getNextPageTokenBytes();

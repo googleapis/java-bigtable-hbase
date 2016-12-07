@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 
 import org.apache.hadoop.hbase.client.Operation;
 
@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.client.Operation;
  * @author sduskis
  * @version $Id: $Id
  */
-public interface OperationAdapter<T extends Operation, U extends GeneratedMessage.Builder<?>> {
+public interface OperationAdapter<T extends Operation, U extends GeneratedMessageV3.Builder<?>> {
 
   /**
    * Adapt a single HBase Operation to a single Bigtable generated message.

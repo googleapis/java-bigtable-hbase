@@ -8,50 +8,50 @@ public interface ListSnapshotsRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the cluster for which snapshots should be listed.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;`.
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   java.lang.String getParent();
   /**
-   * <code>optional string parent = 1;</code>
-   *
    * <pre>
    * The unique name of the cluster for which snapshots should be listed.
    * Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/clusters/&lt;cluster&gt;`.
    * </pre>
+   *
+   * <code>optional string parent = 1;</code>
    */
   com.google.protobuf.ByteString
       getParentBytes();
 
   /**
-   * <code>optional int32 page_size = 2;</code>
-   *
    * <pre>
    * The maximum number of snapshots to return.
    * </pre>
+   *
+   * <code>optional int32 page_size = 2;</code>
    */
   int getPageSize();
 
   /**
-   * <code>optional string page_token = 3;</code>
-   *
    * <pre>
    * The value of `next_page_token` returned by a previous call.
    * </pre>
+   *
+   * <code>optional string page_token = 3;</code>
    */
   java.lang.String getPageToken();
   /**
-   * <code>optional string page_token = 3;</code>
-   *
    * <pre>
    * The value of `next_page_token` returned by a previous call.
    * </pre>
+   *
+   * <code>optional string page_token = 3;</code>
    */
   com.google.protobuf.ByteString
       getPageTokenBytes();

@@ -4,8 +4,6 @@
 package com.google.rpc;
 
 /**
- * Protobuf type {@code google.rpc.RetryInfo}
- *
  * <pre>
  * Describes when the clients can retry a failed request. Clients could ignore
  * the recommendation here or retry when this information is missing from error
@@ -19,13 +17,15 @@ package com.google.rpc;
  * number of retires have been reached or a maximum retry delay cap has been
  * reached.
  * </pre>
+ *
+ * Protobuf type {@code google.rpc.RetryInfo}
  */
 public  final class RetryInfo extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.rpc.RetryInfo)
     RetryInfoOrBuilder {
   // Use RetryInfo.newBuilder() to construct.
-  private RetryInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private RetryInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private RetryInfo() {
@@ -38,7 +38,8 @@ public  final class RetryInfo extends
   }
   private RetryInfo(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -71,11 +72,10 @@ public  final class RetryInfo extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -85,7 +85,7 @@ public  final class RetryInfo extends
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_RetryInfo_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_RetryInfo_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -95,31 +95,31 @@ public  final class RetryInfo extends
   public static final int RETRY_DELAY_FIELD_NUMBER = 1;
   private com.google.protobuf.Duration retryDelay_;
   /**
-   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-   *
    * <pre>
    * Clients should wait at least this long between retrying the same request.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
    */
   public boolean hasRetryDelay() {
     return retryDelay_ != null;
   }
   /**
-   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-   *
    * <pre>
    * Clients should wait at least this long between retrying the same request.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
    */
   public com.google.protobuf.Duration getRetryDelay() {
     return retryDelay_ == null ? com.google.protobuf.Duration.getDefaultInstance() : retryDelay_;
   }
   /**
-   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-   *
    * <pre>
    * Clients should wait at least this long between retrying the same request.
    * </pre>
+   *
+   * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
    */
   public com.google.protobuf.DurationOrBuilder getRetryDelayOrBuilder() {
     return getRetryDelay();
@@ -156,6 +156,41 @@ public  final class RetryInfo extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.rpc.RetryInfo)) {
+      return super.equals(obj);
+    }
+    com.google.rpc.RetryInfo other = (com.google.rpc.RetryInfo) obj;
+
+    boolean result = true;
+    result = result && (hasRetryDelay() == other.hasRetryDelay());
+    if (hasRetryDelay()) {
+      result = result && getRetryDelay()
+          .equals(other.getRetryDelay());
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    if (hasRetryDelay()) {
+      hash = (37 * hash) + RETRY_DELAY_FIELD_NUMBER;
+      hash = (53 * hash) + getRetryDelay().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.rpc.RetryInfo parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -179,34 +214,40 @@ public  final class RetryInfo extends
   }
   public static com.google.rpc.RetryInfo parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.RetryInfo parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.RetryInfo parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.rpc.RetryInfo parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.RetryInfo parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.RetryInfo parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -223,13 +264,11 @@ public  final class RetryInfo extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.rpc.RetryInfo}
-   *
    * <pre>
    * Describes when the clients can retry a failed request. Clients could ignore
    * the recommendation here or retry when this information is missing from error
@@ -243,9 +282,11 @@ public  final class RetryInfo extends
    * number of retires have been reached or a maximum retry delay cap has been
    * reached.
    * </pre>
+   *
+   * Protobuf type {@code google.rpc.RetryInfo}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.rpc.RetryInfo)
       com.google.rpc.RetryInfoOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -253,7 +294,7 @@ public  final class RetryInfo extends
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_RetryInfo_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_RetryInfo_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -266,12 +307,13 @@ public  final class RetryInfo extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -313,6 +355,32 @@ public  final class RetryInfo extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.rpc.RetryInfo) {
         return mergeFrom((com.google.rpc.RetryInfo)other);
@@ -344,7 +412,7 @@ public  final class RetryInfo extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.rpc.RetryInfo) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -354,24 +422,24 @@ public  final class RetryInfo extends
     }
 
     private com.google.protobuf.Duration retryDelay_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> retryDelayBuilder_;
     /**
-     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-     *
      * <pre>
      * Clients should wait at least this long between retrying the same request.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
      */
     public boolean hasRetryDelay() {
       return retryDelayBuilder_ != null || retryDelay_ != null;
     }
     /**
-     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-     *
      * <pre>
      * Clients should wait at least this long between retrying the same request.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
      */
     public com.google.protobuf.Duration getRetryDelay() {
       if (retryDelayBuilder_ == null) {
@@ -381,11 +449,11 @@ public  final class RetryInfo extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-     *
      * <pre>
      * Clients should wait at least this long between retrying the same request.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
      */
     public Builder setRetryDelay(com.google.protobuf.Duration value) {
       if (retryDelayBuilder_ == null) {
@@ -401,11 +469,11 @@ public  final class RetryInfo extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-     *
      * <pre>
      * Clients should wait at least this long between retrying the same request.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
      */
     public Builder setRetryDelay(
         com.google.protobuf.Duration.Builder builderForValue) {
@@ -419,11 +487,11 @@ public  final class RetryInfo extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-     *
      * <pre>
      * Clients should wait at least this long between retrying the same request.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
      */
     public Builder mergeRetryDelay(com.google.protobuf.Duration value) {
       if (retryDelayBuilder_ == null) {
@@ -441,11 +509,11 @@ public  final class RetryInfo extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-     *
      * <pre>
      * Clients should wait at least this long between retrying the same request.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
      */
     public Builder clearRetryDelay() {
       if (retryDelayBuilder_ == null) {
@@ -459,11 +527,11 @@ public  final class RetryInfo extends
       return this;
     }
     /**
-     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-     *
      * <pre>
      * Clients should wait at least this long between retrying the same request.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
      */
     public com.google.protobuf.Duration.Builder getRetryDelayBuilder() {
       
@@ -471,11 +539,11 @@ public  final class RetryInfo extends
       return getRetryDelayFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-     *
      * <pre>
      * Clients should wait at least this long between retrying the same request.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
      */
     public com.google.protobuf.DurationOrBuilder getRetryDelayOrBuilder() {
       if (retryDelayBuilder_ != null) {
@@ -486,17 +554,17 @@ public  final class RetryInfo extends
       }
     }
     /**
-     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
-     *
      * <pre>
      * Clients should wait at least this long between retrying the same request.
      * </pre>
+     *
+     * <code>optional .google.protobuf.Duration retry_delay = 1;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> 
         getRetryDelayFieldBuilder() {
       if (retryDelayBuilder_ == null) {
-        retryDelayBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        retryDelayBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder>(
                 getRetryDelay(),
                 getParentForChildren(),
@@ -535,16 +603,7 @@ public  final class RetryInfo extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new RetryInfo(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

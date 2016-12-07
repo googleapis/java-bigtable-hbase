@@ -8,8 +8,6 @@ public interface ColumnFamilyOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
-   *
    * <pre>
    * Garbage collection rule specified as a protobuf.
    * Must serialize to at most 500 bytes.
@@ -17,11 +15,11 @@ public interface ColumnFamilyOrBuilder extends
    * so it's possible for reads to return a cell even if it matches the active
    * GC expression for its family.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
    */
   boolean hasGcRule();
   /**
-   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
-   *
    * <pre>
    * Garbage collection rule specified as a protobuf.
    * Must serialize to at most 500 bytes.
@@ -29,11 +27,11 @@ public interface ColumnFamilyOrBuilder extends
    * so it's possible for reads to return a cell even if it matches the active
    * GC expression for its family.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
    */
   com.google.bigtable.admin.v2.GcRule getGcRule();
   /**
-   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
-   *
    * <pre>
    * Garbage collection rule specified as a protobuf.
    * Must serialize to at most 500 bytes.
@@ -41,6 +39,8 @@ public interface ColumnFamilyOrBuilder extends
    * so it's possible for reads to return a cell even if it matches the active
    * GC expression for its family.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.GcRule gc_rule = 1;</code>
    */
   com.google.bigtable.admin.v2.GcRuleOrBuilder getGcRuleOrBuilder();
 }

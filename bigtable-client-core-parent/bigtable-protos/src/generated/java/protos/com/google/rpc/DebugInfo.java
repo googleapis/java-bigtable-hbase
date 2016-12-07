@@ -4,18 +4,18 @@
 package com.google.rpc;
 
 /**
- * Protobuf type {@code google.rpc.DebugInfo}
- *
  * <pre>
  * Describes additional debugging info.
  * </pre>
+ *
+ * Protobuf type {@code google.rpc.DebugInfo}
  */
 public  final class DebugInfo extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.rpc.DebugInfo)
     DebugInfoOrBuilder {
   // Use DebugInfo.newBuilder() to construct.
-  private DebugInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private DebugInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private DebugInfo() {
@@ -30,7 +30,8 @@ public  final class DebugInfo extends
   }
   private DebugInfo(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -65,11 +66,10 @@ public  final class DebugInfo extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
         stackEntries_ = stackEntries_.getUnmodifiableView();
@@ -82,7 +82,7 @@ public  final class DebugInfo extends
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_DebugInfo_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_DebugInfo_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -93,42 +93,42 @@ public  final class DebugInfo extends
   public static final int STACK_ENTRIES_FIELD_NUMBER = 1;
   private com.google.protobuf.LazyStringList stackEntries_;
   /**
-   * <code>repeated string stack_entries = 1;</code>
-   *
    * <pre>
    * The stack trace entries indicating where the error occurred.
    * </pre>
+   *
+   * <code>repeated string stack_entries = 1;</code>
    */
   public com.google.protobuf.ProtocolStringList
       getStackEntriesList() {
     return stackEntries_;
   }
   /**
-   * <code>repeated string stack_entries = 1;</code>
-   *
    * <pre>
    * The stack trace entries indicating where the error occurred.
    * </pre>
+   *
+   * <code>repeated string stack_entries = 1;</code>
    */
   public int getStackEntriesCount() {
     return stackEntries_.size();
   }
   /**
-   * <code>repeated string stack_entries = 1;</code>
-   *
    * <pre>
    * The stack trace entries indicating where the error occurred.
    * </pre>
+   *
+   * <code>repeated string stack_entries = 1;</code>
    */
   public java.lang.String getStackEntries(int index) {
     return stackEntries_.get(index);
   }
   /**
-   * <code>repeated string stack_entries = 1;</code>
-   *
    * <pre>
    * The stack trace entries indicating where the error occurred.
    * </pre>
+   *
+   * <code>repeated string stack_entries = 1;</code>
    */
   public com.google.protobuf.ByteString
       getStackEntriesBytes(int index) {
@@ -138,11 +138,11 @@ public  final class DebugInfo extends
   public static final int DETAIL_FIELD_NUMBER = 2;
   private volatile java.lang.Object detail_;
   /**
-   * <code>optional string detail = 2;</code>
-   *
    * <pre>
    * Additional debugging information provided by the server.
    * </pre>
+   *
+   * <code>optional string detail = 2;</code>
    */
   public java.lang.String getDetail() {
     java.lang.Object ref = detail_;
@@ -157,11 +157,11 @@ public  final class DebugInfo extends
     }
   }
   /**
-   * <code>optional string detail = 2;</code>
-   *
    * <pre>
    * Additional debugging information provided by the server.
    * </pre>
+   *
+   * <code>optional string detail = 2;</code>
    */
   public com.google.protobuf.ByteString
       getDetailBytes() {
@@ -190,10 +190,10 @@ public  final class DebugInfo extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     for (int i = 0; i < stackEntries_.size(); i++) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, stackEntries_.getRaw(i));
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, stackEntries_.getRaw(i));
     }
     if (!getDetailBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 2, detail_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, detail_);
     }
   }
 
@@ -211,13 +211,49 @@ public  final class DebugInfo extends
       size += 1 * getStackEntriesList().size();
     }
     if (!getDetailBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, detail_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, detail_);
     }
     memoizedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.rpc.DebugInfo)) {
+      return super.equals(obj);
+    }
+    com.google.rpc.DebugInfo other = (com.google.rpc.DebugInfo) obj;
+
+    boolean result = true;
+    result = result && getStackEntriesList()
+        .equals(other.getStackEntriesList());
+    result = result && getDetail()
+        .equals(other.getDetail());
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    if (getStackEntriesCount() > 0) {
+      hash = (37 * hash) + STACK_ENTRIES_FIELD_NUMBER;
+      hash = (53 * hash) + getStackEntriesList().hashCode();
+    }
+    hash = (37 * hash) + DETAIL_FIELD_NUMBER;
+    hash = (53 * hash) + getDetail().hashCode();
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.rpc.DebugInfo parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -241,34 +277,40 @@ public  final class DebugInfo extends
   }
   public static com.google.rpc.DebugInfo parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.DebugInfo parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.DebugInfo parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.rpc.DebugInfo parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.rpc.DebugInfo parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.rpc.DebugInfo parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -285,19 +327,19 @@ public  final class DebugInfo extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.rpc.DebugInfo}
-   *
    * <pre>
    * Describes additional debugging info.
    * </pre>
+   *
+   * Protobuf type {@code google.rpc.DebugInfo}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.rpc.DebugInfo)
       com.google.rpc.DebugInfoOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -305,7 +347,7 @@ public  final class DebugInfo extends
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_DebugInfo_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.rpc.ErrorDetailsProto.internal_static_google_rpc_DebugInfo_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -318,12 +360,13 @@ public  final class DebugInfo extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -367,6 +410,32 @@ public  final class DebugInfo extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.rpc.DebugInfo) {
         return mergeFrom((com.google.rpc.DebugInfo)other);
@@ -409,7 +478,7 @@ public  final class DebugInfo extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.rpc.DebugInfo) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -427,53 +496,53 @@ public  final class DebugInfo extends
        }
     }
     /**
-     * <code>repeated string stack_entries = 1;</code>
-     *
      * <pre>
      * The stack trace entries indicating where the error occurred.
      * </pre>
+     *
+     * <code>repeated string stack_entries = 1;</code>
      */
     public com.google.protobuf.ProtocolStringList
         getStackEntriesList() {
       return stackEntries_.getUnmodifiableView();
     }
     /**
-     * <code>repeated string stack_entries = 1;</code>
-     *
      * <pre>
      * The stack trace entries indicating where the error occurred.
      * </pre>
+     *
+     * <code>repeated string stack_entries = 1;</code>
      */
     public int getStackEntriesCount() {
       return stackEntries_.size();
     }
     /**
-     * <code>repeated string stack_entries = 1;</code>
-     *
      * <pre>
      * The stack trace entries indicating where the error occurred.
      * </pre>
+     *
+     * <code>repeated string stack_entries = 1;</code>
      */
     public java.lang.String getStackEntries(int index) {
       return stackEntries_.get(index);
     }
     /**
-     * <code>repeated string stack_entries = 1;</code>
-     *
      * <pre>
      * The stack trace entries indicating where the error occurred.
      * </pre>
+     *
+     * <code>repeated string stack_entries = 1;</code>
      */
     public com.google.protobuf.ByteString
         getStackEntriesBytes(int index) {
       return stackEntries_.getByteString(index);
     }
     /**
-     * <code>repeated string stack_entries = 1;</code>
-     *
      * <pre>
      * The stack trace entries indicating where the error occurred.
      * </pre>
+     *
+     * <code>repeated string stack_entries = 1;</code>
      */
     public Builder setStackEntries(
         int index, java.lang.String value) {
@@ -486,11 +555,11 @@ public  final class DebugInfo extends
       return this;
     }
     /**
-     * <code>repeated string stack_entries = 1;</code>
-     *
      * <pre>
      * The stack trace entries indicating where the error occurred.
      * </pre>
+     *
+     * <code>repeated string stack_entries = 1;</code>
      */
     public Builder addStackEntries(
         java.lang.String value) {
@@ -503,11 +572,11 @@ public  final class DebugInfo extends
       return this;
     }
     /**
-     * <code>repeated string stack_entries = 1;</code>
-     *
      * <pre>
      * The stack trace entries indicating where the error occurred.
      * </pre>
+     *
+     * <code>repeated string stack_entries = 1;</code>
      */
     public Builder addAllStackEntries(
         java.lang.Iterable<java.lang.String> values) {
@@ -518,11 +587,11 @@ public  final class DebugInfo extends
       return this;
     }
     /**
-     * <code>repeated string stack_entries = 1;</code>
-     *
      * <pre>
      * The stack trace entries indicating where the error occurred.
      * </pre>
+     *
+     * <code>repeated string stack_entries = 1;</code>
      */
     public Builder clearStackEntries() {
       stackEntries_ = com.google.protobuf.LazyStringArrayList.EMPTY;
@@ -531,11 +600,11 @@ public  final class DebugInfo extends
       return this;
     }
     /**
-     * <code>repeated string stack_entries = 1;</code>
-     *
      * <pre>
      * The stack trace entries indicating where the error occurred.
      * </pre>
+     *
+     * <code>repeated string stack_entries = 1;</code>
      */
     public Builder addStackEntriesBytes(
         com.google.protobuf.ByteString value) {
@@ -551,11 +620,11 @@ public  final class DebugInfo extends
 
     private java.lang.Object detail_ = "";
     /**
-     * <code>optional string detail = 2;</code>
-     *
      * <pre>
      * Additional debugging information provided by the server.
      * </pre>
+     *
+     * <code>optional string detail = 2;</code>
      */
     public java.lang.String getDetail() {
       java.lang.Object ref = detail_;
@@ -570,11 +639,11 @@ public  final class DebugInfo extends
       }
     }
     /**
-     * <code>optional string detail = 2;</code>
-     *
      * <pre>
      * Additional debugging information provided by the server.
      * </pre>
+     *
+     * <code>optional string detail = 2;</code>
      */
     public com.google.protobuf.ByteString
         getDetailBytes() {
@@ -590,11 +659,11 @@ public  final class DebugInfo extends
       }
     }
     /**
-     * <code>optional string detail = 2;</code>
-     *
      * <pre>
      * Additional debugging information provided by the server.
      * </pre>
+     *
+     * <code>optional string detail = 2;</code>
      */
     public Builder setDetail(
         java.lang.String value) {
@@ -607,11 +676,11 @@ public  final class DebugInfo extends
       return this;
     }
     /**
-     * <code>optional string detail = 2;</code>
-     *
      * <pre>
      * Additional debugging information provided by the server.
      * </pre>
+     *
+     * <code>optional string detail = 2;</code>
      */
     public Builder clearDetail() {
       
@@ -620,11 +689,11 @@ public  final class DebugInfo extends
       return this;
     }
     /**
-     * <code>optional string detail = 2;</code>
-     *
      * <pre>
      * Additional debugging information provided by the server.
      * </pre>
+     *
+     * <code>optional string detail = 2;</code>
      */
     public Builder setDetailBytes(
         com.google.protobuf.ByteString value) {
@@ -667,16 +736,7 @@ public  final class DebugInfo extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new DebugInfo(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

@@ -8,45 +8,45 @@ public interface QuotaFailureOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-   *
    * <pre>
    * Describes all quota violations.
    * </pre>
+   *
+   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
    */
   java.util.List<com.google.rpc.QuotaFailure.Violation> 
       getViolationsList();
   /**
-   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-   *
    * <pre>
    * Describes all quota violations.
    * </pre>
+   *
+   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
    */
   com.google.rpc.QuotaFailure.Violation getViolations(int index);
   /**
-   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-   *
    * <pre>
    * Describes all quota violations.
    * </pre>
+   *
+   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
    */
   int getViolationsCount();
   /**
-   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-   *
    * <pre>
    * Describes all quota violations.
    * </pre>
+   *
+   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
    */
   java.util.List<? extends com.google.rpc.QuotaFailure.ViolationOrBuilder> 
       getViolationsOrBuilderList();
   /**
-   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
-   *
    * <pre>
    * Describes all quota violations.
    * </pre>
+   *
+   * <code>repeated .google.rpc.QuotaFailure.Violation violations = 1;</code>
    */
   com.google.rpc.QuotaFailure.ViolationOrBuilder getViolationsOrBuilder(
       int index);
