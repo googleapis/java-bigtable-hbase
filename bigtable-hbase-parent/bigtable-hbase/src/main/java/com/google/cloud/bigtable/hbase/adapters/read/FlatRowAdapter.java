@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.filter.FilterList;
@@ -60,6 +62,7 @@ public class FlatRowAdapter implements ResponseAdapter<FlatRow, Result> {
    * appear one after the other. An {@link Interleave}s can originate from a {@link FilterList} with
    * a {@link FilterList.Operator#MUST_PASS_ONE} operator or a {@link WhileMatchFilter}.
    */
+  @NotThreadSafe
   private static class CellSorter {
     private final byte[] rowKey;
     private final FlatRow flatRow;
