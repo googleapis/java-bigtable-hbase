@@ -4,21 +4,21 @@
 package com.google.bigtable.admin.v2;
 
 /**
- * Protobuf type {@code google.bigtable.admin.v2.Instance}
- *
  * <pre>
  * A collection of Bigtable [Tables][google.bigtable.admin.v2.Table] and
  * the resources that serve them.
  * All tables in an instance are served from a single
  * [Cluster][google.bigtable.admin.v2.Cluster].
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.admin.v2.Instance}
  */
 public  final class Instance extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.admin.v2.Instance)
     InstanceOrBuilder {
   // Use Instance.newBuilder() to construct.
-  private Instance(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private Instance(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private Instance() {
@@ -35,7 +35,8 @@ public  final class Instance extends
   }
   private Instance(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -79,11 +80,10 @@ public  final class Instance extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -93,7 +93,7 @@ public  final class Instance extends
     return com.google.bigtable.admin.v2.InstanceProto.internal_static_google_bigtable_admin_v2_Instance_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.admin.v2.InstanceProto.internal_static_google_bigtable_admin_v2_Instance_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -101,80 +101,88 @@ public  final class Instance extends
   }
 
   /**
-   * Protobuf enum {@code google.bigtable.admin.v2.Instance.State}
-   *
    * <pre>
    * Possible states of an instance.
    * </pre>
+   *
+   * Protobuf enum {@code google.bigtable.admin.v2.Instance.State}
    */
   public enum State
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
-     * <code>STATE_NOT_KNOWN = 0;</code>
-     *
      * <pre>
      * The state of the instance could not be determined.
      * </pre>
-     */
-    STATE_NOT_KNOWN(0, 0),
-    /**
-     * <code>READY = 1;</code>
      *
+     * <code>STATE_NOT_KNOWN = 0;</code>
+     */
+    STATE_NOT_KNOWN(0),
+    /**
      * <pre>
      * The instance has been successfully created and can serve requests
      * to its tables.
      * </pre>
-     */
-    READY(1, 1),
-    /**
-     * <code>CREATING = 2;</code>
      *
+     * <code>READY = 1;</code>
+     */
+    READY(1),
+    /**
      * <pre>
      * The instance is currently being created, and may be destroyed
      * if the creation process encounters an error.
      * </pre>
+     *
+     * <code>CREATING = 2;</code>
      */
-    CREATING(2, 2),
-    UNRECOGNIZED(-1, -1),
+    CREATING(2),
+    UNRECOGNIZED(-1),
     ;
 
     /**
-     * <code>STATE_NOT_KNOWN = 0;</code>
-     *
      * <pre>
      * The state of the instance could not be determined.
      * </pre>
+     *
+     * <code>STATE_NOT_KNOWN = 0;</code>
      */
     public static final int STATE_NOT_KNOWN_VALUE = 0;
     /**
-     * <code>READY = 1;</code>
-     *
      * <pre>
      * The instance has been successfully created and can serve requests
      * to its tables.
      * </pre>
+     *
+     * <code>READY = 1;</code>
      */
     public static final int READY_VALUE = 1;
     /**
-     * <code>CREATING = 2;</code>
-     *
      * <pre>
      * The instance is currently being created, and may be destroyed
      * if the creation process encounters an error.
      * </pre>
+     *
+     * <code>CREATING = 2;</code>
      */
     public static final int CREATING_VALUE = 2;
 
 
     public final int getNumber() {
-      if (index == -1) {
+      if (this == UNRECOGNIZED) {
         throw new java.lang.IllegalArgumentException(
             "Can't get the number of an unknown enum value.");
       }
       return value;
     }
 
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static State valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static State forNumber(int value) {
       switch (value) {
         case 0: return STATE_NOT_KNOWN;
         case 1: return READY;
@@ -191,13 +199,13 @@ public  final class Instance extends
         State> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<State>() {
             public State findValueByNumber(int number) {
-              return State.valueOf(number);
+              return State.forNumber(number);
             }
           };
 
     public final com.google.protobuf.Descriptors.EnumValueDescriptor
         getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
+      return getDescriptor().getValues().get(ordinal());
     }
     public final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptorForType() {
@@ -222,11 +230,9 @@ public  final class Instance extends
       return VALUES[desc.getIndex()];
     }
 
-    private final int index;
     private final int value;
 
-    private State(int index, int value) {
-      this.index = index;
+    private State(int value) {
       this.value = value;
     }
 
@@ -234,36 +240,34 @@ public  final class Instance extends
   }
 
   /**
-   * Protobuf enum {@code google.bigtable.admin.v2.Instance.Type}
-   *
    * <pre>
    * The type of the instance.
    * </pre>
+   *
+   * Protobuf enum {@code google.bigtable.admin.v2.Instance.Type}
    */
   public enum Type
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
-     * <code>TYPE_UNSPECIFIED = 0;</code>
-     *
      * <pre>
      * The type of the instance is unspecified. If set when creating an
      * instance, a `PRODUCTION` instance will be created. If set when updating
      * an instance, the type will be left unchanged.
      * </pre>
-     */
-    TYPE_UNSPECIFIED(0, 0),
-    /**
-     * <code>PRODUCTION = 1;</code>
      *
+     * <code>TYPE_UNSPECIFIED = 0;</code>
+     */
+    TYPE_UNSPECIFIED(0),
+    /**
      * <pre>
      * An instance meant for production use. `serve_nodes` must be set
      * on the cluster.
      * </pre>
-     */
-    PRODUCTION(1, 1),
-    /**
-     * <code>DEVELOPMENT = 2;</code>
      *
+     * <code>PRODUCTION = 1;</code>
+     */
+    PRODUCTION(1),
+    /**
      * <pre>
      * The instance is meant for development purposes only.
      * It uses shared resources and has no performance or uptime guarantees.
@@ -273,33 +277,33 @@ public  final class Instance extends
      * When creating a development instance, `serve_nodes` on the cluster must
      * not be set.
      * </pre>
+     *
+     * <code>DEVELOPMENT = 2;</code>
      */
-    DEVELOPMENT(2, 2),
-    UNRECOGNIZED(-1, -1),
+    DEVELOPMENT(2),
+    UNRECOGNIZED(-1),
     ;
 
     /**
-     * <code>TYPE_UNSPECIFIED = 0;</code>
-     *
      * <pre>
      * The type of the instance is unspecified. If set when creating an
      * instance, a `PRODUCTION` instance will be created. If set when updating
      * an instance, the type will be left unchanged.
      * </pre>
+     *
+     * <code>TYPE_UNSPECIFIED = 0;</code>
      */
     public static final int TYPE_UNSPECIFIED_VALUE = 0;
     /**
-     * <code>PRODUCTION = 1;</code>
-     *
      * <pre>
      * An instance meant for production use. `serve_nodes` must be set
      * on the cluster.
      * </pre>
+     *
+     * <code>PRODUCTION = 1;</code>
      */
     public static final int PRODUCTION_VALUE = 1;
     /**
-     * <code>DEVELOPMENT = 2;</code>
-     *
      * <pre>
      * The instance is meant for development purposes only.
      * It uses shared resources and has no performance or uptime guarantees.
@@ -309,19 +313,29 @@ public  final class Instance extends
      * When creating a development instance, `serve_nodes` on the cluster must
      * not be set.
      * </pre>
+     *
+     * <code>DEVELOPMENT = 2;</code>
      */
     public static final int DEVELOPMENT_VALUE = 2;
 
 
     public final int getNumber() {
-      if (index == -1) {
+      if (this == UNRECOGNIZED) {
         throw new java.lang.IllegalArgumentException(
             "Can't get the number of an unknown enum value.");
       }
       return value;
     }
 
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static Type valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static Type forNumber(int value) {
       switch (value) {
         case 0: return TYPE_UNSPECIFIED;
         case 1: return PRODUCTION;
@@ -338,13 +352,13 @@ public  final class Instance extends
         Type> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<Type>() {
             public Type findValueByNumber(int number) {
-              return Type.valueOf(number);
+              return Type.forNumber(number);
             }
           };
 
     public final com.google.protobuf.Descriptors.EnumValueDescriptor
         getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
+      return getDescriptor().getValues().get(ordinal());
     }
     public final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptorForType() {
@@ -369,11 +383,9 @@ public  final class Instance extends
       return VALUES[desc.getIndex()];
     }
 
-    private final int index;
     private final int value;
 
-    private Type(int index, int value) {
-      this.index = index;
+    private Type(int value) {
       this.value = value;
     }
 
@@ -383,13 +395,13 @@ public  final class Instance extends
   public static final int NAME_FIELD_NUMBER = 1;
   private volatile java.lang.Object name_;
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The unique name of the instance. Values are of the form
    * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public java.lang.String getName() {
     java.lang.Object ref = name_;
@@ -404,13 +416,13 @@ public  final class Instance extends
     }
   }
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The unique name of the instance. Values are of the form
    * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -429,13 +441,13 @@ public  final class Instance extends
   public static final int DISPLAY_NAME_FIELD_NUMBER = 2;
   private volatile java.lang.Object displayName_;
   /**
-   * <code>optional string display_name = 2;</code>
-   *
    * <pre>
    * The descriptive name for this instance as it appears in UIs.
    * Can be changed at any time, but should be kept globally unique
    * to avoid confusion.
    * </pre>
+   *
+   * <code>optional string display_name = 2;</code>
    */
   public java.lang.String getDisplayName() {
     java.lang.Object ref = displayName_;
@@ -450,13 +462,13 @@ public  final class Instance extends
     }
   }
   /**
-   * <code>optional string display_name = 2;</code>
-   *
    * <pre>
    * The descriptive name for this instance as it appears in UIs.
    * Can be changed at any time, but should be kept globally unique
    * to avoid confusion.
    * </pre>
+   *
+   * <code>optional string display_name = 2;</code>
    */
   public com.google.protobuf.ByteString
       getDisplayNameBytes() {
@@ -475,23 +487,23 @@ public  final class Instance extends
   public static final int STATE_FIELD_NUMBER = 3;
   private int state_;
   /**
-   * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The current state of the instance.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    */
   public int getStateValue() {
     return state_;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The current state of the instance.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
    */
   public com.google.bigtable.admin.v2.Instance.State getState() {
     com.google.bigtable.admin.v2.Instance.State result = com.google.bigtable.admin.v2.Instance.State.valueOf(state_);
@@ -501,21 +513,21 @@ public  final class Instance extends
   public static final int TYPE_FIELD_NUMBER = 4;
   private int type_;
   /**
-   * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
-   *
    * <pre>
    * The type of the instance. Defaults to `PRODUCTION`.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
    */
   public int getTypeValue() {
     return type_;
   }
   /**
-   * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
-   *
    * <pre>
    * The type of the instance. Defaults to `PRODUCTION`.
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
    */
   public com.google.bigtable.admin.v2.Instance.Type getType() {
     com.google.bigtable.admin.v2.Instance.Type result = com.google.bigtable.admin.v2.Instance.Type.valueOf(type_);
@@ -535,10 +547,10 @@ public  final class Instance extends
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
     }
     if (!getDisplayNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessage.writeString(output, 2, displayName_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, displayName_);
     }
     if (state_ != com.google.bigtable.admin.v2.Instance.State.STATE_NOT_KNOWN.getNumber()) {
       output.writeEnum(3, state_);
@@ -554,10 +566,10 @@ public  final class Instance extends
 
     size = 0;
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
     }
     if (!getDisplayNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessage.computeStringSize(2, displayName_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, displayName_);
     }
     if (state_ != com.google.bigtable.admin.v2.Instance.State.STATE_NOT_KNOWN.getNumber()) {
       size += com.google.protobuf.CodedOutputStream
@@ -572,6 +584,46 @@ public  final class Instance extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.admin.v2.Instance)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.admin.v2.Instance other = (com.google.bigtable.admin.v2.Instance) obj;
+
+    boolean result = true;
+    result = result && getName()
+        .equals(other.getName());
+    result = result && getDisplayName()
+        .equals(other.getDisplayName());
+    result = result && state_ == other.state_;
+    result = result && type_ == other.type_;
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    hash = (37 * hash) + NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getName().hashCode();
+    hash = (37 * hash) + DISPLAY_NAME_FIELD_NUMBER;
+    hash = (53 * hash) + getDisplayName().hashCode();
+    hash = (37 * hash) + STATE_FIELD_NUMBER;
+    hash = (53 * hash) + state_;
+    hash = (37 * hash) + TYPE_FIELD_NUMBER;
+    hash = (53 * hash) + type_;
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.admin.v2.Instance parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -595,34 +647,40 @@ public  final class Instance extends
   }
   public static com.google.bigtable.admin.v2.Instance parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Instance parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Instance parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Instance parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.admin.v2.Instance parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.admin.v2.Instance parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -639,22 +697,22 @@ public  final class Instance extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.admin.v2.Instance}
-   *
    * <pre>
    * A collection of Bigtable [Tables][google.bigtable.admin.v2.Table] and
    * the resources that serve them.
    * All tables in an instance are served from a single
    * [Cluster][google.bigtable.admin.v2.Cluster].
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.admin.v2.Instance}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.admin.v2.Instance)
       com.google.bigtable.admin.v2.InstanceOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -662,7 +720,7 @@ public  final class Instance extends
       return com.google.bigtable.admin.v2.InstanceProto.internal_static_google_bigtable_admin_v2_Instance_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.admin.v2.InstanceProto.internal_static_google_bigtable_admin_v2_Instance_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -675,12 +733,13 @@ public  final class Instance extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -723,6 +782,32 @@ public  final class Instance extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.admin.v2.Instance) {
         return mergeFrom((com.google.bigtable.admin.v2.Instance)other);
@@ -765,7 +850,7 @@ public  final class Instance extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.admin.v2.Instance) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -776,13 +861,13 @@ public  final class Instance extends
 
     private java.lang.Object name_ = "";
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the instance. Values are of the form
      * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -797,13 +882,13 @@ public  final class Instance extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the instance. Values are of the form
      * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -819,13 +904,13 @@ public  final class Instance extends
       }
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the instance. Values are of the form
      * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setName(
         java.lang.String value) {
@@ -838,13 +923,13 @@ public  final class Instance extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the instance. Values are of the form
      * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder clearName() {
       
@@ -853,13 +938,13 @@ public  final class Instance extends
       return this;
     }
     /**
-     * <code>optional string name = 1;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The unique name of the instance. Values are of the form
      * `projects/&lt;project&gt;/instances/[a-z][a-z0-9&#92;&#92;-]+[a-z0-9]`.
      * </pre>
+     *
+     * <code>optional string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -875,13 +960,13 @@ public  final class Instance extends
 
     private java.lang.Object displayName_ = "";
     /**
-     * <code>optional string display_name = 2;</code>
-     *
      * <pre>
      * The descriptive name for this instance as it appears in UIs.
      * Can be changed at any time, but should be kept globally unique
      * to avoid confusion.
      * </pre>
+     *
+     * <code>optional string display_name = 2;</code>
      */
     public java.lang.String getDisplayName() {
       java.lang.Object ref = displayName_;
@@ -896,13 +981,13 @@ public  final class Instance extends
       }
     }
     /**
-     * <code>optional string display_name = 2;</code>
-     *
      * <pre>
      * The descriptive name for this instance as it appears in UIs.
      * Can be changed at any time, but should be kept globally unique
      * to avoid confusion.
      * </pre>
+     *
+     * <code>optional string display_name = 2;</code>
      */
     public com.google.protobuf.ByteString
         getDisplayNameBytes() {
@@ -918,13 +1003,13 @@ public  final class Instance extends
       }
     }
     /**
-     * <code>optional string display_name = 2;</code>
-     *
      * <pre>
      * The descriptive name for this instance as it appears in UIs.
      * Can be changed at any time, but should be kept globally unique
      * to avoid confusion.
      * </pre>
+     *
+     * <code>optional string display_name = 2;</code>
      */
     public Builder setDisplayName(
         java.lang.String value) {
@@ -937,13 +1022,13 @@ public  final class Instance extends
       return this;
     }
     /**
-     * <code>optional string display_name = 2;</code>
-     *
      * <pre>
      * The descriptive name for this instance as it appears in UIs.
      * Can be changed at any time, but should be kept globally unique
      * to avoid confusion.
      * </pre>
+     *
+     * <code>optional string display_name = 2;</code>
      */
     public Builder clearDisplayName() {
       
@@ -952,13 +1037,13 @@ public  final class Instance extends
       return this;
     }
     /**
-     * <code>optional string display_name = 2;</code>
-     *
      * <pre>
      * The descriptive name for this instance as it appears in UIs.
      * Can be changed at any time, but should be kept globally unique
      * to avoid confusion.
      * </pre>
+     *
+     * <code>optional string display_name = 2;</code>
      */
     public Builder setDisplayNameBytes(
         com.google.protobuf.ByteString value) {
@@ -974,23 +1059,23 @@ public  final class Instance extends
 
     private int state_ = 0;
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The current state of the instance.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public int getStateValue() {
       return state_;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The current state of the instance.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public Builder setStateValue(int value) {
       state_ = value;
@@ -998,24 +1083,24 @@ public  final class Instance extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The current state of the instance.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public com.google.bigtable.admin.v2.Instance.State getState() {
       com.google.bigtable.admin.v2.Instance.State result = com.google.bigtable.admin.v2.Instance.State.valueOf(state_);
       return result == null ? com.google.bigtable.admin.v2.Instance.State.UNRECOGNIZED : result;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The current state of the instance.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public Builder setState(com.google.bigtable.admin.v2.Instance.State value) {
       if (value == null) {
@@ -1027,12 +1112,12 @@ public  final class Instance extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
-     *
      * <pre>
      * (`OutputOnly`)
      * The current state of the instance.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance.State state = 3;</code>
      */
     public Builder clearState() {
       
@@ -1043,21 +1128,21 @@ public  final class Instance extends
 
     private int type_ = 0;
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
-     *
      * <pre>
      * The type of the instance. Defaults to `PRODUCTION`.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
      */
     public int getTypeValue() {
       return type_;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
-     *
      * <pre>
      * The type of the instance. Defaults to `PRODUCTION`.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
      */
     public Builder setTypeValue(int value) {
       type_ = value;
@@ -1065,22 +1150,22 @@ public  final class Instance extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
-     *
      * <pre>
      * The type of the instance. Defaults to `PRODUCTION`.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
      */
     public com.google.bigtable.admin.v2.Instance.Type getType() {
       com.google.bigtable.admin.v2.Instance.Type result = com.google.bigtable.admin.v2.Instance.Type.valueOf(type_);
       return result == null ? com.google.bigtable.admin.v2.Instance.Type.UNRECOGNIZED : result;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
-     *
      * <pre>
      * The type of the instance. Defaults to `PRODUCTION`.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
      */
     public Builder setType(com.google.bigtable.admin.v2.Instance.Type value) {
       if (value == null) {
@@ -1092,11 +1177,11 @@ public  final class Instance extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
-     *
      * <pre>
      * The type of the instance. Defaults to `PRODUCTION`.
      * </pre>
+     *
+     * <code>optional .google.bigtable.admin.v2.Instance.Type type = 4;</code>
      */
     public Builder clearType() {
       
@@ -1134,16 +1219,7 @@ public  final class Instance extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new Instance(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

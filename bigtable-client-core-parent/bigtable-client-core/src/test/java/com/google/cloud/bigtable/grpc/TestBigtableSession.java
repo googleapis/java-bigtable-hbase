@@ -75,7 +75,7 @@ public class TestBigtableSession {
     // Make sure BigtableSession does its setup. This call is just to make sure that the
     // BigtableSession's static code snippets are invoked.
     BigtableSession.isAlpnProviderEnabled();
-    Field field = Recycler.class.getDeclaredField("DEFAULT_MAX_CAPACITY");
+    Field field = Recycler.class.getDeclaredField("DEFAULT_MAX_CAPACITY_PER_THREAD");
     field.setAccessible(true);
     Assert.assertEquals(0, field.getInt(null));
   }

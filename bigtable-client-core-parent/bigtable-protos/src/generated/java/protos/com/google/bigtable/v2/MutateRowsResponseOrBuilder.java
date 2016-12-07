@@ -8,45 +8,45 @@ public interface MutateRowsResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-   *
    * <pre>
    * One or more results for Entries from the batch request.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    */
   java.util.List<com.google.bigtable.v2.MutateRowsResponse.Entry> 
       getEntriesList();
   /**
-   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-   *
    * <pre>
    * One or more results for Entries from the batch request.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    */
   com.google.bigtable.v2.MutateRowsResponse.Entry getEntries(int index);
   /**
-   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-   *
    * <pre>
    * One or more results for Entries from the batch request.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    */
   int getEntriesCount();
   /**
-   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-   *
    * <pre>
    * One or more results for Entries from the batch request.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    */
   java.util.List<? extends com.google.bigtable.v2.MutateRowsResponse.EntryOrBuilder> 
       getEntriesOrBuilderList();
   /**
-   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
-   *
    * <pre>
    * One or more results for Entries from the batch request.
    * </pre>
+   *
+   * <code>repeated .google.bigtable.v2.MutateRowsResponse.Entry entries = 1;</code>
    */
   com.google.bigtable.v2.MutateRowsResponse.EntryOrBuilder getEntriesOrBuilder(
       int index);

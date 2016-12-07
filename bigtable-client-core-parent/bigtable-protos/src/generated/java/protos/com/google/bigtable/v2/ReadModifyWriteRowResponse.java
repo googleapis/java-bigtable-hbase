@@ -4,18 +4,18 @@
 package com.google.bigtable.v2;
 
 /**
- * Protobuf type {@code google.bigtable.v2.ReadModifyWriteRowResponse}
- *
  * <pre>
  * Response message for Bigtable.ReadModifyWriteRow.
  * </pre>
+ *
+ * Protobuf type {@code google.bigtable.v2.ReadModifyWriteRowResponse}
  */
 public  final class ReadModifyWriteRowResponse extends
-    com.google.protobuf.GeneratedMessage implements
+    com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:google.bigtable.v2.ReadModifyWriteRowResponse)
     ReadModifyWriteRowResponseOrBuilder {
   // Use ReadModifyWriteRowResponse.newBuilder() to construct.
-  private ReadModifyWriteRowResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private ReadModifyWriteRowResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
   private ReadModifyWriteRowResponse() {
@@ -28,7 +28,8 @@ public  final class ReadModifyWriteRowResponse extends
   }
   private ReadModifyWriteRowResponse(
       com.google.protobuf.CodedInputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     int mutable_bitField0_ = 0;
     try {
@@ -61,11 +62,10 @@ public  final class ReadModifyWriteRowResponse extends
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-      throw new RuntimeException(e.setUnfinishedMessage(this));
+      throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new RuntimeException(
-          new com.google.protobuf.InvalidProtocolBufferException(
-              e.getMessage()).setUnfinishedMessage(this));
+      throw new com.google.protobuf.InvalidProtocolBufferException(
+          e).setUnfinishedMessage(this);
     } finally {
       makeExtensionsImmutable();
     }
@@ -75,7 +75,7 @@ public  final class ReadModifyWriteRowResponse extends
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_ReadModifyWriteRowResponse_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_ReadModifyWriteRowResponse_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
@@ -85,31 +85,31 @@ public  final class ReadModifyWriteRowResponse extends
   public static final int ROW_FIELD_NUMBER = 1;
   private com.google.bigtable.v2.Row row_;
   /**
-   * <code>optional .google.bigtable.v2.Row row = 1;</code>
-   *
    * <pre>
    * A Row containing the new contents of all cells modified by the request.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.Row row = 1;</code>
    */
   public boolean hasRow() {
     return row_ != null;
   }
   /**
-   * <code>optional .google.bigtable.v2.Row row = 1;</code>
-   *
    * <pre>
    * A Row containing the new contents of all cells modified by the request.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.Row row = 1;</code>
    */
   public com.google.bigtable.v2.Row getRow() {
     return row_ == null ? com.google.bigtable.v2.Row.getDefaultInstance() : row_;
   }
   /**
-   * <code>optional .google.bigtable.v2.Row row = 1;</code>
-   *
    * <pre>
    * A Row containing the new contents of all cells modified by the request.
    * </pre>
+   *
+   * <code>optional .google.bigtable.v2.Row row = 1;</code>
    */
   public com.google.bigtable.v2.RowOrBuilder getRowOrBuilder() {
     return getRow();
@@ -146,6 +146,41 @@ public  final class ReadModifyWriteRowResponse extends
   }
 
   private static final long serialVersionUID = 0L;
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof com.google.bigtable.v2.ReadModifyWriteRowResponse)) {
+      return super.equals(obj);
+    }
+    com.google.bigtable.v2.ReadModifyWriteRowResponse other = (com.google.bigtable.v2.ReadModifyWriteRowResponse) obj;
+
+    boolean result = true;
+    result = result && (hasRow() == other.hasRow());
+    if (hasRow()) {
+      result = result && getRow()
+          .equals(other.getRow());
+    }
+    return result;
+  }
+
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptorForType().hashCode();
+    if (hasRow()) {
+      hash = (37 * hash) + ROW_FIELD_NUMBER;
+      hash = (53 * hash) + getRow().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
   public static com.google.bigtable.v2.ReadModifyWriteRowResponse parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -169,34 +204,40 @@ public  final class ReadModifyWriteRowResponse extends
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static com.google.bigtable.v2.ReadModifyWriteRowResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
   public Builder newBuilderForType() { return newBuilder(); }
@@ -213,19 +254,19 @@ public  final class ReadModifyWriteRowResponse extends
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code google.bigtable.v2.ReadModifyWriteRowResponse}
-   *
    * <pre>
    * Response message for Bigtable.ReadModifyWriteRow.
    * </pre>
+   *
+   * Protobuf type {@code google.bigtable.v2.ReadModifyWriteRowResponse}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:google.bigtable.v2.ReadModifyWriteRowResponse)
       com.google.bigtable.v2.ReadModifyWriteRowResponseOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -233,7 +274,7 @@ public  final class ReadModifyWriteRowResponse extends
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_ReadModifyWriteRowResponse_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.bigtable.v2.BigtableProto.internal_static_google_bigtable_v2_ReadModifyWriteRowResponse_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -246,12 +287,13 @@ public  final class ReadModifyWriteRowResponse extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
       }
     }
     public Builder clear() {
@@ -293,6 +335,32 @@ public  final class ReadModifyWriteRowResponse extends
       return result;
     }
 
+    public Builder clone() {
+      return (Builder) super.clone();
+    }
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.setField(field, value);
+    }
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return (Builder) super.clearField(field);
+    }
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return (Builder) super.clearOneof(oneof);
+    }
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, Object value) {
+      return (Builder) super.setRepeatedField(field, index, value);
+    }
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        Object value) {
+      return (Builder) super.addRepeatedField(field, value);
+    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.google.bigtable.v2.ReadModifyWriteRowResponse) {
         return mergeFrom((com.google.bigtable.v2.ReadModifyWriteRowResponse)other);
@@ -324,7 +392,7 @@ public  final class ReadModifyWriteRowResponse extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (com.google.bigtable.v2.ReadModifyWriteRowResponse) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -334,24 +402,24 @@ public  final class ReadModifyWriteRowResponse extends
     }
 
     private com.google.bigtable.v2.Row row_ = null;
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.Row, com.google.bigtable.v2.Row.Builder, com.google.bigtable.v2.RowOrBuilder> rowBuilder_;
     /**
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
-     *
      * <pre>
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.Row row = 1;</code>
      */
     public boolean hasRow() {
       return rowBuilder_ != null || row_ != null;
     }
     /**
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
-     *
      * <pre>
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.Row row = 1;</code>
      */
     public com.google.bigtable.v2.Row getRow() {
       if (rowBuilder_ == null) {
@@ -361,11 +429,11 @@ public  final class ReadModifyWriteRowResponse extends
       }
     }
     /**
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
-     *
      * <pre>
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.Row row = 1;</code>
      */
     public Builder setRow(com.google.bigtable.v2.Row value) {
       if (rowBuilder_ == null) {
@@ -381,11 +449,11 @@ public  final class ReadModifyWriteRowResponse extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
-     *
      * <pre>
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.Row row = 1;</code>
      */
     public Builder setRow(
         com.google.bigtable.v2.Row.Builder builderForValue) {
@@ -399,11 +467,11 @@ public  final class ReadModifyWriteRowResponse extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
-     *
      * <pre>
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.Row row = 1;</code>
      */
     public Builder mergeRow(com.google.bigtable.v2.Row value) {
       if (rowBuilder_ == null) {
@@ -421,11 +489,11 @@ public  final class ReadModifyWriteRowResponse extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
-     *
      * <pre>
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.Row row = 1;</code>
      */
     public Builder clearRow() {
       if (rowBuilder_ == null) {
@@ -439,11 +507,11 @@ public  final class ReadModifyWriteRowResponse extends
       return this;
     }
     /**
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
-     *
      * <pre>
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.Row row = 1;</code>
      */
     public com.google.bigtable.v2.Row.Builder getRowBuilder() {
       
@@ -451,11 +519,11 @@ public  final class ReadModifyWriteRowResponse extends
       return getRowFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
-     *
      * <pre>
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.Row row = 1;</code>
      */
     public com.google.bigtable.v2.RowOrBuilder getRowOrBuilder() {
       if (rowBuilder_ != null) {
@@ -466,17 +534,17 @@ public  final class ReadModifyWriteRowResponse extends
       }
     }
     /**
-     * <code>optional .google.bigtable.v2.Row row = 1;</code>
-     *
      * <pre>
      * A Row containing the new contents of all cells modified by the request.
      * </pre>
+     *
+     * <code>optional .google.bigtable.v2.Row row = 1;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.google.bigtable.v2.Row, com.google.bigtable.v2.Row.Builder, com.google.bigtable.v2.RowOrBuilder> 
         getRowFieldBuilder() {
       if (rowBuilder_ == null) {
-        rowBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        rowBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.google.bigtable.v2.Row, com.google.bigtable.v2.Row.Builder, com.google.bigtable.v2.RowOrBuilder>(
                 getRow(),
                 getParentForChildren(),
@@ -515,16 +583,7 @@ public  final class ReadModifyWriteRowResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      try {
         return new ReadModifyWriteRowResponse(input, extensionRegistry);
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof
-            com.google.protobuf.InvalidProtocolBufferException) {
-          throw (com.google.protobuf.InvalidProtocolBufferException)
-              e.getCause();
-        }
-        throw e;
-      }
     }
   };
 

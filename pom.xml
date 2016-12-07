@@ -57,9 +57,9 @@ limitations under the License.
         <compat.module>hbase-hadoop2-compat</compat.module>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
-        <grpc.version>0.14.1</grpc.version>
-        <netty.version>4.1.1.Final</netty.version>
-        <protobuff-java.version>3.0.0-beta-2</protobuff-java.version>
+        <grpc.version>1.0.2</grpc.version>
+        <netty.version>4.1.6.Final</netty.version>
+        <protobuff-java.version>3.0.2</protobuff-java.version>
         <google.api.client.version>1.22.0</google.api.client.version>
         <google.http.client.version>1.22.0</google.http.client.version>
         <guava.version>19.0</guava.version>

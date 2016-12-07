@@ -8,44 +8,94 @@ public interface TableOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The unique name of the table. Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
    * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   java.lang.String getName();
   /**
-   * <code>optional string name = 1;</code>
-   *
    * <pre>
    * (`OutputOnly`)
    * The unique name of the table. Values are of the form
    * `projects/&lt;project&gt;/instances/&lt;instance&gt;/tables/[_a-zA-Z0-9][-_.a-zA-Z0-9]*`.
    * Views: `NAME_ONLY`, `SCHEMA_VIEW`, `FULL`
    * </pre>
+   *
+   * <code>optional string name = 1;</code>
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
-   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
-   *
    * <pre>
    * (`CreationOnly`)
    * The column families configured for this table, mapped by column family ID.
    * Views: `SCHEMA_VIEW`, `FULL`
    * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
    */
+  int getColumnFamiliesCount();
+  /**
+   * <pre>
+   * (`CreationOnly`)
+   * The column families configured for this table, mapped by column family ID.
+   * Views: `SCHEMA_VIEW`, `FULL`
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+  boolean containsColumnFamilies(
+      java.lang.String key);
+  /**
+   * Use {@link #getColumnFamiliesMap()} instead.
+   */
+  @java.lang.Deprecated
   java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
   getColumnFamilies();
+  /**
+   * <pre>
+   * (`CreationOnly`)
+   * The column families configured for this table, mapped by column family ID.
+   * Views: `SCHEMA_VIEW`, `FULL`
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+  java.util.Map<java.lang.String, com.google.bigtable.admin.v2.ColumnFamily>
+  getColumnFamiliesMap();
+  /**
+   * <pre>
+   * (`CreationOnly`)
+   * The column families configured for this table, mapped by column family ID.
+   * Views: `SCHEMA_VIEW`, `FULL`
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+
+  com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrDefault(
+      java.lang.String key,
+      com.google.bigtable.admin.v2.ColumnFamily defaultValue);
+  /**
+   * <pre>
+   * (`CreationOnly`)
+   * The column families configured for this table, mapped by column family ID.
+   * Views: `SCHEMA_VIEW`, `FULL`
+   * </pre>
+   *
+   * <code>map&lt;string, .google.bigtable.admin.v2.ColumnFamily&gt; column_families = 3;</code>
+   */
+
+  com.google.bigtable.admin.v2.ColumnFamily getColumnFamiliesOrThrow(
+      java.lang.String key);
 
   /**
-   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-   *
    * <pre>
    * (`CreationOnly`)
    * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
@@ -53,11 +103,11 @@ public interface TableOrBuilder extends
    * If unspecified at creation time, the value will be set to `MILLIS`.
    * Views: `SCHEMA_VIEW`, `FULL`
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   int getGranularityValue();
   /**
-   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
-   *
    * <pre>
    * (`CreationOnly`)
    * The granularity (e.g. `MILLIS`, `MICROS`) at which timestamps are stored in
@@ -65,6 +115,8 @@ public interface TableOrBuilder extends
    * If unspecified at creation time, the value will be set to `MILLIS`.
    * Views: `SCHEMA_VIEW`, `FULL`
    * </pre>
+   *
+   * <code>optional .google.bigtable.admin.v2.Table.TimestampGranularity granularity = 4;</code>
    */
   com.google.bigtable.admin.v2.Table.TimestampGranularity getGranularity();
 }
