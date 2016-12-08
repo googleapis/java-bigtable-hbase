@@ -853,39 +853,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
-  public boolean isSnapshotFinished(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, HBaseSnapshotException, UnknownSnapshotException {
-    throw new UnsupportedOperationException("isSnapshotFinished");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void cloneSnapshot(byte[] snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     throw new UnsupportedOperationException("cloneSnapshot");  // TODO
@@ -939,6 +906,41 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void deleteSnapshots(Pattern pattern) throws IOException {
     throw new UnsupportedOperationException("deleteSnapshots");  // TODO
+  }
+
+  // ------------- Unsupported snapshot methods.
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isSnapshotFinished(HBaseProtos.SnapshotDescription snapshot)
+      throws IOException, HBaseSnapshotException, UnknownSnapshotException {
+    throw new UnsupportedOperationException("isSnapshotFinished");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
   }
 
   // ------------- Snapshot method end
