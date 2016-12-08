@@ -55,15 +55,15 @@ public class BigtableClusterName {
 
   /**
    * @return The id of the instance that contains this cluster. It's the second group in the Cluster
-   *         name: "projects/(.+)/instances/(.+)/clusters/(.+)".
+   *         name: "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
    */
   public String getInstanceId() {
     return instanceId;
   }
 
   /**
-   * @return The id of this cluster. It will look like the following
-   *         projects/(.+)/instances/(.+)/clusters/(.+).
+   * @return The name of this cluster. It will look like the following
+   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
    */
   public String getClusterName() {
     return clusterName;
@@ -71,7 +71,7 @@ public class BigtableClusterName {
 
   /**
    * @return The id of this cluster. It's the third group in the Cluster name:
-   *         "projects/(.+)/instances/(.+)/clusters/(.+)".
+   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}".
    */
   public String getClusterId() {
     return clusterId;
@@ -79,7 +79,8 @@ public class BigtableClusterName {
 
   /**
    * Create a fully qualified snapshot name based on the the clusterName and the snapshotId.
-   * Snapshot name will look like: "projects/(.+)/instances/(.+)/clusters/(.+)/snapshots/(.+)"
+   * Snapshot name will look like:
+   * "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots{snpashotId}".
    * @param snapshotId The id of the snapshot
    * @return A fully qualified snapshot name that contains the fully qualified cluster name as the
    *         parent and the snapshot name as the child.

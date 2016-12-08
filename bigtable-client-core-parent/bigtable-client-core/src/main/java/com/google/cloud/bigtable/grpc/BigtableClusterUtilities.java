@@ -70,7 +70,10 @@ public class BigtableClusterUtilities implements AutoCloseable {
   }
 
   /**
-   * @return The instance id associated with the given project, zone and cluster.
+   * @return The instance id associated with the given project, zone and cluster. We expect instance
+   *         and cluster to have one-to-one relationship.
+   *
+   * @throws IllegalStateException if the cluster is not found
    */
   public static String lookupInstanceId(String projectId, String clusterId, String zoneId)
     throws IOException {
@@ -94,7 +97,10 @@ public class BigtableClusterUtilities implements AutoCloseable {
   }
 
   /**
-   * @return The cluster associated with the given project and instance
+   * @return The cluster associated with the given project and instance. We expect instance and
+   *         cluster to have one-to-one relationship.
+   * @throws IllegalStateException if the cluster is not found or if there are many clusters in this
+   *           instance.
    */
   public static Cluster lookupCluster(String projectId, String instanceId)
     throws IOException {
@@ -152,6 +158,8 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @param clusterId
    * @param zoneId
    * @return the {@link Cluster#getServeNodes()} of the clusterId.
+   * @deprecated Use {@link #getCluster(String, String)} or {@link #getSingleCluster()} and then
+   *             call {@link Cluster#getServeNodes()}.
    */
   public int getClusterSize(String clusterId, String zoneId) {
     Cluster cluster = getCluster(clusterId, zoneId);
