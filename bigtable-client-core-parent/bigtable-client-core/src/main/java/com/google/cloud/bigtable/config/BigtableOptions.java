@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.config;
 import java.io.Serializable;
 import java.util.Objects;
 
+import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
@@ -271,6 +272,7 @@ public class BigtableOptions implements Serializable {
   private final boolean usePlaintextNegotiation;
 
   private final BigtableInstanceName instanceName;
+  private final BigtableClusterName clusterName;
 
   private final BulkOptions bulkOptions;
   private final CallOptionsConfig callOptionsConfig;
@@ -290,6 +292,7 @@ public class BigtableOptions implements Serializable {
       zoneId = null;
       dataChannelCount = 1;
       instanceName = null;
+      clusterName = null;
       usePlaintextNegotiation = false;
 
       bulkOptions = null;
@@ -337,8 +340,14 @@ public class BigtableOptions implements Serializable {
     if (!Strings.isNullOrEmpty(projectId)
         && !Strings.isNullOrEmpty(instanceId)) {
       this.instanceName = new BigtableInstanceName(projectId, instanceId);
+      if (!Strings.isNullOrEmpty(clusterId)) {
+        this.clusterName = instanceName.toClusterName(clusterId);
+      } else {
+        this.clusterName = null;
+      }
     } else {
       this.instanceName = null;
+      this.clusterName = null;
     }
 
     LOG.debug("Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
@@ -471,6 +480,10 @@ public class BigtableOptions implements Serializable {
    */
   public BigtableInstanceName getInstanceName() {
     return instanceName;
+  }
+
+  public BigtableClusterName getClusterName() {
+    return clusterName;
   }
 
   /**

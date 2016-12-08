@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
 import com.google.api.client.util.Strings;
+import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.config.CredentialOptions;
@@ -232,7 +233,7 @@ public class BigtableSession implements Closeable {
   private BigtableTableAdminClient tableAdminClient;
   private BigtableInstanceGrpcClient instanceAdminClient;
 
-  private final BigtableOptions options;
+  private  BigtableOptions options;
   private final List<ManagedChannel> managedChannels = Collections
       .synchronizedList(new ArrayList<ManagedChannel>());
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
@@ -375,6 +376,28 @@ public class BigtableSession implements Closeable {
       return options.toBuilder().setInstanceId(instanceId).build();
     }
     return options;
+  }
+
+
+  /**
+   * Return options with legacy input options, if any, resolved into currently supported options.
+   */
+  public synchronized BigtableClusterName getClusterName() throws IOException {
+    if (options.getClusterName() == null) {
+      try (BigtableClusterUtilities util =
+          BigtableClusterUtilities.forInstance(options.getProjectId(), options.getInstanceId())) {
+        final ListClustersResponse clusters = util.getClusters();
+        Preconditions.checkState(clusters.getClustersCount() == 0,
+          "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
+          options.getProjectId(), options.getInstanceId(), clusters.getClustersCount());
+        String clusterName = util.getSingleCluster().getName();
+        String clusterId = BigtableClusterName.parse(clusterName).getClusterId();
+        options = options.toBuilder().setClusterId(clusterId).build();
+      } catch (GeneralSecurityException e) {
+        throw new IOException("Could not get cluster Id.", e);
+      }
+    }
+    return options.getClusterName();
   }
 
   /**

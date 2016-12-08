@@ -120,5 +120,9 @@ public class BigtableInstanceName implements Serializable {
   public String getInstanceName() {
     return instanceName;
   }
+
+  public BigtableClusterName toClusterName(String clusterId) {
+    return new BigtableClusterName(instanceName + "/clusters/" + clusterId);
+  }
 }
 
