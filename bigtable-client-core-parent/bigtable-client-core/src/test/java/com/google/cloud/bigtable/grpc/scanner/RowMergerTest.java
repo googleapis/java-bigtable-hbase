@@ -180,7 +180,6 @@ public class RowMergerTest {
 
     verify(observer, times(1)).onNext(eq(FlatRow.newBuilder().withRowKey(rowKeyByteString)
         .addCell(family1, qualifier1ByteString, ts1, value1ByteString)
-        .addCell(family1, qualifier1ByteString, ts1, value1ByteString)
         .addCell(family1, qualifier1ByteString, ts2, value2ByteString)
         .addCell(family1, qualifier1ByteString, ts2, value2ByteString, Arrays.asList(label))
         .addCell(family1, qualifier2ByteString, ts1, value3ByteString)
