@@ -72,6 +72,7 @@ public class RpcThrottlerPerf {
                 registeredEvents.add(underTest.registerOperationWithHeapSize(1));
               }
             } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
               e.printStackTrace();
               throw new RuntimeException(e);
             } finally {
@@ -102,6 +103,7 @@ public class RpcThrottlerPerf {
                 }
               }
             } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
               throw new RuntimeException(e);
             } finally {
               long totalTime = System.nanoTime() - startComplete;

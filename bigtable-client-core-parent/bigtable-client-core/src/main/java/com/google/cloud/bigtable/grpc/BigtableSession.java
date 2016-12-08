@@ -561,6 +561,7 @@ public class BigtableSession implements Closeable {
       try {
         channel.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         throw new IOException("Interrupted while closing the channelPools");
       }
     }

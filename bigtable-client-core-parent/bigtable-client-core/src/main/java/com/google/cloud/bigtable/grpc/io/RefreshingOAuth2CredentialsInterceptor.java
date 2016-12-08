@@ -249,6 +249,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
           try {
             isRefreshing.wait(250);
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new IOException(e);
           }
         }
@@ -416,7 +417,7 @@ public class RefreshingOAuth2CredentialsInterceptor implements HeaderInterceptor
       return RetryState.PerformRetry;
     } catch (InterruptedException e) {
       logger.warn("Interrupted while trying to refresh credentials.");
-      Thread.interrupted();
+      Thread.currentThread().interrupt();
       // If the thread is interrupted, terminate immediately.
       return RetryState.Interrupted;
     }

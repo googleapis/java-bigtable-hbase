@@ -99,6 +99,7 @@ public class TestRpcThrottler {
             underTest.registerOperationWithHeapSize(5l);
             secondRequestRegisteredLatch.countDown();
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
           }
         }
@@ -137,6 +138,7 @@ public class TestRpcThrottler {
               allOperationsDone.notify();
             }
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             e.printStackTrace();
             throw new RuntimeException(e);
           }
@@ -159,6 +161,7 @@ public class TestRpcThrottler {
               }
             }
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
           }
         }
@@ -217,6 +220,7 @@ public class TestRpcThrottler {
               allOperationsDone.notify();
             }
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             e.printStackTrace();
             throw new RuntimeException(e);
           }
@@ -235,6 +239,7 @@ public class TestRpcThrottler {
               }
             }
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
           }
         }
@@ -290,7 +295,8 @@ public class TestRpcThrottler {
           try {
             underTest.awaitCompletion();
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
           }
         }
       });

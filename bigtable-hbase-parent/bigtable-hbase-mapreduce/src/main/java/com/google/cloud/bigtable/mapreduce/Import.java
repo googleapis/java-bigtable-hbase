@@ -100,6 +100,7 @@ public class Import extends Configured implements Tool {
      * @param context  The current context.
      * @throws IOException When something is broken with the data.
      */
+    @SuppressWarnings("deprecation")
     @Override
     public void map(ImmutableBytesWritable row, Result value, Context context) throws IOException {
       try {
@@ -117,7 +118,8 @@ public class Import extends Configured implements Tool {
           }
         }
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        Thread.currentThread().interrupt();
+        throw new IOException("map process was interrupted", e);
       }
     }
 
@@ -147,7 +149,8 @@ public class Import extends Configured implements Tool {
       try {
         writeResult(row, value, context);
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        Thread.currentThread().interrupt();
+        throw new IOException("map process was interrupted", e);
       }
     }
 

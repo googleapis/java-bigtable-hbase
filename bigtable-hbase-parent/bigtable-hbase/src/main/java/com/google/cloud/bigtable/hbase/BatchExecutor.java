@@ -244,7 +244,10 @@ public class BatchExecutor {
       } else if (row instanceof RowMutations) {
         return bulkOperation.mutateRowAsync(requestAdapter.adapt((RowMutations) row));
       }
-    } catch (Exception e) {
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return Futures.immediateFailedFuture(new IOException("Could not process the batch due to interrupt", e));
+    } catch (Throwable e) {
       return Futures.immediateFailedFuture(new IOException("Could not process the batch", e));
     }
     LOG.error("Encountered unknown action type %s", row.getClass());
@@ -324,6 +327,7 @@ public class BatchExecutor {
       batch(actions, results);
       return results;
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       LOG.error("Encountered exception in batch(List<>).", e);
       throw new IOException("Batch error", e);
     }
