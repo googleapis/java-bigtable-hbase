@@ -813,6 +813,136 @@ public abstract class AbstractBigtableAdmin implements Admin {
     return getAlterStatus(TableName.valueOf(tableName));
   }
 
+  // ------------ SNAPSHOT methods begin
+
+  /** {@inheritDoc} */
+  @Override
+  public void snapshot(String snapshotName, TableName tableName)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    throw new UnsupportedOperationException("snapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void snapshot(byte[] snapshotName, TableName tableName)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    throw new UnsupportedOperationException("snapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void snapshot(String snapshotName, TableName tableName,
+      HBaseProtos.SnapshotDescription.Type type)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    throw new UnsupportedOperationException("snapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void snapshot(HBaseProtos.SnapshotDescription snapshot)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    throw new UnsupportedOperationException("snapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot)
+      throws IOException, SnapshotCreationException {
+    throw new UnsupportedOperationException("takeSnapshotAsync");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isSnapshotFinished(HBaseProtos.SnapshotDescription snapshot)
+      throws IOException, HBaseSnapshotException, UnknownSnapshotException {
+    throw new UnsupportedOperationException("isSnapshotFinished");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void cloneSnapshot(byte[] snapshotName, TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("cloneSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void cloneSnapshot(String snapshotName, TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("cloneSnapshot");  // TODO
+  }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
+    throw new UnsupportedOperationException("listSnapshots");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<HBaseProtos.SnapshotDescription> listSnapshots(String regex) throws IOException {
+    throw new UnsupportedOperationException("listSnapshots");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
+    throw new UnsupportedOperationException("listSnapshots");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void deleteSnapshot(byte[] snapshotName) throws IOException {
+    throw new UnsupportedOperationException("deleteSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void deleteSnapshot(String snapshotName) throws IOException {
+    throw new UnsupportedOperationException("deleteSnapshot");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void deleteSnapshots(String regex) throws IOException {
+    throw new UnsupportedOperationException("deleteSnapshots");  // TODO
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void deleteSnapshots(Pattern pattern) throws IOException {
+    throw new UnsupportedOperationException("deleteSnapshots");  // TODO
+  }
+
+  // ------------- Snapshot method end
+
   /** {@inheritDoc} */
   @Override
   public void closeRegion(String regionname, String serverName) throws IOException {
@@ -1095,89 +1225,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
-  public void snapshot(String snapshotName, TableName tableName)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void snapshot(byte[] snapshotName, TableName tableName)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void snapshot(String snapshotName, TableName tableName,
-      HBaseProtos.SnapshotDescription.Type type)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void snapshot(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException {
-    throw new UnsupportedOperationException("takeSnapshotAsync");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean isSnapshotFinished(HBaseProtos.SnapshotDescription snapshot)
-      throws IOException, HBaseSnapshotException, UnknownSnapshotException {
-    throw new UnsupportedOperationException("isSnapshotFinished");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void cloneSnapshot(byte[] snapshotName, TableName tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("cloneSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void cloneSnapshot(String snapshotName, TableName tableName)
-      throws IOException, TableExistsException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("cloneSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void execProcedure(String signature, String instance, Map<String, String> props)
       throws IOException {
     throw new UnsupportedOperationException("execProcedure");  // TODO
@@ -1195,48 +1242,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public boolean isProcedureFinished(String signature, String instance, Map<String, String> props)
       throws IOException {
     throw new UnsupportedOperationException("isProcedureFinished");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots(String regex) throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void deleteSnapshot(byte[] snapshotName) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void deleteSnapshot(String snapshotName) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshot");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void deleteSnapshots(String regex) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshots");  // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void deleteSnapshots(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshots");  // TODO
   }
 
   /** {@inheritDoc} */
