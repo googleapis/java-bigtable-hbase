@@ -59,6 +59,7 @@ import com.google.common.base.Preconditions;
     TestGet.class,
     TestGetTable.class,
     TestScan.class,
+    TestSnapshots.class,
     TestIncrement.class,
     TestListTables.class,
     TestPut.class,

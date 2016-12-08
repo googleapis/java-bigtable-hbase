@@ -15,7 +15,6 @@
  */package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.IntegrationTests.COLUMN_FAMILY;
-import static com.google.cloud.bigtable.hbase.IntegrationTests.TABLE_NAME;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,28 +32,21 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 
 public class TestSnapshots extends AbstractTest {
 
-  static final int count = 10;
   final byte[] QUALIFIER = dataHelper.randomData("TestSingleColumnValueFilter");
 
   private final TableName tableName = IntegrationTests.newTestTableName();
   private final String snapshotName = tableName.getNameAsString() + "_snp";
   private final TableName clonedTableName =
       TableName.valueOf(tableName.getNameAsString() + "_clone");
-
-   @Before
-   public void fillTable() throws IOException {
-   }
 
    @After
    public void delete() throws IOException {
@@ -73,21 +65,30 @@ public class TestSnapshots extends AbstractTest {
     admin.createTable(
       new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
 
-    Map<String, Long> values = createTable();
+    Map<String, Long> values = createAndPopulateTable();
+    Assert.assertEquals(0, admin.listSnapshots(snapshotName).size());
     admin.snapshot(snapshotName, tableName);
-    List<SnapshotDescription> snapshots = admin.listSnapshots(snapshotName);
-    Assert.assertEquals(1, snapshots.size());
+    Assert.assertEquals(1, admin.listSnapshots(snapshotName).size());
     admin.cloneSnapshot(snapshotName, clonedTableName);
     validateClone(values);
+    Assert.assertEquals(1, admin.listSnapshots(snapshotName).size());
+    admin.deleteSnapshot(snapshotName);
+    Assert.assertEquals(0, admin.listSnapshots(snapshotName).size());
     admin.close();
   }
 
-  private Map<String, Long> createTable() throws IOException {
+  /**
+   * Create a test table, and add a small number of rows to the table.
+   *
+   * @return A Map of the data that was added to the original table.
+   * @throws IOException
+   */
+  private Map<String, Long> createAndPopulateTable() throws IOException {
     Map<String, Long> values = new HashMap<>();
     try (Table table = getConnection().getTable(tableName)) {
       values.clear();
       List<Put> puts = new ArrayList<>();
-      for (long i = 0; i < count; i++) {
+      for (long i = 0; i < 10; i++) {
         final UUID rowKey = UUID.randomUUID();
         byte[] row = Bytes.toBytes(rowKey.toString());
         values.put(rowKey.toString(), i);
@@ -109,7 +110,7 @@ public class TestSnapshots extends AbstractTest {
         values.remove(row);
       }
     }
-    Assert.assertTrue("Extra keys found.", values.isEmpty());
+    Assert.assertTrue("There were missing keys.", values.isEmpty());
   }
 
 }
