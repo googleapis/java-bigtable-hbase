@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.grpc.io;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.cloud.bigtable.config.Logger;
@@ -99,8 +98,7 @@ public class ChannelPool extends ManagedChannel {
     private final ManagedChannel delegate;
     // a uniquely named timer for this channel's latency
     private final Timer timer;
-
-    private final AtomicBoolean active = new AtomicBoolean(true);
+    private boolean active = true;
 
     public InstrumentedChannel(ManagedChannel channel) {
       this.delegate = channel;
@@ -110,10 +108,10 @@ public class ChannelPool extends ManagedChannel {
     }
 
     private synchronized void markInactive(){
-      boolean previouslyActive = active.getAndSet(false);
-      if (previouslyActive) {
+      if (active) {
         getStats().ACTIVE_CHANNEL_COUNTER.dec();
       }
+      active = false;
     }
 
     @Override
@@ -147,67 +145,69 @@ public class ChannelPool extends ManagedChannel {
     @Override
     public <ReqT, RespT> ClientCall<ReqT, RespT>
         newCall(MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
-      final Context timerContext = timer.time();
-      final AtomicBoolean decremented = new AtomicBoolean(false);
       return new CheckedForwardingClientCall<ReqT, RespT>(delegate.newCall(methodDescriptor, callOptions)) {
+        final Context timerContext = timer.time();
+        boolean decremented = false;
         @Override
         protected void checkedStart(ClientCall.Listener<RespT> responseListener, Metadata headers)
             throws Exception {
           for (HeaderInterceptor interceptor : headerInterceptors) {
             interceptor.updateHeaders(headers);
           }
-          ClientCall.Listener<RespT> timingListener = wrap(responseListener, timerContext, decremented);
           getStats().ACTIVE_RPC_COUNTER.inc();
           getStats().RPC_METER.mark();
-          delegate().start(timingListener, headers);
+          delegate().start(wrap(responseListener), headers);
         }
 
         @Override
         public void cancel(String message, Throwable cause) {
-          if (!decremented.getAndSet(true)) {
-            getStats().ACTIVE_RPC_COUNTER.dec();
-          }
+          decrement();
           super.cancel(message, cause);
         }
-      };
-    }
 
-    protected <RespT> ClientCall.Listener<RespT> wrap(final ClientCall.Listener<RespT> delegate,
-        final Context timeContext, final AtomicBoolean decremented) {
-      return new ClientCall.Listener<RespT>() {
-
-        @Override
-        public void onHeaders(Metadata headers) {
-          delegate.onHeaders(headers);
-        }
-
-        @Override
-        public void onMessage(RespT message) {
-          delegate.onMessage(message);
-        }
-
-        @Override
-        public void onClose(Status status, Metadata trailers) {
-          try {
-            if (!decremented.getAndSet(true)) {
-              getStats().ACTIVE_RPC_COUNTER.dec();
-            }
-            if (!status.isOk()) {
-              BigtableClientMetrics.meter(MetricLevel.Info, "grpc.errors." + status.getCode().name())
-                  .mark();
-            }
-            delegate.onClose(status, trailers);
-          } finally {
-            timeContext.close();
+        private synchronized void decrement() {
+          if (!decremented) {
+            getStats().ACTIVE_RPC_COUNTER.dec();
           }
+          decremented = true;
         }
 
-        @Override
-        public void onReady() {
-          delegate.onReady();
+        protected ClientCall.Listener<RespT> wrap(final ClientCall.Listener<RespT> delegate) {
+          return new ClientCall.Listener<RespT>() {
+
+            @Override
+            public void onHeaders(Metadata headers) {
+              delegate.onHeaders(headers);
+            }
+
+            @Override
+            public void onMessage(RespT message) {
+              delegate.onMessage(message);
+            }
+
+            @Override
+            public void onClose(Status status, Metadata trailers) {
+              try {
+                decrement();
+                if (!status.isOk()) {
+                  BigtableClientMetrics.meter(MetricLevel.Info, "grpc.errors." + status.getCode().name())
+                      .mark();
+                }
+                delegate.onClose(status, trailers);
+              } finally {
+                timerContext.close();
+              }
+            }
+
+            @Override
+            public void onReady() {
+              delegate.onReady();
+            }
+          };
         }
       };
     }
+
 
     @Override
     public String authority() {
