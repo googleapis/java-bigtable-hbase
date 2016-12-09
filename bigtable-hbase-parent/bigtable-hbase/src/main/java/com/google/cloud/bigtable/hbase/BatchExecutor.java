@@ -34,7 +34,6 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 
 import com.google.api.client.util.Preconditions;
-import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -145,6 +144,7 @@ public class BatchExecutor {
 
   protected static class BulkOperation {
     private final AsyncExecutor asyncExecutor;
+    private final HBaseRequestAdapter requestAdapter;
     private final BigtableOptions options;
     private BulkMutation bulkMutation;
     private BulkRead bulkRead;
@@ -152,19 +152,36 @@ public class BatchExecutor {
     protected BulkOperation(
         BigtableSession session,
         AsyncExecutor asyncExecutor,
+        HBaseRequestAdapter requestAdapter,
         BigtableTableName tableName) {
       this.asyncExecutor = asyncExecutor;
+      this.requestAdapter = requestAdapter;
       this.options = session.getOptions();
       this.bulkRead = session.createBulkRead(tableName);
       this.bulkMutation = session.createBulkMutation(tableName, asyncExecutor);
     }
 
-    protected ListenableFuture<?> mutateRowAsync(MutateRowRequest request)
-        throws InterruptedException {
+    protected ListenableFuture<?> mutateRowAsync(Put put) throws InterruptedException {
       if (!options.getBulkOptions().useBulkApi()) {
-        return asyncExecutor.mutateRowAsync(request);
+        return asyncExecutor.mutateRowAsync(requestAdapter.adapt(put));
       } else {
-        return bulkMutation.add(request);
+        return bulkMutation.add(requestAdapter.adaptEntry(put));
+      }
+    }
+
+    protected ListenableFuture<?> mutateRowAsync(Delete delete) throws InterruptedException {
+      if (!options.getBulkOptions().useBulkApi()) {
+        return asyncExecutor.mutateRowAsync(requestAdapter.adapt(delete));
+      } else {
+        return bulkMutation.add(requestAdapter.adaptEntry(delete));
+      }
+    }
+
+    protected ListenableFuture<?> mutateRowAsync(RowMutations mutations) throws InterruptedException {
+      if (!options.getBulkOptions().useBulkApi()) {
+        return asyncExecutor.mutateRowAsync(requestAdapter.adapt(mutations));
+      } else {
+        return bulkMutation.add(requestAdapter.adaptEntry(mutations));
       }
     }
 
@@ -234,17 +251,20 @@ public class BatchExecutor {
       if (row instanceof Get) {
         return bulkOperation.readRowsAsync(requestAdapter.adapt((Get) row));
       } else if (row instanceof Put) {
-        return bulkOperation.mutateRowAsync(requestAdapter.adapt((Put) row));
+        return bulkOperation.mutateRowAsync((Put) row);
       } else if (row instanceof Delete) {
-        return bulkOperation.mutateRowAsync(requestAdapter.adapt((Delete) row));
+        return bulkOperation.mutateRowAsync((Delete) row);
       } else if (row instanceof Append) {
         return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Append) row));
       } else if (row instanceof Increment) {
         return asyncExecutor.readModifyWriteRowAsync(requestAdapter.adapt((Increment) row));
       } else if (row instanceof RowMutations) {
-        return bulkOperation.mutateRowAsync(requestAdapter.adapt((RowMutations) row));
+        return bulkOperation.mutateRowAsync((RowMutations) row);
       }
-    } catch (Exception e) {
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return Futures.immediateFailedFuture(new IOException("Could not process the batch due to interrupt", e));
+    } catch (Throwable e) {
       return Futures.immediateFailedFuture(new IOException("Could not process the batch", e));
     }
     LOG.error("Encountered unknown action type %s", row.getClass());
@@ -298,7 +318,7 @@ public class BatchExecutor {
 
   private <R> List<ListenableFuture<?>> issueAsyncRowRequests(List<? extends Row> actions,
       Object[] results, Batch.Callback<R> callback) {
-    BulkOperation bulkOperation = new BulkOperation(session, asyncExecutor,
+    BulkOperation bulkOperation = new BulkOperation(session, asyncExecutor, requestAdapter,
         requestAdapter.getBigtableTableName());
     try {
       List<ListenableFuture<?>> resultFutures = new ArrayList<>(actions.size());
@@ -324,6 +344,7 @@ public class BatchExecutor {
       batch(actions, results);
       return results;
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       LOG.error("Encountered exception in batch(List<>).", e);
       throw new IOException("Batch error", e);
     }

@@ -1,4 +1,5 @@
 /*
+
  * Copyright 2015 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,10 +83,12 @@ public class BulkMutation {
 
   @VisibleForTesting
   static MutateRowsRequest.Entry convert(MutateRowRequest request) {
-    return MutateRowsRequest.Entry.newBuilder()
-            .setRowKey(request.getRowKey())
-            .addAllMutations(request.getMutationsList())
-            .build();
+    if (request == null) {
+      return null;
+    } else {
+      return MutateRowsRequest.Entry.newBuilder().setRowKey(request.getRowKey())
+          .addAllMutations(request.getMutationsList()).build();
+    }
   }
 
   @VisibleForTesting
@@ -155,18 +158,18 @@ public class BulkMutation {
     }
 
     /**
-     * Adds a {@link MutateRowRequest} to the
+     * Adds a {@link MutateRowsRequest.Entry} to the
      * {@link com.google.bigtable.v2.MutateRowsRequest.Builder}. NOTE: Users have to make sure that
      * this gets called in a thread safe way.
-     * @param request The {@link MutateRowRequest} to add
+     * @param entry The {@link MutateRowsRequest.Entry} to add
      * @return a {@link SettableFuture} that will be populated when the {@link MutateRowsResponse}
-     *         returns from the server. See {@link #addCallback(ListenableFuture)} for
-     *         more information about how the SettableFuture is set.
+     *         returns from the server. See {@link #addCallback(ListenableFuture)} for more
+     *         information about how the SettableFuture is set.
      */
-    private ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
-      Preconditions.checkNotNull(currentRequestManager);
+    private ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
+      Preconditions.checkNotNull(entry);
       SettableFuture<MutateRowResponse> future = SettableFuture.create();
-      currentRequestManager.add(future, convert(request));
+      currentRequestManager.add(future, entry);
       return future;
     }
 
@@ -368,6 +371,9 @@ public class BulkMutation {
         }
         mutateRowsFuture = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
         currentRequestManager.lastRpcSentTime = clock.currentTimeMillis();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } catch (Throwable e) {
         mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {
@@ -475,25 +481,28 @@ public class BulkMutation {
     this.maxRequestSize = maxRequestSize;
   }
 
+  public ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
+    return add(convert(request));
+  }
+
   /**
-   * Adds a {@link MutateRowRequest} to the {@link
-   * com.google.bigtable.v2.MutateRowsRequest.Builder}. NOTE: Users have to make sure that this gets
-   * called in a thread safe way.
-   *
-   * @param request The {@link MutateRowRequest} to add
+   * Adds a {@link MutateRowsRequest.Entry} to the {@link MutateRowsRequest.Builder}. NOTE: Users
+   * have to make sure that this gets called in a thread safe way.
+   * @param entry The {@link MutateRowsRequest.Entry} to add
    * @return a {@link com.google.common.util.concurrent.SettableFuture} that will be populated when
-   *     the {@link MutateRowsResponse} returns from the server. See {@link
-   *     BulkMutation.Batch#addCallback(ListenableFuture)} for more information about how the
-   *     SettableFuture is set.
+   *         the {@link MutateRowsResponse} returns from the server. See
+   *         {@link BulkMutation.Batch#addCallback(ListenableFuture)} for more information about how
+   *         the SettableFuture is set.
    */
-  public synchronized ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {
-    Preconditions.checkArgument(!request.getRowKey().isEmpty(), "Request has an empty rowkey");
+  public synchronized ListenableFuture<MutateRowResponse> add(MutateRowsRequest.Entry entry) {
+    Preconditions.checkNotNull(entry, "Request null");
+    Preconditions.checkArgument(!entry.getRowKey().isEmpty(), "Request has an empty rowkey");
     if (currentBatch == null) {
       batchMeter.mark();
       currentBatch = new Batch();
     }
 
-    ListenableFuture<MutateRowResponse> future = currentBatch.add(request);
+    ListenableFuture<MutateRowResponse> future = currentBatch.add(entry);
     if (currentBatch.isFull()) {
       flush();
     }

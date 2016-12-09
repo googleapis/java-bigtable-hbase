@@ -39,7 +39,7 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.google.bigtable.v2.MutateRowRequest;
+import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -150,6 +150,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
             }
             operation.run();
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             LOG.info("Interrupted. Shutting down the mutation worker.");
             break;
           } catch (Exception e) {
@@ -315,6 +316,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
         }
       }
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new IOException("Interrupted in buffered mutator while mutating row : '"
           + Bytes.toString(mutation.getRow()), e);
     }
@@ -340,13 +342,13 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * <p>adapt.</p>
    *
    * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
-   * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
+   * @return a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} object.
    */
-  protected MutateRowRequest adapt(Mutation mutation) {
+  protected MutateRowsRequest.Entry adapt(Mutation mutation) {
     if (mutation instanceof Put) {
-      return adapter.adapt((Put) mutation);
+      return adapter.adaptEntry((Put) mutation);
     } else if (mutation instanceof Delete) {
-      return adapter.adapt((Delete) mutation);
+      return adapter.adaptEntry((Delete) mutation);
     } else {
       throw new IllegalArgumentException(
           "Encountered unknown mutation type: " + mutation.getClass());
@@ -371,7 +373,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
       }
       return Futures.immediateFailedFuture(
         new IllegalArgumentException("Encountered unknown mutation type: " + mutation.getClass()));
-    } catch (Exception e) {
+    } catch (Throwable e) {
       // issueRequest(mutation) could throw an Exception for validation issues. Remove the heapsize
       // and inflight rpc count.
       return Futures.immediateFailedFuture(e);
