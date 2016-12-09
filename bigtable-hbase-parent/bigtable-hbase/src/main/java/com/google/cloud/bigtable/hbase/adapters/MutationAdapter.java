@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters;
 import java.util.Collection;
 
 import org.apache.hadoop.hbase.client.Mutation;
+import org.apache.hadoop.hbase.client.Row;
 
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowsRequest;
@@ -31,7 +32,7 @@ import com.google.protobuf.ByteString;
  * @version $Id: $Id
  */
 
-public abstract class MutationAdapter<T extends Mutation>
+public abstract class MutationAdapter<T extends Row>
     implements OperationAdapter<T, MutateRowRequest.Builder> {
 
   protected static byte[] getBytes(ByteString bs) {
