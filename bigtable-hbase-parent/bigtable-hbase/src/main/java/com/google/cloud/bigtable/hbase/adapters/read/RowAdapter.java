@@ -15,9 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.read;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
