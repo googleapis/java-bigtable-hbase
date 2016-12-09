@@ -342,7 +342,7 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * <p>adapt.</p>
    *
    * @param mutation a {@link org.apache.hadoop.hbase.client.Mutation} object.
-   * @return a {@link com.google.bigtable.v2.MutateRowRequest} object.
+   * @return a {@link com.google.bigtable.v2.MutateRowsRequest.Entry} object.
    */
   protected MutateRowsRequest.Entry adapt(Mutation mutation) {
     if (mutation instanceof Put) {
