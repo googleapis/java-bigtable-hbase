@@ -75,9 +75,12 @@ public class ReadRowsAcceptanceTest {
     public List<TestResult> getNonExceptionResults() {
       ArrayList<TestResult> response = new ArrayList<>();
       if (results != null) {
+        TestResult previous = null;
         for (TestResult result : results) {
-          if (!result.error) {
+          if (!result.error && !result.equals(previous)) {
+            // Dedup the results.  Row merger dedups as well.
             response.add(result);
+            previous = result;
           }
         }
       }

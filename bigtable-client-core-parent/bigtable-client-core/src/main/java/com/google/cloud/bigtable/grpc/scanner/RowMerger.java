@@ -19,7 +19,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
+import com.google.common.base.Objects;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk.RowStatusCase;
@@ -247,24 +250,68 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    */
   private static final class RowInProgress {
     private ByteString rowKey;
-    private ImmutableList.Builder<FlatRow.Cell> cells;
 
     // cell in progress info
     private CellIdentifier currentId;
     private ByteArrayOutputStream outputStream;
 
+
+    private final Map<String, List<FlatRow.Cell>> cells = new TreeMap<>();
+    private List<FlatRow.Cell> currentFamilyRowCells = null;
+    private String currentFamily;
+    private FlatRow.Cell previousNoLabelCell;
+
     private final void addFullChunk(ReadRowsResponse.CellChunk chunk) {
       Preconditions.checkState(!hasChunkInProgess());
-      cells.add(new FlatRow.Cell(currentId.family, currentId.qualifier, currentId.timestampMicros,
-        chunk.getValue(), currentId.labels));
+      addCell(chunk.getValue());
     }
 
     private final void completeMultiChunkCell() {
       Preconditions.checkArgument(hasChunkInProgess());
-      ByteString value = ByteStringer.wrap(outputStream.toByteArray());
-      cells.add(new FlatRow.Cell(currentId.family, currentId.qualifier, currentId.timestampMicros,
-        value, currentId.labels));
+      addCell(ByteStringer.wrap(outputStream.toByteArray()));
       outputStream = null;
+    }
+
+    /**
+     * Adds a Cell to {@link #cells} map which is ordered by family. Cloud Bigtable returns values
+     * sorted by family (by internal id, not lexicographically), a lexicographically ascending
+     * ordering of qualifiers, and finally by timestamp descending. Each cell can appear more than
+     * once, if there are {@link Interleave}s in the {@link ReadRowsRequest#getFilter()}, but the
+     * duplicates will appear one after the other.
+     * <p>
+     * The end result will be that {@link #cells} will be lexicographically ordered by family, and
+     * the list of cells will be ordered by qualifier and timestamp. A flattened version of the
+     * {@link #cells} map will be sorted correctly.
+     */
+    private void addCell(ByteString value) {
+      if (!Objects.equal(currentFamily, currentId.family)) {
+        currentFamilyRowCells = new ArrayList<>();
+        currentFamily = currentId.family;
+        cells.put(currentId.family, currentFamilyRowCells);
+        previousNoLabelCell = null;
+      }
+
+      FlatRow.Cell cell = new FlatRow.Cell(currentId.family, currentId.qualifier,
+        currentId.timestampMicros, value, currentId.labels);
+      if (!currentId.labels.isEmpty()) {
+        currentFamilyRowCells.add(cell);
+      } else if (!isSameTimestampAndQualifier()) {
+        currentFamilyRowCells.add(cell);
+        previousNoLabelCell = cell;
+      } // else, this is a duplicate cell.
+    }
+
+    /**
+     * Checks to see if the current {@link FlatRow.Cell}'s qualifier and timestamp are equal to the
+     * previous {@link FlatRow.Cell}'s. This method assumes that {@link #isSameFamily(String)} was
+     * called, and the {@link #previousCell} is not null and has the same family as the new cell.
+     * @param the new {@link FlatRow.Cell}
+     * @return true if the new cell and old cell have logical equivalency.
+     */
+    private boolean isSameTimestampAndQualifier() {
+      return previousNoLabelCell != null
+          && currentId.timestampMicros == previousNoLabelCell.getTimestamp()
+          && Objects.equal(previousNoLabelCell.getQualifier(), currentId.qualifier);
     }
 
     /**
@@ -274,8 +321,10 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       ByteString newRowKey = chunk.getRowKey();
       if (rowKey == null || (!newRowKey.isEmpty() && !newRowKey.equals(rowKey))) {
         rowKey = newRowKey;
-        cells = ImmutableList.builder();
         currentId = new CellIdentifier(chunk);
+        currentFamily = null;
+        cells.clear();
+        currentFamilyRowCells = null;
       } else if (chunk.hasFamilyName()) {
         currentId.updateForFamily(chunk);
       } else if (chunk.hasQualifier()) {
@@ -304,9 +353,25 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
       return rowKey != null;
     }
 
-    FlatRow buildRow() {
-      return new FlatRow(rowKey, cells.build());
+    private FlatRow buildRow() {
+      return new FlatRow(rowKey, flattenCells());
     }
+
+    /**
+     * This method flattens the {@link #familyMap} which has a map of Lists keyed by family name.
+     * The {@link #familyMap} TreeMap is sorted lexicographically, and each List is sorted by
+     * qualifier in lexicographically ascending order, and timestamp in descending order.
+     *
+     * @return an array of HBase {@link Cell}s that is sorted by family asc, qualifier asc, timestamp desc.
+     */
+    private ImmutableList<FlatRow.Cell> flattenCells() {
+      ImmutableList.Builder<FlatRow.Cell> combined = ImmutableList.builder();
+      for (List<FlatRow.Cell> familyCellList : cells.values()) {
+        combined.addAll(familyCellList);
+      }
+      return combined.build();
+    }
+
   }
 
   private static boolean isCommit(CellChunk chunk) {

@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import java.util.Collection;
-
 import com.google.bigtable.v2.Cell;
 import com.google.bigtable.v2.Column;
 import com.google.bigtable.v2.Family;
@@ -34,24 +32,13 @@ public class FlatRowConverter {
     if (row == null) {
       return null;
     }
-    return convert(row, FlatRow.CellOrdering.DEFAULT_ORDERING.immutableSortedCopy(row.getCells()));
-  }
-
-  public static Row convertUnorderd(FlatRow row) {
-    if (row == null) {
-      return null;
-    }
-    return convert(row, row.getCells());
-  }
-
-  private static Row convert(FlatRow row, Collection<FlatRow.Cell> cells) {
     Row.Builder rowBuilder = Row.newBuilder().setKey(row.getRowKey());
     String prevFamily = null;
     Family.Builder familyBuilder = null;
     ByteString previousColumn = null;
     Column.Builder columnBuilder = null;
 
-    for (FlatRow.Cell cell : cells) {
+    for (FlatRow.Cell cell : row.getCells()) {
       final String currentFamily = cell.getFamily();
       if (!currentFamily.equals(prevFamily)) {
         if (familyBuilder != null) {
@@ -73,6 +60,7 @@ public class FlatRowConverter {
         columnBuilder = Column.newBuilder().setQualifier(currentQualifier);
         previousColumn = currentQualifier;
       }
+
       columnBuilder.addCells(toCell(cell));
     }
 

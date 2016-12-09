@@ -72,8 +72,6 @@ public class TestFlatRowAdapter {
     FlatRow row = FlatRow.newBuilder().withRowKey(ByteString.copyFromUtf8("key"))
         // First cell.
         .addCell(family1, ByteString.copyFrom(qualifier1), 54321L, ByteString.copyFrom(value1))
-        // Duplicate cell.
-        .addCell(family1, ByteString.copyFrom(qualifier1), 54321L, ByteString.copyFrom(value1))
         // Same family, same column, but different timestamps.
         .addCell(family1, ByteString.copyFrom(qualifier1), 12345L, ByteString.copyFrom(value2))
         // With label

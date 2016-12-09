@@ -19,6 +19,11 @@ import static com.google.cloud.bigtable.hbase.IntegrationTests.*;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -31,10 +36,16 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import com.google.protobuf.ByteString;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 
 public class TestGet extends AbstractTest {
   /**
@@ -528,6 +539,43 @@ public class TestGet extends AbstractTest {
     for (int i = 0; i < qualifiers.length; i++) {
       byte[] value = CellUtil.cloneValue(result.getColumnLatestCell(COLUMN_FAMILY, qualifiers[i]));
       Assert.assertArrayEquals(values[i], value);
+    }
+  }
+
+  @Test
+  public void testOrder() throws IOException {
+    TableName tableName = IntegrationTests.newTestTableName();
+    List<String> randomFamilies = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      randomFamilies.add(UUID.randomUUID().toString());
+    }
+    try (Admin admin = getConnection().getAdmin()) {
+      HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+      for (String family : randomFamilies) {
+        tableDescriptor.addFamily(new HColumnDescriptor(family));
+      }
+      admin.createTable(tableDescriptor);
+      try (Table table = getConnection().getTable(tableName)) {
+        Collections.shuffle(randomFamilies);
+        byte[] rowKey = Bytes.toBytes("rowKey");
+        Put put = new Put(rowKey);
+        for (String family : randomFamilies) {
+          put.addColumn(Bytes.toBytes(family), Bytes.toBytes(UUID.randomUUID().toString()),
+            Bytes.toBytes(UUID.randomUUID().toString()));
+          put.addColumn(Bytes.toBytes(family), Bytes.toBytes(UUID.randomUUID().toString()),
+            Bytes.toBytes(UUID.randomUUID().toString()));
+        }
+        table.put(put);
+        Result result = table.get(new Get(rowKey));
+        Cell[] rawCells = result.rawCells();
+        Set<Cell> ordered = new TreeSet<>(KeyValue.COMPARATOR);
+        ordered.addAll(Arrays.asList(rawCells));
+        Cell[] orderedCells = ordered.toArray(new Cell[0]);
+        Assert.assertArrayEquals(orderedCells, rawCells);
+      } finally {
+        admin.disableTable(tableName);
+        admin.deleteTable(tableName);
+      }
     }
   }
 }

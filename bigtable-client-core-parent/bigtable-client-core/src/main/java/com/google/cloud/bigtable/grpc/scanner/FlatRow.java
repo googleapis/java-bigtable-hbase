@@ -24,7 +24,6 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Ordering;
 import com.google.protobuf.ByteString;
 
 /**
@@ -145,27 +144,6 @@ public class FlatRow implements Serializable {
           .add("value", value)
           .add("labels", labels)
           .toString();
-    }
-  }
-
-  public static class CellOrdering extends Ordering<Cell> {
-    public static final CellOrdering DEFAULT_ORDERING = new CellOrdering();
-
-    private CellOrdering() {}
-
-    @Override
-    public int compare(Cell left, Cell right) {
-
-      int result = left.family.compareTo(right.family);
-      if (result != 0) {
-        return result;
-      }
-      result =
-          left.qualifier.asReadOnlyByteBuffer().compareTo(right.qualifier.asReadOnlyByteBuffer());
-      if (result != 0) {
-        return result;
-      }
-      return 0;
     }
   }
 
