@@ -389,6 +389,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       listener.start();
       return listener.getCompletionFuture().get();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       listener.cancel();
       throw Status.CANCELLED.withCause(e).asRuntimeException();
     } catch (ExecutionException e) {

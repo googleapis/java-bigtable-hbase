@@ -371,6 +371,9 @@ public class BulkMutation {
         }
         mutateRowsFuture = asyncExecutor.mutateRowsAsync(currentRequestManager.build());
         currentRequestManager.lastRpcSentTime = clock.currentTimeMillis();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } catch (Throwable e) {
         mutateRowsFuture = Futures.<List<MutateRowsResponse>> immediateFailedFuture(e);
       } finally {

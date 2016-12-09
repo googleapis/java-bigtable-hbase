@@ -184,6 +184,7 @@ public class TestPut extends AbstractTest {
       TimeUnit.MILLISECONDS.sleep(10);  // Make sure the clock has a chance to move
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      throw new RuntimeException("sleep was interrupted", e);
     }
     table.put(put);
     get.addColumn(COLUMN_FAMILY, qualifier);
