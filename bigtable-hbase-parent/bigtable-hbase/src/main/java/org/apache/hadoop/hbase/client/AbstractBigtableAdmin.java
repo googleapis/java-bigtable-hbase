@@ -81,10 +81,6 @@ import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAdapter;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
@@ -836,49 +832,49 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void snapshot(String snapshotName, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
-    com.google.longrunning.Operation operation = snapshotTable(snapshotName, tableName);
-    try {
-      waitForOperation(operation.getName());
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Create snapshot operation was interrupted", e);
-    }
+    waitForOperation(snapshotTable(snapshotName, tableName));
   }
 
-  private com.google.longrunning.Operation snapshotTable(String snapshotName, TableName tableName)
+  private Operation snapshotTable(String snapshotName, TableName tableName)
       throws IOException {
-    BigtableClusterName clusterName = this.connection.getSession().getClusterName();
-    BigtableInstanceName instanceName = options.getInstanceName();
-    BigtableTableName btTableName = instanceName.toTableName(tableName.getNameAsString());
     return bigtableTableAdminClient.snapshotTable(SnapshotTableRequest.newBuilder()
-        .setCluster(clusterName.getClusterName())
+        .setCluster(getClusterName().toString())
         .setSnapshotId(snapshotName)
-        .setName(btTableName.toString())
+        .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()).toString())
         .build());
   }
 
   /**
-   * Waits for an operation like cluster resizing to complete.
-   * @param operationName The fully qualified name of the operation
+   * Waits for an operation like creating a snapshot to complete.
+   * @param operation. The current state of the operation.
    * @throws InterruptedException if a user interrupts the process, usually with a ^C.
    * @throws IOException
    */
-  private void waitForOperation(String operationName) throws InterruptedException, IOException {
-    GetOperationRequest request = GetOperationRequest.newBuilder().setName(operationName).build();
-    while(true) {
-      Thread.sleep(200);
-      Operation response = connection.getSession().getInstanceAdminClient().getOperation(request);
-      if (response.getDone()) {
-        switch (response.getResultCase()) {
+  private void waitForOperation(Operation operation) throws IOException {
+    GetOperationRequest request =
+        GetOperationRequest.newBuilder().setName(operation.getName()).build();
+    Operation currentOperationState = operation;
+    while (true) {
+      if (currentOperationState.getDone()) {
+        switch (currentOperationState.getResultCase()) {
         case RESPONSE:
           return;
         case ERROR:
-          throw new RuntimeException("Cluster could not be resized: " + response.getError());
+          throw new RuntimeException(
+              "Cluster could not be resized: " + currentOperationState.getError());
         case RESULT_NOT_SET:
           throw new IllegalStateException(
-              "System returned invalid response for Operation check: " + response);
+              "System returned invalid response for Operation check: " + currentOperationState);
         }
       }
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Wating for operation was interrupted.", e);
+      }
+      currentOperationState =
+          connection.getSession().getInstanceAdminClient().getOperation(request);
     }
   }
 
@@ -926,15 +922,16 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
-    BigtableInstanceName instanceName = options.getInstanceName();
-    BigtableClusterName clusterName = this.connection.getSession().getClusterName();
-    String btSnapshotName = clusterName.toSnapshotName(snapshotName);
-
-    bigtableTableAdminClient.createTableFromSnapshot(CreateTableFromSnapshotRequest.newBuilder()
-      .setParent(instanceName.toString())
+    CreateTableFromSnapshotRequest request = CreateTableFromSnapshotRequest.newBuilder()
+      .setParent(options.getInstanceName().toString())
       .setTableId(tableName.getNameAsString())
-      .setSourceSnapshot(btSnapshotName)
-      .build());
+      .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
+      .build();
+    waitForOperation(bigtableTableAdminClient.createTableFromSnapshot(request));
+  }
+
+  private BigtableClusterName getClusterName() throws IOException {
+    return this.connection.getSession().getClusterName();
   }
 
 
@@ -943,10 +940,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
     List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();
     ListSnapshotsResponse snapshotList =
-        bigtableTableAdminClient.listSnapshots(ListSnapshotsRequest.getDefaultInstance());
+        bigtableTableAdminClient.listSnapshots(ListSnapshotsRequest.newBuilder()
+          .setParent(getClusterName().toString())
+          .build());
     for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
-      BigtableSnapshotName snapshotName = BigtableSnapshotName.parse(snapshot.getName());
-      BigtableTableName tableName = BigtableTableName.parse(snapshot.getSourceTable().getName());
+      BigtableSnapshotName snapshotName = new BigtableSnapshotName(snapshot.getName());
+      BigtableTableName tableName = new BigtableTableName(snapshot.getSourceTable().getName());
       response.add(HBaseProtos.SnapshotDescription.newBuilder()
         .setName(snapshotName.getSnapshotId())
         .setTable(tableName.getTableId())
@@ -983,8 +982,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void deleteSnapshot(String snapshotName) throws IOException {
-    BigtableClusterName clusterName = this.connection.getSession().getClusterName();
-    String btSnapshotName = clusterName.toSnapshotName(snapshotName);
+    String btSnapshotName = getClusterName().toSnapshotName(snapshotName);
 
     bigtableTableAdminClient
         .deleteSnapshot(DeleteSnapshotRequest.newBuilder().setName(btSnapshotName).build());

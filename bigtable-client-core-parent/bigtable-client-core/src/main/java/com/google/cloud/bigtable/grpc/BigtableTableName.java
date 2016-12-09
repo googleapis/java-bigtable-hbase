@@ -36,11 +36,7 @@ public class BigtableTableName {
   private final String instanceId;
   private final String tableId;
 
-  public static BigtableTableName parse(String name) {
-    return null;
-  }
-
-  BigtableTableName(String tableName) {
+  public BigtableTableName(String tableName) {
     this.tableName = tableName;
     Matcher matcher = PATTERN.matcher(tableName);
     Preconditions.checkArgument(matcher.matches(), "Malformed snapshot name");

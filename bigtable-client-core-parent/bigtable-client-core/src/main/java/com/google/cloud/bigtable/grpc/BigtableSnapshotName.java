@@ -29,11 +29,6 @@ public class BigtableSnapshotName {
   private static final Pattern PATTERN =
       Pattern.compile("projects/[^/]+/instances/([^/]+)/clusters/([^/]+)/snapshots/([^/]+)");
 
-
-  public static BigtableSnapshotName parse(String snapshotName) {
-    return new BigtableSnapshotName(snapshotName);
-  }
-
   private final String snapshotName;
   private final String instanceId;
   private final String clusterId;
@@ -49,7 +44,8 @@ public class BigtableSnapshotName {
   }
 
   /**
-   * Returns the fully qualified Snapshot name same thing as {@link #getClusterName()}.
+   * Returns the fully qualified Snapshot name. This method returns the same result as
+   * {@link #getSnapshotName()}.
    */
   @Override
   public String toString() {
@@ -57,8 +53,9 @@ public class BigtableSnapshotName {
   }
 
   /**
-   * @return The id of the instance that contains this cluster. It's the second group in the Snapshot name
-   *         name: "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{@snapshotId}".
+   * @return The id of the instance that contains this cluster. It's the second group in the
+   *         Snapshot name:
+   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
    */
   public String getInstanceId() {
     return instanceId;
@@ -66,7 +63,7 @@ public class BigtableSnapshotName {
 
   /**
    * @return The id of this cluster. It's the third group in the Snapshot name:
-   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{@snapshotId}".
+   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
    */
   public String getClusterId() {
     return clusterId;
@@ -74,7 +71,7 @@ public class BigtableSnapshotName {
 
   /**
    * @return The id of this snapshot. It's the fourth group in the Snapshot name:
-   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{@snapshotId}".
+   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
    */
   public String getSnapshotId() {
     return snapshotId;
@@ -82,7 +79,7 @@ public class BigtableSnapshotName {
 
   /**
    * @return The name of this snapshot. It will look like the following
-   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{@snapshotId}".
+   *         "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
    */
   public String getSnapshotName() {
     return snapshotName;

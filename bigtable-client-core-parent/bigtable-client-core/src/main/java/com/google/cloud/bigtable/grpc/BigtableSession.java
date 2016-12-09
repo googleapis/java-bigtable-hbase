@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +36,11 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
 import com.google.api.client.util.Strings;
+import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.ListClustersResponse;
+import com.google.bigtable.v2.ColumnRange;
+import com.google.bigtable.v2.RowFilter;
+import com.google.bigtable.v2.RowFilter.Chain;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.config.CredentialOptions;
@@ -57,6 +62,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.protobuf.ByteString;
 
 import io.grpc.ManagedChannel;
 import io.grpc.netty.GrpcSslContexts;
@@ -386,13 +392,16 @@ public class BigtableSession implements Closeable {
     if (options.getClusterName() == null) {
       try (BigtableClusterUtilities util =
           BigtableClusterUtilities.forInstance(options.getProjectId(), options.getInstanceId())) {
-        final ListClustersResponse clusters = util.getClusters();
-        Preconditions.checkState(clusters.getClustersCount() == 0,
-          "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
-          options.getProjectId(), options.getInstanceId(), clusters.getClustersCount());
-        String clusterName = util.getSingleCluster().getName();
-        String clusterId = BigtableClusterName.parse(clusterName).getClusterId();
-        options = options.toBuilder().setClusterId(clusterId).build();
+        ListClustersResponse clusters = util.getClusters();
+        Preconditions.checkState(clusters.getClustersCount() == 1,
+          String.format(
+            "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
+            options.getProjectId(), options.getInstanceId(), clusters.getClustersCount()));
+        Cluster cluster = clusters.getClusters(0);
+        options = options.toBuilder()
+            .setClusterId(new BigtableClusterName(cluster.getName()).getClusterId())
+            .setZoneId(BigtableClusterUtilities.getZoneId(cluster))
+            .build();
       } catch (GeneralSecurityException e) {
         throw new IOException("Could not get cluster Id.", e);
       }

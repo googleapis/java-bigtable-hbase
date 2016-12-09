@@ -44,37 +44,51 @@ public class TestSnapshots extends AbstractTest {
   final byte[] QUALIFIER = dataHelper.randomData("TestSingleColumnValueFilter");
 
   private final TableName tableName = IntegrationTests.newTestTableName();
-  private final String snapshotName = tableName.getNameAsString() + "_snp";
+  // The maximum size of a table id or snapshot id is 50. newTestTableName().size() can approach 50.
+  // Make sure that the snapshot name and cloned table are within the 50 character limit
+  private final String snapshotName = tableName.getNameAsString().substring(40) + "_snp";
   private final TableName clonedTableName =
-      TableName.valueOf(tableName.getNameAsString() + "_clone");
+      TableName.valueOf(tableName.getNameAsString().substring(40) + "_clone");
 
-   @After
-   public void delete() throws IOException {
-     Admin admin = getConnection().getAdmin();
-     admin.disableTable(tableName);
-     admin.deleteTable(tableName);
-     admin.disableTable(clonedTableName);
-     admin.deleteTable(clonedTableName);
-     admin.close();
-   }
+  @After
+  public void delete() throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+      delete(admin, tableName);
+      delete(admin, clonedTableName);
+      admin.deleteSnapshot(snapshotName);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void delete(Admin admin, TableName tableName) throws IOException {
+    if (admin.tableExists(tableName)) {
+      admin.disableTable(tableName);
+      admin.deleteTable(tableName);
+    }
+  }
 
   @Test
   @Category(KnownGap.class)
   public void testSnapshot() throws IOException {
-    Admin admin = getConnection().getAdmin();
-    admin.createTable(
-      new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
+    try (Admin admin = getConnection().getAdmin()) {
+      admin.createTable(
+        new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(COLUMN_FAMILY)));
 
-    Map<String, Long> values = createAndPopulateTable();
-    Assert.assertEquals(0, admin.listSnapshots(snapshotName).size());
-    admin.snapshot(snapshotName, tableName);
-    Assert.assertEquals(1, admin.listSnapshots(snapshotName).size());
-    admin.cloneSnapshot(snapshotName, clonedTableName);
-    validateClone(values);
-    Assert.assertEquals(1, admin.listSnapshots(snapshotName).size());
-    admin.deleteSnapshot(snapshotName);
-    Assert.assertEquals(0, admin.listSnapshots(snapshotName).size());
-    admin.close();
+      Map<String, Long> values = createAndPopulateTable();
+      checkSnapshotCount(admin, 0);
+      admin.snapshot(snapshotName, tableName);
+      checkSnapshotCount(admin, 1);
+      admin.cloneSnapshot(snapshotName, clonedTableName);
+      validateClone(values);
+      checkSnapshotCount(admin, 1);
+      admin.deleteSnapshot(snapshotName);
+      checkSnapshotCount(admin, 0);
+    }
+  }
+
+  private void checkSnapshotCount(Admin admin, int count) throws IOException {
+    Assert.assertEquals(count, admin.listSnapshots(snapshotName).size());
   }
 
   /**
