@@ -637,7 +637,7 @@ limitations under the License.
                                 <location>${basedir}/javadoc/hbase-docs</location>
                             </offlineLink>
                             <offlineLink>
-                                <url>https://developers.google.com/protocol-buffers/docs/reference/java/</url>
+                                <url>http://atetric.com/atetric/javadoc/com.google.protobuf/protobuf-java/3.0.2/</url>
                                 <location>${basedir}/javadoc/protobuf-docs</location>
                             </offlineLink>
                         </offlineLinks>
