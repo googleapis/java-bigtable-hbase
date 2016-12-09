@@ -237,6 +237,53 @@ public class BigtableSession implements Closeable {
       .synchronizedList(new ArrayList<ManagedChannel>());
   private final ImmutableList<HeaderInterceptor> headerInterceptors;
 
+
+  /**
+   * Use {@link com.google.cloud.bigtable.grpc.BigtableSession#BigtableSession(BigtableOptions)} instead;
+   *
+   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   * @param batchPool a {@link java.util.concurrent.ExecutorService} object.
+   * @throws java.io.IOException if any.
+   */
+  @Deprecated
+  public BigtableSession(
+      BigtableOptions options, @SuppressWarnings("unused") ExecutorService batchPool)
+      throws IOException {
+    this(options);
+  }
+
+  /**
+   * Use {@link com.google.cloud.bigtable.grpc.BigtableSession#BigtableSession(BigtableOptions)} instead;
+   *
+   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
+   * @param batchPool a {@link java.util.concurrent.ExecutorService} object.
+   * @param elg a {@link io.netty.channel.EventLoopGroup} object.
+   * @param scheduledRetries a {@link java.util.concurrent.ScheduledExecutorService} object.
+   * @throws java.io.IOException if any.
+   */
+  @Deprecated
+  public BigtableSession(
+      BigtableOptions options,
+      @SuppressWarnings("unused") @Nullable ExecutorService batchPool,
+      @Nullable EventLoopGroup elg,
+      @Nullable ScheduledExecutorService scheduledRetries)
+      throws IOException {
+    this(options);
+    if (elg != null) {
+      // There used to be a default EventLoopGroup if the elg is not passed in.
+      // AbstractBigtableConnection never sent one in, but some users may have. With the shared
+      // threadpools, the user supplied EventLoopGroup is no longer used. Previously, the elg would
+      // have been shut down in BigtableSession.close(), so shut it here.
+      elg.shutdown();
+    }
+    if (scheduledRetries != null) {
+      // Just like the EventLoopGroup, the schedule retries threadpool used to be a user feature
+      // that wasn't often used. It was shutdown in the close() method. Since it's no longer used,
+      // shut it down immediately.
+      scheduledRetries.shutdown();
+    }
+  }
+
   /**
    * <p>Constructor for BigtableSession.</p>
    *
@@ -328,52 +375,6 @@ public class BigtableSession implements Closeable {
       return options.toBuilder().setInstanceId(instanceId).build();
     }
     return options;
-  }
-
-  /**
-   * Use {@link com.google.cloud.bigtable.grpc.BigtableSession#BigtableSession(BigtableOptions)} instead;
-   *
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @param batchPool a {@link java.util.concurrent.ExecutorService} object.
-   * @throws java.io.IOException if any.
-   */
-  @Deprecated
-  public BigtableSession(
-      BigtableOptions options, @SuppressWarnings("unused") ExecutorService batchPool)
-      throws IOException {
-    this(options);
-  }
-
-  /**
-   * Use {@link com.google.cloud.bigtable.grpc.BigtableSession#BigtableSession(BigtableOptions)} instead;
-   *
-   * @param options a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   * @param batchPool a {@link java.util.concurrent.ExecutorService} object.
-   * @param elg a {@link io.netty.channel.EventLoopGroup} object.
-   * @param scheduledRetries a {@link java.util.concurrent.ScheduledExecutorService} object.
-   * @throws java.io.IOException if any.
-   */
-  @Deprecated
-  public BigtableSession(
-      BigtableOptions options,
-      @SuppressWarnings("unused") @Nullable ExecutorService batchPool,
-      @Nullable EventLoopGroup elg,
-      @Nullable ScheduledExecutorService scheduledRetries)
-      throws IOException {
-    this(options);
-    if (elg != null) {
-      // There used to be a default EventLoopGroup if the elg is not passed in.
-      // AbstractBigtableConnection never sent one in, but some users may have. With the shared
-      // threadpools, the user supplied EventLoopGroup is no longer used. Previously, the elg would
-      // have been shut down in BigtableSession.close(), so shut it here.
-      elg.shutdown();
-    }
-    if (scheduledRetries != null) {
-      // Just like the EventLoopGroup, the schedule retries threadpool used to be a user feature
-      // that wasn't often used. It was shutdown in the close() method. Since it's no longer used,
-      // shut it down immediately.
-      scheduledRetries.shutdown();
-    }
   }
 
   /**

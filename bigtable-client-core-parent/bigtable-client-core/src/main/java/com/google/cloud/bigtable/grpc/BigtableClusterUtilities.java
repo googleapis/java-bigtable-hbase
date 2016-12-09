@@ -86,7 +86,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
 
     try {
       Cluster cluster = utils.getCluster(clusterId, zoneId);
-      return BigtableClusterName.parse(cluster.getName()).getInstanceId();
+      return new BigtableClusterName(cluster.getName()).getInstanceId();
     } finally {
       try {
         utils.close();
@@ -256,7 +256,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @return the id portion of the {@link Cluster#getName()};
    */
   private String getClusterId(Cluster cluster) {
-    return BigtableClusterName.parse(cluster.getName()).getClusterId();
+    return new BigtableClusterName(cluster.getName()).getClusterId();
   }
 
   /**
@@ -329,7 +329,7 @@ public class BigtableClusterUtilities implements AutoCloseable {
    * @throws Exception
    */
   @Override
-  public void close() throws Exception {
+  public void close() {
     channelPool.shutdownNow();
   }
 }
