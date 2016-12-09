@@ -33,10 +33,6 @@ public class BigtableClusterName {
   private final String instanceId;
   private final String clusterId;
 
-  public static BigtableClusterName parse(String clusterName) {
-    return new BigtableClusterName(clusterName);
-  }
-
   public BigtableClusterName(String clusterName) {
     this.clusterName = clusterName;
     Matcher matcher = PATTERN.matcher(clusterName);
