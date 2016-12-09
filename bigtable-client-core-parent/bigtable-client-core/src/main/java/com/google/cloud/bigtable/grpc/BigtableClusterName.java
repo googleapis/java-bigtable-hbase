@@ -42,7 +42,8 @@ public class BigtableClusterName {
   }
 
   /**
-   * Returns the fully qualified cluster name same thing as {@link #getClusterName()}.
+   * @return the fully qualified cluster name. This method returns the same result as
+   *         {@link #getClusterName()}.
    */
   @Override
   public String toString() {
