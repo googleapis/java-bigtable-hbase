@@ -878,6 +878,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
   }
 
+  /** This is needed for the hbase shell */
+  public void snapshot(byte[] snapshotName, byte[] tableName)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    snapshot(snapshotName, TableName.valueOf(tableName));
+  }
+
   /** {@inheritDoc} */
   @Override
   public void snapshot(byte[] snapshotName, TableName tableName)
@@ -909,6 +915,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
         + "You may poll for existence of the snapshot with listSnapshots(snpashotName)");
     return MasterProtos.SnapshotResponse.newBuilder()
         .setExpectedTimeout(TimeUnit.MINUTES.toMillis(5)).build();
+  }
+
+  /** This is needed for the hbase shell */
+  public void cloneSnapshot(byte[] snapshotName, byte[] tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    cloneSnapshot(snapshotName, TableName.valueOf(tableName));
   }
 
   /** {@inheritDoc} */
