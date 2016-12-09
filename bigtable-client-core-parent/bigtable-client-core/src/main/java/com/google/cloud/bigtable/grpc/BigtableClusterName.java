@@ -76,7 +76,7 @@ public class BigtableClusterName {
   /**
    * Create a fully qualified snapshot name based on the the clusterName and the snapshotId.
    * Snapshot name will look like:
-   * "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots{snpashotId}".
+   * "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/snapshots/{snapshotId}".
    * @param snapshotId The id of the snapshot
    * @return A fully qualified snapshot name that contains the fully qualified cluster name as the
    *         parent and the snapshot name as the child.
